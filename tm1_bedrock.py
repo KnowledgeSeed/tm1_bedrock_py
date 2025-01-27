@@ -153,6 +153,7 @@ def dataframe_to_cube_with_clear(tm1_service, dataframe, cube_name, clear_target
     use_blob = mode == 'blob'
     if clear_target:
         tm1_service.cells.clear_with_dataframe(cube=cube_name, dataframe=dataframe)
+
     tm1_service.cells.write_dataframe(
         cube_name=cube_name,
         data=dataframe,

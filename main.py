@@ -5,7 +5,6 @@ from TM1py import TM1Service
 
 def manage():
     tm1_params = developer_test_files.tm1_connection.params
-
     target_cube_name = "Cost and FTE by Groups"
     data_mdx = """
             SELECT 
