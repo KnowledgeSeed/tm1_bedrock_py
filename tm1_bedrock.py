@@ -120,6 +120,9 @@ def mdx_to_dataframe_ordered(
     where_clause = parse_where_clause(data_mdx)
     for dim, (_, elem) in where_clause.items():
         df[dim] = elem
+
+    df = pd.concat([df, pd.DataFrame(columns=[name for name in cube_dims if name not in df.columns])], axis=1)
+
     df_reordered = df.loc[:, cube_dims]
     return df_reordered
 
