@@ -1,0 +1,18 @@
+# Byte-compiled / optimized / compiled Python files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environment
+.env/
+venv/
+.venv/
+
+# IDE settings
+.idea/
+
+# other data and test files
+*.txt
+*.csv
+tm1_bedrock_async.py
