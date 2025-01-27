@@ -13,6 +13,4 @@ venv/
 .idea/
 
 # other data and test files
-*.txt
-*.csv
-tm1_bedrock_async.py
+developer_test_files/

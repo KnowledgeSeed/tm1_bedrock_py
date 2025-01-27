@@ -1,15 +1,10 @@
 import tm1_bedrock
+import developer_test_files.tm1_connection
 from TM1py import TM1Service
 
 
 def manage():
-    tm1_params = {
-        "address": "localhost",
-        "port": 5365,
-        "user": "admin",
-        "password": "",
-        "ssl": False
-    }
+    tm1_params = developer_test_files.tm1_connection.params
 
     target_cube_name = "Cost and FTE by Groups"
     data_mdx = """
@@ -51,6 +46,7 @@ def manage():
         )
         df_remapped.to_csv('mapped_data.csv', index=False)
 
+        print(tm1.elements.get_element_names('Versions', 'Versions'))
         #tm1_bedrock.dataframe_to_cube_with_clear(tm1, df_remapped, target_cube_name, False, 'default')
 
     finally:
