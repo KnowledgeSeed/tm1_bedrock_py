@@ -51,6 +51,24 @@ def parse_where_clause(mdx_query):
     return result
 
 
+def generate_kwargs_from_mdx(mdx_expressions):
+    """
+    Generate a dictionary of kwargs from a list of MDX expressions.
+
+    Args:
+        mdx_expressions (list): A list of MDX expressions.
+
+    Returns:
+        dict: A dictionary where keys are dimension names (in lowercase, spaces removed) and values are the MDX expressions.
+    """
+    regex = r"\{\s*\[\s*([\w\s]+?)\s*\]\s*"
+    return {
+        re.search(regex, mdx).group(1).lower().replace(" ", ""): mdx
+        for mdx in mdx_expressions
+        if re.search(regex, mdx)
+    }
+
+
 def get_hierarchy_default_element(tm1_service, dimension_name, hierarchy_name):
     """
     gets the default element of a dimension-hierarchy
@@ -157,9 +175,13 @@ def dataframe_to_cube_with_clear(tm1_service, dataframe, cube_name, clear_target
     if clear_target:
         tm1_service.cells.clear_with_dataframe(cube=cube_name, dataframe=dataframe)
 
+    cube_dims = tm1_service.cubes.get_dimension_names(cube_name)
+
+    tm1_service.debug_logging = True
     tm1_service.cells.write_dataframe(
         cube_name=cube_name,
         data=dataframe,
+        dimensions=cube_dims,
         deactivate_transaction_log=True,
         reactivate_transaction_log=True,
         skip_non_updateable=True,
