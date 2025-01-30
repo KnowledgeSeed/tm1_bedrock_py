@@ -153,24 +153,10 @@ def collect_cube_metadata(tm1_service, mdx_list=None, additional_cube_list=None)
 # ------------------------------------------------------------------------------------------------------------
 
 
-def mdx_to_dataframe(mdx_function=None, **kwargs):
-    """
-    Executes an MDX query and returns a DataFrame. If no custom function is provided,
-    the default TM1 service function is used.
-
-    Args:
-        mdx_function (callable, optional): A function to execute an MDX query and return a DataFrame.
-                                           Defaults to the built-in TM1 service function.
-        **kwargs: Keyword arguments for the MDX query execution, including:
-                  - tm1_service (TM1Service): An active TM1Service object for the TM1 server connection.
-                  - data_mdx (str): The MDX query string to execute.
-                  - skip_zeros (bool, optional): Whether to skip cells with zero values.
-                  - skip_consolidated_cells (bool, optional): Whether to skip consolidated cells.
-                  - skip_rule_derived_cells (bool, optional): Whether to skip rule-derived cells.
-
-    Returns:
-        pd.DataFrame: DataFrame containing the result of the MDX query.
-    """
+def mdx_to_dataframe(
+    mdx_function=None,
+    **kwargs
+):
     if mdx_function is None:
         mdx_function = mdx_to_dataframe_default
 
@@ -219,9 +205,9 @@ def normalize_dataframe(dataframe, data_mdx, metadata):
     return dataframe_reordered
 
 
-def mdx_to_normalized_dataframe(mdx_function=None, **kwargs):
+def mdx_to_normalized_dataframe(mdx_function=None, data_mdx="", metadata=None, **kwargs):
     dataframe = mdx_to_dataframe(mdx_function, **kwargs)
-    dataframe = normalize_dataframe(dataframe, **kwargs)
+    dataframe = normalize_dataframe(dataframe, data_mdx, metadata)
     return dataframe
 
 
@@ -242,7 +228,7 @@ def clear_cube(clear_function=None, **kwargs):
                   - cube_name (str)
                   - clear_set_mdx_list (list): a list of valid set MDXs that define the clear space
     Returns:
-        None
+        clear function call
     """
     if clear_function is None:
         clear_function = clear_cube_default
@@ -260,8 +246,8 @@ def clear_cube_default(tm1_service, cube_name, clear_set_mdx_list):
     Returns:
         None
     """
-    clear_kwargs = generate_kwargs_from_set_mdx_list(clear_set_mdx_list)
-    tm1_service.cells.clear(cube_name, **clear_kwargs)
+    clearing_kwargs = generate_kwargs_from_set_mdx_list(clear_set_mdx_list)
+    tm1_service.cells.clear(cube_name, **clearing_kwargs)
 
 
 def dataframe_to_cube(write_function=None, **kwargs):
@@ -289,7 +275,6 @@ def dataframe_to_cube_default(tm1_service, dataframe, cube_name, cube_dims, mode
 def dataframe_to_cube_with_clear(clear_function=None, write_function=None, clear_target=False, **kwargs):
     if clear_target:
         clear_cube(clear_function, **kwargs)
-
     write_function(**kwargs)
 
 
@@ -298,48 +283,54 @@ def dataframe_to_cube_with_clear(clear_function=None, write_function=None, clear
 # ------------------------------------------------------------------------------------------------------------
 
 
-def mdx_to_dataframe_with_literal_remap(
-    tm1_service, data_mdx, mapping,
-    skip_zeros=False, skip_consolidated_cells=False, skip_rule_derived_cells=False
-):
+def dataframe_literal_remap(dataframe, mapping):
+    for dimension, element_mapping in mapping.items():
+        if dimension in dataframe.columns:
+            dataframe[dimension] = dataframe[dimension].replace(element_mapping)
+    return dataframe
+
+
+def dataframe_settings_remap(main_dataframe, mapping_dataframe, target_mapping):
     """
-    Execute an MDX query, remap dimension elements, return dataframe that has all dimensions of the cube, in order,
-    plus a dimension for value
-    The mapping dictionary can have multiple dimensions, and multiple elements in the dimensions as well.
-    {dim1:{old1:new1, old3:new3, old4:new4, ...}, dim2:{old2:new2}, ...}
+    Remaps dimensions in the main dataframe using the values from the mapping dataframe.
 
     Args:
-        tm1_service (TM1Service): An active TM1Service instance.
-        data_mdx (str): The MDX query to execute.
-        mapping (dict): A dictionary where the key is the dimension name, and the value is a dictionary
-                        mapping old elements to new elements.
-        skip_zeros (bool): Whether to include only non-zero cells.
-        skip_consolidated_cells (bool): Whether to include consolidated cells.
-        skip_rule_derived_cells (bool): Whether to include rule-derived cells.
+        main_dataframe (pd.DataFrame): The main data with dimensionality to be remapped.
+        mapping_dataframe (pd.DataFrame): The settings or mapping data with shared dimensions and mapping keys.
+        target_mapping (dict): A dictionary defining the mapping of target dimensions.
+                               Format - {'Target Dimension': {'Mapping Dimension': 'Mapping Value'}}.
 
     Returns:
-        None
+        pd.DataFrame: A dataframe with the remapped dimensions.
     """
-    df = mdx_to_normalized_dataframe(
-        tm1_service, data_mdx,
-        skip_zeros, skip_consolidated_cells, skip_rule_derived_cells
-    )
-    for dimension, element_mapping in mapping.items():
-        if dimension in df.columns:
-            df[dimension] = df[dimension].replace(element_mapping)
-    return df
 
+    # Identify shared dimensions between the two dataframes
+    shared_dimensions = list(set(main_dataframe.columns) & set(mapping_dataframe.columns))
 
-def mdx_to_cube_with_literal_remap(
-    tm1_service, data_mdx, mapping, target_cube,
-    skip_zeros=False, skip_consolidated_cells=False, skip_rule_derived_cells=False,
-    clear_target=False, mode='default'
-):
-    df = mdx_to_dataframe_with_literal_remap(
-        tm1_service, data_mdx, mapping,
-        skip_zeros, skip_consolidated_cells, skip_rule_derived_cells
-    )
-    dataframe_to_cube_with_clear(tm1_service, df, target_cube, clear_target, mode)
+    # Filter mapping dataframe based on the target_mapping criteria
+    filtered_mapping = mapping_dataframe.copy()
+    for target_dimension, mapping_info in target_mapping.items():
+        for mapping_dimension, mapping_value in mapping_info.items():
+            filtered_mapping = filtered_mapping[filtered_mapping[mapping_dimension] == mapping_value]
+
+    # Ensure all necessary shared dimensions exist in both dataframes
+    missing_dims = [dim for dim in shared_dimensions if dim not in main_dataframe.columns]
+    if missing_dims:
+        raise ValueError(f"The following shared dimensions are missing in the main dataframe: {missing_dims}")
+
+    # Merge the dataframes based on shared dimensions
+    merged_df = main_dataframe.merge(filtered_mapping, on=shared_dimensions, how="left")
+
+    # Apply the remapping based on the target mapping dictionary
+    for target_dimension, mapping_info in target_mapping.items():
+        for mapping_dimension, mapping_value in mapping_info.items():
+            merged_df[target_dimension] = merged_df[mapping_dimension]
+
+    # Drop the temporary mapping dimensions
+    merged_df = merged_df.drop(columns=[info for mapping in target_mapping.values() for info in mapping],
+                               errors="ignore")
+
+    return merged_df
 
 
 def mdx_to_dataframe_with_settings_mapping(
@@ -362,6 +353,7 @@ def mdx_to_dataframe_with_settings_mapping(
     Returns:
         None
     """
+
     data_df = mdx_to_normalized_dataframe(
         tm1_service, data_mdx,
         skip_zeros, skip_consolidated_cells, skip_rule_derived_cells
