@@ -7,6 +7,24 @@ import re
 
 
 # ------------------------------------------------------------------------------------------------------------
+# Utility: Metadata building specific ID-s
+# ------------------------------------------------------------------------------------------------------------
+
+# query specific identifiers: queries, query cube name, filtering dimension related
+QUERIES="queries"
+QUERIES_CUBE="cube name"
+QUERIES_F_DIM="filter dimensions"
+QUERIES_F_HIER="hierarchy"
+QUERIES_F_ELEM="element"
+
+# cube specific identifiers: cubes, dimension-hierarchy, default member related
+CUBES="cubes"
+CUBES_DIM="dimensions"
+CUBES_HIER="hierarchies"
+CUBES_DEF_NAME="default member name"
+CUBES_DEF_TYPE="default member type"
+
+# ------------------------------------------------------------------------------------------------------------
 # Utility: MDX query parsing functions
 # ------------------------------------------------------------------------------------------------------------
 
@@ -119,13 +137,13 @@ def collect_cube_metadata(tm1_service, mdx_list=None, additional_cube_list=None)
             query_cube_name = parse_from_clause(mdx)
             if query_cube_name not in additional_cube_list:
                 additional_cube_list.append(query_cube_name)
-            metadata["queries"][mdx]["cube name"] = query_cube_name
+            metadata[QUERIES][mdx][QUERIES_CUBE] = query_cube_name
 
             where_clause = parse_where_clause(mdx)
             for dimension, hierarchy, element in where_clause:
-                query_dim = metadata["queries"][mdx]["filter dimensions"][dimension]
-                query_dim["hierarchy"] = hierarchy
-                query_dim["element"] = element
+                query_dim = metadata[QUERIES][mdx][QUERIES_F_DIM][dimension]
+                query_dim[QUERIES_F_HIER] = hierarchy
+                query_dim[QUERIES_F_ELEM] = element
 
     # general data for multiple cubes (from queries and/or additional list)
     for cube_name in additional_cube_list:
@@ -133,17 +151,17 @@ def collect_cube_metadata(tm1_service, mdx_list=None, additional_cube_list=None)
         for dimension in cube_dimensions:
             dimension_hierarchies = tm1_service.hierarchies.get_all_names(dimension_name=dimension)
             for hierarchy in dimension_hierarchies:
-                cube_dim_hier = metadata["cubes"][cube_name]["dimensions"][dimension]["hierarchies"][hierarchy]
+                cube_dim_hier = metadata[CUBES][cube_name][CUBES_DIM][dimension][CUBES_HIER][hierarchy]
 
                 default_member = tm1_service.hierarchies.get(
                     dimension_name=dimension, hierarchy_name=hierarchy
                 ).default_member
-                cube_dim_hier["default member name"] = default_member
+                cube_dim_hier[CUBES_DEF_NAME] = default_member
 
                 default_member_type = tm1_service.elements.get(
                     dimension_name=dimension, hierarchy_name=hierarchy, element_name=default_member
                 ).element_type
-                cube_dim_hier["default member type"] = default_member_type
+                cube_dim_hier[CUBES_DEF_TYPE] = default_member_type
 
     return metadata
 
@@ -190,13 +208,13 @@ def mdx_to_dataframe_default(
 
 
 def normalize_dataframe(dataframe, data_mdx, metadata):
-    cube_name = metadata["queries"][data_mdx]["cube name"]
-    dataframe_dimensions = metadata["cubes"][cube_name]["dimensions"].to_list()
+    cube_name = metadata[QUERIES][data_mdx][QUERIES_CUBE]
+    dataframe_dimensions = metadata[CUBES][cube_name][CUBES_DIM].to_list()
     dataframe_dimensions.append('Value')
 
-    filter_dimensions = metadata["queries"][data_mdx]["filtering dimensions"]
+    filter_dimensions = metadata[QUERIES][data_mdx][QUERIES_F_DIM]
     for dimension in filter_dimensions:
-        dataframe[dimension] = filter_dimensions[dimension]["element"]
+        dataframe[dimension] = filter_dimensions[dimension][QUERIES_F_ELEM]
 
     dataframe = pd.concat([dataframe, pd.DataFrame(
         columns=[name for name in dataframe_dimensions if name not in dataframe.columns])], axis=1)

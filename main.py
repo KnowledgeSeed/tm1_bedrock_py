@@ -59,12 +59,49 @@ def manage():
     tm1 = TM1Service(**tm1_params)
 
     try:
+        # metadata building
         metadata = tm1_bedrock.collect_cube_metadata(
             tm1,
             mdx_list=[data_mdx, mapping_target_data_mdx],
             additional_cube_list=["Headcount Parameter", "Position Parameter"]
         )
-        pprint(metadata.to_dict())
+        pprint(metadata[tm1_bedrock.CUBES].to_dict())
+
+        print("default")
+        dataframe = tm1_bedrock.mdx_to_dataframe(
+            tm1_service=tm1,
+            data_mdx=data_mdx,
+            skip_zeros=True,
+            skip_consolidated_cells=True,
+            skip_rule_derived_cells=False
+        )
+        dataframe = tm1_bedrock.normalize_dataframe(dataframe, data_mdx, metadata)
+        print(dataframe)
+
+        print("kwargs default")
+        kwargs = {
+            "tm1_service":tm1,
+            "data_mdx":data_mdx,
+            "skip_zeros":True,
+            "skip_consolidated_cells":True,
+            "skip_rule_derived_cells":False
+        }
+        dataframe = tm1_bedrock.mdx_to_dataframe(**kwargs)
+        dataframe = tm1_bedrock.normalize_dataframe(dataframe, data_mdx, metadata)
+        print(dataframe)
+
+        print("kwargs and callable")
+        kwargs = {
+            "tm1_service": tm1,
+            "data_mdx": data_mdx,
+            "skip_zeros": True,
+            "skip_consolidated_cells": True,
+            "skip_rule_derived_cells": False
+        }
+        mdx_function = tm1_bedrock.mdx_to_dataframe_default
+        dataframe = tm1_bedrock.mdx_to_dataframe(mdx_function, **kwargs)
+        dataframe = tm1_bedrock.normalize_dataframe(dataframe, data_mdx, metadata)
+        print(dataframe)
 
     finally:
         tm1.logout()
