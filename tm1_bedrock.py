@@ -3,33 +3,18 @@ This file is a collection of upgraded TM1 bedrock functionality, ported to pytho
 """
 
 import pandas as pd
+from pandas import DataFrame
+from TM1py import TM1Service
 import re
+from typing import Callable, List, Dict, Optional, Any, Union, Iterator
 
-
-# ------------------------------------------------------------------------------------------------------------
-# Utility: Metadata building specific ID-s
-# ------------------------------------------------------------------------------------------------------------
-
-# query specific identifiers: queries, query cube name, filtering dimension related
-QUERIES="queries"
-QUERIES_CUBE="cube name"
-QUERIES_F_DIM="filter dimensions"
-QUERIES_F_HIER="hierarchy"
-QUERIES_F_ELEM="element"
-
-# cube specific identifiers: cubes, dimension-hierarchy, default member related
-CUBES="cubes"
-CUBES_DIM="dimensions"
-CUBES_HIER="hierarchies"
-CUBES_DEF_NAME="default member name"
-CUBES_DEF_TYPE="default member type"
 
 # ------------------------------------------------------------------------------------------------------------
 # Utility: MDX query parsing functions
 # ------------------------------------------------------------------------------------------------------------
 
 
-def parse_from_clause(mdx_query):
+def parse_from_clause(mdx_query: str) -> str:
     """
     Extracts the cube name from the FROM clause of an MDX query.
 
@@ -42,46 +27,52 @@ def parse_from_clause(mdx_query):
     Raises:
         ValueError: If the MDX query does not contain a valid FROM clause.
     """
-    from_part_match = re.search(r"FROM\s*\[(.*?)\]", mdx_query, re.IGNORECASE)
+    from_part_match: Optional[re.Match[str]] = re.search(r"FROM\s*\[(.*?)\]", mdx_query, re.IGNORECASE)
     if not from_part_match:
         raise ValueError("MDX query is missing the FROM clause.")
     return from_part_match.group(1).strip()
 
 
-def parse_where_clause(mdx_query):
+def parse_where_clause(mdx_query: str) -> List[List[str]]:
     """
-    Extracts the dimensions, hierarchies, and elements from the WHERE clause of an MDX query.
-    First it looks for [dim].[hier].[elem], then it looks for the remaining [dim].[elem] parts and adds that
-        to the list as well, in the format [dim].[dim].[elem]
+    Parses the WHERE clause of an MDX query and extracts the dimensions, hierarchies, and elements.
+
+    The function first looks for elements in the format `[Dimension].[Hierarchy].[Element]`. If no hierarchy
+    is specified, it assumes the hierarchy name is the same as the dimension and looks for `[Dimension].[Element]`.
 
     Args:
         mdx_query (str): The MDX query string to parse.
 
     Returns:
-        list: A list of lists where each sublist contains the dimension,hierarchy (dim itself if no hierarchy),
-              and element from the WHERE clause.
+        List[List[str]]: A list of lists where each sublist contains three strings:
+                        - The dimension name
+                        - The hierarchy name (or the dimension name if no hierarchy is present)
+                        - The element name
     """
-    where_match = re.search(r'WHERE\s*\((.*?)\)', mdx_query, re.S)
+    where_match: Optional[re.Match[str]] = re.search(r'WHERE\s*\((.*?)\)', mdx_query, re.S)
     if not where_match:
         return []
-    where_content = where_match.group(1)
-    hier_elements = re.findall(r'\[(.*?)\]\.\[(.*?)\]\.\[(.*?)\]', where_content)
-    result = [[dim, hier, elem] for dim, hier, elem in hier_elements]
-    remaining_content = re.sub(r'\[(.*?)\]\.\[(.*?)\]\.\[(.*?)\]', '', where_content)
-    dim_elements = re.findall(r'\[(.*?)\]\.\[(.*?)\]', remaining_content)
+
+    where_content: str = where_match.group(1)
+    hier_elements: List[tuple] = re.findall(r'\[(.*?)\]\.\[(.*?)\]\.\[(.*?)\]', where_content)
+    result: List[List[str]] = [[dim, hier, elem] for dim, hier, elem in hier_elements]
+
+    remaining_content: str = re.sub(r'\[(.*?)\]\.\[(.*?)\]\.\[(.*?)\]', '', where_content)
+    dim_elements: List[tuple] = re.findall(r'\[(.*?)\]\.\[(.*?)\]', remaining_content)
     result.extend([[dim, dim, elem] for dim, elem in dim_elements])
+
     return result
 
 
-def generate_kwargs_from_set_mdx_list(mdx_expressions):
+def generate_kwargs_from_set_mdx_list(mdx_expressions: List[str]) -> Dict[str, str]:
     """
     Generate a dictionary of kwargs from a list of MDX expressions.
 
     Args:
-        mdx_expressions (list): A list of MDX expressions.
+        mdx_expressions (List[str]): A list of MDX expressions.
 
     Returns:
-        dict: A dictionary where keys are dimension names (in lowercase, spaces removed)
+        Dict[str, str]: A dictionary where keys are dimension names (in lowercase, spaces removed)
             and values are the MDX expressions.
     """
     regex = r"\{\s*\[\s*([\w\s]+?)\s*\]\s*"
@@ -93,78 +84,206 @@ def generate_kwargs_from_set_mdx_list(mdx_expressions):
 
 
 # ------------------------------------------------------------------------------------------------------------
+# Utility: Metadata building specific ID-s
+# ------------------------------------------------------------------------------------------------------------
+
+QUERY_VAL = "query value"
+QUERY_FILTER_DIMS = "query filter dimensions"
+QUERY_FILTER_HIER = "hierarchy"
+QUERY_FILTER_ELEM = "element"
+CUBE_NAME = "cube name"
+CUBE_DIMS = "dimensions"
+DIM_HIERS = "hierarchies"
+DEFAULT_NAME = "default member name"
+DEFAULT_TYPE = "default memmber type"
+
+# ------------------------------------------------------------------------------------------------------------
 # Utility: Cube metadata collection using input MDXs and/or other cubes
 # ------------------------------------------------------------------------------------------------------------
 
 
 class Metadata:
-    def __init__(self):
-        self._data = {}
+    """
+    A recursive metadata structure that behaves like a nested dictionary. Provides methods for
+    accessing, setting, iterating over keys, and converting the metadata to dictionary or list formats.
 
-    def __getitem__(self, item):
+    - `__getitem__`: Returns the value for the given key, creating a new nested `Metadata` if the key does not exist.
+    - `__setitem__`: Sets the value for a specified key.
+    - `__iter__`: Returns an iterator over the keys.
+    - `__repr__` / `__str__`: Provides a string representation of the metadata keys.
+    - `to_dict`: Recursively converts the metadata to a dictionary.
+    - `to_list`: Returns a list of the top-level keys in the metadata.
+    """
+    def __init__(self) -> None:
+        self._data: Dict[str, Union['Metadata', Any]] = {}
+
+    def __getitem__(self, item: str) -> Union['Metadata', Any]:
         if item not in self._data:
             self._data[item] = Metadata()
         return self._data[item]
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: Any) -> None:
         self._data[key] = value
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         return iter(self._data)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Metadata({list(self._data.keys())})"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return repr(self)
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         return {k: v.to_dict() if isinstance(v, Metadata) else v for k, v in self._data.items()}
 
-    def to_list(self):
+    def to_list(self) -> list:
         return list(self._data.keys())
 
+    def get_cube_name(self) -> str:
+        return self[CUBE_NAME]
 
-def collect_cube_metadata(tm1_service, mdx_list=None, additional_cube_list=None):
+    def get_cube_dims(self) -> List[str]:
+        return self[CUBE_DIMS].to_list()
+
+    def get_filter_dims(self) -> List[str]:
+        return self[QUERY_FILTER_DIMS].to_list()
+
+    def get_filter_elem(self, dimension: str) -> str:
+        return self[QUERY_FILTER_DIMS][dimension][QUERY_FILTER_ELEM]
+
+
+def collect_metadata(
+    tm1_service: Any,
+    mdx: Optional[str] = None,
+    cube_name: Optional[str] = None,
+    retrieve_all_dimension_data: Optional[
+        Callable[[Any, List[str], Metadata, Callable[[Any, str, List[str], Metadata], Metadata]], None]
+    ] = None,
+    retrieve_dimension_data: Optional[
+        Callable[[Any, str, List[str], Metadata], Metadata]
+    ] = None
+) -> Metadata:
+    """
+    Collects metadata about a cube based on either an MDX query or a cube name.
+
+    Args:
+        tm1_service (Any): The TM1 service object used to interact with the cube.
+        mdx (Optional[str]): The MDX query string.
+        cube_name (Optional[str]): The name of the cube.
+        retrieve_all_dimension_data (Optional[Callable]): A callable function to handle retrieving all dimension data.
+        retrieve_dimension_data (Optional[Callable]): A callable function to handle metadata retrieval for dims.
+
+    Returns:
+        Metadata: A structured metadata object containing information about the cube.
+
+    Raises:
+        ValueError: If neither an MDX query nor a cube name is provided.
+    """
     metadata = Metadata()
 
-    if additional_cube_list is None:
-        additional_cube_list = []
+    if mdx:
+        cube_name = parse_from_clause(mdx)
+        metadata = collect_query_metadata(mdx, metadata)
 
-    # query specific data for multiple mdx-s
-    if mdx_list is not None:
-        for mdx in mdx_list:
-            query_cube_name = parse_from_clause(mdx)
-            if query_cube_name not in additional_cube_list:
-                additional_cube_list.append(query_cube_name)
-            metadata[QUERIES][mdx][QUERIES_CUBE] = query_cube_name
+    if not cube_name:
+        raise ValueError("No MDX or cube name was specified.")
 
-            where_clause = parse_where_clause(mdx)
-            for dimension, hierarchy, element in where_clause:
-                query_dim = metadata[QUERIES][mdx][QUERIES_F_DIM][dimension]
-                query_dim[QUERIES_F_HIER] = hierarchy
-                query_dim[QUERIES_F_ELEM] = element
+    metadata[CUBE_NAME] = cube_name
+    cube_dimensions = tm1_service.cubes.get_dimension_names(cube_name)
 
-    # general data for multiple cubes (from queries and/or additional list)
-    for cube_name in additional_cube_list:
-        cube_dimensions = tm1_service.cubes.get_dimension_names(cube_name)
-        for dimension in cube_dimensions:
-            dimension_hierarchies = tm1_service.hierarchies.get_all_names(dimension_name=dimension)
-            for hierarchy in dimension_hierarchies:
-                cube_dim_hier = metadata[CUBES][cube_name][CUBES_DIM][dimension][CUBES_HIER][hierarchy]
+    if retrieve_all_dimension_data is None:
+        retrieve_all_dimension_data = retrieve_all_dimension_data_default
 
-                default_member = tm1_service.hierarchies.get(
-                    dimension_name=dimension, hierarchy_name=hierarchy
-                ).default_member
-                cube_dim_hier[CUBES_DEF_NAME] = default_member
+    if retrieve_dimension_data is None:
+        retrieve_dimension_data = retrieve_dimension_data_default
 
-                default_member_type = tm1_service.elements.get(
-                    dimension_name=dimension, hierarchy_name=hierarchy, element_name=default_member
-                ).element_type
-                cube_dim_hier[CUBES_DEF_TYPE] = default_member_type
+    metadata = retrieve_all_dimension_data(
+        tm1_service=tm1_service,
+        cube_dimensions=cube_dimensions,
+        metadata=metadata,
+        retrieve_dimension_data=retrieve_dimension_data
+    )
 
     return metadata
 
+
+def retrieve_all_dimension_data_default(
+    tm1_service: Any,
+    cube_dimensions: List[str],
+    metadata: Metadata,
+    retrieve_dimension_data: Callable[[Any, str, List[str], Metadata], Metadata]
+) -> Metadata:
+    """
+    Default implementation to retrieve and update metadata for all dimensions of a cube.
+
+    Args:
+        tm1_service (Any): The TM1 service object.
+        cube_dimensions (List[str]): A list of dimension names in the cube.
+        metadata (Metadata): The metadata object to update.
+        retrieve_dimension_data (Callable): A function to retrieve and update metadata for each dimension.
+
+    Returns:
+        metadata (Metadata)
+    """
+    for dimension in cube_dimensions:
+        dimension_hierarchies = tm1_service.hierarchies.get_all_names(dimension_name=dimension)
+        retrieve_dimension_data(tm1_service, dimension, dimension_hierarchies, metadata)
+
+    return metadata
+
+
+def retrieve_dimension_data_default(
+    tm1_service: Any,
+    dimension: str,
+    hierarchies: List[str],
+    metadata: Metadata
+) -> Metadata:
+    """
+    Default implementation to retrieve and collect metadata for a dimension and its hierarchies.
+
+    Args:
+        tm1_service (Any): The TM1 service object.
+        dimension (str): The name of the dimension.
+        hierarchies (List[str]): A list of hierarchies in the dimension.
+        metadata (Metadata): The metadata object to update.
+
+    Returns:
+        Metadata: The updated metadata object.
+    """
+    for hierarchy in hierarchies:
+        default_member = tm1_service.hierarchies.get(
+            dimension_name=dimension, hierarchy_name=hierarchy
+        ).default_member
+        metadata[CUBE_DIMS][dimension][DIM_HIERS][hierarchy][DEFAULT_NAME] = default_member
+
+        default_member_type = tm1_service.elements.get(
+            dimension_name=dimension, hierarchy_name=hierarchy, element_name=default_member
+        ).element_type
+        metadata[CUBE_DIMS][dimension][DIM_HIERS][hierarchy][DEFAULT_TYPE] = default_member_type
+
+    return metadata
+
+
+def collect_query_metadata(mdx: str, metadata: Metadata) -> Metadata:
+    """
+    Extracts query-specific metadata from an MDX query.
+
+    Args:
+        mdx (str): The MDX query string.
+        metadata (Metadata): The metadata object to update.
+
+    Returns:
+        Metadata: The updated metadata object.
+    """
+    metadata["query value"] = mdx
+    where_clause = parse_where_clause(mdx)
+
+    for dimension, hierarchy, element in where_clause:
+        metadata[QUERY_FILTER_DIMS][dimension][QUERY_FILTER_HIER] = hierarchy
+        metadata[QUERY_FILTER_DIMS][dimension][QUERY_FILTER_ELEM] = element
+
+    return metadata
 
 # ------------------------------------------------------------------------------------------------------------
 # Main: MDX query to normalized pandas dataframe functions
@@ -172,9 +291,20 @@ def collect_cube_metadata(tm1_service, mdx_list=None, additional_cube_list=None)
 
 
 def mdx_to_dataframe(
-    mdx_function=None,
-    **kwargs
-):
+    mdx_function: Optional[Callable[..., DataFrame]] = None,
+    **kwargs: Any
+) -> DataFrame:
+    """
+    Retrieves a DataFrame by executing the provided MDX function.
+
+    Args:
+        mdx_function (Optional[Callable]): A function to execute the MDX query and return a DataFrame.
+                                           If None, the default function is used.
+        **kwargs (Any): Additional keyword arguments passed to the MDX function.
+
+    Returns:
+        DataFrame: The DataFrame resulting from the MDX query.
+    """
     if mdx_function is None:
         mdx_function = mdx_to_dataframe_default
 
@@ -182,9 +312,12 @@ def mdx_to_dataframe(
 
 
 def mdx_to_dataframe_default(
-    tm1_service, data_mdx,
-    skip_zeros=False, skip_consolidated_cells=False, skip_rule_derived_cells=False
-):
+    tm1_service: TM1Service,
+    data_mdx: str,
+    skip_zeros: bool = False,
+    skip_consolidated_cells: bool = False,
+    skip_rule_derived_cells: bool = False
+) -> DataFrame:
     """
     Executes an MDX query using the default TM1 service function and returns a DataFrame.
 
@@ -196,36 +329,77 @@ def mdx_to_dataframe_default(
         skip_rule_derived_cells (bool, optional): If True, rule-derived cells will be excluded. Defaults to False.
 
     Returns:
-        pd.DataFrame: DataFrame containing the result of the MDX query.
+        DataFrame: A DataFrame containing the result of the MDX query.
     """
-    dataframe = tm1_service.cells.execute_mdx_dataframe(
+    return tm1_service.cells.execute_mdx_dataframe(
         mdx=data_mdx,
         skip_zeros=skip_zeros,
         skip_consolidated_cells=skip_consolidated_cells,
         skip_rule_derived_cells=skip_rule_derived_cells
     )
-    return dataframe
 
 
-def normalize_dataframe(dataframe, data_mdx, metadata):
-    cube_name = metadata[QUERIES][data_mdx][QUERIES_CUBE]
-    dataframe_dimensions = metadata[CUBES][cube_name][CUBES_DIM].to_list()
-    dataframe_dimensions.append('Value')
+def normalize_dataframe(
+    dataframe: DataFrame,
+    metadata_function: Optional[Callable[..., Any]] = None,
+    **kwargs: Any
+) -> DataFrame:
+    """
+    Default implementation to normalize a DataFrame using metadata.
 
-    filter_dimensions = metadata[QUERIES][data_mdx][QUERIES_F_DIM]
-    for dimension in filter_dimensions:
-        dataframe[dimension] = filter_dimensions[dimension][QUERIES_F_ELEM]
+    Args:
+        dataframe (DataFrame): The DataFrame to normalize.
+        metadata_function (Optional[Callable]): A function to collect metadata for normalization.
+                                                If None, a default function is used.
+        **kwargs (Any): Additional keyword arguments for the metadata function.
 
-    dataframe = pd.concat([dataframe, pd.DataFrame(
-        columns=[name for name in dataframe_dimensions if name not in dataframe.columns])], axis=1)
+    Returns:
+        DataFrame: The normalized DataFrame.
+    """
+    if metadata_function is None:
+        metadata_function = collect_metadata
 
-    dataframe_reordered = dataframe.loc[:, dataframe_dimensions]
-    return dataframe_reordered
+    metadata = metadata_function(**kwargs)
+    dataframe_dimensions = metadata.get_cube_dims()
+
+    if 'Value' not in dataframe_dimensions:
+        dataframe_dimensions.append('Value')
+
+    filter_dimensions = metadata.get_filter_dims()
+    additional_columns = {
+        dimension: metadata.get_filter_elem(dimension) for dimension in filter_dimensions
+    }
+
+    dataframe = dataframe.assign(**additional_columns)
+    dataframe = pd.concat([dataframe, DataFrame(
+        columns=[name for name in dataframe_dimensions if name not in dataframe.columns]
+    )], axis=1)
+
+    return dataframe.loc[:, dataframe_dimensions]
 
 
-def mdx_to_normalized_dataframe(mdx_function=None, data_mdx="", metadata=None, **kwargs):
+def mdx_to_normalized_dataframe(
+    mdx_function: Optional[Callable[..., DataFrame]] = None,
+    metadata_function: Optional[Callable[..., Any]] = None,
+    **kwargs: Any
+) -> DataFrame:
+    """
+    Retrieves and normalizes a DataFrame from an MDX query function.
+
+    Args:
+        mdx_function (Optional[Callable]): A function to retrieve a DataFrame from an MDX query.
+                                           If None, a default function is used.
+        normalize_function (Optional[Callable]): A function to normalize the retrieved DataFrame.
+                                                 If None, a default function is used.
+        metadata_function (Optional[Callable]): A function to collect metadata for normalization.
+                                                If None, a default function is used.
+        **kwargs (Any): Additional keyword arguments for the MDX and normalization functions.
+
+    Returns:
+        DataFrame: The normalized DataFrame.
+    """
     dataframe = mdx_to_dataframe(mdx_function, **kwargs)
-    dataframe = normalize_dataframe(dataframe, data_mdx, metadata)
+    dataframe = normalize_dataframe(dataframe, metadata_function, **kwargs)
     return dataframe
 
 
@@ -233,48 +407,77 @@ def mdx_to_normalized_dataframe(mdx_function=None, data_mdx="", metadata=None, *
 # Main: normalized pandas dataframe to cube functions
 # ------------------------------------------------------------------------------------------------------------
 
-def clear_cube(clear_function=None, **kwargs):
+def clear_cube(
+    clear_function: Optional[Callable[..., Any]] = None,
+    **kwargs: Any
+) -> None:
     """
-    Clears a cube with filters. If no custom function is provided,
-    the default TM1 service function is used.
+    Clears a cube with filters. If no custom function is provided, the default function is used.
 
     Args:
-        clear_function (callable, optional): A function to clear the cube, preferably by using a list of set MDXs
-                                           Defaults to the built-in TM1 service function.
-        **kwargs: Keyword arguments for the MDX query execution, including:
-                  - tm1_service (TM1Service): An active TM1Service object for the TM1 server connection.
-                  - cube_name (str)
-                  - clear_set_mdx_list (list): a list of valid set MDXs that define the clear space
-    Returns:
-        clear function call
+        clear_function (Optional[Callable]): A function to clear the cube using set MDXs.
+                                             Defaults to the built-in TM1 service function.
+        **kwargs (Any): Additional keyword arguments for the clear function, which may include:
+                        - tm1_service (TM1Service): An active TM1Service object for the server connection.
+                        - cube_name (str): The name of the cube to clear.
+                        - clear_set_mdx_list (List[str]): A list of valid MDX set expressions defining the clear space.
     """
     if clear_function is None:
         clear_function = clear_cube_default
     return clear_function(**kwargs)
 
 
-def clear_cube_default(tm1_service, cube_name, clear_set_mdx_list):
+def clear_cube_default(
+    tm1_service: TM1Service,
+    cube_name: str,
+    clear_set_mdx_list: List[str]
+) -> None:
     """
-    Clears a cube with filters.
+    Clears a cube with filters by generating clear parameters from a list of set MDXs.
 
     Args:
-        - tm1_service (TM1Service): An active TM1Service object for the TM1 server connection.
-        - cube_name (str)
-        - clear_set_mdx_list (list): a list of valid set MDXs that define the clear space
-    Returns:
-        None
+        tm1_service (TM1Service): An active TM1Service object for the TM1 server connection.
+        cube_name (str): The name of the cube to clear.
+        clear_set_mdx_list (List[str]): A list of valid MDX set expressions defining the clear space.
     """
     clearing_kwargs = generate_kwargs_from_set_mdx_list(clear_set_mdx_list)
     tm1_service.cells.clear(cube_name, **clearing_kwargs)
 
 
-def dataframe_to_cube(write_function=None, **kwargs):
+def dataframe_to_cube(
+    write_function: Optional[Callable[..., Any]] = None,
+    **kwargs: Any
+) -> None:
+    """
+    Writes a DataFrame to a cube. If no custom function is provided, the default function is used.
+
+    Args:
+        write_function (Optional[Callable]): A function to write the DataFrame to the cube.
+                                             Defaults to the built-in TM1 service function.
+        **kwargs (Any): Additional keyword arguments for the write function.
+    """
     if write_function is None:
         write_function = dataframe_to_cube_default
     return write_function(**kwargs)
 
 
-def dataframe_to_cube_default(tm1_service, dataframe, cube_name, cube_dims, mode='default'):
+def dataframe_to_cube_default(
+    tm1_service: TM1Service,
+    dataframe: DataFrame,
+    cube_name: str,
+    cube_dims: List[str],
+    mode: str = 'default'
+) -> None:
+    """
+    Writes a DataFrame to a cube using the TM1 service.
+
+    Args:
+        tm1_service (TM1Service): An active TM1Service object for the TM1 server connection.
+        dataframe (DataFrame): The DataFrame to write to the cube.
+        cube_name (str): The name of the target cube.
+        cube_dims (List[str]): A list of dimensions for the target cube.
+        mode (str, optional): The mode for writing data ('default', 'ti', or 'blob'). Defaults to 'default'.
+    """
     use_ti = mode == 'ti'
     use_blob = mode == 'blob'
 
@@ -290,10 +493,29 @@ def dataframe_to_cube_default(tm1_service, dataframe, cube_name, cube_dims, mode
     )
 
 
-def dataframe_to_cube_with_clear(clear_function=None, write_function=None, clear_target=False, **kwargs):
+def dataframe_to_cube_with_clear(
+    clear_function: Optional[Callable[..., None]] = None,
+    write_function: Optional[Callable[..., None]] = None,
+    clear_target: bool = False,
+    **kwargs: Any
+) -> None:
+    """
+    Clears a cube and writes a DataFrame to it if requested.
+
+    Args:
+        clear_function (Optional[Callable]): A function to clear the cube. Defaults to None.
+        write_function (Optional[Callable]): A function to write the DataFrame to the cube.
+                                             Must not be None.
+        clear_target (bool, optional): If True, the cube will be cleared before writing. Defaults to False.
+        **kwargs (Any): Additional keyword arguments for the clear and write functions.
+
+    Returns:
+        None
+    """
     if clear_target:
         clear_cube(clear_function, **kwargs)
-    write_function(**kwargs)
+    if write_function is not None:
+        write_function(**kwargs)
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -301,77 +523,78 @@ def dataframe_to_cube_with_clear(clear_function=None, write_function=None, clear
 # ------------------------------------------------------------------------------------------------------------
 
 
-def dataframe_literal_remap(dataframe, mapping):
+def dataframe_literal_remap(
+    dataframe: DataFrame,
+    mapping: Dict[str, Dict[Any, Any]]
+) -> DataFrame:
+    """
+    Remaps elements in a DataFrame based on a provided mapping.
+
+    Args:
+        dataframe (DataFrame): The DataFrame to remap.
+        mapping (Dict[str, Dict[Any, Any]]): A dictionary where keys are column names (dimensions),
+                                             and values are dictionaries mapping old elements to new elements.
+
+    Returns:
+        DataFrame: The updated DataFrame with elements remapped.
+    """
     for dimension, element_mapping in mapping.items():
         if dimension in dataframe.columns:
-            dataframe[dimension] = dataframe[dimension].replace(element_mapping)
+            dataframe[dimension].replace(element_mapping, inplace=True)
     return dataframe
 
 
-def dataframe_settings_remap(main_dataframe, mapping_dataframe, target_mapping):
+def dataframe_settings_remap(
+        main_dataframe: DataFrame,
+        mapping_dataframe: DataFrame,
+        target_mapping: Dict[str, Dict[str, Any]]
+) -> DataFrame:
     """
-    Remaps dimensions in the main dataframe using the values from the mapping dataframe.
+    Remaps dimensions in the main DataFrame using values from the mapping DataFrame.
 
     Args:
-        main_dataframe (pd.DataFrame): The main data with dimensionality to be remapped.
-        mapping_dataframe (pd.DataFrame): The settings or mapping data with shared dimensions and mapping keys.
-        target_mapping (dict): A dictionary defining the mapping of target dimensions.
-                               Format - {'Target Dimension': {'Mapping Dimension': 'Mapping Value'}}.
+        main_dataframe (DataFrame): The primary DataFrame with data to be remapped.
+        mapping_dataframe (DataFrame): The DataFrame containing mapping values and keys.
+        target_mapping (Dict[str, Dict[str, Any]]): A dictionary defining how to map dimensions.
+            Format - {'Target Dimension': {'Mapping Dimension': 'Mapping Value'}}.
 
     Returns:
-        pd.DataFrame: A dataframe with the remapped dimensions.
-    """
+        DataFrame: The remapped DataFrame.
 
-    # Identify shared dimensions between the two dataframes
+    Raises:
+        ValueError: If any shared dimensions are missing in the main DataFrame.
+    """
     shared_dimensions = list(set(main_dataframe.columns) & set(mapping_dataframe.columns))
 
-    # Filter mapping dataframe based on the target_mapping criteria
     filtered_mapping = mapping_dataframe.copy()
     for target_dimension, mapping_info in target_mapping.items():
         for mapping_dimension, mapping_value in mapping_info.items():
             filtered_mapping = filtered_mapping[filtered_mapping[mapping_dimension] == mapping_value]
 
-    # Ensure all necessary shared dimensions exist in both dataframes
     missing_dims = [dim for dim in shared_dimensions if dim not in main_dataframe.columns]
     if missing_dims:
-        raise ValueError(f"The following shared dimensions are missing in the main dataframe: {missing_dims}")
+        raise ValueError(f"The following shared dimensions are missing in the main DataFrame: {missing_dims}")
 
-    # Merge the dataframes based on shared dimensions
     merged_df = main_dataframe.merge(filtered_mapping, on=shared_dimensions, how="left")
 
-    # Apply the remapping based on the target mapping dictionary
     for target_dimension, mapping_info in target_mapping.items():
-        for mapping_dimension, mapping_value in mapping_info.items():
+        for mapping_dimension, _ in mapping_info.items():
             merged_df[target_dimension] = merged_df[mapping_dimension]
 
-    # Drop the temporary mapping dimensions
-    merged_df = merged_df.drop(columns=[info for mapping in target_mapping.values() for info in mapping],
-                               errors="ignore")
+    merged_df = merged_df.drop(
+        columns=[info for mapping in target_mapping.values() for info in mapping],
+        errors="ignore"
+    )
 
     return merged_df
 
 
+"""
 def mdx_to_dataframe_with_settings_mapping(
     tm1_service, data_mdx, settings_mdx, target_mapping_dict,
     skip_zeros=False, skip_consolidated_cells=False, skip_rule_derived_cells=False
 ):
-    """
-    Map data from a source cube using settings from another cube and return pd dataframe.
-
-    Args:
-        tm1_service (TM1Service): An active TM1Service instance.
-        data_mdx (str): The MDX query for the source data cube.
-        settings_mdx (str): The MDX query for the settings cube with mappings.
-        target_mapping_dict (dict): Dictionary where keys are dimensions in the data cube,
-                                    and values are the mapping elements in the settings cube.
-        skip_zeros (bool): Whether to include only non-zero cells in the data query.
-        skip_consolidated_cells (bool): Whether to include consolidated cells in the data query.
-        skip_rule_derived_cells (bool): Whether to include rule-derived cells in the data query.
-
-    Returns:
-        None
-    """
-
+    
     data_df = mdx_to_normalized_dataframe(
         tm1_service, data_mdx,
         skip_zeros, skip_consolidated_cells, skip_rule_derived_cells
@@ -379,7 +602,6 @@ def mdx_to_dataframe_with_settings_mapping(
     settings_df = mdx_to_normalized_dataframe(
         tm1_service, settings_mdx
     )
-
     def extract_column_dimension(mdx):
         pattern = r"ON COLUMNS.*?\{.*?\[(.*?)\]\..*?\}"
         match = re.search(pattern, mdx, re.IGNORECASE | re.DOTALL)
@@ -429,22 +651,6 @@ def mdx_to_dataframe_with_cube_mapping(
         tm1_service, data_mdx, mapping_mdx, dimension_mapping,
         skip_zeros=True, skip_consolidated_cells=True, skip_rule_derived_cells=True
 ):
-    """
-    Map data from a target cube to new dimension values using a mapping cube.
-
-    Args:
-        tm1_service (TM1Service): An active TM1Service instance.
-        data_mdx (str): MDX query to extract data from the target cube.
-        mapping_mdx (str): MDX query to extract mapping basis data.
-        dimension_mapping (dict): Dictionary where keys are data cube dimensions,
-                                   and values are corresponding mapping cube dimensions.
-        skip_zeros (bool): Whether to include only non-zero cells in the data query.
-        skip_consolidated_cells (bool): Whether to include consolidated cells in the data query.
-        skip_rule_derived_cells (bool): Whether to include rule-derived cells in the data query.
-
-    Returns:
-        pd.DataFrame: DataFrame with the same structure as data_mdx, but with mapped dimension values.
-    """
 
     data_df = mdx_to_normalized_dataframe(
         tm1_service, data_mdx,
@@ -486,23 +692,23 @@ def transform_dataframe_to_target_dataframe(
     target_dimension_mapping_for_copy,
     dimension_mapping_for_copy
 ):
-    """
+    """"""
     Transforms the input DataFrame to match the dimensionality of the target cube.
 
     Args:
         tm1_service (TM1Service): Active TM1py service instance.
-        data_df (pd.DataFrame): DataFrame containing source cube's data.
+        data_df (DataFrame): DataFrame containing source cube's data.
         target_cube (str): Name of the target cube.
         source_dimension_mapping_for_copy (dict, optional): Mapping for extra source dimensions.
         target_dimension_mapping_for_copy (dict, optional): Mapping for extra target dimensions.
         dimension_mapping_for_copy (dict, optional): Mapping for dimensions unique to source and target cubes.
 
     Returns:
-        pd.DataFrame: Transformed DataFrame in the dimensionality of the target cube.
+        DataFrame: Transformed DataFrame in the dimensionality of the target cube.
 
     Raises:
         ValueError: If required mappings or defaults are missing or invalid.
-    """
+    """"""
 
     source_dimensions = list(data_df.columns)
     target_dimensions = tm1_service.cubes.get_dimension_names(target_cube)
@@ -553,3 +759,4 @@ def transform_dataframe_to_target_dataframe(
     # Reorder DataFrame to match target cube dimensions
     data_df = data_df[target_dimensions + list(set(data_df.columns) - set(target_dimensions))]
     return data_df
+"""

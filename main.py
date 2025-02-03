@@ -31,6 +31,8 @@ def manage():
           )
          """
 
+# obj -> kockák -> id -> dimenziók -> dimid -> hier -> hierid -> default element
+
     mapping_target_data_mdx = """
         SELECT 
            {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],
@@ -65,7 +67,8 @@ def manage():
             mdx_list=[data_mdx, mapping_target_data_mdx],
             additional_cube_list=["Headcount Parameter", "Position Parameter"]
         )
-        pprint(metadata[tm1_bedrock.CUBES].to_dict())
+        def get_metadata(): return metadata
+        # pprint(metadata[tm1_bedrock.CUBES].to_dict())
 
         print("default")
         dataframe = tm1_bedrock.mdx_to_dataframe(
@@ -102,6 +105,9 @@ def manage():
         dataframe = tm1_bedrock.mdx_to_dataframe(mdx_function, **kwargs)
         dataframe = tm1_bedrock.normalize_dataframe(dataframe, data_mdx, metadata)
         print(dataframe)
+
+
+
 
     finally:
         tm1.logout()
