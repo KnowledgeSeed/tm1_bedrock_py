@@ -17,7 +17,7 @@ def manage():
            {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],
            [Periods].[Periods].[202304],[Periods].[Periods].[202305],[Periods].[Periods].[202306],
            [Periods].[Periods].[202307],[Periods].[Periods].[202308],[Periods].[Periods].[202309],
-           [Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]} 
+           [Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]}  
           ON COLUMNS , 
            {[Groups].[Groups].Members}
            * {[Employees].[Employees].Members} 
@@ -44,14 +44,16 @@ def manage():
         FROM [Cost and FTE by Groups] 
         WHERE 
           (
-           [sVersions].[Versions].[TM1py Test Version], 
+           [Versions].[Versions].[TM1py Test Version], 
            [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[FTE],
            [Measures Cost and FTE by Group].[Measures Cost and FTE by Groups].[Value]
           )
          """
+
     literal_mapping = {
         "Versions": {"Base Plan":"TM1py Test Version"}
     }
+    cube_name = "Cost and FTE by Groups"
 
     clear_set_mdx_list = ["{[Versions].[TM1py Test Version]}",
                           "{[Periods].[Periods].[2023].Children}"]
@@ -59,7 +61,12 @@ def manage():
     tm1 = TM1Service(**tm1_params)
 
     try:
-        pass
+        # mdx_string = tm1_bedrock.filter_to_mdx(tm1_service=tm1, filter_dict=literal_mapping, cube_name=cube_name)
+
+        df = tm1_bedrock.mdx_to_dataframe(tm1_service=tm1, data_mdx=data_mdx)
+        df = tm1_bedrock.normalize_dataframe(tm1_service=tm1, dataframe=df, mdx=data_mdx)
+
+        print(df)
     finally:
         tm1.logout()
 
