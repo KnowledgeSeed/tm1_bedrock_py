@@ -1,0 +1,4 @@
+portno: 7070
+connections:
+  - url: http://tm1:5360
+    name: tm1

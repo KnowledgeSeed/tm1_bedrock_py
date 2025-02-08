@@ -14,3 +14,6 @@ venv/
 
 # other data and test files
 developer_test_files/
+
+*.log
+logs
