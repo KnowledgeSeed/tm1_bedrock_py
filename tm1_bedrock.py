@@ -3,6 +3,7 @@ This file is a collection of upgraded TM1 bedrock functionality, ported to pytho
 """
 
 import pandas as pd
+from mdxpy import MdxBuilder, MdxHierarchySet, Member
 from pandas import DataFrame
 from TM1py import TM1Service
 import re
@@ -401,6 +402,33 @@ def mdx_to_normalized_dataframe(
     dataframe = mdx_to_dataframe(mdx_function, **kwargs)
     dataframe = normalize_dataframe(dataframe, metadata_function, **kwargs)
     return dataframe
+
+
+def mdx_object_builder(
+        cube_name: str,
+        dimension: dict,
+        metadata_function: Optional[Callable[..., Any]] = None,
+        **kwargs: Any
+) -> str:
+
+    if metadata_function is None:
+        metadata_function = collect_metadata
+
+    metadata = metadata_function(cube_name=cube_name, **kwargs)
+    dataframe_dimensions = metadata.get_cube_dims()
+
+    mdx_object = MdxBuilder.from_cube(cube_name)
+    dim_keys = [key for key in dimension]
+
+    for dim in dataframe_dimensions:
+        if dim not in dim_keys:
+            mdx_object.add_hierarchy_set_to_axis(1, MdxHierarchySet.all_leaves(dim))
+        else:
+            member_keys = [key for key in dimension[dim].keys()]
+            value = member_keys[0]
+            mdx_object.add_hierarchy_set_to_axis(0, MdxHierarchySet.member(Member.of(dim, value)))
+
+    return mdx_object.to_mdx()
 
 
 # ------------------------------------------------------------------------------------------------------------
