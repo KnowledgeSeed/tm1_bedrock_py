@@ -343,6 +343,7 @@ def mdx_to_dataframe_default(
 def normalize_dataframe(
     dataframe: DataFrame,
     metadata_function: Optional[Callable[..., Any]] = None,
+
     **kwargs: Any
 ) -> DataFrame:
     """
@@ -547,6 +548,15 @@ def dataframe_to_cube_with_clear(
 
 
 # ------------------------------------------------------------------------------------------------------------
+# Main: dataframe transform utility functions
+# ------------------------------------------------------------------------------------------------------------
+
+# basic filter for 1 dimension-element
+# basic addition for 1 dimension-element
+# filter for nonzero then drop value column
+
+
+# ------------------------------------------------------------------------------------------------------------
 # Main: dataframe remapping and copy functions
 # ------------------------------------------------------------------------------------------------------------
 
@@ -573,9 +583,9 @@ def dataframe_literal_remap(
 
 
 def dataframe_settings_remap(
-        main_dataframe: DataFrame,
-        mapping_dataframe: DataFrame,
-        target_mapping: Dict[str, Dict[str, Any]]
+    main_dataframe: DataFrame,
+    mapping_dataframe: DataFrame,
+    target_mapping: Dict[str, Dict[str, Any]]
 ) -> DataFrame:
     """
     Remaps dimensions in the main DataFrame using values from the mapping DataFrame.
@@ -617,101 +627,79 @@ def dataframe_settings_remap(
     return merged_df
 
 
+def dataframe_cube_remap(
+    data_df: DataFrame,
+    mapping_df: DataFrame,
+    mapped_dimensions: dict
+) -> DataFrame:
+    """
+    Map specified dimension columns in 'data_df' using a 'mapping_df'.
+
+    Steps:
+        1) Identify shared dimensions (intersection of columns).
+        2) Exclude from shared dimensions any column which appears in 'mapped_dimensions' keys,
+           because we want to replace these columns, not join on them.
+        3) Perform a left join on the remaining shared dimensions.
+        4) For each (key, value) in 'mapped_dimensions', overwrite 'key' column
+           in the joined dataframe with the data from the 'value' column in mapping_df.
+        5) Return only the columns that were originally in 'data_df'.
+
+    Parameters
+    ----------
+    data_df : pd.DataFrame
+        The original source dataframe, whose columns we want to preserve except
+        where we overwrite certain dimension values.
+    mapping_df : pd.DataFrame
+        The dataframe containing the mapped values for certain columns.
+    mapped_dimensions : dict
+        A dictionary that specifies which columns in 'data_df' should be replaced
+        by which columns in 'mapping_df'. For example, {"orgunit": "orgunit_mapped"}.
+        The key is the column name in data_df, the value is the column name in mapping_df.
+
+    Returns
+    -------
+    pd.DataFrame
+        A new dataframe with the same columns (and order) as 'data_df', but
+        with specified dimensions mapped from 'mapping_df'.
+    """
+
+    # 1) Find columns in both data_df and mapping_df
+    shared_dimensions = list(set(data_df.columns).intersection(set(mapping_df.columns)))
+
+    # 2) Exclude columns that appear in the mapped_dimensions keys
+    for dim in mapped_dimensions.keys():
+        if dim in shared_dimensions:
+            shared_dimensions.remove(dim)
+
+    # 3) Perform a left join on these remaining shared columns
+    #    We use suffixes=('', '_mapped') to avoid collisions
+    joined_df = data_df.merge(
+        mapping_df,
+        how='left',
+        on=shared_dimensions,
+        suffixes=('', '_mapped')
+    )
+
+    # 4) Overwrite columns in data_df with the mapped columns
+    for data_col, map_col in mapped_dimensions.items():
+        # If the mapped column name is the same, it will appear in joined as 'map_col_mapped'
+        # if it was not used in the join. Otherwise, if the name is different, it should appear
+        # exactly as 'map_col'. Use whichever logic fits your data best.
+        #
+        # Below we handle the case if the mapped column is the same name as the key:
+        map_col_in_joined = map_col
+        if map_col == data_col:
+            map_col_in_joined = f"{map_col}_mapped"
+
+        joined_df[data_col] = joined_df[map_col_in_joined]
+
+    # 5) Retain only the original columns from data_df
+    mapped_df = joined_df[data_df.columns]
+
+    return mapped_df
+
+
 """
-def mdx_to_dataframe_with_settings_mapping(
-    tm1_service, data_mdx, settings_mdx, target_mapping_dict,
-    skip_zeros=False, skip_consolidated_cells=False, skip_rule_derived_cells=False
-):
-    
-    data_df = mdx_to_normalized_dataframe(
-        tm1_service, data_mdx,
-        skip_zeros, skip_consolidated_cells, skip_rule_derived_cells
-    )
-    settings_df = mdx_to_normalized_dataframe(
-        tm1_service, settings_mdx
-    )
-    def extract_column_dimension(mdx):
-        pattern = r"ON COLUMNS.*?\{.*?\[(.*?)\]\..*?\}"
-        match = re.search(pattern, mdx, re.IGNORECASE | re.DOTALL)
-        if match:
-            return match.group(1)
-        else:
-            raise ValueError("Unable to extract column dimension from the settings MDX.")
-
-    column_mapping_dimension = extract_column_dimension(settings_mdx)
-    shared_dimensions = [col for col in settings_df.columns if col != column_mapping_dimension]
-    missing_dims = [dim for dim in shared_dimensions if dim not in data_df.columns]
-    if missing_dims:
-        raise ValueError(f"The following shared dimensions are missing in the data cube: {missing_dims}")
-
-    for target_dimension, mapping_element in target_mapping_dict.items():
-        if mapping_element not in settings_df.columns:
-            raise ValueError(f"Mapping element '{mapping_element}' for dimension '{target_dimension}' "
-                             f"is not found in the settings cube.")
-
-    merged_df = data_df.merge(
-        settings_df[shared_dimensions + list(target_mapping_dict.values())],
-        how="left", on=shared_dimensions
-    )
-
-    for target_dimension, mapping_element in target_mapping_dict.items():
-        merged_df[target_dimension] = merged_df[mapping_element]
-
-    merged_df = merged_df.drop(columns=list(target_mapping_dict.values()), errors="ignore")
-
-    return merged_df
-
-
-def mdx_to_cube_with_settings_remap(
-        tm1_service, data_mdx, settings_mdx, target_mapping_dict, target_cube,
-        skip_zeros=False, skip_consolidated_cells=False, skip_rule_derived_cells=False,
-        clear_target=False, mode='default'
-):
-    df = mdx_to_dataframe_with_settings_mapping(
-        tm1_service, data_mdx, settings_mdx, target_mapping_dict,
-        skip_zeros, skip_consolidated_cells, skip_rule_derived_cells
-    )
-
-    dataframe_to_cube_with_clear(tm1_service, df, target_cube, clear_target, mode)
-
-
-def mdx_to_dataframe_with_cube_mapping(
-        tm1_service, data_mdx, mapping_mdx, dimension_mapping,
-        skip_zeros=True, skip_consolidated_cells=True, skip_rule_derived_cells=True
-):
-
-    data_df = mdx_to_normalized_dataframe(
-        tm1_service, data_mdx,
-        skip_zeros, skip_consolidated_cells, skip_rule_derived_cells
-    )
-
-    mapping_df = mdx_to_normalized_dataframe(
-        tm1_service, mapping_mdx
-    )
-    mapping_col_dim = re.search(r"ON COLUMNS\s+\{.*?\[(.*?)\]\..*?\}", mapping_mdx, re.IGNORECASE)
-    if not mapping_col_dim:
-        raise ValueError("The mapping MDX must have exactly one dimension in ON COLUMNS with a specified element.")
-    mapping_measure_dim = mapping_col_dim.group(1)
-
-    shared_dimensions = [dim for dim in data_df.columns if dim in mapping_df.columns]
-
-    if not all(dim in data_df.columns for dim in dimension_mapping.keys()):
-        raise ValueError("All keys in dimension_mapping must exist in the data MDX dimensions.")
-    if not all(dim in mapping_df.columns for dim in dimension_mapping.values()):
-        raise ValueError("All values in dimension_mapping must exist in the mapping MDX dimensions.")
-
-    merged_df = data_df.merge(mapping_df, how="left", on=shared_dimensions)
-
-    for data_dim, mapping_dim in dimension_mapping.items():
-        if mapping_dim in merged_df.columns:
-            merged_df[data_dim] = merged_df[mapping_dim]
-
-    drop_columns = [mapping_dim for _, mapping_dim in dimension_mapping.items()]
-    merged_df = merged_df.drop(columns=drop_columns + [mapping_measure_dim], errors="ignore")
-
-    return merged_df
-
-
 def transform_dataframe_to_target_dataframe(
     tm1_service,
     data_df,
