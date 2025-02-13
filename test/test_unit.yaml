@@ -1,0 +1,119 @@
+# Main: MDX query to normalized pandas dataframe functions
+test_mdx_object_builder_valid_format:
+  -
+    dimensions: {"Versions": {"Base Plan": "TM1py Test Version"}}
+    cube_name: "Cost and FTE by Groups"
+    expected_mdx:
+      "SELECT\r\n
+         {[versions].[versions].[baseplan]} DIMENSION PROPERTIES MEMBER_NAME ON 0,\r\n
+         {TM1FILTERBYLEVEL({TM1SUBSETALL([groups].[groups])},0)} *
+         {TM1FILTERBYLEVEL({TM1SUBSETALL([periods].[periods])},0)} *
+         {TM1FILTERBYLEVEL({TM1SUBSETALL([employees].[employees])},0)} *
+         {TM1FILTERBYLEVEL({TM1SUBSETALL([lineitemscostandftebygroups].[lineitemscostandftebygroups])},0)}
+         *
+         {TM1FILTERBYLEVEL({TM1SUBSETALL([measurescostandftebygroups].[measurescostandftebygroups])},0)}
+         DIMENSION PROPERTIES MEMBER_NAME ON 1\r\n
+         FROM [costandftebygroups]"
+
+test_mdx_to_dataframe_execute_query:
+  -
+    data_mdx:
+      "SELECT 
+           {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],
+           [Periods].[Periods].[202304],[Periods].[Periods].[202305],[Periods].[Periods].[202306],
+           [Periods].[Periods].[202307],[Periods].[Periods].[202308],[Periods].[Periods].[202309],
+           [Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]}  
+          ON COLUMNS , 
+           {[Groups].[Groups].Members}
+           * {[Employees].[Employees].Members} 
+          ON ROWS 
+        FROM [Cost and FTE by Groups] 
+        WHERE 
+          (
+           [Versions].[Versions].[Base Plan], 
+           [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[FTE],
+           [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
+          )"
+  -
+    data_mdx:
+     "SELECT\r\n
+         {[versions].[versions].[baseplan]} DIMENSION PROPERTIES MEMBER_NAME ON 0,\r\n
+         {TM1FILTERBYLEVEL({TM1SUBSETALL([groups].[groups])},0)} *
+         {TM1FILTERBYLEVEL({TM1SUBSETALL([periods].[periods])},0)} *
+         {TM1FILTERBYLEVEL({TM1SUBSETALL([employees].[employees])},0)} *
+         {TM1FILTERBYLEVEL({TM1SUBSETALL([lineitemscostandftebygroups].[lineitemscostandftebygroups])},0)}
+         *
+         {TM1FILTERBYLEVEL({TM1SUBSETALL([measurescostandftebygroups].[measurescostandftebygroups])},0)}
+         DIMENSION PROPERTIES MEMBER_NAME ON 1\r\n
+         FROM [costandftebygroups]"
+
+test_normalize_dataframe_is_dataframe:
+  -
+    data_mdx:
+      "SELECT 
+           {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],
+           [Periods].[Periods].[202304],[Periods].[Periods].[202305],[Periods].[Periods].[202306],
+           [Periods].[Periods].[202307],[Periods].[Periods].[202308],[Periods].[Periods].[202309],
+           [Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]}  
+          ON COLUMNS , 
+           {[Groups].[Groups].Members}
+           * {[Employees].[Employees].Members} 
+          ON ROWS 
+        FROM [Cost and FTE by Groups] 
+        WHERE 
+          (
+           [Versions].[Versions].[Base Plan], 
+           [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[FTE],
+           [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
+          )"
+
+test_normalize_dataframe_match_dimensions:
+  -
+    data_mdx:
+      "SELECT 
+           {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],
+           [Periods].[Periods].[202304],[Periods].[Periods].[202305],[Periods].[Periods].[202306],
+           [Periods].[Periods].[202307],[Periods].[Periods].[202308],[Periods].[Periods].[202309],
+           [Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]}  
+          ON COLUMNS , 
+           {[Groups].[Groups].Members}
+           * {[Employees].[Employees].Members} 
+          ON ROWS 
+        FROM [Cost and FTE by Groups] 
+        WHERE 
+          (
+           [Versions].[Versions].[Base Plan], 
+           [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[FTE],
+           [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
+          )"
+    expected_dimensions: 7
+
+test_mdx_builder_execute_query:
+  -
+    dimensions: {"Versions": {"Base Plan": "TM1py Test Version"}}
+    cube_name: "Cost and FTE by Groups"
+
+
+# Main: tests for dataframe remapping and copy functions
+test_dataframe_literal_remap:
+  -
+    dataframe: { "Versions": ["Base Plan"]}
+    mapping: { "Versions": {"Base Plan":"TM1py Test Version"} }
+    expected_dataframe: { "Versions": [ "TM1py Test Version" ] }
+
+test_dataframe_settings_remap:
+  -
+    main_dataframe: {"Product": ["A", "B"], "Code": ["X1", "X2"]}
+    mapping_dataframe: {"Code": ["X1", "X2"], "New_Product": ["Alpha", "Beta"]}
+    target_mapping: {"Product": {"Code": ["X1", "X2"]}}
+    expected_dataframe: {"Product": ["X1", "X2"], "New_Product": ["Alpha", "Beta"]}
+  -
+    main_dataframe: {"Product": ["A", "B"], "Code": ["X1", "X2"]}
+    mapping_dataframe: {"Code": ["X1", "X2"], "New_Product": ["Alpha", "Beta"]}
+    target_mapping: {"Product": {"New_Product": ["Alpha", "Beta"]}}
+    expected_dataframe: {"Product": ["Alpha", "Beta"], "Code": ["X1", "X2"]}
+  -
+    main_dataframe: {"Product": ["A", "B"], "Code": ["X1", "X2"]}
+    mapping_dataframe: {"New_Code": ["X1", "X2"], "New_Product": ["Alpha", "Beta"]}
+    target_mapping: {"Product": {"New_Product": ["Alpha", "Beta"]}}
+    expected_dataframe: {"Product": ["Alpha", "Beta"], "Code": ["X1", "X2"]}
