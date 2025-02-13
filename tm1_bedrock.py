@@ -343,7 +343,6 @@ def mdx_to_dataframe_default(
 def normalize_dataframe(
     dataframe: DataFrame,
     metadata_function: Optional[Callable[..., Any]] = None,
-
     **kwargs: Any
 ) -> DataFrame:
     """
