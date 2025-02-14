@@ -1,5 +1,93 @@
+# Utility: Cube metadata collection using input MDXs and/or other cubes
+test_collect_metadata_based_on_cube_name_success:
+  -
+    cube_name: "Group Employee"
+  -
+    cube_name: "Employee Organization"
+
+test_collect_metadata_based_on_cube_name_fail:
+  -
+    cube_name: "Group Employees"
+    exception: TM1pyRestException
+  -
+    cube_name: ["Group Employee"]
+    exception: TM1pyRestException
+  -
+    cube_name: 101
+    exception: TM1pyRestException
+  -
+    cube_name: ""
+    exception: ValueError
+
+test_collect_metadata_based_on_mdx_success:
+  -
+    data_mdx:
+      "SELECT 
+           {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],
+           [Periods].[Periods].[202304],[Periods].[Periods].[202305],[Periods].[Periods].[202306],
+           [Periods].[Periods].[202307],[Periods].[Periods].[202308],[Periods].[Periods].[202309],
+           [Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]}  
+          ON COLUMNS , 
+           {[Groups].[Groups].Members}
+           * {[Employees].[Employees].Members} 
+          ON ROWS 
+        FROM [Cost and FTE by Groups] 
+        WHERE 
+          (
+           [Versions].[Versions].[Base Plan], 
+           [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[FTE],
+           [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
+          )"
+
+test_collect_metadata_based_on_mdx_fail:
+    -
+      data_mdx: ""
+      exception: ValueError
+    -
+      data_mdx: 1011
+      exception: TypeError
+    -
+      data_mdx: "Group Employee"
+      exception: ValueError
+    -
+      data_mdx: {"Versions": {"Base Plan": "TM1py Test Version"}}
+      exception: TypeError
+
+test_collect_metadata_cube_dimensions_not_empty:
+  -
+    cube_name: "Group Employee"
+
+test_collect_metadata_cube_dimensions_match_dimensions:
+  -
+    cube_name: "Group Employee"
+    expected_dimensions: ['Groups', 'Employees', 'Measures Group Employee']
+
+test_collect_metadata_filter_dimensions_not_empty:
+  -
+    cube_name: "Group Employee"
+
 # Main: MDX query to normalized pandas dataframe functions
-test_mdx_object_builder_valid_format:
+example_data_mdx:
+  -
+    data_mdx:
+      "SELECT 
+           {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],
+           [Periods].[Periods].[202304],[Periods].[Periods].[202305],[Periods].[Periods].[202306],
+           [Periods].[Periods].[202307],[Periods].[Periods].[202308],[Periods].[Periods].[202309],
+           [Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]}  
+          ON COLUMNS , 
+           {[Groups].[Groups].Members}
+           * {[Employees].[Employees].Members} 
+          ON ROWS 
+        FROM [Cost and FTE by Groups] 
+        WHERE 
+          (
+           [Versions].[Versions].[Base Plan], 
+           [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[FTE],
+           [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
+          )"
+
+test_mdx_object_builder_is_valid_format_true:
   -
     dimensions: {"Versions": {"Base Plan": "TM1py Test Version"}}
     cube_name: "Cost and FTE by Groups"
@@ -15,7 +103,7 @@ test_mdx_object_builder_valid_format:
          DIMENSION PROPERTIES MEMBER_NAME ON 1\r\n
          FROM [costandftebygroups]"
 
-test_mdx_to_dataframe_execute_query:
+test_mdx_to_dataframe_execute_query_success:
   -
     data_mdx:
       "SELECT 
@@ -47,7 +135,28 @@ test_mdx_to_dataframe_execute_query:
          DIMENSION PROPERTIES MEMBER_NAME ON 1\r\n
          FROM [costandftebygroups]"
 
-test_normalize_dataframe_is_dataframe:
+test_mdx_to_dataframe_execute_query_fail:
+  -
+    data_mdx:
+      "    {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],
+           [Periods].[Periods].[202304],[Periods].[Periods].[202305],[Periods].[Periods].[202306],
+           [Periods].[Periods].[202307],[Periods].[Periods].[202308],[Periods].[Periods].[202309],
+           [Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]}  
+          ON COLUMNS , 
+           {[Groups].[Groups].Members}
+           * {[Employees].[Employees].Members} 
+          ON ROWS 
+        FROM [Cost and FTE by Groups] 
+        WHERE 
+          (
+           [Versions].[Versions].[Base Plan], 
+           [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[FTE],
+           [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
+          )"
+  -
+    data_mdx: ""
+
+test_normalize_dataframe_is_dataframe_true:
   -
     data_mdx:
       "SELECT 
@@ -67,7 +176,7 @@ test_normalize_dataframe_is_dataframe:
            [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
           )"
 
-test_normalize_dataframe_match_dimensions:
+test_normalize_dataframe_match_number_of_dimensions_success:
   -
     data_mdx:
       "SELECT 
@@ -88,20 +197,63 @@ test_normalize_dataframe_match_dimensions:
           )"
     expected_dimensions: 7
 
-test_mdx_builder_execute_query:
+test_normalize_dataframe_match_dimensions_success:
+  -
+    data_mdx:
+      "SELECT 
+           {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],
+           [Periods].[Periods].[202304],[Periods].[Periods].[202305],[Periods].[Periods].[202306],
+           [Periods].[Periods].[202307],[Periods].[Periods].[202308],[Periods].[Periods].[202309],
+           [Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]}  
+          ON COLUMNS , 
+           {[Groups].[Groups].Members}
+           * {[Employees].[Employees].Members} 
+          ON ROWS 
+        FROM [Cost and FTE by Groups] 
+        WHERE 
+          (
+           [Versions].[Versions].[Base Plan], 
+           [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[FTE],
+           [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
+          )"
+    expected_dimensions: ['Groups', 'Versions', 'Periods', 'Employees', 'Lineitems Cost and FTE by Groups', 'Measures Cost and FTE by Groups', 'Value']
+
+test_mdx_object_builder_create_dataframe_success:
   -
     dimensions: {"Versions": {"Base Plan": "TM1py Test Version"}}
     cube_name: "Cost and FTE by Groups"
 
 
 # Main: tests for dataframe remapping and copy functions
-test_dataframe_literal_remap:
+test_dataframe_literal_remap_success:
   -
     dataframe: { "Versions": ["Base Plan"]}
     mapping: { "Versions": {"Base Plan":"TM1py Test Version"} }
     expected_dataframe: { "Versions": [ "TM1py Test Version" ] }
 
-test_dataframe_settings_remap:
+test_dataframe_literal_remap_fail:
+  -
+    dataframe: { "Versions": ["Base Plan"]}
+    mapping: {}
+    expected_dataframe: { "Versions": [ "TM1py Test Version" ] }
+  -
+    dataframe: { "Versions": ["Base Plan"]}
+    mapping: { "Versions": {} }
+    expected_dataframe: { "Versions": [ "TM1py Test Version" ] }
+  -
+    dataframe: { "Versions": ["Plan"]}
+    mapping: { "Versions": {"Base Plan":"TM1py Test Version"} }
+    expected_dataframe: { "Versions": [ "TM1py Test Version" ] }
+  -
+    dataframe: { "Versions": []}
+    mapping: { "Versions": {"Base Plan":"TM1py Test Version"} }
+    expected_dataframe: { "Versions": [ "TM1py Test Version" ] }
+  -
+    dataframe: {}
+    mapping: { "Versions": {"Base Plan":"TM1py Test Version"} }
+    expected_dataframe: { "Versions": [ "TM1py Test Version" ] }
+
+test_dataframe_settings_remap_success:
   -
     main_dataframe: {"Product": ["A", "B"], "Code": ["X1", "X2"]}
     mapping_dataframe: {"Code": ["X1", "X2"], "New_Product": ["Alpha", "Beta"]}
@@ -112,8 +264,35 @@ test_dataframe_settings_remap:
     mapping_dataframe: {"Code": ["X1", "X2"], "New_Product": ["Alpha", "Beta"]}
     target_mapping: {"Product": {"New_Product": ["Alpha", "Beta"]}}
     expected_dataframe: {"Product": ["Alpha", "Beta"], "Code": ["X1", "X2"]}
+
+test_dataframe_settings_remap_fail:
+  -
+    main_dataframe: {"Product": [], "Code": ["X1", "X2"]}
+    mapping_dataframe: {"Code": ["X1", "X2"], "New_Product": ["Alpha", "Beta"]}
+    target_mapping: {"Product": {"Code": ["X1", "X2"]}}
+    expected_dataframe: {"Product": ["X1", "X2"], "New_Product": ["Alpha", "Beta"]}
+    exception: ValueError
+  -
+    main_dataframe: {"Product": ["A", "B"], "Code": ["X1", "X2"]}
+    mapping_dataframe: {}
+    target_mapping: {"Product": {"New_Product": ["Alpha", "Beta"]}}
+    expected_dataframe: {"Product": ["Alpha", "Beta"], "Code": ["X1", "X2"]}
+    exception: KeyError
   -
     main_dataframe: {"Product": ["A", "B"], "Code": ["X1", "X2"]}
     mapping_dataframe: {"New_Code": ["X1", "X2"], "New_Product": ["Alpha", "Beta"]}
     target_mapping: {"Product": {"New_Product": ["Alpha", "Beta"]}}
     expected_dataframe: {"Product": ["Alpha", "Beta"], "Code": ["X1", "X2"]}
+    exception: IndexError
+  -
+    main_dataframe: {"Product": ["A", "B"], "Code": ["X1", "X2"]}
+    mapping_dataframe: {"Code": ["X1", "X2"], "New_Product": ["Alpha", "Beta"]}
+    target_mapping: {"Product": {"Code": []}}
+    expected_dataframe: {"Product": ["X1", "X2"], "New_Product": ["Alpha", "Beta"]}
+    exception: ValueError
+  -
+    main_dataframe: { "Product": [ "A", "B" ], "Code": [ "X1", "X2" ] }
+    mapping_dataframe: [[ "X1", "X2" ], [ "Alpha", "Beta" ]]
+    target_mapping: { "Product": { "New_Product": [ "Alpha", "Beta" ] } }
+    expected_dataframe: { "Product": [ "Alpha", "Beta" ], "Code": [ "X1", "X2" ] }
+    exception: KeyError
