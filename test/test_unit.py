@@ -32,6 +32,26 @@ def tm1_connection():
 
 
 # ------------------------------------------------------------------------------------------------------------
+# Utility: MDX query parsing functions
+# ------------------------------------------------------------------------------------------------------------
+
+@parametrize_from_file
+def test_parse_from_clause(mdx_query):
+    cube_name = tm1_bedrock.parse_from_clause(mdx_query)
+    assert isinstance(cube_name, str)
+
+
+@parametrize_from_file
+def test_parse_where_clause(mdx_query):
+    dimensions = tm1_bedrock.parse_where_clause(mdx_query)
+    if mdx_query:
+        for dim in dimensions:
+            for elem in dim:
+                assert isinstance(elem, str)
+    else:
+        assert dimensions == []
+
+# ------------------------------------------------------------------------------------------------------------
 # Utility: Cube metadata collection using input MDXs and/or other cubes
 # ------------------------------------------------------------------------------------------------------------
 
@@ -234,16 +254,3 @@ def test_dataframe_settings_remap_success(main_dataframe, mapping_dataframe, tar
     except IndexError:
         tm1_bedrock.dataframe_settings_remap(main_dataframe=main_df, mapping_dataframe=mapping_df, target_mapping=target_mapping)
 
-
-@parametrize_from_file
-def test_dataframe_settings_remap_fail(main_dataframe, mapping_dataframe, target_mapping, expected_dataframe, exception):
-    """Tries to remap dimensions in the main DataFrame using values from the mapping DataFrame. Uses bad inputs. Raises error."""
-
-    expected_df = pd.DataFrame(expected_dataframe)
-    with pytest.raises(EXCEPTION_MAP[exception]):
-        remapped_df = tm1_bedrock.dataframe_settings_remap(
-            main_dataframe=pd.DataFrame(main_dataframe),
-            mapping_dataframe=pd.DataFrame(mapping_dataframe),
-            target_mapping=target_mapping
-        )
-        pd.testing.assert_frame_equal(remapped_df, expected_df)

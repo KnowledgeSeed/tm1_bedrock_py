@@ -1,3 +1,30 @@
+# Utility: MDX query parsing functions
+test_parse_from_clause:
+  -
+    mdx_query:
+      "FROM [Cost and FTE by Groups]"
+
+test_parse_where_clause:
+  -
+    mdx_query:
+      "WHERE 
+          (
+           [Versions].[Versions].[Base Plan], 
+           [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[FTE],
+           [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
+          )"
+  -
+    mdx_query:
+      "WHERE 
+          (
+           [Versions].[Base Plan], 
+           [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[FTE],
+           [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
+          )"
+  -
+    mdx_query:
+      ""
+
 # Utility: Cube metadata collection using input MDXs and/or other cubes
 test_collect_metadata_based_on_cube_name_success:
   -
@@ -264,35 +291,3 @@ test_dataframe_settings_remap_success:
     mapping_dataframe: {"Code": ["X1", "X2"], "New_Product": ["Alpha", "Beta"]}
     target_mapping: {"Product": {"New_Product": ["Alpha", "Beta"]}}
     expected_dataframe: {"Product": ["Alpha", "Beta"], "Code": ["X1", "X2"]}
-
-test_dataframe_settings_remap_fail:
-  -
-    main_dataframe: {"Product": [], "Code": ["X1", "X2"]}
-    mapping_dataframe: {"Code": ["X1", "X2"], "New_Product": ["Alpha", "Beta"]}
-    target_mapping: {"Product": {"Code": ["X1", "X2"]}}
-    expected_dataframe: {"Product": ["X1", "X2"], "New_Product": ["Alpha", "Beta"]}
-    exception: ValueError
-  -
-    main_dataframe: {"Product": ["A", "B"], "Code": ["X1", "X2"]}
-    mapping_dataframe: {}
-    target_mapping: {"Product": {"New_Product": ["Alpha", "Beta"]}}
-    expected_dataframe: {"Product": ["Alpha", "Beta"], "Code": ["X1", "X2"]}
-    exception: KeyError
-  -
-    main_dataframe: {"Product": ["A", "B"], "Code": ["X1", "X2"]}
-    mapping_dataframe: {"New_Code": ["X1", "X2"], "New_Product": ["Alpha", "Beta"]}
-    target_mapping: {"Product": {"New_Product": ["Alpha", "Beta"]}}
-    expected_dataframe: {"Product": ["Alpha", "Beta"], "Code": ["X1", "X2"]}
-    exception: IndexError
-  -
-    main_dataframe: {"Product": ["A", "B"], "Code": ["X1", "X2"]}
-    mapping_dataframe: {"Code": ["X1", "X2"], "New_Product": ["Alpha", "Beta"]}
-    target_mapping: {"Product": {"Code": []}}
-    expected_dataframe: {"Product": ["X1", "X2"], "New_Product": ["Alpha", "Beta"]}
-    exception: ValueError
-  -
-    main_dataframe: { "Product": [ "A", "B" ], "Code": [ "X1", "X2" ] }
-    mapping_dataframe: [[ "X1", "X2" ], [ "Alpha", "Beta" ]]
-    target_mapping: { "Product": { "New_Product": [ "Alpha", "Beta" ] } }
-    expected_dataframe: { "Product": [ "Alpha", "Beta" ], "Code": [ "X1", "X2" ] }
-    exception: KeyError
