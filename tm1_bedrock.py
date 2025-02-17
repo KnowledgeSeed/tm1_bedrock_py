@@ -553,6 +553,91 @@ def dataframe_to_cube_with_clear(
 # basic filter for 1 dimension-element
 # basic addition for 1 dimension-element
 # filter for nonzero then drop value column
+def dataframe_filter(
+        dataframe: DataFrame,
+        filter_condition: dict
+) -> DataFrame:
+    """
+    Filters DataFrame based on filter_condition. Only filters the DataFrame if at least one condition is met. If not, it returns an empty DataFrame.
+
+    Args:
+         dataframe: (DataFrame): The DataFrame to filter.
+         filter_condition: (dict) Dimension:element key,value pairs for filtering the DataFrame.
+    Returns:
+        DataFrame: The updated DataFrame.
+    """
+    valid_columns = [col for col in filter_condition if col in dataframe.columns]
+
+    if not valid_columns:
+        return dataframe.iloc[0:0]
+
+    condition = (dataframe[valid_columns] == pd.Series({col: filter_condition[col] for col in valid_columns})).all(axis=1)
+    return dataframe.loc[condition]
+
+
+def dataframe_drop_column(
+        dataframe: DataFrame,
+        column_list: list[str]
+) -> DataFrame:
+    """
+    Drops columns from DataFrame if the values in the input column_list are found in the columns of the DataFrame.
+    If a column_list value is not found in the DataFrame, it is ignored.
+
+    Args:
+        dataframe: (DataFrame): The DataFrame from which columns are to be dropped.
+        column_list: (list): Name of the columns to be dropped.
+    Returns:
+        DataFrame: The updated DataFrame.
+    """
+    if not all(item in dataframe.columns for item in column_list):
+        return dataframe
+    return dataframe.drop(column_list, axis=1)
+
+
+def dataframe_add_column_assign_value(
+        dataframe: DataFrame,
+        column_value: dict
+) -> DataFrame:
+    """
+    Ads columns with assigned values to DataFrame if the column_value pairs are not found in the DataFrame.
+    If a column from the column_value pair is found in the DataFrame, the pair is ignored.
+
+    Args:
+        dataframe: (DataFrame): The DataFrame to which columns are to be added.
+        column_value: (dict): Column:value pairs to be added.
+    Returns:
+        DataFrame: The updated DataFrame.
+    """
+    new_columns = {col: value for col, value in column_value.items() if col not in dataframe.columns}
+
+    if new_columns:
+        dataframe[list(new_columns)] = pd.DataFrame([new_columns], index=dataframe.index)
+
+    return dataframe
+
+
+def dataframe_redimension_scale_down(
+        dataframe: DataFrame,
+        filter_condition: dict,
+        column_list: list[str]
+) -> DataFrame:
+    """
+    Filters DataFrame based on filter_condition and drops columns given in column_list.
+    Only filters the DataFrame if at least one condition is met. If non is met, it returns an empty DataFrame.
+    If a column_list value is not found in the DataFrame, it is ignored.
+
+    Args:
+        dataframe: (DataFrame): The DataFrame to filter.
+        filter_condition: (dict) Dimension:element key,value pairs for filtering the DataFrame.
+        column_list: (list): Name of the columns to be dropped.
+    Returns:
+        DataFrame: The updated DataFrame.
+    """
+
+    filtered_dataframe = dataframe_filter(dataframe=dataframe, filter_condition=filter_condition)
+    if filtered_dataframe.equals(dataframe):
+        return dataframe
+    return dataframe_drop_column(dataframe=filtered_dataframe, column_list=column_list)
 
 
 # ------------------------------------------------------------------------------------------------------------
