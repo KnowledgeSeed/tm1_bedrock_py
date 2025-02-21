@@ -286,6 +286,111 @@ def collect_query_metadata(mdx: str, metadata: Metadata) -> Metadata:
 
     return metadata
 
+
+# ------------------------------------------------------------------------------------------------------------
+# Utility: DataFrame validation functions
+# ------------------------------------------------------------------------------------------------------------
+
+
+def validate_dataframe_columns(
+    dataframe: DataFrame,
+    cube_name: str,
+    metadata_function: Optional[Callable[..., Any]] = None,
+    **kwargs: Any
+) -> bool:
+    """
+    Collects the column labels from th DataFrame and compares them with the column labels collected from the Metadata based on a cube_name or metadata_function.
+    Compares them as lists to check for matching label names and order.
+
+    Args:
+        dataframe: (DataFrame): The DataFrame to validate.
+        cube_name: (srt): The name of the Cube.
+        metadata_function: (Optional[Callable]): A function to collect metadata for validation.
+                                                 If None, a default function is used.
+        **kwargs: (Any): Additional keyword arguments passed to the function.
+    Returns:
+        boolean: True if the column label names and their order in the input DataFrame match the column labels of the Metadata.
+                 False if the column labels or their order does not match.
+    """
+
+    if metadata_function is None:
+        metadata_function = collect_metadata
+
+    metadata = metadata_function(cube_name=cube_name, **kwargs)
+    dimensions_from_metadata = metadata.get_cube_dims()
+    dimensions_from_dataframe = list(map(str, dataframe.keys()))
+    dimensions_from_dataframe.remove("Value")
+
+    return dimensions_from_metadata == dimensions_from_dataframe
+
+
+def validate_dataframe_not_NaN(
+    dataframe: DataFrame
+) -> bool:
+    """
+    Checks if the DataFrame rows contain NaN values for validating the DataFrame.
+
+    Args:
+        dataframe: (DataFrame): The DataFrame to check for NaN values.
+    Returns:
+         boolean: True if the DataFrame does not contain NaN values.
+                  False if it does.
+    """
+    return not dataframe.isna().values.any()
+
+
+def validate_dataframe_no_duplicates(
+    dataframe: DataFrame
+) -> bool:
+    """
+    Checks if the DataFrame rows contain duplicate values for validating the DataFrame.
+
+    Args:
+        dataframe: (DataFrame): The DataFrame to check for duplicate values.
+    Returns:
+         boolean: True if the DataFrame does not contain duplicate values.
+                  False if it does.
+    """
+    return not dataframe.duplicated(keep=False).any()
+
+
+def validate_dataframe_rows(
+    dataframe: DataFrame
+) -> bool:
+    """
+    Checks if the DataFrame rows are valid. A row is valid if it does not contain duplicate or NaN values.
+
+    Args:
+        dataframe: (DataFrame): The DataFrame to check for duplicate and NaN values.
+    Returns:
+        boolean: True if the DataFrame does not contain duplicate or NaN values.
+                 False if it does contain either.
+    """
+    return validate_dataframe_not_NaN(dataframe) and validate_dataframe_no_duplicates(dataframe)
+
+
+def validate_dataframe(
+    dataframe: DataFrame,
+    cube_name: str,
+    metadata_function: Optional[Callable[..., Any]] = None,
+    **kwargs: Any
+) -> bool:
+    """
+    Calls the validate_dataframe_rows() and validate_dataframe_columns() functions and returns only returns True if both conditions are met.
+
+    Args:
+        dataframe: (DataFrame): The DataFrame to validate.
+        cube_name: (srt): The name of the Cube.
+        metadata_function: (Optional[Callable]): A function to collect metadata for validation.
+                                                 If None, a default function is used.
+        **kwargs: (Any): Additional keyword arguments passed to the function.
+    Returns:
+        boolean: True if all conditions are met.
+                 False if any of the called functions returned False.
+    """
+    return validate_dataframe_rows(dataframe) and validate_dataframe_columns(dataframe=dataframe, cube_name=cube_name, metadata_function=metadata_function, **kwargs)
+
+
 # ------------------------------------------------------------------------------------------------------------
 # Main: MDX query to normalized pandas dataframe functions
 # ------------------------------------------------------------------------------------------------------------
@@ -619,25 +724,69 @@ def dataframe_add_column_assign_value(
 def dataframe_redimension_scale_down(
         dataframe: DataFrame,
         filter_condition: dict,
-        column_list: list[str]
 ) -> DataFrame:
     """
     Filters DataFrame based on filter_condition and drops columns given in column_list.
     Only filters the DataFrame if at least one condition is met. If non is met, it returns an empty DataFrame.
-    If a column_list value is not found in the DataFrame, it is ignored.
 
     Args:
         dataframe: (DataFrame): The DataFrame to filter.
         filter_condition: (dict) Dimension:element key,value pairs for filtering the DataFrame.
-        column_list: (list): Name of the columns to be dropped.
     Returns:
         DataFrame: The updated DataFrame.
     """
 
     filtered_dataframe = dataframe_filter(dataframe=dataframe, filter_condition=filter_condition)
-    if filtered_dataframe.equals(dataframe):
-        return dataframe
+    column_list = list(map(str, filter_condition.keys()))
     return dataframe_drop_column(dataframe=filtered_dataframe, column_list=column_list)
+
+
+def dataframe_drop_zero_and_values(
+        dataframe: DataFrame
+) -> DataFrame:
+    """
+    Drops all rows with zero values from DaraFrame, then drops the values column.
+
+    Args:
+        dataframe: (DataFrame): The DataFrame to update.
+    Return:
+        DataFrame: The updated DataFrame without the zero values.
+    """
+    dataframe.drop(dataframe[dataframe["Value"] == 0].index, inplace=True)
+    dataframe.drop(columns=["Value"], inplace=True)
+    return dataframe
+
+
+def dataframe_relabel(
+        dataframe: DataFrame,
+        columns: dict
+) -> None:
+    """
+    Relabels DataFrame column(s) if the original label is found in the DataFrame. If an original label is not found, then it is ignored.
+    Args:
+        dataframe: (DataFrame): The DataFrame to relabel.
+        columns: (dict): The original and the new column labels as key-value pairs. The key stands for the original column label, the value for the new label.
+    Return: None
+    """
+    dataframe.rename(columns=columns, inplace=True)
+
+
+def dataframe_value_scale(
+        dataframe: DataFrame,
+        value_function: callable
+) -> DataFrame:
+    """
+    Applies an input function to the 'Value' column of the DataFrame.
+
+    Args:
+        dataframe (DataFrame): The input DataFrame.
+        value_function (callable): A function to apply to the 'Value' column.
+
+    Returns:
+        DataFrame: The modified DataFrame (in place).
+    """
+    dataframe["Value"] = dataframe["Value"].apply(value_function)
+    return dataframe
 
 
 # ------------------------------------------------------------------------------------------------------------
