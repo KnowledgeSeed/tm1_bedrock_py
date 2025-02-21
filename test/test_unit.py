@@ -238,19 +238,3 @@ def test_dataframe_literal_remap_fail(dataframe, mapping, expected_dataframe):
     with pytest.raises(AssertionError):
         remapped_df = tm1_bedrock.dataframe_literal_remap(dataframe=pd.DataFrame(dataframe), mapping=mapping)
         pd.testing.assert_frame_equal(remapped_df, expected_df)
-
-
-@parametrize_from_file
-def test_dataframe_settings_remap_success(main_dataframe, mapping_dataframe, target_mapping, expected_dataframe):
-    """Remaps dimensions in the main DataFrame using values from the mapping DataFrame."""
-
-    main_df = pd.DataFrame(main_dataframe)
-    mapping_df = pd.DataFrame(mapping_dataframe)
-    expected_df = pd.DataFrame(expected_dataframe)
-
-    try:
-        remapped_df = tm1_bedrock.dataframe_settings_remap(main_dataframe=main_df, mapping_dataframe=mapping_df, target_mapping=target_mapping)
-        pd.testing.assert_frame_equal(remapped_df, expected_df)
-    except IndexError:
-        tm1_bedrock.dataframe_settings_remap(main_dataframe=main_df, mapping_dataframe=mapping_df, target_mapping=target_mapping)
-

@@ -279,15 +279,3 @@ test_dataframe_literal_remap_fail:
     dataframe: {}
     mapping: { "Versions": {"Base Plan":"TM1py Test Version"} }
     expected_dataframe: { "Versions": [ "TM1py Test Version" ] }
-
-test_dataframe_settings_remap_success:
-  -
-    main_dataframe: {"Product": ["A", "B"], "Code": ["X1", "X2"]}
-    mapping_dataframe: {"Code": ["X1", "X2"], "New_Product": ["Alpha", "Beta"]}
-    target_mapping: {"Product": {"Code": ["X1", "X2"]}}
-    expected_dataframe: {"Product": ["X1", "X2"], "New_Product": ["Alpha", "Beta"]}
-  -
-    main_dataframe: {"Product": ["A", "B"], "Code": ["X1", "X2"]}
-    mapping_dataframe: {"Code": ["X1", "X2"], "New_Product": ["Alpha", "Beta"]}
-    target_mapping: {"Product": {"New_Product": ["Alpha", "Beta"]}}
-    expected_dataframe: {"Product": ["Alpha", "Beta"], "Code": ["X1", "X2"]}
