@@ -1070,7 +1070,7 @@ def assign_mapping_dataframes(
 def dataframe_execute_mappings(
     data_df: DataFrame,
     mapping_data: Dict[str, Optional[DataFrame] | List[Dict[str, Any]]]
-):
+) -> DataFrame:
     """
 
     example of the mapping steps list of dictionaries:
@@ -1124,3 +1124,5 @@ def dataframe_execute_mappings(
 
             if mapping_step["relabel dimensions"]:
                 data_df = dataframe_relabel(dataframe=data_df, columns=mapping_step["mapping_dims"])
+
+    return data_df
