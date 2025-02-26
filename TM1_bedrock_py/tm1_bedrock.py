@@ -1067,62 +1067,142 @@ def assign_mapping_dataframes(
     return {"shared_mapping_df": shared_mapping_df, "mapping_data": mapping_steps}
 
 
+def _apply_replace(data_df: DataFrame, mapping_step: Dict[str, Any], mapping_data: Dict[str, Any]) -> DataFrame:
+    """
+    Handle the 'replace' mapping step.
+
+    Parameters
+    ----------
+    data_df : DataFrame
+        The DataFrame to apply replacements on.
+    mapping_step : Dict[str, Any]
+        The dictionary containing information about the current mapping step.
+    mapping_data : Dict[str, Any]
+        The overall mapping data dictionary which can include shared or step-specific resources.
+
+    Returns
+    -------
+    DataFrame
+        The modified DataFrame after applying the literal remap.
+    """
+    _ = mapping_data
+    return dataframe_literal_remap(
+        dataframe=data_df,
+        mapping=mapping_step["mapping"]
+    )
+
+
+def _apply_map_by_mdx(data_df: DataFrame, mapping_step: Dict[str, Any], mapping_data: Dict[str, Any]) -> DataFrame:
+    """
+    Handle the 'map_by_mdx' mapping step.
+
+    Parameters
+    ----------
+    data_df : DataFrame
+        The main DataFrame that will be remapped using the MDX approach.
+    mapping_step : Dict[str, Any]
+        The dictionary specifying how to map, which may contain 'mapping_filter',
+        'mapping_mdx', 'mapping_dims', etc.
+    mapping_data : Dict[str, Any]
+        The overall mapping data dictionary. Used to fetch a shared DataFrame if
+        a step-specific one is not provided.
+
+    Returns
+    -------
+    DataFrame
+        The modified DataFrame after applying the MDX-based remap.
+    """
+    step_uses_independent_mapping = (
+        "mapping_df" in mapping_step and mapping_step["mapping_df"] is not None
+    )
+
+    mapping_df = (
+        mapping_step["mapping_df"]
+        if step_uses_independent_mapping
+        else mapping_data["shared_mapping_df"]
+    )
+
+    if "mapping_filter" in mapping_step:
+        mapping_df = dataframe_filter(
+            dataframe=mapping_df,
+            filter_condition=mapping_step["mapping_filter"],
+            inplace=step_uses_independent_mapping
+        )
+
+    data_df = dataframe_cube_remap(
+        data_df=data_df,
+        mapping_df=mapping_df,
+        mapped_dimensions=mapping_step["mapping_dims"]
+    )
+
+    if mapping_step.get("relabel_dimensions"):
+        data_df = dataframe_relabel(
+            dataframe=data_df,
+            columns=mapping_step["mapping_dims"]
+        )
+
+    return data_df
+
+
 def dataframe_execute_mappings(
     data_df: DataFrame,
     mapping_data: Dict[str, Optional[DataFrame] | List[Dict[str, Any]]]
 ) -> DataFrame:
     """
+    Execute a series of mapping steps on data_df based on the instructions in
+    mapping_data. Uses mutation for memory efficiency.
+    Mapping filters mutate the step specific mapping dataframes, but don't mutate the shared one.
 
-    example of the mapping steps list of dictionaries:
+    Parameters
+    ----------
+    data_df : DataFrame
+        The main DataFrame to be transformed.
+    mapping_data : Dict[str, Optional[DataFrame] | List[Dict[str, Any]]]
+        A dictionary containing:
+          - "mapping_steps": a list of dicts specifying each mapping step.
+          - "shared_mapping_df": a shared DataFrame that may be used by multiple steps.
 
-    [
-        {
-            "method":"replace",
-            "mapping":{
-                dim1:{source:target},
-                dim2:{source3:target3, source4:target4}
+    Returns
+    -------
+    DataFrame
+        The transformed DataFrame after all mapping steps have been applied.
+
+    Example of the 'mapping_steps' inside mapping_data::
+    -------
+        [
+            {
+                "method": "replace",
+                "mapping": {
+                    "dim1": {"source": "target"},
+                    "dim2": {"source3": "target3", "source4": "target4"}
+                }
+            },
+            {
+                "method": "map_by_mdx",
+                "mapping_mdx": "////valid mdx////",
+                "mapping_filter": {
+                    "dim": "element",
+                    "dim2": "element2"
+                },
+                "mapping_dims": {
+                    "Organization Units": "Value"
+                },
+                "relabel_dimensions": false
             }
-        },
-        {
-            "method":"map_by_mdx",
-            "mapping_mdx":"////valid mdx////",
-            "mapping_filter":{
-                dim:element,
-                dim2:element2,
-            },
-            "mapping_dims":{
-                "Organization Units":"Value"
-            },
-            "relabel_dimensions":false
-        }
-    ]
+        ]
     """
+    # Dispatch dictionary: map the 'method' to the function that handles it.
+    method_handlers = {
+        "replace": _apply_replace,
+        "map_by_mdx": _apply_map_by_mdx,
+    }
 
     for mapping_step in mapping_data["mapping_steps"]:
         method = mapping_step["method"]
-        if method is "replace":
-            data_df = dataframe_literal_remap(
-                dataframe=data_df, mapping=mapping_step["mapping"]
-            )
-        elif method is "map_by_mdx":
-            step_uses_independent_mapping = "mapping_df" in mapping_step and mapping_step["mapping_df"] is not None
-
-            mapping_df = (
-                mapping_step["mapping_df"] if step_uses_independent_mapping
-                else mapping_data["shared_mapping_df"]
-            )
-
-            if "mapping_filter" in mapping_step:
-                mapping_df = dataframe_filter(
-                    dataframe=mapping_df,
-                    filter_condition=mapping_step["mapping_filter"],
-                    inplace=step_uses_independent_mapping
-                )
-            data_df = dataframe_cube_remap(
-                data_df=data_df, mapping_df=mapping_df, mapped_dimensions=mapping_step["mapping_dims"]
-            )
-
-            if mapping_step["relabel dimensions"]:
-                data_df = dataframe_relabel(dataframe=data_df, columns=mapping_step["mapping_dims"])
+        # Dynamically call the right function for each method
+        if method in method_handlers:
+            data_df = method_handlers[method](data_df, mapping_step, mapping_data)
+        else:
+            raise ValueError(f"Unsupported mapping method: {method}")
 
     return data_df
