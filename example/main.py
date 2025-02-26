@@ -1,4 +1,4 @@
-import tm1_bedrock
+from TM1_bedrock_py import tm1_bedrock
 from TM1py import TM1Service
 from pprint import pprint
 

@@ -1,4 +1,5 @@
 import configparser
+from pathlib import Path
 
 from TM1py.Exceptions import TM1pyRestException
 from pandas.core.frame import DataFrame
@@ -7,8 +8,7 @@ import pytest
 import parametrize_from_file
 from TM1py import TM1Service
 
-from tm1_bedrock_py import tm1_bedrock
-#import tm1_bedrock
+from TM1_bedrock_py import tm1_bedrock
 
 
 EXCEPTION_MAP = {
@@ -24,7 +24,7 @@ EXCEPTION_MAP = {
 def tm1_connection():
     """Creates a TM1 connection before tests and closes it after all tests."""
     config = configparser.ConfigParser()
-    config.read(r'../config.ini')
+    config.read(Path(__file__).parent.joinpath('config.ini'))
 
     tm1 = TM1Service(**config['tm1srv'])
     yield tm1

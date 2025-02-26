@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tm1_bedrock_py"
+version = "0.1.0"
+authors = [
+  { name="Example Author", email="author@example.com" },
+]
+description = "A python modul for TM1 Bedrock."
+readme = "README.md"
+requires-python = ">=3.7"
+keywords=["TM1", "IBM Cognos TM1", "Planning Analytics", "PA", "Cognos"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "TM1py",
+    "mdxpy",
+    "pandas"
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "parametrize_from_file"]
+
+[tool.setuptools]
+packages = ["tm1_bedrock_py"]

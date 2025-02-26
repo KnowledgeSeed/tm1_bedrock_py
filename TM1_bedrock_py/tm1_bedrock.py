@@ -366,7 +366,7 @@ def validate_dataframe_rows(
         boolean: True if the DataFrame does not contain duplicate or NaN values.
                  False if it does contain either.
     """
-    return validate_dataframe_not_NaN(dataframe) and validate_dataframe_no_duplicates(dataframe)
+    return validate_dataframe_not_NaN(dataframe=dataframe) and validate_dataframe_no_duplicates(dataframe=dataframe)
 
 
 def validate_dataframe(
@@ -388,7 +388,13 @@ def validate_dataframe(
         boolean: True if all conditions are met.
                  False if any of the called functions returned False.
     """
-    return validate_dataframe_rows(dataframe) and validate_dataframe_columns(dataframe=dataframe, cube_name=cube_name, metadata_function=metadata_function, **kwargs)
+    return (validate_dataframe_rows(dataframe=dataframe) and
+            validate_dataframe_columns(
+                dataframe=dataframe,
+                cube_name=cube_name,
+                metadata_function=metadata_function,
+                **kwargs
+            ))
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -752,6 +758,7 @@ def dataframe_drop_zero_and_values(
     Return:
         DataFrame: The updated DataFrame without the zero values.
     """
+
     dataframe.drop(dataframe[dataframe["Value"] == 0].index, inplace=True)
     dataframe.drop(columns=["Value"], inplace=True)
     return dataframe
@@ -930,82 +937,3 @@ def dataframe_cube_remap(
     mapped_df = joined_df[data_df.columns]
 
     return mapped_df
-
-
-"""
-def transform_dataframe_to_target_dataframe(
-    tm1_service,
-    data_df,
-    target_cube,
-    source_dimension_mapping_for_copy,
-    target_dimension_mapping_for_copy,
-    dimension_mapping_for_copy
-):
-    """"""
-    Transforms the input DataFrame to match the dimensionality of the target cube.
-
-    Args:
-        tm1_service (TM1Service): Active TM1py service instance.
-        data_df (DataFrame): DataFrame containing source cube's data.
-        target_cube (str): Name of the target cube.
-        source_dimension_mapping_for_copy (dict, optional): Mapping for extra source dimensions.
-        target_dimension_mapping_for_copy (dict, optional): Mapping for extra target dimensions.
-        dimension_mapping_for_copy (dict, optional): Mapping for dimensions unique to source and target cubes.
-
-    Returns:
-        DataFrame: Transformed DataFrame in the dimensionality of the target cube.
-
-    Raises:
-        ValueError: If required mappings or defaults are missing or invalid.
-    """"""
-
-    source_dimensions = list(data_df.columns)
-    target_dimensions = tm1_service.cubes.get_dimension_names(target_cube)
-
-    # Handle cases where dimensions are unequal
-    # Case 1: Dimensions are equal
-    if set(source_dimensions) == set(target_dimensions):
-        return data_df
-
-    # Case 2: Source cube has extra dimensions
-    for dim in set(source_dimensions) - set(target_dimensions):
-        if source_dimension_mapping_for_copy and dim in source_dimension_mapping_for_copy:
-            data_df = data_df[data_df[dim] == source_dimension_mapping_for_copy[dim]]
-            data_df = data_df.drop(columns=[dim])
-        else:
-            # default_element = get_hierarchy_default_element(tm1_service, dim, dim)
-            default_element = ""
-            if not default_element:
-                raise ValueError(f"No mapping or default element for source dimension '{dim}'.")
-            data_df = data_df[data_df[dim] == default_element]
-            data_df = data_df.drop(columns=[dim])
-
-    # Case 3: Target cube has extra dimensions
-    for dim in set(target_dimensions) - set(source_dimensions):
-        if target_dimension_mapping_for_copy and dim in target_dimension_mapping_for_copy:
-            data_df[dim] = target_dimension_mapping_for_copy[dim]
-        else:
-            # default_element = get_hierarchy_default_element(tm1_service, dim, dim)
-            # element_writable = element_is_writable(tm1_service, dim, dim, default_element)
-            default_element = ""
-            element_writable = False
-            if not default_element or not element_writable:
-                raise ValueError(f"No mapping, writable element, or default element for target dimension '{dim}'.")
-            data_df[dim] = default_element
-
-    # Case 4: Handle dimension mapping using dimension_mapping_for_copy
-    if dimension_mapping_for_copy:
-        for src_dim, tgt_dim in dimension_mapping_for_copy.items():
-            if src_dim in data_df.columns and tgt_dim in target_dimensions:
-                data_df[tgt_dim] = data_df[src_dim]
-                data_df.drop(columns=[src_dim], inplace=True)
-
-    # Ensure DataFrame has all target dimensions in the correct order
-    missing_dims = set(target_dimensions) - set(data_df.columns)
-    if missing_dims:
-        raise ValueError(f"The transformed DataFrame is missing target dimensions: {missing_dims}")
-
-    # Reorder DataFrame to match target cube dimensions
-    data_df = data_df[target_dimensions + list(set(data_df.columns) - set(target_dimensions))]
-    return data_df
-"""
