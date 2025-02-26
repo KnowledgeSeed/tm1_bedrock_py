@@ -108,13 +108,25 @@ class Metadata:
     A recursive metadata structure that behaves like a nested dictionary. Provides methods for
     accessing, setting, iterating over keys, and converting the metadata to dictionary or list formats.
 
+    The purpose of this class is to collect all necessary utility data for a single mdx query and/or it's cube
+    for robust dataframe transformations, such as mdx filter dimensions and their elements, cube attributes,
+    dimensions in cube, hierarchies of dimensions, default members of hierarchies, etc.
+
+    This can be generated for each procedure, or generated once and then passed as value.
+
     - `__getitem__`: Returns the value for the given key, creating a new nested `Metadata` if the key does not exist.
     - `__setitem__`: Sets the value for a specified key.
     - `__iter__`: Returns an iterator over the keys.
     - `__repr__` / `__str__`: Provides a string representation of the metadata keys.
     - `to_dict`: Recursively converts the metadata to a dictionary.
     - `to_list`: Returns a list of the top-level keys in the metadata.
+    - `get_cube_name`: Returns the cube name.
+    - `get_cube_dims`: Returns the dimensions of the cube.
+    - `get_filter_dims`: Returns the filter dimensions of the mdx query (that were in the WHERE clause)
+    - `get_filter_elem`: Returns the exact element of a filter dimension in the mdx query (that was in the WHERE clause)
+
     """
+
     def __init__(self) -> None:
         self._data: Dict[str, Union['Metadata', Any]] = {}
 
@@ -166,7 +178,7 @@ def collect_metadata(
     ] = None
 ) -> Metadata:
     """
-    Collects metadata about a cube based on either an MDX query or a cube name.
+    Collects important data about an mdx query and/or it's cube based on either an MDX query or a cube name.
 
     Args:
         tm1_service (Any): The TM1 service object used to interact with the cube.
@@ -181,6 +193,7 @@ def collect_metadata(
     Raises:
         ValueError: If neither an MDX query nor a cube name is provided.
     """
+
     metadata = Metadata()
 
     if mdx:
@@ -268,7 +281,7 @@ def retrieve_dimension_data_default(
 
 def collect_query_metadata(mdx: str, metadata: Metadata) -> Metadata:
     """
-    Extracts query-specific metadata from an MDX query.
+    Extracts the filter dimensions and their elements in the mdx query (parts of the WHERE clause)
 
     Args:
         mdx (str): The MDX query string.
@@ -277,6 +290,7 @@ def collect_query_metadata(mdx: str, metadata: Metadata) -> Metadata:
     Returns:
         Metadata: The updated metadata object.
     """
+
     metadata["query value"] = mdx
     where_clause = parse_where_clause(mdx)
 
@@ -299,7 +313,8 @@ def validate_dataframe_columns(
     **kwargs: Any
 ) -> bool:
     """
-    Collects the column labels from th DataFrame and compares them with the column labels collected from the Metadata based on a cube_name or metadata_function.
+    Collects the column labels from the DataFrame and compares them with the column labels collected from the Metadata
+    based on a cube_name or metadata_function.
     Compares them as lists to check for matching label names and order.
 
     Args:
@@ -309,8 +324,8 @@ def validate_dataframe_columns(
                                                  If None, a default function is used.
         **kwargs: (Any): Additional keyword arguments passed to the function.
     Returns:
-        boolean: True if the column label names and their order in the input DataFrame match the column labels of the Metadata.
-                 False if the column labels or their order does not match.
+        boolean: True if the column label names and their order in the input DataFrame match the column labels
+                 of the Metadata. False if the column labels or their order does not match.
     """
 
     if metadata_function is None:
@@ -324,11 +339,11 @@ def validate_dataframe_columns(
     return dimensions_from_metadata == dimensions_from_dataframe
 
 
-def validate_dataframe_not_NaN(
+def validate_dataframe_values(
     dataframe: DataFrame
 ) -> bool:
     """
-    Checks if the DataFrame rows contain NaN values for validating the DataFrame.
+    Checks if the DataFrame rows contain NaN values in the "Value" column
 
     Args:
         dataframe: (DataFrame): The DataFrame to check for NaN values.
@@ -336,7 +351,8 @@ def validate_dataframe_not_NaN(
          boolean: True if the DataFrame does not contain NaN values.
                   False if it does.
     """
-    return not dataframe.isna().values.any()
+
+    return not dataframe["Value"].isna().values.any()
 
 
 def validate_dataframe_no_duplicates(
@@ -366,7 +382,7 @@ def validate_dataframe_rows(
         boolean: True if the DataFrame does not contain duplicate or NaN values.
                  False if it does contain either.
     """
-    return validate_dataframe_not_NaN(dataframe=dataframe) and validate_dataframe_no_duplicates(dataframe=dataframe)
+    return validate_dataframe_values(dataframe=dataframe) and validate_dataframe_no_duplicates(dataframe=dataframe)
 
 
 def validate_dataframe(
@@ -376,7 +392,8 @@ def validate_dataframe(
     **kwargs: Any
 ) -> bool:
     """
-    Calls the validate_dataframe_rows() and validate_dataframe_columns() functions and returns only returns True if both conditions are met.
+    Calls the validate_dataframe_rows() and validate_dataframe_columns() functions and returns only returns True if both
+    conditions are met.
 
     Args:
         dataframe: (DataFrame): The DataFrame to validate.
@@ -457,7 +474,9 @@ def normalize_dataframe(
     **kwargs: Any
 ) -> DataFrame:
     """
-    Default implementation to normalize a DataFrame using metadata.
+    Returns a normalized dataframe using the raw output dataframe of the execute mdx function, and necessary cube
+    and query based metadata. Makes sure that all cube dimensions are present in the dataframe and that they are in
+    the right order.
 
     Args:
         dataframe (DataFrame): The DataFrame to normalize.
@@ -468,6 +487,7 @@ def normalize_dataframe(
     Returns:
         DataFrame: The normalized DataFrame.
     """
+
     if metadata_function is None:
         metadata_function = collect_metadata
 
@@ -496,13 +516,12 @@ def mdx_to_normalized_dataframe(
     **kwargs: Any
 ) -> DataFrame:
     """
-    Retrieves and normalizes a DataFrame from an MDX query function.
+    Retrieves and normalizes a DataFrame from an MDX query function. The output dataframe will be in the format of the
+    cube, ready for writing.
 
     Args:
         mdx_function (Optional[Callable]): A function to retrieve a DataFrame from an MDX query.
                                            If None, a default function is used.
-        normalize_function (Optional[Callable]): A function to normalize the retrieved DataFrame.
-                                                 If None, a default function is used.
         metadata_function (Optional[Callable]): A function to collect metadata for normalization.
                                                 If None, a default function is used.
         **kwargs (Any): Additional keyword arguments for the MDX and normalization functions.
@@ -510,6 +529,7 @@ def mdx_to_normalized_dataframe(
     Returns:
         DataFrame: The normalized DataFrame.
     """
+
     dataframe = mdx_to_dataframe(mdx_function, **kwargs)
     dataframe = normalize_dataframe(dataframe, metadata_function, **kwargs)
     return dataframe
@@ -517,10 +537,20 @@ def mdx_to_normalized_dataframe(
 
 def mdx_object_builder(
         cube_name: str,
-        dimension: dict,
+        cube_filter: dict,
         metadata_function: Optional[Callable[..., Any]] = None,
         **kwargs: Any
 ) -> str:
+    """
+    Returns a valid MDX from a cube and dictionary filters. All dimensions not specified in the filter dictionary
+    will get all leaves elements put in the query.
+
+    Args:
+
+
+    Returns:
+        DataFrame: The normalized DataFrame.
+    """
 
     if metadata_function is None:
         metadata_function = collect_metadata
@@ -529,13 +559,13 @@ def mdx_object_builder(
     dataframe_dimensions = metadata.get_cube_dims()
 
     mdx_object = MdxBuilder.from_cube(cube_name)
-    dim_keys = [key for key in dimension]
+    dim_keys = [key for key in cube_filter]
 
     for dim in dataframe_dimensions:
         if dim not in dim_keys:
             mdx_object.add_hierarchy_set_to_axis(1, MdxHierarchySet.all_leaves(dim))
         else:
-            member_keys = [key for key in dimension[dim].keys()]
+            member_keys = [key for key in cube_filter[dim].keys()]
             value = member_keys[0]
             mdx_object.add_hierarchy_set_to_axis(0, MdxHierarchySet.member(Member.of(dim, value)))
 
@@ -669,7 +699,8 @@ def dataframe_filter(
         filter_condition: dict
 ) -> DataFrame:
     """
-    Filters DataFrame based on filter_condition. Only filters the DataFrame if at least one condition is met. If not, it returns an empty DataFrame.
+    Filters DataFrame based on filter_condition. Only filters the DataFrame if at least one condition is met.
+    If not, it returns an empty DataFrame.
 
     Args:
          dataframe: (DataFrame): The DataFrame to filter.
@@ -682,7 +713,9 @@ def dataframe_filter(
     if not valid_columns:
         return dataframe.iloc[0:0]
 
-    condition = (dataframe[valid_columns] == pd.Series({col: filter_condition[col] for col in valid_columns})).all(axis=1)
+    condition = (
+            dataframe[valid_columns] == pd.Series({col: filter_condition[col] for col in valid_columns})
+    ).all(axis=1)
     return dataframe.loc[condition]
 
 
@@ -769,10 +802,13 @@ def dataframe_relabel(
         columns: dict
 ) -> None:
     """
-    Relabels DataFrame column(s) if the original label is found in the DataFrame. If an original label is not found, then it is ignored.
+    Relabels DataFrame column(s) if the original label is found in the DataFrame.
+    If an original label is not found, then it is ignored.
+
     Args:
         dataframe: (DataFrame): The DataFrame to relabel.
-        columns: (dict): The original and the new column labels as key-value pairs. The key stands for the original column label, the value for the new label.
+        columns: (dict): The original and the new column labels as key-value pairs.
+                         The key stands for the original column label, the value for the new label.
     Return: None
     """
     dataframe.rename(columns=columns, inplace=True)
