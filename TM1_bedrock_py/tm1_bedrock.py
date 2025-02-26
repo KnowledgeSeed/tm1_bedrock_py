@@ -414,6 +414,61 @@ def validate_dataframe(
             ))
 
 
+def validate_dataframe_transform_input(
+        source_dataframe: DataFrame,
+        target_cube_name: str,
+        source_dim_mapping: dict,
+        related_dimensions: dict,
+        target_dim_mapping: dict,
+        **kwargs
+) -> bool:
+
+    source_dimensions = source_dataframe.columns()
+    target_dimensions = collect_metadata(cube_name=target_cube_name, **kwargs).get_cube_dims()
+
+    if source_dimensions == target_dimensions:
+        return True
+    else:
+        return (
+            validate_source_dim_mapping(
+                source_dimensions=source_dimensions,
+                source_dim_mapping=source_dim_mapping,
+                related_dimensions=related_dimensions
+            ) and
+            validate_target_dim_mapping(
+                target_dimensions=target_dimensions,
+                target_dim_mapping=target_dim_mapping,
+                related_dimensions=related_dimensions
+            )
+        )
+
+
+def validate_source_dim_mapping(
+        source_dimensions: list,
+        source_dim_mapping: dict,
+        related_dimensions: dict
+) -> bool:
+    related_dim_list = list(map(str, related_dimensions.keys()))
+    if related_dim_list in source_dimensions:
+        return True
+    else:
+        source_dim_list = list(map(str, source_dim_mapping.keys()))
+        return source_dimensions == source_dim_list
+
+
+def validate_target_dim_mapping(
+        target_dimensions: list,
+        target_dim_mapping: dict,
+        related_dimensions: dict
+) -> bool:
+    related_dim_list = list(map(str, related_dimensions.values()))
+    if related_dim_list in target_dimensions:
+        return True
+    else:
+        source_dim_list = list(map(str, target_dim_mapping.keys()))
+        return target_dimensions == source_dim_list
+
+
 # ------------------------------------------------------------------------------------------------------------
 # Main: MDX query to normalized pandas dataframe functions
 # ------------------------------------------------------------------------------------------------------------
@@ -830,6 +885,20 @@ def dataframe_value_scale(
         DataFrame: The modified DataFrame (in place).
     """
     dataframe["Value"] = dataframe["Value"].apply(value_function)
+    return dataframe
+
+
+def dataframe_redimension_and_transform(
+        dataframe: DataFrame,
+        source_dim_mapping: dict,
+        related_dimensions: dict,
+        target_dim_mapping: dict
+) -> DataFrame:
+
+    dataframe = dataframe_redimension_scale_down(dataframe=dataframe, filter_condition=source_dim_mapping)
+    dataframe = dataframe_relabel(dataframe=dataframe, columns=related_dimensions)
+    dataframe = dataframe_add_column_assign_value(dataframe=dataframe, column_value=target_dim_mapping)
+
     return dataframe
 
 
