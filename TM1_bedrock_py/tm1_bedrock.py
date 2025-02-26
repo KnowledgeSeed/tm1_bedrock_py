@@ -178,7 +178,7 @@ def collect_metadata(
     ] = None
 ) -> Metadata:
     """
-    Collects important data about an mdx query and/or it's cube based on either an MDX query or a cube name.
+    Collects important data about the mdx query and/or it's cube based on either an MDX query or a cube name.
 
     Args:
         tm1_service (Any): The TM1 service object used to interact with the cube.
@@ -859,55 +859,11 @@ def dataframe_literal_remap(
     return dataframe
 
 
-def dataframe_settings_remap(
-    main_dataframe: DataFrame,
-    mapping_dataframe: DataFrame,
-    target_mapping: Dict[str, Dict[str, Any]]
-) -> DataFrame:
-    """
-    Remaps dimensions in the main DataFrame using values from the mapping DataFrame.
-
-    Args:
-        main_dataframe (DataFrame): The primary DataFrame with data to be remapped.
-        mapping_dataframe (DataFrame): The DataFrame containing mapping values and keys.
-        target_mapping (Dict[str, Dict[str, Any]]): A dictionary defining how to map dimensions.
-            Format - {'Target Dimension': {'Mapping Dimension': 'Mapping Value'}}.
-
-    Returns:
-        DataFrame: The remapped DataFrame.
-
-    Raises:
-        ValueError: If any shared dimensions are missing in the main DataFrame.
-    """
-    shared_dimensions = list(set(main_dataframe.columns) & set(mapping_dataframe.columns))
-
-    filtered_mapping = mapping_dataframe.copy()
-    for target_dimension, mapping_info in target_mapping.items():
-        for mapping_dimension, mapping_value in mapping_info.items():
-            filtered_mapping = filtered_mapping[filtered_mapping[mapping_dimension] == mapping_value]
-
-    missing_dims = [dim for dim in shared_dimensions if dim not in main_dataframe.columns]
-    if missing_dims:
-        raise ValueError(f"The following shared dimensions are missing in the main DataFrame: {missing_dims}")
-
-    merged_df = main_dataframe.merge(filtered_mapping, on=shared_dimensions, how="left")
-
-    for target_dimension, mapping_info in target_mapping.items():
-        for mapping_dimension, _ in mapping_info.items():
-            merged_df[target_dimension] = merged_df[mapping_dimension]
-
-    merged_df = merged_df.drop(
-        columns=[info for mapping in target_mapping.values() for info in mapping],
-        errors="ignore"
-    )
-
-    return merged_df
-
-
 def dataframe_cube_remap(
     data_df: DataFrame,
     mapping_df: DataFrame,
-    mapped_dimensions: dict
+    mapped_dimensions: dict,
+    relabel_dimension: bool = False
 ) -> DataFrame:
     """
     Map specified dimension columns in 'data_df' using a 'mapping_df'.
@@ -932,6 +888,9 @@ def dataframe_cube_remap(
         A dictionary that specifies which columns in 'data_df' should be replaced
         by which columns in 'mapping_df'. For example, {"orgunit": "orgunit_mapped"}.
         The key is the column name in data_df, the value is the column name in mapping_df.
+    relabel_dimension : bool
+        A boolean value that specifies if the column of the dataframe should be renamed to the one
+        specified in the mapping dataframe
 
     Returns
     -------
@@ -973,4 +932,7 @@ def dataframe_cube_remap(
     # 5) Retain only the original columns from data_df
     mapped_df = joined_df[data_df.columns]
 
-    return dataframe_relabel(dataframe=mapped_df, columns=mapped_dimensions)
+    if relabel_dimension:
+        mapped_df = dataframe_relabel(dataframe=mapped_df, columns=mapped_dimensions)
+
+    return mapped_df
