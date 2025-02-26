@@ -746,32 +746,40 @@ def dataframe_to_cube_with_clear(
 # Main: dataframe transform utility functions
 # ------------------------------------------------------------------------------------------------------------
 
-# basic filter for 1 dimension-element
-# basic addition for 1 dimension-element
-# filter for nonzero then drop value column
+
 def dataframe_filter(
-        dataframe: DataFrame,
-        filter_condition: dict
-) -> DataFrame:
+    dataframe: pd.DataFrame,
+    filter_condition: Dict[str, Any],
+    inplace: bool = False
+) -> pd.DataFrame:
     """
-    Filters DataFrame based on filter_condition. Only filters the DataFrame if at least one condition is met.
-    If not, it returns an empty DataFrame.
+    Filters a DataFrame based on a given filter_condition.
+
+    - If at least one valid condition is met, it filters the DataFrame.
+    - If no valid condition is met, it returns an empty DataFrame.
+    - If 'inplace' is True, the function modifies the original DataFrame and returns it.
+    - If 'inplace' is False (default), it returns a new filtered DataFrame.
 
     Args:
-         dataframe: (DataFrame): The DataFrame to filter.
-         filter_condition: (dict) Dimension:element key,value pairs for filtering the DataFrame.
+        dataframe (pd.DataFrame): The DataFrame to filter.
+        filter_condition (Dict[str, Any]): Dictionary with column names as keys and values to filter for.
+        inplace (bool, optional): If True, modifies the original DataFrame in-place. Defaults to False.
+
     Returns:
-        DataFrame: The updated DataFrame.
+        pd.DataFrame: The filtered DataFrame (either new or modified in-place).
     """
-    valid_columns = [col for col in filter_condition if col in dataframe.columns]
+    valid_columns = list(filter(lambda col: col in dataframe.columns, filter_condition.keys()))
 
+    # in case of inplace=True, don't return empty data
     if not valid_columns:
-        return dataframe.iloc[0:0]
+        return dataframe if inplace else dataframe.iloc[0:0]
 
-    condition = (
-            dataframe[valid_columns] == pd.Series({col: filter_condition[col] for col in valid_columns})
+    # build condition boolean string for row dropping
+    condition = dataframe[valid_columns].eq(
+        pd.Series({col: filter_condition[col] for col in valid_columns})
     ).all(axis=1)
-    return dataframe.loc[condition]
+
+    return dataframe.drop(index=dataframe.index[~condition]) if inplace else dataframe.loc[condition]
 
 
 def dataframe_drop_column(
@@ -922,29 +930,18 @@ def dataframe_literal_remap(
     Returns:
         DataFrame: The updated DataFrame with elements remapped.
     """
-    for dimension, element_mapping in mapping.items():
-        if dimension in dataframe.columns:
-            dataframe[dimension].replace(element_mapping, inplace=True)
+    dataframe.replace({col: mapping[col] for col in mapping.keys() if col in dataframe.columns}, inplace=True)
     return dataframe
 
 
 def dataframe_cube_remap(
-    data_df: DataFrame,
-    mapping_df: DataFrame,
-    mapped_dimensions: dict,
-    relabel_dimension: bool = False
-) -> DataFrame:
+    data_df: pd.DataFrame,
+    mapping_df: pd.DataFrame,
+    mapped_dimensions: Dict[str, str]
+) -> pd.DataFrame:
     """
-    Map specified dimension columns in 'data_df' using a 'mapping_df'.
-
-    Steps:
-        1) Identify shared dimensions (intersection of columns).
-        2) Exclude from shared dimensions any column which appears in 'mapped_dimensions' keys,
-           because we want to replace these columns, not join on them.
-        3) Perform a left join on the remaining shared dimensions.
-        4) For each (key, value) in 'mapped_dimensions', overwrite 'key' column
-           in the joined dataframe with the data from the 'value' column in mapping_df.
-        5) Return only the columns that were originally in 'data_df'.
+    Map specified dimension columns in 'data_df' using 'mapping_df',
+    optimized for memory efficiency by modifying dataframes in-place.
 
     Parameters
     ----------
@@ -955,53 +952,175 @@ def dataframe_cube_remap(
         The dataframe containing the mapped values for certain columns.
     mapped_dimensions : dict
         A dictionary that specifies which columns in 'data_df' should be replaced
-        by which columns in 'mapping_df'. For example, {"orgunit": "orgunit_mapped"}.
-        The key is the column name in data_df, the value is the column name in mapping_df.
-    relabel_dimension : bool
-        A boolean value that specifies if the column of the dataframe should be renamed to the one
-        specified in the mapping dataframe
+        by which columns in 'mapping_df'.
 
     Returns
     -------
     pd.DataFrame
-        A new dataframe with the same columns (and order) as 'data_df', but
-        with specified dimensions mapped from 'mapping_df'.
+        A dataframe with the same columns (and order) as 'data_df',
+        but with specified dimensions mapped from 'mapping_df'.
     """
 
-    # 1) Find columns in both data_df and mapping_df
-    shared_dimensions = list(set(data_df.columns).intersection(set(mapping_df.columns)))
+    # 1) Compute shared dimensions, excluding those being remapped
+    shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - set(mapped_dimensions.keys()))
 
-    # 2) Exclude columns that appear in the mapped_dimensions keys
-    for dim in mapped_dimensions.keys():
-        if dim in shared_dimensions:
-            shared_dimensions.remove(dim)
+    # 2) Perform an in-place left join on shared dimensions
+    data_df = data_df.merge(mapping_df, how='left', on=shared_dimensions, suffixes=('', '_mapped'))
 
-    # 3) Perform a left join on these remaining shared columns
-    #    We use suffixes=('', '_mapped') to avoid collisions
-    joined_df = data_df.merge(
-        mapping_df,
-        how='left',
-        on=shared_dimensions,
-        suffixes=('', '_mapped')
+    # 3) Overwrite columns in data_df with their mapped versions, avoiding extra copies
+    for data_col, map_col in mapped_dimensions.items():
+        mapped_col_name = f"{map_col}_mapped" if map_col == data_col else map_col
+        data_df[data_col] = data_df[mapped_col_name]
+        del data_df[mapped_col_name]
+
+    # 4) Retain only the original columns from data_df
+    return data_df[data_df.columns.intersection(set(mapping_df.columns))]
+
+
+def assign_mapping_dataframes(
+    mapping_steps: List[Dict],
+    shared_mapping_df: Optional[pd.DataFrame] = None,
+    shared_mapping_mdx: Optional[str] = None,
+    mdx_function: Optional[Callable[..., pd.DataFrame]] = None,
+    tm1_service: Optional[Any] = None,
+    **kwargs
+) -> Dict[str, Optional[pd.DataFrame] | List[Dict[str, Any]]]:
+    """
+    Assigns mapping DataFrames to mapping steps by either:
+    - Using an existing 'mapping_df' in the step (if provided).
+    - Generating a DataFrame from 'mapping_mdx' (if provided).
+    - Falling back to 'shared_mapping_df' if neither is provided.
+
+    Ensures that 'map_by_mdx' steps have at least one valid mapping source
+    (either a step-specific 'mapping_df' or 'mapping_mdx', or a shared_mapping_df).
+
+    Parameters:
+    ----------
+    mapping_steps : List[Dict]
+        A list of mapping step dictionaries, each containing at least a 'method' key.
+        - If 'method' is "map_by_mdx", it must include either 'mapping_df' or 'mapping_mdx',
+          or else the shared_mapping_df must be provided.
+        - If 'method' is "replace", no additional checks are applied.
+
+    shared_mapping_df : Optional[pd.DataFrame], default=None
+        A shared DataFrame to be used if no 'mapping_df' or 'mapping_mdx' is provided.
+
+    shared_mapping_mdx : Optional[str], default=None
+        A shared MDX query string that will be converted into a DataFrame if no
+        'mapping_df' or 'mapping_mdx' is provided.
+
+    mdx_function : Optional[Callable[..., pd.DataFrame]], default=None
+        A function that takes an MDX query and returns a Pandas DataFrame.
+        Used to convert 'mapping_mdx' queries into DataFrames.
+
+    tm1_service : Optional[Any], default=None
+        An optional service object used by 'mdx_function' if required.
+
+    **kwargs : dict
+        Additional keyword arguments that will be passed to 'mdx_function'.
+
+    Returns:
+    -------
+    Dict[str, Any]
+        A dictionary containing:
+        - 'shared_mapping_df': The resolved shared mapping DataFrame.
+        - 'mapping_data': The updated list of mapping steps, where each 'map_by_mdx' step
+          has an assigned 'mapping_df' if necessary.
+
+    Raises:
+    ------
+    ValueError
+        If any 'map_by_mdx' step lacks both 'mapping_df' and 'mapping_mdx',
+        AND 'shared_mapping_df' is also missing or empty.
+    """
+
+    def create_dataframe(mdx: str) -> pd.DataFrame:
+        """Helper function to convert MDX to a normalized DataFrame."""
+        return mdx_to_normalized_dataframe(
+            mdx_function=mdx_function, tm1_service=tm1_service, data_mdx=mdx, **kwargs
+        )
+
+    shared_mapping_df = shared_mapping_df or (
+        create_dataframe(shared_mapping_mdx) if shared_mapping_mdx else None
     )
 
-    # 4) Overwrite columns in data_df with the mapped columns
-    for data_col, map_col in mapped_dimensions.items():
-        # If the mapped column name is the same, it will appear in joined as 'map_col_mapped'
-        # if it was not used in the join. Otherwise, if the name is different, it should appear
-        # exactly as 'map_col'. Use whichever logic fits your data best.
-        #
-        # Below we handle the case if the mapped column is the same name as the key:
-        map_col_in_joined = map_col
-        if map_col == data_col:
-            map_col_in_joined = f"{map_col}_mapped"
+    mapping_steps = [
+        {
+            **step,
+            "mapping_df": step.get("mapping_df")
+            or (create_dataframe(step["mapping_mdx"]) if "mapping_mdx" in step else None)
+        }
+        for step in mapping_steps
+    ]
 
-        joined_df[data_col] = joined_df[map_col_in_joined]
+    missing_mdx_steps = [
+        step for step in mapping_steps
+        if step["method"] == "map_by_mdx" and not step.get("mapping_df")
+    ]
 
-    # 5) Retain only the original columns from data_df
-    mapped_df = joined_df[data_df.columns]
+    if missing_mdx_steps and (shared_mapping_df is None or shared_mapping_df.empty):
+        raise ValueError(
+            f"Missing mapping source for 'map_by_mdx' steps: {missing_mdx_steps}. "
+            "Either provide 'mapping_mdx' or 'mapping_df' in these steps, or a valid 'shared_mapping_df'."
+        )
 
-    if relabel_dimension:
-        mapped_df = dataframe_relabel(dataframe=mapped_df, columns=mapped_dimensions)
+    return {"shared_mapping_df": shared_mapping_df, "mapping_data": mapping_steps}
 
-    return mapped_df
+
+def dataframe_execute_mappings(
+    data_df: DataFrame,
+    mapping_data: Dict[str, Optional[pd.DataFrame] | List[Dict[str, Any]]]
+):
+    """
+
+    example of the mapping steps list of dictionaries:
+
+    [
+        {
+            "method":"replace",
+            "mapping":{
+                dim1:{source:target},
+                dim2:{source3:target3, source4:target4}
+            }
+        },
+        {
+            "method":"map_by_mdx",
+            "mapping_mdx":"////valid mdx////",
+            "mapping_filter":{
+                dim:element,
+                dim2:element2,
+            },
+            "mapping_dims":{
+                "Organization Units":"Value"
+            },
+            "relabel_dimensions":false
+        }
+    ]
+    """
+
+    for mapping_step in mapping_data["mapping_steps"]:
+        method = mapping_step["method"]
+        if method is "replace":
+            data_df = dataframe_literal_remap(
+                dataframe=data_df, mapping=mapping_step["mapping"]
+            )
+        elif method is "map_by_mdx":
+            step_uses_independent_mapping = "mapping_df" in mapping_step and mapping_step["mapping_df"] is not None
+
+            mapping_df = (
+                mapping_step["mapping_df"] if step_uses_independent_mapping
+                else mapping_data["shared_mapping_df"]
+            )
+
+            if "mapping_filter" in mapping_step:
+                mapping_df = dataframe_filter(
+                    dataframe=mapping_df,
+                    filter_condition=mapping_step["mapping_filter"],
+                    inplace=step_uses_independent_mapping
+                )
+            data_df = dataframe_cube_remap(
+                data_df=data_df, mapping_df=mapping_df, mapped_dimensions=mapping_step["mapping_dims"]
+            )
+
+            if mapping_step["relabel dimensions"]:
+                data_df = dataframe_relabel(dataframe=data_df, columns=mapping_step["mapping_dims"])
