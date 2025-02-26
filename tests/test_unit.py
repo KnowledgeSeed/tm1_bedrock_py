@@ -137,10 +137,10 @@ def test_collect_metadata_filter_dimensions_not_empty(tm1_connection, cube_name)
 # ------------------------------------------------------------------------------------------------------------
 
 @parametrize_from_file
-def test_mdx_object_builder_is_valid_format_true(tm1_connection, dimensions, cube_name, expected_mdx):
+def test_mdx_object_builder_is_valid_format_true(tm1_connection, cube_filter, cube_name, expected_mdx):
     """Build MDX from cube name and dimension and check if the returned MDX matches the expected."""
 
-    mdx = tm1_bedrock.mdx_object_builder(tm1_service=tm1_connection, cube_name=cube_name, dimension=dimensions)
+    mdx = tm1_bedrock.mdx_object_builder(tm1_service=tm1_connection, cube_name=cube_name, cube_filter=cube_filter)
     mdx = mdx.replace(" ", "")
     expected_mdx = expected_mdx.replace(" ", "")
 
@@ -203,16 +203,75 @@ def test_normalize_dataframe_match_dimensions_success(tm1_connection, data_mdx, 
 
 
 @parametrize_from_file
-def test_mdx_object_builder_create_dataframe_success(tm1_connection ,dimensions, cube_name):
+def test_mdx_object_builder_create_dataframe_success(tm1_connection ,cube_filter, cube_name):
     """Run MDX query created by the MDX builder and verifies that the output is a DataFrame object"""
 
-    data_mdx = tm1_bedrock.mdx_object_builder(tm1_service=tm1_connection, cube_name=cube_name, dimension=dimensions)
+    data_mdx = tm1_bedrock.mdx_object_builder(tm1_service=tm1_connection, cube_name=cube_name, cube_filter=cube_filter)
     try:
         df = tm1_bedrock.mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
         df = tm1_bedrock.normalize_dataframe(tm1_service=tm1_connection, dataframe=df, mdx=data_mdx)
         assert isinstance(df, DataFrame)
     except Exception as e:
         pytest.fail(f"MDX query execution failed: {e}")
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Main: dataframe transform utility functions
+# ------------------------------------------------------------------------------------------------------------
+
+@parametrize_from_file
+def test_dataframe_filter(dataframe, filter_condition, expected_dataframe):
+    df = pd.DataFrame(dataframe)
+    expected_df = pd.DataFrame(expected_dataframe)
+    filtered_df = tm1_bedrock.dataframe_filter(dataframe=df, filter_condition=filter_condition)
+    print(filtered_df)
+    print(expected_df)
+
+    pd.testing.assert_frame_equal(filtered_df, expected_df)
+
+
+@parametrize_from_file
+def test_dataframe_drop_column(dataframe, column_list, expected_dataframe):
+    df = pd.DataFrame(dataframe)
+    expected_df = pd.DataFrame(expected_dataframe)
+
+    df = tm1_bedrock.dataframe_drop_column(dataframe=df, column_list=column_list)
+    pd.testing.assert_frame_equal(df, expected_df)
+
+
+@parametrize_from_file
+def test_dataframe_redimension_scale_down(dataframe, filter_condition, expected_dataframe):
+    df = pd.DataFrame(dataframe)
+    expected_df = pd.DataFrame(expected_dataframe)
+    transformed_df = tm1_bedrock.dataframe_redimension_scale_down(dataframe=df, filter_condition=filter_condition)
+
+    pd.testing.assert_frame_equal(transformed_df, expected_df)
+
+
+@parametrize_from_file
+def test_dataframe_relabel(dataframe, columns, expected_columns):
+    df = pd.DataFrame(dataframe)
+    relabeled_df = tm1_bedrock.dataframe_relabel(dataframe=df, columns=columns)
+    new_columns = list(map(str, relabeled_df.columns))
+    assert new_columns == expected_columns
+
+
+@parametrize_from_file
+def test_dataframe_add_column_assign_value(dataframe, column_values, expected_dataframe):
+    df = pd.DataFrame(dataframe)
+    expected_df = pd.DataFrame(expected_dataframe)
+
+    transformed_df = tm1_bedrock.dataframe_add_column_assign_value(dataframe=df, column_value=column_values)
+    pd.testing.assert_frame_equal(transformed_df, expected_df)
+
+
+@parametrize_from_file
+def test_dataframe_redimension_and_transform(dataframe, source_dim_mapping, related_dimensions, target_dim_mapping, expected_dataframe):
+    df = pd.DataFrame(dataframe)
+    expected_df = pd.DataFrame(expected_dataframe)
+
+    transformed_df = tm1_bedrock.dataframe_redimension_and_transform(df, source_dim_mapping, related_dimensions, target_dim_mapping)
+    pd.testing.assert_frame_equal(transformed_df, expected_df)
 
 
 # ------------------------------------------------------------------------------------------------------------
