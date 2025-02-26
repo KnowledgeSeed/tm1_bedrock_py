@@ -748,10 +748,10 @@ def dataframe_to_cube_with_clear(
 
 
 def dataframe_filter(
-    dataframe: pd.DataFrame,
+    dataframe: DataFrame,
     filter_condition: Dict[str, Any],
     inplace: bool = False
-) -> pd.DataFrame:
+) -> DataFrame:
     """
     Filters a DataFrame based on a given filter_condition.
 
@@ -761,12 +761,12 @@ def dataframe_filter(
     - If 'inplace' is False (default), it returns a new filtered DataFrame.
 
     Args:
-        dataframe (pd.DataFrame): The DataFrame to filter.
+        dataframe (DataFrame): The DataFrame to filter.
         filter_condition (Dict[str, Any]): Dictionary with column names as keys and values to filter for.
         inplace (bool, optional): If True, modifies the original DataFrame in-place. Defaults to False.
 
     Returns:
-        pd.DataFrame: The filtered DataFrame (either new or modified in-place).
+        DataFrame: The filtered DataFrame (either new or modified in-place).
     """
     valid_columns = list(filter(lambda col: col in dataframe.columns, filter_condition.keys()))
 
@@ -818,7 +818,7 @@ def dataframe_add_column_assign_value(
     new_columns = {col: value for col, value in column_value.items() if col not in dataframe.columns}
 
     if new_columns:
-        dataframe[list(new_columns)] = pd.DataFrame([new_columns], index=dataframe.index)
+        dataframe[list(new_columns)] = DataFrame([new_columns], index=dataframe.index)
 
     return dataframe
 
@@ -935,20 +935,20 @@ def dataframe_literal_remap(
 
 
 def dataframe_cube_remap(
-    data_df: pd.DataFrame,
-    mapping_df: pd.DataFrame,
+    data_df: DataFrame,
+    mapping_df: DataFrame,
     mapped_dimensions: Dict[str, str]
-) -> pd.DataFrame:
+) -> DataFrame:
     """
     Map specified dimension columns in 'data_df' using 'mapping_df',
     optimized for memory efficiency by modifying dataframes in-place.
 
     Parameters
     ----------
-    data_df : pd.DataFrame
+    data_df : DataFrame
         The original source dataframe, whose columns we want to preserve except
         where we overwrite certain dimension values.
-    mapping_df : pd.DataFrame
+    mapping_df : DataFrame
         The dataframe containing the mapped values for certain columns.
     mapped_dimensions : dict
         A dictionary that specifies which columns in 'data_df' should be replaced
@@ -956,7 +956,7 @@ def dataframe_cube_remap(
 
     Returns
     -------
-    pd.DataFrame
+    DataFrame
         A dataframe with the same columns (and order) as 'data_df',
         but with specified dimensions mapped from 'mapping_df'.
     """
@@ -979,12 +979,12 @@ def dataframe_cube_remap(
 
 def assign_mapping_dataframes(
     mapping_steps: List[Dict],
-    shared_mapping_df: Optional[pd.DataFrame] = None,
+    shared_mapping_df: Optional[DataFrame] = None,
     shared_mapping_mdx: Optional[str] = None,
-    mdx_function: Optional[Callable[..., pd.DataFrame]] = None,
+    mdx_function: Optional[Callable[..., DataFrame]] = None,
     tm1_service: Optional[Any] = None,
     **kwargs
-) -> Dict[str, Optional[pd.DataFrame] | List[Dict[str, Any]]]:
+) -> Dict[str, Optional[DataFrame] | List[Dict[str, Any]]]:
     """
     Assigns mapping DataFrames to mapping steps by either:
     - Using an existing 'mapping_df' in the step (if provided).
@@ -1002,14 +1002,14 @@ def assign_mapping_dataframes(
           or else the shared_mapping_df must be provided.
         - If 'method' is "replace", no additional checks are applied.
 
-    shared_mapping_df : Optional[pd.DataFrame], default=None
+    shared_mapping_df : Optional[DataFrame], default=None
         A shared DataFrame to be used if no 'mapping_df' or 'mapping_mdx' is provided.
 
     shared_mapping_mdx : Optional[str], default=None
         A shared MDX query string that will be converted into a DataFrame if no
         'mapping_df' or 'mapping_mdx' is provided.
 
-    mdx_function : Optional[Callable[..., pd.DataFrame]], default=None
+    mdx_function : Optional[Callable[..., DataFrame]], default=None
         A function that takes an MDX query and returns a Pandas DataFrame.
         Used to convert 'mapping_mdx' queries into DataFrames.
 
@@ -1034,7 +1034,7 @@ def assign_mapping_dataframes(
         AND 'shared_mapping_df' is also missing or empty.
     """
 
-    def create_dataframe(mdx: str) -> pd.DataFrame:
+    def create_dataframe(mdx: str) -> DataFrame:
         """Helper function to convert MDX to a normalized DataFrame."""
         return mdx_to_normalized_dataframe(
             mdx_function=mdx_function, tm1_service=tm1_service, data_mdx=mdx, **kwargs
@@ -1069,7 +1069,7 @@ def assign_mapping_dataframes(
 
 def dataframe_execute_mappings(
     data_df: DataFrame,
-    mapping_data: Dict[str, Optional[pd.DataFrame] | List[Dict[str, Any]]]
+    mapping_data: Dict[str, Optional[DataFrame] | List[Dict[str, Any]]]
 ):
     """
 
