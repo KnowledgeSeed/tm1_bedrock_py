@@ -800,7 +800,7 @@ def dataframe_drop_zero_and_values(
 def dataframe_relabel(
         dataframe: DataFrame,
         columns: dict
-) -> None:
+) -> DataFrame:
     """
     Relabels DataFrame column(s) if the original label is found in the DataFrame.
     If an original label is not found, then it is ignored.
@@ -812,6 +812,7 @@ def dataframe_relabel(
     Return: None
     """
     dataframe.rename(columns=columns, inplace=True)
+    return dataframe
 
 
 def dataframe_value_scale(
@@ -972,4 +973,4 @@ def dataframe_cube_remap(
     # 5) Retain only the original columns from data_df
     mapped_df = joined_df[data_df.columns]
 
-    return mapped_df
+    return dataframe_relabel(dataframe=mapped_df, columns=mapped_dimensions)
