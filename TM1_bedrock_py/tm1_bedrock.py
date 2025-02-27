@@ -167,6 +167,27 @@ class Metadata:
 
 
 def collect_metadata(
+    metadata_function: Optional[Callable[..., DataFrame]] = None,
+    **kwargs: Any
+) -> Metadata:
+    """
+    Retrieves a Metadata object by executing the provided metadata function.
+
+    Args:
+        metadata_function (Optional[Callable]): A function to execute the MDX query and return a DataFrame.
+                                           If None, the default function is used.
+        **kwargs (Any): Additional keyword arguments passed to the MDX function.
+
+    Returns:
+        Metadata: The Metadata object resulting from the function call
+    """
+    if metadata_function is None:
+        metadata_function = collect_metadata_default
+
+    return metadata_function(**kwargs)
+
+
+def collect_metadata_default(
     tm1_service: Any,
     mdx: Optional[str] = None,
     cube_name: Optional[str] = None,
@@ -497,17 +518,21 @@ def mdx_to_dataframe(
 
 def mdx_to_dataframe_default(
     tm1_service: TM1Service,
-    data_mdx: str,
+    data_mdx: Optional[str] = None,
+    data_mdx_list:  Optional[list[str]] = None,
     skip_zeros: bool = False,
     skip_consolidated_cells: bool = False,
     skip_rule_derived_cells: bool = False
 ) -> DataFrame:
     """
     Executes an MDX query using the default TM1 service function and returns a DataFrame.
+    If an MDX is given, it will execute it synchronously,
+    if an MDX list is given, it will execute them asynchronously.
 
     Args:
         tm1_service (TM1Service): An active TM1Service object for connecting to the TM1 server.
         data_mdx (str): The MDX query string to execute.
+        data_mdx_list (list[str]): A list of mdx queries to execute in an asynchronous way.
         skip_zeros (bool, optional): If True, cells with zero values will be excluded. Defaults to False.
         skip_consolidated_cells (bool, optional): If True, consolidated cells will be excluded. Defaults to False.
         skip_rule_derived_cells (bool, optional): If True, rule-derived cells will be excluded. Defaults to False.
@@ -515,12 +540,23 @@ def mdx_to_dataframe_default(
     Returns:
         DataFrame: A DataFrame containing the result of the MDX query.
     """
-    return tm1_service.cells.execute_mdx_dataframe(
-        mdx=data_mdx,
-        skip_zeros=skip_zeros,
-        skip_consolidated_cells=skip_consolidated_cells,
-        skip_rule_derived_cells=skip_rule_derived_cells
-    )
+
+    if data_mdx_list:
+        return tm1_service.cells.execute_mdx_dataframe_async(
+            mdx_list=data_mdx_list,
+            skip_zeros=skip_zeros,
+            skip_consolidated_cells=skip_consolidated_cells,
+            skip_rule_derived_cells=skip_rule_derived_cells,
+            use_iterative_json=True
+        )
+    else:
+        return tm1_service.cells.execute_mdx_dataframe(
+            mdx=data_mdx,
+            skip_zeros=skip_zeros,
+            skip_consolidated_cells=skip_consolidated_cells,
+            skip_rule_derived_cells=skip_rule_derived_cells,
+            use_iterative_json=True
+        )
 
 
 def normalize_dataframe(
@@ -543,10 +579,7 @@ def normalize_dataframe(
         DataFrame: The normalized DataFrame.
     """
 
-    if metadata_function is None:
-        metadata_function = collect_metadata
-
-    metadata = metadata_function(**kwargs)
+    metadata = collect_metadata(metadata_function=metadata_function, **kwargs)
     dataframe_dimensions = metadata.get_cube_dims()
 
     if 'Value' not in dataframe_dimensions:
@@ -690,9 +723,9 @@ def dataframe_to_cube_default(
     dataframe: DataFrame,
     cube_name: str,
     cube_dims: List[str],
-    async_write: bool = True,
+    async_write: bool = False,
     use_ti: bool = False,
-    use_blob: bool = True,
+    use_blob: bool = False,
     increment: bool = False,
     sum_numeric_duplicates: bool = True
 ) -> None:
@@ -704,9 +737,9 @@ def dataframe_to_cube_default(
         dataframe (DataFrame): The DataFrame to write to the cube.
         cube_name (str): The name of the target cube.
         cube_dims (List[str]): A list of dimensions for the target cube.
-        async_write (bool, optional): Whether to write data asynchronously. Defaults to True.
+        async_write (bool, optional): Whether to write data asynchronously. Defaults to False.
         use_ti (bool, optional): Whether to use TurboIntegrator. Defaults to False.
-        use_blob (bool, optional): Whether to use the 'blob' method. Defaults to True.
+        use_blob (bool, optional): Whether to use the 'blob' method. Defaults to False.
         increment (bool, optional): Increments the values in the cube instead of replacing them. Defaults to False.
         sum_numeric_duplicates (bool, optional): Aggregate numerical values for duplicated intersections.
             Defaults to True.
@@ -714,10 +747,8 @@ def dataframe_to_cube_default(
     Returns:
         None
     """
-    # Determine function name dynamically
     function_name = "write_dataframe_async" if async_write else "write_dataframe"
 
-    # Dynamically call the chosen function
     getattr(tm1_service.cells, function_name)(
         cube_name=cube_name,
         data=dataframe,
@@ -996,6 +1027,7 @@ def assign_mapping_dataframes(
     mapping_steps: List[Dict],
     shared_mapping_df: Optional[DataFrame] = None,
     shared_mapping_mdx: Optional[str] = None,
+    shared_mapping_metadata_function: Optional[Callable[..., Any]] = None,
     mdx_function: Optional[Callable[..., DataFrame]] = None,
     tm1_service: Optional[Any] = None,
     **kwargs
@@ -1047,23 +1079,57 @@ def assign_mapping_dataframes(
     ValueError
         If any 'map_by_mdx' step lacks both 'mapping_df' and 'mapping_mdx',
         AND 'shared_mapping_df' is also missing or empty.
+
+    Example of the 'mapping_steps'::
+    -------
+        [
+            {
+                "method": "replace",
+                "mapping": {
+                    "dim1": {"source": "target"},
+                    "dim2": {"source3": "target3", "source4": "target4"}
+                }
+            },
+            {
+                "method": "map_by_mdx",
+                "mapping_mdx": "////valid mdx////",
+                "mapping_metadata_function": mapping_metadata_function
+                "mapping_df": mapping_dataframe
+                "mapping_filter": {
+                    "dim": "element",
+                    "dim2": "element2"
+                },
+                "mapping_dims": {
+                    "Organization Units": "Value"
+                },
+                "relabel_dimensions": false
+            }
+        ]
     """
 
-    def create_dataframe(mdx: str) -> DataFrame:
+    def create_dataframe(mdx: str, metadata_function: Optional[Callable[..., Any]] = None) -> DataFrame:
         """Helper function to convert MDX to a normalized DataFrame."""
         return mdx_to_normalized_dataframe(
-            mdx_function=mdx_function, tm1_service=tm1_service, data_mdx=mdx, **kwargs
+            mdx_function=mdx_function,
+            metadata_function=metadata_function,
+            tm1_service=tm1_service,
+            data_mdx=mdx,
+            skip_zeros=True,
+            skip_consolidated_cells=True,
+            **kwargs
         )
 
     shared_mapping_df = shared_mapping_df or (
-        create_dataframe(shared_mapping_mdx) if shared_mapping_mdx else None
+        create_dataframe(shared_mapping_mdx, shared_mapping_metadata_function) if shared_mapping_mdx else None
     )
 
     mapping_steps = [
         {
             **step,
             "mapping_df": step.get("mapping_df")
-            or (create_dataframe(step["mapping_mdx"]) if "mapping_mdx" in step else None)
+            or (create_dataframe(step["mapping_mdx"],
+                                 step["mapping_metadata_function"]
+                                 ) if "mapping_mdx" in step else None)
         }
         for step in mapping_steps
     ]
@@ -1195,6 +1261,8 @@ def dataframe_execute_mappings(
             {
                 "method": "map_by_mdx",
                 "mapping_mdx": "////valid mdx////",
+                "mapping_metadata_function": mapping_metadata_function
+                "mapping_df": mapping_dataframe
                 "mapping_filter": {
                     "dim": "element",
                     "dim2": "element2"
