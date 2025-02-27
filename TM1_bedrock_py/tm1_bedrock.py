@@ -690,9 +690,9 @@ def dataframe_to_cube_default(
     dataframe: DataFrame,
     cube_name: str,
     cube_dims: List[str],
-    async_write: bool = True,
+    async_write: bool = False,
     use_ti: bool = False,
-    use_blob: bool = True,
+    use_blob: bool = False,
     increment: bool = False,
     sum_numeric_duplicates: bool = True
 ) -> None:
@@ -704,9 +704,9 @@ def dataframe_to_cube_default(
         dataframe (DataFrame): The DataFrame to write to the cube.
         cube_name (str): The name of the target cube.
         cube_dims (List[str]): A list of dimensions for the target cube.
-        async_write (bool, optional): Whether to write data asynchronously. Defaults to True.
+        async_write (bool, optional): Whether to write data asynchronously. Defaults to False.
         use_ti (bool, optional): Whether to use TurboIntegrator. Defaults to False.
-        use_blob (bool, optional): Whether to use the 'blob' method. Defaults to True.
+        use_blob (bool, optional): Whether to use the 'blob' method. Defaults to False.
         increment (bool, optional): Increments the values in the cube instead of replacing them. Defaults to False.
         sum_numeric_duplicates (bool, optional): Aggregate numerical values for duplicated intersections.
             Defaults to True.
@@ -714,10 +714,8 @@ def dataframe_to_cube_default(
     Returns:
         None
     """
-    # Determine function name dynamically
     function_name = "write_dataframe_async" if async_write else "write_dataframe"
 
-    # Dynamically call the chosen function
     getattr(tm1_service.cells, function_name)(
         cube_name=cube_name,
         data=dataframe,
