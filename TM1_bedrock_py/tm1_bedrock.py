@@ -1009,6 +1009,7 @@ def assign_mapping_dataframes(
     mapping_steps: List[Dict],
     shared_mapping_df: Optional[DataFrame] = None,
     shared_mapping_mdx: Optional[str] = None,
+    shared_mapping_metadata_function: Optional[Callable[..., Any]] = None,
     mdx_function: Optional[Callable[..., DataFrame]] = None,
     tm1_service: Optional[Any] = None,
     **kwargs
@@ -1062,21 +1063,27 @@ def assign_mapping_dataframes(
         AND 'shared_mapping_df' is also missing or empty.
     """
 
-    def create_dataframe(mdx: str) -> DataFrame:
+    def create_dataframe(mdx: str, metadata_function: Optional[Callable[..., Any]] = None) -> DataFrame:
         """Helper function to convert MDX to a normalized DataFrame."""
         return mdx_to_normalized_dataframe(
-            mdx_function=mdx_function, tm1_service=tm1_service, data_mdx=mdx, **kwargs
+            mdx_function=mdx_function,
+            metadata_function=metadata_function,
+            tm1_service=tm1_service,
+            data_mdx=mdx,
+            **kwargs
         )
 
     shared_mapping_df = shared_mapping_df or (
-        create_dataframe(shared_mapping_mdx) if shared_mapping_mdx else None
+        create_dataframe(shared_mapping_mdx, shared_mapping_metadata_function) if shared_mapping_mdx else None
     )
 
     mapping_steps = [
         {
             **step,
             "mapping_df": step.get("mapping_df")
-            or (create_dataframe(step["mapping_mdx"]) if "mapping_mdx" in step else None)
+            or (create_dataframe(step["mapping_mdx"],
+                                 step["mapping_metadata_function"]
+                                 ) if "mapping_mdx" in step else None)
         }
         for step in mapping_steps
     ]
@@ -1208,7 +1215,8 @@ def dataframe_execute_mappings(
             {
                 "method": "map_by_mdx",
                 "mapping_mdx": "////valid mdx////",
-                "mapping_df":
+                "mapping_metadata_function": mapping_metadata_function
+                "mapping_df": mapping_dataframe
                 "mapping_filter": {
                     "dim": "element",
                     "dim2": "element2"
