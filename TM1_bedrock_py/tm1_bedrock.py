@@ -1061,6 +1061,32 @@ def assign_mapping_dataframes(
     ValueError
         If any 'map_by_mdx' step lacks both 'mapping_df' and 'mapping_mdx',
         AND 'shared_mapping_df' is also missing or empty.
+
+    Example of the 'mapping_steps'::
+    -------
+        [
+            {
+                "method": "replace",
+                "mapping": {
+                    "dim1": {"source": "target"},
+                    "dim2": {"source3": "target3", "source4": "target4"}
+                }
+            },
+            {
+                "method": "map_by_mdx",
+                "mapping_mdx": "////valid mdx////",
+                "mapping_metadata_function": mapping_metadata_function
+                "mapping_df": mapping_dataframe
+                "mapping_filter": {
+                    "dim": "element",
+                    "dim2": "element2"
+                },
+                "mapping_dims": {
+                    "Organization Units": "Value"
+                },
+                "relabel_dimensions": false
+            }
+        ]
     """
 
     def create_dataframe(mdx: str, metadata_function: Optional[Callable[..., Any]] = None) -> DataFrame:
@@ -1070,6 +1096,8 @@ def assign_mapping_dataframes(
             metadata_function=metadata_function,
             tm1_service=tm1_service,
             data_mdx=mdx,
+            skip_zeros=True,
+            skip_consolidated_cells=True,
             **kwargs
         )
 
