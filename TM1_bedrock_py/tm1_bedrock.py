@@ -179,7 +179,7 @@ def collect_metadata(
         **kwargs (Any): Additional keyword arguments passed to the MDX function.
 
     Returns:
-        Metadata: The Metadata object resulting from the function call
+        Metadata: The Metadata object resulting from the metadata function call
     """
     if metadata_function is None:
         metadata_function = collect_metadata_default
@@ -349,10 +349,7 @@ def validate_dataframe_columns(
                  of the Metadata. False if the column labels or their order does not match.
     """
 
-    if metadata_function is None:
-        metadata_function = collect_metadata
-
-    metadata = metadata_function(cube_name=cube_name, **kwargs)
+    metadata = collect_metadata(metadata_function=metadata_function, cube_name=cube_name, **kwargs)
     dimensions_from_metadata = metadata.get_cube_dims()
     dimensions_from_dataframe = list(map(str, dataframe.keys()))
     dimensions_from_dataframe.remove("Value")
@@ -578,6 +575,8 @@ def normalize_dataframe(
     Returns:
         DataFrame: The normalized DataFrame.
     """
+
+
 
     metadata = collect_metadata(metadata_function=metadata_function, **kwargs)
     dataframe_dimensions = metadata.get_cube_dims()
