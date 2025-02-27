@@ -167,6 +167,27 @@ class Metadata:
 
 
 def collect_metadata(
+    metadata_function: Optional[Callable[..., DataFrame]] = None,
+    **kwargs: Any
+) -> Metadata:
+    """
+    Retrieves a Metadata object by executing the provided metadata function.
+
+    Args:
+        metadata_function (Optional[Callable]): A function to execute the MDX query and return a DataFrame.
+                                           If None, the default function is used.
+        **kwargs (Any): Additional keyword arguments passed to the MDX function.
+
+    Returns:
+        Metadata: The Metadata object resulting from the function call
+    """
+    if metadata_function is None:
+        metadata_function = collect_metadata_default
+
+    return metadata_function(**kwargs)
+
+
+def collect_metadata_default(
     tm1_service: Any,
     mdx: Optional[str] = None,
     cube_name: Optional[str] = None,
@@ -558,10 +579,7 @@ def normalize_dataframe(
         DataFrame: The normalized DataFrame.
     """
 
-    if metadata_function is None:
-        metadata_function = collect_metadata
-
-    metadata = metadata_function(**kwargs)
+    metadata = collect_metadata(metadata_function=metadata_function, **kwargs)
     dataframe_dimensions = metadata.get_cube_dims()
 
     if 'Value' not in dataframe_dimensions:
