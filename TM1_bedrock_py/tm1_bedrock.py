@@ -690,7 +690,9 @@ def dataframe_to_cube_default(
     dataframe: DataFrame,
     cube_name: str,
     cube_dims: List[str],
-    mode: str = 'default'
+    mode: str = 'default',
+    increment: Optional[bool] = False,
+    sum_numeric_duplicates: Optional[bool] = True
 ) -> None:
     """
     Writes a DataFrame to a cube using the TM1 service.
@@ -701,6 +703,8 @@ def dataframe_to_cube_default(
         cube_name (str): The name of the target cube.
         cube_dims (List[str]): A list of dimensions for the target cube.
         mode (str, optional): The mode for writing data ('default', 'ti', or 'blob'). Defaults to 'default'.
+        increment (bool, optional): increments the values in the cube instead of replacing them
+        sum_numeric_duplicates (bool, optional): Aggregate numerical values for duplicated intersections
     """
     use_ti = mode == 'ti'
     use_blob = mode == 'blob'
@@ -713,7 +717,9 @@ def dataframe_to_cube_default(
         reactivate_transaction_log=True,
         skip_non_updateable=True,
         use_ti=use_ti,
-        use_blob=use_blob
+        use_blob=use_blob,
+        increment=increment,
+        sum_numeric_duplicates=sum_numeric_duplicates
     )
 
 
@@ -1191,15 +1197,12 @@ def dataframe_execute_mappings(
             }
         ]
     """
-    # Dispatch dictionary: map the 'method' to the function that handles it.
     method_handlers = {
         "replace": _apply_replace,
         "map_by_mdx": _apply_map_by_mdx,
     }
-
     for mapping_step in mapping_data["mapping_steps"]:
         method = mapping_step["method"]
-        # Dynamically call the right function for each method
         if method in method_handlers:
             data_df = method_handlers[method](data_df, mapping_step, mapping_data)
         else:
