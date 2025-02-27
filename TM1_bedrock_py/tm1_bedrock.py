@@ -497,17 +497,21 @@ def mdx_to_dataframe(
 
 def mdx_to_dataframe_default(
     tm1_service: TM1Service,
-    data_mdx: str,
+    data_mdx: Optional[str] = None,
+    data_mdx_list:  Optional[list[str]] = None,
     skip_zeros: bool = False,
     skip_consolidated_cells: bool = False,
     skip_rule_derived_cells: bool = False
 ) -> DataFrame:
     """
     Executes an MDX query using the default TM1 service function and returns a DataFrame.
+    If an MDX is given, it will execute it synchronously,
+    if an MDX list is given, it will execute them asynchronously.
 
     Args:
         tm1_service (TM1Service): An active TM1Service object for connecting to the TM1 server.
         data_mdx (str): The MDX query string to execute.
+        data_mdx_list (list[str]): A list of mdx queries to execute in an asynchronous way.
         skip_zeros (bool, optional): If True, cells with zero values will be excluded. Defaults to False.
         skip_consolidated_cells (bool, optional): If True, consolidated cells will be excluded. Defaults to False.
         skip_rule_derived_cells (bool, optional): If True, rule-derived cells will be excluded. Defaults to False.
@@ -515,12 +519,23 @@ def mdx_to_dataframe_default(
     Returns:
         DataFrame: A DataFrame containing the result of the MDX query.
     """
-    return tm1_service.cells.execute_mdx_dataframe(
-        mdx=data_mdx,
-        skip_zeros=skip_zeros,
-        skip_consolidated_cells=skip_consolidated_cells,
-        skip_rule_derived_cells=skip_rule_derived_cells
-    )
+
+    if data_mdx_list:
+        return tm1_service.cells.execute_mdx_dataframe_async(
+            mdx_list=data_mdx_list,
+            skip_zeros=skip_zeros,
+            skip_consolidated_cells=skip_consolidated_cells,
+            skip_rule_derived_cells=skip_rule_derived_cells,
+            use_iterative_json=True
+        )
+    else:
+        return tm1_service.cells.execute_mdx_dataframe(
+            mdx=data_mdx,
+            skip_zeros=skip_zeros,
+            skip_consolidated_cells=skip_consolidated_cells,
+            skip_rule_derived_cells=skip_rule_derived_cells,
+            use_iterative_json=True
+        )
 
 
 def normalize_dataframe(
@@ -1193,6 +1208,7 @@ def dataframe_execute_mappings(
             {
                 "method": "map_by_mdx",
                 "mapping_mdx": "////valid mdx////",
+                "mapping_df":
                 "mapping_filter": {
                     "dim": "element",
                     "dim2": "element2"
