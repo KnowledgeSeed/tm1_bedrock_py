@@ -244,6 +244,7 @@ def test_dataframe_redimension_scale_down(dataframe, filter_condition, expected_
     df = pd.DataFrame(dataframe)
     expected_df = pd.DataFrame(expected_dataframe)
     transformed_df = tm1_bedrock.dataframe_redimension_scale_down(dataframe=df, filter_condition=filter_condition)
+    transformed_df.reset_index(drop=True, inplace=True)
 
     pd.testing.assert_frame_equal(transformed_df, expected_df)
 
@@ -271,6 +272,8 @@ def test_dataframe_redimension_and_transform(dataframe, source_dim_mapping, rela
     expected_df = pd.DataFrame(expected_dataframe)
 
     transformed_df = tm1_bedrock.dataframe_redimension_and_transform(df, source_dim_mapping, related_dimensions, target_dim_mapping)
+    transformed_df.reset_index(drop=True, inplace=True)
+
     pd.testing.assert_frame_equal(transformed_df, expected_df)
 
 
