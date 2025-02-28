@@ -396,3 +396,44 @@ test_dataframe_redimension_and_transform:
       "Base Versions": [ "Plan1" ],
       "Employee": [ "Alice" ],
     }
+
+test_data_copy:
+  -
+    base_data_mdx:
+      "SELECT 
+             {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],[Periods].[Periods].[202304],[Periods].[Periods].[202305],[Periods].[Periods].[202306],[Periods].[Periods].[202307],[Periods].[Periods].[202308],[Periods].[Periods].[202309],[Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]} 
+            ON COLUMNS , 
+             {[Groups].[Groups].[Group_2]}
+             * {[Employees].[Employees].[Employees_1],[Employees].[Employees].[Employees_2],[Employees].[Employees].[Employees_3],[Employees].[Employees].[Employees_4],[Employees].[Employees].[Employees_5]} 
+            ON ROWS 
+          FROM [Cost and FTE by Groups] 
+          WHERE 
+            (
+             [Versions].[Versions].[Base Plan],
+             [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[Caculated Salary],
+             [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
+          )"
+    mapping_steps: [
+      {
+        "method":"replace",
+        "mapping":{
+          "Versions":{
+            "Base Plan":"DataCopy Write Test"
+          }
+        }
+      }
+    ]
+    output_data_mdx:
+      "SELECT 
+             {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],[Periods].[Periods].[202304],[Periods].[Periods].[202305],[Periods].[Periods].[202306],[Periods].[Periods].[202307],[Periods].[Periods].[202308],[Periods].[Periods].[202309],[Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]} 
+            ON COLUMNS , 
+             {[Groups].[Groups].[Group_2]}
+             * {[Employees].[Employees].[Employees_1],[Employees].[Employees].[Employees_2],[Employees].[Employees].[Employees_3],[Employees].[Employees].[Employees_4],[Employees].[Employees].[Employees_5]} 
+            ON ROWS 
+          FROM [Cost and FTE by Groups] 
+          WHERE 
+            (
+             [Versions].[Versions].[DataCopy Write Test],
+             [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[Caculated Salary],
+             [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
+          )"

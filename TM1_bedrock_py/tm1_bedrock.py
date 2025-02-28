@@ -824,7 +824,7 @@ def dataframe_filter(
         pd.Series({col: filter_condition[col] for col in valid_columns})
     ).all(axis=1)
 
-    return dataframe.drop(index=dataframe.index[~condition]) if inplace else dataframe.loc[condition]
+    return dataframe.drop(index=dataframe.index[~condition]).reset_index(drop=True) if inplace else dataframe.loc[condition]
 
 
 def dataframe_drop_column(
@@ -843,7 +843,7 @@ def dataframe_drop_column(
     """
     if not all(item in dataframe.columns for item in column_list):
         return dataframe
-    return dataframe.drop(column_list, axis=1)
+    return dataframe.drop(column_list, axis=1).reset_index(drop=True)
 
 
 def dataframe_add_column_assign_value(
@@ -865,7 +865,7 @@ def dataframe_add_column_assign_value(
     if new_columns:
         dataframe[list(new_columns)] = DataFrame([new_columns], index=dataframe.index)
 
-    return dataframe
+    return dataframe.reset_index(drop=True)
 
 
 def dataframe_redimension_scale_down(
@@ -885,7 +885,7 @@ def dataframe_redimension_scale_down(
 
     filtered_dataframe = dataframe_filter(dataframe=dataframe, filter_condition=filter_condition)
     column_list = list(map(str, filter_condition.keys()))
-    return dataframe_drop_column(dataframe=filtered_dataframe, column_list=column_list)
+    return dataframe_drop_column(dataframe=filtered_dataframe, column_list=column_list).reset_index(drop=True)
 
 
 def dataframe_drop_zero_and_values(
@@ -902,7 +902,7 @@ def dataframe_drop_zero_and_values(
 
     dataframe.drop(dataframe[dataframe["Value"] == 0].index, inplace=True)
     dataframe.drop(columns=["Value"], inplace=True)
-    return dataframe
+    return dataframe.reset_index(drop=True)
 
 
 def dataframe_relabel(
@@ -938,19 +938,24 @@ def dataframe_value_scale(
         DataFrame: The modified DataFrame (in place).
     """
     dataframe["Value"] = dataframe["Value"].apply(value_function)
-    return dataframe
+    return dataframe.reset_index(drop=True)
 
 
 def dataframe_redimension_and_transform(
         dataframe: DataFrame,
-        source_dim_mapping: dict,
-        related_dimensions: dict,
-        target_dim_mapping: dict
+        source_dim_mapping: Optional[dict] = None,
+        related_dimensions: Optional[dict] = None,
+        target_dim_mapping: Optional[dict] = None
 ) -> DataFrame:
 
-    dataframe = dataframe_redimension_scale_down(dataframe=dataframe, filter_condition=source_dim_mapping)
-    dataframe = dataframe_relabel(dataframe=dataframe, columns=related_dimensions)
-    dataframe = dataframe_add_column_assign_value(dataframe=dataframe, column_value=target_dim_mapping)
+    if source_dim_mapping is not None:
+        dataframe = dataframe_redimension_scale_down(dataframe=dataframe, filter_condition=source_dim_mapping)
+
+    if related_dimensions is not None:
+        dataframe = dataframe_relabel(dataframe=dataframe, columns=related_dimensions)
+
+    if target_dim_mapping is not None:
+        dataframe = dataframe_add_column_assign_value(dataframe=dataframe, column_value=target_dim_mapping)
 
     return dataframe
 
@@ -1144,7 +1149,7 @@ def assign_mapping_dataframes(
             "Either provide 'mapping_mdx' or 'mapping_df' in these steps, or a valid 'shared_mapping_df'."
         )
 
-    return {"shared_mapping_df": shared_mapping_df, "mapping_data": mapping_steps}
+    return {"shared_mapping_df": shared_mapping_df, "mapping_steps": mapping_steps}
 
 
 def _apply_replace(data_df: DataFrame, mapping_step: Dict[str, Any], mapping_data: Dict[str, Any]) -> DataFrame:
@@ -1285,3 +1290,97 @@ def dataframe_execute_mappings(
             raise ValueError(f"Unsupported mapping method: {method}")
 
     return data_df
+
+
+def data_copy(
+        tm1_service: Optional[Any],
+        data_mdx: Optional[str] = None,
+        mdx_function: Optional[Callable[..., DataFrame]] = None,
+        data_mdx_list: Optional[list[str]] = None,
+        skip_zeros: Optional[bool] = False,
+        skip_consolidated_cells: Optional[bool] = False,
+        skip_rule_derived_cells: Optional[bool] = False,
+        data_metadata_function: Optional[Callable[..., DataFrame]] = None,
+        target_cube_name: Optional[str] = None,
+        mapping_steps: Optional[List[Dict]] = None,
+        #target_metadata_function: Optional[Callable[..., DataFrame]] = None,
+        shared_mapping_df: Optional[DataFrame] = None,
+        shared_mapping_mdx: Optional[str] = None,
+        shared_mapping_metadata_function: Optional[Callable[..., Any]] = None,
+        source_dim_mapping: Optional[dict] = None,
+        related_dimensions: Optional[dict] = None,
+        target_dim_mapping: Optional[dict] = None,
+        value_function: Optional[Callable[..., Any]] = None,
+        clear_set_mdx_list: Optional[List[str]] = None,
+        clear_target: Optional[bool] = False,
+        async_write: bool = False,
+        use_ti: bool = False,
+        use_blob: bool = False,
+        increment: bool = False,
+        sum_numeric_duplicates: bool = True,
+        **kwargs
+) -> None:
+    data_metadata = collect_metadata(
+        tm1_service=tm1_service,
+        mdx=data_mdx,
+        metadata_function=data_metadata_function,
+        **kwargs
+    )
+
+    if target_cube_name is None:
+        target_cube_name = data_metadata.get_cube_name()
+
+    data_metadata_function = lambda: data_metadata
+
+    dataframe = mdx_to_dataframe(
+        tm1_service=tm1_service,
+        data_mdx=data_mdx,
+        data_mdx_list=data_mdx_list,
+        skip_zeros=skip_zeros,
+        skip_consolidated_cells=skip_consolidated_cells,
+        skip_rule_derived_cells=skip_rule_derived_cells,
+        mdx_function=mdx_function,
+    )
+
+    dataframe = normalize_dataframe(
+        dataframe=dataframe,
+        metadata_function = data_metadata_function
+    )
+
+    mapping_data = assign_mapping_dataframes(
+        mapping_steps=mapping_steps,
+        shared_mapping_df=shared_mapping_df,
+        shared_mapping_mdx=shared_mapping_mdx,
+        shared_mapping_metadata_function=shared_mapping_metadata_function
+    )
+
+    dataframe = dataframe_execute_mappings(
+        data_df=dataframe,
+        mapping_data=mapping_data
+    )
+    print("\n")
+    print(dataframe)
+
+    dataframe = dataframe_redimension_and_transform(
+        dataframe=dataframe,
+        source_dim_mapping=source_dim_mapping,
+        related_dimensions=related_dimensions,
+        target_dim_mapping=target_dim_mapping
+    )
+
+    if value_function is not None:
+        dataframe = dataframe_value_scale(dataframe=dataframe, value_function=value_function)
+
+    dataframe_to_cube_with_clear(
+        tm1_service=tm1_service,
+        dataframe=dataframe,
+        clear_set_mdx_list=clear_set_mdx_list,
+        clear_target=clear_target,
+        async_write=async_write,
+        use_ti=use_ti,
+        increment=increment,
+        use_blob=use_blob,
+        sum_numeric_duplicates=sum_numeric_duplicates,
+        cube_dims=data_metadata.get_cube_dims(),
+        cube_name=target_cube_name
+    )

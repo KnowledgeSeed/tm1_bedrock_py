@@ -224,8 +224,6 @@ def test_dataframe_filter(dataframe, filter_condition, expected_dataframe):
     df = pd.DataFrame(dataframe)
     expected_df = pd.DataFrame(expected_dataframe)
     filtered_df = tm1_bedrock.dataframe_filter(dataframe=df, filter_condition=filter_condition)
-    print(filtered_df)
-    print(expected_df)
 
     pd.testing.assert_frame_equal(filtered_df, expected_df)
 
@@ -234,9 +232,9 @@ def test_dataframe_filter(dataframe, filter_condition, expected_dataframe):
 def test_dataframe_drop_column(dataframe, column_list, expected_dataframe):
     df = pd.DataFrame(dataframe)
     expected_df = pd.DataFrame(expected_dataframe)
+    transformed_df = tm1_bedrock.dataframe_drop_column(dataframe=df, column_list=column_list)
 
-    df = tm1_bedrock.dataframe_drop_column(dataframe=df, column_list=column_list)
-    pd.testing.assert_frame_equal(df, expected_df)
+    pd.testing.assert_frame_equal(transformed_df, expected_df)
 
 
 @parametrize_from_file
@@ -244,7 +242,6 @@ def test_dataframe_redimension_scale_down(dataframe, filter_condition, expected_
     df = pd.DataFrame(dataframe)
     expected_df = pd.DataFrame(expected_dataframe)
     transformed_df = tm1_bedrock.dataframe_redimension_scale_down(dataframe=df, filter_condition=filter_condition)
-    transformed_df.reset_index(drop=True, inplace=True)
 
     pd.testing.assert_frame_equal(transformed_df, expected_df)
 
@@ -261,8 +258,8 @@ def test_dataframe_relabel(dataframe, columns, expected_columns):
 def test_dataframe_add_column_assign_value(dataframe, column_values, expected_dataframe):
     df = pd.DataFrame(dataframe)
     expected_df = pd.DataFrame(expected_dataframe)
-
     transformed_df = tm1_bedrock.dataframe_add_column_assign_value(dataframe=df, column_value=column_values)
+
     pd.testing.assert_frame_equal(transformed_df, expected_df)
 
 
@@ -270,9 +267,7 @@ def test_dataframe_add_column_assign_value(dataframe, column_values, expected_da
 def test_dataframe_redimension_and_transform(dataframe, source_dim_mapping, related_dimensions, target_dim_mapping, expected_dataframe):
     df = pd.DataFrame(dataframe)
     expected_df = pd.DataFrame(expected_dataframe)
-
     transformed_df = tm1_bedrock.dataframe_redimension_and_transform(df, source_dim_mapping, related_dimensions, target_dim_mapping)
-    transformed_df.reset_index(drop=True, inplace=True)
 
     pd.testing.assert_frame_equal(transformed_df, expected_df)
 
@@ -300,3 +295,20 @@ def test_dataframe_literal_remap_fail(dataframe, mapping, expected_dataframe):
     with pytest.raises(AssertionError):
         remapped_df = tm1_bedrock.dataframe_literal_remap(dataframe=pd.DataFrame(dataframe), mapping=mapping)
         pd.testing.assert_frame_equal(remapped_df, expected_df)
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Main: dataframe remapping and copy functions
+# ------------------------------------------------------------------------------------------------------------
+
+@parametrize_from_file
+def test_data_copy(tm1_connection, base_data_mdx, mapping_steps, output_data_mdx):
+    base_df = tm1_bedrock.mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=base_data_mdx)
+    base_df = tm1_bedrock.normalize_dataframe(tm1_service=tm1_connection, dataframe=base_df, mdx=base_data_mdx)
+
+    tm1_bedrock.data_copy(tm1_service=tm1_connection, data_mdx=base_data_mdx, mapping_steps=mapping_steps, skip_zeros=True)
+
+    copy_test_df = tm1_bedrock.mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=output_data_mdx)
+    copy_test_df = tm1_bedrock.normalize_dataframe(tm1_service=tm1_connection, dataframe=copy_test_df, mdx=output_data_mdx)
+
+    pd.testing.assert_frame_equal(base_df, copy_test_df)
