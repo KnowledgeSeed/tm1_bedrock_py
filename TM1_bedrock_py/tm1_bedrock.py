@@ -726,7 +726,8 @@ def dataframe_to_cube_default(
     use_ti: bool = False,
     use_blob: bool = False,
     increment: bool = False,
-    sum_numeric_duplicates: bool = True
+    sum_numeric_duplicates: bool = True,
+    **kwargs
 ) -> None:
     """
     Writes a DataFrame to a cube using the TM1 service.
@@ -783,8 +784,7 @@ def dataframe_to_cube_with_clear(
     """
     if clear_target:
         clear_cube(clear_function, **kwargs)
-    if write_function is not None:
-        write_function(**kwargs)
+    dataframe_to_cube(write_function, **kwargs)
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -1358,8 +1358,6 @@ def data_copy(
         data_df=dataframe,
         mapping_data=mapping_data
     )
-    print("\n")
-    print(dataframe)
 
     dataframe = dataframe_redimension_and_transform(
         dataframe=dataframe,

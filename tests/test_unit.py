@@ -302,9 +302,10 @@ def test_dataframe_literal_remap_fail(dataframe, mapping, expected_dataframe):
 # ------------------------------------------------------------------------------------------------------------
 
 @parametrize_from_file
-def test_data_copy(tm1_connection, base_data_mdx, mapping_steps, output_data_mdx):
+def test_data_copy_for_single_literal_remap(tm1_connection, base_data_mdx, mapping_steps, literal_mapping, output_data_mdx):
     base_df = tm1_bedrock.mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=base_data_mdx)
     base_df = tm1_bedrock.normalize_dataframe(tm1_service=tm1_connection, dataframe=base_df, mdx=base_data_mdx)
+    base_df = tm1_bedrock.dataframe_literal_remap(dataframe=base_df, mapping=literal_mapping)
 
     tm1_bedrock.data_copy(tm1_service=tm1_connection, data_mdx=base_data_mdx, mapping_steps=mapping_steps, skip_zeros=True)
 
