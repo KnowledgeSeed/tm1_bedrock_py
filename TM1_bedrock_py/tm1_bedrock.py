@@ -166,7 +166,7 @@ class Metadata:
     - `get_cube_dims`: Returns the dimensions of the cube.
     - `get_filter_dims`: Returns the filter dimensions of the mdx query (that were in the WHERE clause)
     - `get_filter_elem`: Returns the exact element of a filter dimension in the mdx query (that was in the WHERE clause)
-    - `get_filter_dict`: Returns the filter dimensions and their elemens in a {"dim":"elem", ..} dictionary format
+    - `get_filter_dict`: Returns the filter dimensions and their elemens in a {"dim":"elem", ...} dictionary format
 
     """
 
@@ -216,8 +216,8 @@ class Metadata:
 # refactor inside metadata class
 # utils
 def collect_metadata(
-    metadata_function: Optional[Callable[..., DataFrame]] = None,
-    **kwargs: Any
+        metadata_function: Optional[Callable[..., DataFrame]] = None,
+        **kwargs: Any
 ) -> Metadata:
     """
     Retrieves a Metadata object by executing the provided metadata function.
@@ -239,15 +239,15 @@ def collect_metadata(
 # tm1 cube object metadata collect, default
 # utils, internal
 def collect_metadata_default(
-    tm1_service: Any,
-    mdx: Optional[str] = None,
-    cube_name: Optional[str] = None,
-    retrieve_all_dimension_data: Optional[
-        Callable[[Any, List[str], Metadata, Callable[[Any, str, List[str], Metadata], Metadata]], None]
-    ] = None,
-    retrieve_dimension_data: Optional[
-        Callable[[Any, str, List[str], Metadata], Metadata]
-    ] = None
+        tm1_service: Any,
+        mdx: Optional[str] = None,
+        cube_name: Optional[str] = None,
+        retrieve_all_dimension_data: Optional[
+            Callable[[Any, List[str], Metadata, Callable[[Any, str, List[str], Metadata], Metadata]], None]
+        ] = None,
+        retrieve_dimension_data: Optional[
+            Callable[[Any, str, List[str], Metadata], Metadata]
+        ] = None
 ) -> Metadata:
     """
     Collects important data about the mdx query and/or it's cube based on either an MDX query or a cube name.
@@ -297,10 +297,10 @@ def collect_metadata_default(
 # tm1 dimension data collector for cube
 # utils, internal
 def retrieve_all_dimension_data_default(
-    tm1_service: Any,
-    cube_dimensions: List[str],
-    metadata: Metadata,
-    retrieve_dimension_data: Callable[[Any, str, List[str], Metadata], Metadata]
+        tm1_service: Any,
+        cube_dimensions: List[str],
+        metadata: Metadata,
+        retrieve_dimension_data: Callable[[Any, str, List[str], Metadata], Metadata]
 ) -> Metadata:
     """
     Default implementation to retrieve and update metadata for all dimensions of a cube.
@@ -324,10 +324,10 @@ def retrieve_all_dimension_data_default(
 # tm1 dimension data collector
 # utils, internal
 def retrieve_dimension_data_default(
-    tm1_service: Any,
-    dimension: str,
-    hierarchies: List[str],
-    metadata: Metadata
+        tm1_service: Any,
+        dimension: str,
+        hierarchies: List[str],
+        metadata: Metadata
 ) -> Metadata:
     """
     Default implementation to retrieve and collect metadata for a dimension and its hierarchies.
@@ -389,10 +389,10 @@ def collect_query_metadata(mdx: str, metadata: Metadata) -> Metadata:
 # validate_dataframe_columns
 # utility
 def validate_dataframe_columns(
-    dataframe: DataFrame,
-    cube_name: str,
-    metadata_function: Optional[Callable[..., Any]] = None,
-    **kwargs: Any
+        dataframe: DataFrame,
+        cube_name: str,
+        metadata_function: Optional[Callable[..., Any]] = None,
+        **kwargs: Any
 ) -> bool:
     """
     Collects the column labels from the DataFrame and compares them with the column labels collected from the Metadata
@@ -420,9 +420,7 @@ def validate_dataframe_columns(
 
 # validate_dataframe_values_for_na
 # utility
-def validate_dataframe_values(
-    dataframe: DataFrame
-) -> bool:
+def validate_dataframe_values(dataframe: DataFrame) -> bool:
     """
     Checks if the DataFrame rows contain NaN values in the "Value" column
 
@@ -438,9 +436,7 @@ def validate_dataframe_values(
 
 # validate_dataframe_no_duplicates
 # utility
-def validate_dataframe_no_duplicates(
-    dataframe: DataFrame
-) -> bool:
+def validate_dataframe_no_duplicates(dataframe: DataFrame) -> bool:
     """
     Checks if the DataFrame rows contain duplicate values for validating the DataFrame.
 
@@ -454,9 +450,7 @@ def validate_dataframe_no_duplicates(
 
 
 # utils
-def validate_dataframe_rows(
-    dataframe: DataFrame
-) -> bool:
+def validate_dataframe_rows(dataframe: DataFrame) -> bool:
     """
     Checks if the DataFrame rows are valid. A row is valid if it does not contain duplicate or NaN values.
 
@@ -472,10 +466,10 @@ def validate_dataframe_rows(
 # validate dataframe for cube objects
 # utils
 def validate_dataframe(
-    dataframe: DataFrame,
-    cube_name: str,
-    metadata_function: Optional[Callable[..., Any]] = None,
-    **kwargs: Any
+        dataframe: DataFrame,
+        cube_name: str,
+        metadata_function: Optional[Callable[..., Any]] = None,
+        **kwargs: Any
 ) -> bool:
     """
     Calls the validate_dataframe_rows() and validate_dataframe_columns() functions and returns only returns True if both
@@ -569,8 +563,8 @@ def validate_target_dim_mapping(
 
 # extract
 def mdx_to_dataframe(
-    mdx_function: Optional[Callable[..., DataFrame]] = None,
-    **kwargs: Any
+        mdx_function: Optional[Callable[..., DataFrame]] = None,
+        **kwargs: Any
 ) -> DataFrame:
     """
     Retrieves a DataFrame by executing the provided MDX function.
@@ -591,12 +585,12 @@ def mdx_to_dataframe(
 
 # extract, internal
 def mdx_to_dataframe_default(
-    tm1_service: TM1Service,
-    data_mdx: Optional[str] = None,
-    data_mdx_list:  Optional[list[str]] = None,
-    skip_zeros: bool = False,
-    skip_consolidated_cells: bool = False,
-    skip_rule_derived_cells: bool = False
+        tm1_service: TM1Service,
+        data_mdx: Optional[str] = None,
+        data_mdx_list:  Optional[list[str]] = None,
+        skip_zeros: bool = False,
+        skip_consolidated_cells: bool = False,
+        skip_rule_derived_cells: bool = False
 ) -> DataFrame:
     """
     Executes an MDX query using the default TM1 service function and returns a DataFrame.
@@ -638,9 +632,9 @@ def mdx_to_dataframe_default(
 # add col assign val -> metadata.get_filter_dict()
 # rearrange dimensions -> metadata.get_cube_dims()
 def normalize_dataframe(
-    dataframe: DataFrame,
-    metadata_function: Optional[Callable[..., Any]] = None,
-    **kwargs: Any
+        dataframe: DataFrame,
+        metadata_function: Optional[Callable[..., Any]] = None,
+        **kwargs: Any
 ) -> DataFrame:
     """
     Returns a normalized dataframe using the raw output dataframe of the execute mdx function, and necessary cube
@@ -664,9 +658,33 @@ def normalize_dataframe(
 
 
 def dataframe_rearrange_dimensions(
-    dataframe: DataFrame,
-    cube_dimensions: List[str]
+        dataframe: DataFrame,
+        cube_dimensions: List[str]
 ) -> DataFrame:
+    """
+    Rearranges the columns of a DataFrame based on the specified cube dimensions.
+
+    The column Value is added to the cube dimension list, since the tm1 loader function expects it to exist at
+    the last column index of the dataframe.
+
+    Parameters:
+    -----------
+    dataframe : DataFrame
+        The input Pandas DataFrame to be rearranged.
+    cube_dimensions : List[str]
+        A list of column names defining the order of dimensions. The "Value"
+        column will be appended if it is not already included.
+
+    Returns:
+    --------
+    DataFrame
+        A new DataFrame containing only the specified cube dimensions in order.
+
+    Raises:
+    -------
+    KeyError:
+        If any column in `cube_dimensions` does not exist in the DataFrame.
+    """
     if 'Value' not in cube_dimensions:
         cube_dimensions.append('Value')
     return dataframe.loc[:, cube_dimensions]
@@ -676,10 +694,10 @@ def dataframe_rearrange_dimensions(
 # utils
 # ráér
 def mdx_object_builder(
-    cube_name: str,
-    cube_filter: dict,
-    metadata_function: Optional[Callable[..., Any]] = None,
-    **kwargs: Any
+        cube_name: str,
+        cube_filter: dict,
+        metadata_function: Optional[Callable[..., Any]] = None,
+        **kwargs: Any
 ) -> str:
     """
     Returns a valid MDX from a cube and dictionary filters. All dimensions not specified in the filter dictionary
@@ -718,8 +736,8 @@ def mdx_object_builder(
 
 # loader
 def clear_cube(
-    clear_function: Optional[Callable[..., Any]] = None,
-    **kwargs: Any
+        clear_function: Optional[Callable[..., Any]] = None,
+        **kwargs: Any
 ) -> None:
     """
     Clears a cube with filters. If no custom function is provided, the default function is used.
@@ -739,9 +757,9 @@ def clear_cube(
 
 # loader, internal
 def clear_cube_default(
-    tm1_service: TM1Service,
-    cube_name: str,
-    clear_set_mdx_list: List[str]
+        tm1_service: TM1Service,
+        cube_name: str,
+        clear_set_mdx_list: List[str]
 ) -> None:
     """
     Clears a cube with filters by generating clear parameters from a list of set MDXs.
@@ -757,8 +775,8 @@ def clear_cube_default(
 
 # loader
 def dataframe_to_cube(
-    write_function: Optional[Callable[..., Any]] = None,
-    **kwargs: Any
+        write_function: Optional[Callable[..., Any]] = None,
+        **kwargs: Any
 ) -> None:
     """
     Writes a DataFrame to a cube. If no custom function is provided, the default function is used.
@@ -775,16 +793,16 @@ def dataframe_to_cube(
 
 # loader, internal
 def dataframe_to_cube_default(
-    tm1_service: TM1Service,
-    dataframe: DataFrame,
-    cube_name: str,
-    cube_dims: List[str],
-    async_write: bool = False,
-    use_ti: bool = False,
-    use_blob: bool = False,
-    increment: bool = False,
-    sum_numeric_duplicates: bool = True,
-    **kwargs
+        tm1_service: TM1Service,
+        dataframe: DataFrame,
+        cube_name: str,
+        cube_dims: List[str],
+        async_write: bool = False,
+        use_ti: bool = False,
+        use_blob: bool = False,
+        increment: bool = False,
+        sum_numeric_duplicates: bool = True,
+        **kwargs
 ) -> None:
     """
     Writes a DataFrame to a cube using the TM1 service.
@@ -822,10 +840,10 @@ def dataframe_to_cube_default(
 
 # loader
 def dataframe_to_cube_with_clear(
-    clear_function: Optional[Callable[..., None]] = None,
-    write_function: Optional[Callable[..., None]] = None,
-    clear_target: bool = False,
-    **kwargs: Any
+        clear_function: Optional[Callable[..., None]] = None,
+        write_function: Optional[Callable[..., None]] = None,
+        clear_target: bool = False,
+        **kwargs: Any
 ) -> None:
     """
     Clears a cube and writes a DataFrame to it if requested.
@@ -850,11 +868,12 @@ def dataframe_to_cube_with_clear(
 # ------------------------------------------------------------------------------------------------------------
 # naming review needed!!!
 
+
 # transform
 def dataframe_filter(
-    dataframe: DataFrame,
-    filter_condition: Dict[str, Any],
-    inplace: bool = False
+        dataframe: DataFrame,
+        filter_condition: Dict[str, Any],
+        inplace: bool = False
 ) -> DataFrame:
     """
     Filters a DataFrame based on a given filter_condition.
@@ -883,7 +902,11 @@ def dataframe_filter(
         pd.Series({col: filter_condition[col] for col in valid_columns})
     ).all(axis=1)
 
-    return dataframe.drop(index=dataframe.index[~condition]).reset_index(drop=True) if inplace else dataframe.loc[condition]
+    return (
+        dataframe.drop(index=dataframe.index[~condition]).reset_index(drop=True)
+        if inplace
+        else dataframe.loc[condition]
+    )
 
 
 # transform
@@ -932,7 +955,7 @@ def dataframe_add_column_assign_value(
 # transform
 def dataframe_redimension_scale_down(
         dataframe: DataFrame,
-        filter_condition: dict,
+        filter_condition: dict
 ) -> DataFrame:
     """
     Filters DataFrame based on filter_condition and drops columns given in column_list.
@@ -986,6 +1009,7 @@ def dataframe_relabel(
     dataframe.rename(columns=columns, inplace=True)
     return dataframe
 
+
 # transform
 def dataframe_value_scale(
         dataframe: DataFrame,
@@ -1032,8 +1056,8 @@ def dataframe_redimension_and_transform(
 
 # transform
 def dataframe_literal_remap(
-    dataframe: DataFrame,
-    mapping: Dict[str, Dict[Any, Any]]
+        dataframe: DataFrame,
+        mapping: Dict[str, Dict[Any, Any]]
 ) -> DataFrame:
     """
     Remaps elements in a DataFrame based on a provided mapping.
@@ -1052,10 +1076,10 @@ def dataframe_literal_remap(
 
 # dataframe map and replace
 # transform
-def dataframe_cube_remap(
-    data_df: DataFrame,
-    mapping_df: DataFrame,
-    mapped_dimensions: Dict[str, str]
+def dataframe_map_and_replace(
+        data_df: DataFrame,
+        mapping_df: DataFrame,
+        mapped_dimensions: Dict[str, str]
 ) -> DataFrame:
     """
     Map specified dimension columns in 'data_df' using 'mapping_df',
@@ -1097,16 +1121,62 @@ def dataframe_cube_remap(
 
 # dataframe map and join
 # transform
+def dataframe_map_and_join(
+        data_df: DataFrame,
+        mapping_df: DataFrame,
+        joined_columns: List[str]
+) -> DataFrame:
+    """
+    Joins specified columns from 'mapping_df' to 'data_df' based on shared dimensions.
+
+    This function identifies the common dimensions between `data_df` and `mapping_df`
+    and performs an in-place left join, adding only the columns specified in `joined_columns`
+    from `mapping_df` to `data_df`.
+
+    Parameters
+    ----------
+    data_df : DataFrame
+        The primary DataFrame to which additional columns will be joined.
+    mapping_df : DataFrame
+        The DataFrame containing additional data to be mapped.
+    joined_columns : List[str]
+        A list of column names that should be brought from `mapping_df` to `data_df`.
+
+    Returns
+    -------
+    DataFrame
+        The modified `data_df` with `joined_columns` added from `mapping_df`
+        based on shared dimensions.
+
+    Raises
+    ------
+    KeyError:
+        If any column in `joined_columns` is not found in `mapping_df`.
+    """
+    # Validate that all joined columns exist in mapping_df
+    missing_cols = [col for col in joined_columns if col not in mapping_df.columns]
+    if missing_cols:
+        raise KeyError(f"Columns {missing_cols} not found in mapping_df.")
+
+    # Identify shared dimensions (excluding the explicitly joined columns)
+    shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - set(joined_columns))
+
+    # Perform an in-place left join
+    data_df = data_df.merge(mapping_df[shared_dimensions + joined_columns],
+                            how='left', on=shared_dimensions)
+
+    return data_df
+
 
 # extract, internal
 def assign_mapping_dataframes(
-    mapping_steps: List[Dict],
-    shared_mapping_df: Optional[DataFrame] = None,
-    shared_mapping_mdx: Optional[str] = None,
-    shared_mapping_metadata_function: Optional[Callable[..., Any]] = None,
-    mdx_function: Optional[Callable[..., DataFrame]] = None,
-    tm1_service: Optional[Any] = None,
-    **kwargs
+        mapping_steps: List[Dict],
+        shared_mapping_df: Optional[DataFrame] = None,
+        shared_mapping_mdx: Optional[str] = None,
+        shared_mapping_metadata_function: Optional[Callable[..., Any]] = None,
+        mdx_function: Optional[Callable[..., DataFrame]] = None,
+        tm1_service: Optional[Any] = None,
+        **kwargs
 ) -> Dict[str, Optional[DataFrame] | List[Dict[str, Any]]]:
     """
     Assigns mapping DataFrames to mapping steps by either:
@@ -1114,14 +1184,14 @@ def assign_mapping_dataframes(
     - Generating a DataFrame from 'mapping_mdx' (if provided).
     - Falling back to 'shared_mapping_df' if neither is provided.
 
-    Ensures that 'map_by_mdx' steps have at least one valid mapping source
+    Ensures that 'map_and_replace' steps have at least one valid mapping source
     (either a step-specific 'mapping_df' or 'mapping_mdx', or a shared_mapping_df).
 
     Parameters:
     ----------
     mapping_steps : List[Dict]
         A list of mapping step dictionaries, each containing at least a 'method' key.
-        - If 'method' is "map_by_mdx", it must include either 'mapping_df' or 'mapping_mdx',
+        - If 'method' is "map_and_replace", it must include either 'mapping_df' or 'mapping_mdx',
           or else the shared_mapping_df must be provided.
         - If 'method' is "replace", no additional checks are applied.
 
@@ -1147,40 +1217,14 @@ def assign_mapping_dataframes(
     Dict[str, Any]
         A dictionary containing:
         - 'shared_mapping_df': The resolved shared mapping DataFrame.
-        - 'mapping_data': The updated list of mapping steps, where each 'map_by_mdx' step
+        - 'mapping_data': The updated list of mapping steps, where each 'map_and_replace' step
           has an assigned 'mapping_df' if necessary.
 
     Raises:
     ------
     ValueError
-        If any 'map_by_mdx' step lacks both 'mapping_df' and 'mapping_mdx',
+        If any 'map_and_replace' step lacks both 'mapping_df' and 'mapping_mdx',
         AND 'shared_mapping_df' is also missing or empty.
-
-    Example of the 'mapping_steps'::
-    -------
-        [
-            {
-                "method": "replace",
-                "mapping": {
-                    "dim1": {"source": "target"},
-                    "dim2": {"source3": "target3", "source4": "target4"}
-                }
-            },
-            {
-                "method": "map_by_mdx",
-                "mapping_mdx": "////valid mdx////",
-                "mapping_metadata_function": mapping_metadata_function
-                "mapping_df": mapping_dataframe
-                "mapping_filter": {
-                    "dim": "element",
-                    "dim2": "element2"
-                },
-                "mapping_dims": {
-                    "Organization Units": "Value"
-                },
-                "relabel_dimensions": false
-            }
-        ]
     """
 
     def create_dataframe(mdx: str, metadata_function: Optional[Callable[..., Any]] = None) -> DataFrame:
@@ -1213,12 +1257,12 @@ def assign_mapping_dataframes(
 
     missing_mdx_steps = [
         step for step in mapping_steps
-        if step["method"] == "map_by_mdx" and not step.get("mapping_df")
+        if step["method"] == "map_and_replace" and not step.get("mapping_df")
     ]
 
     if missing_mdx_steps and (shared_mapping_df is None or shared_mapping_df.empty):
         raise ValueError(
-            f"Missing mapping source for 'map_by_mdx' steps: {missing_mdx_steps}. "
+            f"Missing mapping source for 'map_and_replace' steps: {missing_mdx_steps}. "
             "Either provide 'mapping_mdx' or 'mapping_df' in these steps, or a valid 'shared_mapping_df'."
         )
 
@@ -1226,7 +1270,11 @@ def assign_mapping_dataframes(
 
 
 # transform, internal
-def _apply_replace(data_df: DataFrame, mapping_step: Dict[str, Any], mapping_data: Dict[str, Any]) -> DataFrame:
+def _apply_replace(
+        data_df: DataFrame,
+        mapping_step: Dict[str, Any],
+        mapping_data: Dict[str, Any]
+) -> DataFrame:
     """
     Handle the 'replace' mapping step.
 
@@ -1253,9 +1301,13 @@ def _apply_replace(data_df: DataFrame, mapping_step: Dict[str, Any], mapping_dat
 
 # apply map and replace
 # transform, internal
-def _apply_map_by_mdx(data_df: DataFrame, mapping_step: Dict[str, Any], mapping_data: Dict[str, Any]) -> DataFrame:
+def _apply_map_and_replace(
+        data_df: DataFrame,
+        mapping_step: Dict[str, Any],
+        mapping_data: Dict[str, Any]
+) -> DataFrame:
     """
-    Handle the 'map_by_mdx' mapping step.
+    Handle the 'map_and_replace' mapping step.
 
     Parameters
     ----------
@@ -1290,7 +1342,7 @@ def _apply_map_by_mdx(data_df: DataFrame, mapping_step: Dict[str, Any], mapping_
             inplace=step_uses_independent_mapping
         )
 
-    data_df = dataframe_cube_remap(
+    data_df = dataframe_map_and_replace(
         data_df=data_df,
         mapping_df=mapping_df,
         mapped_dimensions=mapping_step["mapping_dims"]
@@ -1307,11 +1359,44 @@ def _apply_map_by_mdx(data_df: DataFrame, mapping_step: Dict[str, Any], mapping_
 
 # apply map and join
 # transform, internal
+def _apply_map_and_join(
+        data_df: DataFrame,
+        mapping_step: Dict[str, Any],
+        mapping_data: Dict[str, Any]
+) -> DataFrame:
+    step_uses_independent_mapping = (
+        "mapping_df" in mapping_step and mapping_step["mapping_df"] is not None
+    )
+
+    mapping_df = (
+        mapping_step["mapping_df"]
+        if step_uses_independent_mapping
+        else mapping_data["shared_mapping_df"]
+    )
+
+    if "mapping_filter" in mapping_step:
+        mapping_df = dataframe_filter(
+            dataframe=mapping_df,
+            filter_condition=mapping_step["mapping_filter"],
+            inplace=step_uses_independent_mapping
+        )
+
+    data_df = dataframe_map_and_join(
+        data_df=data_df,
+        mapping_df=mapping_df,
+        joined_columns=mapping_step["joined_columns"]
+    )
+
+    if "dropped_columns" in mapping_step:
+        data_df = dataframe_drop_column(dataframe=data_df, column_list=mapping_step["dropped_columns"])
+
+    return data_df
+
 
 # transform
 def dataframe_execute_mappings(
-    data_df: DataFrame,
-    mapping_data: Dict[str, Optional[DataFrame] | List[Dict[str, Any]]]
+        data_df: DataFrame,
+        mapping_data: Dict[str, Optional[DataFrame] | List[Dict[str, Any]]]
 ) -> DataFrame:
     """
     Execute a series of mapping steps on data_df based on the instructions in
@@ -1338,12 +1423,26 @@ def dataframe_execute_mappings(
             {
                 "method": "replace",
                 "mapping": {
-                    "dim1": {"source": "target"},
-                    "dim2": {"source3": "target3", "source4": "target4"}
+                    "dim1tochange": {"source": "target"},
+                    "dim2tochange": {"source3": "target3", "source4": "target4"}
                 }
             },
             {
-                "method": "map_by_mdx",
+                "method": "map_and_replace",
+                "mapping_mdx": "////valid mdx////",
+                "mapping_metadata_function": mapping_metadata_function_name
+                "mapping_df": mapping_dataframe
+                "mapping_filter": {
+                    "dim": "element",
+                    "dim2": "element2"
+                },
+                "mapping_dims": {
+                    "dimname_to_change_values_of_in_source":"dim_to_change_the_values_with_in_mapping"
+                },
+                "relabel_dimensions": false
+            },
+            {
+                "method": "map_and_join",
                 "mapping_mdx": "////valid mdx////",
                 "mapping_metadata_function": mapping_metadata_function
                 "mapping_df": mapping_dataframe
@@ -1351,16 +1450,15 @@ def dataframe_execute_mappings(
                     "dim": "element",
                     "dim2": "element2"
                 },
-                "mapping_dims": {
-                    "Organization Units": "Value"
-                },
-                "relabel_dimensions": false
+                "joined_columns": ["dim1tojoin", "dim2tojoin"],
+                "dropped_columns": ["dim1todrop", "dim2todrop"]
             }
         ]
     """
     method_handlers = {
         "replace": _apply_replace,
-        "map_by_mdx": _apply_map_by_mdx,
+        "map_and_replace": _apply_map_and_replace,
+        "map_and_join": _apply_map_and_join,
     }
     for mapping_step in mapping_data["mapping_steps"]:
         method = mapping_step["method"]
@@ -1374,7 +1472,7 @@ def dataframe_execute_mappings(
 
 # data_copy_intercube
 # bedrock
-def data_copy_inter_cube(
+def data_copy_intercube(
         tm1_service: Optional[Any],
         data_mdx: Optional[str] = None,
         mdx_function: Optional[Callable[..., DataFrame]] = None,
@@ -1474,11 +1572,54 @@ def data_copy_inter_cube(
 
     Notes:
     ------
-    - The function first collects metadata for the source data.
-    - It retrieves and normalizes the data into a DataFrame in the shape that the cube write expects,
-        by adding filter dimensions/elements and rearranging the dimensions.
+    - The function first collects metadata for the source data, and target cube.
+    - It then retrieves the dataframe with the provided mdx function and returns a dataframe.
+    - It adds filter dimensions with elements to the dataframe from the query metadata.
     - It applies transformation and mapping logic.
+        Within this step, it also creates the shared and step-specific mapping dataframes using the provided mdx
+        function if necessary.
+    - It applies the provided value scale function
+    - It rearranges the columns to the expected shape of the target cube.
+    - If needed, it clears the target cube with the provided set MDX's
     - Finally, it writes the processed data into the target cube in TM1.
+
+    Example of the 'mapping_steps' inside mapping_data::
+    -------
+        [
+            {
+                "method": "replace",
+                "mapping": {
+                    "dim1tochange": {"source": "target"},
+                    "dim2tochange": {"source3": "target3", "source4": "target4"}
+                }
+            },
+            {
+                "method": "map_and_replace",
+                "mapping_mdx": "////valid mdx////",
+                "mapping_metadata_function": mapping_metadata_function_name
+                "mapping_df": mapping_dataframe
+                "mapping_filter": {
+                    "dim": "element",
+                    "dim2": "element2"
+                },
+                "mapping_dims": {
+                    "dimname_to_change_values_of_in_source":"dim_to_change_the_values_with_in_mapping"
+                },
+                "relabel_dimensions": false
+            },
+            {
+                "method": "map_and_join",
+                "mapping_mdx": "////valid mdx////",
+                "mapping_metadata_function": mapping_metadata_function
+                "mapping_df": mapping_dataframe
+                "mapping_filter": {
+                    "dim": "element",
+                    "dim2": "element2"
+                },
+                "joined_columns": ["dim1tojoin", "dim2tojoin"],
+                "dropped_columns": ["dim1todrop", "dim2todrop"]
+            }
+        ]
     """
 
     data_metadata = collect_metadata(
@@ -1495,8 +1636,6 @@ def data_copy_inter_cube(
         **kwargs
     )
 
-    def data_metadata_function() -> Metadata: return data_metadata
-
     dataframe = mdx_to_dataframe(
         tm1_service=tm1_service,
         data_mdx=data_mdx,
@@ -1507,10 +1646,7 @@ def data_copy_inter_cube(
         mdx_function=mdx_function,
     )
 
-    dataframe = normalize_dataframe(
-        dataframe=dataframe,
-        metadata_function = data_metadata_function
-    )
+    dataframe = dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
 
     mapping_data = assign_mapping_dataframes(
         mapping_steps=mapping_steps,
@@ -1533,6 +1669,8 @@ def data_copy_inter_cube(
 
     if value_function is not None:
         dataframe = dataframe_value_scale(dataframe=dataframe, value_function=value_function)
+
+    dataframe = dataframe_rearrange_dimensions(dataframe=dataframe, cube_dimensions=target_metadata.get_cube_dims())
 
     dataframe_to_cube_with_clear(
         tm1_service=tm1_service,
@@ -1577,8 +1715,7 @@ def data_copy(
         **kwargs
 ) -> None:
     """
-    Copies data from a source cube to source cube in TM1, with optional transformations, mappings,
-    and basic value scale.
+    Copies data within cube in TM1, with optional transformations, mappings, and basic value scale.
 
     Parameters:
     ----------
@@ -1645,10 +1782,44 @@ def data_copy(
     Notes:
     ------
     - The function first collects metadata for the source data.
-    - It retrieves and normalizes the data into a DataFrame in the shape that the cube write expects,
-        by adding filter dimensions/elements and rearranging the dimensions.
+    - It then retrieves the dataframe with the provided mdx function and returns a dataframe.
+    - It adds filter dimensions with elements to the dataframe from the query metadata.
     - It applies transformation and mapping logic.
-    - Finally, it writes the processed data into the target cube in TM1.
+        Within this step, it also creates the shared and step-specific mapping dataframes using the provided mdx
+        function if necessary.
+    - It applies the provided value scale function
+    - It rearranges the columns to the expected shape of the cube.
+    - If needed, it clears the cube with the provided set MDX's
+    - Finally, it writes the processed data back into the cube in TM1.
+
+    Example of the 'mapping_steps' inside mapping_data::
+    -------
+        [
+            {
+                "method": "replace",
+                "mapping": {
+                    "dim1tochange": {"source": "target"},
+                    "dim2tochange": {"source3": "target3", "source4": "target4"}
+                }
+            },
+            {
+                "method": "map_and_replace",
+                "mapping_mdx": "////valid mdx////",
+                "mapping_metadata_function": mapping_metadata_function_name
+                "mapping_df": mapping_dataframe
+                "mapping_filter": {
+                    "dim": "element",
+                    "dim2": "element2"
+                },
+                "mapping_dims": {
+                    "dimname_to_change_values_of_in_source":"dim_to_change_the_values_with_in_mapping"
+                },
+                "relabel_dimensions": false
+            }
+        ]
+
+    Map and join and the relabeling functonality of map and replace is not viable in case of in-cube transformations.
+    Using them will raise an error at writing
     """
 
     data_metadata = collect_metadata(
@@ -1657,8 +1828,6 @@ def data_copy(
         metadata_function=data_metadata_function,
         **kwargs
     )
-
-    def data_metadata_function() -> Metadata: return data_metadata
 
     dataframe = mdx_to_dataframe(
         tm1_service=tm1_service,
@@ -1670,10 +1839,7 @@ def data_copy(
         mdx_function=mdx_function,
     )
 
-    dataframe = normalize_dataframe(
-        dataframe=dataframe,
-        metadata_function = data_metadata_function
-    )
+    dataframe = dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
 
     mapping_data = assign_mapping_dataframes(
         mapping_steps=mapping_steps,
@@ -1696,6 +1862,8 @@ def data_copy(
 
     if value_function is not None:
         dataframe = dataframe_value_scale(dataframe=dataframe, value_function=value_function)
+
+    dataframe = dataframe_rearrange_dimensions(dataframe=dataframe, cube_dimensions=data_metadata.get_cube_dims())
 
     dataframe_to_cube_with_clear(
         tm1_service=tm1_service,
