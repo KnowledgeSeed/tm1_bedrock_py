@@ -35,39 +35,6 @@ def parse_from_clause(mdx_query: str) -> str:
     return from_part_match.group(1).strip()
 
 
-# to be deprecated
-def parse_where_clause(mdx_query: str) -> List[List[str]]:
-    """
-    Parses the WHERE clause of an MDX query and extracts the dimensions, hierarchies, and elements.
-
-    The function first looks for elements in the format `[Dimension].[Hierarchy].[Element]`. If no hierarchy
-    is specified, it assumes the hierarchy name is the same as the dimension and looks for `[Dimension].[Element]`.
-
-    Args:
-        mdx_query (str): The MDX query string to parse.
-
-    Returns:
-        List[List[str]]: A list of lists where each sublist contains three strings:
-                        - The dimension name
-                        - The hierarchy name (or the dimension name if no hierarchy is present)
-                        - The element name
-    """
-    where_match: Optional[re.Match[str]] = re.search(r'WHERE\s*\((.*?)\)', mdx_query, re.S)
-    if not where_match:
-        return []
-
-    where_content: str = where_match.group(1)
-    hier_elements: List[tuple] = re.findall(r'\[(.*?)\]\.\[(.*?)\]\.\[(.*?)\]', where_content)
-    result: List[List[str]] = [[dim, hier, elem] for dim, hier, elem in hier_elements]
-
-    remaining_content: str = re.sub(r'\[(.*?)\]\.\[(.*?)\]\.\[(.*?)\]', '', where_content)
-    dim_elements: List[tuple] = re.findall(r'\[(.*?)\]\.\[(.*?)\]', remaining_content)
-    result.extend([[dim, dim, elem] for dim, elem in dim_elements])
-
-    return result
-
-
-# mdx slicer to dictionary
 # internal
 def mdx_filter_to_dictionary(mdx_query: str) -> Dict[str, str]:
     """
@@ -128,10 +95,7 @@ def generate_kwargs_from_set_mdx_list(mdx_expressions: List[str]) -> Dict[str, s
 
 # metadata parts, internal naming
 QUERY_VAL = "query value"
-QUERY_FILTER_DIMS = "query filter dimensions"
 QUERY_FILTER_DICT = "query filter dictionary"
-QUERY_FILTER_HIER = "hierarchy"
-QUERY_FILTER_ELEM = "element"
 CUBE_NAME = "cube name"
 CUBE_DIMS = "dimensions"
 DIM_HIERS = "hierarchies"
@@ -201,12 +165,6 @@ class Metadata:
 
     def get_cube_dims(self) -> List[str]:
         return self[CUBE_DIMS].to_list()
-
-    def get_filter_dims(self) -> List[str]:
-        return self[QUERY_FILTER_DIMS].to_list()
-
-    def get_filter_elem(self, dimension: str) -> str:
-        return self[QUERY_FILTER_DIMS][dimension][QUERY_FILTER_ELEM]
 
     def get_filter_dict(self):
         return self[QUERY_FILTER_DICT]
@@ -371,14 +329,7 @@ def collect_query_metadata(mdx: str, metadata: Metadata) -> Metadata:
     """
 
     metadata["query value"] = mdx
-    where_clause = parse_where_clause(mdx)
-
-    for dimension, hierarchy, element in where_clause:
-        metadata[QUERY_FILTER_DIMS][dimension][QUERY_FILTER_HIER] = hierarchy
-        metadata[QUERY_FILTER_DIMS][dimension][QUERY_FILTER_ELEM] = element
-
     metadata[QUERY_FILTER_DICT] = mdx_filter_to_dictionary(mdx)
-
     return metadata
 
 
