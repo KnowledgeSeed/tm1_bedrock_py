@@ -657,51 +657,19 @@ def normalize_dataframe(
         DataFrame: The normalized DataFrame.
     """
 
-
-
     metadata = collect_metadata(metadata_function=metadata_function, **kwargs)
-    dataframe_dimensions = metadata.get_cube_dims()
 
-    if 'Value' not in dataframe_dimensions:
-        dataframe_dimensions.append('Value')
-
-    filter_dimensions = metadata.get_filter_dims()
-    additional_columns = {
-        dimension: metadata.get_filter_elem(dimension) for dimension in filter_dimensions
-    }
-
-    dataframe = dataframe.assign(**additional_columns)
-    dataframe = pd.concat([dataframe, DataFrame(
-        columns=[name for name in dataframe_dimensions if name not in dataframe.columns]
-    )], axis=1)
-
-    return dataframe.loc[:, dataframe_dimensions]
+    dataframe = dataframe_add_column_assign_value(dataframe=dataframe, column_value=metadata.get_filter_dict())
+    return dataframe_rearrange_dimensions(dataframe=dataframe, cube_dimensions=metadata.get_cube_dims())
 
 
-# deprecated, delete
-def mdx_to_normalized_dataframe(
-    mdx_function: Optional[Callable[..., DataFrame]] = None,
-    metadata_function: Optional[Callable[..., Any]] = None,
-    **kwargs: Any
+def dataframe_rearrange_dimensions(
+    dataframe: DataFrame,
+    cube_dimensions: List[str]
 ) -> DataFrame:
-    """
-    Retrieves and normalizes a DataFrame from an MDX query function. The output dataframe will be in the format of the
-    cube, ready for writing.
-
-    Args:
-        mdx_function (Optional[Callable]): A function to retrieve a DataFrame from an MDX query.
-                                           If None, a default function is used.
-        metadata_function (Optional[Callable]): A function to collect metadata for normalization.
-                                                If None, a default function is used.
-        **kwargs (Any): Additional keyword arguments for the MDX and normalization functions.
-
-    Returns:
-        DataFrame: The normalized DataFrame.
-    """
-
-    dataframe = mdx_to_dataframe(mdx_function, **kwargs)
-    dataframe = normalize_dataframe(dataframe, metadata_function, **kwargs)
-    return dataframe
+    if 'Value' not in cube_dimensions:
+        cube_dimensions.append('Value')
+    return dataframe.loc[:, cube_dimensions]
 
 
 # build mdx from cube filter -> review needed
@@ -1217,15 +1185,16 @@ def assign_mapping_dataframes(
 
     def create_dataframe(mdx: str, metadata_function: Optional[Callable[..., Any]] = None) -> DataFrame:
         """Helper function to convert MDX to a normalized DataFrame."""
-        return mdx_to_normalized_dataframe(
+        dataframe = mdx_to_dataframe(
             mdx_function=mdx_function,
-            metadata_function=metadata_function,
             tm1_service=tm1_service,
             data_mdx=mdx,
             skip_zeros=True,
             skip_consolidated_cells=True,
             **kwargs
         )
+        filter_dict = collect_metadata(metadata_function=metadata_function, **kwargs).get_filter_dict()
+        return dataframe_add_column_assign_value(dataframe=dataframe, column_value=filter_dict)
 
     shared_mapping_df = shared_mapping_df or (
         create_dataframe(shared_mapping_mdx, shared_mapping_metadata_function) if shared_mapping_mdx else None
