@@ -66,12 +66,22 @@ def manage():
         # data_mdx = mdx
 
         df = tm1_bedrock.mdx_to_dataframe(tm1_service=tm1, data_mdx=data_mdx)
-
         print(df)
+
+        valid = tm1_bedrock.validate_dataframe_columns(
+            dataframe=df,
+            cube_name=cube_name,
+            tm1_service=tm1
+        )
+        print(valid)
+
+
+
 
         df = tm1_bedrock.normalize_dataframe(tm1_service=tm1, dataframe=df, mdx=data_mdx)
 
         print(df)
+
     finally:
         tm1.logout()
 

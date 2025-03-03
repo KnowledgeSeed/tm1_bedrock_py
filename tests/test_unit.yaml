@@ -116,7 +116,7 @@ example_data_mdx:
 
 test_mdx_object_builder_is_valid_format_true:
   -
-    dimensions: {"Versions": {"Base Plan": "TM1py Test Version"}}
+    cube_filter: {"Versions": {"Base Plan": "TM1py Test Version"}}
     cube_name: "Cost and FTE by Groups"
     expected_mdx:
       "SELECT\r\n
@@ -247,16 +247,20 @@ test_normalize_dataframe_match_dimensions_success:
 
 test_mdx_object_builder_create_dataframe_success:
   -
-    dimensions: {"Versions": {"Base Plan": "TM1py Test Version"}}
+    cube_filter: {"Versions": {"Base Plan": "TM1py Test Version"}}
     cube_name: "Cost and FTE by Groups"
 
 
 # Main: tests for dataframe remapping and copy functions
 test_dataframe_literal_remap_success:
   -
-    dataframe: { "Versions": ["Base Plan"]}
+    dataframe: { "Versions": ["Base Plan", "Plan1"]}
     mapping: { "Versions": {"Base Plan":"TM1py Test Version"} }
-    expected_dataframe: { "Versions": [ "TM1py Test Version" ] }
+    expected_dataframe: { "Versions": [ "TM1py Test Version", "Plan1" ] }
+  -
+    dataframe: { "Versions": ["Base Plan", "Plan1"]}
+    mapping: { "Versions": {"Base Plan":"TM1py Test Version", "Plan1": "Plan2"} }
+    expected_dataframe: { "Versions": [ "TM1py Test Version", "Plan2" ] }
 
 test_dataframe_literal_remap_fail:
   -
@@ -279,3 +283,158 @@ test_dataframe_literal_remap_fail:
     dataframe: {}
     mapping: { "Versions": {"Base Plan":"TM1py Test Version"} }
     expected_dataframe: { "Versions": [ "TM1py Test Version" ] }
+
+test_dataframe_filter:
+  -
+    dataframe: {
+      "Versions": [ "Base Plan", "Plan1", "Plan2" ],
+      "Orgunit": [ "ASD123", "ASD123", "XYZ123" ],
+      "Value": [ 1, 0, 1 ],
+    }
+    filter_condition: { "Orgunit": "ASD123" }
+    expected_dataframe: {
+      "Versions": [ "Base Plan", "Plan1" ],
+      "Orgunit": [ "ASD123", "ASD123" ],
+      "Value": [ 1, 0 ],
+    }
+
+test_dataframe_drop_column:
+  -
+    dataframe: {
+      "Versions": [ "Base Plan", "Plan1", "Plan2" ],
+      "Orgunit": [ "ASD123", "ASD123", "XYZ123" ],
+      "Value": [ 1, 0, 1 ]
+    }
+    column_list: ["Orgunit"]
+    expected_dataframe: {
+      "Versions": [ "Base Plan", "Plan1", "Plan2" ],
+      "Value": [ 1, 0, 1 ]
+    }
+
+test_dataframe_redimension_scale_down:
+  -
+    dataframe: {
+      "Versions": [ "Base Plan", "Plan1", "Plan2" ],
+      "Orgunit": [ "ASD123", "ASD123", "XYZ123" ],
+      "Value": [ 1, 0, 1 ]
+    }
+    filter_condition: { "Orgunit": "ASD123" }
+    expected_dataframe: {
+      "Versions": [ "Base Plan", "Plan1" ],
+      "Value": [ 1, 0]
+    }
+  -
+    dataframe: {
+    "Versions": [ "Base Plan", "Plan1", "Plan2" ],
+    "Orgunit": [ "ASD123", "ASD123", "XYZ123" ],
+    "Value": [ 1, 0, 1 ]
+  }
+    filter_condition: { "Orgunit": "XYZ123" }
+    expected_dataframe: {
+      "Versions": [ "Plan2" ],
+      "Value": [ 1 ]
+    }
+
+
+test_dataframe_relabel:
+  -
+    dataframe: {
+      "Versions": [ "Base Plan", "Plan1", "Plan2" ],
+      "Orgunit": [ "ASD123", "ASD123", "XYZ123" ],
+      "Value": [ 1, 0, 1 ]
+    }
+    columns: { "Orgunit": "Orgunit2" }
+    expected_columns: ["Versions", "Orgunit2", "Value"]
+  -
+    dataframe: {
+    "Versions": [ "Base Plan", "Plan1", "Plan2" ],
+    "Orgunit": [ "ASD123", "ASD123", "XYZ123" ],
+    "Value": [ 1, 0, 1 ]
+  }
+    columns: { "Orgunit": "Orgunit2", "Versions": "Base Version" }
+    expected_columns: [ "Base Version", "Orgunit2", "Value" ]
+
+
+test_dataframe_add_column_assign_value:
+  -
+    dataframe: {
+      "Versions": [ "Base Plan", "Plan1", "Plan2" ],
+      "Orgunit": [ "ASD123", "ASD123", "XYZ123" ],
+    }
+    column_values: { "Employee": "Alice" }
+    expected_dataframe: {
+      "Versions": [ "Base Plan", "Plan1", "Plan2" ],
+      "Orgunit": [ "ASD123", "ASD123", "XYZ123" ],
+      "Employee": ["Alice", "Alice", "Alice"],
+    }
+
+test_dataframe_redimension_and_transform:
+  -
+    dataframe: {
+      "Versions": [ "Base Plan", "Plan1", "Plan2" ],
+      "Period": ["202401", "202402", "202402"],
+      "Orgunit": [ "ASD123", "ASD123", "XYZ123" ],
+    }
+    source_dim_mapping: { "Orgunit": "ASD123" }
+    related_dimensions: { "Versions": "Base Versions" }
+    target_dim_mapping: { "Employee": "Alice" }
+    expected_dataframe: {
+      "Base Versions": [ "Base Plan", "Plan1" ],
+      "Period": [ "202401", "202402" ],
+      "Employee": ["Alice", "Alice"],
+    }
+  -
+    dataframe: {
+    "Versions": [ "Base Plan", "Plan1", "Plan2" ],
+    "Period": [ "202401", "202402", "202402" ],
+    "Orgunit": [ "ASD123", "ASD123", "XYZ123" ],
+  }
+    source_dim_mapping: { "Orgunit": "ASD123", "Period": "202402"}
+    related_dimensions: { "Versions": "Base Versions" }
+    target_dim_mapping: { "Employee": "Alice" }
+    expected_dataframe: {
+      "Base Versions": [ "Plan1" ],
+      "Employee": [ "Alice" ],
+    }
+
+test_data_copy_for_single_literal_remap:
+  -
+    base_data_mdx:
+      "SELECT 
+             {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],[Periods].[Periods].[202304],[Periods].[Periods].[202305],[Periods].[Periods].[202306],[Periods].[Periods].[202307],[Periods].[Periods].[202308],[Periods].[Periods].[202309],[Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]} 
+            ON COLUMNS , 
+             {[Groups].[Groups].[Group_2]}
+             * {[Employees].[Employees].[Employees_1],[Employees].[Employees].[Employees_2],[Employees].[Employees].[Employees_3],[Employees].[Employees].[Employees_4],[Employees].[Employees].[Employees_5]} 
+            ON ROWS 
+          FROM [Cost and FTE by Groups] 
+          WHERE 
+            (
+             [Versions].[Versions].[Base Plan],
+             [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[Caculated Salary],
+             [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
+          )"
+    mapping_steps: [
+      {
+        "method":"replace",
+        "mapping":{
+          "Versions":{
+            "Base Plan":"DataCopy Write Test"
+          }
+        }
+      }
+    ]
+    literal_mapping: { "Versions":{"Base Plan":"DataCopy Write Test" } }
+    output_data_mdx:
+      "SELECT 
+             {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],[Periods].[Periods].[202304],[Periods].[Periods].[202305],[Periods].[Periods].[202306],[Periods].[Periods].[202307],[Periods].[Periods].[202308],[Periods].[Periods].[202309],[Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]} 
+            ON COLUMNS , 
+             {[Groups].[Groups].[Group_2]}
+             * {[Employees].[Employees].[Employees_1],[Employees].[Employees].[Employees_2],[Employees].[Employees].[Employees_3],[Employees].[Employees].[Employees_4],[Employees].[Employees].[Employees_5]} 
+            ON ROWS 
+          FROM [Cost and FTE by Groups] 
+          WHERE 
+            (
+             [Versions].[Versions].[DataCopy Write Test],
+             [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[Caculated Salary],
+             [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
+          )"

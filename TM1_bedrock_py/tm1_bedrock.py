@@ -167,6 +167,27 @@ class Metadata:
 
 
 def collect_metadata(
+    metadata_function: Optional[Callable[..., DataFrame]] = None,
+    **kwargs: Any
+) -> Metadata:
+    """
+    Retrieves a Metadata object by executing the provided metadata function.
+
+    Args:
+        metadata_function (Optional[Callable]): A function to execute the MDX query and return a DataFrame.
+                                           If None, the default function is used.
+        **kwargs (Any): Additional keyword arguments passed to the MDX function.
+
+    Returns:
+        Metadata: The Metadata object resulting from the metadata function call
+    """
+    if metadata_function is None:
+        metadata_function = collect_metadata_default
+
+    return metadata_function(**kwargs)
+
+
+def collect_metadata_default(
     tm1_service: Any,
     mdx: Optional[str] = None,
     cube_name: Optional[str] = None,
@@ -178,7 +199,7 @@ def collect_metadata(
     ] = None
 ) -> Metadata:
     """
-    Collects important data about an mdx query and/or it's cube based on either an MDX query or a cube name.
+    Collects important data about the mdx query and/or it's cube based on either an MDX query or a cube name.
 
     Args:
         tm1_service (Any): The TM1 service object used to interact with the cube.
@@ -328,10 +349,7 @@ def validate_dataframe_columns(
                  of the Metadata. False if the column labels or their order does not match.
     """
 
-    if metadata_function is None:
-        metadata_function = collect_metadata
-
-    metadata = metadata_function(cube_name=cube_name, **kwargs)
+    metadata = collect_metadata(metadata_function=metadata_function, cube_name=cube_name, **kwargs)
     dimensions_from_metadata = metadata.get_cube_dims()
     dimensions_from_dataframe = list(map(str, dataframe.keys()))
     dimensions_from_dataframe.remove("Value")
@@ -414,6 +432,61 @@ def validate_dataframe(
             ))
 
 
+def validate_dataframe_transform_input(
+        source_dataframe: DataFrame,
+        target_cube_name: str,
+        source_dim_mapping: dict,
+        related_dimensions: dict,
+        target_dim_mapping: dict,
+        **kwargs
+) -> bool:
+
+    source_dimensions = source_dataframe.columns()
+    target_dimensions = collect_metadata(cube_name=target_cube_name, **kwargs).get_cube_dims()
+
+    if source_dimensions == target_dimensions:
+        return True
+    else:
+        return (
+            validate_source_dim_mapping(
+                source_dimensions=source_dimensions,
+                source_dim_mapping=source_dim_mapping,
+                related_dimensions=related_dimensions
+            ) and
+            validate_target_dim_mapping(
+                target_dimensions=target_dimensions,
+                target_dim_mapping=target_dim_mapping,
+                related_dimensions=related_dimensions
+            )
+        )
+
+
+def validate_source_dim_mapping(
+        source_dimensions: list,
+        source_dim_mapping: dict,
+        related_dimensions: dict
+) -> bool:
+    related_dim_list = list(map(str, related_dimensions.keys()))
+    if related_dim_list in source_dimensions:
+        return True
+    else:
+        source_dim_list = list(map(str, source_dim_mapping.keys()))
+        return source_dimensions == source_dim_list
+
+
+def validate_target_dim_mapping(
+        target_dimensions: list,
+        target_dim_mapping: dict,
+        related_dimensions: dict
+) -> bool:
+    related_dim_list = list(map(str, related_dimensions.values()))
+    if related_dim_list in target_dimensions:
+        return True
+    else:
+        source_dim_list = list(map(str, target_dim_mapping.keys()))
+        return target_dimensions == source_dim_list
+
+
 # ------------------------------------------------------------------------------------------------------------
 # Main: MDX query to normalized pandas dataframe functions
 # ------------------------------------------------------------------------------------------------------------
@@ -442,17 +515,21 @@ def mdx_to_dataframe(
 
 def mdx_to_dataframe_default(
     tm1_service: TM1Service,
-    data_mdx: str,
+    data_mdx: Optional[str] = None,
+    data_mdx_list:  Optional[list[str]] = None,
     skip_zeros: bool = False,
     skip_consolidated_cells: bool = False,
     skip_rule_derived_cells: bool = False
 ) -> DataFrame:
     """
     Executes an MDX query using the default TM1 service function and returns a DataFrame.
+    If an MDX is given, it will execute it synchronously,
+    if an MDX list is given, it will execute them asynchronously.
 
     Args:
         tm1_service (TM1Service): An active TM1Service object for connecting to the TM1 server.
         data_mdx (str): The MDX query string to execute.
+        data_mdx_list (list[str]): A list of mdx queries to execute in an asynchronous way.
         skip_zeros (bool, optional): If True, cells with zero values will be excluded. Defaults to False.
         skip_consolidated_cells (bool, optional): If True, consolidated cells will be excluded. Defaults to False.
         skip_rule_derived_cells (bool, optional): If True, rule-derived cells will be excluded. Defaults to False.
@@ -460,12 +537,23 @@ def mdx_to_dataframe_default(
     Returns:
         DataFrame: A DataFrame containing the result of the MDX query.
     """
-    return tm1_service.cells.execute_mdx_dataframe(
-        mdx=data_mdx,
-        skip_zeros=skip_zeros,
-        skip_consolidated_cells=skip_consolidated_cells,
-        skip_rule_derived_cells=skip_rule_derived_cells
-    )
+
+    if data_mdx_list:
+        return tm1_service.cells.execute_mdx_dataframe_async(
+            mdx_list=data_mdx_list,
+            skip_zeros=skip_zeros,
+            skip_consolidated_cells=skip_consolidated_cells,
+            skip_rule_derived_cells=skip_rule_derived_cells,
+            use_iterative_json=True
+        )
+    else:
+        return tm1_service.cells.execute_mdx_dataframe(
+            mdx=data_mdx,
+            skip_zeros=skip_zeros,
+            skip_consolidated_cells=skip_consolidated_cells,
+            skip_rule_derived_cells=skip_rule_derived_cells,
+            use_iterative_json=True
+        )
 
 
 def normalize_dataframe(
@@ -488,10 +576,9 @@ def normalize_dataframe(
         DataFrame: The normalized DataFrame.
     """
 
-    if metadata_function is None:
-        metadata_function = collect_metadata
 
-    metadata = metadata_function(**kwargs)
+
+    metadata = collect_metadata(metadata_function=metadata_function, **kwargs)
     dataframe_dimensions = metadata.get_cube_dims()
 
     if 'Value' not in dataframe_dimensions:
@@ -635,7 +722,12 @@ def dataframe_to_cube_default(
     dataframe: DataFrame,
     cube_name: str,
     cube_dims: List[str],
-    mode: str = 'default'
+    async_write: bool = False,
+    use_ti: bool = False,
+    use_blob: bool = False,
+    increment: bool = False,
+    sum_numeric_duplicates: bool = True,
+    **kwargs
 ) -> None:
     """
     Writes a DataFrame to a cube using the TM1 service.
@@ -645,12 +737,19 @@ def dataframe_to_cube_default(
         dataframe (DataFrame): The DataFrame to write to the cube.
         cube_name (str): The name of the target cube.
         cube_dims (List[str]): A list of dimensions for the target cube.
-        mode (str, optional): The mode for writing data ('default', 'ti', or 'blob'). Defaults to 'default'.
-    """
-    use_ti = mode == 'ti'
-    use_blob = mode == 'blob'
+        async_write (bool, optional): Whether to write data asynchronously. Defaults to False.
+        use_ti (bool, optional): Whether to use TurboIntegrator. Defaults to False.
+        use_blob (bool, optional): Whether to use the 'blob' method. Defaults to False.
+        increment (bool, optional): Increments the values in the cube instead of replacing them. Defaults to False.
+        sum_numeric_duplicates (bool, optional): Aggregate numerical values for duplicated intersections.
+            Defaults to True.
 
-    tm1_service.cells.write_dataframe(
+    Returns:
+        None
+    """
+    function_name = "write_dataframe_async" if async_write else "write_dataframe"
+
+    getattr(tm1_service.cells, function_name)(
         cube_name=cube_name,
         data=dataframe,
         dimensions=cube_dims,
@@ -658,7 +757,9 @@ def dataframe_to_cube_default(
         reactivate_transaction_log=True,
         skip_non_updateable=True,
         use_ti=use_ti,
-        use_blob=use_blob
+        use_blob=use_blob,
+        increment=increment,
+        sum_numeric_duplicates=sum_numeric_duplicates
     )
 
 
@@ -683,40 +784,47 @@ def dataframe_to_cube_with_clear(
     """
     if clear_target:
         clear_cube(clear_function, **kwargs)
-    if write_function is not None:
-        write_function(**kwargs)
+    dataframe_to_cube(write_function, **kwargs)
 
 
 # ------------------------------------------------------------------------------------------------------------
 # Main: dataframe transform utility functions
 # ------------------------------------------------------------------------------------------------------------
 
-# basic filter for 1 dimension-element
-# basic addition for 1 dimension-element
-# filter for nonzero then drop value column
+
 def dataframe_filter(
-        dataframe: DataFrame,
-        filter_condition: dict
+    dataframe: DataFrame,
+    filter_condition: Dict[str, Any],
+    inplace: bool = False
 ) -> DataFrame:
     """
-    Filters DataFrame based on filter_condition. Only filters the DataFrame if at least one condition is met.
-    If not, it returns an empty DataFrame.
+    Filters a DataFrame based on a given filter_condition.
+
+    - If at least one valid condition is met, it filters the DataFrame.
+    - If no valid condition is met, it returns an empty DataFrame.
+    - If 'inplace' is True, the function modifies the original DataFrame and returns it.
+    - If 'inplace' is False (default), it returns a new filtered DataFrame.
 
     Args:
-         dataframe: (DataFrame): The DataFrame to filter.
-         filter_condition: (dict) Dimension:element key,value pairs for filtering the DataFrame.
+        dataframe (DataFrame): The DataFrame to filter.
+        filter_condition (Dict[str, Any]): Dictionary with column names as keys and values to filter for.
+        inplace (bool, optional): If True, modifies the original DataFrame in-place. Defaults to False.
+
     Returns:
-        DataFrame: The updated DataFrame.
+        DataFrame: The filtered DataFrame (either new or modified in-place).
     """
-    valid_columns = [col for col in filter_condition if col in dataframe.columns]
+    valid_columns = list(filter(lambda col: col in dataframe.columns, filter_condition.keys()))
 
+    # in case of inplace=True, don't return empty data
     if not valid_columns:
-        return dataframe.iloc[0:0]
+        return dataframe if inplace else dataframe.iloc[0:0]
 
-    condition = (
-            dataframe[valid_columns] == pd.Series({col: filter_condition[col] for col in valid_columns})
+    # build condition boolean string for row dropping
+    condition = dataframe[valid_columns].eq(
+        pd.Series({col: filter_condition[col] for col in valid_columns})
     ).all(axis=1)
-    return dataframe.loc[condition]
+
+    return dataframe.drop(index=dataframe.index[~condition]).reset_index(drop=True) if inplace else dataframe.loc[condition]
 
 
 def dataframe_drop_column(
@@ -735,7 +843,7 @@ def dataframe_drop_column(
     """
     if not all(item in dataframe.columns for item in column_list):
         return dataframe
-    return dataframe.drop(column_list, axis=1)
+    return dataframe.drop(column_list, axis=1).reset_index(drop=True)
 
 
 def dataframe_add_column_assign_value(
@@ -755,9 +863,9 @@ def dataframe_add_column_assign_value(
     new_columns = {col: value for col, value in column_value.items() if col not in dataframe.columns}
 
     if new_columns:
-        dataframe[list(new_columns)] = pd.DataFrame([new_columns], index=dataframe.index)
+        dataframe[list(new_columns)] = DataFrame([new_columns], index=dataframe.index)
 
-    return dataframe
+    return dataframe.reset_index(drop=True)
 
 
 def dataframe_redimension_scale_down(
@@ -777,7 +885,7 @@ def dataframe_redimension_scale_down(
 
     filtered_dataframe = dataframe_filter(dataframe=dataframe, filter_condition=filter_condition)
     column_list = list(map(str, filter_condition.keys()))
-    return dataframe_drop_column(dataframe=filtered_dataframe, column_list=column_list)
+    return dataframe_drop_column(dataframe=filtered_dataframe, column_list=column_list).reset_index(drop=True)
 
 
 def dataframe_drop_zero_and_values(
@@ -794,7 +902,7 @@ def dataframe_drop_zero_and_values(
 
     dataframe.drop(dataframe[dataframe["Value"] == 0].index, inplace=True)
     dataframe.drop(columns=["Value"], inplace=True)
-    return dataframe
+    return dataframe.reset_index(drop=True)
 
 
 def dataframe_relabel(
@@ -830,6 +938,25 @@ def dataframe_value_scale(
         DataFrame: The modified DataFrame (in place).
     """
     dataframe["Value"] = dataframe["Value"].apply(value_function)
+    return dataframe.reset_index(drop=True)
+
+
+def dataframe_redimension_and_transform(
+        dataframe: DataFrame,
+        source_dim_mapping: Optional[dict] = None,
+        related_dimensions: Optional[dict] = None,
+        target_dim_mapping: Optional[dict] = None
+) -> DataFrame:
+
+    if source_dim_mapping is not None:
+        dataframe = dataframe_redimension_scale_down(dataframe=dataframe, filter_condition=source_dim_mapping)
+
+    if related_dimensions is not None:
+        dataframe = dataframe_relabel(dataframe=dataframe, columns=related_dimensions)
+
+    if target_dim_mapping is not None:
+        dataframe = dataframe_add_column_assign_value(dataframe=dataframe, column_value=target_dim_mapping)
+
     return dataframe
 
 
@@ -853,124 +980,482 @@ def dataframe_literal_remap(
     Returns:
         DataFrame: The updated DataFrame with elements remapped.
     """
-    for dimension, element_mapping in mapping.items():
-        if dimension in dataframe.columns:
-            dataframe[dimension].replace(element_mapping, inplace=True)
+    dataframe.replace({col: mapping[col] for col in mapping.keys() if col in dataframe.columns}, inplace=True)
     return dataframe
-
-
-def dataframe_settings_remap(
-    main_dataframe: DataFrame,
-    mapping_dataframe: DataFrame,
-    target_mapping: Dict[str, Dict[str, Any]]
-) -> DataFrame:
-    """
-    Remaps dimensions in the main DataFrame using values from the mapping DataFrame.
-
-    Args:
-        main_dataframe (DataFrame): The primary DataFrame with data to be remapped.
-        mapping_dataframe (DataFrame): The DataFrame containing mapping values and keys.
-        target_mapping (Dict[str, Dict[str, Any]]): A dictionary defining how to map dimensions.
-            Format - {'Target Dimension': {'Mapping Dimension': 'Mapping Value'}}.
-
-    Returns:
-        DataFrame: The remapped DataFrame.
-
-    Raises:
-        ValueError: If any shared dimensions are missing in the main DataFrame.
-    """
-    shared_dimensions = list(set(main_dataframe.columns) & set(mapping_dataframe.columns))
-
-    filtered_mapping = mapping_dataframe.copy()
-    for target_dimension, mapping_info in target_mapping.items():
-        for mapping_dimension, mapping_value in mapping_info.items():
-            filtered_mapping = filtered_mapping[filtered_mapping[mapping_dimension] == mapping_value]
-
-    missing_dims = [dim for dim in shared_dimensions if dim not in main_dataframe.columns]
-    if missing_dims:
-        raise ValueError(f"The following shared dimensions are missing in the main DataFrame: {missing_dims}")
-
-    merged_df = main_dataframe.merge(filtered_mapping, on=shared_dimensions, how="left")
-
-    for target_dimension, mapping_info in target_mapping.items():
-        for mapping_dimension, _ in mapping_info.items():
-            merged_df[target_dimension] = merged_df[mapping_dimension]
-
-    merged_df = merged_df.drop(
-        columns=[info for mapping in target_mapping.values() for info in mapping],
-        errors="ignore"
-    )
-
-    return merged_df
 
 
 def dataframe_cube_remap(
     data_df: DataFrame,
     mapping_df: DataFrame,
-    mapped_dimensions: dict
+    mapped_dimensions: Dict[str, str]
 ) -> DataFrame:
     """
-    Map specified dimension columns in 'data_df' using a 'mapping_df'.
-
-    Steps:
-        1) Identify shared dimensions (intersection of columns).
-        2) Exclude from shared dimensions any column which appears in 'mapped_dimensions' keys,
-           because we want to replace these columns, not join on them.
-        3) Perform a left join on the remaining shared dimensions.
-        4) For each (key, value) in 'mapped_dimensions', overwrite 'key' column
-           in the joined dataframe with the data from the 'value' column in mapping_df.
-        5) Return only the columns that were originally in 'data_df'.
+    Map specified dimension columns in 'data_df' using 'mapping_df',
+    optimized for memory efficiency by modifying dataframes in-place.
 
     Parameters
     ----------
-    data_df : pd.DataFrame
+    data_df : DataFrame
         The original source dataframe, whose columns we want to preserve except
         where we overwrite certain dimension values.
-    mapping_df : pd.DataFrame
+    mapping_df : DataFrame
         The dataframe containing the mapped values for certain columns.
     mapped_dimensions : dict
         A dictionary that specifies which columns in 'data_df' should be replaced
-        by which columns in 'mapping_df'. For example, {"orgunit": "orgunit_mapped"}.
-        The key is the column name in data_df, the value is the column name in mapping_df.
+        by which columns in 'mapping_df'.
 
     Returns
     -------
-    pd.DataFrame
-        A new dataframe with the same columns (and order) as 'data_df', but
-        with specified dimensions mapped from 'mapping_df'.
+    DataFrame
+        A dataframe with the same columns (and order) as 'data_df',
+        but with specified dimensions mapped from 'mapping_df'.
     """
 
-    # 1) Find columns in both data_df and mapping_df
-    shared_dimensions = list(set(data_df.columns).intersection(set(mapping_df.columns)))
+    # 1) Compute shared dimensions, excluding those being remapped
+    shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - set(mapped_dimensions.keys()))
 
-    # 2) Exclude columns that appear in the mapped_dimensions keys
-    for dim in mapped_dimensions.keys():
-        if dim in shared_dimensions:
-            shared_dimensions.remove(dim)
+    # 2) Perform an in-place left join on shared dimensions
+    data_df = data_df.merge(mapping_df, how='left', on=shared_dimensions, suffixes=('', '_mapped'))
 
-    # 3) Perform a left join on these remaining shared columns
-    #    We use suffixes=('', '_mapped') to avoid collisions
-    joined_df = data_df.merge(
-        mapping_df,
-        how='left',
-        on=shared_dimensions,
-        suffixes=('', '_mapped')
+    # 3) Overwrite columns in data_df with their mapped versions, avoiding extra copies
+    for data_col, map_col in mapped_dimensions.items():
+        mapped_col_name = f"{map_col}_mapped" if map_col == data_col else map_col
+        data_df[data_col] = data_df[mapped_col_name]
+        del data_df[mapped_col_name]
+
+    # 4) Retain only the original columns from data_df
+    return data_df[data_df.columns.intersection(set(mapping_df.columns))]
+
+
+def assign_mapping_dataframes(
+    mapping_steps: List[Dict],
+    shared_mapping_df: Optional[DataFrame] = None,
+    shared_mapping_mdx: Optional[str] = None,
+    shared_mapping_metadata_function: Optional[Callable[..., Any]] = None,
+    mdx_function: Optional[Callable[..., DataFrame]] = None,
+    tm1_service: Optional[Any] = None,
+    **kwargs
+) -> Dict[str, Optional[DataFrame] | List[Dict[str, Any]]]:
+    """
+    Assigns mapping DataFrames to mapping steps by either:
+    - Using an existing 'mapping_df' in the step (if provided).
+    - Generating a DataFrame from 'mapping_mdx' (if provided).
+    - Falling back to 'shared_mapping_df' if neither is provided.
+
+    Ensures that 'map_by_mdx' steps have at least one valid mapping source
+    (either a step-specific 'mapping_df' or 'mapping_mdx', or a shared_mapping_df).
+
+    Parameters:
+    ----------
+    mapping_steps : List[Dict]
+        A list of mapping step dictionaries, each containing at least a 'method' key.
+        - If 'method' is "map_by_mdx", it must include either 'mapping_df' or 'mapping_mdx',
+          or else the shared_mapping_df must be provided.
+        - If 'method' is "replace", no additional checks are applied.
+
+    shared_mapping_df : Optional[DataFrame], default=None
+        A shared DataFrame to be used if no 'mapping_df' or 'mapping_mdx' is provided.
+
+    shared_mapping_mdx : Optional[str], default=None
+        A shared MDX query string that will be converted into a DataFrame if no
+        'mapping_df' or 'mapping_mdx' is provided.
+
+    mdx_function : Optional[Callable[..., DataFrame]], default=None
+        A function that takes an MDX query and returns a Pandas DataFrame.
+        Used to convert 'mapping_mdx' queries into DataFrames.
+
+    tm1_service : Optional[Any], default=None
+        An optional service object used by 'mdx_function' if required.
+
+    **kwargs : dict
+        Additional keyword arguments that will be passed to 'mdx_function'.
+
+    Returns:
+    -------
+    Dict[str, Any]
+        A dictionary containing:
+        - 'shared_mapping_df': The resolved shared mapping DataFrame.
+        - 'mapping_data': The updated list of mapping steps, where each 'map_by_mdx' step
+          has an assigned 'mapping_df' if necessary.
+
+    Raises:
+    ------
+    ValueError
+        If any 'map_by_mdx' step lacks both 'mapping_df' and 'mapping_mdx',
+        AND 'shared_mapping_df' is also missing or empty.
+
+    Example of the 'mapping_steps'::
+    -------
+        [
+            {
+                "method": "replace",
+                "mapping": {
+                    "dim1": {"source": "target"},
+                    "dim2": {"source3": "target3", "source4": "target4"}
+                }
+            },
+            {
+                "method": "map_by_mdx",
+                "mapping_mdx": "////valid mdx////",
+                "mapping_metadata_function": mapping_metadata_function
+                "mapping_df": mapping_dataframe
+                "mapping_filter": {
+                    "dim": "element",
+                    "dim2": "element2"
+                },
+                "mapping_dims": {
+                    "Organization Units": "Value"
+                },
+                "relabel_dimensions": false
+            }
+        ]
+    """
+
+    def create_dataframe(mdx: str, metadata_function: Optional[Callable[..., Any]] = None) -> DataFrame:
+        """Helper function to convert MDX to a normalized DataFrame."""
+        return mdx_to_normalized_dataframe(
+            mdx_function=mdx_function,
+            metadata_function=metadata_function,
+            tm1_service=tm1_service,
+            data_mdx=mdx,
+            skip_zeros=True,
+            skip_consolidated_cells=True,
+            **kwargs
+        )
+
+    shared_mapping_df = shared_mapping_df or (
+        create_dataframe(shared_mapping_mdx, shared_mapping_metadata_function) if shared_mapping_mdx else None
     )
 
-    # 4) Overwrite columns in data_df with the mapped columns
-    for data_col, map_col in mapped_dimensions.items():
-        # If the mapped column name is the same, it will appear in joined as 'map_col_mapped'
-        # if it was not used in the join. Otherwise, if the name is different, it should appear
-        # exactly as 'map_col'. Use whichever logic fits your data best.
-        #
-        # Below we handle the case if the mapped column is the same name as the key:
-        map_col_in_joined = map_col
-        if map_col == data_col:
-            map_col_in_joined = f"{map_col}_mapped"
+    mapping_steps = [
+        {
+            **step,
+            "mapping_df": step.get("mapping_df")
+            or (create_dataframe(step["mapping_mdx"],
+                                 step["mapping_metadata_function"]
+                                 ) if "mapping_mdx" in step else None)
+        }
+        for step in mapping_steps
+    ]
 
-        joined_df[data_col] = joined_df[map_col_in_joined]
+    missing_mdx_steps = [
+        step for step in mapping_steps
+        if step["method"] == "map_by_mdx" and not step.get("mapping_df")
+    ]
 
-    # 5) Retain only the original columns from data_df
-    mapped_df = joined_df[data_df.columns]
+    if missing_mdx_steps and (shared_mapping_df is None or shared_mapping_df.empty):
+        raise ValueError(
+            f"Missing mapping source for 'map_by_mdx' steps: {missing_mdx_steps}. "
+            "Either provide 'mapping_mdx' or 'mapping_df' in these steps, or a valid 'shared_mapping_df'."
+        )
 
-    return dataframe_relabel(dataframe=mapped_df, columns=mapped_dimensions)
+    return {"shared_mapping_df": shared_mapping_df, "mapping_steps": mapping_steps}
+
+
+def _apply_replace(data_df: DataFrame, mapping_step: Dict[str, Any], mapping_data: Dict[str, Any]) -> DataFrame:
+    """
+    Handle the 'replace' mapping step.
+
+    Parameters
+    ----------
+    data_df : DataFrame
+        The DataFrame to apply replacements on.
+    mapping_step : Dict[str, Any]
+        The dictionary containing information about the current mapping step.
+    mapping_data : Dict[str, Any]
+        The overall mapping data dictionary which can include shared or step-specific resources.
+
+    Returns
+    -------
+    DataFrame
+        The modified DataFrame after applying the literal remap.
+    """
+    _ = mapping_data
+    return dataframe_literal_remap(
+        dataframe=data_df,
+        mapping=mapping_step["mapping"]
+    )
+
+
+def _apply_map_by_mdx(data_df: DataFrame, mapping_step: Dict[str, Any], mapping_data: Dict[str, Any]) -> DataFrame:
+    """
+    Handle the 'map_by_mdx' mapping step.
+
+    Parameters
+    ----------
+    data_df : DataFrame
+        The main DataFrame that will be remapped using the MDX approach.
+    mapping_step : Dict[str, Any]
+        The dictionary specifying how to map, which may contain 'mapping_filter',
+        'mapping_mdx', 'mapping_dims', etc.
+    mapping_data : Dict[str, Any]
+        The overall mapping data dictionary. Used to fetch a shared DataFrame if
+        a step-specific one is not provided.
+
+    Returns
+    -------
+    DataFrame
+        The modified DataFrame after applying the MDX-based remap.
+    """
+    step_uses_independent_mapping = (
+        "mapping_df" in mapping_step and mapping_step["mapping_df"] is not None
+    )
+
+    mapping_df = (
+        mapping_step["mapping_df"]
+        if step_uses_independent_mapping
+        else mapping_data["shared_mapping_df"]
+    )
+
+    if "mapping_filter" in mapping_step:
+        mapping_df = dataframe_filter(
+            dataframe=mapping_df,
+            filter_condition=mapping_step["mapping_filter"],
+            inplace=step_uses_independent_mapping
+        )
+
+    data_df = dataframe_cube_remap(
+        data_df=data_df,
+        mapping_df=mapping_df,
+        mapped_dimensions=mapping_step["mapping_dims"]
+    )
+
+    if mapping_step.get("relabel_dimensions"):
+        data_df = dataframe_relabel(
+            dataframe=data_df,
+            columns=mapping_step["mapping_dims"]
+        )
+
+    return data_df
+
+
+def dataframe_execute_mappings(
+    data_df: DataFrame,
+    mapping_data: Dict[str, Optional[DataFrame] | List[Dict[str, Any]]]
+) -> DataFrame:
+    """
+    Execute a series of mapping steps on data_df based on the instructions in
+    mapping_data. Uses mutation for memory efficiency.
+    Mapping filters mutate the step specific mapping dataframes, but don't mutate the shared one.
+
+    Parameters
+    ----------
+    data_df : DataFrame
+        The main DataFrame to be transformed.
+    mapping_data : Dict[str, Optional[DataFrame] | List[Dict[str, Any]]]
+        A dictionary containing:
+          - "mapping_steps": a list of dicts specifying each mapping step.
+          - "shared_mapping_df": a shared DataFrame that may be used by multiple steps.
+
+    Returns
+    -------
+    DataFrame
+        The transformed DataFrame after all mapping steps have been applied.
+
+    Example of the 'mapping_steps' inside mapping_data::
+    -------
+        [
+            {
+                "method": "replace",
+                "mapping": {
+                    "dim1": {"source": "target"},
+                    "dim2": {"source3": "target3", "source4": "target4"}
+                }
+            },
+            {
+                "method": "map_by_mdx",
+                "mapping_mdx": "////valid mdx////",
+                "mapping_metadata_function": mapping_metadata_function
+                "mapping_df": mapping_dataframe
+                "mapping_filter": {
+                    "dim": "element",
+                    "dim2": "element2"
+                },
+                "mapping_dims": {
+                    "Organization Units": "Value"
+                },
+                "relabel_dimensions": false
+            }
+        ]
+    """
+    method_handlers = {
+        "replace": _apply_replace,
+        "map_by_mdx": _apply_map_by_mdx,
+    }
+    for mapping_step in mapping_data["mapping_steps"]:
+        method = mapping_step["method"]
+        if method in method_handlers:
+            data_df = method_handlers[method](data_df, mapping_step, mapping_data)
+        else:
+            raise ValueError(f"Unsupported mapping method: {method}")
+
+    return data_df
+
+
+def data_copy(
+        tm1_service: Optional[Any],
+        data_mdx: Optional[str] = None,
+        mdx_function: Optional[Callable[..., DataFrame]] = None,
+        data_mdx_list: Optional[list[str]] = None,
+        skip_zeros: Optional[bool] = False,
+        skip_consolidated_cells: Optional[bool] = False,
+        skip_rule_derived_cells: Optional[bool] = False,
+        data_metadata_function: Optional[Callable[..., DataFrame]] = None,
+        target_cube_name: Optional[str] = None,
+        mapping_steps: Optional[List[Dict]] = None,
+        #target_metadata_function: Optional[Callable[..., DataFrame]] = None,
+        shared_mapping_df: Optional[DataFrame] = None,
+        shared_mapping_mdx: Optional[str] = None,
+        shared_mapping_metadata_function: Optional[Callable[..., Any]] = None,
+        source_dim_mapping: Optional[dict] = None,
+        related_dimensions: Optional[dict] = None,
+        target_dim_mapping: Optional[dict] = None,
+        value_function: Optional[Callable[..., Any]] = None,
+        clear_set_mdx_list: Optional[List[str]] = None,
+        clear_target: Optional[bool] = False,
+        async_write: bool = False,
+        use_ti: bool = False,
+        use_blob: bool = False,
+        increment: bool = False,
+        sum_numeric_duplicates: bool = True,
+        **kwargs
+) -> None:
+    """
+    Copies data from a source cube to a target cube in TM1, with optional transformations, mappings,
+    and basic value scale.
+
+    Parameters:
+    ----------
+    tm1_service : Optional[Any]
+        TM1 service instance used to interact with the TM1 server.
+    data_mdx : Optional[str]
+        MDX query string for retrieving source data. Currently, this can be the only source
+    mdx_function : Optional[Callable[..., DataFrame]]
+        Function to execute an MDX query and return a DataFrame.
+    data_mdx_list : Optional[list[str]]
+        List of MDX queries for retrieving multiple data sets.
+    skip_zeros : Optional[bool], default=False
+        Whether to skip zero values when retrieving source data.
+    skip_consolidated_cells : Optional[bool], default=False
+        Whether to skip consolidated cells in the source data.
+    skip_rule_derived_cells : Optional[bool], default=False
+        Whether to skip rule-derived cells in the source data.
+    data_metadata_function : Optional[Callable[..., DataFrame]]
+        Function to retrieve metadata about the data source.
+    target_cube_name : Optional[str]
+        Name of the target cube where the data should be copied. If omitted, it will be set as the source cube name.
+    mapping_steps : Optional[List[Dict]]
+        Steps for mapping data from source to target.
+    shared_mapping_df : Optional[DataFrame]
+        DataFrame containing shared mapping data. This will be used by the cube mapping steps, if no local mapping
+        is provided. The mapping steps filtering don't mutate the original dataframe.
+    shared_mapping_mdx : Optional[str]
+        MDX query to retrieve shared mapping data.
+    shared_mapping_metadata_function : Optional[Callable[..., Any]]
+        Function to retrieve metadata for the shared mapping.
+    source_dim_mapping : Optional[dict]
+        Declaration of the dimensions present in the source dataframe, but not present in the target cube.
+        If there are such dimensions, these need to be specified, with for each dimension.
+        Rows will be filtered with the specified element, and then the dimension (column) will be dropped.
+    related_dimensions : Optional[dict]
+        Dictionary defining related dimensions for transformation. Source dimensions will be relabeled to the target
+        dimensions. Dimensionality and elements will stay unchanged.
+    target_dim_mapping : Optional[dict]
+        Declarations of the dimensions present in the target cube, but not in the data dataframe,
+        after all mapping steps. If there are such dimensions, these need to be specified, with an element for each
+        dimension. Dimensions (columns) will be added to the dataframe, and their values will be set uniformly.
+    value_function : Optional[Callable[..., Any]]
+        Function for transforming values before writing to the target cube.
+    clear_set_mdx_list : Optional[List[str]]
+        List of MDX queries to clear specific data areas in the target cube.
+    clear_target : Optional[bool], default=False
+        Whether to clear target before writing.
+    async_write : bool, default=False
+        Whether to write data asynchronously. Currently, divides the data into 250.000 row chunks.
+    use_ti : bool, default=False
+        Whether to use TurboIntegrator (TI) for writing data.
+    use_blob : bool, default=False
+        Whether to use BLOB storage for data transfer.
+    increment : bool, default=False
+        Whether to increment existing values instead of replacing them in the cube.
+    sum_numeric_duplicates : bool, default=True
+        Whether to sum duplicate numeric values in the dataframe instead of overwriting them.
+    **kwargs
+        Additional keyword arguments for customization.
+
+    Returns:
+    -------
+    None
+        This function does not return anything; it writes data directly into TM1
+
+    Notes:
+    ------
+    - The function first collects metadata for the source data.
+    - It retrieves and normalizes the data into a DataFrame in the shape that the cube write expects,
+        by adding filter dimensions/elements and rearranging the dimensions.
+    - It applies transformation and mapping logic.
+    - Finally, it writes the processed data into the target cube in TM1.
+    """
+
+    data_metadata = collect_metadata(
+        tm1_service=tm1_service,
+        mdx=data_mdx,
+        metadata_function=data_metadata_function,
+        **kwargs
+    )
+
+    if target_cube_name is None:
+        target_cube_name = data_metadata.get_cube_name()
+
+    def data_metadata_function() -> Metadata: return data_metadata
+
+    dataframe = mdx_to_dataframe(
+        tm1_service=tm1_service,
+        data_mdx=data_mdx,
+        data_mdx_list=data_mdx_list,
+        skip_zeros=skip_zeros,
+        skip_consolidated_cells=skip_consolidated_cells,
+        skip_rule_derived_cells=skip_rule_derived_cells,
+        mdx_function=mdx_function,
+    )
+
+    dataframe = normalize_dataframe(
+        dataframe=dataframe,
+        metadata_function = data_metadata_function
+    )
+
+    mapping_data = assign_mapping_dataframes(
+        mapping_steps=mapping_steps,
+        shared_mapping_df=shared_mapping_df,
+        shared_mapping_mdx=shared_mapping_mdx,
+        shared_mapping_metadata_function=shared_mapping_metadata_function
+    )
+
+    dataframe = dataframe_execute_mappings(
+        data_df=dataframe,
+        mapping_data=mapping_data
+    )
+
+    dataframe = dataframe_redimension_and_transform(
+        dataframe=dataframe,
+        source_dim_mapping=source_dim_mapping,
+        related_dimensions=related_dimensions,
+        target_dim_mapping=target_dim_mapping
+    )
+
+    if value_function is not None:
+        dataframe = dataframe_value_scale(dataframe=dataframe, value_function=value_function)
+
+    dataframe_to_cube_with_clear(
+        tm1_service=tm1_service,
+        dataframe=dataframe,
+        clear_set_mdx_list=clear_set_mdx_list,
+        clear_target=clear_target,
+        async_write=async_write,
+        use_ti=use_ti,
+        increment=increment,
+        use_blob=use_blob,
+        sum_numeric_duplicates=sum_numeric_duplicates,
+        cube_dims=data_metadata.get_cube_dims(),
+        cube_name=target_cube_name
+    )
