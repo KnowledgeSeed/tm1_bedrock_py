@@ -1320,6 +1320,83 @@ def data_copy(
         sum_numeric_duplicates: bool = True,
         **kwargs
 ) -> None:
+    """
+    Copies data from a source cube to a target cube in TM1, with optional transformations, mappings,
+    and basic value scale.
+
+    Parameters:
+    ----------
+    tm1_service : Optional[Any]
+        TM1 service instance used to interact with the TM1 server.
+    data_mdx : Optional[str]
+        MDX query string for retrieving source data. Currently, this can be the only source
+    mdx_function : Optional[Callable[..., DataFrame]]
+        Function to execute an MDX query and return a DataFrame.
+    data_mdx_list : Optional[list[str]]
+        List of MDX queries for retrieving multiple data sets.
+    skip_zeros : Optional[bool], default=False
+        Whether to skip zero values when retrieving source data.
+    skip_consolidated_cells : Optional[bool], default=False
+        Whether to skip consolidated cells in the source data.
+    skip_rule_derived_cells : Optional[bool], default=False
+        Whether to skip rule-derived cells in the source data.
+    data_metadata_function : Optional[Callable[..., DataFrame]]
+        Function to retrieve metadata about the data source.
+    target_cube_name : Optional[str]
+        Name of the target cube where the data should be copied. If omitted, it will be set as the source cube name.
+    mapping_steps : Optional[List[Dict]]
+        Steps for mapping data from source to target.
+    shared_mapping_df : Optional[DataFrame]
+        DataFrame containing shared mapping data. This will be used by the cube mapping steps, if no local mapping
+        is provided. The mapping steps filtering don't mutate the original dataframe.
+    shared_mapping_mdx : Optional[str]
+        MDX query to retrieve shared mapping data.
+    shared_mapping_metadata_function : Optional[Callable[..., Any]]
+        Function to retrieve metadata for the shared mapping.
+    source_dim_mapping : Optional[dict]
+        Declaration of the dimensions present in the source dataframe, but not present in the target cube.
+        If there are such dimensions, these need to be specified, with for each dimension.
+        Rows will be filtered with the specified element, and then the dimension (column) will be dropped.
+    related_dimensions : Optional[dict]
+        Dictionary defining related dimensions for transformation. Source dimensions will be relabeled to the target
+        dimensions. Dimensionality and elements will stay unchanged.
+    target_dim_mapping : Optional[dict]
+        Declarations of the dimensions present in the target cube, but not in the data dataframe,
+        after all mapping steps. If there are such dimensions, these need to be specified, with an element for each
+        dimension. Dimensions (columns) will be added to the dataframe, and their values will be set uniformly.
+    value_function : Optional[Callable[..., Any]]
+        Function for transforming values before writing to the target cube.
+    clear_set_mdx_list : Optional[List[str]]
+        List of MDX queries to clear specific data areas in the target cube.
+    clear_target : Optional[bool], default=False
+        Whether to clear target before writing.
+    async_write : bool, default=False
+        Whether to write data asynchronously. Currently, divides the data into 250.000 row chunks.
+    use_ti : bool, default=False
+        Whether to use TurboIntegrator (TI) for writing data.
+    use_blob : bool, default=False
+        Whether to use BLOB storage for data transfer.
+    increment : bool, default=False
+        Whether to increment existing values instead of replacing them in the cube.
+    sum_numeric_duplicates : bool, default=True
+        Whether to sum duplicate numeric values in the dataframe instead of overwriting them.
+    **kwargs
+        Additional keyword arguments for customization.
+
+    Returns:
+    -------
+    None
+        This function does not return anything; it writes data directly into TM1
+
+    Notes:
+    ------
+    - The function first collects metadata for the source data.
+    - It retrieves and normalizes the data into a DataFrame in the shape that the cube write expects,
+        by adding filter dimensions/elements and rearranging the dimensions.
+    - It applies transformation and mapping logic.
+    - Finally, it writes the processed data into the target cube in TM1.
+    """
+
     data_metadata = collect_metadata(
         tm1_service=tm1_service,
         mdx=data_mdx,
@@ -1330,7 +1407,7 @@ def data_copy(
     if target_cube_name is None:
         target_cube_name = data_metadata.get_cube_name()
 
-    data_metadata_function = lambda: data_metadata
+    def data_metadata_function() -> Metadata: return data_metadata
 
     dataframe = mdx_to_dataframe(
         tm1_service=tm1_service,

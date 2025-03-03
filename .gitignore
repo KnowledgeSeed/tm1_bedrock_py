@@ -16,4 +16,5 @@ venv/
 developer_test_files/
 
 *.log
+*.mdmp
 logs
