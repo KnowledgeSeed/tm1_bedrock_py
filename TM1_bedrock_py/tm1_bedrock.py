@@ -65,6 +65,38 @@ def parse_where_clause(mdx_query: str) -> List[List[str]]:
     return result
 
 
+def mdx_filter_to_dictionary(mdx_query: str) -> Dict[str, str]:
+    """
+    Parses the WHERE clause of an MDX query and extracts dimensions and their elements.
+
+    Args:
+        mdx_query (str): The MDX query string to parse.
+
+    Returns:
+        Dict[str, str]: A dictionary where keys are dimension names and values are element names.
+    """
+    where_match: Optional[re.Match[str]] = re.search(r'WHERE\s*\((.*?)\)', mdx_query, re.S)
+    if not where_match:
+        return {}
+
+    where_content: str = where_match.group(1)
+    mdx_dict: Dict[str, str] = {}
+
+    # Extract full dimension-hierarchy-element triplets
+    hier_elements: List[tuple] = re.findall(r'\[(.*?)\]\.?\[(.*?)\]\.?\[(.*?)\]', where_content)
+    for dim, hier, elem in hier_elements:
+        mdx_dict[dim] = elem
+
+    # Remove extracted triplets to process remaining dimension-element pairs
+    remaining_content: str = re.sub(r'\[(.*?)\]\.?\[(.*?)\]\.?\[(.*?)\]', '', where_content)
+    dim_elements: List[tuple] = re.findall(r'\[(.*?)\]\.?\[(.*?)\]', remaining_content)
+
+    for dim, elem in dim_elements:
+        mdx_dict[dim] = elem  # Overwrites if already exists, ensuring latest match
+
+    return mdx_dict
+
+
 def generate_kwargs_from_set_mdx_list(mdx_expressions: List[str]) -> Dict[str, str]:
     """
     Generate a dictionary of kwargs from a list of MDX expressions.
@@ -90,6 +122,7 @@ def generate_kwargs_from_set_mdx_list(mdx_expressions: List[str]) -> Dict[str, s
 
 QUERY_VAL = "query value"
 QUERY_FILTER_DIMS = "query filter dimensions"
+QUERY_FILTER_DICT = "query filter dictionary"
 QUERY_FILTER_HIER = "hierarchy"
 QUERY_FILTER_ELEM = "element"
 CUBE_NAME = "cube name"
@@ -124,6 +157,7 @@ class Metadata:
     - `get_cube_dims`: Returns the dimensions of the cube.
     - `get_filter_dims`: Returns the filter dimensions of the mdx query (that were in the WHERE clause)
     - `get_filter_elem`: Returns the exact element of a filter dimension in the mdx query (that was in the WHERE clause)
+    - `get_filter_dict`: Returns the filter dimensions and their elemens in a {"dim":"elem", ..} dictionary format
 
     """
 
@@ -164,6 +198,9 @@ class Metadata:
 
     def get_filter_elem(self, dimension: str) -> str:
         return self[QUERY_FILTER_DIMS][dimension][QUERY_FILTER_ELEM]
+
+    def get_filter_dict(self):
+        return self[QUERY_FILTER_DICT]
 
 
 def collect_metadata(
@@ -318,6 +355,8 @@ def collect_query_metadata(mdx: str, metadata: Metadata) -> Metadata:
     for dimension, hierarchy, element in where_clause:
         metadata[QUERY_FILTER_DIMS][dimension][QUERY_FILTER_HIER] = hierarchy
         metadata[QUERY_FILTER_DIMS][dimension][QUERY_FILTER_ELEM] = element
+
+    metadata[QUERY_FILTER_DICT] = mdx_filter_to_dictionary(mdx)
 
     return metadata
 
