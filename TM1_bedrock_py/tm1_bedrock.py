@@ -1576,7 +1576,7 @@ def data_copy_inter_cube(
         use_blob=use_blob,
         sum_numeric_duplicates=sum_numeric_duplicates,
         cube_dims=target_metadata.get_cube_dims(),
-        cube_name=target_cube_name
+        cube_name=target_metadata.get_cube_name()
     )
 
 
