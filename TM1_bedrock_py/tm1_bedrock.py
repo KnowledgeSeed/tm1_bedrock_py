@@ -14,7 +14,8 @@ from typing import Callable, List, Dict, Optional, Any, Union, Iterator
 # Utility: MDX query parsing functions
 # ------------------------------------------------------------------------------------------------------------
 
-
+# get cube name from MDX
+# internal
 def parse_from_clause(mdx_query: str) -> str:
     """
     Extracts the cube name from the FROM clause of an MDX query.
@@ -34,6 +35,7 @@ def parse_from_clause(mdx_query: str) -> str:
     return from_part_match.group(1).strip()
 
 
+# to be deprecated
 def parse_where_clause(mdx_query: str) -> List[List[str]]:
     """
     Parses the WHERE clause of an MDX query and extracts the dimensions, hierarchies, and elements.
@@ -65,6 +67,8 @@ def parse_where_clause(mdx_query: str) -> List[List[str]]:
     return result
 
 
+# mdx slicer to dictionary
+# internal
 def mdx_filter_to_dictionary(mdx_query: str) -> Dict[str, str]:
     """
     Parses the WHERE clause of an MDX query and extracts dimensions and their elements.
@@ -97,6 +101,8 @@ def mdx_filter_to_dictionary(mdx_query: str) -> Dict[str, str]:
     return mdx_dict
 
 
+# transform set mdx list to tm1py clear kwargs
+# internal
 def generate_kwargs_from_set_mdx_list(mdx_expressions: List[str]) -> Dict[str, str]:
     """
     Generate a dictionary of kwargs from a list of MDX expressions.
@@ -120,6 +126,7 @@ def generate_kwargs_from_set_mdx_list(mdx_expressions: List[str]) -> Dict[str, s
 # Utility: Metadata building specific ID-s
 # ------------------------------------------------------------------------------------------------------------
 
+# metadata parts, internal naming
 QUERY_VAL = "query value"
 QUERY_FILTER_DIMS = "query filter dimensions"
 QUERY_FILTER_DICT = "query filter dictionary"
@@ -136,6 +143,8 @@ DEFAULT_TYPE = "default memmber type"
 # ------------------------------------------------------------------------------------------------------------
 
 
+# TM1 Cube Object Metadata
+# utils
 class Metadata:
     """
     A recursive metadata structure that behaves like a nested dictionary. Provides methods for
@@ -203,6 +212,9 @@ class Metadata:
         return self[QUERY_FILTER_DICT]
 
 
+# tm1 cube object metadata collect
+# refactor inside metadata class
+# utils
 def collect_metadata(
     metadata_function: Optional[Callable[..., DataFrame]] = None,
     **kwargs: Any
@@ -224,6 +236,8 @@ def collect_metadata(
     return metadata_function(**kwargs)
 
 
+# tm1 cube object metadata collect, default
+# utils, internal
 def collect_metadata_default(
     tm1_service: Any,
     mdx: Optional[str] = None,
@@ -280,6 +294,8 @@ def collect_metadata_default(
     return metadata
 
 
+# tm1 dimension data collector for cube
+# utils, internal
 def retrieve_all_dimension_data_default(
     tm1_service: Any,
     cube_dimensions: List[str],
@@ -305,6 +321,8 @@ def retrieve_all_dimension_data_default(
     return metadata
 
 
+# tm1 dimension data collector
+# utils, internal
 def retrieve_dimension_data_default(
     tm1_service: Any,
     dimension: str,
@@ -337,6 +355,9 @@ def retrieve_dimension_data_default(
     return metadata
 
 
+# expand metadata
+# refactor inside metadata
+#
 def collect_query_metadata(mdx: str, metadata: Metadata) -> Metadata:
     """
     Extracts the filter dimensions and their elements in the mdx query (parts of the WHERE clause)
@@ -365,7 +386,8 @@ def collect_query_metadata(mdx: str, metadata: Metadata) -> Metadata:
 # Utility: DataFrame validation functions
 # ------------------------------------------------------------------------------------------------------------
 
-
+# validate_dataframe_columns
+# utility
 def validate_dataframe_columns(
     dataframe: DataFrame,
     cube_name: str,
@@ -396,6 +418,8 @@ def validate_dataframe_columns(
     return dimensions_from_metadata == dimensions_from_dataframe
 
 
+# validate_dataframe_values_for_na
+# utility
 def validate_dataframe_values(
     dataframe: DataFrame
 ) -> bool:
@@ -412,6 +436,8 @@ def validate_dataframe_values(
     return not dataframe["Value"].isna().values.any()
 
 
+# validate_dataframe_no_duplicates
+# utility
 def validate_dataframe_no_duplicates(
     dataframe: DataFrame
 ) -> bool:
@@ -427,6 +453,7 @@ def validate_dataframe_no_duplicates(
     return not dataframe.duplicated(keep=False).any()
 
 
+# utils
 def validate_dataframe_rows(
     dataframe: DataFrame
 ) -> bool:
@@ -442,6 +469,8 @@ def validate_dataframe_rows(
     return validate_dataframe_values(dataframe=dataframe) and validate_dataframe_no_duplicates(dataframe=dataframe)
 
 
+# validate dataframe for cube objects
+# utils
 def validate_dataframe(
     dataframe: DataFrame,
     cube_name: str,
@@ -471,6 +500,9 @@ def validate_dataframe(
             ))
 
 
+# validate dataframe transformations
+# refactor for general
+# utils
 def validate_dataframe_transform_input(
         source_dataframe: DataFrame,
         target_cube_name: str,
@@ -500,6 +532,8 @@ def validate_dataframe_transform_input(
         )
 
 
+# validate dataframe transformations for source
+# utils, internal
 def validate_source_dim_mapping(
         source_dimensions: list,
         source_dim_mapping: dict,
@@ -513,6 +547,8 @@ def validate_source_dim_mapping(
         return source_dimensions == source_dim_list
 
 
+# validate dataframe transformations for source
+# utils, internal
 def validate_target_dim_mapping(
         target_dimensions: list,
         target_dim_mapping: dict,
@@ -531,6 +567,7 @@ def validate_target_dim_mapping(
 # ------------------------------------------------------------------------------------------------------------
 
 
+# extract
 def mdx_to_dataframe(
     mdx_function: Optional[Callable[..., DataFrame]] = None,
     **kwargs: Any
@@ -552,6 +589,7 @@ def mdx_to_dataframe(
     return mdx_function(**kwargs)
 
 
+# extract, internal
 def mdx_to_dataframe_default(
     tm1_service: TM1Service,
     data_mdx: Optional[str] = None,
@@ -595,6 +633,10 @@ def mdx_to_dataframe_default(
         )
 
 
+# transform
+#
+# add col assign val -> metadata.get_filter_dict()
+# rearrange dimensions -> metadata.get_cube_dims()
 def normalize_dataframe(
     dataframe: DataFrame,
     metadata_function: Optional[Callable[..., Any]] = None,
@@ -636,6 +678,7 @@ def normalize_dataframe(
     return dataframe.loc[:, dataframe_dimensions]
 
 
+# deprecated, delete
 def mdx_to_normalized_dataframe(
     mdx_function: Optional[Callable[..., DataFrame]] = None,
     metadata_function: Optional[Callable[..., Any]] = None,
@@ -661,11 +704,14 @@ def mdx_to_normalized_dataframe(
     return dataframe
 
 
+# build mdx from cube filter -> review needed
+# utils
+# ráér
 def mdx_object_builder(
-        cube_name: str,
-        cube_filter: dict,
-        metadata_function: Optional[Callable[..., Any]] = None,
-        **kwargs: Any
+    cube_name: str,
+    cube_filter: dict,
+    metadata_function: Optional[Callable[..., Any]] = None,
+    **kwargs: Any
 ) -> str:
     """
     Returns a valid MDX from a cube and dictionary filters. All dimensions not specified in the filter dictionary
@@ -702,6 +748,7 @@ def mdx_object_builder(
 # Main: normalized pandas dataframe to cube functions
 # ------------------------------------------------------------------------------------------------------------
 
+# loader
 def clear_cube(
     clear_function: Optional[Callable[..., Any]] = None,
     **kwargs: Any
@@ -722,6 +769,7 @@ def clear_cube(
     return clear_function(**kwargs)
 
 
+# loader, internal
 def clear_cube_default(
     tm1_service: TM1Service,
     cube_name: str,
@@ -739,6 +787,7 @@ def clear_cube_default(
     tm1_service.cells.clear(cube_name, **clearing_kwargs)
 
 
+# loader
 def dataframe_to_cube(
     write_function: Optional[Callable[..., Any]] = None,
     **kwargs: Any
@@ -756,6 +805,7 @@ def dataframe_to_cube(
     return write_function(**kwargs)
 
 
+# loader, internal
 def dataframe_to_cube_default(
     tm1_service: TM1Service,
     dataframe: DataFrame,
@@ -802,6 +852,7 @@ def dataframe_to_cube_default(
     )
 
 
+# loader
 def dataframe_to_cube_with_clear(
     clear_function: Optional[Callable[..., None]] = None,
     write_function: Optional[Callable[..., None]] = None,
@@ -829,8 +880,9 @@ def dataframe_to_cube_with_clear(
 # ------------------------------------------------------------------------------------------------------------
 # Main: dataframe transform utility functions
 # ------------------------------------------------------------------------------------------------------------
+# naming review needed!!!
 
-
+# transform
 def dataframe_filter(
     dataframe: DataFrame,
     filter_condition: Dict[str, Any],
@@ -866,6 +918,7 @@ def dataframe_filter(
     return dataframe.drop(index=dataframe.index[~condition]).reset_index(drop=True) if inplace else dataframe.loc[condition]
 
 
+# transform
 def dataframe_drop_column(
         dataframe: DataFrame,
         column_list: list[str]
@@ -885,6 +938,7 @@ def dataframe_drop_column(
     return dataframe.drop(column_list, axis=1).reset_index(drop=True)
 
 
+# transform
 def dataframe_add_column_assign_value(
         dataframe: DataFrame,
         column_value: dict
@@ -907,6 +961,7 @@ def dataframe_add_column_assign_value(
     return dataframe.reset_index(drop=True)
 
 
+# transform
 def dataframe_redimension_scale_down(
         dataframe: DataFrame,
         filter_condition: dict,
@@ -927,6 +982,7 @@ def dataframe_redimension_scale_down(
     return dataframe_drop_column(dataframe=filtered_dataframe, column_list=column_list).reset_index(drop=True)
 
 
+# transform
 def dataframe_drop_zero_and_values(
         dataframe: DataFrame
 ) -> DataFrame:
@@ -944,6 +1000,7 @@ def dataframe_drop_zero_and_values(
     return dataframe.reset_index(drop=True)
 
 
+# transfrom
 def dataframe_relabel(
         dataframe: DataFrame,
         columns: dict
@@ -961,7 +1018,7 @@ def dataframe_relabel(
     dataframe.rename(columns=columns, inplace=True)
     return dataframe
 
-
+# transform
 def dataframe_value_scale(
         dataframe: DataFrame,
         value_function: callable
@@ -980,6 +1037,7 @@ def dataframe_value_scale(
     return dataframe.reset_index(drop=True)
 
 
+# transform
 def dataframe_redimension_and_transform(
         dataframe: DataFrame,
         source_dim_mapping: Optional[dict] = None,
@@ -1004,6 +1062,7 @@ def dataframe_redimension_and_transform(
 # ------------------------------------------------------------------------------------------------------------
 
 
+# transform
 def dataframe_literal_remap(
     dataframe: DataFrame,
     mapping: Dict[str, Dict[Any, Any]]
@@ -1023,6 +1082,8 @@ def dataframe_literal_remap(
     return dataframe
 
 
+# dataframe map and replace
+# transform
 def dataframe_cube_remap(
     data_df: DataFrame,
     mapping_df: DataFrame,
@@ -1066,6 +1127,10 @@ def dataframe_cube_remap(
     return data_df[data_df.columns.intersection(set(mapping_df.columns))]
 
 
+# dataframe map and join
+# transform
+
+# extract, internal
 def assign_mapping_dataframes(
     mapping_steps: List[Dict],
     shared_mapping_df: Optional[DataFrame] = None,
@@ -1191,6 +1256,7 @@ def assign_mapping_dataframes(
     return {"shared_mapping_df": shared_mapping_df, "mapping_steps": mapping_steps}
 
 
+# transform, internal
 def _apply_replace(data_df: DataFrame, mapping_step: Dict[str, Any], mapping_data: Dict[str, Any]) -> DataFrame:
     """
     Handle the 'replace' mapping step.
@@ -1216,6 +1282,8 @@ def _apply_replace(data_df: DataFrame, mapping_step: Dict[str, Any], mapping_dat
     )
 
 
+# apply map and replace
+# transform, internal
 def _apply_map_by_mdx(data_df: DataFrame, mapping_step: Dict[str, Any], mapping_data: Dict[str, Any]) -> DataFrame:
     """
     Handle the 'map_by_mdx' mapping step.
@@ -1268,6 +1336,10 @@ def _apply_map_by_mdx(data_df: DataFrame, mapping_step: Dict[str, Any], mapping_
     return data_df
 
 
+# apply map and join
+# transform, internal
+
+# transform
 def dataframe_execute_mappings(
     data_df: DataFrame,
     mapping_data: Dict[str, Optional[DataFrame] | List[Dict[str, Any]]]
@@ -1331,6 +1403,8 @@ def dataframe_execute_mappings(
     return data_df
 
 
+# data_copy_intercube
+# bedrock
 def data_copy_inter_cube(
         tm1_service: Optional[Any],
         data_mdx: Optional[str] = None,
@@ -1506,6 +1580,7 @@ def data_copy_inter_cube(
     )
 
 
+# bedrock
 def data_copy(
         tm1_service: Optional[Any],
         data_mdx: Optional[str] = None,
