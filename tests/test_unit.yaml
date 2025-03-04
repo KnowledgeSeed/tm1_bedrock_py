@@ -4,7 +4,7 @@ test_parse_from_clause:
     mdx_query:
       "FROM [Cost and FTE by Groups]"
 
-test_parse_where_clause:
+test_mdx_filter_to_dictionary:
   -
     mdx_query:
       "WHERE 

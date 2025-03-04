@@ -2,6 +2,8 @@ from TM1_bedrock_py import tm1_bedrock
 from TM1py import TM1Service
 from pprint import pprint
 
+from TM1_bedrock_py.tm1_bedrock import mdx_filter_to_dictionary
+
 
 def manage():
     tm1_params = {
@@ -61,26 +63,8 @@ def manage():
     tm1 = TM1Service(**tm1_params)
 
     try:
-        # mdx_string = tm1_bedrock.filter_to_mdx(tm1_service=tm1, filter_dict=literal_mapping, cube_name=cube_name)
-        # mdx = tm1_bedrock.mdx_object_builder(tm1_service=tm1, cube_name=cube_name, dimension=literal_mapping)
-        # data_mdx = mdx
-
-        df = tm1_bedrock.mdx_to_dataframe(tm1_service=tm1, data_mdx=data_mdx)
-        print(df)
-
-        valid = tm1_bedrock.validate_dataframe_columns(
-            dataframe=df,
-            cube_name=cube_name,
-            tm1_service=tm1
-        )
-        print(valid)
-
-
-
-
-        df = tm1_bedrock.normalize_dataframe(tm1_service=tm1, dataframe=df, mdx=data_mdx)
-
-        print(df)
+        filter_dict = mdx_filter_to_dictionary(data_mdx)
+        print(filter_dict)
 
     finally:
         tm1.logout()
