@@ -42,14 +42,14 @@ def test_parse_from_clause(mdx_query):
 
 
 @parametrize_from_file
-def test_parse_where_clause(mdx_query):
-    dimensions = tm1_bedrock.parse_where_clause(mdx_query)
+def test_mdx_filter_to_dictionary(mdx_query):
+    dimensions = tm1_bedrock.mdx_filter_to_dictionary(mdx_query)
     if mdx_query:
         for dim in dimensions:
             for elem in dim:
                 assert isinstance(elem, str)
     else:
-        assert dimensions == []
+        assert dimensions == {}
 
 # ------------------------------------------------------------------------------------------------------------
 # Utility: Cube metadata collection using input MDXs and/or other cubes
