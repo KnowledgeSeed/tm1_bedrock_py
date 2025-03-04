@@ -1652,9 +1652,6 @@ def data_copy(
         shared_mapping_df: Optional[DataFrame] = None,
         shared_mapping_mdx: Optional[str] = None,
         shared_mapping_metadata_function: Optional[Callable[..., Any]] = None,
-        source_dim_mapping: Optional[dict] = None,
-        related_dimensions: Optional[dict] = None,
-        target_dim_mapping: Optional[dict] = None,
         value_function: Optional[Callable[..., Any]] = None,
         clear_set_mdx_list: Optional[List[str]] = None,
         clear_target: Optional[bool] = False,
@@ -1802,13 +1799,6 @@ def data_copy(
     dataframe = dataframe_execute_mappings(
         data_df=dataframe,
         mapping_data=mapping_data
-    )
-
-    dataframe = dataframe_redimension_and_transform(
-        dataframe=dataframe,
-        source_dim_mapping=source_dim_mapping,
-        related_dimensions=related_dimensions,
-        target_dim_mapping=target_dim_mapping
     )
 
     if value_function is not None:
