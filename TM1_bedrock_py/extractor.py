@@ -77,10 +77,6 @@ def __extract_default(
         )
 
 
-
-
-
-
 # extract, internal
 def __assign_mapping_dataframes(
         mapping_steps: List[Dict],
@@ -150,7 +146,9 @@ def __assign_mapping_dataframes(
             skip_consolidated_cells=True,
             **kwargs
         )
-        filter_dict = utility.tm1_cube_object_metadata_collect(metadata_function=metadata_function, **kwargs).get_filter_dict()
+        filter_dict = utility.tm1_cube_object_metadata_collect(
+            metadata_function=metadata_function, **kwargs
+        ).get_filter_dict()
         return transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=filter_dict)
 
     shared_mapping_df = shared_mapping_df or (
@@ -180,4 +178,3 @@ def __assign_mapping_dataframes(
         )
 
     return {"shared_mapping_df": shared_mapping_df, "mapping_steps": mapping_steps}
-

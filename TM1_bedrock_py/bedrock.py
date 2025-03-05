@@ -9,8 +9,6 @@ from pandas import DataFrame
 from TM1_bedrock_py import utility, transformer, loader, extractor
 
 
-
-
 # data_copy_intercube
 # bedrock
 def data_copy_intercube(
@@ -187,7 +185,9 @@ def data_copy_intercube(
         mdx_function=mdx_function,
     )
 
-    dataframe = transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
+    dataframe = transformer.dataframe_add_column_assign_value(
+        dataframe=dataframe, column_value=data_metadata.get_filter_dict()
+    )
 
     mapping_data = extractor.__assign_mapping_dataframes(
         mapping_steps=mapping_steps,
@@ -211,7 +211,9 @@ def data_copy_intercube(
     if value_function is not None:
         dataframe = transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
 
-    dataframe = transformer.dataframe_rearrange_dimensions(dataframe=dataframe, cube_dimensions=target_metadata.get_cube_dims())
+    dataframe = transformer.dataframe_rearrange_dimensions(
+        dataframe=dataframe, cube_dimensions=target_metadata.get_cube_dims()
+    )
 
     loader.dataframe_to_cube_with_clear(
         tm1_service=tm1_service,
@@ -377,7 +379,9 @@ def data_copy(
         mdx_function=mdx_function,
     )
 
-    dataframe = transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
+    dataframe = transformer.dataframe_add_column_assign_value(
+        dataframe=dataframe, column_value=data_metadata.get_filter_dict()
+    )
 
     mapping_data = extractor.__assign_mapping_dataframes(
         mapping_steps=mapping_steps,
@@ -394,7 +398,9 @@ def data_copy(
     if value_function is not None:
         dataframe = transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
 
-    dataframe = transformer.dataframe_rearrange_dimensions(dataframe=dataframe, cube_dimensions=data_metadata.get_cube_dims())
+    dataframe = transformer.dataframe_rearrange_dimensions(
+        dataframe=dataframe, cube_dimensions=data_metadata.get_cube_dims()
+    )
 
     loader.dataframe_to_cube_with_clear(
         tm1_service=tm1_service,

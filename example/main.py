@@ -53,7 +53,7 @@ def manage():
          """
 
     literal_mapping = {
-        "Versions": {"Base Plan":"TM1py Test Version"}
+        "Versions": {"Base Plan": "TM1py Test Version"}
     }
     cube_name = "Cost and FTE by Groups"
 

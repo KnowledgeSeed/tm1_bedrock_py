@@ -5,6 +5,7 @@ from TM1py.Exceptions import TM1pyRestException
 import pandas as pd
 import pytest
 import parametrize_from_file
+
 from TM1py import TM1Service
 
 from TM1_bedrock_py import bedrock, extractor, transformer
@@ -31,7 +32,9 @@ def tm1_connection():
 
 
 @parametrize_from_file
-def test_data_copy_for_single_literal_remap(tm1_connection, base_data_mdx, mapping_steps, literal_mapping, output_data_mdx):
+def test_data_copy_for_single_literal_remap(
+        tm1_connection, base_data_mdx, mapping_steps, literal_mapping, output_data_mdx
+):
     base_df = extractor.extract(tm1_service=tm1_connection, data_mdx=base_data_mdx)
     base_df = transformer.normalize_dataframe(tm1_service=tm1_connection, dataframe=base_df, mdx=base_data_mdx)
     base_df = transformer.dataframe_literal_remap(dataframe=base_df, mapping=literal_mapping)
@@ -39,6 +42,8 @@ def test_data_copy_for_single_literal_remap(tm1_connection, base_data_mdx, mappi
     bedrock.data_copy(tm1_service=tm1_connection, data_mdx=base_data_mdx, mapping_steps=mapping_steps, skip_zeros=True)
 
     copy_test_df = extractor.extract(tm1_service=tm1_connection, data_mdx=output_data_mdx)
-    copy_test_df = transformer.normalize_dataframe(tm1_service=tm1_connection, dataframe=copy_test_df, mdx=output_data_mdx)
+    copy_test_df = transformer.normalize_dataframe(
+        tm1_service=tm1_connection, dataframe=copy_test_df, mdx=output_data_mdx
+    )
 
     pd.testing.assert_frame_equal(base_df, copy_test_df)

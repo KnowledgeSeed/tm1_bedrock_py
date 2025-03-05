@@ -373,6 +373,7 @@ def dataframe_map_and_join(
 
     return data_df
 
+
 # transform, internal
 def __apply_replace(
         data_df: DataFrame,
@@ -572,4 +573,3 @@ def dataframe_execute_mappings(
             raise ValueError(f"Unsupported mapping method: {method}")
 
     return data_df
-

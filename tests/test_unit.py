@@ -55,6 +55,7 @@ def test_mdx_filter_to_dictionary(mdx_query):
 # Utility: Cube metadata collection using input MDXs and/or other cubes
 # ------------------------------------------------------------------------------------------------------------
 
+
 @parametrize_from_file
 def test_tm1_cube_object_metadata_collect_based_on_cube_name_success(tm1_connection, cube_name):
     """Collects metadata based on cube name and checks if the method's output is a Metadata object"""
@@ -111,7 +112,9 @@ def test_tm1_cube_object_metadata_collect_cube_dimensions_not_empty(tm1_connecti
 
 
 @parametrize_from_file
-def test_tm1_cube_object_metadata_collect_cube_dimensions_match_dimensions(tm1_connection, cube_name, expected_dimensions):
+def test_tm1_cube_object_metadata_collect_cube_dimensions_match_dimensions(
+        tm1_connection, cube_name, expected_dimensions
+):
     """Collects metadata and verifies that cube dimensions match the expected dimensions."""
     try:
         metadata = utility.tm1_cube_object_metadata_collect(tm1_service=tm1_connection, cube_name=cube_name)
@@ -203,10 +206,12 @@ def test_normalize_dataframe_match_dimensions_success(tm1_connection, data_mdx, 
 
 
 @parametrize_from_file
-def test_build_mdx_from_cube_filter_create_dataframe_success(tm1_connection ,cube_filter, cube_name):
+def test_build_mdx_from_cube_filter_create_dataframe_success(tm1_connection, cube_filter, cube_name):
     """Run MDX query created by the MDX builder and verifies that the output is a DataFrame object"""
 
-    data_mdx = utility.build_mdx_from_cube_filter(tm1_service=tm1_connection, cube_name=cube_name, cube_filter=cube_filter)
+    data_mdx = utility.build_mdx_from_cube_filter(
+        tm1_service=tm1_connection, cube_name=cube_name, cube_filter=cube_filter
+    )
     try:
         df = extractor.extract(tm1_service=tm1_connection, data_mdx=data_mdx)
         df = transformer.normalize_dataframe(tm1_service=tm1_connection, dataframe=df, mdx=data_mdx)
@@ -264,10 +269,14 @@ def test_dataframe_add_column_assign_value(dataframe, column_values, expected_da
 
 
 @parametrize_from_file
-def test_dataframe_redimension_and_transform(dataframe, source_dim_mapping, related_dimensions, target_dim_mapping, expected_dataframe):
+def test_dataframe_redimension_and_transform(
+        dataframe, source_dim_mapping, related_dimensions, target_dim_mapping, expected_dataframe
+):
     df = pd.DataFrame(dataframe)
     expected_df = pd.DataFrame(expected_dataframe)
-    transformed_df = transformer.dataframe_redimension_and_transform(df, source_dim_mapping, related_dimensions, target_dim_mapping)
+    transformed_df = transformer.dataframe_redimension_and_transform(
+        df, source_dim_mapping, related_dimensions, target_dim_mapping
+    )
 
     pd.testing.assert_frame_equal(transformed_df, expected_df)
 
