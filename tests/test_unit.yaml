@@ -1,5 +1,5 @@
 # Utility: MDX query parsing functions
-test_parse_from_clause:
+test_get_cube_name_from_mdx:
   -
     mdx_query:
       "FROM [Cost and FTE by Groups]"
@@ -26,13 +26,13 @@ test_mdx_filter_to_dictionary:
       ""
 
 # Utility: Cube metadata collection using input MDXs and/or other cubes
-test_collect_metadata_based_on_cube_name_success:
+test_tm1_cube_object_metadata_collect_based_on_cube_name_success:
   -
     cube_name: "Group Employee"
   -
     cube_name: "Employee Organization"
 
-test_collect_metadata_based_on_cube_name_fail:
+test_tm1_cube_object_metadata_collect_based_on_cube_name_fail:
   -
     cube_name: "Group Employees"
     exception: TM1pyRestException
@@ -46,7 +46,7 @@ test_collect_metadata_based_on_cube_name_fail:
     cube_name: ""
     exception: ValueError
 
-test_collect_metadata_based_on_mdx_success:
+test_tm1_cube_object_metadata_collect_based_on_mdx_name_success:
   -
     data_mdx:
       "SELECT 
@@ -66,7 +66,7 @@ test_collect_metadata_based_on_mdx_success:
            [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
           )"
 
-test_collect_metadata_based_on_mdx_fail:
+test_tm1_cube_object_metadata_collect_based_on_mdx_name_fail:
     -
       data_mdx: ""
       exception: ValueError
@@ -80,16 +80,16 @@ test_collect_metadata_based_on_mdx_fail:
       data_mdx: {"Versions": {"Base Plan": "TM1py Test Version"}}
       exception: TypeError
 
-test_collect_metadata_cube_dimensions_not_empty:
+test_tm1_cube_object_metadata_collect_cube_dimensions_not_empty:
   -
     cube_name: "Group Employee"
 
-test_collect_metadata_cube_dimensions_match_dimensions:
+test_tm1_cube_object_metadata_collect_cube_dimensions_match_dimensions:
   -
     cube_name: "Group Employee"
     expected_dimensions: ['Groups', 'Employees', 'Measures Group Employee']
 
-test_collect_metadata_filter_dimensions_not_empty:
+test_tm1_cube_object_metadata_collect_filter_dimensions_not_empty:
   -
     cube_name: "Group Employee"
 
@@ -114,7 +114,7 @@ example_data_mdx:
            [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
           )"
 
-test_mdx_object_builder_is_valid_format_true:
+test_build_mdx_from_cube_filter_is_valid_format_true:
   -
     cube_filter: {"Versions": {"Base Plan": "TM1py Test Version"}}
     cube_name: "Cost and FTE by Groups"
@@ -245,7 +245,7 @@ test_normalize_dataframe_match_dimensions_success:
           )"
     expected_dimensions: ['Groups', 'Versions', 'Periods', 'Employees', 'Lineitems Cost and FTE by Groups', 'Measures Cost and FTE by Groups', 'Value']
 
-test_mdx_object_builder_create_dataframe_success:
+test_build_mdx_from_cube_filter_create_dataframe_success:
   -
     cube_filter: {"Versions": {"Base Plan": "TM1py Test Version"}}
     cube_name: "Cost and FTE by Groups"
@@ -397,44 +397,3 @@ test_dataframe_redimension_and_transform:
       "Employee": [ "Alice" ],
     }
 
-test_data_copy_for_single_literal_remap:
-  -
-    base_data_mdx:
-      "SELECT 
-             {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],[Periods].[Periods].[202304],[Periods].[Periods].[202305],[Periods].[Periods].[202306],[Periods].[Periods].[202307],[Periods].[Periods].[202308],[Periods].[Periods].[202309],[Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]} 
-            ON COLUMNS , 
-             {[Groups].[Groups].[Group_2]}
-             * {[Employees].[Employees].[Employees_1],[Employees].[Employees].[Employees_2],[Employees].[Employees].[Employees_3],[Employees].[Employees].[Employees_4],[Employees].[Employees].[Employees_5]} 
-            ON ROWS 
-          FROM [Cost and FTE by Groups] 
-          WHERE 
-            (
-             [Versions].[Versions].[Base Plan],
-             [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[Caculated Salary],
-             [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
-          )"
-    mapping_steps: [
-      {
-        "method":"replace",
-        "mapping":{
-          "Versions":{
-            "Base Plan":"DataCopy Write Test"
-          }
-        }
-      }
-    ]
-    literal_mapping: { "Versions":{"Base Plan":"DataCopy Write Test" } }
-    output_data_mdx:
-      "SELECT 
-             {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],[Periods].[Periods].[202304],[Periods].[Periods].[202305],[Periods].[Periods].[202306],[Periods].[Periods].[202307],[Periods].[Periods].[202308],[Periods].[Periods].[202309],[Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]} 
-            ON COLUMNS , 
-             {[Groups].[Groups].[Group_2]}
-             * {[Employees].[Employees].[Employees_1],[Employees].[Employees].[Employees_2],[Employees].[Employees].[Employees_3],[Employees].[Employees].[Employees_4],[Employees].[Employees].[Employees_5]} 
-            ON ROWS 
-          FROM [Cost and FTE by Groups] 
-          WHERE 
-            (
-             [Versions].[Versions].[DataCopy Write Test],
-             [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[Caculated Salary],
-             [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
-          )"
