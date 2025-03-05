@@ -10,7 +10,15 @@ from TM1_bedrock_py import utility
 # Main: normalized pandas dataframe to cube functions
 # ------------------------------------------------------------------------------------------------------------
 
-# loader
+# todo: deprecate mdx to cube with clear
+# todo: refactor datacopy
+    # call clear for target
+    # call write for target
+    # add source zero as end procedure
+
+
+# rename: clear_cube_with_set_mdx_list
+# loader -> utils
 def clear_cube(
         clear_function: Optional[Callable[..., Any]] = None,
         **kwargs: Any
@@ -31,7 +39,8 @@ def clear_cube(
     return clear_function(**kwargs)
 
 
-# loader, internal
+# rename: clear_cube_with_set_mdx_list
+# loader, internal -> utils, internal
 def __clear_cube_default(
         tm1_service: TM1Service,
         cube_name: str,
@@ -113,7 +122,7 @@ def __dataframe_to_cube_default(
         sum_numeric_duplicates=sum_numeric_duplicates
     )
 
-
+# deprecated, todo: remove
 # loader
 def dataframe_to_cube_with_clear(
         clear_function: Optional[Callable[..., None]] = None,

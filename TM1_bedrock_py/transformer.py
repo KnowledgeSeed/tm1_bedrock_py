@@ -36,6 +36,7 @@ def normalize_dataframe(
     return dataframe_rearrange_dimensions(dataframe=dataframe, cube_dimensions=metadata.get_cube_dims())
 
 
+# rename: dataframe reorder dimensions
 def dataframe_rearrange_dimensions(
         dataframe: DataFrame,
         cube_dimensions: List[str]
@@ -158,6 +159,7 @@ def dataframe_add_column_assign_value(
     return dataframe.reset_index(drop=True)
 
 
+# rename: dataframe drop filtered column
 # transform
 def dataframe_redimension_scale_down(
         dataframe: DataFrame,
@@ -179,6 +181,7 @@ def dataframe_redimension_scale_down(
     return dataframe_drop_column(dataframe=filtered_dataframe, column_list=column_list).reset_index(drop=True)
 
 
+# deprecated, todo: delete
 # transform
 def dataframe_drop_zero_and_values(
         dataframe: DataFrame
@@ -260,6 +263,7 @@ def dataframe_redimension_and_transform(
 # ------------------------------------------------------------------------------------------------------------
 
 
+# rename: dataframe find and replace
 # transform
 def dataframe_literal_remap(
         dataframe: DataFrame,

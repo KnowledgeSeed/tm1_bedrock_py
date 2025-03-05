@@ -10,7 +10,7 @@ from TM1_bedrock_py import utility, transformer
 # Main: MDX query to normalized pandas dataframe functions
 # ------------------------------------------------------------------------------------------------------------
 
-
+# rename: tm1_mdx_to_dataframe
 # extract
 def extract(
         mdx_function: Optional[Callable[..., DataFrame]] = None,
@@ -32,7 +32,7 @@ def extract(
 
     return mdx_function(**kwargs)
 
-
+# rename: tm1_mdx_to_dataframe_default
 # extract, internal
 def __extract_default(
         tm1_service: TM1Service,
@@ -76,6 +76,38 @@ def __extract_default(
             use_iterative_json=True
         )
 
+
+# create: generate mapping dataframe
+    # get a mapping step as input
+    # determine extraction method
+    # execute, normalize
+    # return extracted dataframe
+# extractor.py
+
+
+# create: generate all mapping dataframes
+    # get the mapping steps as input
+    # loop through
+    # call generate mapping dataframe for each
+    # assign returned dataframes to mapping steps
+# transformer.py
+
+
+# todo: remove shared mapping from mapping data
+# todo: refactor execute mappings
+
+
+# create: validate mapping steps
+    # get mapping steps, shared mapping dataframe
+    # make sure every mapping step has a mapping dataframe
+# utils.py
+
+
+# deprecated, delete if above are created
+# todo: refactor data copy:
+    # generator for shared mapping
+    # generate mapping dfs
+    # executor gets these
 
 # extract, internal
 def __assign_mapping_dataframes(
