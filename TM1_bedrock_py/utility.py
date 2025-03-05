@@ -9,6 +9,7 @@ from typing import Callable, List, Dict, Optional, Any, Union, Iterator
 # Utility: MDX query parsing functions
 # ------------------------------------------------------------------------------------------------------------
 
+
 # get cube name from MDX
 # internal
 def __get_cube_name_from_mdx(mdx_query: str) -> str:
@@ -195,12 +196,8 @@ def __tm1_cube_object_metadata_collect_default(
         tm1_service: Any,
         mdx: Optional[str] = None,
         cube_name: Optional[str] = None,
-        retrieve_all_dimension_data: Optional[
-            Callable[[Any, List[str], TM1_Cube_Object_Metadata, Callable[[Any, str, List[str], TM1_Cube_Object_Metadata], TM1_Cube_Object_Metadata]], None]
-        ] = None,
-        retrieve_dimension_data: Optional[
-            Callable[[Any, str, List[str], TM1_Cube_Object_Metadata], TM1_Cube_Object_Metadata]
-        ] = None
+        retrieve_all_dimension_data: Optional[Callable[..., Any]] = None,
+        retrieve_dimension_data: Optional[Callable[..., Any]] = None
 ) -> TM1_Cube_Object_Metadata:
     """
     Collects important data about the mdx query and/or it's cube based on either an MDX query or a cube name.
@@ -253,7 +250,7 @@ def __tm1_dimension_data_collector_for_cube(
         tm1_service: Any,
         cube_dimensions: List[str],
         metadata: TM1_Cube_Object_Metadata,
-        retrieve_dimension_data: Callable[[Any, str, List[str], TM1_Cube_Object_Metadata], TM1_Cube_Object_Metadata]
+        retrieve_dimension_data: Callable[..., Any]
 ) -> TM1_Cube_Object_Metadata:
     """
     Default implementation to retrieve and update metadata for all dimensions of a cube.
@@ -406,7 +403,8 @@ def validate_dataframe_rows(dataframe: DataFrame) -> bool:
         boolean: True if the DataFrame does not contain duplicate or NaN values.
                  False if it does contain either.
     """
-    return validate_dataframe_values_for_na(dataframe=dataframe) and validate_dataframe_no_duplicates(dataframe=dataframe)
+    return (validate_dataframe_values_for_na(dataframe=dataframe)
+            and validate_dataframe_no_duplicates(dataframe=dataframe))
 
 
 # validate dataframe for cube objects
@@ -458,18 +456,15 @@ def validate_dataframe_transformations(
     if source_dimensions == target_dimensions:
         return True
     else:
-        return (
-                __validate_dataframe_transformations_for_source(
-                source_dimensions=source_dimensions,
-                source_dim_mapping=source_dim_mapping,
-                related_dimensions=related_dimensions
-            ) and
-                __validate_dataframe_transformations_for_target(
-                target_dimensions=target_dimensions,
-                target_dim_mapping=target_dim_mapping,
-                related_dimensions=related_dimensions
-            )
-        )
+        return (__validate_dataframe_transformations_for_source(
+                        source_dimensions=source_dimensions,
+                        source_dim_mapping=source_dim_mapping,
+                        related_dimensions=related_dimensions)
+                and __validate_dataframe_transformations_for_target(
+                        target_dimensions=target_dimensions,
+                        target_dim_mapping=target_dim_mapping,
+                        related_dimensions=related_dimensions)
+                )
 
 
 # validate dataframe transformations for source
