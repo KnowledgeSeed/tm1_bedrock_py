@@ -397,3 +397,139 @@ test_dataframe_redimension_and_transform:
       "Employee": [ "Alice" ],
     }
 
+test_dataframe_rearrange_dimensions:
+  -
+    dataframe: {
+      "Period": [ "202202", "202202", "202202", "202202" ],
+      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
+      "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
+      "Measure": [ "Value", "Value", "Value", "Value" ],
+      "Value": [ 120, 120, 120, 120 ]
+    }
+  -
+    cube_cols: ["Period", "OrgUnit", "Employee", "Measure"]
+  -
+    expected: {
+      "Period": [ "202202", "202202", "202202", "202202" ],
+      "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
+      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
+      "Measure": [ "Value", "Value", "Value", "Value" ],
+      "Value": [ 120, 120, 120, 120 ]
+    }
+
+
+test_dataframe_replace_success:
+  -
+    dataframe: {
+      "period": ["202202", "202203", "202202", "202203"],
+      "dim_to_map": ["source1", "source2", "other", "other"],
+      "dim2_to_map": ["source3", "other", "source3", "other"],
+      "measure": ["value", "value", "value", "value"],
+      "value": [100, 100, 100, 100]
+    }
+  -
+    mapping: {
+      "dim_to_map": { "source1": "target1", "source2": "target2" },
+      "dim2_to_map": { "source3": "target3" }
+    }
+  -
+    expected: {
+      "period": ["202202", "202203", "202202", "202203"],
+      "dim_to_map": ["target1", "target2", "other", "other"],
+      "dim2_to_map": ["target3", "other", "target3", "other"],
+      "measure": ["value", "value", "value", "value"],
+      "value": [100, 100, 100, 100]
+    }
+
+test_dataframe_map_and_replace_success:
+  -
+    dataframe: {
+      "Period": ["202202", "202202", "202202", "202202"],
+      "Employee": ["00000001", "00000002", "00000003", "00000004"],
+      "OrgUnit": ["ABC123A", "ABC123A", "XYZ123X", "XYZ123X"],
+      "Measure": ["Value", "Value", "Value", "Value"],
+      "Value": [120, 120, 120, 120]
+    }
+  -
+    mapping_dataframe: {
+      "Period": ["202202", "202202", "202202", "202202"],
+      "Employee": ["00000001", "00000002", "00000003", "00000004"],
+      "Employee Settings": ["ORG_UNIT_PARENT", "ORG_UNIT_PARENT", "ORG_UNIT_PARENT", "ORG_UNIT_PARENT"],
+      "Value": ["AAA0001", "AAA0002", "AAA0001", "AAA0002"]
+    }
+  -
+    mapping_dimensions: {
+      "OrgUnit": "Value"
+    }
+  -
+    expected: {
+      "Period": ["202202", "202202", "202202", "202202"],
+      "Employee": ["00000001", "00000002", "00000003", "00000004"],
+      "OrgUnit": ["AAA0001", "AAA0002", "AAA0001", "AAA0002"],
+      "Measure": ["Value", "Value", "Value", "Value"],
+      "Value": [120, 120, 120, 120]
+    }
+
+test_dataframe_map_and_join_success:
+  -
+    dataframe: {
+      "Period": ["202201", "202201", "202202", "202202"],
+      "Employee": ["00000001", "00000002", "00000001", "00000002"],
+      "Orgunit": ["abc123a", "abc123a", "def345a", "def345a"],
+      "Measure": ["cost001", "cost001", "cost001", "cost001"],
+      "Value": [10, 10, 10, 10]
+    }
+  -
+    joined_cols: ["Sales Channel", "Specialism"]
+  -
+    mapping_dataframe: {
+      "Period": ["202201", "202201", "202202", "202202"],
+      "Employee": ["00000001", "00000002", "00000001", "00000002"],
+      "Sales Channel": ["temp", "perm", "perm", "perm"],
+      "Specialism": ["IT", "finance", "engineering", "engineering"],
+      "Cost Position Type": ["KAM", "AM", "Team Leader", "Manager"]
+    }
+  -
+    expected: {
+      "Period": ["202201", "202201", "202202", "202202"],
+      "Employee": ["00000001", "00000002", "00000001", "00000002"],
+      "Orgunit": ["abc123a", "abc123a", "def345a", "def345a"],
+      "Measure": ["cost001", "cost001", "cost001", "cost001"],
+      "Value": [10, 10, 10, 10],
+      "Sales Channel": ["temp", "perm", "perm", "perm"],
+      "Specialism": ["IT", "finance", "engineering", "engineering"]
+    }
+
+test_dataframe_execute_mappings_replace_success:
+  -
+    mapping_steps: [
+      {
+        "method": "replace",
+        "mapping": {"replace_dim": {"replace_source": "replace_target"}}
+      }
+    ]
+
+test_dataframe_execute_mappings_map_and_replace_shared_df_with_filter_and_relabel_success:
+  -
+    mapping_steps: [
+      {
+        "method": "map_and_replace",
+        # since this is a test for shared mapping only, no step-specific mapping df is specified
+        "mapping_filter": { "filter_dim": "filter_map_and_replace" },
+        "mapping_dimensions": { "map_and_replace_dim_source": "map_and_replace_dim_target" },
+        "relabel_dimensions": True
+      }
+    ]
+
+test_dataframe_execute_mappings_map_and_join_shared_with_filter_and_drop_success:
+  -
+    mapping_steps: [
+      {
+        "method": "map_and_join",
+        # since this is a test for shared mapping only, no step-specific mapping df is specified
+        "mapping_filter": { "filter_dim": "filter_map_and_join" },
+        "joined_columns": ["col_to_join1", "col_to_join2"],
+        "dropped_columns": ["col_to_drop1", "col_to_drop2"]
+
+      }
+    ]

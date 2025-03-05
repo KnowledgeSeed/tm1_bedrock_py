@@ -141,7 +141,7 @@ def data_copy_intercube(
                     "dim": "element",
                     "dim2": "element2"
                 },
-                "mapping_dims": {
+                "mapping_dimensions": {
                     "dimname_to_change_values_of_in_source":"dim_to_change_the_values_with_in_mapping"
                 },
                 "relabel_dimensions": false
@@ -351,7 +351,7 @@ def data_copy(
                     "dim": "element",
                     "dim2": "element2"
                 },
-                "mapping_dims": {
+                "mapping_dimensions": {
                     "dimname_to_change_values_of_in_source":"dim_to_change_the_values_with_in_mapping"
                 },
                 "relabel_dimensions": false

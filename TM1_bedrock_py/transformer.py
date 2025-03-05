@@ -420,7 +420,7 @@ def __apply_map_and_replace(
         The main DataFrame that will be remapped using the MDX approach.
     mapping_step : Dict[str, Any]
         The dictionary specifying how to map, which may contain 'mapping_filter',
-        'mapping_mdx', 'mapping_dims', etc.
+        'mapping_mdx', 'mapping_dimensions', etc.
     mapping_data : Dict[str, Any]
         The overall mapping data dictionary. Used to fetch a shared DataFrame if
         a step-specific one is not provided.
@@ -450,13 +450,13 @@ def __apply_map_and_replace(
     data_df = dataframe_map_and_replace(
         data_df=data_df,
         mapping_df=mapping_df,
-        mapped_dimensions=mapping_step["mapping_dims"]
+        mapped_dimensions=mapping_step["mapping_dimensions"]
     )
 
     if mapping_step.get("relabel_dimensions"):
         data_df = dataframe_relabel(
             dataframe=data_df,
-            columns=mapping_step["mapping_dims"]
+            columns=mapping_step["mapping_dimensions"]
         )
 
     return data_df
@@ -541,7 +541,7 @@ def dataframe_execute_mappings(
                     "dim": "element",
                     "dim2": "element2"
                 },
-                "mapping_dims": {
+                "mapping_dimensions": {
                     "dimname_to_change_values_of_in_source":"dim_to_change_the_values_with_in_mapping"
                 },
                 "relabel_dimensions": false
