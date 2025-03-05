@@ -30,7 +30,7 @@ def normalize_dataframe(
         DataFrame: The normalized DataFrame.
     """
 
-    metadata = utility.tm1_cube_object_metadata_collect(metadata_function=metadata_function, **kwargs)
+    metadata = utility.TM1CubeObjectMetadata.tm1_cube_object_metadata_collect(metadata_function=metadata_function, **kwargs)
 
     dataframe = dataframe_add_column_assign_value(dataframe=dataframe, column_value=metadata.get_filter_dict())
     return dataframe_rearrange_dimensions(dataframe=dataframe, cube_dimensions=metadata.get_cube_dims())

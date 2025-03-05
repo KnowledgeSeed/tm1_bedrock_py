@@ -161,14 +161,14 @@ def data_copy_intercube(
         ]
     """
 
-    data_metadata = utility.tm1_cube_object_metadata_collect(
+    data_metadata = utility.TM1CubeObjectMetadata.tm1_cube_object_metadata_collect(
         tm1_service=tm1_service,
         mdx=data_mdx,
         metadata_function=data_metadata_function,
         **kwargs
     )
 
-    target_metadata = utility.tm1_cube_object_metadata_collect(
+    target_metadata = utility.TM1CubeObjectMetadata.tm1_cube_object_metadata_collect(
         tm1_service=tm1_service,
         cube_name=target_cube_name,
         metadata_function=target_metadata_function,
@@ -362,7 +362,7 @@ def data_copy(
     Using them will raise an error at writing
     """
 
-    data_metadata = utility.tm1_cube_object_metadata_collect(
+    data_metadata = utility.TM1CubeObjectMetadata.tm1_cube_object_metadata_collect(
         tm1_service=tm1_service,
         mdx=data_mdx,
         metadata_function=data_metadata_function,

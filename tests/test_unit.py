@@ -37,13 +37,13 @@ def tm1_connection():
 
 @parametrize_from_file
 def test_get_cube_name_from_mdx(mdx_query):
-    cube_name = utility.__get_cube_name_from_mdx(mdx_query)
+    cube_name = utility._get_cube_name_from_mdx(mdx_query)
     assert isinstance(cube_name, str)
 
 
 @parametrize_from_file
 def test_mdx_filter_to_dictionary(mdx_query):
-    dimensions = utility.__mdx_filter_to_dictionary(mdx_query)
+    dimensions = utility._mdx_filter_to_dictionary(mdx_query)
     if mdx_query:
         for dim in dimensions:
             for elem in dim:
@@ -61,8 +61,8 @@ def test_tm1_cube_object_metadata_collect_based_on_cube_name_success(tm1_connect
     """Collects metadata based on cube name and checks if the method's output is a Metadata object"""
     try:
         assert isinstance(
-            utility.tm1_cube_object_metadata_collect(tm1_service=tm1_connection, cube_name=cube_name),
-            utility.TM1_Cube_Object_Metadata
+            utility.TM1CubeObjectMetadata.tm1_cube_object_metadata_collect(tm1_service=tm1_connection, cube_name=cube_name),
+            utility.TM1CubeObjectMetadata
         )
     except TM1pyRestException as e:
         pytest.fail(f"Cube name not found: {e}")
@@ -73,8 +73,8 @@ def test_tm1_cube_object_metadata_collect_based_on_cube_name_fail(tm1_connection
     """Runs collect_metadata based with bad cube name and checks if the method's output is a Metadata object."""
     with pytest.raises(EXCEPTION_MAP[exception]):
         assert isinstance(
-            utility.tm1_cube_object_metadata_collect(tm1_service=tm1_connection, cube_name=cube_name),
-            utility.TM1_Cube_Object_Metadata
+            utility.TM1CubeObjectMetadata.tm1_cube_object_metadata_collect(tm1_service=tm1_connection, cube_name=cube_name),
+            utility.TM1CubeObjectMetadata
         )
 
 
@@ -83,8 +83,8 @@ def test_tm1_cube_object_metadata_collect_based_on_mdx_name_success(tm1_connecti
     """Collects metadata based on MDX and checks if the method's output is a Metadata object"""
     try:
         assert isinstance(
-            utility.tm1_cube_object_metadata_collect(tm1_service=tm1_connection, mdx=data_mdx),
-            utility.TM1_Cube_Object_Metadata
+            utility.TM1CubeObjectMetadata.tm1_cube_object_metadata_collect(tm1_service=tm1_connection, mdx=data_mdx),
+            utility.TM1CubeObjectMetadata
         )
     except TM1pyRestException as e:
         pytest.fail(f"Cube not found based on MDX: {e}")
@@ -95,8 +95,8 @@ def test_tm1_cube_object_metadata_collect_based_on_mdx_name_fail(tm1_connection,
     """Runs collect_metadata with bad input for MDX and checks if the method's output is a Metadata object."""
     with pytest.raises(EXCEPTION_MAP[exception]):
         assert isinstance(
-            utility.tm1_cube_object_metadata_collect(tm1_service=tm1_connection, mdx=data_mdx),
-            utility.TM1_Cube_Object_Metadata
+            utility.TM1CubeObjectMetadata.tm1_cube_object_metadata_collect(tm1_service=tm1_connection, mdx=data_mdx),
+            utility.TM1CubeObjectMetadata
         )
 
 
@@ -104,7 +104,7 @@ def test_tm1_cube_object_metadata_collect_based_on_mdx_name_fail(tm1_connection,
 def test_tm1_cube_object_metadata_collect_cube_dimensions_not_empty(tm1_connection, cube_name):
     """Collects metadata and verifies that cube dimensions are not empty."""
     try:
-        metadata = utility.tm1_cube_object_metadata_collect(tm1_service=tm1_connection, cube_name=cube_name)
+        metadata = utility.TM1CubeObjectMetadata.tm1_cube_object_metadata_collect(tm1_service=tm1_connection, cube_name=cube_name)
         cube_dims = metadata.get_cube_dims()
         assert cube_dims != 0
     except TM1pyRestException as e:
@@ -117,7 +117,7 @@ def test_tm1_cube_object_metadata_collect_cube_dimensions_match_dimensions(
 ):
     """Collects metadata and verifies that cube dimensions match the expected dimensions."""
     try:
-        metadata = utility.tm1_cube_object_metadata_collect(tm1_service=tm1_connection, cube_name=cube_name)
+        metadata = utility.TM1CubeObjectMetadata.tm1_cube_object_metadata_collect(tm1_service=tm1_connection, cube_name=cube_name)
         cube_dims = metadata.get_cube_dims()
         assert cube_dims == expected_dimensions
     except TM1pyRestException as e:
@@ -128,7 +128,7 @@ def test_tm1_cube_object_metadata_collect_cube_dimensions_match_dimensions(
 def test_tm1_cube_object_metadata_collect_filter_dimensions_not_empty(tm1_connection, cube_name):
     """Collects metadata and verifies that filter dimensions are not empty."""
     try:
-        metadata = utility.tm1_cube_object_metadata_collect(tm1_service=tm1_connection, cube_name=cube_name)
+        metadata = utility.TM1CubeObjectMetadata.tm1_cube_object_metadata_collect(tm1_service=tm1_connection, cube_name=cube_name)
         filter_dims = metadata["dimensions"].to_dict()
         assert bool(filter_dims)
     except TM1pyRestException as e:

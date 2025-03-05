@@ -1,9 +1,9 @@
-import pandas as pd
-from mdxpy import MdxBuilder, MdxHierarchySet, Member
-from pandas import DataFrame
-from TM1py import TM1Service
 import re
 from typing import Callable, List, Dict, Optional, Any, Union, Iterator
+
+from mdxpy import MdxBuilder, MdxHierarchySet, Member
+from pandas import DataFrame
+
 
 # ------------------------------------------------------------------------------------------------------------
 # Utility: MDX query parsing functions
@@ -12,7 +12,7 @@ from typing import Callable, List, Dict, Optional, Any, Union, Iterator
 
 # get cube name from MDX
 # internal
-def __get_cube_name_from_mdx(mdx_query: str) -> str:
+def _get_cube_name_from_mdx(mdx_query: str) -> str:
     """
     Extracts the cube name from the FROM clause of an MDX query.
 
@@ -25,14 +25,14 @@ def __get_cube_name_from_mdx(mdx_query: str) -> str:
     Raises:
         ValueError: If the MDX query does not contain a valid FROM clause.
     """
-    from_part_match: Optional[re.Match[str]] = re.search(r"FROM\s*\[(.*?)\]", mdx_query, re.IGNORECASE)
+    from_part_match: Optional[re.Match[str]] = re.search(r"FROM\s*\[(.*?)]", mdx_query, re.IGNORECASE)
     if not from_part_match:
         raise ValueError("MDX query is missing the FROM clause.")
     return from_part_match.group(1).strip()
 
 
 # internal
-def __mdx_filter_to_dictionary(mdx_query: str) -> Dict[str, str]:
+def _mdx_filter_to_dictionary(mdx_query: str) -> Dict[str, str]:
     """
     Parses the WHERE clause of an MDX query and extracts dimensions and their elements.
 
@@ -50,13 +50,13 @@ def __mdx_filter_to_dictionary(mdx_query: str) -> Dict[str, str]:
     mdx_dict: Dict[str, str] = {}
 
     # Extract full dimension-hierarchy-element triplets
-    hier_elements: List[tuple] = re.findall(r'\[(.*?)\]\.?\[(.*?)\]\.?\[(.*?)\]', where_content)
+    hier_elements: List[tuple] = re.findall(r'\[(.*?)]\.?\[(.*?)]\.?\[(.*?)]', where_content)
     for dim, hier, elem in hier_elements:
         mdx_dict[dim] = elem
 
     # Remove extracted triplets to process remaining dimension-element pairs
-    remaining_content: str = re.sub(r'\[(.*?)\]\.?\[(.*?)\]\.?\[(.*?)\]', '', where_content)
-    dim_elements: List[tuple] = re.findall(r'\[(.*?)\]\.?\[(.*?)\]', remaining_content)
+    remaining_content: str = re.sub(r'\[(.*?)]\.?\[(.*?)]\.?\[(.*?)]', '', where_content)
+    dim_elements: List[tuple] = re.findall(r'\[(.*?)]\.?\[(.*?)]', remaining_content)
 
     for dim, elem in dim_elements:
         mdx_dict[dim] = elem  # Overwrites if already exists, ensuring latest match
@@ -86,26 +86,13 @@ def __transform_set_mdx_list_to_tm1py_clear_kwargs(mdx_expressions: List[str]) -
 
 
 # ------------------------------------------------------------------------------------------------------------
-# Utility: Metadata building specific ID-s
-# ------------------------------------------------------------------------------------------------------------
-
-# metadata parts, internal naming
-QUERY_VAL = "query value"
-QUERY_FILTER_DICT = "query filter dictionary"
-CUBE_NAME = "cube name"
-CUBE_DIMS = "dimensions"
-DIM_HIERS = "hierarchies"
-DEFAULT_NAME = "default member name"
-DEFAULT_TYPE = "default member type"
-
-# ------------------------------------------------------------------------------------------------------------
 # Utility: Cube metadata collection using input MDXs and/or other cubes
 # ------------------------------------------------------------------------------------------------------------
 
 
 # TM1 Cube Object Metadata
 # utils
-class TM1_Cube_Object_Metadata:
+class TM1CubeObjectMetadata:
     """
     A recursive metadata structure that behaves like a nested dictionary. Provides methods for
     accessing, setting, iterating over keys, and converting the metadata to dictionary or list formats.
@@ -130,12 +117,21 @@ class TM1_Cube_Object_Metadata:
 
     """
 
-    def __init__(self) -> None:
-        self._data: Dict[str, Union['TM1_Cube_Object_Metadata', Any]] = {}
+    # metadata parts, internal naming
+    QUERY_VAL = "query value"
+    QUERY_FILTER_DICT = "query filter dictionary"
+    CUBE_NAME = "cube name"
+    CUBE_DIMS = "dimensions"
+    DIM_HIERS = "hierarchies"
+    DEFAULT_NAME = "default member name"
+    DEFAULT_TYPE = "default member type"
 
-    def __getitem__(self, item: str) -> Union['TM1_Cube_Object_Metadata', Any]:
+    def __init__(self) -> None:
+        self._data: Dict[str, Union['TM1CubeObjectMetadata', Any]] = {}
+
+    def __getitem__(self, item: str) -> Union['TM1CubeObjectMetadata', Any]:
         if item not in self._data:
-            self._data[item] = TM1_Cube_Object_Metadata()
+            self._data[item] = TM1CubeObjectMetadata()
         return self._data[item]
 
     def __setitem__(self, key: str, value: Any) -> None:
@@ -151,178 +147,187 @@ class TM1_Cube_Object_Metadata:
         return repr(self)
 
     def to_dict(self) -> Dict[str, Any]:
-        return {k: v.to_dict() if isinstance(v, TM1_Cube_Object_Metadata) else v for k, v in self._data.items()}
+        return {k: v.to_dict() if isinstance(v, TM1CubeObjectMetadata) else v for k, v in self._data.items()}
 
     def to_list(self) -> list:
         return list(self._data.keys())
 
     def get_cube_name(self) -> str:
-        return self[CUBE_NAME]
+        return self[self.CUBE_NAME]
 
     def get_cube_dims(self) -> List[str]:
-        return self[CUBE_DIMS].to_list()
+        return self[self.CUBE_DIMS].to_list()
 
     def get_filter_dict(self):
-        return self[QUERY_FILTER_DICT]
+        return self[self.QUERY_FILTER_DICT]
 
 
-# tm1 cube object metadata collect
-# refactor inside metadata class
-# utils
-def tm1_cube_object_metadata_collect(
-        metadata_function: Optional[Callable[..., DataFrame]] = None,
-        **kwargs: Any
-) -> TM1_Cube_Object_Metadata:
-    """
-    Retrieves a Metadata object by executing the provided metadata function.
+    # tm1 cube object metadata collect, default
+    # utils, internal
+    @classmethod
+    def __tm1_cube_object_metadata_collect_default(
+            cls,
+            tm1_service: Any,
+            mdx: Optional[str] = None,
+            cube_name: Optional[str] = None,
+            retrieve_all_dimension_data: Optional[Callable[..., Any]] = None,
+            retrieve_dimension_data: Optional[Callable[..., Any]] = None
+    ) -> "TM1CubeObjectMetadata":
+        """
+        Collects important data about the mdx query and/or it's cube based on either an MDX query or a cube name.
 
-    Args:
-        metadata_function (Optional[Callable]): A function to execute the MDX query and return a DataFrame.
-                                           If None, the default function is used.
-        **kwargs (Any): Additional keyword arguments passed to the MDX function.
+        Args:
+            tm1_service (Any): The TM1 service object used to interact with the cube.
+            mdx (Optional[str]): The MDX query string.
+            cube_name (Optional[str]): The name of the cube.
+            retrieve_all_dimension_data (Optional[Callable]): A callable function to handle retrieving all dimension data.
+            retrieve_dimension_data (Optional[Callable]): A callable function to handle metadata retrieval for dims.
 
-    Returns:
-        TM1_Cube_Object_Metadata: The Metadata object resulting from the metadata function call
-    """
-    if metadata_function is None:
-        metadata_function = __tm1_cube_object_metadata_collect_default
+        Returns:
+            TM1CubeObjectMetadata: A structured metadata object containing information about the cube.
 
-    return metadata_function(**kwargs)
+        Raises:
+            ValueError: If neither an MDX query nor a cube name is provided.
+        """
 
+        metadata = TM1CubeObjectMetadata()
 
-# tm1 cube object metadata collect, default
-# utils, internal
-def __tm1_cube_object_metadata_collect_default(
-        tm1_service: Any,
-        mdx: Optional[str] = None,
-        cube_name: Optional[str] = None,
-        retrieve_all_dimension_data: Optional[Callable[..., Any]] = None,
-        retrieve_dimension_data: Optional[Callable[..., Any]] = None
-) -> TM1_Cube_Object_Metadata:
-    """
-    Collects important data about the mdx query and/or it's cube based on either an MDX query or a cube name.
+        if mdx:
+            cube_name = _get_cube_name_from_mdx(mdx)
+            metadata = cls.expand_metadata(mdx, metadata)
 
-    Args:
-        tm1_service (Any): The TM1 service object used to interact with the cube.
-        mdx (Optional[str]): The MDX query string.
-        cube_name (Optional[str]): The name of the cube.
-        retrieve_all_dimension_data (Optional[Callable]): A callable function to handle retrieving all dimension data.
-        retrieve_dimension_data (Optional[Callable]): A callable function to handle metadata retrieval for dims.
+        if not cube_name:
+            raise ValueError("No MDX or cube name was specified.")
 
-    Returns:
-        TM1_Cube_Object_Metadata: A structured metadata object containing information about the cube.
+        metadata[cls.CUBE_NAME] = cube_name
+        cube_dimensions = tm1_service.cubes.get_dimension_names(cube_name)
 
-    Raises:
-        ValueError: If neither an MDX query nor a cube name is provided.
-    """
+        if retrieve_all_dimension_data is None:
+            retrieve_all_dimension_data = cls.__tm1_dimension_data_collector_for_cube
 
-    metadata = TM1_Cube_Object_Metadata()
+        if retrieve_dimension_data is None:
+            retrieve_dimension_data = cls.__tm1_dimension_data_collector_default
 
-    if mdx:
-        cube_name = __get_cube_name_from_mdx(mdx)
-        metadata = expand_metadata(mdx, metadata)
+        metadata = retrieve_all_dimension_data(
+            tm1_service=tm1_service,
+            cube_dimensions=cube_dimensions,
+            metadata=metadata,
+            retrieve_dimension_data=retrieve_dimension_data
+        )
 
-    if not cube_name:
-        raise ValueError("No MDX or cube name was specified.")
-
-    metadata[CUBE_NAME] = cube_name
-    cube_dimensions = tm1_service.cubes.get_dimension_names(cube_name)
-
-    if retrieve_all_dimension_data is None:
-        retrieve_all_dimension_data = __tm1_dimension_data_collector_for_cube
-
-    if retrieve_dimension_data is None:
-        retrieve_dimension_data = __tm1_dimension_data_collector_default
-
-    metadata = retrieve_all_dimension_data(
-        tm1_service=tm1_service,
-        cube_dimensions=cube_dimensions,
-        metadata=metadata,
-        retrieve_dimension_data=retrieve_dimension_data
-    )
-
-    return metadata
+        return metadata
 
 
-# tm1 dimension data collector for cube
-# utils, internal
-def __tm1_dimension_data_collector_for_cube(
-        tm1_service: Any,
-        cube_dimensions: List[str],
-        metadata: TM1_Cube_Object_Metadata,
-        retrieve_dimension_data: Callable[..., Any]
-) -> TM1_Cube_Object_Metadata:
-    """
-    Default implementation to retrieve and update metadata for all dimensions of a cube.
+    # tm1 cube object metadata collect
+    # refactor inside metadata class
+    # utils
+    @classmethod
+    def tm1_cube_object_metadata_collect(
+            cls,
+            metadata_function: Optional[Callable[..., DataFrame]] = None,
+            **kwargs: Any
+    ) -> "TM1CubeObjectMetadata":
+        """
+        Retrieves a Metadata object by executing the provided metadata function.
 
-    Args:
-        tm1_service (Any): The TM1 service object.
-        cube_dimensions (List[str]): A list of dimension names in the cube.
-        metadata (TM1_Cube_Object_Metadata): The metadata object to update.
-        retrieve_dimension_data (Callable): A function to retrieve and update metadata for each dimension.
+        Args:
+            metadata_function (Optional[Callable]): A function to execute the MDX query and return a DataFrame.
+                                               If None, the default function is used.
+            **kwargs (Any): Additional keyword arguments passed to the MDX function.
 
-    Returns:
-        metadata (Metadata)
-    """
-    for dimension in cube_dimensions:
-        dimension_hierarchies = tm1_service.hierarchies.get_all_names(dimension_name=dimension)
-        retrieve_dimension_data(tm1_service, dimension, dimension_hierarchies, metadata)
+        Returns:
+            TM1CubeObjectMetadata: The Metadata object resulting from the metadata function call
+        """
+        if metadata_function is None:
+            metadata_function = cls.__tm1_cube_object_metadata_collect_default
 
-    return metadata
-
-
-# tm1 dimension data collector
-# utils, internal
-def __tm1_dimension_data_collector_default(
-        tm1_service: Any,
-        dimension: str,
-        hierarchies: List[str],
-        metadata: TM1_Cube_Object_Metadata
-) -> TM1_Cube_Object_Metadata:
-    """
-    Default implementation to retrieve and collect metadata for a dimension and its hierarchies.
-
-    Args:
-        tm1_service (Any): The TM1 service object.
-        dimension (str): The name of the dimension.
-        hierarchies (List[str]): A list of hierarchies in the dimension.
-        metadata (TM1_Cube_Object_Metadata): The metadata object to update.
-
-    Returns:
-        TM1_Cube_Object_Metadata: The updated metadata object.
-    """
-    for hierarchy in hierarchies:
-        default_member = tm1_service.hierarchies.get(
-            dimension_name=dimension, hierarchy_name=hierarchy
-        ).default_member
-        metadata[CUBE_DIMS][dimension][DIM_HIERS][hierarchy][DEFAULT_NAME] = default_member
-
-        default_member_type = tm1_service.elements.get(
-            dimension_name=dimension, hierarchy_name=hierarchy, element_name=default_member
-        ).element_type
-        metadata[CUBE_DIMS][dimension][DIM_HIERS][hierarchy][DEFAULT_TYPE] = default_member_type
-
-    return metadata
+        return metadata_function(**kwargs)
 
 
-# expand metadata
-# refactor inside metadata
-#
-def expand_metadata(mdx: str, metadata: TM1_Cube_Object_Metadata) -> TM1_Cube_Object_Metadata:
-    """
-    Extracts the filter dimensions and their elements in the mdx query (parts of the WHERE clause)
+    # tm1 dimension data collector for cube
+    # utils, internal
+    @classmethod
+    def __tm1_dimension_data_collector_for_cube(
+            cls,
+            tm1_service: Any,
+            cube_dimensions: List[str],
+            metadata: "TM1CubeObjectMetadata",
+            retrieve_dimension_data: Callable[..., Any]
+    ) -> "TM1CubeObjectMetadata":
+        """
+        Default implementation to retrieve and update metadata for all dimensions of a cube.
 
-    Args:
-        mdx (str): The MDX query string.
-        metadata (TM1_Cube_Object_Metadata): The metadata object to update.
+        Args:
+            tm1_service (Any): The TM1 service object.
+            cube_dimensions (List[str]): A list of dimension names in the cube.
+            metadata (TM1CubeObjectMetadata): The metadata object to update.
+            retrieve_dimension_data (Callable): A function to retrieve and update metadata for each dimension.
 
-    Returns:
-        TM1_Cube_Object_Metadata: The updated metadata object.
-    """
+        Returns:
+            metadata (Metadata)
+        """
+        for dimension in cube_dimensions:
+            dimension_hierarchies = tm1_service.hierarchies.get_all_names(dimension_name=dimension)
+            retrieve_dimension_data(tm1_service, dimension, dimension_hierarchies, metadata)
 
-    metadata["query value"] = mdx
-    metadata[QUERY_FILTER_DICT] = __mdx_filter_to_dictionary(mdx)
-    return metadata
+        return metadata
+
+
+    # tm1 dimension data collector
+    # utils, internal
+    @classmethod
+    def __tm1_dimension_data_collector_default(
+            cls,
+            tm1_service: Any,
+            dimension: str,
+            hierarchies: List[str],
+            metadata: "TM1CubeObjectMetadata"
+    ) -> "TM1CubeObjectMetadata":
+        """
+        Default implementation to retrieve and collect metadata for a dimension and its hierarchies.
+
+        Args:
+            tm1_service (Any): The TM1 service object.
+            dimension (str): The name of the dimension.
+            hierarchies (List[str]): A list of hierarchies in the dimension.
+            metadata (TM1CubeObjectMetadata): The metadata object to update.
+
+        Returns:
+            TM1CubeObjectMetadata: The updated metadata object.
+        """
+        for hierarchy in hierarchies:
+            default_member = tm1_service.hierarchies.get(
+                dimension_name=dimension, hierarchy_name=hierarchy
+            ).default_member
+            metadata[cls.CUBE_DIMS][dimension][cls.DIM_HIERS][hierarchy][cls.DEFAULT_NAME] = default_member
+
+            default_member_type = tm1_service.elements.get(
+                dimension_name=dimension, hierarchy_name=hierarchy, element_name=default_member
+            ).element_type
+            metadata[cls.CUBE_DIMS][dimension][cls.DIM_HIERS][hierarchy][cls.DEFAULT_TYPE] = default_member_type
+
+        return metadata
+
+
+    # expand metadata
+    # refactor inside metadata
+    #
+    @classmethod
+    def expand_metadata(cls, mdx: str, metadata: "TM1CubeObjectMetadata") -> "TM1CubeObjectMetadata":
+        """
+        Extracts the filter dimensions and their elements in the mdx query (parts of the WHERE clause)
+
+        Args:
+            mdx (str): The MDX query string.
+            metadata (TM1CubeObjectMetadata): The metadata object to update.
+
+        Returns:
+            TM1CubeObjectMetadata: The updated metadata object.
+        """
+
+        metadata["query value"] = mdx
+        metadata[cls.QUERY_FILTER_DICT] = _mdx_filter_to_dictionary(mdx)
+        return metadata
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -353,7 +358,7 @@ def validate_dataframe_columns(
                  of the Metadata. False if the column labels or their order does not match.
     """
 
-    metadata = tm1_cube_object_metadata_collect(metadata_function=metadata_function, cube_name=cube_name, **kwargs)
+    metadata = TM1CubeObjectMetadata.tm1_cube_object_metadata_collect(metadata_function=metadata_function, cube_name=cube_name, **kwargs)
     dimensions_from_metadata = metadata.get_cube_dims()
     dimensions_from_dataframe = list(map(str, dataframe.keys()))
     dimensions_from_dataframe.remove("Value")
@@ -451,7 +456,7 @@ def validate_dataframe_transformations(
 ) -> bool:
 
     source_dimensions = source_dataframe.columns()
-    target_dimensions = tm1_cube_object_metadata_collect(cube_name=target_cube_name, **kwargs).get_cube_dims()
+    target_dimensions = TM1CubeObjectMetadata.tm1_cube_object_metadata_collect(cube_name=target_cube_name, **kwargs).get_cube_dims()
 
     if source_dimensions == target_dimensions:
         return True
@@ -518,7 +523,7 @@ def build_mdx_from_cube_filter(
     """
 
     if metadata_function is None:
-        metadata_function = tm1_cube_object_metadata_collect
+        metadata_function = TM1CubeObjectMetadata.tm1_cube_object_metadata_collect
 
     metadata = metadata_function(cube_name=cube_name, **kwargs)
     dataframe_dimensions = metadata.get_cube_dims()

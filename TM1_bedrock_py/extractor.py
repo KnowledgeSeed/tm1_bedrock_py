@@ -146,7 +146,7 @@ def __assign_mapping_dataframes(
             skip_consolidated_cells=True,
             **kwargs
         )
-        filter_dict = utility.tm1_cube_object_metadata_collect(
+        filter_dict = utility.TM1CubeObjectMetadata.tm1_cube_object_metadata_collect(
             metadata_function=metadata_function, **kwargs
         ).get_filter_dict()
         return transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=filter_dict)
