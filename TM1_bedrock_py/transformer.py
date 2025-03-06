@@ -297,7 +297,7 @@ def dataframe_map_and_replace(
     """
 
     # 1) Compute shared dimensions, excluding those being remapped
-    shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - set(mapped_dimensions.keys()))
+    shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - set(mapped_dimensions.keys()) - {"Value"})
 
     # 2) Perform an in-place left join on shared dimensions
     data_df = data_df.merge(mapping_df, how='left', on=shared_dimensions, suffixes=('', '_mapped'))
@@ -350,7 +350,7 @@ def dataframe_map_and_join(
         raise KeyError(f"Columns {missing_cols} not found in mapping_df.")
 
     # Identify shared dimensions (excluding the explicitly joined columns)
-    shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - set(joined_columns))
+    shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - set(joined_columns) - {"Value"})
 
     # Perform an in-place left join
     data_df = data_df.merge(mapping_df[shared_dimensions + joined_columns],
