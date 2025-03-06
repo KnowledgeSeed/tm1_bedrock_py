@@ -61,7 +61,7 @@ def test_tm1_cube_object_metadata_collect_based_on_cube_name_success(tm1_connect
     """Collects metadata based on cube name and checks if the method's output is a Metadata object"""
     try:
         assert isinstance(
-            utility.TM1CubeObjectMetadata.tm1_cube_object_metadata_collect(tm1_service=tm1_connection, cube_name=cube_name),
+            utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, cube_name=cube_name),
             utility.TM1CubeObjectMetadata
         )
     except TM1pyRestException as e:
@@ -73,7 +73,7 @@ def test_tm1_cube_object_metadata_collect_based_on_cube_name_fail(tm1_connection
     """Runs collect_metadata based with bad cube name and checks if the method's output is a Metadata object."""
     with pytest.raises(EXCEPTION_MAP[exception]):
         assert isinstance(
-            utility.TM1CubeObjectMetadata.tm1_cube_object_metadata_collect(tm1_service=tm1_connection, cube_name=cube_name),
+            utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, cube_name=cube_name),
             utility.TM1CubeObjectMetadata
         )
 
@@ -83,7 +83,7 @@ def test_tm1_cube_object_metadata_collect_based_on_mdx_name_success(tm1_connecti
     """Collects metadata based on MDX and checks if the method's output is a Metadata object"""
     try:
         assert isinstance(
-            utility.TM1CubeObjectMetadata.tm1_cube_object_metadata_collect(tm1_service=tm1_connection, mdx=data_mdx),
+            utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, mdx=data_mdx),
             utility.TM1CubeObjectMetadata
         )
     except TM1pyRestException as e:
@@ -95,7 +95,7 @@ def test_tm1_cube_object_metadata_collect_based_on_mdx_name_fail(tm1_connection,
     """Runs collect_metadata with bad input for MDX and checks if the method's output is a Metadata object."""
     with pytest.raises(EXCEPTION_MAP[exception]):
         assert isinstance(
-            utility.TM1CubeObjectMetadata.tm1_cube_object_metadata_collect(tm1_service=tm1_connection, mdx=data_mdx),
+            utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, mdx=data_mdx),
             utility.TM1CubeObjectMetadata
         )
 
@@ -104,7 +104,7 @@ def test_tm1_cube_object_metadata_collect_based_on_mdx_name_fail(tm1_connection,
 def test_tm1_cube_object_metadata_collect_cube_dimensions_not_empty(tm1_connection, cube_name):
     """Collects metadata and verifies that cube dimensions are not empty."""
     try:
-        metadata = utility.TM1CubeObjectMetadata.tm1_cube_object_metadata_collect(tm1_service=tm1_connection, cube_name=cube_name)
+        metadata = utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, cube_name=cube_name)
         cube_dims = metadata.get_cube_dims()
         assert cube_dims != 0
     except TM1pyRestException as e:
@@ -117,7 +117,7 @@ def test_tm1_cube_object_metadata_collect_cube_dimensions_match_dimensions(
 ):
     """Collects metadata and verifies that cube dimensions match the expected dimensions."""
     try:
-        metadata = utility.TM1CubeObjectMetadata.tm1_cube_object_metadata_collect(tm1_service=tm1_connection, cube_name=cube_name)
+        metadata = utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, cube_name=cube_name)
         cube_dims = metadata.get_cube_dims()
         assert cube_dims == expected_dimensions
     except TM1pyRestException as e:
@@ -128,7 +128,7 @@ def test_tm1_cube_object_metadata_collect_cube_dimensions_match_dimensions(
 def test_tm1_cube_object_metadata_collect_filter_dimensions_not_empty(tm1_connection, cube_name):
     """Collects metadata and verifies that filter dimensions are not empty."""
     try:
-        metadata = utility.TM1CubeObjectMetadata.tm1_cube_object_metadata_collect(tm1_service=tm1_connection, cube_name=cube_name)
+        metadata = utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, cube_name=cube_name)
         filter_dims = metadata["dimensions"].to_dict()
         assert bool(filter_dims)
     except TM1pyRestException as e:
@@ -154,7 +154,7 @@ def test_build_mdx_from_cube_filter_is_valid_format_true(tm1_connection, cube_fi
 def test_mdx_to_dataframe_execute_query_success(tm1_connection, data_mdx):
     """Run MDX to dataframe function and verifies that the output is a DataFrame object."""
     try:
-        df = extractor.extract(tm1_service=tm1_connection, data_mdx=data_mdx)
+        df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
         assert isinstance(df, DataFrame)
     except Exception as e:
         pytest.fail(f"MDX query execution failed: {e}")
@@ -165,7 +165,7 @@ def test_mdx_to_dataframe_execute_query_fail(tm1_connection, data_mdx):
     """Run MDX to dataframe function with bad input. Raises error."""
     with pytest.raises(TM1pyRestException):
         assert isinstance(
-            extractor.extract(tm1_service=tm1_connection, data_mdx=data_mdx),
+            extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx),
             DataFrame
         )
 
@@ -174,7 +174,7 @@ def test_mdx_to_dataframe_execute_query_fail(tm1_connection, data_mdx):
 def test_normalize_dataframe_is_dataframe_true(tm1_connection, data_mdx):
     """Run normalize dataframe function and check for if output is dataframe"""
     try:
-        df = extractor.extract(tm1_service=tm1_connection, data_mdx=data_mdx)
+        df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
         df = transformer.normalize_dataframe(tm1_service=tm1_connection, dataframe=df, mdx=data_mdx)
         assert isinstance(df, DataFrame)
     except Exception as e:
@@ -185,7 +185,7 @@ def test_normalize_dataframe_is_dataframe_true(tm1_connection, data_mdx):
 def test_normalize_dataframe_match_number_of_dimensions_success(tm1_connection, data_mdx, expected_dimensions):
     """Run normalize dataframe function and check if the output has the correct number of dimensions"""
     try:
-        df = extractor.extract(tm1_service=tm1_connection, data_mdx=data_mdx)
+        df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
         df = transformer.normalize_dataframe(tm1_service=tm1_connection, dataframe=df, mdx=data_mdx)
         df.keys()
         assert len(df.keys()) == expected_dimensions
@@ -197,7 +197,7 @@ def test_normalize_dataframe_match_number_of_dimensions_success(tm1_connection, 
 def test_normalize_dataframe_match_dimensions_success(tm1_connection, data_mdx, expected_dimensions):
     """Runs normalize dataframe function and validates that the output's dimension keys match the expected"""
     try:
-        df = extractor.extract(tm1_service=tm1_connection, data_mdx=data_mdx)
+        df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
         df = transformer.normalize_dataframe(tm1_service=tm1_connection, dataframe=df, mdx=data_mdx)
         keys = [key for key in df.keys()]
         assert expected_dimensions == keys
@@ -213,7 +213,7 @@ def test_build_mdx_from_cube_filter_create_dataframe_success(tm1_connection, cub
         tm1_service=tm1_connection, cube_name=cube_name, cube_filter=cube_filter
     )
     try:
-        df = extractor.extract(tm1_service=tm1_connection, data_mdx=data_mdx)
+        df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
         df = transformer.normalize_dataframe(tm1_service=tm1_connection, dataframe=df, mdx=data_mdx)
         assert isinstance(df, DataFrame)
     except Exception as e:
@@ -246,7 +246,7 @@ def test_dataframe_drop_column(dataframe, column_list, expected_dataframe):
 def test_dataframe_redimension_scale_down(dataframe, filter_condition, expected_dataframe):
     df = pd.DataFrame(dataframe)
     expected_df = pd.DataFrame(expected_dataframe)
-    transformed_df = transformer.dataframe_redimension_scale_down(dataframe=df, filter_condition=filter_condition)
+    transformed_df = transformer.dataframe_drop_filtered_column(dataframe=df, filter_condition=filter_condition)
 
     pd.testing.assert_frame_equal(transformed_df, expected_df)
 
@@ -286,21 +286,21 @@ def test_dataframe_redimension_and_transform(
 # ------------------------------------------------------------------------------------------------------------
 
 @parametrize_from_file
-def test_dataframe_literal_remap_success(dataframe, mapping, expected_dataframe):
+def test_dataframe_find_and_replace_success(dataframe, mapping, expected_dataframe):
     """Remaps elements based on literal mapping, without dimension manipulation and checks for successful execution"""
 
     df = pd.DataFrame(dataframe)
     expected_df = pd.DataFrame(expected_dataframe)
-    remapped_df = transformer.dataframe_literal_remap(dataframe=df, mapping=mapping)
+    remapped_df = transformer.dataframe_find_and_replace(dataframe=df, mapping=mapping)
 
     pd.testing.assert_frame_equal(remapped_df, expected_df)
 
 
 @parametrize_from_file
-def test_dataframe_literal_remap_fail(dataframe, mapping, expected_dataframe):
+def test_dataframe_find_and_replace_fail(dataframe, mapping, expected_dataframe):
     """Tries to remap elements based on literal mapping, without dimension manipulation with bad input. Raises error."""
 
     expected_df = pd.DataFrame(expected_dataframe)
     with pytest.raises(AssertionError):
-        remapped_df = transformer.dataframe_literal_remap(dataframe=pd.DataFrame(dataframe), mapping=mapping)
+        remapped_df = transformer.dataframe_find_and_replace(dataframe=pd.DataFrame(dataframe), mapping=mapping)
         pd.testing.assert_frame_equal(remapped_df, expected_df)

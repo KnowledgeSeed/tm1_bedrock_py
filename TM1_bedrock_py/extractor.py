@@ -12,7 +12,7 @@ from TM1_bedrock_py import utility, transformer
 
 
 # extract
-def extract(
+def tm1_mdx_to_dataframe(
         mdx_function: Optional[Callable[..., DataFrame]] = None,
         **kwargs: Any
 ) -> DataFrame:
@@ -28,13 +28,13 @@ def extract(
         DataFrame: The DataFrame resulting from the MDX query.
     """
     if mdx_function is None:
-        mdx_function = __extract_default
+        mdx_function = __tm1_mdx_to_dataframe_default
 
     return mdx_function(**kwargs)
 
 
 # extract, internal
-def __extract_default(
+def __tm1_mdx_to_dataframe_default(
         tm1_service: TM1Service,
         data_mdx: Optional[str] = None,
         data_mdx_list:  Optional[list[str]] = None,
@@ -138,7 +138,7 @@ def __assign_mapping_dataframes(
 
     def create_dataframe(mdx: str, metadata_function: Optional[Callable[..., Any]] = None) -> DataFrame:
         """Helper function to convert MDX to a normalized DataFrame."""
-        dataframe = extract(
+        dataframe = tm1_mdx_to_dataframe(
             mdx_function=mdx_function,
             tm1_service=tm1_service,
             data_mdx=mdx,
@@ -146,7 +146,7 @@ def __assign_mapping_dataframes(
             skip_consolidated_cells=True,
             **kwargs
         )
-        filter_dict = utility.TM1CubeObjectMetadata.tm1_cube_object_metadata_collect(
+        filter_dict = utility.TM1CubeObjectMetadata.collect(
             metadata_function=metadata_function, **kwargs
         ).get_filter_dict()
         return transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=filter_dict)

@@ -137,4 +137,3 @@ def dataframe_to_cube_with_clear(
     if clear_target:
         clear_cube(clear_function, **kwargs)
     dataframe_to_cube(write_function, **kwargs)
-

@@ -161,21 +161,21 @@ def data_copy_intercube(
         ]
     """
 
-    data_metadata = utility.TM1CubeObjectMetadata.tm1_cube_object_metadata_collect(
+    data_metadata = utility.TM1CubeObjectMetadata.collect(
         tm1_service=tm1_service,
         mdx=data_mdx,
         metadata_function=data_metadata_function,
         **kwargs
     )
 
-    target_metadata = utility.TM1CubeObjectMetadata.tm1_cube_object_metadata_collect(
+    target_metadata = utility.TM1CubeObjectMetadata.collect(
         tm1_service=tm1_service,
         cube_name=target_cube_name,
         metadata_function=target_metadata_function,
         **kwargs
     )
 
-    dataframe = extractor.extract(
+    dataframe = extractor.tm1_mdx_to_dataframe(
         tm1_service=tm1_service,
         data_mdx=data_mdx,
         data_mdx_list=data_mdx_list,
@@ -211,7 +211,7 @@ def data_copy_intercube(
     if value_function is not None:
         dataframe = transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
 
-    dataframe = transformer.dataframe_rearrange_dimensions(
+    dataframe = transformer.dataframe_reorder_dimensions(
         dataframe=dataframe, cube_dimensions=target_metadata.get_cube_dims()
     )
 
@@ -362,14 +362,14 @@ def data_copy(
     Using them will raise an error at writing
     """
 
-    data_metadata = utility.TM1CubeObjectMetadata.tm1_cube_object_metadata_collect(
+    data_metadata = utility.TM1CubeObjectMetadata.collect(
         tm1_service=tm1_service,
         mdx=data_mdx,
         metadata_function=data_metadata_function,
         **kwargs
     )
 
-    dataframe = extractor.extract(
+    dataframe = extractor.tm1_mdx_to_dataframe(
         tm1_service=tm1_service,
         data_mdx=data_mdx,
         data_mdx_list=data_mdx_list,
@@ -398,7 +398,7 @@ def data_copy(
     if value_function is not None:
         dataframe = transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
 
-    dataframe = transformer.dataframe_rearrange_dimensions(
+    dataframe = transformer.dataframe_reorder_dimensions(
         dataframe=dataframe, cube_dimensions=data_metadata.get_cube_dims()
     )
 

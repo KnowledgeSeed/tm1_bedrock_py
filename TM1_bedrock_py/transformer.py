@@ -30,13 +30,13 @@ def normalize_dataframe(
         DataFrame: The normalized DataFrame.
     """
 
-    metadata = utility.TM1CubeObjectMetadata.tm1_cube_object_metadata_collect(metadata_function=metadata_function, **kwargs)
+    metadata = utility.TM1CubeObjectMetadata.collect(metadata_function=metadata_function, **kwargs)
 
     dataframe = dataframe_add_column_assign_value(dataframe=dataframe, column_value=metadata.get_filter_dict())
-    return dataframe_rearrange_dimensions(dataframe=dataframe, cube_dimensions=metadata.get_cube_dims())
+    return dataframe_reorder_dimensions(dataframe=dataframe, cube_dimensions=metadata.get_cube_dims())
 
 
-def dataframe_rearrange_dimensions(
+def dataframe_reorder_dimensions(
         dataframe: DataFrame,
         cube_dimensions: List[str]
 ) -> DataFrame:
@@ -159,7 +159,7 @@ def dataframe_add_column_assign_value(
 
 
 # transform
-def dataframe_redimension_scale_down(
+def dataframe_drop_filtered_column(
         dataframe: DataFrame,
         filter_condition: dict
 ) -> DataFrame:
@@ -244,7 +244,7 @@ def dataframe_redimension_and_transform(
 ) -> DataFrame:
 
     if source_dim_mapping is not None:
-        dataframe = dataframe_redimension_scale_down(dataframe=dataframe, filter_condition=source_dim_mapping)
+        dataframe = dataframe_drop_filtered_column(dataframe=dataframe, filter_condition=source_dim_mapping)
 
     if related_dimensions is not None:
         dataframe = dataframe_relabel(dataframe=dataframe, columns=related_dimensions)
@@ -261,7 +261,7 @@ def dataframe_redimension_and_transform(
 
 
 # transform
-def dataframe_literal_remap(
+def dataframe_find_and_replace(
         dataframe: DataFrame,
         mapping: Dict[str, Dict[Any, Any]]
 ) -> DataFrame:
@@ -398,7 +398,7 @@ def __apply_replace(
         The modified DataFrame after applying the literal remap.
     """
     _ = mapping_data
-    return dataframe_literal_remap(
+    return dataframe_find_and_replace(
         dataframe=data_df,
         mapping=mapping_step["mapping"]
     )
