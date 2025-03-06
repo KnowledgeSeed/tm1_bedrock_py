@@ -122,9 +122,9 @@ class TM1CubeObjectMetadata:
     _QUERY_FILTER_DICT = "query filter dictionary"
     _CUBE_NAME = "cube name"
     _CUBE_DIMS = "dimensions"
-    DIM_HIERS = "hierarchies"
-    DEFAULT_NAME = "default member name"
-    DEFAULT_TYPE = "default member type"
+    _DIM_HIERS = "hierarchies"
+    _DEFAULT_NAME = "default member name"
+    _DEFAULT_TYPE = "default member type"
 
     def __init__(self) -> None:
         self._data: Dict[str, Union['TM1CubeObjectMetadata', Any]] = {}
@@ -286,12 +286,12 @@ class TM1CubeObjectMetadata:
             default_member = tm1_service.hierarchies.get(
                 dimension_name=dimension, hierarchy_name=hierarchy
             ).default_member
-            metadata[cls._CUBE_DIMS][dimension][cls.DIM_HIERS][hierarchy][cls.DEFAULT_NAME] = default_member
+            metadata[cls._CUBE_DIMS][dimension][cls._DIM_HIERS][hierarchy][cls._DEFAULT_NAME] = default_member
 
             default_member_type = tm1_service.elements.get(
                 dimension_name=dimension, hierarchy_name=hierarchy, element_name=default_member
             ).element_type
-            metadata[cls._CUBE_DIMS][dimension][cls.DIM_HIERS][hierarchy][cls.DEFAULT_TYPE] = default_member_type
+            metadata[cls._CUBE_DIMS][dimension][cls._DIM_HIERS][hierarchy][cls._DEFAULT_TYPE] = default_member_type
 
         return metadata
 
