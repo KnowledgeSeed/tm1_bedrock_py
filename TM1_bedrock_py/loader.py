@@ -10,7 +10,7 @@ from TM1_bedrock_py import utility
 # Main: normalized pandas dataframe to cube functions
 # ------------------------------------------------------------------------------------------------------------
 
-# loader
+
 def clear_cube(
         clear_function: Optional[Callable[..., Any]] = None,
         **kwargs: Any
@@ -31,7 +31,6 @@ def clear_cube(
     return clear_function(**kwargs)
 
 
-# loader, internal
 def __clear_cube_default(
         tm1_service: TM1Service,
         cube_name: str,
@@ -49,7 +48,6 @@ def __clear_cube_default(
     tm1_service.cells.clear(cube_name, **clearing_kwargs)
 
 
-# loader
 def dataframe_to_cube(
         write_function: Optional[Callable[..., Any]] = None,
         **kwargs: Any
@@ -67,7 +65,6 @@ def dataframe_to_cube(
     return write_function(**kwargs)
 
 
-# loader, internal
 def __dataframe_to_cube_default(
         tm1_service: TM1Service,
         dataframe: DataFrame,
@@ -114,7 +111,6 @@ def __dataframe_to_cube_default(
     )
 
 
-# loader
 def dataframe_to_cube_with_clear(
         clear_function: Optional[Callable[..., None]] = None,
         write_function: Optional[Callable[..., None]] = None,

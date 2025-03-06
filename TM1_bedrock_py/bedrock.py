@@ -9,8 +9,6 @@ from pandas import DataFrame
 from TM1_bedrock_py import utility, transformer, loader, extractor
 
 
-# data_copy_intercube
-# bedrock
 def data_copy_intercube(
         tm1_service: Optional[Any],
         data_mdx: Optional[str] = None,
@@ -230,7 +228,6 @@ def data_copy_intercube(
     )
 
 
-# bedrock
 def data_copy(
         tm1_service: Optional[Any],
         data_mdx: Optional[str] = None,

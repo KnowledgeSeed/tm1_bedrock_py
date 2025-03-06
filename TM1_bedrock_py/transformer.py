@@ -6,10 +6,6 @@ from pandas import DataFrame
 from TM1_bedrock_py import utility
 
 
-# transform
-#
-# add col assign val -> metadata.get_filter_dict()
-# rearrange dimensions -> metadata.get_cube_dims()
 def normalize_dataframe(
         dataframe: DataFrame,
         metadata_function: Optional[Callable[..., Any]] = None,
@@ -75,7 +71,6 @@ def dataframe_reorder_dimensions(
 # naming review needed!!!
 
 
-# transform
 def dataframe_filter(
         dataframe: DataFrame,
         filter_condition: Dict[str, Any],
@@ -115,7 +110,6 @@ def dataframe_filter(
     )
 
 
-# transform
 def dataframe_drop_column(
         dataframe: DataFrame,
         column_list: list[str]
@@ -135,7 +129,6 @@ def dataframe_drop_column(
     return dataframe.drop(column_list, axis=1).reset_index(drop=True)
 
 
-# transform
 def dataframe_add_column_assign_value(
         dataframe: DataFrame,
         column_value: dict
@@ -158,7 +151,6 @@ def dataframe_add_column_assign_value(
     return dataframe.reset_index(drop=True)
 
 
-# transform
 def dataframe_drop_filtered_column(
         dataframe: DataFrame,
         filter_condition: dict
@@ -179,7 +171,6 @@ def dataframe_drop_filtered_column(
     return dataframe_drop_column(dataframe=filtered_dataframe, column_list=column_list).reset_index(drop=True)
 
 
-# transform
 def dataframe_drop_zero_and_values(
         dataframe: DataFrame
 ) -> DataFrame:
@@ -197,7 +188,6 @@ def dataframe_drop_zero_and_values(
     return dataframe.reset_index(drop=True)
 
 
-# transfrom
 def dataframe_relabel(
         dataframe: DataFrame,
         columns: dict
@@ -216,7 +206,6 @@ def dataframe_relabel(
     return dataframe
 
 
-# transform
 def dataframe_value_scale(
         dataframe: DataFrame,
         value_function: callable
@@ -235,7 +224,6 @@ def dataframe_value_scale(
     return dataframe.reset_index(drop=True)
 
 
-# transform
 def dataframe_redimension_and_transform(
         dataframe: DataFrame,
         source_dim_mapping: Optional[dict] = None,
@@ -260,7 +248,6 @@ def dataframe_redimension_and_transform(
 # ------------------------------------------------------------------------------------------------------------
 
 
-# transform
 def dataframe_find_and_replace(
         dataframe: DataFrame,
         mapping: Dict[str, Dict[Any, Any]]
@@ -280,8 +267,6 @@ def dataframe_find_and_replace(
     return dataframe
 
 
-# dataframe map and replace
-# transform
 def dataframe_map_and_replace(
         data_df: DataFrame,
         mapping_df: DataFrame,
@@ -325,8 +310,6 @@ def dataframe_map_and_replace(
     return data_df[data_df.columns.intersection(set(mapping_df.columns))]
 
 
-# dataframe map and join
-# transform
 def dataframe_map_and_join(
         data_df: DataFrame,
         mapping_df: DataFrame,
@@ -374,7 +357,6 @@ def dataframe_map_and_join(
     return data_df
 
 
-# transform, internal
 def __apply_replace(
         data_df: DataFrame,
         mapping_step: Dict[str, Any],
@@ -404,8 +386,6 @@ def __apply_replace(
     )
 
 
-# apply map and replace
-# transform, internal
 def __apply_map_and_replace(
         data_df: DataFrame,
         mapping_step: Dict[str, Any],
@@ -462,8 +442,6 @@ def __apply_map_and_replace(
     return data_df
 
 
-# apply map and join
-# transform, internal
 def __apply_map_and_join(
         data_df: DataFrame,
         mapping_step: Dict[str, Any],
@@ -498,7 +476,6 @@ def __apply_map_and_join(
     return data_df
 
 
-# transform
 def dataframe_execute_mappings(
         data_df: DataFrame,
         mapping_data: Dict[str, Optional[DataFrame] | List[Dict[str, Any]]]

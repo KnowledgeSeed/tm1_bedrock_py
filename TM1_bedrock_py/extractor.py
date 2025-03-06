@@ -11,7 +11,6 @@ from TM1_bedrock_py import utility, transformer
 # ------------------------------------------------------------------------------------------------------------
 
 
-# extract
 def tm1_mdx_to_dataframe(
         mdx_function: Optional[Callable[..., DataFrame]] = None,
         **kwargs: Any
@@ -33,7 +32,6 @@ def tm1_mdx_to_dataframe(
     return mdx_function(**kwargs)
 
 
-# extract, internal
 def __tm1_mdx_to_dataframe_default(
         tm1_service: TM1Service,
         data_mdx: Optional[str] = None,
@@ -77,7 +75,6 @@ def __tm1_mdx_to_dataframe_default(
         )
 
 
-# extract, internal
 def __assign_mapping_dataframes(
         mapping_steps: List[Dict],
         shared_mapping_df: Optional[DataFrame] = None,

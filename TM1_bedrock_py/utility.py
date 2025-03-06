@@ -10,8 +10,6 @@ from pandas import DataFrame
 # ------------------------------------------------------------------------------------------------------------
 
 
-# get cube name from MDX
-# internal
 def _get_cube_name_from_mdx(mdx_query: str) -> str:
     """
     Extracts the cube name from the FROM clause of an MDX query.
@@ -31,7 +29,6 @@ def _get_cube_name_from_mdx(mdx_query: str) -> str:
     return from_part_match.group(1).strip()
 
 
-# internal
 def _mdx_filter_to_dictionary(mdx_query: str) -> Dict[str, str]:
     """
     Parses the WHERE clause of an MDX query and extracts dimensions and their elements.
@@ -64,8 +61,6 @@ def _mdx_filter_to_dictionary(mdx_query: str) -> Dict[str, str]:
     return mdx_dict
 
 
-# transform set mdx list to tm1py clear kwargs
-# internal
 def __transform_set_mdx_list_to_tm1py_clear_kwargs(mdx_expressions: List[str]) -> Dict[str, str]:
     """
     Generate a dictionary of kwargs from a list of MDX expressions.
@@ -90,8 +85,6 @@ def __transform_set_mdx_list_to_tm1py_clear_kwargs(mdx_expressions: List[str]) -
 # ------------------------------------------------------------------------------------------------------------
 
 
-# TM1 Cube Object Metadata
-# utils
 class TM1CubeObjectMetadata:
     """
     A recursive metadata structure that behaves like a nested dictionary. Provides methods for
@@ -317,8 +310,7 @@ class TM1CubeObjectMetadata:
 # Utility: DataFrame validation functions
 # ------------------------------------------------------------------------------------------------------------
 
-# validate_dataframe_columns
-# utility
+
 def validate_dataframe_columns(
         dataframe: DataFrame,
         cube_name: str,
@@ -349,8 +341,6 @@ def validate_dataframe_columns(
     return dimensions_from_metadata == dimensions_from_dataframe
 
 
-# validate_dataframe_values_for_na
-# utility
 def validate_dataframe_values_for_na(dataframe: DataFrame) -> bool:
     """
     Checks if the DataFrame rows contain NaN values in the "Value" column
@@ -365,8 +355,6 @@ def validate_dataframe_values_for_na(dataframe: DataFrame) -> bool:
     return not dataframe["Value"].isna().values.any()
 
 
-# validate_dataframe_no_duplicates
-# utility
 def validate_dataframe_no_duplicates(dataframe: DataFrame) -> bool:
     """
     Checks if the DataFrame rows contain duplicate values for validating the DataFrame.
@@ -380,7 +368,6 @@ def validate_dataframe_no_duplicates(dataframe: DataFrame) -> bool:
     return not dataframe.duplicated(keep=False).any()
 
 
-# utils
 def validate_dataframe_rows(dataframe: DataFrame) -> bool:
     """
     Checks if the DataFrame rows are valid. A row is valid if it does not contain duplicate or NaN values.
@@ -395,8 +382,6 @@ def validate_dataframe_rows(dataframe: DataFrame) -> bool:
             and validate_dataframe_no_duplicates(dataframe=dataframe))
 
 
-# validate dataframe for cube objects
-# utils
 def validate_dataframe_for_cube_objects(
         dataframe: DataFrame,
         cube_name: str,
@@ -426,9 +411,6 @@ def validate_dataframe_for_cube_objects(
             ))
 
 
-# validate dataframe transformations
-# refactor for general
-# utils
 def validate_dataframe_transformations(
         source_dataframe: DataFrame,
         target_cube_name: str,
@@ -455,8 +437,6 @@ def validate_dataframe_transformations(
                 )
 
 
-# validate dataframe transformations for source
-# utils, internal
 def __validate_dataframe_transformations_for_source(
         source_dimensions: list,
         source_dim_mapping: dict,
@@ -470,8 +450,6 @@ def __validate_dataframe_transformations_for_source(
         return source_dimensions == source_dim_list
 
 
-# validate dataframe transformations for source
-# utils, internal
 def __validate_dataframe_transformations_for_target(
         target_dimensions: list,
         target_dim_mapping: dict,
@@ -485,9 +463,11 @@ def __validate_dataframe_transformations_for_target(
         return target_dimensions == source_dim_list
 
 
-# build mdx from cube filter -> review needed
-# utils
-# ráér
+# ------------------------------------------------------------------------------------------------------------
+# Utility: MDX builder functions
+# ------------------------------------------------------------------------------------------------------------
+
+
 def build_mdx_from_cube_filter(
         cube_name: str,
         cube_filter: dict,
