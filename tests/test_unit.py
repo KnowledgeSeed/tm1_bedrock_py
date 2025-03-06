@@ -281,6 +281,15 @@ def test_dataframe_redimension_and_transform(
     pd.testing.assert_frame_equal(transformed_df, expected_df)
 
 
+@parametrize_from_file
+def test_dataframe_reorder_dimensions(dataframe, cube_cols, expected_dataframe):
+    df = pd.DataFrame(dataframe)
+    expected_df = pd.DataFrame(expected_dataframe)
+    transformed_df = transformer.dataframe_reorder_dimensions(dataframe=df, cube_dimensions=cube_cols)
+
+    pd.testing.assert_frame_equal(transformed_df, expected_df)
+
+
 # ------------------------------------------------------------------------------------------------------------
 # Main: tests for dataframe remapping and copy functions
 # ------------------------------------------------------------------------------------------------------------
@@ -304,3 +313,37 @@ def test_dataframe_find_and_replace_fail(dataframe, mapping, expected_dataframe)
     with pytest.raises(AssertionError):
         remapped_df = transformer.dataframe_find_and_replace(dataframe=pd.DataFrame(dataframe), mapping=mapping)
         pd.testing.assert_frame_equal(remapped_df, expected_df)
+
+
+@parametrize_from_file
+def test_dataframe_map_and_replace_success(dataframe, mapping_dataframe, mapping_dimensions, expected_dataframe):
+    df = pd.DataFrame(dataframe)
+    mapping_df = pd.DataFrame(mapping_dataframe)
+    expected_df = pd.DataFrame(expected_dataframe)
+    remapped_df = transformer.dataframe_map_and_replace(
+        data_df=df,
+        mapping_df=mapping_df,
+        mapped_dimensions=mapping_dimensions)
+
+    print(remapped_df)
+    print(expected_df)
+    pd.testing.assert_frame_equal(remapped_df, expected_df)
+
+
+@parametrize_from_file
+def test_dataframe_map_and_join_success(dataframe, joined_cols, mapping_dataframe, expected_dataframe):
+    df = pd.DataFrame(dataframe)
+    mapping_df = pd.DataFrame(mapping_dataframe)
+    expected_df = pd.DataFrame(expected_dataframe)
+    remapped_df = transformer.dataframe_map_and_join(
+        data_df=df,
+        mapping_df=mapping_df,
+        joined_columns=joined_cols
+    )
+
+    pd.testing.assert_frame_equal(remapped_df, expected_df)
+
+
+@parametrize_from_file
+def test_dataframe_execute_mappings_replace_success(mapping_steps):
+    pass

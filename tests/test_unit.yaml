@@ -251,39 +251,6 @@ test_build_mdx_from_cube_filter_create_dataframe_success:
     cube_name: "Cost and FTE by Groups"
 
 
-# Main: tests for dataframe remapping and copy functions
-test_dataframe_literal_remap_success:
-  -
-    dataframe: { "Versions": ["Base Plan", "Plan1"]}
-    mapping: { "Versions": {"Base Plan":"TM1py Test Version"} }
-    expected_dataframe: { "Versions": [ "TM1py Test Version", "Plan1" ] }
-  -
-    dataframe: { "Versions": ["Base Plan", "Plan1"]}
-    mapping: { "Versions": {"Base Plan":"TM1py Test Version", "Plan1": "Plan2"} }
-    expected_dataframe: { "Versions": [ "TM1py Test Version", "Plan2" ] }
-
-test_dataframe_literal_remap_fail:
-  -
-    dataframe: { "Versions": ["Base Plan"]}
-    mapping: {}
-    expected_dataframe: { "Versions": [ "TM1py Test Version" ] }
-  -
-    dataframe: { "Versions": ["Base Plan"]}
-    mapping: { "Versions": {} }
-    expected_dataframe: { "Versions": [ "TM1py Test Version" ] }
-  -
-    dataframe: { "Versions": ["Plan"]}
-    mapping: { "Versions": {"Base Plan":"TM1py Test Version"} }
-    expected_dataframe: { "Versions": [ "TM1py Test Version" ] }
-  -
-    dataframe: { "Versions": []}
-    mapping: { "Versions": {"Base Plan":"TM1py Test Version"} }
-    expected_dataframe: { "Versions": [ "TM1py Test Version" ] }
-  -
-    dataframe: {}
-    mapping: { "Versions": {"Base Plan":"TM1py Test Version"} }
-    expected_dataframe: { "Versions": [ "TM1py Test Version" ] }
-
 test_dataframe_filter:
   -
     dataframe: {
@@ -334,7 +301,6 @@ test_dataframe_redimension_scale_down:
       "Versions": [ "Plan2" ],
       "Value": [ 1 ]
     }
-
 
 test_dataframe_relabel:
   -
@@ -397,7 +363,7 @@ test_dataframe_redimension_and_transform:
       "Employee": [ "Alice" ],
     }
 
-test_dataframe_rearrange_dimensions:
+test_dataframe_reorder_dimensions:
   -
     dataframe: {
       "Period": [ "202202", "202202", "202202", "202202" ],
@@ -406,10 +372,8 @@ test_dataframe_rearrange_dimensions:
       "Measure": [ "Value", "Value", "Value", "Value" ],
       "Value": [ 120, 120, 120, 120 ]
     }
-  -
     cube_cols: ["Period", "OrgUnit", "Employee", "Measure"]
-  -
-    expected: {
+    expected_dataframe: {
       "Period": [ "202202", "202202", "202202", "202202" ],
       "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
       "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
@@ -417,6 +381,39 @@ test_dataframe_rearrange_dimensions:
       "Value": [ 120, 120, 120, 120 ]
     }
 
+
+# Main: tests for dataframe remapping and copy functions
+test_dataframe_find_and_replace_success:
+  -
+    dataframe: { "Versions": ["Base Plan", "Plan1"]}
+    mapping: { "Versions": {"Base Plan":"TM1py Test Version"} }
+    expected_dataframe: { "Versions": [ "TM1py Test Version", "Plan1" ] }
+  -
+    dataframe: { "Versions": ["Base Plan", "Plan1"]}
+    mapping: { "Versions": {"Base Plan":"TM1py Test Version", "Plan1": "Plan2"} }
+    expected_dataframe: { "Versions": [ "TM1py Test Version", "Plan2" ] }
+
+test_dataframe_find_and_replace_fail:
+  -
+    dataframe: { "Versions": ["Base Plan"]}
+    mapping: {}
+    expected_dataframe: { "Versions": [ "TM1py Test Version" ] }
+  -
+    dataframe: { "Versions": ["Base Plan"]}
+    mapping: { "Versions": {} }
+    expected_dataframe: { "Versions": [ "TM1py Test Version" ] }
+  -
+    dataframe: { "Versions": ["Plan"]}
+    mapping: { "Versions": {"Base Plan":"TM1py Test Version"} }
+    expected_dataframe: { "Versions": [ "TM1py Test Version" ] }
+  -
+    dataframe: { "Versions": []}
+    mapping: { "Versions": {"Base Plan":"TM1py Test Version"} }
+    expected_dataframe: { "Versions": [ "TM1py Test Version" ] }
+  -
+    dataframe: {}
+    mapping: { "Versions": {"Base Plan":"TM1py Test Version"} }
+    expected_dataframe: { "Versions": [ "TM1py Test Version" ] }
 
 test_dataframe_replace_success:
   -
@@ -427,13 +424,11 @@ test_dataframe_replace_success:
       "measure": ["value", "value", "value", "value"],
       "value": [100, 100, 100, 100]
     }
-  -
     mapping: {
       "dim_to_map": { "source1": "target1", "source2": "target2" },
       "dim2_to_map": { "source3": "target3" }
     }
-  -
-    expected: {
+    expected_dataframe: {
       "period": ["202202", "202203", "202202", "202203"],
       "dim_to_map": ["target1", "target2", "other", "other"],
       "dim2_to_map": ["target3", "other", "target3", "other"],
@@ -450,19 +445,16 @@ test_dataframe_map_and_replace_success:
       "Measure": ["Value", "Value", "Value", "Value"],
       "Value": [120, 120, 120, 120]
     }
-  -
     mapping_dataframe: {
       "Period": ["202202", "202202", "202202", "202202"],
       "Employee": ["00000001", "00000002", "00000003", "00000004"],
       "Employee Settings": ["ORG_UNIT_PARENT", "ORG_UNIT_PARENT", "ORG_UNIT_PARENT", "ORG_UNIT_PARENT"],
       "Value": ["AAA0001", "AAA0002", "AAA0001", "AAA0002"]
     }
-  -
     mapping_dimensions: {
       "OrgUnit": "Value"
     }
-  -
-    expected: {
+    expected_dataframe: {
       "Period": ["202202", "202202", "202202", "202202"],
       "Employee": ["00000001", "00000002", "00000003", "00000004"],
       "OrgUnit": ["AAA0001", "AAA0002", "AAA0001", "AAA0002"],
@@ -479,9 +471,7 @@ test_dataframe_map_and_join_success:
       "Measure": ["cost001", "cost001", "cost001", "cost001"],
       "Value": [10, 10, 10, 10]
     }
-  -
     joined_cols: ["Sales Channel", "Specialism"]
-  -
     mapping_dataframe: {
       "Period": ["202201", "202201", "202202", "202202"],
       "Employee": ["00000001", "00000002", "00000001", "00000002"],
@@ -489,8 +479,7 @@ test_dataframe_map_and_join_success:
       "Specialism": ["IT", "finance", "engineering", "engineering"],
       "Cost Position Type": ["KAM", "AM", "Team Leader", "Manager"]
     }
-  -
-    expected: {
+    expected_dataframe: {
       "Period": ["202201", "202201", "202202", "202202"],
       "Employee": ["00000001", "00000002", "00000001", "00000002"],
       "Orgunit": ["abc123a", "abc123a", "def345a", "def345a"],
