@@ -120,10 +120,19 @@ def _handle_mapping_sql_query(
     return None
 
 
+def _handle_mapping_csv(
+    step: Dict[str, Any],
+    **_kwargs
+) -> None:
+    """Currently returns None if 'mapping_sql_query' is present."""
+    return None
+
+
 MAPPING_HANDLERS = {
     "mapping_df": _handle_mapping_df,
     "mapping_mdx": _handle_mapping_mdx,
-    "mapping_sql_query": _handle_mapping_sql_query
+    "mapping_sql_query": _handle_mapping_sql_query,
+    "mapping_csv": _handle_mapping_csv
 }
 
 

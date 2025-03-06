@@ -123,8 +123,16 @@ def data_copy_intercube(
     - If needed, it clears the target cube with the provided set MDX's
     - Finally, it writes the processed data into the target cube in TM1.
 
+    Example of shared mapping:
+        {
+            "mapping_mdx": "////valid mdx////",
+            "mapping_metadata_function": mapping_metadata_function_name
+            "mapping_df": mapping_dataframe
+        }
+
     Example of the 'mapping_steps' inside mapping_data::
     -------
+
         [
             {
                 "method": "replace",
@@ -245,6 +253,7 @@ def data_copy_intercube(
         use_blob=use_blob,
         sum_numeric_duplicates=sum_numeric_duplicates,
     )
+
     if clear_source:
         loader.clear_cube(
             tm1_service=tm1_service,
