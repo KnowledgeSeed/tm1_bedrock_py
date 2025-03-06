@@ -171,6 +171,8 @@ def dataframe_drop_filtered_column(
     return dataframe_drop_column(dataframe=filtered_dataframe, column_list=column_list).reset_index(drop=True)
 
 
+# deprecated, todo: delete
+# transform
 def dataframe_drop_zero_and_values(
         dataframe: DataFrame
 ) -> DataFrame:
