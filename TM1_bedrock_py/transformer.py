@@ -360,7 +360,7 @@ def dataframe_map_and_join(
 def __apply_replace(
         data_df: DataFrame,
         mapping_step: Dict[str, Any],
-        mapping_data: Dict[str, Any]
+        shared_mapping_df
 ) -> DataFrame:
     """
     Handle the 'replace' mapping step.
@@ -371,15 +371,15 @@ def __apply_replace(
         The DataFrame to apply replacements on.
     mapping_step : Dict[str, Any]
         The dictionary containing information about the current mapping step.
-    mapping_data : Dict[str, Any]
-        The overall mapping data dictionary which can include shared or step-specific resources.
+    shared_mapping_df: DataFrame
+        pandas dataframe containing shared mapping data. Is ignored here
 
     Returns
     -------
     DataFrame
         The modified DataFrame after applying the literal remap.
     """
-    _ = mapping_data
+    _ = shared_mapping_df
     return dataframe_find_and_replace(
         dataframe=data_df,
         mapping=mapping_step["mapping"]
@@ -389,7 +389,7 @@ def __apply_replace(
 def __apply_map_and_replace(
         data_df: DataFrame,
         mapping_step: Dict[str, Any],
-        mapping_data: Dict[str, Any]
+        shared_mapping_df: DataFrame
 ) -> DataFrame:
     """
     Handle the 'map_and_replace' mapping step.
@@ -401,9 +401,8 @@ def __apply_map_and_replace(
     mapping_step : Dict[str, Any]
         The dictionary specifying how to map, which may contain 'mapping_filter',
         'mapping_mdx', 'mapping_dimensions', etc.
-    mapping_data : Dict[str, Any]
-        The overall mapping data dictionary. Used to fetch a shared DataFrame if
-        a step-specific one is not provided.
+    shared_mapping_df: DataFrame
+        pandas dataframe containing shared mapping data.
 
     Returns
     -------
@@ -417,7 +416,7 @@ def __apply_map_and_replace(
     mapping_df = (
         mapping_step["mapping_df"]
         if step_uses_independent_mapping
-        else mapping_data["shared_mapping_df"]
+        else shared_mapping_df
     )
 
     if "mapping_filter" in mapping_step:
@@ -445,8 +444,27 @@ def __apply_map_and_replace(
 def __apply_map_and_join(
         data_df: DataFrame,
         mapping_step: Dict[str, Any],
-        mapping_data: Dict[str, Any]
+        shared_mapping_df
 ) -> DataFrame:
+    """
+    Handle the 'map_and_join' mapping step.
+
+    Parameters
+    ----------
+    data_df : DataFrame
+        The main DataFrame that will be remapped using the MDX approach.
+    mapping_step : Dict[str, Any]
+        The dictionary specifying how to map, which may contain 'mapping_filter',
+        'mapping_mdx', 'mapping_dimensions', etc.
+    shared_mapping_df: DataFrame
+        pandas dataframe containing shared mapping data.
+
+    Returns
+    -------
+    DataFrame
+        The modified DataFrame after applying the MDX-based remap.
+    """
+
     step_uses_independent_mapping = (
         "mapping_df" in mapping_step and mapping_step["mapping_df"] is not None
     )
@@ -454,7 +472,7 @@ def __apply_map_and_join(
     mapping_df = (
         mapping_step["mapping_df"]
         if step_uses_independent_mapping
-        else mapping_data["shared_mapping_df"]
+        else shared_mapping_df
     )
 
     if "mapping_filter" in mapping_step:
@@ -478,21 +496,22 @@ def __apply_map_and_join(
 
 def dataframe_execute_mappings(
         data_df: DataFrame,
-        mapping_data: Dict[str, Optional[DataFrame] | List[Dict[str, Any]]]
+        mapping_steps: List[Dict],
+        shared_mapping_df: Optional[DataFrame] = None
 ) -> DataFrame:
     """
-    Execute a series of mapping steps on data_df based on the instructions in
-    mapping_data. Uses mutation for memory efficiency.
+    Execute a series of mapping steps on data_df.
+    Uses mutation for memory efficiency.
     Mapping filters mutate the step specific mapping dataframes, but don't mutate the shared one.
 
     Parameters
     ----------
     data_df : DataFrame
         The main DataFrame to be transformed.
-    mapping_data : Dict[str, Optional[DataFrame] | List[Dict[str, Any]]]
-        A dictionary containing:
-          - "mapping_steps": a list of dicts specifying each mapping step.
-          - "shared_mapping_df": a shared DataFrame that may be used by multiple steps.
+    mapping_steps : List[Dict[str, Any]]
+        A list of dicts specifying each mapping step procedure
+    shared_mapping_df: Optional[DataFrame]
+        A shared DataFrame that may be used by multiple steps.
 
     Returns
     -------
@@ -542,10 +561,10 @@ def dataframe_execute_mappings(
         "map_and_replace": __apply_map_and_replace,
         "map_and_join": __apply_map_and_join,
     }
-    for mapping_step in mapping_data["mapping_steps"]:
-        method = mapping_step["method"]
+    for step in mapping_steps:
+        method = step["method"]
         if method in method_handlers:
-            data_df = method_handlers[method](data_df, mapping_step, mapping_data)
+            data_df = method_handlers[method](data_df, step, shared_mapping_df)
         else:
             raise ValueError(f"Unsupported mapping method: {method}")
 

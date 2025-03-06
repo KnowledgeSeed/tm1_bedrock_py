@@ -75,103 +75,79 @@ def __tm1_mdx_to_dataframe_default(
         )
 
 
-def __assign_mapping_dataframes(
-        mapping_steps: List[Dict],
-        shared_mapping_df: Optional[DataFrame] = None,
-        shared_mapping_mdx: Optional[str] = None,
-        shared_mapping_metadata_function: Optional[Callable[..., Any]] = None,
-        mdx_function: Optional[Callable[..., DataFrame]] = None,
-        tm1_service: Optional[Any] = None,
+def _handle_mapping_df(
+    step: Dict[str, Any],
+    **_kwargs
+) -> DataFrame:
+    """If 'mapping_df' key is present, just return it."""
+    return step["mapping_df"]
+
+
+def _handle_mapping_mdx(
+    step: Dict[str, Any],
+    mdx_function: Optional[Callable[..., DataFrame]] = None,
+    tm1_service: Optional[Any] = None,
+    **kwargs
+) -> DataFrame:
+    """Execute MDX and augment the resulting DataFrame with metadata."""
+    mdx = step["mapping_mdx"]
+    dataframe = tm1_mdx_to_dataframe(
+        mdx_function=mdx_function,
+        tm1_service=tm1_service,
+        data_mdx=mdx,
+        skip_zeros=True,
+        skip_consolidated_cells=True,
         **kwargs
-) -> Dict[str, Optional[DataFrame] | List[Dict[str, Any]]]:
-    """
-    Assigns mapping DataFrames to mapping steps by either:
-    - Using an existing 'mapping_df' in the step (if provided).
-    - Generating a DataFrame from 'mapping_mdx' (if provided).
-    - Falling back to 'shared_mapping_df' if neither is provided.
-
-    Ensures that 'map_and_replace' steps have at least one valid mapping source
-    (either a step-specific 'mapping_df' or 'mapping_mdx', or a shared_mapping_df).
-
-    Parameters:
-    ----------
-    mapping_steps : List[Dict]
-        A list of mapping step dictionaries, each containing at least a 'method' key.
-        - If 'method' is "map_and_replace", it must include either 'mapping_df' or 'mapping_mdx',
-          or else the shared_mapping_df must be provided.
-        - If 'method' is "replace", no additional checks are applied.
-
-    shared_mapping_df : Optional[DataFrame], default=None
-        A shared DataFrame to be used if no 'mapping_df' or 'mapping_mdx' is provided.
-
-    shared_mapping_mdx : Optional[str], default=None
-        A shared MDX query string that will be converted into a DataFrame if no
-        'mapping_df' or 'mapping_mdx' is provided.
-
-    mdx_function : Optional[Callable[..., DataFrame]], default=None
-        A function that takes an MDX query and returns a Pandas DataFrame.
-        Used to convert 'mapping_mdx' queries into DataFrames.
-
-    tm1_service : Optional[Any], default=None
-        An optional service object used by 'mdx_function' if required.
-
-    **kwargs : dict
-        Additional keyword arguments that will be passed to 'mdx_function'.
-
-    Returns:
-    -------
-    Dict[str, Any]
-        A dictionary containing:
-        - 'shared_mapping_df': The resolved shared mapping DataFrame.
-        - 'mapping_data': The updated list of mapping steps, where each 'map_and_replace' step
-          has an assigned 'mapping_df' if necessary.
-
-    Raises:
-    ------
-    ValueError
-        If any 'map_and_replace' step lacks both 'mapping_df' and 'mapping_mdx',
-        AND 'shared_mapping_df' is also missing or empty.
-    """
-
-    def create_dataframe(mdx: str, metadata_function: Optional[Callable[..., Any]] = None) -> DataFrame:
-        """Helper function to convert MDX to a normalized DataFrame."""
-        dataframe = tm1_mdx_to_dataframe(
-            mdx_function=mdx_function,
-            tm1_service=tm1_service,
-            data_mdx=mdx,
-            skip_zeros=True,
-            skip_consolidated_cells=True,
-            **kwargs
-        )
-        filter_dict = utility.TM1CubeObjectMetadata.collect(
-            metadata_function=metadata_function, **kwargs
-        ).get_filter_dict()
-        return transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=filter_dict)
-
-    shared_mapping_df = shared_mapping_df or (
-        create_dataframe(shared_mapping_mdx, shared_mapping_metadata_function) if shared_mapping_mdx else None
+    )
+    metadata_object = utility.TM1CubeObjectMetadata.collect(
+        metadata_function=step.get("mapping_metadata_function"),
+        tm1_service=tm1_service,
+        mdx=mdx,
+        **kwargs
+    )
+    filter_dict = metadata_object.get_filter_dict()
+    return transformer.dataframe_add_column_assign_value(
+        dataframe=dataframe,
+        column_value=filter_dict
     )
 
-    mapping_steps = [
-        {
-            **step,
-            "mapping_df": step.get("mapping_df")
-            or (create_dataframe(step["mapping_mdx"],
-                                 step["mapping_metadata_function"]
-                                 ) if "mapping_mdx" in step else None)
-        }
-        for step in mapping_steps
-    ]
 
-    missing_mdx_steps = [
-        step for step in mapping_steps
-        if step["method"] == "map_and_replace" and not step.get("mapping_df")
-    ]
+def _handle_mapping_sql_query(
+    step: Dict[str, Any],
+    **_kwargs
+) -> None:
+    """Currently returns None if 'mapping_sql_query' is present."""
+    return None
 
-    if missing_mdx_steps and (shared_mapping_df is None or shared_mapping_df.empty):
-        raise ValueError(
-            f"Missing mapping source for 'map_and_replace' steps: {missing_mdx_steps}. "
-            "Either provide 'mapping_mdx' or 'mapping_df' in these steps, or a valid 'shared_mapping_df'."
+
+MAPPING_HANDLERS = {
+    "mapping_df": _handle_mapping_df,
+    "mapping_mdx": _handle_mapping_mdx,
+    "mapping_sql_query": _handle_mapping_sql_query
+}
+
+
+def generate_dataframe_for_mapping_info(
+        mapping_info: Dict[str, Any],
+        **kwargs
+) -> None:
+    found_key = next((k for k in MAPPING_HANDLERS if k in mapping_info), None)
+    mapping_info["mapping_df"] = (
+        MAPPING_HANDLERS[found_key](
+            step=mapping_info,
+            **kwargs
         )
+        if found_key
+        else None
+    )
 
-    return {"shared_mapping_df": shared_mapping_df, "mapping_steps": mapping_steps}
+
+def generate_step_specific_mapping_dataframes(
+    mapping_steps: List[Dict[str, Any]],
+    **kwargs
+) -> None:
+    """
+    Mutates each step in mapping_steps by assigning 'mapping_df'.
+    """
+    for step in mapping_steps:
+        generate_dataframe_for_mapping_info(step, **kwargs)
