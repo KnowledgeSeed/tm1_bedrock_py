@@ -26,8 +26,10 @@ def data_copy_intercube(
         related_dimensions: Optional[dict] = None,
         target_dim_mapping: Optional[dict] = None,
         value_function: Optional[Callable[..., Any]] = None,
-        clear_set_mdx_list: Optional[List[str]] = None,
         clear_target: Optional[bool] = False,
+        target_clear_set_mdx_list: Optional[List[str]] = None,
+        clear_source: Optional[bool] = False,
+        source_clear_set_mdx_list: Optional[List[str]] = None,
         async_write: bool = False,
         use_ti: bool = False,
         use_blob: bool = False,
@@ -84,6 +86,12 @@ def data_copy_intercube(
         List of MDX queries to clear specific data areas in the target cube.
     clear_target : Optional[bool], default=False
         Whether to clear target before writing.
+    target_clear_set_mdx_list: Optional[List[str]]
+        List of MDX queries to clear specific data areas in the target cube.
+    clear_source: Optional[bool], default=False
+        Whether to clear the source after writing.
+    source_clear_set_mdx_list: Optional[List[str]]
+        List of MDX queries to clear specific data areas in the source cube.
     async_write : bool, default=False
         Whether to write data asynchronously. Currently, divides the data into 250.000 row chunks.
     use_ti : bool, default=False
@@ -167,6 +175,7 @@ def data_copy_intercube(
         metadata_function=target_metadata_function,
         **kwargs
     )
+    target_cube_name = target_metadata.get_cube_name()
 
     dataframe = extractor.tm1_mdx_to_dataframe(
         tm1_service=tm1_service,
@@ -217,19 +226,32 @@ def data_copy_intercube(
         dataframe=dataframe, cube_dimensions=target_metadata.get_cube_dims()
     )
 
-    loader.dataframe_to_cube_with_clear(
+    if clear_target:
+        loader.clear_cube(
+            tm1_service=tm1_service,
+            cube_name=target_cube_name,
+            clear_set_mdx_list=target_clear_set_mdx_list,
+            **kwargs
+        )
+
+    loader.dataframe_to_cube(
         tm1_service=tm1_service,
         dataframe=dataframe,
-        clear_set_mdx_list=clear_set_mdx_list,
-        clear_target=clear_target,
+        cube_name=target_cube_name,
+        cube_dims=target_metadata.get_cube_dims(),
         async_write=async_write,
         use_ti=use_ti,
         increment=increment,
         use_blob=use_blob,
         sum_numeric_duplicates=sum_numeric_duplicates,
-        cube_dims=target_metadata.get_cube_dims(),
-        cube_name=target_metadata.get_cube_name()
     )
+    if clear_source:
+        loader.clear_cube(
+            tm1_service=tm1_service,
+            cube_name=data_metadata.get_cube_name(),
+            clear_set_mdx_list=source_clear_set_mdx_list,
+            **kwargs
+        )
 
 
 def data_copy(
@@ -366,6 +388,7 @@ def data_copy(
         metadata_function=data_metadata_function,
         **kwargs
     )
+    cube_name = data_metadata.get_cube_name()
 
     dataframe = extractor.tm1_mdx_to_dataframe(
         tm1_service=tm1_service,
@@ -409,16 +432,22 @@ def data_copy(
         dataframe=dataframe, cube_dimensions=data_metadata.get_cube_dims()
     )
 
-    loader.dataframe_to_cube_with_clear(
+    if clear_target:
+        loader.clear_cube(
+            tm1_service=tm1_service,
+            cube_name=cube_name,
+            clear_set_mdx_list=clear_set_mdx_list,
+            **kwargs
+        )
+
+    loader.dataframe_to_cube(
         tm1_service=tm1_service,
         dataframe=dataframe,
-        clear_set_mdx_list=clear_set_mdx_list,
-        clear_target=clear_target,
+        cube_name=cube_name,
+        cube_dims=data_metadata.get_cube_dims(),
         async_write=async_write,
         use_ti=use_ti,
         increment=increment,
         use_blob=use_blob,
         sum_numeric_duplicates=sum_numeric_duplicates,
-        cube_dims=data_metadata.get_cube_dims(),
-        cube_name=data_metadata.get_cube_name()
     )
