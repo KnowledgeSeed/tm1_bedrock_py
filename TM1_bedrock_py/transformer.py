@@ -298,18 +298,23 @@ def dataframe_map_and_replace(
 
     # 1) Compute shared dimensions, excluding those being remapped
     shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - set(mapped_dimensions.keys()) - {"Value"})
-
+    data_df_original_dimensions = data_df.columns
     # 2) Perform an in-place left join on shared dimensions
-    data_df = data_df.merge(mapping_df, how='left', on=shared_dimensions, suffixes=('', '_mapped'))
+    data_df = data_df.merge(
+        mapping_df[shared_dimensions+list(mapped_dimensions.values())],
+        how='left',
+        on=shared_dimensions,
+        suffixes=('', '_mapped')
+    )
 
     # 3) Overwrite columns in data_df with their mapped versions, avoiding extra copies
+
     for data_col, map_col in mapped_dimensions.items():
-        mapped_col_name = f"{map_col}_mapped" if map_col == data_col else map_col
+        mapped_col_name = f"{map_col}_mapped" if map_col in data_df_original_dimensions else map_col
         data_df[data_col] = data_df[mapped_col_name]
         del data_df[mapped_col_name]
 
-    # 4) Retain only the original columns from data_df
-    return data_df[data_df.columns.intersection(set(mapping_df.columns))]
+    return data_df
 
 
 def dataframe_map_and_join(

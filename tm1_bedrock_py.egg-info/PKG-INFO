@@ -1,0 +1,47 @@
+Metadata-Version: 2.2
+Name: tm1_bedrock_py
+Version: 0.1.0
+Summary: A python modul for TM1 Bedrock.
+Home-page: 
+Author: 
+Author-email: Example Author <author@example.com>
+Keywords: TM1,IBM Cognos TM1,Planning Analytics,PA,Cognos
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+Requires-Dist: TM1py
+Requires-Dist: mdxpy
+Requires-Dist: pandas
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: parametrize_from_file; extra == "dev"
+Dynamic: requires-python
+
+# tm1_bedrock_py
+A python package by Knowledgeseed for TM1 Bedrock.
+
+## Requirements
+* Python
+* TM1py
+* mdxpy
+* Pandas
+
+## Development
+
+```
+python -m venv .env
+source .env/bin/activate
+python -m pip install -r requirements.txt
+python -m build
+```
+
+## Usage
+
+Create a connection in TM1 with at least the following parameters set:
+
+* address
+* user
+* password
+* port
+* ssl
