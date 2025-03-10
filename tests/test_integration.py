@@ -58,6 +58,9 @@ def test_data_copy_for_multiple_steps(
         shared_mapping=shared_mapping,
         data_mdx=base_data_mdx,
         mapping_steps=mapping_steps,
-        skip_zeros=True
+        clear_target=True,
+        clear_set_mdx_list=["{[Versions].[Versions].[DataCopy Integration Test]}"],
+        skip_zeros=True,
+        skip_consolidated_cells=True
     )
 
