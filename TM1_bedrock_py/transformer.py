@@ -60,9 +60,7 @@ def dataframe_reorder_dimensions(
     KeyError:
         If any column in `cube_dimensions` does not exist in the DataFrame.
     """
-    if 'Value' not in cube_dimensions:
-        cube_dimensions.append('Value')
-    return dataframe.loc[:, cube_dimensions]
+    return dataframe.loc[:, cube_dimensions+["Value"]]
 
 
 # ------------------------------------------------------------------------------------------------------------

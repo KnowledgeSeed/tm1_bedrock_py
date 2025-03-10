@@ -8,7 +8,7 @@ import parametrize_from_file
 
 from TM1py import TM1Service
 
-from TM1_bedrock_py import bedrock, extractor, transformer
+from TM1_bedrock_py import bedrock, extractor, transformer, utility
 
 
 EXCEPTION_MAP = {
@@ -53,6 +53,26 @@ def test_data_copy_for_single_literal_remap(
 def test_data_copy_for_multiple_steps(
         tm1_connection, base_data_mdx, shared_mapping, mapping_steps
 ):
+    """
+    dataframe = extractor.tm1_mdx_to_dataframe(
+        tm1_service=tm1_connection,
+        data_mdx=base_data_mdx,
+        skip_zeros=True,
+        skip_consolidated_cells=True
+    )
+
+    metadata = utility.TM1CubeObjectMetadata.collect(
+        tm1_service=tm1_connection,
+        mdx=base_data_mdx
+    )
+
+    dataframe = transformer.dataframe_add_column_assign_value(
+        dataframe=dataframe, column_value=metadata.get_filter_dict()
+    )
+
+    print(dataframe)
+    """
+
     bedrock.data_copy(
         tm1_service=tm1_connection,
         shared_mapping=shared_mapping,
@@ -60,7 +80,6 @@ def test_data_copy_for_multiple_steps(
         mapping_steps=mapping_steps,
         clear_target=True,
         clear_set_mdx_list=["{[Versions].[Versions].[DataCopy Integration Test]}"],
-        skip_zeros=True,
-        skip_consolidated_cells=True
+        skip_zeros=True
     )
 

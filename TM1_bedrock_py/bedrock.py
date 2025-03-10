@@ -398,6 +398,7 @@ def data_copy(
         **kwargs
     )
     cube_name = data_metadata.get_cube_name()
+    cube_dims = data_metadata.get_cube_dims()
 
     dataframe = extractor.tm1_mdx_to_dataframe(
         tm1_service=tm1_service,
@@ -438,7 +439,7 @@ def data_copy(
         dataframe = transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
 
     dataframe = transformer.dataframe_reorder_dimensions(
-        dataframe=dataframe, cube_dimensions=data_metadata.get_cube_dims()
+        dataframe=dataframe, cube_dimensions=cube_dims
     )
 
     if clear_target:
@@ -453,7 +454,7 @@ def data_copy(
         tm1_service=tm1_service,
         dataframe=dataframe,
         cube_name=cube_name,
-        cube_dims=data_metadata.get_cube_dims(),
+        cube_dims=cube_dims,
         async_write=async_write,
         use_ti=use_ti,
         increment=increment,
