@@ -35,13 +35,13 @@ def tm1_connection():
 def test_data_copy_for_single_literal_remap(
         tm1_connection, base_data_mdx, mapping_steps, literal_mapping, output_data_mdx
 ):
-    base_df = extractor.extract(tm1_service=tm1_connection, data_mdx=base_data_mdx)
+    base_df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=base_data_mdx)
     base_df = transformer.normalize_dataframe(tm1_service=tm1_connection, dataframe=base_df, mdx=base_data_mdx)
-    base_df = transformer.dataframe_literal_remap(dataframe=base_df, mapping=literal_mapping)
+    base_df = transformer.dataframe_find_and_replace(dataframe=base_df, mapping=literal_mapping)
 
     bedrock.data_copy(tm1_service=tm1_connection, data_mdx=base_data_mdx, mapping_steps=mapping_steps, skip_zeros=True)
 
-    copy_test_df = extractor.extract(tm1_service=tm1_connection, data_mdx=output_data_mdx)
+    copy_test_df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=output_data_mdx)
     copy_test_df = transformer.normalize_dataframe(
         tm1_service=tm1_connection, dataframe=copy_test_df, mdx=output_data_mdx
     )

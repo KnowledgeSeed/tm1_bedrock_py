@@ -9,8 +9,6 @@ from pandas import DataFrame
 from TM1_bedrock_py import utility, transformer, loader, extractor
 
 
-# data_copy_intercube
-# bedrock
 def data_copy_intercube(
         tm1_service: Optional[Any],
         data_mdx: Optional[str] = None,
@@ -23,15 +21,15 @@ def data_copy_intercube(
         target_metadata_function: Optional[Callable[..., DataFrame]] = None,
         data_metadata_function: Optional[Callable[..., DataFrame]] = None,
         mapping_steps: Optional[List[Dict]] = None,
-        shared_mapping_df: Optional[DataFrame] = None,
-        shared_mapping_mdx: Optional[str] = None,
-        shared_mapping_metadata_function: Optional[Callable[..., Any]] = None,
+        shared_mapping: Optional[Dict] = None,
         source_dim_mapping: Optional[dict] = None,
         related_dimensions: Optional[dict] = None,
         target_dim_mapping: Optional[dict] = None,
         value_function: Optional[Callable[..., Any]] = None,
-        clear_set_mdx_list: Optional[List[str]] = None,
         clear_target: Optional[bool] = False,
+        target_clear_set_mdx_list: Optional[List[str]] = None,
+        clear_source: Optional[bool] = False,
+        source_clear_set_mdx_list: Optional[List[str]] = None,
         async_write: bool = False,
         use_ti: bool = False,
         use_blob: bool = False,
@@ -67,13 +65,10 @@ def data_copy_intercube(
             Function to retrieve metadata for the target cube.
     mapping_steps : Optional[List[Dict]]
         Steps for mapping data from source to target.
-    shared_mapping_df : Optional[DataFrame]
-        DataFrame containing shared mapping data. This will be used by the cube mapping steps, if no local mapping
-        is provided. The mapping steps filtering don't mutate the original dataframe.
-    shared_mapping_mdx : Optional[str]
-        MDX query to retrieve shared mapping data.
-    shared_mapping_metadata_function : Optional[Callable[..., Any]]
-        Function to retrieve metadata for the shared mapping.
+    shared_mapping: Optional[Dict]
+        Information about the shared mapping data that can be used for the mapping steps.
+        Will generate a dataframe if any inputs are provided.
+        Has the same format as a singular mapping step
     source_dim_mapping : Optional[dict]
         Declaration of the dimensions present in the source dataframe, but not present in the target cube.
         If there are such dimensions, these need to be specified, with for each dimension.
@@ -91,6 +86,12 @@ def data_copy_intercube(
         List of MDX queries to clear specific data areas in the target cube.
     clear_target : Optional[bool], default=False
         Whether to clear target before writing.
+    target_clear_set_mdx_list: Optional[List[str]]
+        List of MDX queries to clear specific data areas in the target cube.
+    clear_source: Optional[bool], default=False
+        Whether to clear the source after writing.
+    source_clear_set_mdx_list: Optional[List[str]]
+        List of MDX queries to clear specific data areas in the source cube.
     async_write : bool, default=False
         Whether to write data asynchronously. Currently, divides the data into 250.000 row chunks.
     use_ti : bool, default=False
@@ -122,8 +123,16 @@ def data_copy_intercube(
     - If needed, it clears the target cube with the provided set MDX's
     - Finally, it writes the processed data into the target cube in TM1.
 
+    Example of shared mapping:
+        {
+            "mapping_mdx": "////valid mdx////",
+            "mapping_metadata_function": mapping_metadata_function_name
+            "mapping_df": mapping_dataframe
+        }
+
     Example of the 'mapping_steps' inside mapping_data::
     -------
+
         [
             {
                 "method": "replace",
@@ -161,21 +170,22 @@ def data_copy_intercube(
         ]
     """
 
-    data_metadata = utility.tm1_cube_object_metadata_collect(
+    data_metadata = utility.TM1CubeObjectMetadata.collect(
         tm1_service=tm1_service,
         mdx=data_mdx,
         metadata_function=data_metadata_function,
         **kwargs
     )
 
-    target_metadata = utility.tm1_cube_object_metadata_collect(
+    target_metadata = utility.TM1CubeObjectMetadata.collect(
         tm1_service=tm1_service,
         cube_name=target_cube_name,
         metadata_function=target_metadata_function,
         **kwargs
     )
+    target_cube_name = target_metadata.get_cube_name()
 
-    dataframe = extractor.extract(
+    dataframe = extractor.tm1_mdx_to_dataframe(
         tm1_service=tm1_service,
         data_mdx=data_mdx,
         data_mdx_list=data_mdx_list,
@@ -189,16 +199,25 @@ def data_copy_intercube(
         dataframe=dataframe, column_value=data_metadata.get_filter_dict()
     )
 
-    mapping_data = extractor.__assign_mapping_dataframes(
+    shared_mapping_df = None
+    if shared_mapping:
+        extractor.generate_dataframe_for_mapping_info(
+            mapping_info=shared_mapping,
+            tm1_service=tm1_service,
+            mdx_function=mdx_function
+        )
+        shared_mapping_df = shared_mapping["mapping_df"]
+
+    extractor.generate_step_specific_mapping_dataframes(
         mapping_steps=mapping_steps,
-        shared_mapping_df=shared_mapping_df,
-        shared_mapping_mdx=shared_mapping_mdx,
-        shared_mapping_metadata_function=shared_mapping_metadata_function
+        tm1_service=tm1_service,
+        mdx_function=mdx_function
     )
 
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe,
-        mapping_data=mapping_data
+        mapping_steps=mapping_steps,
+        shared_mapping_df=shared_mapping_df
     )
 
     dataframe = transformer.dataframe_redimension_and_transform(
@@ -211,26 +230,39 @@ def data_copy_intercube(
     if value_function is not None:
         dataframe = transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
 
-    dataframe = transformer.dataframe_rearrange_dimensions(
+    dataframe = transformer.dataframe_reorder_dimensions(
         dataframe=dataframe, cube_dimensions=target_metadata.get_cube_dims()
     )
 
-    loader.dataframe_to_cube_with_clear(
+    if clear_target:
+        loader.clear_cube(
+            tm1_service=tm1_service,
+            cube_name=target_cube_name,
+            clear_set_mdx_list=target_clear_set_mdx_list,
+            **kwargs
+        )
+
+    loader.dataframe_to_cube(
         tm1_service=tm1_service,
         dataframe=dataframe,
-        clear_set_mdx_list=clear_set_mdx_list,
-        clear_target=clear_target,
+        cube_name=target_cube_name,
+        cube_dims=target_metadata.get_cube_dims(),
         async_write=async_write,
         use_ti=use_ti,
         increment=increment,
         use_blob=use_blob,
         sum_numeric_duplicates=sum_numeric_duplicates,
-        cube_dims=target_metadata.get_cube_dims(),
-        cube_name=target_metadata.get_cube_name()
     )
 
+    if clear_source:
+        loader.clear_cube(
+            tm1_service=tm1_service,
+            cube_name=data_metadata.get_cube_name(),
+            clear_set_mdx_list=source_clear_set_mdx_list,
+            **kwargs
+        )
 
-# bedrock
+
 def data_copy(
         tm1_service: Optional[Any],
         data_mdx: Optional[str] = None,
@@ -241,9 +273,7 @@ def data_copy(
         skip_rule_derived_cells: Optional[bool] = False,
         data_metadata_function: Optional[Callable[..., DataFrame]] = None,
         mapping_steps: Optional[List[Dict]] = None,
-        shared_mapping_df: Optional[DataFrame] = None,
-        shared_mapping_mdx: Optional[str] = None,
-        shared_mapping_metadata_function: Optional[Callable[..., Any]] = None,
+        shared_mapping: Optional[Dict] = None,
         value_function: Optional[Callable[..., Any]] = None,
         clear_set_mdx_list: Optional[List[str]] = None,
         clear_target: Optional[bool] = False,
@@ -277,11 +307,10 @@ def data_copy(
         Function to retrieve metadata about the data source.
     mapping_steps : Optional[List[Dict]]
         Steps for mapping data from source to target.
-    shared_mapping_df : Optional[DataFrame]
-        DataFrame containing shared mapping data. This will be used by the cube mapping steps, if no local mapping
-        is provided. The mapping steps filtering don't mutate the original dataframe.
-    shared_mapping_mdx : Optional[str]
-        MDX query to retrieve shared mapping data.
+    shared_mapping: Optional[Dict]
+        Information about the shared mapping data that can be used for the mapping steps.
+        Will generate a dataframe if any inputs are provided.
+        Has the same format as a singular mapping step
     shared_mapping_metadata_function : Optional[Callable[..., Any]]
         Function to retrieve metadata for the shared mapping.
     source_dim_mapping : Optional[dict]
@@ -362,14 +391,15 @@ def data_copy(
     Using them will raise an error at writing
     """
 
-    data_metadata = utility.tm1_cube_object_metadata_collect(
+    data_metadata = utility.TM1CubeObjectMetadata.collect(
         tm1_service=tm1_service,
         mdx=data_mdx,
         metadata_function=data_metadata_function,
         **kwargs
     )
+    cube_name = data_metadata.get_cube_name()
 
-    dataframe = extractor.extract(
+    dataframe = extractor.tm1_mdx_to_dataframe(
         tm1_service=tm1_service,
         data_mdx=data_mdx,
         data_mdx_list=data_mdx_list,
@@ -383,35 +413,50 @@ def data_copy(
         dataframe=dataframe, column_value=data_metadata.get_filter_dict()
     )
 
-    mapping_data = extractor.__assign_mapping_dataframes(
+    shared_mapping_df = None
+    if shared_mapping:
+        extractor.generate_dataframe_for_mapping_info(
+            mapping_info=shared_mapping,
+            tm1_service=tm1_service,
+            mdx_function=mdx_function
+        )
+        shared_mapping_df = shared_mapping["mapping_df"]
+
+    extractor.generate_step_specific_mapping_dataframes(
         mapping_steps=mapping_steps,
-        shared_mapping_df=shared_mapping_df,
-        shared_mapping_mdx=shared_mapping_mdx,
-        shared_mapping_metadata_function=shared_mapping_metadata_function
+        tm1_service=tm1_service,
+        mdx_function=mdx_function
     )
 
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe,
-        mapping_data=mapping_data
+        mapping_steps=mapping_steps,
+        shared_mapping_df=shared_mapping_df
     )
 
     if value_function is not None:
         dataframe = transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
 
-    dataframe = transformer.dataframe_rearrange_dimensions(
+    dataframe = transformer.dataframe_reorder_dimensions(
         dataframe=dataframe, cube_dimensions=data_metadata.get_cube_dims()
     )
 
-    loader.dataframe_to_cube_with_clear(
+    if clear_target:
+        loader.clear_cube(
+            tm1_service=tm1_service,
+            cube_name=cube_name,
+            clear_set_mdx_list=clear_set_mdx_list,
+            **kwargs
+        )
+
+    loader.dataframe_to_cube(
         tm1_service=tm1_service,
         dataframe=dataframe,
-        clear_set_mdx_list=clear_set_mdx_list,
-        clear_target=clear_target,
+        cube_name=cube_name,
+        cube_dims=data_metadata.get_cube_dims(),
         async_write=async_write,
         use_ti=use_ti,
         increment=increment,
         use_blob=use_blob,
         sum_numeric_duplicates=sum_numeric_duplicates,
-        cube_dims=data_metadata.get_cube_dims(),
-        cube_name=data_metadata.get_cube_name()
     )

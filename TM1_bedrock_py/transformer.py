@@ -6,10 +6,6 @@ from pandas import DataFrame
 from TM1_bedrock_py import utility
 
 
-# transform
-#
-# add col assign val -> metadata.get_filter_dict()
-# rearrange dimensions -> metadata.get_cube_dims()
 def normalize_dataframe(
         dataframe: DataFrame,
         metadata_function: Optional[Callable[..., Any]] = None,
@@ -30,14 +26,13 @@ def normalize_dataframe(
         DataFrame: The normalized DataFrame.
     """
 
-    metadata = utility.tm1_cube_object_metadata_collect(metadata_function=metadata_function, **kwargs)
+    metadata = utility.TM1CubeObjectMetadata.collect(metadata_function=metadata_function, **kwargs)
 
     dataframe = dataframe_add_column_assign_value(dataframe=dataframe, column_value=metadata.get_filter_dict())
-    return dataframe_rearrange_dimensions(dataframe=dataframe, cube_dimensions=metadata.get_cube_dims())
+    return dataframe_reorder_dimensions(dataframe=dataframe, cube_dimensions=metadata.get_cube_dims())
 
 
-# rename: dataframe reorder dimensions
-def dataframe_rearrange_dimensions(
+def dataframe_reorder_dimensions(
         dataframe: DataFrame,
         cube_dimensions: List[str]
 ) -> DataFrame:
@@ -76,7 +71,6 @@ def dataframe_rearrange_dimensions(
 # naming review needed!!!
 
 
-# transform
 def dataframe_filter(
         dataframe: DataFrame,
         filter_condition: Dict[str, Any],
@@ -116,7 +110,6 @@ def dataframe_filter(
     )
 
 
-# transform
 def dataframe_drop_column(
         dataframe: DataFrame,
         column_list: list[str]
@@ -136,7 +129,6 @@ def dataframe_drop_column(
     return dataframe.drop(column_list, axis=1).reset_index(drop=True)
 
 
-# transform
 def dataframe_add_column_assign_value(
         dataframe: DataFrame,
         column_value: dict
@@ -159,9 +151,7 @@ def dataframe_add_column_assign_value(
     return dataframe.reset_index(drop=True)
 
 
-# rename: dataframe drop filtered column
-# transform
-def dataframe_redimension_scale_down(
+def dataframe_drop_filtered_column(
         dataframe: DataFrame,
         filter_condition: dict
 ) -> DataFrame:
@@ -200,7 +190,6 @@ def dataframe_drop_zero_and_values(
     return dataframe.reset_index(drop=True)
 
 
-# transfrom
 def dataframe_relabel(
         dataframe: DataFrame,
         columns: dict
@@ -219,7 +208,6 @@ def dataframe_relabel(
     return dataframe
 
 
-# transform
 def dataframe_value_scale(
         dataframe: DataFrame,
         value_function: callable
@@ -238,7 +226,6 @@ def dataframe_value_scale(
     return dataframe.reset_index(drop=True)
 
 
-# transform
 def dataframe_redimension_and_transform(
         dataframe: DataFrame,
         source_dim_mapping: Optional[dict] = None,
@@ -247,7 +234,7 @@ def dataframe_redimension_and_transform(
 ) -> DataFrame:
 
     if source_dim_mapping is not None:
-        dataframe = dataframe_redimension_scale_down(dataframe=dataframe, filter_condition=source_dim_mapping)
+        dataframe = dataframe_drop_filtered_column(dataframe=dataframe, filter_condition=source_dim_mapping)
 
     if related_dimensions is not None:
         dataframe = dataframe_relabel(dataframe=dataframe, columns=related_dimensions)
@@ -263,9 +250,7 @@ def dataframe_redimension_and_transform(
 # ------------------------------------------------------------------------------------------------------------
 
 
-# rename: dataframe find and replace
-# transform
-def dataframe_literal_remap(
+def dataframe_find_and_replace(
         dataframe: DataFrame,
         mapping: Dict[str, Dict[Any, Any]]
 ) -> DataFrame:
@@ -284,8 +269,6 @@ def dataframe_literal_remap(
     return dataframe
 
 
-# dataframe map and replace
-# transform
 def dataframe_map_and_replace(
         data_df: DataFrame,
         mapping_df: DataFrame,
@@ -314,23 +297,26 @@ def dataframe_map_and_replace(
     """
 
     # 1) Compute shared dimensions, excluding those being remapped
-    shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - set(mapped_dimensions.keys()))
-
+    shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - set(mapped_dimensions.keys()) - {"Value"})
+    data_df_original_dimensions = data_df.columns
     # 2) Perform an in-place left join on shared dimensions
-    data_df = data_df.merge(mapping_df, how='left', on=shared_dimensions, suffixes=('', '_mapped'))
+    data_df = data_df.merge(
+        mapping_df[shared_dimensions+list(mapped_dimensions.values())],
+        how='left',
+        on=shared_dimensions,
+        suffixes=('', '_mapped')
+    )
 
     # 3) Overwrite columns in data_df with their mapped versions, avoiding extra copies
+
     for data_col, map_col in mapped_dimensions.items():
-        mapped_col_name = f"{map_col}_mapped" if map_col == data_col else map_col
+        mapped_col_name = f"{map_col}_mapped" if map_col in data_df_original_dimensions else map_col
         data_df[data_col] = data_df[mapped_col_name]
         del data_df[mapped_col_name]
 
-    # 4) Retain only the original columns from data_df
-    return data_df[data_df.columns.intersection(set(mapping_df.columns))]
+    return data_df
 
 
-# dataframe map and join
-# transform
 def dataframe_map_and_join(
         data_df: DataFrame,
         mapping_df: DataFrame,
@@ -369,7 +355,7 @@ def dataframe_map_and_join(
         raise KeyError(f"Columns {missing_cols} not found in mapping_df.")
 
     # Identify shared dimensions (excluding the explicitly joined columns)
-    shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - set(joined_columns))
+    shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - set(joined_columns) - {"Value"})
 
     # Perform an in-place left join
     data_df = data_df.merge(mapping_df[shared_dimensions + joined_columns],
@@ -378,11 +364,10 @@ def dataframe_map_and_join(
     return data_df
 
 
-# transform, internal
 def __apply_replace(
         data_df: DataFrame,
         mapping_step: Dict[str, Any],
-        mapping_data: Dict[str, Any]
+        shared_mapping_df
 ) -> DataFrame:
     """
     Handle the 'replace' mapping step.
@@ -393,27 +378,25 @@ def __apply_replace(
         The DataFrame to apply replacements on.
     mapping_step : Dict[str, Any]
         The dictionary containing information about the current mapping step.
-    mapping_data : Dict[str, Any]
-        The overall mapping data dictionary which can include shared or step-specific resources.
+    shared_mapping_df: DataFrame
+        pandas dataframe containing shared mapping data. Is ignored here
 
     Returns
     -------
     DataFrame
         The modified DataFrame after applying the literal remap.
     """
-    _ = mapping_data
-    return dataframe_literal_remap(
+    _ = shared_mapping_df
+    return dataframe_find_and_replace(
         dataframe=data_df,
         mapping=mapping_step["mapping"]
     )
 
 
-# apply map and replace
-# transform, internal
 def __apply_map_and_replace(
         data_df: DataFrame,
         mapping_step: Dict[str, Any],
-        mapping_data: Dict[str, Any]
+        shared_mapping_df: DataFrame
 ) -> DataFrame:
     """
     Handle the 'map_and_replace' mapping step.
@@ -425,9 +408,8 @@ def __apply_map_and_replace(
     mapping_step : Dict[str, Any]
         The dictionary specifying how to map, which may contain 'mapping_filter',
         'mapping_mdx', 'mapping_dimensions', etc.
-    mapping_data : Dict[str, Any]
-        The overall mapping data dictionary. Used to fetch a shared DataFrame if
-        a step-specific one is not provided.
+    shared_mapping_df: DataFrame
+        pandas dataframe containing shared mapping data.
 
     Returns
     -------
@@ -441,7 +423,7 @@ def __apply_map_and_replace(
     mapping_df = (
         mapping_step["mapping_df"]
         if step_uses_independent_mapping
-        else mapping_data["shared_mapping_df"]
+        else shared_mapping_df
     )
 
     if "mapping_filter" in mapping_step:
@@ -466,13 +448,30 @@ def __apply_map_and_replace(
     return data_df
 
 
-# apply map and join
-# transform, internal
 def __apply_map_and_join(
         data_df: DataFrame,
         mapping_step: Dict[str, Any],
-        mapping_data: Dict[str, Any]
+        shared_mapping_df
 ) -> DataFrame:
+    """
+    Handle the 'map_and_join' mapping step.
+
+    Parameters
+    ----------
+    data_df : DataFrame
+        The main DataFrame that will be remapped using the MDX approach.
+    mapping_step : Dict[str, Any]
+        The dictionary specifying how to map, which may contain 'mapping_filter',
+        'mapping_mdx', 'mapping_dimensions', etc.
+    shared_mapping_df: DataFrame
+        pandas dataframe containing shared mapping data.
+
+    Returns
+    -------
+    DataFrame
+        The modified DataFrame after applying the MDX-based remap.
+    """
+
     step_uses_independent_mapping = (
         "mapping_df" in mapping_step and mapping_step["mapping_df"] is not None
     )
@@ -480,7 +479,7 @@ def __apply_map_and_join(
     mapping_df = (
         mapping_step["mapping_df"]
         if step_uses_independent_mapping
-        else mapping_data["shared_mapping_df"]
+        else shared_mapping_df
     )
 
     if "mapping_filter" in mapping_step:
@@ -502,24 +501,24 @@ def __apply_map_and_join(
     return data_df
 
 
-# transform
 def dataframe_execute_mappings(
         data_df: DataFrame,
-        mapping_data: Dict[str, Optional[DataFrame] | List[Dict[str, Any]]]
+        mapping_steps: List[Dict],
+        shared_mapping_df: Optional[DataFrame] = None
 ) -> DataFrame:
     """
-    Execute a series of mapping steps on data_df based on the instructions in
-    mapping_data. Uses mutation for memory efficiency.
+    Execute a series of mapping steps on data_df.
+    Uses mutation for memory efficiency.
     Mapping filters mutate the step specific mapping dataframes, but don't mutate the shared one.
 
     Parameters
     ----------
     data_df : DataFrame
         The main DataFrame to be transformed.
-    mapping_data : Dict[str, Optional[DataFrame] | List[Dict[str, Any]]]
-        A dictionary containing:
-          - "mapping_steps": a list of dicts specifying each mapping step.
-          - "shared_mapping_df": a shared DataFrame that may be used by multiple steps.
+    mapping_steps : List[Dict[str, Any]]
+        A list of dicts specifying each mapping step procedure
+    shared_mapping_df: Optional[DataFrame]
+        A shared DataFrame that may be used by multiple steps.
 
     Returns
     -------
@@ -569,10 +568,10 @@ def dataframe_execute_mappings(
         "map_and_replace": __apply_map_and_replace,
         "map_and_join": __apply_map_and_join,
     }
-    for mapping_step in mapping_data["mapping_steps"]:
-        method = mapping_step["method"]
+    for step in mapping_steps:
+        method = step["method"]
         if method in method_handlers:
-            data_df = method_handlers[method](data_df, mapping_step, mapping_data)
+            data_df = method_handlers[method](data_df, step, shared_mapping_df)
         else:
             raise ValueError(f"Unsupported mapping method: {method}")
 

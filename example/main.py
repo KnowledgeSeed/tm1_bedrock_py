@@ -1,8 +1,6 @@
-from TM1_bedrock_py import bedrock
 from TM1py import TM1Service
-from pprint import pprint
 
-from TM1_bedrock_py.utility import __mdx_filter_to_dictionary
+from TM1_bedrock_py.utility import _mdx_filter_to_dictionary
 
 
 def manage():
@@ -63,7 +61,7 @@ def manage():
     tm1 = TM1Service(**tm1_params)
 
     try:
-        filter_dict = __mdx_filter_to_dictionary(data_mdx)
+        filter_dict = _mdx_filter_to_dictionary(data_mdx)
         print(filter_dict)
 
     finally:

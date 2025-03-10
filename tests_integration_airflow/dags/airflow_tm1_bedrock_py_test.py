@@ -8,7 +8,7 @@ from airflow.decorators import task
 
 from airflow_provider_tm1.operators.tm1_mdx_query import TM1MDXQueryOperator
 
-from tm1_bedrock import normalize_dataframe
+from TM1_bedrock_py import bedrock, extractor, transformer, utility, loader
 from airflow_provider_tm1.hooks.tm1 import TM1Hook
 
 default_args = {
@@ -27,7 +27,7 @@ def parse_and_filter(df: pd.DataFrame, **kwargs):
     print("test2 dim values:" + str(df.location.values))
     tm1_conn_id = kwargs.get('task').tm1_conn_id
     with TM1Hook(tm1_conn_id=tm1_conn_id).get_conn() as tm1:
-        md = normalize_dataframe(dataframe=df, tm1_service=tm1, cube_name="Revenue")
+        md = transformer.normalize_dataframe(dataframe=df, tm1_service=tm1, cube_name="Revenue")
         print("test1 dim values:" + str(md.time.values))
         print("test2 dim values:" + str(md.location.values))
     return df

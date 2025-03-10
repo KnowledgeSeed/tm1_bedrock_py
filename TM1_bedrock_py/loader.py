@@ -58,7 +58,6 @@ def __clear_cube_default(
     tm1_service.cells.clear(cube_name, **clearing_kwargs)
 
 
-# loader
 def dataframe_to_cube(
         write_function: Optional[Callable[..., Any]] = None,
         **kwargs: Any
@@ -76,7 +75,6 @@ def dataframe_to_cube(
     return write_function(**kwargs)
 
 
-# loader, internal
 def __dataframe_to_cube_default(
         tm1_service: TM1Service,
         dataframe: DataFrame,
@@ -121,29 +119,3 @@ def __dataframe_to_cube_default(
         increment=increment,
         sum_numeric_duplicates=sum_numeric_duplicates
     )
-
-# deprecated, todo: remove
-# loader
-def dataframe_to_cube_with_clear(
-        clear_function: Optional[Callable[..., None]] = None,
-        write_function: Optional[Callable[..., None]] = None,
-        clear_target: bool = False,
-        **kwargs: Any
-) -> None:
-    """
-    Clears a cube and writes a DataFrame to it if requested.
-
-    Args:
-        clear_function (Optional[Callable]): A function to clear the cube. Defaults to None.
-        write_function (Optional[Callable]): A function to write the DataFrame to the cube.
-                                             Must not be None.
-        clear_target (bool, optional): If True, the cube will be cleared before writing. Defaults to False.
-        **kwargs (Any): Additional keyword arguments for the clear and write functions.
-
-    Returns:
-        None
-    """
-    if clear_target:
-        clear_cube(clear_function, **kwargs)
-    dataframe_to_cube(write_function, **kwargs)
-
