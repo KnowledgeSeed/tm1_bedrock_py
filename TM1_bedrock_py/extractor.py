@@ -79,7 +79,6 @@ def _handle_mapping_df(
     step: Dict[str, Any],
     **_kwargs
 ) -> DataFrame:
-    """If 'mapping_df' key is present, just return it."""
     return step["mapping_df"]
 
 
@@ -116,7 +115,6 @@ def _handle_mapping_sql_query(
     step: Dict[str, Any],
     **_kwargs
 ) -> None:
-    """Currently returns None if 'mapping_sql_query' is present."""
     return None
 
 
@@ -124,7 +122,6 @@ def _handle_mapping_csv(
     step: Dict[str, Any],
     **_kwargs
 ) -> None:
-    """Currently returns None if 'mapping_sql_query' is present."""
     return None
 
 
@@ -140,6 +137,9 @@ def generate_dataframe_for_mapping_info(
         mapping_info: Dict[str, Any],
         **kwargs
 ) -> None:
+    """
+    Mutates a mapping step (mapping info) by assigning 'mapping_df'.
+    """
     found_key = next((k for k in MAPPING_HANDLERS if k in mapping_info), None)
     mapping_info["mapping_df"] = (
         MAPPING_HANDLERS[found_key](

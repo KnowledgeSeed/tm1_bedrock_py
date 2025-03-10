@@ -68,7 +68,6 @@ def dataframe_reorder_dimensions(
 # ------------------------------------------------------------------------------------------------------------
 # Main: dataframe transform utility functions
 # ------------------------------------------------------------------------------------------------------------
-# naming review needed!!!
 
 
 def dataframe_filter(
@@ -171,8 +170,6 @@ def dataframe_drop_filtered_column(
     return dataframe_drop_column(dataframe=filtered_dataframe, column_list=column_list).reset_index(drop=True)
 
 
-# deprecated, todo: delete
-# transform
 def dataframe_drop_zero_and_values(
         dataframe: DataFrame
 ) -> DataFrame:
@@ -296,18 +293,14 @@ def dataframe_map_and_replace(
         but with specified dimensions mapped from 'mapping_df'.
     """
 
-    # 1) Compute shared dimensions, excluding those being remapped
     shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - set(mapped_dimensions.keys()) - {"Value"})
     data_df_original_dimensions = data_df.columns
-    # 2) Perform an in-place left join on shared dimensions
     data_df = data_df.merge(
         mapping_df[shared_dimensions+list(mapped_dimensions.values())],
         how='left',
         on=shared_dimensions,
         suffixes=('', '_mapped')
     )
-
-    # 3) Overwrite columns in data_df with their mapped versions, avoiding extra copies
 
     for data_col, map_col in mapped_dimensions.items():
         mapped_col_name = f"{map_col}_mapped" if map_col in data_df_original_dimensions else map_col

@@ -46,17 +46,15 @@ def _mdx_filter_to_dictionary(mdx_query: str) -> Dict[str, str]:
     where_content: str = where_match.group(1)
     mdx_dict: Dict[str, str] = {}
 
-    # Extract full dimension-hierarchy-element triplets
     hier_elements: List[tuple] = re.findall(r'\[(.*?)]\.?\[(.*?)]\.?\[(.*?)]', where_content)
     for dim, hier, elem in hier_elements:
         mdx_dict[dim] = elem
 
-    # Remove extracted triplets to process remaining dimension-element pairs
     remaining_content: str = re.sub(r'\[(.*?)]\.?\[(.*?)]\.?\[(.*?)]', '', where_content)
     dim_elements: List[tuple] = re.findall(r'\[(.*?)]\.?\[(.*?)]', remaining_content)
 
     for dim, elem in dim_elements:
-        mdx_dict[dim] = elem  # Overwrites if already exists, ensuring latest match
+        mdx_dict[dim] = elem
 
     return mdx_dict
 
