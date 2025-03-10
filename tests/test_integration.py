@@ -47,3 +47,17 @@ def test_data_copy_for_single_literal_remap(
     )
 
     pd.testing.assert_frame_equal(base_df, copy_test_df)
+
+
+@parametrize_from_file
+def test_data_copy_for_multiple_steps(
+        tm1_connection, base_data_mdx, shared_mapping, mapping_steps
+):
+    bedrock.data_copy(
+        tm1_service=tm1_connection,
+        shared_mapping=shared_mapping,
+        data_mdx=base_data_mdx,
+        mapping_steps=mapping_steps,
+        skip_zeros=True
+    )
+
