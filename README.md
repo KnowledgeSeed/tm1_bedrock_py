@@ -27,15 +27,16 @@ Create a connection in TM1 with at least the following parameters set:
 You can check your connection via running `example/check_connectivity.py`. You can configure your connection in `examples/config_example.ini` or if left empty, via user input from the terminal.
 
 ## Development
-### On Windows
+Run the `build` command before publishing a new version of the package.
+### Windows
 ```
 python -m venv .env
-.env\Scripts\activate
+.\.env\Scripts\activate
 pip install -r requirements-dev.txt
 python -m build
 ```
 
-### On Linux
+### Linux/macOS
 ```
 virtualenv .env
 source .env/bin/activate
