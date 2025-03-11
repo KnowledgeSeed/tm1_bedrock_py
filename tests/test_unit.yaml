@@ -251,6 +251,20 @@ test_build_mdx_from_cube_filter_create_dataframe_success:
     cube_name: "Cost and FTE by Groups"
 
 
+test_dataframe_filter_inplace:
+  -
+    dataframe: {
+      "Versions": [ "Base Plan", "Plan1", "Plan2" ],
+      "Orgunit": [ "ASD123", "ASD123", "XYZ123" ],
+      "Value": [ 1, 0, 1 ],
+    }
+    filter_condition: { "Orgunit": "ASD123" }
+    expected_dataframe: {
+      "Versions": [ "Base Plan", "Plan1" ],
+      "Orgunit": [ "ASD123", "ASD123" ],
+      "Value": [ 1, 0 ],
+    }
+
 test_dataframe_filter:
   -
     dataframe: {
