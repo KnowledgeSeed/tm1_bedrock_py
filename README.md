@@ -7,17 +7,15 @@ A python package by Knowledgeseed for TM1 Bedrock.
 * mdxpy
 * Pandas
 
-## Development
-
-```
-python -m venv .env
-source .env/bin/activate
-python -m pip install -r requirements.txt
-python -m build
-```
-
 ## Usage
+#### Install dependencies
+```
+git clone https://github.com/KnowledgeSeed/tm1_bedrock_py.git
+pip install -r requirements.txt
+```
+For creating a python virtual environment see [Development](#development).
 
+#### Example
 Create a connection in TM1 with at least the following parameters set:
 
 * address
@@ -25,3 +23,22 @@ Create a connection in TM1 with at least the following parameters set:
 * password
 * port
 * ssl
+
+You can check your connection via running `example/check_connectivity.py`. You can configure your connection in `examples/config_example.ini` or if left empty, via user input from the terminal.
+
+## Development
+### On Windows
+```
+python -m venv .env
+.env\Scripts\activate
+pip install -r requirements-dev.txt
+python -m build
+```
+
+### On Linux
+```
+virtualenv .env
+source .env/bin/activate
+pip install -r requirements-dev.txt
+python -m build
+```
