@@ -44,7 +44,7 @@ test_tm1_cube_object_metadata_collect_based_on_cube_name_fail:
     exception: TM1pyRestException
   -
     cube_name: ""
-    exception: ValueError
+    exception: TM1pyRestException
 
 test_tm1_cube_object_metadata_collect_based_on_mdx_name_success:
   -
@@ -69,7 +69,7 @@ test_tm1_cube_object_metadata_collect_based_on_mdx_name_success:
 test_tm1_cube_object_metadata_collect_based_on_mdx_name_fail:
     -
       data_mdx: ""
-      exception: ValueError
+      exception: TM1pyRestException
     -
       data_mdx: 1011
       exception: TypeError
@@ -89,9 +89,50 @@ test_tm1_cube_object_metadata_collect_cube_dimensions_match_dimensions:
     cube_name: "Group Employee"
     expected_dimensions: ['Groups', 'Employees', 'Measures Group Employee']
 
-test_tm1_cube_object_metadata_collect_filter_dimensions_not_empty:
+test_tm1_cube_object_metadata_collect_filter_dict_not_empty:
   -
-    cube_name: "Group Employee"
+    data_mdx:
+      "SELECT 
+           {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],
+           [Periods].[Periods].[202304],[Periods].[Periods].[202305],[Periods].[Periods].[202306],
+           [Periods].[Periods].[202307],[Periods].[Periods].[202308],[Periods].[Periods].[202309],
+           [Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]}  
+          ON COLUMNS , 
+           {[Groups].[Groups].Members}
+           * {[Employees].[Employees].Members} 
+          ON ROWS 
+        FROM [Cost and FTE by Groups] 
+        WHERE 
+          (
+           [Versions].[Versions].[Base Plan], 
+           [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[FTE],
+           [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
+          )"
+
+test_tm1_cube_object_metadata_collect_filter_dict_match:
+  -
+    data_mdx:
+        "SELECT 
+             {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],
+             [Periods].[Periods].[202304],[Periods].[Periods].[202305],[Periods].[Periods].[202306],
+             [Periods].[Periods].[202307],[Periods].[Periods].[202308],[Periods].[Periods].[202309],
+             [Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]}  
+            ON COLUMNS , 
+             {[Groups].[Groups].Members}
+             * {[Employees].[Employees].Members} 
+            ON ROWS 
+          FROM [Cost and FTE by Groups] 
+          WHERE 
+            (
+             [Versions].[Versions].[Base Plan], 
+             [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[FTE],
+             [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
+            )"
+    expected_filter_dict: {
+      "Versions":"Base Plan",
+      "Lineitems Cost and FTE by Groups":"FTE",
+      "Measures Cost and FTE by Groups":"Value"
+    }
 
 # Main: MDX query to normalized pandas dataframe functions
 example_data_mdx:
@@ -474,6 +515,30 @@ test_dataframe_map_and_replace_success:
       "OrgUnit": ["AAA0001", "AAA0002", "AAA0001", "AAA0002"],
       "Measure": ["Value", "Value", "Value", "Value"],
       "Value": [120, 120, 120, 120]
+    }
+  -
+    dataframe: {
+      "Period": [ "202202", "202202", "202202", "202202" ],
+      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
+      "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
+      "Measure": [ "Value", "Value", "Value", "Value" ],
+      "Value": [ 120, 120, 120, 120 ]
+    }
+    mapping_dataframe: {
+      "Period": [ "202202", "202202", "202202", "202202" ],
+      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
+      "OrgUnit": ["AAA0001", "AAA0002", "AAA0001", "AAA0002"],
+      "Value": [1, 1, 1, 1]
+    }
+    mapping_dimensions: {
+      "OrgUnit": "OrgUnit"
+    }
+    expected_dataframe: {
+      "Period": [ "202202", "202202", "202202", "202202" ],
+      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
+      "OrgUnit": [ "AAA0001", "AAA0002", "AAA0001", "AAA0002" ],
+      "Measure": [ "Value", "Value", "Value", "Value" ],
+      "Value": [ 120, 120, 120, 120 ]
     }
 
 test_dataframe_map_and_join_success:

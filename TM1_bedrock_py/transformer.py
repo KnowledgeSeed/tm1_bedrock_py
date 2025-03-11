@@ -59,7 +59,10 @@ def dataframe_reorder_dimensions(
     KeyError:
         If any column in `cube_dimensions` does not exist in the DataFrame.
     """
-    dataframe[:] = dataframe.loc[:, cube_dimensions + ["Value"]]
+    temp_reordered = dataframe[cube_dimensions+["Value"]]
+    dataframe.drop(columns=dataframe.columns, inplace=True)
+    for col in temp_reordered.columns:
+        dataframe[col] = temp_reordered[col]
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -313,15 +316,11 @@ def dataframe_map_and_replace(
     merged_df = data_df[shared_dimensions].merge(
         mapping_df[shared_dimensions + list(mapped_dimensions.values())],
         how='left',
-        on=shared_dimensions,
-        suffixes=('', '_mapped')
+        on=shared_dimensions
     )
 
     for data_col, map_col in mapped_dimensions.items():
-        mapped_col_name = f"{map_col}_mapped" if map_col in data_df.columns else map_col
-        data_df[data_col] = merged_df[mapped_col_name]
-
-    del merged_df
+        data_df[data_col] = merged_df[map_col]
 
 
 def dataframe_map_and_join(
@@ -359,8 +358,6 @@ def dataframe_map_and_join(
 
     for col in joined_columns:
         data_df[col] = merged_df[col]
-
-    del merged_df
 
 
 def __apply_replace(

@@ -206,7 +206,7 @@ class TM1CubeObjectMetadata:
         if mdx:
             cube_name = _get_cube_name_from_mdx(mdx)
             cls._expand_query_metadata(mdx, metadata)
-            cls._expand_base_cube_metadata(tm1_service=tm1_service, cube_name=cube_name, metadata=metadata)
+        cls._expand_base_cube_metadata(tm1_service=tm1_service, cube_name=cube_name, metadata=metadata)
 
         if not cube_name:
             raise ValueError("No MDX or cube name was specified.")

@@ -60,10 +60,9 @@ def test_mdx_filter_to_dictionary(mdx_query):
 def test_tm1_cube_object_metadata_collect_based_on_cube_name_success(tm1_connection, cube_name):
     """Collects metadata based on cube name and checks if the method's output is a Metadata object"""
     try:
-        assert isinstance(
-            utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, cube_name=cube_name),
-            utility.TM1CubeObjectMetadata
-        )
+        metadata = utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, cube_name=cube_name)
+        print(metadata.to_dict())
+        assert isinstance(metadata, utility.TM1CubeObjectMetadata)
     except TM1pyRestException as e:
         pytest.fail(f"Cube name not found: {e}")
 
@@ -72,10 +71,9 @@ def test_tm1_cube_object_metadata_collect_based_on_cube_name_success(tm1_connect
 def test_tm1_cube_object_metadata_collect_based_on_cube_name_fail(tm1_connection, cube_name, exception):
     """Runs collect_metadata based with bad cube name and checks if the method's output is a Metadata object."""
     with pytest.raises(EXCEPTION_MAP[exception]):
-        assert isinstance(
-            utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, cube_name=cube_name),
-            utility.TM1CubeObjectMetadata
-        )
+        metadata = utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, cube_name=cube_name)
+        print(metadata.to_dict())
+        assert isinstance(metadata, utility.TM1CubeObjectMetadata)
 
 
 @parametrize_from_file
@@ -125,12 +123,23 @@ def test_tm1_cube_object_metadata_collect_cube_dimensions_match_dimensions(
 
 
 @parametrize_from_file
-def test_tm1_cube_object_metadata_collect_filter_dimensions_not_empty(tm1_connection, cube_name):
+def test_tm1_cube_object_metadata_collect_filter_dict_not_empty(tm1_connection, data_mdx):
     """Collects metadata and verifies that filter dimensions are not empty."""
     try:
-        metadata = utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, cube_name=cube_name)
-        filter_dims = metadata["dimensions"].to_dict()
-        assert bool(filter_dims)
+        metadata = utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, mdx=data_mdx)
+        filter_dims = metadata.get_filter_dict()
+        assert filter_dims
+    except TM1pyRestException as e:
+        pytest.fail(f"Cube name not found: {e}")
+
+
+@parametrize_from_file
+def test_tm1_cube_object_metadata_collect_filter_dict_match(tm1_connection, data_mdx, expected_filter_dict):
+    """Collects metadata and verifies that filter dimensions are not empty."""
+    try:
+        metadata = utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, mdx=data_mdx)
+        filter_dict = metadata.get_filter_dict()
+        assert filter_dict == expected_filter_dict
     except TM1pyRestException as e:
         pytest.fail(f"Cube name not found: {e}")
 
