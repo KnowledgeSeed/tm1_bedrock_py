@@ -60,10 +60,9 @@ def test_mdx_filter_to_dictionary(mdx_query):
 def test_tm1_cube_object_metadata_collect_based_on_cube_name_success(tm1_connection, cube_name):
     """Collects metadata based on cube name and checks if the method's output is a Metadata object"""
     try:
-        assert isinstance(
-            utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, cube_name=cube_name),
-            utility.TM1CubeObjectMetadata
-        )
+        metadata = utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, cube_name=cube_name)
+        print(metadata.to_dict())
+        assert isinstance(metadata, utility.TM1CubeObjectMetadata)
     except TM1pyRestException as e:
         pytest.fail(f"Cube name not found: {e}")
 
@@ -72,10 +71,9 @@ def test_tm1_cube_object_metadata_collect_based_on_cube_name_success(tm1_connect
 def test_tm1_cube_object_metadata_collect_based_on_cube_name_fail(tm1_connection, cube_name, exception):
     """Runs collect_metadata based with bad cube name and checks if the method's output is a Metadata object."""
     with pytest.raises(EXCEPTION_MAP[exception]):
-        assert isinstance(
-            utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, cube_name=cube_name),
-            utility.TM1CubeObjectMetadata
-        )
+        metadata = utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, cube_name=cube_name)
+        print(metadata.to_dict())
+        assert isinstance(metadata, utility.TM1CubeObjectMetadata)
 
 
 @parametrize_from_file
@@ -125,12 +123,23 @@ def test_tm1_cube_object_metadata_collect_cube_dimensions_match_dimensions(
 
 
 @parametrize_from_file
-def test_tm1_cube_object_metadata_collect_filter_dimensions_not_empty(tm1_connection, cube_name):
+def test_tm1_cube_object_metadata_collect_filter_dict_not_empty(tm1_connection, data_mdx):
     """Collects metadata and verifies that filter dimensions are not empty."""
     try:
-        metadata = utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, cube_name=cube_name)
-        filter_dims = metadata["dimensions"].to_dict()
-        assert bool(filter_dims)
+        metadata = utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, mdx=data_mdx)
+        filter_dims = metadata.get_filter_dict()
+        assert filter_dims
+    except TM1pyRestException as e:
+        pytest.fail(f"Cube name not found: {e}")
+
+
+@parametrize_from_file
+def test_tm1_cube_object_metadata_collect_filter_dict_match(tm1_connection, data_mdx, expected_filter_dict):
+    """Collects metadata and verifies that filter dimensions are not empty."""
+    try:
+        metadata = utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, mdx=data_mdx)
+        filter_dict = metadata.get_filter_dict()
+        assert filter_dict == expected_filter_dict
     except TM1pyRestException as e:
         pytest.fail(f"Cube name not found: {e}")
 
@@ -175,7 +184,7 @@ def test_normalize_dataframe_is_dataframe_true(tm1_connection, data_mdx):
     """Run normalize dataframe function and check for if output is dataframe"""
     try:
         df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
-        df = transformer.normalize_dataframe(tm1_service=tm1_connection, dataframe=df, mdx=data_mdx)
+        transformer.normalize_dataframe(tm1_service=tm1_connection, dataframe=df, mdx=data_mdx)
         assert isinstance(df, DataFrame)
     except Exception as e:
         pytest.fail(f"MDX query execution failed: {e}")
@@ -186,7 +195,7 @@ def test_normalize_dataframe_match_number_of_dimensions_success(tm1_connection, 
     """Run normalize dataframe function and check if the output has the correct number of dimensions"""
     try:
         df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
-        df = transformer.normalize_dataframe(tm1_service=tm1_connection, dataframe=df, mdx=data_mdx)
+        transformer.normalize_dataframe(tm1_service=tm1_connection, dataframe=df, mdx=data_mdx)
         df.keys()
         assert len(df.keys()) == expected_dimensions
     except Exception as e:
@@ -198,7 +207,7 @@ def test_normalize_dataframe_match_dimensions_success(tm1_connection, data_mdx, 
     """Runs normalize dataframe function and validates that the output's dimension keys match the expected"""
     try:
         df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
-        df = transformer.normalize_dataframe(tm1_service=tm1_connection, dataframe=df, mdx=data_mdx)
+        transformer.normalize_dataframe(tm1_service=tm1_connection, dataframe=df, mdx=data_mdx)
         keys = [key for key in df.keys()]
         assert expected_dimensions == keys
     except Exception as e:
@@ -214,7 +223,7 @@ def test_build_mdx_from_cube_filter_create_dataframe_success(tm1_connection, cub
     )
     try:
         df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
-        df = transformer.normalize_dataframe(tm1_service=tm1_connection, dataframe=df, mdx=data_mdx)
+        transformer.normalize_dataframe(tm1_service=tm1_connection, dataframe=df, mdx=data_mdx)
         assert isinstance(df, DataFrame)
     except Exception as e:
         pytest.fail(f"MDX query execution failed: {e}")
@@ -223,6 +232,15 @@ def test_build_mdx_from_cube_filter_create_dataframe_success(tm1_connection, cub
 # ------------------------------------------------------------------------------------------------------------
 # Main: dataframe transform utility functions
 # ------------------------------------------------------------------------------------------------------------
+
+@parametrize_from_file
+def test_dataframe_filter_inplace(dataframe, filter_condition, expected_dataframe):
+    df = pd.DataFrame(dataframe)
+    expected_df = pd.DataFrame(expected_dataframe)
+    transformer.dataframe_filter_inplace(dataframe=df, filter_condition=filter_condition)
+
+    pd.testing.assert_frame_equal(df, expected_df)
+
 
 @parametrize_from_file
 def test_dataframe_filter(dataframe, filter_condition, expected_dataframe):
@@ -237,25 +255,25 @@ def test_dataframe_filter(dataframe, filter_condition, expected_dataframe):
 def test_dataframe_drop_column(dataframe, column_list, expected_dataframe):
     df = pd.DataFrame(dataframe)
     expected_df = pd.DataFrame(expected_dataframe)
-    transformed_df = transformer.dataframe_drop_column(dataframe=df, column_list=column_list)
+    transformer.dataframe_drop_column(dataframe=df, column_list=column_list)
 
-    pd.testing.assert_frame_equal(transformed_df, expected_df)
+    pd.testing.assert_frame_equal(df, expected_df)
 
 
 @parametrize_from_file
 def test_dataframe_redimension_scale_down(dataframe, filter_condition, expected_dataframe):
     df = pd.DataFrame(dataframe)
     expected_df = pd.DataFrame(expected_dataframe)
-    transformed_df = transformer.dataframe_drop_filtered_column(dataframe=df, filter_condition=filter_condition)
+    transformer.dataframe_drop_filtered_column(dataframe=df, filter_condition=filter_condition)
 
-    pd.testing.assert_frame_equal(transformed_df, expected_df)
+    pd.testing.assert_frame_equal(df, expected_df)
 
 
 @parametrize_from_file
 def test_dataframe_relabel(dataframe, columns, expected_columns):
     df = pd.DataFrame(dataframe)
-    relabeled_df = transformer.dataframe_relabel(dataframe=df, columns=columns)
-    new_columns = list(map(str, relabeled_df.columns))
+    transformer.dataframe_relabel(dataframe=df, columns=columns)
+    new_columns = list(map(str, df.columns))
     assert new_columns == expected_columns
 
 
@@ -263,9 +281,9 @@ def test_dataframe_relabel(dataframe, columns, expected_columns):
 def test_dataframe_add_column_assign_value(dataframe, column_values, expected_dataframe):
     df = pd.DataFrame(dataframe)
     expected_df = pd.DataFrame(expected_dataframe)
-    transformed_df = transformer.dataframe_add_column_assign_value(dataframe=df, column_value=column_values)
+    transformer.dataframe_add_column_assign_value(dataframe=df, column_value=column_values)
 
-    pd.testing.assert_frame_equal(transformed_df, expected_df)
+    pd.testing.assert_frame_equal(df, expected_df)
 
 
 @parametrize_from_file
@@ -274,20 +292,20 @@ def test_dataframe_redimension_and_transform(
 ):
     df = pd.DataFrame(dataframe)
     expected_df = pd.DataFrame(expected_dataframe)
-    transformed_df = transformer.dataframe_redimension_and_transform(
+    transformer.dataframe_redimension_and_transform(
         df, source_dim_mapping, related_dimensions, target_dim_mapping
     )
 
-    pd.testing.assert_frame_equal(transformed_df, expected_df)
+    pd.testing.assert_frame_equal(df, expected_df)
 
 
 @parametrize_from_file
 def test_dataframe_reorder_dimensions(dataframe, cube_cols, expected_dataframe):
     df = pd.DataFrame(dataframe)
     expected_df = pd.DataFrame(expected_dataframe)
-    transformed_df = transformer.dataframe_reorder_dimensions(dataframe=df, cube_dimensions=cube_cols)
+    transformer.dataframe_reorder_dimensions(dataframe=df, cube_dimensions=cube_cols)
 
-    pd.testing.assert_frame_equal(transformed_df, expected_df)
+    pd.testing.assert_frame_equal(df, expected_df)
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -300,19 +318,19 @@ def test_dataframe_find_and_replace_success(dataframe, mapping, expected_datafra
 
     df = pd.DataFrame(dataframe)
     expected_df = pd.DataFrame(expected_dataframe)
-    remapped_df = transformer.dataframe_find_and_replace(dataframe=df, mapping=mapping)
+    transformer.dataframe_find_and_replace(dataframe=df, mapping=mapping)
 
-    pd.testing.assert_frame_equal(remapped_df, expected_df)
+    pd.testing.assert_frame_equal(df, expected_df)
 
 
 @parametrize_from_file
 def test_dataframe_find_and_replace_fail(dataframe, mapping, expected_dataframe):
     """Tries to remap elements based on literal mapping, without dimension manipulation with bad input. Raises error."""
-
+    df = pd.DataFrame(dataframe)
     expected_df = pd.DataFrame(expected_dataframe)
     with pytest.raises(AssertionError):
-        remapped_df = transformer.dataframe_find_and_replace(dataframe=pd.DataFrame(dataframe), mapping=mapping)
-        pd.testing.assert_frame_equal(remapped_df, expected_df)
+        transformer.dataframe_find_and_replace(dataframe=df, mapping=mapping)
+        pd.testing.assert_frame_equal(df, expected_df)
 
 
 @parametrize_from_file
@@ -320,14 +338,14 @@ def test_dataframe_map_and_replace_success(dataframe, mapping_dataframe, mapping
     df = pd.DataFrame(dataframe)
     mapping_df = pd.DataFrame(mapping_dataframe)
     expected_df = pd.DataFrame(expected_dataframe)
-    remapped_df = transformer.dataframe_map_and_replace(
+    transformer.dataframe_map_and_replace(
         data_df=df,
         mapping_df=mapping_df,
         mapped_dimensions=mapping_dimensions)
 
-    print(remapped_df)
+    print(df)
     print(expected_df)
-    pd.testing.assert_frame_equal(remapped_df, expected_df)
+    pd.testing.assert_frame_equal(df, expected_df)
 
 
 @parametrize_from_file
@@ -335,13 +353,13 @@ def test_dataframe_map_and_join_success(dataframe, joined_cols, mapping_datafram
     df = pd.DataFrame(dataframe)
     mapping_df = pd.DataFrame(mapping_dataframe)
     expected_df = pd.DataFrame(expected_dataframe)
-    remapped_df = transformer.dataframe_map_and_join(
+    transformer.dataframe_map_and_join(
         data_df=df,
         mapping_df=mapping_df,
         joined_columns=joined_cols
     )
 
-    pd.testing.assert_frame_equal(remapped_df, expected_df)
+    pd.testing.assert_frame_equal(df, expected_df)
 
 
 @parametrize_from_file

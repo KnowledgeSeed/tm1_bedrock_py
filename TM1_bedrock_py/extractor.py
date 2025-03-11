@@ -105,10 +105,8 @@ def _handle_mapping_mdx(
         **kwargs
     )
     filter_dict = metadata_object.get_filter_dict()
-    return transformer.dataframe_add_column_assign_value(
-        dataframe=dataframe,
-        column_value=filter_dict
-    )
+    transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=filter_dict)
+    return dataframe
 
 
 def _handle_mapping_sql_query(

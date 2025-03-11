@@ -70,9 +70,9 @@ def __dataframe_to_cube_default(
         dataframe: DataFrame,
         cube_name: str,
         cube_dims: List[str],
+        use_blob: bool,
         async_write: bool = False,
         use_ti: bool = False,
-        use_blob: bool = False,
         increment: bool = False,
         sum_numeric_duplicates: bool = True,
         **kwargs
@@ -95,17 +95,28 @@ def __dataframe_to_cube_default(
     Returns:
         None
     """
-    function_name = "write_dataframe_async" if async_write else "write_dataframe"
-
-    getattr(tm1_service.cells, function_name)(
-        cube_name=cube_name,
-        data=dataframe,
-        dimensions=cube_dims,
-        deactivate_transaction_log=True,
-        reactivate_transaction_log=True,
-        skip_non_updateable=True,
-        use_ti=use_ti,
-        use_blob=use_blob,
-        increment=increment,
-        sum_numeric_duplicates=sum_numeric_duplicates
-    )
+    if async_write:
+        tm1_service.cells.write_dataframe_async(
+            cube_name=cube_name,
+            data=dataframe,
+            dimensions=cube_dims,
+            deactivate_transaction_log=True,
+            reactivate_transaction_log=True,
+            skip_non_updateable=True,
+            increment=increment,
+            sum_numeric_duplicates=sum_numeric_duplicates
+        )
+    else:
+        tm1_service.cells.write_dataframe(
+            cube_name=cube_name,
+            data=dataframe,
+            dimensions=cube_dims,
+            deactivate_transaction_log=True,
+            reactivate_transaction_log=True,
+            skip_non_updateable=True,
+            use_ti=use_ti,
+            use_blob=use_blob,
+            remove_blob=True,
+            increment=increment,
+            sum_numeric_duplicates=sum_numeric_duplicates
+        )

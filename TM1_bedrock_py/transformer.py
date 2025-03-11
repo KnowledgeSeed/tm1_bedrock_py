@@ -10,7 +10,7 @@ def normalize_dataframe(
         dataframe: DataFrame,
         metadata_function: Optional[Callable[..., Any]] = None,
         **kwargs: Any
-) -> DataFrame:
+) -> None:
     """
     Returns a normalized dataframe using the raw output dataframe of the execute mdx function, and necessary cube
     and query based metadata. Makes sure that all cube dimensions are present in the dataframe and that they are in
@@ -23,19 +23,19 @@ def normalize_dataframe(
         **kwargs (Any): Additional keyword arguments for the metadata function.
 
     Returns:
-        DataFrame: The normalized DataFrame.
+        None: modifies the dataframe in place
     """
 
     metadata = utility.TM1CubeObjectMetadata.collect(metadata_function=metadata_function, **kwargs)
 
-    dataframe = dataframe_add_column_assign_value(dataframe=dataframe, column_value=metadata.get_filter_dict())
-    return dataframe_reorder_dimensions(dataframe=dataframe, cube_dimensions=metadata.get_cube_dims())
+    dataframe_add_column_assign_value(dataframe=dataframe, column_value=metadata.get_filter_dict())
+    dataframe_reorder_dimensions(dataframe=dataframe, cube_dimensions=metadata.get_cube_dims())
 
 
 def dataframe_reorder_dimensions(
         dataframe: DataFrame,
         cube_dimensions: List[str]
-) -> DataFrame:
+) -> None:
     """
     Rearranges the columns of a DataFrame based on the specified cube dimensions.
 
@@ -52,15 +52,17 @@ def dataframe_reorder_dimensions(
 
     Returns:
     --------
-    DataFrame
-        A new DataFrame containing only the specified cube dimensions in order.
+    None, mutates the dataframe in place
 
     Raises:
     -------
     KeyError:
         If any column in `cube_dimensions` does not exist in the DataFrame.
     """
-    return dataframe.loc[:, cube_dimensions+["Value"]]
+    temp_reordered = dataframe[cube_dimensions+["Value"]]
+    dataframe.drop(columns=dataframe.columns, inplace=True)
+    for col in temp_reordered.columns:
+        dataframe[col] = temp_reordered[col]
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -68,68 +70,92 @@ def dataframe_reorder_dimensions(
 # ------------------------------------------------------------------------------------------------------------
 
 
-def dataframe_filter(
-        dataframe: DataFrame,
-        filter_condition: Dict[str, Any],
-        inplace: bool = False
-) -> DataFrame:
+def dataframe_filter_inplace(
+        dataframe: pd.DataFrame,
+        filter_condition: Dict[str, Any]
+) -> None:
     """
-    Filters a DataFrame based on a given filter_condition.
+    Filters a DataFrame in-place based on a given filter_condition.
 
-    - If at least one valid condition is met, it filters the DataFrame.
-    - If no valid condition is met, it returns an empty DataFrame.
-    - If 'inplace' is True, the function modifies the original DataFrame and returns it.
-    - If 'inplace' is False (default), it returns a new filtered DataFrame.
+    - If at least one valid condition is met, it modifies the DataFrame in-place.
+    - If no valid condition is met, it clears the DataFrame.
 
     Args:
-        dataframe (DataFrame): The DataFrame to filter.
+        dataframe (pd.DataFrame): The DataFrame to filter.
         filter_condition (Dict[str, Any]): Dictionary with column names as keys and values to filter for.
-        inplace (bool, optional): If True, modifies the original DataFrame in-place. Defaults to False.
 
     Returns:
-        DataFrame: The filtered DataFrame (either new or modified in-place).
+        None: Modifies the DataFrame in-place.
     """
-    valid_columns = list(filter(lambda col: col in dataframe.columns, filter_condition.keys()))
+    valid_columns = [col for col in filter_condition.keys() if col in dataframe.columns]
 
-    # in case of inplace=True, don't return empty data
     if not valid_columns:
-        return dataframe if inplace else dataframe.iloc[0:0]
+        dataframe.drop(dataframe.index, inplace=True)  # Clears DataFrame
+        return
 
-    # build condition boolean string for row dropping
     condition = dataframe[valid_columns].eq(
         pd.Series({col: filter_condition[col] for col in valid_columns})
     ).all(axis=1)
 
-    return (
-        dataframe.drop(index=dataframe.index[~condition]).reset_index(drop=True)
-        if inplace
-        else dataframe.loc[condition]
-    )
+    dataframe.drop(index=dataframe.index[~condition], inplace=True)
+    dataframe.reset_index(drop=True, inplace=True)
+
+
+def dataframe_filter(
+        dataframe: DataFrame,
+        filter_condition: Dict[str, Any]
+) -> DataFrame:
+    """
+    Filters a DataFrame based on a given filter_condition.
+
+    - If at least one valid condition is met, it returns a filtered DataFrame.
+    - If no valid condition is met, it returns an empty DataFrame.
+
+    Args:
+        dataframe (DataFrame): The DataFrame to filter.
+        filter_condition (Dict[str, Any]): Dictionary with column names as keys and values to filter for.
+
+    Returns:
+        DataFrame: The filtered DataFrame.
+    """
+    valid_columns = [col for col in filter_condition.keys() if col in dataframe.columns]
+
+    if not valid_columns:
+        return dataframe.iloc[0:0]
+
+    condition = dataframe[valid_columns].eq(
+        pd.Series({col: filter_condition[col] for col in valid_columns})
+    ).all(axis=1)
+
+    return dataframe.loc[condition].reset_index(drop=True)
 
 
 def dataframe_drop_column(
         dataframe: DataFrame,
         column_list: list[str]
-) -> DataFrame:
+) -> None:
     """
-    Drops columns from DataFrame if the values in the input column_list are found in the columns of the DataFrame.
+    Drops columns from DataFrame in-place if the values in the input column_list are found in the DataFrame.
     If a column_list value is not found in the DataFrame, it is ignored.
 
     Args:
-        dataframe: (DataFrame): The DataFrame from which columns are to be dropped.
-        column_list: (list): Name of the columns to be dropped.
+        dataframe (DataFrame): The DataFrame from which columns are to be dropped.
+        column_list (list): Name of the columns to be dropped.
+
     Returns:
-        DataFrame: The updated DataFrame.
+        None: The DataFrame is modified in-place.
     """
-    if not all(item in dataframe.columns for item in column_list):
-        return dataframe
-    return dataframe.drop(column_list, axis=1).reset_index(drop=True)
+    columns_to_drop = [col for col in column_list if col in dataframe.columns]
+
+    if columns_to_drop:
+        dataframe.drop(columns=columns_to_drop, axis=1, inplace=True)
+        dataframe.reset_index(drop=True, inplace=True)
 
 
 def dataframe_add_column_assign_value(
         dataframe: DataFrame,
         column_value: dict
-) -> DataFrame:
+) -> None:
     """
     Ads columns with assigned values to DataFrame if the column_value pairs are not found in the DataFrame.
     If a column from the column_value pair is found in the DataFrame, the pair is ignored.
@@ -144,14 +170,13 @@ def dataframe_add_column_assign_value(
 
     if new_columns:
         dataframe[list(new_columns)] = DataFrame([new_columns], index=dataframe.index)
-
-    return dataframe.reset_index(drop=True)
+        dataframe.reset_index(drop=True, inplace=True)
 
 
 def dataframe_drop_filtered_column(
         dataframe: DataFrame,
         filter_condition: dict
-) -> DataFrame:
+) -> None:
     """
     Filters DataFrame based on filter_condition and drops columns given in column_list.
     Only filters the DataFrame if at least one condition is met. If non is met, it returns an empty DataFrame.
@@ -163,14 +188,14 @@ def dataframe_drop_filtered_column(
         DataFrame: The updated DataFrame.
     """
 
-    filtered_dataframe = dataframe_filter(dataframe=dataframe, filter_condition=filter_condition)
+    dataframe_filter_inplace(dataframe=dataframe, filter_condition=filter_condition)
     column_list = list(map(str, filter_condition.keys()))
-    return dataframe_drop_column(dataframe=filtered_dataframe, column_list=column_list).reset_index(drop=True)
+    dataframe_drop_column(dataframe=dataframe, column_list=column_list)
 
 
 def dataframe_drop_zero_and_values(
         dataframe: DataFrame
-) -> DataFrame:
+) -> None:
     """
     Drops all rows with zero values from DaraFrame, then drops the values column.
 
@@ -182,13 +207,13 @@ def dataframe_drop_zero_and_values(
 
     dataframe.drop(dataframe[dataframe["Value"] == 0].index, inplace=True)
     dataframe.drop(columns=["Value"], inplace=True)
-    return dataframe.reset_index(drop=True)
+    dataframe.reset_index(drop=True, inplace=True)
 
 
 def dataframe_relabel(
         dataframe: DataFrame,
         columns: dict
-) -> DataFrame:
+) -> None:
     """
     Relabels DataFrame column(s) if the original label is found in the DataFrame.
     If an original label is not found, then it is ignored.
@@ -200,13 +225,12 @@ def dataframe_relabel(
     Return: None
     """
     dataframe.rename(columns=columns, inplace=True)
-    return dataframe
 
 
 def dataframe_value_scale(
         dataframe: DataFrame,
         value_function: callable
-) -> DataFrame:
+) -> None:
     """
     Applies an input function to the 'Value' column of the DataFrame.
 
@@ -218,7 +242,6 @@ def dataframe_value_scale(
         DataFrame: The modified DataFrame (in place).
     """
     dataframe["Value"] = dataframe["Value"].apply(value_function)
-    return dataframe.reset_index(drop=True)
 
 
 def dataframe_redimension_and_transform(
@@ -226,18 +249,16 @@ def dataframe_redimension_and_transform(
         source_dim_mapping: Optional[dict] = None,
         related_dimensions: Optional[dict] = None,
         target_dim_mapping: Optional[dict] = None
-) -> DataFrame:
+) -> None:
 
     if source_dim_mapping is not None:
-        dataframe = dataframe_drop_filtered_column(dataframe=dataframe, filter_condition=source_dim_mapping)
+        dataframe_drop_filtered_column(dataframe=dataframe, filter_condition=source_dim_mapping)
 
     if related_dimensions is not None:
-        dataframe = dataframe_relabel(dataframe=dataframe, columns=related_dimensions)
+        dataframe_relabel(dataframe=dataframe, columns=related_dimensions)
 
     if target_dim_mapping is not None:
-        dataframe = dataframe_add_column_assign_value(dataframe=dataframe, column_value=target_dim_mapping)
-
-    return dataframe
+        dataframe_add_column_assign_value(dataframe=dataframe, column_value=target_dim_mapping)
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -248,7 +269,7 @@ def dataframe_redimension_and_transform(
 def dataframe_find_and_replace(
         dataframe: DataFrame,
         mapping: Dict[str, Dict[Any, Any]]
-) -> DataFrame:
+) -> None:
     """
     Remaps elements in a DataFrame based on a provided mapping.
 
@@ -261,14 +282,13 @@ def dataframe_find_and_replace(
         DataFrame: The updated DataFrame with elements remapped.
     """
     dataframe.replace({col: mapping[col] for col in mapping.keys() if col in dataframe.columns}, inplace=True)
-    return dataframe
 
 
 def dataframe_map_and_replace(
         data_df: DataFrame,
         mapping_df: DataFrame,
         mapped_dimensions: Dict[str, str]
-) -> DataFrame:
+) -> None:
     """
     Map specified dimension columns in 'data_df' using 'mapping_df',
     optimized for memory efficiency by modifying dataframes in-place.
@@ -292,74 +312,59 @@ def dataframe_map_and_replace(
     """
 
     shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - set(mapped_dimensions.keys()) - {"Value"})
-    data_df_original_dimensions = data_df.columns
-    data_df = data_df.merge(
-        mapping_df[shared_dimensions+list(mapped_dimensions.values())],
+
+    merged_df = data_df[shared_dimensions].merge(
+        mapping_df[shared_dimensions + list(mapped_dimensions.values())],
         how='left',
-        on=shared_dimensions,
-        suffixes=('', '_mapped')
+        on=shared_dimensions
     )
 
     for data_col, map_col in mapped_dimensions.items():
-        mapped_col_name = f"{map_col}_mapped" if map_col in data_df_original_dimensions else map_col
-        data_df[data_col] = data_df[mapped_col_name]
-        del data_df[mapped_col_name]
-
-    return data_df
+        data_df[data_col] = merged_df[map_col]
 
 
 def dataframe_map_and_join(
         data_df: DataFrame,
         mapping_df: DataFrame,
         joined_columns: List[str]
-) -> DataFrame:
+) -> None:
     """
     Joins specified columns from 'mapping_df' to 'data_df' based on shared dimensions.
 
     This function identifies the common dimensions between `data_df` and `mapping_df`
-    and performs an in-place left join, adding only the columns specified in `joined_columns`
-    from `mapping_df` to `data_df`.
+    and performs an in-place left-join of specified columns.
 
     Parameters
     ----------
     data_df : DataFrame
-        The primary DataFrame to which additional columns will be joined.
+        The DataFrame to mutate in-place.
     mapping_df : DataFrame
-        The DataFrame containing additional data to be mapped.
+        The DataFrame containing columns to join.
     joined_columns : List[str]
-        A list of column names that should be brought from `mapping_df` to `data_df`.
+        Column names from `mapping_df` to join into `data_df`.
 
     Returns
     -------
-    DataFrame
-        The modified `data_df` with `joined_columns` added from `mapping_df`
-        based on shared dimensions.
-
-    Raises
-    ------
-    KeyError:
-        If any column in `joined_columns` is not found in `mapping_df`.
+    None
+        The original DataFrame (`data_df`) is modified in-place.
     """
-    # Validate that all joined columns exist in mapping_df
-    missing_cols = [col for col in joined_columns if col not in mapping_df.columns]
-    if missing_cols:
-        raise KeyError(f"Columns {missing_cols} not found in mapping_df.")
-
-    # Identify shared dimensions (excluding the explicitly joined columns)
     shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - set(joined_columns) - {"Value"})
 
-    # Perform an in-place left join
-    data_df = data_df.merge(mapping_df[shared_dimensions + joined_columns],
-                            how='left', on=shared_dimensions)
+    merged_df = data_df[shared_dimensions].merge(
+        mapping_df[shared_dimensions + joined_columns],
+        how='left',
+        on=shared_dimensions
+    )
 
-    return data_df
+    for col in joined_columns:
+        data_df[col] = merged_df[col]
 
 
 def __apply_replace(
         data_df: DataFrame,
         mapping_step: Dict[str, Any],
         shared_mapping_df
-) -> DataFrame:
+) -> None:
     """
     Handle the 'replace' mapping step.
 
@@ -378,17 +383,14 @@ def __apply_replace(
         The modified DataFrame after applying the literal remap.
     """
     _ = shared_mapping_df
-    return dataframe_find_and_replace(
-        dataframe=data_df,
-        mapping=mapping_step["mapping"]
-    )
+    dataframe_find_and_replace(dataframe=data_df, mapping=mapping_step["mapping"])
 
 
 def __apply_map_and_replace(
         data_df: DataFrame,
         mapping_step: Dict[str, Any],
         shared_mapping_df: DataFrame
-) -> DataFrame:
+) -> None:
     """
     Handle the 'map_and_replace' mapping step.
 
@@ -404,8 +406,8 @@ def __apply_map_and_replace(
 
     Returns
     -------
-    DataFrame
-        The modified DataFrame after applying the MDX-based remap.
+    None
+        Modifies the dataframe in place
     """
     step_uses_independent_mapping = (
         "mapping_df" in mapping_step and mapping_step["mapping_df"] is not None
@@ -418,32 +420,24 @@ def __apply_map_and_replace(
     )
 
     if "mapping_filter" in mapping_step:
-        mapping_df = dataframe_filter(
-            dataframe=mapping_df,
-            filter_condition=mapping_step["mapping_filter"],
-            inplace=step_uses_independent_mapping
-        )
+        if step_uses_independent_mapping:
+            dataframe_filter_inplace(dataframe=mapping_df, filter_condition=mapping_step["mapping_filter"])
+        else:
+            mapping_df = dataframe_filter(dataframe=mapping_df, filter_condition=mapping_step["mapping_filter"])
 
-    data_df = dataframe_map_and_replace(
-        data_df=data_df,
-        mapping_df=mapping_df,
-        mapped_dimensions=mapping_step["mapping_dimensions"]
+    dataframe_map_and_replace(
+        data_df=data_df, mapping_df=mapping_df, mapped_dimensions=mapping_step["mapping_dimensions"]
     )
 
     if mapping_step.get("relabel_dimensions"):
-        data_df = dataframe_relabel(
-            dataframe=data_df,
-            columns=mapping_step["mapping_dimensions"]
-        )
-
-    return data_df
+        dataframe_relabel(dataframe=data_df, columns=mapping_step["mapping_dimensions"])
 
 
 def __apply_map_and_join(
         data_df: DataFrame,
         mapping_step: Dict[str, Any],
         shared_mapping_df
-) -> DataFrame:
+) -> None:
     """
     Handle the 'map_and_join' mapping step.
 
@@ -459,8 +453,8 @@ def __apply_map_and_join(
 
     Returns
     -------
-    DataFrame
-        The modified DataFrame after applying the MDX-based remap.
+    None
+        Modifies the dataframe in place
     """
 
     step_uses_independent_mapping = (
@@ -474,29 +468,22 @@ def __apply_map_and_join(
     )
 
     if "mapping_filter" in mapping_step:
-        mapping_df = dataframe_filter(
-            dataframe=mapping_df,
-            filter_condition=mapping_step["mapping_filter"],
-            inplace=step_uses_independent_mapping
-        )
+        if step_uses_independent_mapping:
+            dataframe_filter_inplace(dataframe=mapping_df, filter_condition=mapping_step["mapping_filter"])
+        else:
+            mapping_df = dataframe_filter(dataframe=mapping_df, filter_condition=mapping_step["mapping_filter"])
 
-    data_df = dataframe_map_and_join(
-        data_df=data_df,
-        mapping_df=mapping_df,
-        joined_columns=mapping_step["joined_columns"]
-    )
+    dataframe_map_and_join(data_df=data_df, mapping_df=mapping_df, joined_columns=mapping_step["joined_columns"])
 
     if "dropped_columns" in mapping_step:
-        data_df = dataframe_drop_column(dataframe=data_df, column_list=mapping_step["dropped_columns"])
-
-    return data_df
+        dataframe_drop_column(dataframe=data_df, column_list=mapping_step["dropped_columns"])
 
 
 def dataframe_execute_mappings(
         data_df: DataFrame,
         mapping_steps: List[Dict],
         shared_mapping_df: Optional[DataFrame] = None
-) -> DataFrame:
+) -> None:
     """
     Execute a series of mapping steps on data_df.
     Uses mutation for memory efficiency.
@@ -562,8 +549,6 @@ def dataframe_execute_mappings(
     for step in mapping_steps:
         method = step["method"]
         if method in method_handlers:
-            data_df = method_handlers[method](data_df, step, shared_mapping_df)
+            method_handlers[method](data_df, step, shared_mapping_df)
         else:
             raise ValueError(f"Unsupported mapping method: {method}")
-
-    return data_df

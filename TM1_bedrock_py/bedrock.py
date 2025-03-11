@@ -195,9 +195,7 @@ def data_copy_intercube(
         mdx_function=mdx_function,
     )
 
-    dataframe = transformer.dataframe_add_column_assign_value(
-        dataframe=dataframe, column_value=data_metadata.get_filter_dict()
-    )
+    transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
 
     shared_mapping_df = None
     if shared_mapping:
@@ -214,13 +212,11 @@ def data_copy_intercube(
         mdx_function=mdx_function
     )
 
-    dataframe = transformer.dataframe_execute_mappings(
-        data_df=dataframe,
-        mapping_steps=mapping_steps,
-        shared_mapping_df=shared_mapping_df
+    transformer.dataframe_execute_mappings(
+        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df
     )
 
-    dataframe = transformer.dataframe_redimension_and_transform(
+    transformer.dataframe_redimension_and_transform(
         dataframe=dataframe,
         source_dim_mapping=source_dim_mapping,
         related_dimensions=related_dimensions,
@@ -228,11 +224,9 @@ def data_copy_intercube(
     )
 
     if value_function is not None:
-        dataframe = transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
+        transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
 
-    dataframe = transformer.dataframe_reorder_dimensions(
-        dataframe=dataframe, cube_dimensions=target_metadata.get_cube_dims()
-    )
+    transformer.dataframe_reorder_dimensions(dataframe=dataframe, cube_dimensions=target_metadata.get_cube_dims())
 
     if clear_target:
         loader.clear_cube(
@@ -410,9 +404,7 @@ def data_copy(
         mdx_function=mdx_function,
     )
 
-    dataframe = transformer.dataframe_add_column_assign_value(
-        dataframe=dataframe, column_value=data_metadata.get_filter_dict()
-    )
+    transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
 
     shared_mapping_df = None
     if shared_mapping:
@@ -429,18 +421,14 @@ def data_copy(
         mdx_function=mdx_function
     )
 
-    dataframe = transformer.dataframe_execute_mappings(
-        data_df=dataframe,
-        mapping_steps=mapping_steps,
-        shared_mapping_df=shared_mapping_df
+    transformer.dataframe_execute_mappings(
+        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df
     )
 
     if value_function is not None:
-        dataframe = transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
+        transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
 
-    dataframe = transformer.dataframe_reorder_dimensions(
-        dataframe=dataframe, cube_dimensions=cube_dims
-    )
+    transformer.dataframe_reorder_dimensions(dataframe=dataframe, cube_dimensions=cube_dims)
 
     if clear_target:
         loader.clear_cube(
