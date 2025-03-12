@@ -8,7 +8,7 @@ import pytest
 import parametrize_from_file
 from TM1py import TM1Service
 
-from TM1_bedrock_py import bedrock, extractor, transformer, utility, loader
+from TM1_bedrock_py import extractor, transformer, utility, logger
 
 
 EXCEPTION_MAP = {
@@ -25,10 +25,16 @@ def tm1_connection():
     """Creates a TM1 connection before tests and closes it after all tests."""
     config = configparser.ConfigParser()
     config.read(Path(__file__).parent.joinpath('config.ini'))
+    try:
+        tm1 = TM1Service(**config['tm1srv'])
+        logger.debug("Successfully connected to TM1.")
+        yield tm1
 
-    tm1 = TM1Service(**config['tm1srv'])
-    yield tm1
-    tm1.logout()
+        tm1.logout()
+        logger.debug("Connection closed.")
+
+    except TM1pyRestException:
+        logger.error("Unable to connect to TM1: ", exc_info=True)
 
 
 # ------------------------------------------------------------------------------------------------------------

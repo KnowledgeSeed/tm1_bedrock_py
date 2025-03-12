@@ -1,12 +1,13 @@
 """
 This file is a collection of upgraded TM1 bedrock functionality, ported to python / pandas with the help of TM1py.
 """
-
+import time
 from typing import Callable, List, Dict, Optional, Any
 
 from pandas import DataFrame
 
 from TM1_bedrock_py import utility, transformer, loader, extractor
+from TM1_bedrock_py import logger
 
 
 def data_copy_intercube(
@@ -170,6 +171,24 @@ def data_copy_intercube(
         ]
     """
 
+    start_time = time.time()
+
+    dataframe = extractor.tm1_mdx_to_dataframe(
+        tm1_service=tm1_service,
+        data_mdx=data_mdx,
+        data_mdx_list=data_mdx_list,
+        skip_zeros=skip_zeros,
+        skip_consolidated_cells=skip_consolidated_cells,
+        skip_rule_derived_cells=skip_rule_derived_cells,
+        mdx_function=mdx_function,
+    )
+
+    if len(dataframe) == 0:
+        logger.info("Input source dataframe has no rows, data_copy_intercube execution stopping.")
+        return
+
+    logger.info("Data copy intercube execution starting.")
+
     data_metadata = utility.TM1CubeObjectMetadata.collect(
         tm1_service=tm1_service,
         mdx=data_mdx,
@@ -184,16 +203,6 @@ def data_copy_intercube(
         **kwargs
     )
     target_cube_name = target_metadata.get_cube_name()
-
-    dataframe = extractor.tm1_mdx_to_dataframe(
-        tm1_service=tm1_service,
-        data_mdx=data_mdx,
-        data_mdx_list=data_mdx_list,
-        skip_zeros=skip_zeros,
-        skip_consolidated_cells=skip_consolidated_cells,
-        skip_rule_derived_cells=skip_rule_derived_cells,
-        mdx_function=mdx_function,
-    )
 
     transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
 
@@ -255,6 +264,12 @@ def data_copy_intercube(
             clear_set_mdx_list=source_clear_set_mdx_list,
             **kwargs
         )
+
+    logger.info("Data copy intercube execution finished.")
+
+    end_time = time.time()
+    execution_time = end_time - start_time
+    logger.info(f"Execution time of data_copy_intercube: {execution_time:.4f} seconds")
 
 
 def data_copy(
@@ -385,14 +400,7 @@ def data_copy(
     Using them will raise an error at writing
     """
 
-    data_metadata = utility.TM1CubeObjectMetadata.collect(
-        tm1_service=tm1_service,
-        mdx=data_mdx,
-        metadata_function=data_metadata_function,
-        **kwargs
-    )
-    cube_name = data_metadata.get_cube_name()
-    cube_dims = data_metadata.get_cube_dims()
+    start_time = time.time()
 
     dataframe = extractor.tm1_mdx_to_dataframe(
         tm1_service=tm1_service,
@@ -403,6 +411,21 @@ def data_copy(
         skip_rule_derived_cells=skip_rule_derived_cells,
         mdx_function=mdx_function,
     )
+
+    if len(dataframe) == 0:
+        logger.info("Input source dataframe has no rows, data_copy execution stopping.")
+        return
+
+    logger.info("Data copy execution starting.")
+
+    data_metadata = utility.TM1CubeObjectMetadata.collect(
+        tm1_service=tm1_service,
+        mdx=data_mdx,
+        metadata_function=data_metadata_function,
+        **kwargs
+    )
+    cube_name = data_metadata.get_cube_name()
+    cube_dims = data_metadata.get_cube_dims()
 
     transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
 
@@ -449,3 +472,9 @@ def data_copy(
         use_blob=use_blob,
         sum_numeric_duplicates=sum_numeric_duplicates,
     )
+
+    logger.info("Data copy execution finished.")
+
+    end_time = time.time()
+    execution_time = end_time - start_time
+    logger.info(f"Execution time of data_copy: {execution_time:.4f} seconds")

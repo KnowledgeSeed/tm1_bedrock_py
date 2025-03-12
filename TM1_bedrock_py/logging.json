@@ -1,0 +1,58 @@
+{
+    "version": 1,
+    "disable_existing_loggers": false,
+    "formatters": {
+      "simple": {
+        "format": "%(asctime)s :: %(levelname)s :: %(filename)s :: %(funcName)s() :: %(message)s :: %(process)d - %(threadName)s"
+      },
+
+      "detailed": {
+        "format": "%(asctime)s :: %(levelname)s :: %(name)s :: %(filename)s :: %(funcName)s() :: %(lineno)d :: %(message)s :: %(process)d - %(threadName)s"
+      },
+
+      "json": {
+        "format": "%(asctime)s :: %(levelname)s :: %(name)s :: %(filename)s :: %(funcName)s() :: %(lineno)d :: %(message)s :: %(process)d - %(threadName)s",
+        "class": "json_logging.JSONLogFormatter"
+      }
+    },
+
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "level": "INFO",
+            "formatter": "simple",
+            "stream": "ext://sys.stdout"
+        },
+
+        "file": {
+            "class": "logging.FileHandler",
+            "level": "DEBUG",
+            "formatter": "detailed",
+            "filename": "../logs/TM1_bedrock_py.log",
+            "mode": "a",
+            "encoding": "utf8"
+        },
+
+        "json_file": {
+            "class": "logging.FileHandler",
+            "level": "DEBUG",
+            "formatter": "json",
+            "filename": "../logs/TM1_bedrock_py.json.log",
+            "mode": "a",
+            "encoding": "utf8"
+        }
+    },
+
+    "loggers": {
+        "TM1_bedrock_py": {
+            "level": "DEBUG",
+            "handlers": ["console", "file", "json_file"],
+            "propagate": false
+        }
+    },
+
+    "root": {
+        "level": "WARNING",
+        "handlers": ["console"]
+    }
+}

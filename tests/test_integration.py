@@ -8,7 +8,7 @@ import parametrize_from_file
 
 from TM1py import TM1Service
 
-from TM1_bedrock_py import bedrock, extractor, transformer, utility
+from TM1_bedrock_py import bedrock, extractor, transformer, logger
 
 
 EXCEPTION_MAP = {
@@ -26,9 +26,16 @@ def tm1_connection():
     config = configparser.ConfigParser()
     config.read(Path(__file__).parent.joinpath('config.ini'))
 
-    tm1 = TM1Service(**config['tm1srv'])
-    yield tm1
-    tm1.logout()
+    try:
+        tm1 = TM1Service(**config['tm1srv'])
+        logger.debug("Successfully connected to TM1.")
+        yield tm1
+
+        tm1.logout()
+        logger.debug("Connection closed.")
+
+    except TM1pyRestException:
+        logger.error("Unable to connect to TM1: ", exc_info=True)
 
 
 @parametrize_from_file
