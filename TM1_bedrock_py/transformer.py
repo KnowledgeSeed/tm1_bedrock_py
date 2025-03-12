@@ -1,6 +1,7 @@
 from typing import Callable, List, Dict, Optional, Any
 
 import pandas as pd
+import numpy as np
 from pandas import DataFrame
 
 from TM1_bedrock_py import utility
@@ -65,9 +66,19 @@ def dataframe_reorder_dimensions(
         dataframe[col] = temp_reordered[col]
 
 
-# ------------------------------------------------------------------------------------------------------------
-# Main: dataframe transform utility functions
-# ------------------------------------------------------------------------------------------------------------
+def dataframe_force_float64_on_numeric_values(dataframe: DataFrame) -> None:
+    """
+    Format and then enforce numpy float values in pandas dataframes, if the value is numeric, otherwise keep strings.
+
+    Parameter:
+    --------
+    dataframe: DataFrame - the input dataframe to mutate
+
+    Returns:
+    --------
+    None, mutates the dataframe in place
+    """
+    dataframe["Value"] = dataframe["Value"].apply(utility.force_float64_on_numeric_values)
 
 
 def dataframe_filter_inplace(

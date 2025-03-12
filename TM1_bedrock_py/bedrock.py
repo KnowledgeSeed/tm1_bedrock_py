@@ -205,6 +205,7 @@ def data_copy_intercube(
     target_cube_name = target_metadata.get_cube_name()
 
     transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
+    transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
 
     shared_mapping_df = None
     if shared_mapping:
@@ -428,6 +429,7 @@ def data_copy(
     cube_dims = data_metadata.get_cube_dims()
 
     transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
+    transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
 
     shared_mapping_df = None
     if shared_mapping:

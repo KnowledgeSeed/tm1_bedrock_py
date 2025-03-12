@@ -57,6 +57,22 @@ def test_mdx_filter_to_dictionary(mdx_query):
     else:
         assert dimensions == {}
 
+
+@parametrize_from_file
+def test_utility_float_casting_values(input_value, expected_value):
+    output_value = utility.force_float64_on_numeric_values(input_value)
+    print(f"input value: {input_value}, output_value: {output_value}")
+    assert output_value == expected_value
+
+
+@parametrize_from_file
+def test_utility_float_casting_types(input_value, expected_type):
+    output_value = utility.force_float64_on_numeric_values(input_value)
+    output_type = str(type(output_value))
+    print(output_type)
+    assert output_type == expected_type
+
+
 # ------------------------------------------------------------------------------------------------------------
 # Utility: Cube metadata collection using input MDXs and/or other cubes
 # ------------------------------------------------------------------------------------------------------------
@@ -310,6 +326,28 @@ def test_dataframe_reorder_dimensions(dataframe, cube_cols, expected_dataframe):
     df = pd.DataFrame(dataframe)
     expected_df = pd.DataFrame(expected_dataframe)
     transformer.dataframe_reorder_dimensions(dataframe=df, cube_dimensions=cube_cols)
+
+    pd.testing.assert_frame_equal(df, expected_df)
+
+
+@parametrize_from_file
+def test_dataframe_force_float64_on_numerical_values(dataframe, expected_dataframe):
+    df = pd.DataFrame(dataframe)
+    expected_df = pd.DataFrame(expected_dataframe)
+    transformer.dataframe_force_float64_on_numeric_values(df)
+
+    pd.testing.assert_frame_equal(df, expected_df)
+
+
+@parametrize_from_file
+def test_dataframe_value_scale(dataframe, expected_dataframe):
+    def add_one(x): return x + 1
+    def multiply_by_two(x): return x * 2
+
+    df = pd.DataFrame(dataframe)
+    expected_df = pd.DataFrame(expected_dataframe)
+    transformer.dataframe_value_scale(df, add_one)
+    transformer.dataframe_value_scale(df, multiply_by_two)
 
     pd.testing.assert_frame_equal(df, expected_df)
 

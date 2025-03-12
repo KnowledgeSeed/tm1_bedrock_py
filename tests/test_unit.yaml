@@ -25,6 +25,41 @@ test_mdx_filter_to_dictionary:
     mdx_query:
       ""
 
+test_utility_float_casting_values:
+  -
+    input_value: 12.48
+    expected_value: 12.48
+  -
+    input_value: "12.48"
+    expected_value: 12.48
+  -
+    input_value: "12,48"
+    expected_value: 12.48
+  -
+    input_value: 12
+    expected_value: 12.0
+  -
+    input_value: "test string 123"
+    expected_value: "test string 123"
+
+test_utility_float_casting_types:
+  -
+    input_value: 12.48
+    expected_type: "<class 'numpy.float64'>"
+  -
+    input_value: "12.48"
+    expected_type: "<class 'numpy.float64'>"
+  -
+    input_value: "12,48"
+    expected_type: "<class 'numpy.float64'>"
+  -
+    input_value: 12
+    expected_type: "<class 'numpy.float64'>"
+  -
+    input_value: "test string 123"
+    expected_type: "<class 'str'>"
+
+
 # Utility: Cube metadata collection using input MDXs and/or other cubes
 test_tm1_cube_object_metadata_collect_based_on_cube_name_success:
   -
@@ -436,6 +471,78 @@ test_dataframe_reorder_dimensions:
       "Value": [ 120, 120, 120, 120 ]
     }
 
+test_dataframe_force_float64_on_numerical_values:
+  -
+    dataframe: {
+      "Period": [ "202202", "202202", "202202", "202202" ],
+      "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
+      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
+      "Measure": [ "Value", "Value", "Value", "Value" ],
+      "Value": [ 120, 120, 120, 120 ]
+    }
+    expected_dataframe: {
+      "Period": [ "202202", "202202", "202202", "202202" ],
+      "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
+      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
+      "Measure": [ "Value", "Value", "Value", "Value" ],
+      "Value": [ 120.0, 120.0, 120.0, 120.0 ]
+    }
+  -
+    dataframe: {
+      "Period": [ "202202", "202202", "202202", "202202" ],
+      "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
+      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
+      "Measure": [ "Value", "Value", "Value", "Value" ],
+      "Value": [ "120,0", "120,0", "120,0", "120,0" ]
+    }
+    expected_dataframe: {
+      "Period": [ "202202", "202202", "202202", "202202" ],
+      "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
+      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
+      "Measure": [ "Value", "Value", "Value", "Value" ],
+      "Value": [ 120.0, 120.0, 120.0, 120.0 ]
+    }
+  -
+    dataframe: {
+      "Period": [ "202202", "202202", "202202", "202202" ],
+      "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
+      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
+      "Measure": [ "Value", "Value", "Value", "Value" ],
+      "Value": [ 120.0, 120.0, 120.0, 120.0 ]
+    }
+    expected_dataframe: {
+      "Period": [ "202202", "202202", "202202", "202202" ],
+      "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
+      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
+      "Measure": [ "Value", "Value", "Value", "Value" ],
+      "Value": [ 120.0, 120.0, 120.0, 120.0 ]
+    }
+  -
+    dataframe: {
+      "Period": [ "202202", "202202", "202202", "202202" ],
+      "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
+      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
+      "Measure": [ "Value", "Value", "Value", "Value" ],
+      "Value": [ "cost", "cost", "cost", "cost" ]
+    }
+    expected_dataframe: {
+      "Period": [ "202202", "202202", "202202", "202202" ],
+      "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
+      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
+      "Measure": [ "Value", "Value", "Value", "Value" ],
+      "Value": [ "cost", "cost", "cost", "cost" ]
+    }
+
+test_dataframe_value_scale:
+  -
+    dataframe: {
+      "Period": [ "202202", "202202", "202202", "202202" ],
+      "Value": [ 120, 120, 120, 120 ]
+    }
+    expected_dataframe: {
+      "Period": [ "202202", "202202", "202202", "202202" ],
+      "Value": [ 242, 242, 242, 242 ]
+    }
 
 # Main: tests for dataframe remapping and copy functions
 test_dataframe_find_and_replace_success:

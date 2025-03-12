@@ -3,6 +3,7 @@ from typing import Callable, List, Dict, Optional, Any, Union, Iterator
 
 from mdxpy import MdxBuilder, MdxHierarchySet, Member
 from pandas import DataFrame
+from numpy import float64
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -76,6 +77,29 @@ def __transform_set_mdx_list_to_tm1py_clear_kwargs(mdx_expressions: List[str]) -
         for mdx in mdx_expressions
         if re.search(regex, mdx)
     }
+
+
+def force_float64_on_numeric_values(input_value: Any) -> float64 | str:
+    """
+    Convert string '12,34' → '12.34' and then parse as np.float64 if it is a numeric (optionally with decimal).
+    Otherwise, return the original value unchanged.
+
+    Args:
+        input_value: any type of value to be converted if numerical
+
+    Returns:
+        the converted and cast numerical value or the string unchanged
+    """
+
+    if not isinstance(input_value, str):
+        return float64(input_value)
+    pattern = re.compile(r"^-?\d+(?:[.,]\d+)?$")
+    if pattern.match(input_value):
+        input_value = input_value.replace(',', '.')
+    try:
+        return float64(input_value)
+    except ValueError:
+        return input_value
 
 
 # ------------------------------------------------------------------------------------------------------------
