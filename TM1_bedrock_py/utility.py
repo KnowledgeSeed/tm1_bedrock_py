@@ -7,7 +7,7 @@ from typing import Callable, List, Dict, Optional, Any, Union, Iterator
 from mdxpy import MdxBuilder, MdxHierarchySet, Member
 from pandas import DataFrame
 from numpy import float64
-from TM1_bedrock_py import logger
+from TM1_bedrock_py import execution_time_logger as logger
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -17,14 +17,16 @@ from TM1_bedrock_py import logger
 
 def measure_time(func, *args, **kwargs):
     """Measures and logs the runtime of any function."""
-    start_time = time.perf_counter()  # High-precision start time
-    result = func(*args, **kwargs)  # Execute the function
-    end_time = time.perf_counter()  # End time
-
+    start_time = time.perf_counter()
+    result = func(*args, **kwargs)
+    end_time = time.perf_counter()
     execution_time = end_time - start_time
-    logger.debug(f"Function {func.__name__}() executed in {execution_time:.2f} seconds")
+    logger.debug(f"Executed in {execution_time:.2f} seconds", extra={
+        "func": func.__name__,
+        "fileName": os.path.basename(func.__code__.co_filename)
+    })
 
-    return result  # Return the original function output
+    return result
 
 
 def measure_time_decorator(func):

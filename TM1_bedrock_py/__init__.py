@@ -29,5 +29,6 @@ else:
 
 # Get the logger for the package
 logger = logging.getLogger("TM1_bedrock_py")
+execution_time_logger = logging.getLogger("measure_execution_time")
 
-__all__ = ["logger"]
+__all__ = ["logger", "execution_time_logger"]

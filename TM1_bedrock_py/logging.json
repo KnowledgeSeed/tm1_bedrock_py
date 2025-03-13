@@ -10,8 +10,17 @@
         "format": "%(asctime)s :: %(levelname)s :: %(name)s :: %(filename)s :: %(funcName)s() :: %(lineno)d :: %(message)s :: %(process)d - %(threadName)s"
       },
 
+      "execution_time": {
+        "format": "%(asctime)s :: %(levelname)s :: %(name)s :: %(fileName)s :: %(func)s() :: %(lineno)d :: %(message)s :: %(process)d - %(threadName)s"
+      },
+
       "json": {
         "format": "%(asctime)s :: %(levelname)s :: %(name)s :: %(filename)s :: %(funcName)s() :: %(lineno)d :: %(message)s :: %(process)d - %(threadName)s",
+        "class": "json_logging.JSONLogFormatter"
+      },
+
+      "json_execution_time": {
+        "format": "%(asctime)s :: %(levelname)s :: %(name)s :: %(fileName)s :: %(func)s() :: %(lineno)d :: %(message)s :: %(process)d - %(threadName)s",
         "class": "json_logging.JSONLogFormatter"
       }
     },
@@ -33,10 +42,28 @@
             "encoding": "utf8"
         },
 
+        "file_execution_time": {
+            "class": "logging.FileHandler",
+            "level": "DEBUG",
+            "formatter": "execution_time",
+            "filename": "../logs/TM1_bedrock_py.log",
+            "mode": "a",
+            "encoding": "utf8"
+        },
+
         "json_file": {
             "class": "logging.FileHandler",
             "level": "DEBUG",
             "formatter": "json",
+            "filename": "../logs/TM1_bedrock_py.json.log",
+            "mode": "a",
+            "encoding": "utf8"
+        },
+
+        "json_file_execution_time": {
+            "class": "logging.FileHandler",
+            "level": "DEBUG",
+            "formatter": "json_execution_time",
             "filename": "../logs/TM1_bedrock_py.json.log",
             "mode": "a",
             "encoding": "utf8"
@@ -47,6 +74,11 @@
         "TM1_bedrock_py": {
             "level": "DEBUG",
             "handlers": ["console", "file", "json_file"],
+            "propagate": false
+        },
+        "measure_execution_time": {
+            "level": "DEBUG",
+            "handlers": ["file_execution_time", "json_file_execution_time"],
             "propagate": false
         }
     },
