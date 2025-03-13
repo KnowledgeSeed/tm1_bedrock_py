@@ -2,6 +2,7 @@
 This file is a collection of upgraded TM1 bedrock functionality, ported to python / pandas with the help of TM1py.
 """
 import time
+import functools
 from typing import Callable, List, Dict, Optional, Any
 
 from pandas import DataFrame
@@ -274,6 +275,7 @@ def data_copy_intercube(
     logger.info(f"Execution time of data_copy_intercube: {execution_time:.4f} seconds")
 
 
+@utility.measure_time_decorator
 def data_copy(
         tm1_service: Optional[Any],
         data_mdx: Optional[str] = None,
@@ -403,8 +405,6 @@ def data_copy(
     Using them will raise an error at writing
     """
 
-    start_time = time.time()
-
     dataframe = extractor.tm1_mdx_to_dataframe(
         tm1_service=tm1_service,
         data_mdx=data_mdx,
@@ -478,7 +478,3 @@ def data_copy(
     )
 
     logger.info("Data copy execution finished.")
-
-    end_time = time.time()
-    execution_time = end_time - start_time
-    logger.info(f"Execution time of data_copy: {execution_time:.4f} seconds")

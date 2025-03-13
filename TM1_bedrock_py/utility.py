@@ -1,14 +1,39 @@
+import os
 import re
+import functools
+import time
 from typing import Callable, List, Dict, Optional, Any, Union, Iterator
 
 from mdxpy import MdxBuilder, MdxHierarchySet, Member
 from pandas import DataFrame
 from numpy import float64
+from TM1_bedrock_py import logger
 
 
 # ------------------------------------------------------------------------------------------------------------
 # Utility: MDX query parsing functions
 # ------------------------------------------------------------------------------------------------------------
+
+
+def measure_time(func, *args, **kwargs):
+    """Measures and logs the runtime of any function."""
+    start_time = time.perf_counter()  # High-precision start time
+    result = func(*args, **kwargs)  # Execute the function
+    end_time = time.perf_counter()  # End time
+
+    execution_time = end_time - start_time
+    logger.debug(f"Function {func.__name__}() executed in {execution_time:.2f} seconds")
+
+    return result  # Return the original function output
+
+
+def measure_time_decorator(func):
+    """Decorator to measure function execution time."""
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        return measure_time(func, *args, **kwargs)
+    return wrapper
+
 
 
 def _get_cube_name_from_mdx(mdx_query: str) -> str:
@@ -251,6 +276,7 @@ class TM1CubeObjectMetadata:
 
         return metadata
 
+    #@measure_time_decorator
     @classmethod
     def collect(
             cls,

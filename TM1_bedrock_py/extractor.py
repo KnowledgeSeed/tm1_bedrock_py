@@ -11,6 +11,7 @@ from TM1_bedrock_py import utility, transformer
 # ------------------------------------------------------------------------------------------------------------
 
 
+@utility.measure_time_decorator
 def tm1_mdx_to_dataframe(
         mdx_function: Optional[Callable[..., DataFrame]] = None,
         **kwargs: Any
@@ -133,6 +134,7 @@ MAPPING_HANDLERS = {
 }
 
 
+@utility.measure_time_decorator
 def generate_dataframe_for_mapping_info(
         mapping_info: Dict[str, Any],
         **kwargs
@@ -151,6 +153,7 @@ def generate_dataframe_for_mapping_info(
     )
 
 
+@utility.measure_time_decorator
 def generate_step_specific_mapping_dataframes(
     mapping_steps: List[Dict[str, Any]],
     **kwargs
