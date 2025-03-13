@@ -65,7 +65,8 @@ def __tm1_mdx_to_dataframe_default(
             skip_consolidated_cells=skip_consolidated_cells,
             skip_rule_derived_cells=skip_rule_derived_cells,
             use_iterative_json=True,
-            use_blob=True
+            use_blob=True,
+            decimal=utility.get_local_decimal_separator()
         )
     else:
         return tm1_service.cells.execute_mdx_dataframe(
@@ -74,7 +75,8 @@ def __tm1_mdx_to_dataframe_default(
             skip_consolidated_cells=skip_consolidated_cells,
             skip_rule_derived_cells=skip_rule_derived_cells,
             use_iterative_json=True,
-            use_blob=True
+            use_blob=True,
+            decimal=utility.get_local_decimal_separator()
         )
 
 

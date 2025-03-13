@@ -73,6 +73,7 @@ def __dataframe_to_cube_default(
         cube_name: str,
         cube_dims: List[str],
         use_blob: bool,
+        slice_size_of_dataframe: int,
         async_write: bool = False,
         use_ti: bool = False,
         increment: bool = False,
@@ -106,7 +107,9 @@ def __dataframe_to_cube_default(
             reactivate_transaction_log=True,
             skip_non_updateable=True,
             increment=increment,
-            sum_numeric_duplicates=sum_numeric_duplicates
+            sum_numeric_duplicates=sum_numeric_duplicates,
+            slice_size_of_dataframe=slice_size_of_dataframe,
+            **kwargs
         )
     else:
         tm1_service.cells.write_dataframe(
@@ -120,5 +123,6 @@ def __dataframe_to_cube_default(
             use_blob=use_blob,
             remove_blob=True,
             increment=increment,
-            sum_numeric_duplicates=sum_numeric_duplicates
+            sum_numeric_duplicates=sum_numeric_duplicates,
+            **kwargs
         )

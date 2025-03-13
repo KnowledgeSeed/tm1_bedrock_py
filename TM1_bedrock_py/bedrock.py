@@ -284,6 +284,7 @@ def data_copy(
         clear_set_mdx_list: Optional[List[str]] = None,
         clear_target: Optional[bool] = False,
         async_write: bool = False,
+        slice_size_of_dataframe: int = 250000,
         use_ti: bool = False,
         use_blob: bool = False,
         increment: bool = False,
@@ -469,6 +470,7 @@ def data_copy(
         increment=increment,
         use_blob=use_blob,
         sum_numeric_duplicates=sum_numeric_duplicates,
+        slice_size_of_dataframe=slice_size_of_dataframe
     )
 
     basic_logger.info("Execution ended.")

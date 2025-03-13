@@ -1,6 +1,6 @@
 from TM1py import TM1Service
 
-from TM1_bedrock_py import extractor
+from TM1_bedrock_py import utility
 
 
 def manage():
@@ -61,15 +61,7 @@ def manage():
     tm1 = TM1Service(**tm1_params)
 
     try:
-        dataframe = extractor.tm1_mdx_to_dataframe(
-            tm1_service=tm1,
-            data_mdx=data_mdx
-
-        )
-
-        print(dataframe)
-        print(dataframe.iloc[0, 3])
-        print(type(dataframe.iloc[0, 3]))
+        print(utility.get_local_decimal_separator())
 
     finally:
         tm1.logout()

@@ -2,6 +2,7 @@ import os
 import re
 import functools
 import time
+import locale
 from typing import Callable, List, Dict, Optional, Any, Union, Iterator
 
 from mdxpy import MdxBuilder, MdxHierarchySet, Member
@@ -548,7 +549,7 @@ def build_mdx_from_cube_filter(
 
 
 # ------------------------------------------------------------------------------------------------------------
-# Utility: Value conversion functions
+# Utility: Additional helpers
 # ------------------------------------------------------------------------------------------------------------
 
 
@@ -573,3 +574,8 @@ def force_float64_on_numeric_values(input_value: Any) -> float64 | str:
         return float64(input_value)
     except ValueError:
         return input_value
+
+
+def get_local_decimal_separator() -> str:
+    locale.getlocale()
+    return locale.localeconv()['decimal_point']
