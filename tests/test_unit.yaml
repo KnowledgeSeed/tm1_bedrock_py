@@ -539,6 +539,7 @@ test_dataframe_value_scale:
       "Period": [ "202202", "202202", "202202", "202202" ],
       "Value": [ 120, 120, 120, 120 ]
     }
+    # after add one, multiply by two
     expected_dataframe: {
       "Period": [ "202202", "202202", "202202", "202202" ],
       "Value": [ 242, 242, 242, 242 ]
