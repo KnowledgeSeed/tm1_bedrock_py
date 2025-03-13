@@ -1,4 +1,5 @@
 import configparser
+import logging
 from pathlib import Path
 
 from TM1py.Exceptions import TM1pyRestException
@@ -8,7 +9,7 @@ import parametrize_from_file
 
 from TM1py import TM1Service
 
-from TM1_bedrock_py import bedrock, extractor, transformer, logger
+from TM1_bedrock_py import bedrock, extractor, transformer, basic_logger
 
 
 EXCEPTION_MAP = {
@@ -19,6 +20,7 @@ EXCEPTION_MAP = {
     "KeyError": KeyError
 }
 
+#basic_logger.setLevel(logging.INFO)
 
 @pytest.fixture(scope="session")
 def tm1_connection():
@@ -28,14 +30,14 @@ def tm1_connection():
 
     try:
         tm1 = TM1Service(**config['tm1srv'])
-        logger.debug("Successfully connected to TM1.")
+        basic_logger.debug("Successfully connected to TM1.")
         yield tm1
 
         tm1.logout()
-        logger.debug("Connection closed.")
+        basic_logger.debug("Connection closed.")
 
     except TM1pyRestException:
-        logger.error("Unable to connect to TM1: ", exc_info=True)
+        basic_logger.error("Unable to connect to TM1: ", exc_info=True)
 
 
 @parametrize_from_file
@@ -66,6 +68,8 @@ def test_data_copy_for_multiple_steps(
         clear_target=True,
         clear_set_mdx_list=["{[Versions].[Versions].[DataCopy Integration Test]}"],
         skip_zeros=True,
-        async_write=True
+        async_write=True,
+        logging_level="DEBUG",
+        _execution_id=1
     )
 

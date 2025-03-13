@@ -25,10 +25,10 @@ if os.path.exists(log_config_path):
 
     logging.config.dictConfig(log_config)
 else:
-    logging.basicConfig(level=logging.INFO)  # Fallback if JSON config is missing
+    logging.basicConfig(level=logging.ERROR)  # Fallback if JSON config is missing
 
 # Get the logger for the package
-logger = logging.getLogger("TM1_bedrock_py")
-execution_time_logger = logging.getLogger("measure_execution_time")
+basic_logger = logging.getLogger("TM1_bedrock_py")
+exec_metrics_logger = logging.getLogger("exec_metrics")
 
-__all__ = ["logger", "execution_time_logger"]
+__all__ = ["basic_logger", "exec_metrics_logger"]

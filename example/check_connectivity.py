@@ -4,7 +4,7 @@ from pathlib import Path
 
 from TM1py import TM1Service
 from TM1py.Exceptions import TM1pyRestException
-from TM1_bedrock_py import logger
+from TM1_bedrock_py import basic_logger
 
 if __name__ == '__main__':
 
@@ -44,9 +44,9 @@ if __name__ == '__main__':
 
     try:
         server_name = tm1.server.get_server_name()
-        logger.info("Connection to TM1 established! Your server name is: {}".format(server_name))
+        basic_logger.info("Connection to TM1 established! Your server name is: {}".format(server_name))
     except Exception as e:
-        logger.error("\nERROR:")
-        logger.error("\t" + str(e))
+        basic_logger.error("\nERROR:")
+        basic_logger.error("\t" + str(e))
     finally:
         tm1.logout()

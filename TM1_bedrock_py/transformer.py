@@ -33,7 +33,7 @@ def normalize_dataframe(
     dataframe_reorder_dimensions(dataframe=dataframe, cube_dimensions=metadata.get_cube_dims())
 
 
-@utility.measure_time_decorator
+@utility.log_exec_metrics
 def dataframe_reorder_dimensions(
         dataframe: DataFrame,
         cube_dimensions: List[str]
@@ -67,7 +67,7 @@ def dataframe_reorder_dimensions(
         dataframe[col] = temp_reordered[col]
 
 
-@utility.measure_time_decorator
+@utility.log_exec_metrics
 def dataframe_force_float64_on_numeric_values(dataframe: DataFrame) -> None:
     """
     Format and then enforce numpy float values in pandas dataframes, if the value is numeric, otherwise keep strings.
@@ -165,7 +165,7 @@ def dataframe_drop_column(
         dataframe.reset_index(drop=True, inplace=True)
 
 
-@utility.measure_time_decorator
+@utility.log_exec_metrics
 def dataframe_add_column_assign_value(
         dataframe: DataFrame,
         column_value: dict
@@ -241,7 +241,7 @@ def dataframe_relabel(
     dataframe.rename(columns=columns, inplace=True)
 
 
-@utility.measure_time_decorator
+@utility.log_exec_metrics
 def dataframe_value_scale(
         dataframe: DataFrame,
         value_function: callable
@@ -494,7 +494,7 @@ def __apply_map_and_join(
         dataframe_drop_column(dataframe=data_df, column_list=mapping_step["dropped_columns"])
 
 
-@utility.measure_time_decorator
+@utility.log_exec_metrics
 def dataframe_execute_mappings(
         data_df: DataFrame,
         mapping_steps: List[Dict],

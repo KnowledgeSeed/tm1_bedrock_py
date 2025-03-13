@@ -7,20 +7,20 @@
       },
 
       "detailed": {
-        "format": "%(asctime)s :: %(levelname)s :: %(name)s :: %(filename)s :: %(funcName)s() :: %(lineno)d :: %(message)s :: %(process)d - %(threadName)s"
+        "format": "%(asctime)s :: %(levelname)s :: %(name)s :: %(filename)s :: %(funcName)s() :: %(message)s :: %(process)d - %(threadName)s"
       },
 
-      "execution_time": {
-        "format": "%(asctime)s :: %(levelname)s :: %(name)s :: %(fileName)s :: %(func)s() :: %(lineno)d :: %(message)s :: %(process)d - %(threadName)s"
+      "exec_metrics": {
+        "format": "%(asctime)s :: %(levelname)s :: %(name)s :: %(fileName)s :: %(func)s() :: %(exec_id)s :: %(message)s :: %(process)d - %(threadName)s"
       },
 
       "json": {
-        "format": "%(asctime)s :: %(levelname)s :: %(name)s :: %(filename)s :: %(funcName)s() :: %(lineno)d :: %(message)s :: %(process)d - %(threadName)s",
+        "format": "%(asctime)s :: %(levelname)s :: %(name)s :: %(filename)s :: %(funcName)s() :: %(message)s :: %(process)d - %(threadName)s",
         "class": "json_logging.JSONLogFormatter"
       },
 
-      "json_execution_time": {
-        "format": "%(asctime)s :: %(levelname)s :: %(name)s :: %(fileName)s :: %(func)s() :: %(lineno)d :: %(message)s :: %(process)d - %(threadName)s",
+      "json_exec_metrics": {
+        "format": "%(asctime)s :: %(levelname)s :: %(name)s :: %(fileName)s :: %(func)s() :: %(exec_id)s :: %(message)s :: %(process)d - %(threadName)s",
         "class": "json_logging.JSONLogFormatter"
       }
     },
@@ -42,10 +42,10 @@
             "encoding": "utf8"
         },
 
-        "file_execution_time": {
+        "file_exec_metrics": {
             "class": "logging.FileHandler",
             "level": "DEBUG",
-            "formatter": "execution_time",
+            "formatter": "exec_metrics",
             "filename": "../logs/TM1_bedrock_py.log",
             "mode": "a",
             "encoding": "utf8"
@@ -60,10 +60,10 @@
             "encoding": "utf8"
         },
 
-        "json_file_execution_time": {
+        "json_file_exec_metrics": {
             "class": "logging.FileHandler",
             "level": "DEBUG",
-            "formatter": "json_execution_time",
+            "formatter": "json_exec_metrics",
             "filename": "../logs/TM1_bedrock_py.json.log",
             "mode": "a",
             "encoding": "utf8"
@@ -72,13 +72,13 @@
 
     "loggers": {
         "TM1_bedrock_py": {
-            "level": "DEBUG",
+            "level": "WARNING",
             "handlers": ["console", "file", "json_file"],
             "propagate": false
         },
-        "measure_execution_time": {
-            "level": "DEBUG",
-            "handlers": ["file_execution_time", "json_file_execution_time"],
+        "exec_metrics": {
+            "level": "WARNING",
+            "handlers": ["file_exec_metrics", "json_file_exec_metrics"],
             "propagate": false
         }
     },

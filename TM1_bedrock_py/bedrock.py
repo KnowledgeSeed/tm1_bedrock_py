@@ -1,16 +1,14 @@
 """
 This file is a collection of upgraded TM1 bedrock functionality, ported to python / pandas with the help of TM1py.
 """
-import time
-import functools
 from typing import Callable, List, Dict, Optional, Any
 
 from pandas import DataFrame
 
-from TM1_bedrock_py import utility, transformer, loader, extractor
-from TM1_bedrock_py import logger
+from TM1_bedrock_py import utility, transformer, loader, extractor, basic_logger
 
 
+@utility.log_exec_metrics
 def data_copy_intercube(
         tm1_service: Optional[Any],
         data_mdx: Optional[str] = None,
@@ -37,6 +35,7 @@ def data_copy_intercube(
         use_blob: bool = False,
         increment: bool = False,
         sum_numeric_duplicates: bool = True,
+        logging_level: str = "ERROR",
         _execution_id: int = 0,
         **kwargs
 ) -> None:
@@ -173,7 +172,8 @@ def data_copy_intercube(
         ]
     """
 
-    start_time = time.time()
+    utility.set_logging_level(logging_level=logging_level)
+    basic_logger.info("Execution started.")
 
     dataframe = extractor.tm1_mdx_to_dataframe(
         tm1_service=tm1_service,
@@ -186,10 +186,7 @@ def data_copy_intercube(
     )
 
     if len(dataframe) == 0:
-        logger.info("Input source dataframe has no rows, data_copy_intercube execution stopping.")
         return
-
-    logger.info("Data copy intercube execution starting.")
 
     data_metadata = utility.TM1CubeObjectMetadata.collect(
         tm1_service=tm1_service,
@@ -268,14 +265,10 @@ def data_copy_intercube(
             **kwargs
         )
 
-    logger.info("Data copy intercube execution finished.")
-
-    end_time = time.time()
-    execution_time = end_time - start_time
-    logger.info(f"Execution time of data_copy_intercube: {execution_time:.4f} seconds")
+    basic_logger.info("Execution ended.")
 
 
-@utility.measure_time_decorator
+@utility.log_exec_metrics
 def data_copy(
         tm1_service: Optional[Any],
         data_mdx: Optional[str] = None,
@@ -295,6 +288,7 @@ def data_copy(
         use_blob: bool = False,
         increment: bool = False,
         sum_numeric_duplicates: bool = True,
+        logging_level: str = "ERROR",
         _execution_id: int = 0,
         **kwargs
 ) -> None:
@@ -405,6 +399,9 @@ def data_copy(
     Using them will raise an error at writing
     """
 
+    utility.set_logging_level(logging_level=logging_level)
+    basic_logger.info("Execution started.")
+
     dataframe = extractor.tm1_mdx_to_dataframe(
         tm1_service=tm1_service,
         data_mdx=data_mdx,
@@ -416,10 +413,7 @@ def data_copy(
     )
 
     if len(dataframe) == 0:
-        logger.info("Input source dataframe has no rows, data_copy execution stopping.")
         return
-
-    logger.info("Data copy execution starting.")
 
     data_metadata = utility.TM1CubeObjectMetadata.collect(
         tm1_service=tm1_service,
@@ -477,4 +471,4 @@ def data_copy(
         sum_numeric_duplicates=sum_numeric_duplicates,
     )
 
-    logger.info("Data copy execution finished.")
+    basic_logger.info("Execution ended.")
