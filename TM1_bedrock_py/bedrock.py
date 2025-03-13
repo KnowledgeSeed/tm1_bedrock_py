@@ -1,14 +1,14 @@
 """
 This file is a collection of upgraded TM1 bedrock functionality, ported to python / pandas with the help of TM1py.
 """
-
 from typing import Callable, List, Dict, Optional, Any
 
 from pandas import DataFrame
 
-from TM1_bedrock_py import utility, transformer, loader, extractor
+from TM1_bedrock_py import utility, transformer, loader, extractor, basic_logger
 
 
+@utility.log_exec_metrics
 def data_copy_intercube(
         tm1_service: Optional[Any],
         data_mdx: Optional[str] = None,
@@ -35,6 +35,8 @@ def data_copy_intercube(
         use_blob: bool = False,
         increment: bool = False,
         sum_numeric_duplicates: bool = True,
+        logging_level: str = "ERROR",
+        _execution_id: int = 0,
         **kwargs
 ) -> None:
     """
@@ -170,6 +172,22 @@ def data_copy_intercube(
         ]
     """
 
+    utility.set_logging_level(logging_level=logging_level)
+    basic_logger.info("Execution started.")
+
+    dataframe = extractor.tm1_mdx_to_dataframe(
+        tm1_service=tm1_service,
+        data_mdx=data_mdx,
+        data_mdx_list=data_mdx_list,
+        skip_zeros=skip_zeros,
+        skip_consolidated_cells=skip_consolidated_cells,
+        skip_rule_derived_cells=skip_rule_derived_cells,
+        mdx_function=mdx_function,
+    )
+
+    if len(dataframe) == 0:
+        return
+
     data_metadata = utility.TM1CubeObjectMetadata.collect(
         tm1_service=tm1_service,
         mdx=data_mdx,
@@ -185,17 +203,8 @@ def data_copy_intercube(
     )
     target_cube_name = target_metadata.get_cube_name()
 
-    dataframe = extractor.tm1_mdx_to_dataframe(
-        tm1_service=tm1_service,
-        data_mdx=data_mdx,
-        data_mdx_list=data_mdx_list,
-        skip_zeros=skip_zeros,
-        skip_consolidated_cells=skip_consolidated_cells,
-        skip_rule_derived_cells=skip_rule_derived_cells,
-        mdx_function=mdx_function,
-    )
-
     transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
+    transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
 
     shared_mapping_df = None
     if shared_mapping:
@@ -256,7 +265,10 @@ def data_copy_intercube(
             **kwargs
         )
 
+    basic_logger.info("Execution ended.")
 
+
+@utility.log_exec_metrics
 def data_copy(
         tm1_service: Optional[Any],
         data_mdx: Optional[str] = None,
@@ -276,6 +288,8 @@ def data_copy(
         use_blob: bool = False,
         increment: bool = False,
         sum_numeric_duplicates: bool = True,
+        logging_level: str = "ERROR",
+        _execution_id: int = 0,
         **kwargs
 ) -> None:
     """
@@ -385,14 +399,8 @@ def data_copy(
     Using them will raise an error at writing
     """
 
-    data_metadata = utility.TM1CubeObjectMetadata.collect(
-        tm1_service=tm1_service,
-        mdx=data_mdx,
-        metadata_function=data_metadata_function,
-        **kwargs
-    )
-    cube_name = data_metadata.get_cube_name()
-    cube_dims = data_metadata.get_cube_dims()
+    utility.set_logging_level(logging_level=logging_level)
+    basic_logger.info("Execution started.")
 
     dataframe = extractor.tm1_mdx_to_dataframe(
         tm1_service=tm1_service,
@@ -404,7 +412,20 @@ def data_copy(
         mdx_function=mdx_function,
     )
 
+    if len(dataframe) == 0:
+        return
+
+    data_metadata = utility.TM1CubeObjectMetadata.collect(
+        tm1_service=tm1_service,
+        mdx=data_mdx,
+        metadata_function=data_metadata_function,
+        **kwargs
+    )
+    cube_name = data_metadata.get_cube_name()
+    cube_dims = data_metadata.get_cube_dims()
+
     transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
+    transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
 
     shared_mapping_df = None
     if shared_mapping:
@@ -449,3 +470,5 @@ def data_copy(
         use_blob=use_blob,
         sum_numeric_duplicates=sum_numeric_duplicates,
     )
+
+    basic_logger.info("Execution ended.")

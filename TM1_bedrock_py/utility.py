@@ -1,8 +1,51 @@
+import os
 import re
+import functools
+import time
 from typing import Callable, List, Dict, Optional, Any, Union, Iterator
 
 from mdxpy import MdxBuilder, MdxHierarchySet, Member
 from pandas import DataFrame
+from numpy import float64
+from TM1_bedrock_py import exec_metrics_logger, basic_logger
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Utility: Logging helper functions
+# ------------------------------------------------------------------------------------------------------------
+
+
+def execution_metrics_logger(func, *args, **kwargs):
+    """Measures and logs the runtime of any function."""
+    start_time = time.perf_counter()
+    result = func(*args, **kwargs)
+    exec_id = kwargs.get("_execution_id")
+
+    if exec_id is None:
+        exec_id = 0
+
+    end_time = time.perf_counter()
+    execution_time = end_time - start_time
+    exec_metrics_logger.debug(f"exec_time {execution_time:.2f} s", extra={
+        "func": func.__name__,
+        "fileName": os.path.basename(func.__code__.co_filename),
+        "exec_id": f"exec_id {exec_id}"
+    })
+
+    return result
+
+
+def log_exec_metrics(func):
+    """Decorator to measure function execution time."""
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        return execution_metrics_logger(func, *args, **kwargs)
+    return wrapper
+
+
+def set_logging_level(logging_level: str):
+    basic_logger.setLevel(logging_level)
+    exec_metrics_logger.setLevel(logging_level)
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -227,6 +270,7 @@ class TM1CubeObjectMetadata:
 
         return metadata
 
+    #@measure_time_decorator
     @classmethod
     def collect(
             cls,
@@ -501,3 +545,31 @@ def build_mdx_from_cube_filter(
             mdx_object.add_hierarchy_set_to_axis(0, MdxHierarchySet.member(Member.of(dim, value)))
 
     return mdx_object.to_mdx()
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Utility: Value conversion functions
+# ------------------------------------------------------------------------------------------------------------
+
+
+def force_float64_on_numeric_values(input_value: Any) -> float64 | str:
+    """
+    Convert string '12,34' → '12.34' and then parse as np.float64 if it is a numeric (optionally with decimal).
+    Otherwise, return the original value unchanged.
+
+    Args:
+        input_value: any type of value to be converted if numerical
+
+    Returns:
+        the converted and cast numerical value or the string unchanged
+    """
+
+    if not isinstance(input_value, str):
+        return float64(input_value)
+    pattern = re.compile(r"^-?\d+(?:[.,]\d+)?$")
+    if pattern.match(input_value):
+        input_value = input_value.replace(',', '.')
+    try:
+        return float64(input_value)
+    except ValueError:
+        return input_value

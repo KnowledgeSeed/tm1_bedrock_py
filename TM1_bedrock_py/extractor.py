@@ -11,6 +11,7 @@ from TM1_bedrock_py import utility, transformer
 # ------------------------------------------------------------------------------------------------------------
 
 
+@utility.log_exec_metrics
 def tm1_mdx_to_dataframe(
         mdx_function: Optional[Callable[..., DataFrame]] = None,
         **kwargs: Any
@@ -63,7 +64,8 @@ def __tm1_mdx_to_dataframe_default(
             skip_zeros=skip_zeros,
             skip_consolidated_cells=skip_consolidated_cells,
             skip_rule_derived_cells=skip_rule_derived_cells,
-            use_iterative_json=True
+            use_iterative_json=True,
+            use_blob=True
         )
     else:
         return tm1_service.cells.execute_mdx_dataframe(
@@ -71,7 +73,8 @@ def __tm1_mdx_to_dataframe_default(
             skip_zeros=skip_zeros,
             skip_consolidated_cells=skip_consolidated_cells,
             skip_rule_derived_cells=skip_rule_derived_cells,
-            use_iterative_json=True
+            use_iterative_json=True,
+            use_blob=True
         )
 
 
@@ -106,6 +109,8 @@ def _handle_mapping_mdx(
     )
     filter_dict = metadata_object.get_filter_dict()
     transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=filter_dict)
+    transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
+
     return dataframe
 
 
@@ -131,6 +136,7 @@ MAPPING_HANDLERS = {
 }
 
 
+@utility.log_exec_metrics
 def generate_dataframe_for_mapping_info(
         mapping_info: Dict[str, Any],
         **kwargs
@@ -149,6 +155,7 @@ def generate_dataframe_for_mapping_info(
     )
 
 
+@utility.log_exec_metrics
 def generate_step_specific_mapping_dataframes(
     mapping_steps: List[Dict[str, Any]],
     **kwargs

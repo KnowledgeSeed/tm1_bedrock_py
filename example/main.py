@@ -1,6 +1,6 @@
 from TM1py import TM1Service
 
-from TM1_bedrock_py.utility import _mdx_filter_to_dictionary
+from TM1_bedrock_py import extractor
 
 
 def manage():
@@ -61,8 +61,15 @@ def manage():
     tm1 = TM1Service(**tm1_params)
 
     try:
-        filter_dict = _mdx_filter_to_dictionary(data_mdx)
-        print(filter_dict)
+        dataframe = extractor.tm1_mdx_to_dataframe(
+            tm1_service=tm1,
+            data_mdx=data_mdx
+
+        )
+
+        print(dataframe)
+        print(dataframe.iloc[0, 3])
+        print(type(dataframe.iloc[0, 3]))
 
     finally:
         tm1.logout()

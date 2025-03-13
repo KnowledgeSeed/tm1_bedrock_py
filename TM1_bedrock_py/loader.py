@@ -11,6 +11,7 @@ from TM1_bedrock_py import utility
 # ------------------------------------------------------------------------------------------------------------
 
 
+@utility.log_exec_metrics
 def clear_cube(
         clear_function: Optional[Callable[..., Any]] = None,
         **kwargs: Any
@@ -48,6 +49,7 @@ def __clear_cube_default(
     tm1_service.cells.clear(cube_name, **clearing_kwargs)
 
 
+@utility.log_exec_metrics
 def dataframe_to_cube(
         write_function: Optional[Callable[..., Any]] = None,
         **kwargs: Any
