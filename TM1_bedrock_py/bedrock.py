@@ -36,6 +36,7 @@ def data_copy_intercube(
         use_blob: bool = False,
         increment: bool = False,
         sum_numeric_duplicates: bool = True,
+        _execution_id: int = 0,
         **kwargs
 ) -> None:
     """
@@ -292,6 +293,7 @@ def data_copy(
         use_blob: bool = False,
         increment: bool = False,
         sum_numeric_duplicates: bool = True,
+        _execution_id: int = 0,
         **kwargs
 ) -> None:
     """
