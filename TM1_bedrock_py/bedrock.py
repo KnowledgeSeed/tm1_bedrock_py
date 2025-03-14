@@ -185,7 +185,7 @@ def data_copy_intercube(
         mdx_function=mdx_function,
     )
 
-    if len(dataframe) == 0:
+    if dataframe.empty:
         return
 
     data_metadata = utility.TM1CubeObjectMetadata.collect(
@@ -413,7 +413,7 @@ def data_copy(
         mdx_function=mdx_function,
     )
 
-    if len(dataframe) == 0:
+    if dataframe.empty:
         return
 
     data_metadata = utility.TM1CubeObjectMetadata.collect(
