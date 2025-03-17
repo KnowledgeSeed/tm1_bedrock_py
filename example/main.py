@@ -1,6 +1,7 @@
 from TM1py import TM1Service
 
 from TM1_bedrock_py import utility, extractor
+from TM1_bedrock_py.transformer import normalize_sql_dataframe
 
 
 def manage():
@@ -70,12 +71,21 @@ def manage():
                           "{[Periods].[Periods].[2023].Children}"]
 
     tm1 = TM1Service(**tm1_params)
+    #sql =
 
     try:
         print(utility.get_local_decimal_separator())
         sql_to_df = extractor.sql_to_dataframe(table_name=sql_table_name, **sql_params)
         print(sql_to_df)
+        normalize_sql_dataframe(
+            dataframe=sql_to_df,
+            columns_to_keep=["Employee"],
+            column_mapping={"Version": "Versions", "Group": "Groups"},
+            drop_other_columns=True
+        )
 
+
+        print(sql_to_df)
     finally:
         tm1.logout()
 

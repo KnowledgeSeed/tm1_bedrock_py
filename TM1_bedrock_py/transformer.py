@@ -1,7 +1,6 @@
 from typing import Callable, List, Dict, Optional, Any
 
 import pandas as pd
-import numpy as np
 from pandas import DataFrame
 
 from TM1_bedrock_py import utility
@@ -274,6 +273,30 @@ def dataframe_redimension_and_transform(
 
     if target_dim_mapping is not None:
         dataframe_add_column_assign_value(dataframe=dataframe, column_value=target_dim_mapping)
+
+
+def normalize_sql_dataframe(
+        dataframe: DataFrame,
+        columns_to_keep: Optional[list] = None,
+        column_mapping: Optional[dict] = None,
+        value_column_name: Optional[str] = None,
+        drop_other_columns: bool = False
+) -> None:
+    if column_mapping is None:
+        column_mapping = {}
+    if columns_to_keep is None:
+        columns_to_keep = []
+    if column_mapping:
+        dataframe_relabel(dataframe=dataframe, columns=column_mapping)
+    if value_column_name:
+        dataframe_relabel(dataframe=dataframe, columns={value_column_name: "Value"})
+    if "Value" not in dataframe.columns:
+        dataframe_add_column_assign_value(dataframe=dataframe, column_value={"Value": 1.0})
+    if drop_other_columns:
+        columns_to_drop = list(
+            set(dataframe.columns) - set(columns_to_keep) - set(column_mapping.values()) - {'Value'}
+        )
+        dataframe_drop_column(dataframe=dataframe, column_list=columns_to_drop)
 
 
 # ------------------------------------------------------------------------------------------------------------

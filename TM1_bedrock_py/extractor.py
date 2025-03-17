@@ -118,15 +118,34 @@ def _handle_mapping_mdx(
 
 
 def _handle_mapping_sql_query(
-    step: Dict[str, Any],
-    **_kwargs
-) -> None:
-    return None
+        step: Dict[str, Any],
+        sql_engine: Optional[Any] = None,
+        sql_function: Optional[Callable] = None,
+        **kwargs
+) -> DataFrame:
+    table_name = step.get("sql_table_name")
+    schema = step.get("sql_schema")
+    sql_query = step.get("mapping_sql_query")
+    dataframe = sql_to_dataframe(
+        sql_function=sql_function, engine=sql_engine,
+        sql_query=sql_query, schema=schema, table_name=table_name,
+        **kwargs
+    )
+    columns_to_keep = step.get("sql_columns_to_keep")
+    column_mapping = step.get("sql_column_mapping")
+    value_column = step.get("sql_value_column")
+    drop_other = step.get("sql_drop_other_cols")
+    transformer.normalize_sql_dataframe(
+        dataframe=dataframe,
+        columns_to_keep=columns_to_keep, column_mapping=column_mapping, value_column_name=value_column,
+        drop_other_columns=drop_other
+    )
+    return dataframe
 
 
 def _handle_mapping_csv(
-    step: Dict[str, Any],
-    **_kwargs
+        step: Dict[str, Any],
+        **_kwargs
 ) -> None:
     return None
 
@@ -198,39 +217,21 @@ def sql_to_dataframe(
 
 
 def __sql_to_dataframe_default(
-        username: Optional[str] = None,
-        password: Optional[str] = None,
-        connection_type: Optional[str] = None,
-        connection_string: Optional[str] = None,
         engine: Optional[Any] = None,
-        host: Optional[str] = "localhost",
-        port: Optional[str] = None,
-        mssql_driver: Optional[str] = "ODBC+Driver+17+for+SQL+Server",
-        sqlite_file_path: Optional[str] = None,
-        oracle_sid: Optional[str] = None,
-        database: Optional[str] = None,
         table_name: Optional[str] = None,
         sql_query: Optional[str] = None,
-        schema: Optional[str] = None
+        schema: Optional[str] = None,
+        **kwargs
 ) -> DataFrame:
-    connection_strings = {
-        'mssql': f"mssql+pyodbc://{username}:{password}@{host}:{port}/{database}?driver={mssql_driver}",
-        'sqlite': f"sqlite:///{sqlite_file_path}",
-        'postgresql': f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}",
-        'mysql': f"mysql+mysqlconnector://{username}:{password}@{host}:{port}/{database}",
-        'mariadb': f"mariadb+mariadbconnector://{username}:{password}@{host}:{port}/{database}",
-        'oracle': f"oracle+cx_oracle://{username}:{password}@{host}:{port}/{oracle_sid}",
-        'ibmdb2': f"ibm_db_sa://{username}:{password}@{host}:{port}/{database}",
-        'sqlite_inmemory': "sqlite:///:memory:",
-        'firebird': f"firebird+fdb://{username}:{password}@{host}:{port}/{database}",
-    }
-    if connection_type and not connection_string:
-        connection_string = connection_strings.get(connection_type)
     if not engine:
-        engine = create_engine(connection_string)
+        engine = utility.create_sql_engine(**kwargs)
     if not sql_query:
         sql_query = f"SELECT * FROM [{schema}].[{table_name}]" if schema else f"SELECT * FROM [{table_name}]"
     with engine.connect() as connection:
         raw_connection = connection.connection
+        print(engine)
+        print(type(engine))
+        print(raw_connection)
+        print(type(raw_connection))
         df = read_sql(sql_query, con=raw_connection)
     return df
