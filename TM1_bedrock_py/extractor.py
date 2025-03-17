@@ -1,8 +1,7 @@
 from typing import Callable, List, Dict, Optional, Any
 
 from TM1py import TM1Service
-from pandas import DataFrame, read_sql
-from sqlalchemy import create_engine
+from pandas import DataFrame, read_sql_table, read_sql_query
 
 from TM1_bedrock_py import utility, transformer
 
@@ -194,7 +193,7 @@ def generate_step_specific_mapping_dataframes(
 # ------------------------------------------------------------------------------------------------------------
 
 
-@utility.log_exec_metrics
+#@utility.log_exec_metrics
 def sql_to_dataframe(
         sql_function: Optional[Callable[..., DataFrame]] = None,
         **kwargs: Any
@@ -218,20 +217,18 @@ def sql_to_dataframe(
 
 def __sql_to_dataframe_default(
         engine: Optional[Any] = None,
-        table_name: Optional[str] = None,
         sql_query: Optional[str] = None,
+        table_name: Optional[str] = None,
+        table_columns: Optional[list] = None,
         schema: Optional[str] = None,
+        chunksize: Optional[int] = None,
         **kwargs
 ) -> DataFrame:
     if not engine:
         engine = utility.create_sql_engine(**kwargs)
-    if not sql_query:
-        sql_query = f"SELECT * FROM [{schema}].[{table_name}]" if schema else f"SELECT * FROM [{table_name}]"
-    with engine.connect() as connection:
-        raw_connection = connection.connection
-        print(engine)
-        print(type(engine))
-        print(raw_connection)
-        print(type(raw_connection))
-        df = read_sql(sql_query, con=raw_connection)
-    return df
+    if table_name:
+        return read_sql_table(
+            con=engine, table_name=table_name, columns=table_columns, schema=schema, chunksize=chunksize
+        )
+    if sql_query:
+        return read_sql_query(sql=sql_query, con=engine, chunksize=chunksize)
