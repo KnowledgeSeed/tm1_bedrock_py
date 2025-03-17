@@ -71,6 +71,7 @@ def manage():
                           "{[Periods].[Periods].[2023].Children}"]
 
     tm1 = TM1Service(**tm1_params)
+    #sql =
 
     try:
         print(utility.get_local_decimal_separator())

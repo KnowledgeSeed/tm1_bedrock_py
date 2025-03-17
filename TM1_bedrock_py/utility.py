@@ -6,6 +6,7 @@ import locale
 from typing import Callable, List, Dict, Optional, Any, Union, Iterator
 
 from mdxpy import MdxBuilder, MdxHierarchySet, Member
+from sqlalchemy import create_engine
 from pandas import DataFrame
 from numpy import float64
 from TM1_bedrock_py import exec_metrics_logger, basic_logger
@@ -579,3 +580,32 @@ def force_float64_on_numeric_values(input_value: Any) -> float64 | str:
 def get_local_decimal_separator() -> str:
     locale.getlocale()
     return locale.localeconv()['decimal_point']
+
+
+def create_sql_engine(
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        connection_type: Optional[str] = None,
+        connection_string: Optional[str] = None,
+        host: Optional[str] = "localhost",
+        port: Optional[str] = None,
+        mssql_driver: Optional[str] = "ODBC+Driver+17+for+SQL+Server",
+        sqlite_file_path: Optional[str] = None,
+        oracle_sid: Optional[str] = None,
+        database: Optional[str] = None,
+        **kwargs
+) -> Any:
+    connection_strings = {
+        'mssql': f"mssql+pyodbc://{username}:{password}@{host}:{port}/{database}?driver={mssql_driver}",
+        'sqlite': f"sqlite:///{sqlite_file_path}",
+        'postgresql': f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}",
+        'mysql': f"mysql+mysqlconnector://{username}:{password}@{host}:{port}/{database}",
+        'mariadb': f"mariadb+mariadbconnector://{username}:{password}@{host}:{port}/{database}",
+        'oracle': f"oracle+cx_oracle://{username}:{password}@{host}:{port}/{oracle_sid}",
+        'ibmdb2': f"ibm_db_sa://{username}:{password}@{host}:{port}/{database}",
+        'sqlite_inmemory': "sqlite:///:memory:",
+        'firebird': f"firebird+fdb://{username}:{password}@{host}:{port}/{database}",
+    }
+    if connection_type and not connection_string:
+        connection_string = connection_strings.get(connection_type)
+    return create_engine(connection_string)
