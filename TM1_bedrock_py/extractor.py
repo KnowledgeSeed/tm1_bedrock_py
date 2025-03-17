@@ -1,7 +1,8 @@
 from typing import Callable, List, Dict, Optional, Any
 
 from TM1py import TM1Service
-from pandas import DataFrame
+from pandas import DataFrame, read_sql
+from sqlalchemy import create_engine
 
 from TM1_bedrock_py import utility, transformer
 
@@ -167,3 +168,69 @@ def generate_step_specific_mapping_dataframes(
     """
     for step in mapping_steps:
         generate_dataframe_for_mapping_info(step, **kwargs)
+
+
+# ------------------------------------------------------------------------------------------------------------
+# SQL query to pandas dataframe functions
+# ------------------------------------------------------------------------------------------------------------
+
+
+@utility.log_exec_metrics
+def sql_to_dataframe(
+        sql_function: Optional[Callable[..., DataFrame]] = None,
+        **kwargs: Any
+) -> DataFrame:
+    """
+    Retrieves a DataFrame by executing the provided SQL function
+
+    Args:
+        sql_function (Optional[Callable]): A function to execute the SQL query and return a DataFrame.
+                                           If None, the default function is used.
+        **kwargs (Any): Additional keyword arguments passed to the MDX function.
+
+    Returns:
+        DataFrame: The DataFrame resulting from the SQL query.
+    """
+    if sql_function is None:
+        sql_function = __sql_to_dataframe_default
+
+    return sql_function(**kwargs)
+
+
+def __sql_to_dataframe_default(
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        connection_type: Optional[str] = None,
+        connection_string: Optional[str] = None,
+        engine: Optional[Any] = None,
+        host: Optional[str] = "localhost",
+        port: Optional[str] = None,
+        mssql_driver: Optional[str] = "ODBC+Driver+17+for+SQL+Server",
+        sqlite_file_path: Optional[str] = None,
+        oracle_sid: Optional[str] = None,
+        database: Optional[str] = None,
+        table_name: Optional[str] = None,
+        sql_query: Optional[str] = None,
+        schema: Optional[str] = None
+) -> DataFrame:
+    connection_strings = {
+        'mssql': f"mssql+pyodbc://{username}:{password}@{host}:{port}/{database}?driver={mssql_driver}",
+        'sqlite': f"sqlite:///{sqlite_file_path}",
+        'postgresql': f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}",
+        'mysql': f"mysql+mysqlconnector://{username}:{password}@{host}:{port}/{database}",
+        'mariadb': f"mariadb+mariadbconnector://{username}:{password}@{host}:{port}/{database}",
+        'oracle': f"oracle+cx_oracle://{username}:{password}@{host}:{port}/{oracle_sid}",
+        'ibmdb2': f"ibm_db_sa://{username}:{password}@{host}:{port}/{database}",
+        'sqlite_inmemory': "sqlite:///:memory:",
+        'firebird': f"firebird+fdb://{username}:{password}@{host}:{port}/{database}",
+    }
+    if connection_type and not connection_string:
+        connection_string = connection_strings.get(connection_type)
+    if not engine:
+        engine = create_engine(connection_string)
+    if not sql_query:
+        sql_query = f"SELECT * FROM [{schema}].[{table_name}]" if schema else f"SELECT * FROM [{table_name}]"
+    with engine.connect() as connection:
+        raw_connection = connection.connection
+        df = read_sql(sql_query, con=raw_connection)
+    return df

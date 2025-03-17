@@ -1,6 +1,6 @@
 from TM1py import TM1Service
 
-from TM1_bedrock_py import utility
+from TM1_bedrock_py import utility, extractor
 
 
 def manage():
@@ -11,6 +11,17 @@ def manage():
         "password": "",
         "ssl": False
     }
+
+    sql_params = {
+        "host": "localhost",
+        "port": 5835,
+        "username": "admin",
+        "password": "apple",
+        "connection_type": "mssql",
+        "database": "HRDEMO"
+    }
+
+    sql_table_name = "Employee Group Mapping"
 
     data_mdx = """
         SELECT 
@@ -62,6 +73,8 @@ def manage():
 
     try:
         print(utility.get_local_decimal_separator())
+        sql_to_df = extractor.sql_to_dataframe(table_name=sql_table_name, **sql_params)
+        print(sql_to_df)
 
     finally:
         tm1.logout()
