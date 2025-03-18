@@ -160,7 +160,7 @@ def __dataframe_to_sql_default(
         dataframe: DataFrame,
         table_name: str,
         engine: Optional[Any] = None,
-        if_exists: Literal["fail", "replace", "append"] = "fail",
+        if_exists: Literal["fail", "replace", "append"] = "append",
         index: Optional[bool] = False,
         schema: Optional[str] = None,
         chunksize: Optional[int] = None,
@@ -180,6 +180,7 @@ def __dataframe_to_sql_default(
         method=method,
         index=index
     )
+
 
 @utility.log_exec_metrics
 def clear_table(
