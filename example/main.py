@@ -1,5 +1,5 @@
 from TM1py import TM1Service
-
+import pprint
 from TM1_bedrock_py import utility, extractor, transformer
 from TM1_bedrock_py.transformer import normalize_sql_dataframe
 
@@ -71,7 +71,7 @@ def manage():
                           "{[Periods].[Periods].[2023].Children}"]
 
     sql = utility.create_sql_engine(**sql_params)
-    columninfo = utility.inspect_table(sql, "Unit Test Table")
+    columninfo = utility.inspect_table(sql, "Write Test Table")
     print(columninfo)
     """
     tm1 = TM1Service(**tm1_params)

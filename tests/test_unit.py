@@ -10,7 +10,7 @@ import pytest
 import parametrize_from_file
 from TM1py import TM1Service
 
-from TM1_bedrock_py import extractor, transformer, utility, basic_logger
+from TM1_bedrock_py import extractor, transformer, utility, basic_logger, loader
 
 
 EXCEPTION_MAP = {
@@ -498,3 +498,9 @@ def test_sql_normalize_keep_and_drop(sql_engine, dataframe, expected, keep, drop
     transformer.normalize_sql_dataframe(dataframe=df, columns_to_keep=keep, drop_other_columns=drop)
     expected_df = pd.DataFrame(expected)
     pd.testing.assert_frame_equal(df, expected_df)
+
+
+@parametrize_from_file
+def test_mssql_loader_replace(sql_engine, dataframe, if_exists, table_name):
+    df = pd.DataFrame(dataframe)
+    loader.dataframe_to_sql(dataframe=df, engine=sql_engine, table_name=table_name, if_exists=if_exists, index=False)

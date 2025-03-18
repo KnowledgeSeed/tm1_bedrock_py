@@ -808,3 +808,14 @@ test_sql_normalize_keep_and_drop:
       "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
       "Value": [ 1.0, 1.0]
     }
+
+test_mssql_loader_replace:
+  -
+    dataframe: {
+      "VarcharColumn1X": ["WriteString1_1", "WriteString1_2"],
+      "VarcharColumn2X": ["WriteString2_1", "WriteString2_2"],
+      "FloatColumn1": [12, 56],
+      "Test": [9.331, 111.666]
+    }
+    table_name: "Write Test Table"
+    if_exists: "append"

@@ -1,8 +1,8 @@
-from typing import Callable, List, Optional, Any
+from typing import Callable, List, Optional, Any, Literal
 
 from TM1py import TM1Service
 from pandas import DataFrame
-
+from sqlalchemy import text
 from TM1_bedrock_py import utility
 
 
@@ -160,21 +160,57 @@ def __dataframe_to_sql_default(
         dataframe: DataFrame,
         table_name: str,
         engine: Optional[Any] = None,
-        if_exists: Optional[str] = "fail",
+        if_exists: Literal["fail", "replace", "append"] = "fail",
+        index: Optional[bool] = False,
         schema: Optional[str] = None,
         chunksize: Optional[int] = None,
         dtype: Optional[dict] = None,
-        method: Optional[str] = None,
+        method: Optional[Any] = None,
         **kwargs
 ) -> None:
     if not engine:
         engine = utility.create_sql_engine(**kwargs)
     dataframe.to_sql(
         name=table_name,
-        engine=engine,
+        con=engine,
         if_exists=if_exists,
         schema=schema,
         chunksize=chunksize,
         dtype=dtype,
-        method=method
+        method=method,
+        index=index
     )
+
+@utility.log_exec_metrics
+def clear_table(
+        clear_function: Optional[Callable[..., Any]] = None,
+        **kwargs: Any
+) -> None:
+    """
+    Clears a cube with filters. If no custom function is provided, the default function is used.
+
+    Args:
+        clear_function (Optional[Callable]): A function to clear the cube using set MDXs.
+                                             Defaults to the built-in TM1 service function.
+        **kwargs (Any): Additional keyword arguments for the clear function, which may include:
+                        - tm1_service (TM1Service): An active TM1Service object for the server connection.
+                        - cube_name (str): The name of the cube to clear.
+                        - clear_set_mdx_list (List[str]): A list of valid MDX set expressions defining the clear space.
+    """
+    if clear_function is None:
+        clear_function = __clear_table_default
+    return clear_function(**kwargs)
+
+
+def __clear_table_default(
+        engine: Any,
+        table_name: Optional[str],
+        delete_statement: Optional[str]
+) -> None:
+    with engine.connect() as connection:
+        if table_name:
+            connection.execute(text("TRUNCATE TABLE [" + table_name + "]"))
+        elif delete_statement:
+            connection.execute(text(delete_statement))
+
+
