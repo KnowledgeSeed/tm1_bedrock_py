@@ -6,7 +6,7 @@ import locale
 from typing import Callable, List, Dict, Optional, Any, Union, Iterator
 
 from mdxpy import MdxBuilder, MdxHierarchySet, Member
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect
 from pandas import DataFrame
 from numpy import float64
 from TM1_bedrock_py import exec_metrics_logger, basic_logger
@@ -609,3 +609,7 @@ def create_sql_engine(
     if connection_type and not connection_string:
         connection_string = connection_strings.get(connection_type)
     return create_engine(connection_string)
+
+
+def inspect_table(engine: Any, table_name: str) -> dict:
+    return inspect(engine).get_columns(table_name)

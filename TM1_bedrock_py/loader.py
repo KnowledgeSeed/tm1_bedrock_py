@@ -126,3 +126,55 @@ def __dataframe_to_cube_default(
             sum_numeric_duplicates=sum_numeric_duplicates,
             **kwargs
         )
+
+
+# ------------------------------------------------------------------------------------------------------------
+# pandas dataframe into SQL functions
+# ------------------------------------------------------------------------------------------------------------
+
+
+@utility.log_exec_metrics
+def dataframe_to_sql(
+        sql_write_function: Optional[Callable[..., DataFrame]] = None,
+        **kwargs: Any
+) -> None:
+    """
+    Retrieves a DataFrame by executing the provided SQL function
+
+    Args:
+        sql_write_function (Optional[Callable]):
+            A function to write a dataframe into SQL
+            If None, the default function is used.
+        **kwargs (Any): Additional keyword arguments passed to the MDX function.
+
+    Returns:
+        DataFrame: The DataFrame resulting from the SQL query.
+    """
+    if sql_write_function is None:
+        sql_write_function = __dataframe_to_sql_default
+
+    return sql_write_function(**kwargs)
+
+
+def __dataframe_to_sql_default(
+        dataframe: DataFrame,
+        table_name: str,
+        engine: Optional[Any] = None,
+        if_exists: Optional[str] = "fail",
+        schema: Optional[str] = None,
+        chunksize: Optional[int] = None,
+        dtype: Optional[dict] = None,
+        method: Optional[str] = None,
+        **kwargs
+) -> None:
+    if not engine:
+        engine = utility.create_sql_engine(**kwargs)
+    dataframe.to_sql(
+        name=table_name,
+        engine=engine,
+        if_exists=if_exists,
+        schema=schema,
+        chunksize=chunksize,
+        dtype=dtype,
+        method=method
+    )
