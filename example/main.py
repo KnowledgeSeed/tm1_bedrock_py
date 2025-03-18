@@ -70,23 +70,24 @@ def manage():
     clear_set_mdx_list = ["{[Versions].[TM1py Test Version]}",
                           "{[Periods].[Periods].[2023].Children}"]
 
-    tm1 = TM1Service(**tm1_params)
+    #tm1 = TM1Service(**tm1_params)
     sql = utility.create_sql_engine(**sql_params)
 
-    try:
+    #try:
 
-        sql_to_df = extractor.sql_to_dataframe(table_name=sql_table_name, engine=sql)
-        print(sql_to_df)
-        transformer.normalize_sql_dataframe(
-            dataframe=sql_to_df,
-            columns_to_keep=["Employee"],
-            column_mapping={"Version": "Versions", "Group": "Groups"},
-            drop_other_columns=True
-        )
-        print(sql_to_df)
-
-    finally:
-        tm1.logout()
+    sql_to_df = extractor.sql_to_dataframe(table_name=sql_table_name, engine=sql)
+    print(sql_to_df)
+    """
+    transformer.normalize_sql_dataframe(
+        dataframe=sql_to_df,
+        columns_to_keep=["Employee"],
+        column_mapping={"Version": "Versions", "Group": "Groups"},
+        drop_other_columns=True
+    )
+    print(sql_to_df)
+    """
+    #finally:
+        #tm1.logout()
 
 
 if __name__ == '__main__':

@@ -2,6 +2,8 @@ import configparser
 from pathlib import Path
 
 from TM1py.Exceptions import TM1pyRestException
+from sqlalchemy.exc import OperationalError, InterfaceError
+from sqlalchemy import text
 from pandas.core.frame import DataFrame
 import pandas as pd
 import pytest
@@ -15,6 +17,7 @@ EXCEPTION_MAP = {
     "ValueError": ValueError,
     "TypeError": TypeError,
     "TM1pyRestException": TM1pyRestException,
+    "OperationalError": OperationalError,
     "IndexError": IndexError,
     "KeyError": KeyError
 }
@@ -35,6 +38,23 @@ def tm1_connection():
 
     except TM1pyRestException:
         basic_logger.error("Unable to connect to TM1: ", exc_info=True)
+
+
+@pytest.fixture(scope="session")
+def sql_engine():
+    """Creates a SQL connector engine before tests and closes it after all tests."""
+    config = configparser.ConfigParser()
+    config.read(Path(__file__).parent.joinpath('config.ini'))
+    try:
+        engine = utility.create_sql_engine(**config['mssqlsrv'])
+        basic_logger.debug("SQL engine successfully created")
+        yield engine
+
+        engine.dispose()
+        basic_logger.debug("SQL engine disposed.")
+
+    except OperationalError or InterfaceError:
+        basic_logger.error("Unable to connect to SQL: ", exc_info=True)
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -409,3 +429,21 @@ def test_dataframe_map_and_join_success(dataframe, joined_cols, mapping_datafram
 @parametrize_from_file
 def test_dataframe_execute_mappings_replace_success(mapping_steps):
     pass
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Main: tests for sql connections and I/O processes
+# ----------------------------------------------------------------------------------------------------------
+
+
+def test_mssql_database_connection(sql_engine):
+    with sql_engine.connect() as connection:
+        assert connection.closed is False
+
+
+def test_mssql_server_responds_to_query(sql_engine):
+    with sql_engine.connect() as connection:
+        result = connection.execute(text("SELECT 1"))
+        response = result.fetchone()
+    assert response == (1,)
+

@@ -277,9 +277,9 @@ def dataframe_redimension_and_transform(
 
 def normalize_sql_dataframe(
         dataframe: DataFrame,
-        columns_to_keep: Optional[list] = None,
         column_mapping: Optional[dict] = None,
         value_column_name: Optional[str] = None,
+        columns_to_keep: Optional[list] = None,
         drop_other_columns: bool = False
 ) -> None:
     if column_mapping is None:
