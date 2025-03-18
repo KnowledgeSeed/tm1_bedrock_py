@@ -13,6 +13,8 @@ def data_copy_intercube(
         tm1_service: Optional[Any],
         data_mdx: Optional[str] = None,
         mdx_function: Optional[Callable[..., DataFrame]] = None,
+        sql_engine: Optional[Any] = None,
+        sql_function: Optional[Callable[..., DataFrame]] = None,
         data_mdx_list: Optional[list[str]] = None,
         skip_zeros: Optional[bool] = False,
         skip_consolidated_cells: Optional[bool] = False,
@@ -51,6 +53,10 @@ def data_copy_intercube(
         MDX query string for retrieving source data. Currently, this can be the only source
     mdx_function : Optional[Callable[..., DataFrame]]
         Function to execute an MDX query and return a DataFrame.
+    sql_engine : Optional[Any]
+        A sql connection engine that pandas.read_sql expects, preferably a SQLAlchemy engine.
+    sql_function : Optional[Callable[..., DataFrame]]
+        Function to execute a SQL query and return a DataFrame.
     data_mdx_list : Optional[list[str]]
         List of MDX queries for retrieving multiple data sets.
     skip_zeros : Optional[bool], default=False
@@ -211,7 +217,9 @@ def data_copy_intercube(
         extractor.generate_dataframe_for_mapping_info(
             mapping_info=shared_mapping,
             tm1_service=tm1_service,
-            mdx_function=mdx_function
+            mdx_function=mdx_function,
+            sql_engine=sql_engine,
+            sql_function=sql_function
         )
         shared_mapping_df = shared_mapping["mapping_df"]
 
@@ -273,6 +281,8 @@ def data_copy(
         tm1_service: Optional[Any],
         data_mdx: Optional[str] = None,
         mdx_function: Optional[Callable[..., DataFrame]] = None,
+        sql_engine: Optional[Any] = None,
+        sql_function: Optional[Callable[..., DataFrame]] = None,
         data_mdx_list: Optional[list[str]] = None,
         skip_zeros: Optional[bool] = False,
         skip_consolidated_cells: Optional[bool] = False,
@@ -304,6 +314,10 @@ def data_copy(
         MDX query string for retrieving source data. Currently, this can be the only source
     mdx_function : Optional[Callable[..., DataFrame]]
         Function to execute an MDX query and return a DataFrame.
+    sql_engine : Optional[Any]
+        A sql connection engine that pandas.read_sql expects, preferably a SQLAlchemy engine.
+    sql_function : Optional[Callable[..., DataFrame]]
+        Function to execute a SQL query and return a DataFrame.
     data_mdx_list : Optional[list[str]]
         List of MDX queries for retrieving multiple data sets.
     skip_zeros : Optional[bool], default=False
@@ -433,7 +447,9 @@ def data_copy(
         extractor.generate_dataframe_for_mapping_info(
             mapping_info=shared_mapping,
             tm1_service=tm1_service,
-            mdx_function=mdx_function
+            mdx_function=mdx_function,
+            sql_engine=sql_engine,
+            sql_function=sql_function
         )
         shared_mapping_df = shared_mapping["mapping_df"]
 

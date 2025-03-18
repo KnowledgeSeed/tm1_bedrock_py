@@ -193,7 +193,7 @@ def generate_step_specific_mapping_dataframes(
 # ------------------------------------------------------------------------------------------------------------
 
 
-#@utility.log_exec_metrics
+@utility.log_exec_metrics
 def sql_to_dataframe(
         sql_function: Optional[Callable[..., DataFrame]] = None,
         **kwargs: Any
