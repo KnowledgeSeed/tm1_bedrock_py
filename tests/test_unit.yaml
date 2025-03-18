@@ -709,3 +709,102 @@ test_dataframe_execute_mappings_map_and_join_shared_with_filter_and_drop_success
 
       }
     ]
+
+test_mssql_extract_full_table:
+  -
+    table_name: "Unit Test Table"
+    expected: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
+      "UnitTestFloatColumn1": [ 12.34, 12.34 ],
+      "UnitTestIntColumn2": [ 123, 123 ]
+    }
+
+test_mssql_extract_table_columns:
+  -
+    table_name: "Unit Test Table"
+    columns: ["UnitTestStringColumn1", "UnitTestFloatColumn1"]
+    expected: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestFloatColumn1": [ 12.34, 12.34 ],
+    }
+
+test_mssql_extract_query:
+  -
+    query: "SELECT [UnitTestStringColumn1], [UnitTestFloatColumn1] FROM dbo.[Unit Test Table]"
+    expected: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestFloatColumn1": [ 12.34, 12.34 ],
+    }
+  -
+    query: "SELECT * FROM dbo.[Unit Test Table]"
+    expected: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
+      "UnitTestFloatColumn1": [ 12.34, 12.34 ],
+      "UnitTestIntColumn2": [ 123, 123 ]
+    }
+
+test_mssq_extract_query_with_chunksize:
+  -
+    query: "SELECT [UnitTestStringColumn1], [UnitTestFloatColumn1] FROM dbo.[Unit Test Table]"
+    expected: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestFloatColumn1": [ 12.34, 12.34 ],
+    }
+    chunksize: 1
+  -
+    query: "SELECT * FROM dbo.[Unit Test Table]"
+    expected: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
+      "UnitTestFloatColumn1": [ 12.34, 12.34 ],
+      "UnitTestIntColumn2": [ 123, 123 ]
+    }
+    chunksize: 2
+
+test_sql_normalize_relabel:
+  -
+    dataframe: {
+      "UnitTestStringColumnX": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestStringColumnY": [ 'TestString1_2', 'TestString2_2' ]
+    }
+    column_mapping: {"UnitTestStringColumnX":"UnitTestStringColumn1",
+                     "UnitTestStringColumnY":"UnitTestStringColumn2"}
+    expected: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
+      "Value": [1.0, 1.0]
+    }
+
+test_sql_normalize_valuecol_assign:
+  -
+    dataframe: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
+      "UnitTestFloatColumn1": [ 12.34, 12.34 ],
+      "UnitTestIntColumn2": [ 123, 123 ]
+    }
+    valuecol: "UnitTestFloatColumn1"
+    expected: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
+      "Value": [ 12.34, 12.34 ],
+      "UnitTestIntColumn2": [ 123, 123 ]
+    }
+
+test_sql_normalize_keep_and_drop:
+  -
+    dataframe: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
+      "UnitTestFloatColumn1": [ 12.34, 12.34 ],
+      "UnitTestIntColumn2": [ 123, 123 ]
+    }
+    keep: ["UnitTestStringColumn1", "UnitTestStringColumn2"]
+    drop: True
+    expected: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
+      "Value": [ 1.0, 1.0]
+    }

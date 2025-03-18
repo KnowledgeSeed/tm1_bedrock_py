@@ -1,7 +1,7 @@
 from typing import Callable, List, Dict, Optional, Any
 
 from TM1py import TM1Service
-from pandas import DataFrame, read_sql_table, read_sql_query
+from pandas import DataFrame, read_sql_table, read_sql_query, concat
 
 from TM1_bedrock_py import utility, transformer
 
@@ -231,4 +231,10 @@ def __sql_to_dataframe_default(
             con=engine, table_name=table_name, columns=table_columns, schema=schema, chunksize=chunksize
         )
     if sql_query:
-        return read_sql_query(sql=sql_query, con=engine, chunksize=chunksize)
+        if chunksize:
+            chunks = []
+            for chunk in read_sql_query(sql=sql_query, con=engine, chunksize=chunksize):
+                chunks.append(chunk)
+            return concat(chunks, ignore_index=True)
+        else:
+            return read_sql_query(sql=sql_query, con=engine)

@@ -447,3 +447,54 @@ def test_mssql_server_responds_to_query(sql_engine):
         response = result.fetchone()
     assert response == (1,)
 
+
+@parametrize_from_file
+def test_mssql_extract_full_table(sql_engine, table_name, expected):
+    df = extractor.sql_to_dataframe(engine=sql_engine, table_name=table_name)
+    expected_df = pd.DataFrame(expected)
+    pd.testing.assert_frame_equal(df, expected_df)
+
+
+@parametrize_from_file
+def test_mssql_extract_table_columns(sql_engine, table_name, columns, expected):
+    df = extractor.sql_to_dataframe(engine=sql_engine, table_name=table_name, table_columns=columns)
+    expected_df = pd.DataFrame(expected)
+    pd.testing.assert_frame_equal(df, expected_df)
+
+
+@parametrize_from_file
+def test_mssql_extract_query(sql_engine, query, expected):
+    df = extractor.sql_to_dataframe(engine=sql_engine, sql_query=query)
+    expected_df = pd.DataFrame(expected)
+    pd.testing.assert_frame_equal(df, expected_df)
+
+
+@parametrize_from_file
+def test_mssq_extract_query_with_chunksize(sql_engine, query, expected, chunksize):
+    df = extractor.sql_to_dataframe(engine=sql_engine, sql_query=query, chunksize=chunksize)
+    expected_df = pd.DataFrame(expected)
+    pd.testing.assert_frame_equal(df, expected_df)
+
+
+@parametrize_from_file
+def test_sql_normalize_relabel(sql_engine, dataframe, expected, column_mapping):
+    df = pd.DataFrame(dataframe)
+    transformer.normalize_sql_dataframe(dataframe=df, column_mapping=column_mapping)
+    expected_df = pd.DataFrame(expected)
+    pd.testing.assert_frame_equal(df, expected_df)
+
+
+@parametrize_from_file
+def test_sql_normalize_valuecol_assign(sql_engine, dataframe, expected, valuecol):
+    df = pd.DataFrame(dataframe)
+    transformer.normalize_sql_dataframe(dataframe=df, value_column_name=valuecol)
+    expected_df = pd.DataFrame(expected)
+    pd.testing.assert_frame_equal(df, expected_df)
+
+
+@parametrize_from_file
+def test_sql_normalize_keep_and_drop(sql_engine, dataframe, expected, keep, drop):
+    df = pd.DataFrame(dataframe)
+    transformer.normalize_sql_dataframe(dataframe=df, columns_to_keep=keep, drop_other_columns=drop)
+    expected_df = pd.DataFrame(expected)
+    pd.testing.assert_frame_equal(df, expected_df)
