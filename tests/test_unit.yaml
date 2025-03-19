@@ -545,7 +545,7 @@ test_dataframe_value_scale:
       "Value": [ 242, 242, 242, 242 ]
     }
 
-test_dataframe_filter_for_tm1:
+test_dataframe_itemskip_elements:
   -
     source: {
       "A": [ "apple", "banana", "cherry", "date" ],

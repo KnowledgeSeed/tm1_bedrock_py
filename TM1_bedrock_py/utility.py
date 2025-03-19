@@ -227,7 +227,8 @@ class TM1CubeObjectMetadata:
             cube_name: Optional[str] = None,
             retrieve_all_dimension_data: Optional[Callable[..., Any]] = None,
             retrieve_dimension_data: Optional[Callable[..., Any]] = None,
-            collect_extended_cube_metadata: Optional[bool] = False
+            collect_extended_cube_metadata: Optional[bool] = False,
+            **kwargs
     ) -> "TM1CubeObjectMetadata":
         """
         Collects important data about the mdx query and/or it's cube based on either an MDX query or a cube name.

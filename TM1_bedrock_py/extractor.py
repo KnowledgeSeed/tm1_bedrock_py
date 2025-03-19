@@ -39,7 +39,8 @@ def __tm1_mdx_to_dataframe_default(
         data_mdx_list:  Optional[list[str]] = None,
         skip_zeros: bool = False,
         skip_consolidated_cells: bool = False,
-        skip_rule_derived_cells: bool = False
+        skip_rule_derived_cells: bool = False,
+        **kwargs
 ) -> DataFrame:
     """
     Executes an MDX query using the default TM1 service function and returns a DataFrame.
