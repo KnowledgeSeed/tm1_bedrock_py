@@ -374,6 +374,7 @@ def test_dataframe_value_scale(dataframe, expected_dataframe):
 
 @parametrize_from_file
 def test_dataframe_filter_for_tm1(source, check1, check2, expected):
+    utility.set_logging_level("DEBUG")
     df = pd.DataFrame(source)
     check_dfs = [pd.DataFrame(check1), pd.DataFrame(check2)]
     expected_df = pd.DataFrame(expected)

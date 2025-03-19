@@ -613,3 +613,11 @@ def create_sql_engine(
 
 def inspect_table(engine: Any, table_name: str) -> dict:
     return inspect(engine).get_columns(table_name)
+
+
+@log_exec_metrics
+def get_all_leaves_identifiers(tm1: Any, dimension_name: [str], hierarchy_name: Optional[str] = None) -> Any:
+    # caseandspaceinsensitiveset datastruct to dataframe
+    if not hierarchy_name:
+        hierarchy_name = dimension_name
+    return tm1.elements.get_all_leaf_element_identifiers(dimension_name=dimension_name, hierarchy_name=hierarchy_name)

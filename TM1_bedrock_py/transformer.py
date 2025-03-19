@@ -299,8 +299,9 @@ def normalize_sql_dataframe(
         )
         dataframe_drop_column(dataframe=dataframe, column_list=columns_to_drop)
 
+
 @utility.log_exec_metrics
-def dataframe_filter_for_tm1(dataframe: DataFrame, check_dfs: list[DataFrame]) -> None:
+def dataframe_itemskip_elements(dataframe: DataFrame, check_dfs: list[DataFrame]) -> None:
     """
     Filters the given dataframe in place based on valid values from check dataframes.
 
