@@ -54,3 +54,17 @@ BEGIN
     SET @Counter = @Counter + 1;
 END
 GO
+
+-- Create login for tests
+CREATE LOGIN [admin] WITH PASSWORD = 'apple.82'
+GO
+
+Use HRDEMO;
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = N'admin')
+BEGIN
+    CREATE USER [admin] FOR LOGIN [admin]
+    EXEC sp_addrolemember N'db_owner', N'admin'
+END;
+GO

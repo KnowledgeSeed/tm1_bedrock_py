@@ -5,7 +5,7 @@ services:
     build: .
     container_name: mssql
     ports:
-      - "1433:1433"
+      - "5835:1433"
     environment:
       SA_PASSWORD: "niw9-ueI!ZeL5"
       ACCEPT_EULA: "Y"

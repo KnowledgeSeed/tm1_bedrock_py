@@ -597,7 +597,7 @@ def create_sql_engine(
         **kwargs
 ) -> Any:
     connection_strings = {
-        'mssql': f"mssql+pyodbc://{username}:{password}@{host}:{port}/{database}?driver={mssql_driver}",
+        'mssql': f"mssql+pyodbc://{username}:{password}@{host}:{port}/{database}?driver={mssql_driver}&TrustServerCertificate=yes",
         'sqlite': f"sqlite:///{sqlite_file_path}",
         'postgresql': f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}",
         'mysql': f"mysql+mysqlconnector://{username}:{password}@{host}:{port}/{database}",
