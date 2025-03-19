@@ -81,6 +81,29 @@ def __tm1_mdx_to_dataframe_default(
         )
 
 
+# ------------------------------------------------------------------------------------------------------------
+# utility extractor for metadata
+# ------------------------------------------------------------------------------------------------------------
+
+
+@utility.log_exec_metrics
+def all_leaves_identifiers_to_dataframe(
+        tm1_service: Any, dimension_name: [str], hierarchy_name: Optional[str] = None
+) -> DataFrame:
+    # caseandspaceinsensitiveset datastruct to dataframe
+    if not hierarchy_name:
+        hierarchy_name = dimension_name
+    dataset = tm1_service.elements.get_all_leaf_element_identifiers(
+        dimension_name=dimension_name, hierarchy_name=hierarchy_name
+    )
+    return DataFrame({dimension_name: list(dataset)})
+
+
+# ------------------------------------------------------------------------------------------------------------
+# mapping handler extractors
+# ------------------------------------------------------------------------------------------------------------
+
+
 def _handle_mapping_df(
     step: Dict[str, Any],
     **_kwargs
@@ -228,9 +251,17 @@ def __sql_to_dataframe_default(
     if not engine:
         engine = utility.create_sql_engine(**kwargs)
     if table_name:
-        return read_sql_table(
-            con=engine, table_name=table_name, columns=table_columns, schema=schema, chunksize=chunksize
-        )
+        if chunksize:
+            chunks = []
+            for chunk in read_sql_table(
+                con=engine, table_name=table_name, columns=table_columns, schema=schema, chunksize=chunksize
+            ):
+                chunks.append(chunk)
+            return concat(chunks, ignore_index=True)
+        else:
+            return read_sql_table(
+                con=engine, table_name=table_name, columns=table_columns, schema=schema
+            )
     if sql_query:
         if chunksize:
             chunks = []

@@ -79,9 +79,8 @@ def manage():
     
     try:
         utility.set_logging_level("DEBUG")
-        data = utility.get_all_leaves_identifiers(tm1=tm1, dimension_name="Periods")
-        print(list(data._store.values()))
-        print(type(list(data._store.values())))
+        data = extractor.all_leaves_identifiers_to_dataframe(tm1, "Periods")
+        print(data)
 
     finally:
         tm1.logout()
