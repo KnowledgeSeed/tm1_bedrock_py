@@ -226,7 +226,9 @@ def data_copy_intercube(
     extractor.generate_step_specific_mapping_dataframes(
         mapping_steps=mapping_steps,
         tm1_service=tm1_service,
-        mdx_function=mdx_function
+        mdx_function=mdx_function,
+        sql_engine=sql_engine,
+        sql_function=sql_function
     )
 
     transformer.dataframe_execute_mappings(
@@ -456,7 +458,9 @@ def data_copy(
     extractor.generate_step_specific_mapping_dataframes(
         mapping_steps=mapping_steps,
         tm1_service=tm1_service,
-        mdx_function=mdx_function
+        mdx_function=mdx_function,
+        sql_engine=sql_engine,
+        sql_function=sql_function
     )
 
     transformer.dataframe_execute_mappings(
