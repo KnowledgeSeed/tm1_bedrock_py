@@ -372,6 +372,15 @@ def test_dataframe_value_scale(dataframe, expected_dataframe):
     pd.testing.assert_frame_equal(df, expected_df)
 
 
+@parametrize_from_file
+def test_dataframe_filter_for_tm1(source, check1, check2, expected):
+    df = pd.DataFrame(source)
+    check_dfs = [pd.DataFrame(check1), pd.DataFrame(check2)]
+    expected_df = pd.DataFrame(expected)
+    transformer.dataframe_filter_for_tm1(dataframe=df, check_dfs=check_dfs)
+    pd.testing.assert_frame_equal(df, expected_df)
+
+
 # ------------------------------------------------------------------------------------------------------------
 # Main: tests for dataframe remapping and copy functions
 # ------------------------------------------------------------------------------------------------------------

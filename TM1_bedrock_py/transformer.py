@@ -1,6 +1,7 @@
 from typing import Callable, List, Dict, Optional, Any
 
 import pandas as pd
+import numpy as np
 from pandas import DataFrame
 
 from TM1_bedrock_py import utility
@@ -102,7 +103,7 @@ def dataframe_filter_inplace(
     valid_columns = [col for col in filter_condition.keys() if col in dataframe.columns]
 
     if not valid_columns:
-        dataframe.drop(dataframe.index, inplace=True)  # Clears DataFrame
+        dataframe.drop(dataframe.index, inplace=True)
         return
 
     condition = dataframe[valid_columns].eq(
@@ -298,6 +299,27 @@ def normalize_sql_dataframe(
         )
         dataframe_drop_column(dataframe=dataframe, column_list=columns_to_drop)
 
+@utility.log_exec_metrics
+def dataframe_filter_for_tm1(dataframe: DataFrame, check_dfs: list[DataFrame]) -> None:
+    """
+    Filters the given dataframe in place based on valid values from check dataframes.
+
+    Optimized for when check_dfs are always single-column DataFrames.
+
+    Parameters:
+    - dataframe: The main DataFrame containing multiple columns + a 'Value' column.
+    - check_dfs: A list of single-column check DataFrames,
+                 where each one corresponds to a column in df_source (in order).
+
+    Modifies df_source in place, removing rows that do not match the valid values.
+    """
+    mask = np.ones(len(dataframe), dtype=bool)
+    for df_check in check_dfs:
+        col = df_check.columns[0]
+        valid_values = df_check[col].to_numpy()
+        mask &= np.isin(dataframe[col].to_numpy(), valid_values)
+    dataframe.drop(index=dataframe.index[~mask], inplace=True)
+
 
 # ------------------------------------------------------------------------------------------------------------
 # Main: dataframe remapping and copy functions
@@ -396,6 +418,11 @@ def dataframe_map_and_join(
 
     for col in joined_columns:
         data_df[col] = merged_df[col]
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Main: mapping executor and its apply functions
+# ------------------------------------------------------------------------------------------------------------
 
 
 def __apply_replace(
