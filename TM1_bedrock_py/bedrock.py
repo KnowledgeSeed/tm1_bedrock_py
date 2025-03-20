@@ -1,7 +1,7 @@
 """
 This file is a collection of upgraded TM1 bedrock functionality, ported to python / pandas with the help of TM1py.
 """
-from typing import Callable, List, Dict, Optional, Any, Literal
+from typing import Callable, List, Dict, Optional, Any
 
 from pandas import DataFrame
 
@@ -21,8 +21,8 @@ def data_copy_intercube(
         skip_consolidated_cells: Optional[bool] = False,
         skip_rule_derived_cells: Optional[bool] = False,
         target_cube_name: Optional[str] = None,
-        target_metadata_function: Optional[Callable[..., DataFrame]] = None,
-        data_metadata_function: Optional[Callable[..., DataFrame]] = None,
+        target_metadata_function: Optional[Callable[..., Any]] = None,
+        data_metadata_function: Optional[Callable[..., Any]] = None,
         mapping_steps: Optional[List[Dict]] = None,
         shared_mapping: Optional[Dict] = None,
         source_dim_mapping: Optional[dict] = None,
@@ -301,7 +301,7 @@ def data_copy(
         skip_zeros: Optional[bool] = False,
         skip_consolidated_cells: Optional[bool] = False,
         skip_rule_derived_cells: Optional[bool] = False,
-        data_metadata_function: Optional[Callable[..., DataFrame]] = None,
+        data_metadata_function: Optional[Callable[..., Any]] = None,
         mapping_steps: Optional[List[Dict]] = None,
         shared_mapping: Optional[Dict] = None,
         value_function: Optional[Callable[..., Any]] = None,
@@ -504,6 +504,144 @@ def data_copy(
 
     loader.dataframe_to_cube(
         tm1_service=target_tm1_service,
+        dataframe=dataframe,
+        cube_name=cube_name,
+        cube_dims=cube_dims,
+        async_write=async_write,
+        use_ti=use_ti,
+        increment=increment,
+        use_blob=use_blob,
+        sum_numeric_duplicates=sum_numeric_duplicates,
+        slice_size_of_dataframe=slice_size_of_dataframe
+    )
+
+    basic_logger.info("Execution ended.")
+
+
+@utility.log_exec_metrics
+def load_sql_data_to_tm1_cube(
+        target_cube_name: str,
+        tm1_service: Optional[Any],
+        target_metadata_function: Optional[Callable[..., Any]] = None,
+        mdx_function: Optional[Callable[..., DataFrame]] = None,
+        sql_query: Optional[str] = None,
+        sql_table_name: Optional[str] = None,
+        sql_table_columns: Optional[str] = None,
+        sql_schema: Optional[str] = None,
+        sql_column_mapping: Optional[dict] = None,
+        sql_value_column_name: Optional[str] = None,
+        sql_columns_to_keep: Optional[list] = None,
+        drop_other_sql_columns: bool = False,
+        chunksize: Optional[int] = None,
+        sql_engine: Optional[Any] = None,
+        sql_function: Optional[Callable[..., DataFrame]] = None,
+        mapping_steps: Optional[List[Dict]] = None,
+        shared_mapping: Optional[Dict] = None,
+        source_dim_mapping: Optional[dict] = None,
+        related_dimensions: Optional[dict] = None,
+        target_dim_mapping: Optional[dict] = None,
+        value_function: Optional[Callable[..., Any]] = None,
+        ignore_missing_elements: bool = False,
+        clear_set_mdx_list: Optional[List[str]] = None,
+        clear_target: Optional[bool] = False,
+        async_write: bool = False,
+        slice_size_of_dataframe: int = 250000,
+        use_ti: bool = False,
+        use_blob: bool = False,
+        increment: bool = False,
+        sum_numeric_duplicates: bool = True,
+        logging_level: str = "ERROR",
+        _execution_id: int = 0,
+        **kwargs
+) -> None:
+    """
+
+    """
+
+    utility.set_logging_level(logging_level=logging_level)
+    basic_logger.info("Execution started.")
+
+    target_metadata = utility.TM1CubeObjectMetadata.collect(
+        tm1_service=tm1_service,
+        cube_name=target_cube_name,
+        metadata_function=target_metadata_function,
+        collect_dim_element_identifiers=ignore_missing_elements,
+        **kwargs
+    )
+
+    dataframe = extractor.sql_to_dataframe(
+        sql_function=sql_function,
+        engine=sql_engine,
+        sql_query=sql_query,
+        table_name=sql_table_name,
+        table_columns=sql_table_columns,
+        schema=sql_schema,
+        chunksize=chunksize
+    )
+
+    transformer.normalize_table_source_dataframe(
+        dataframe=dataframe,
+        column_mapping=sql_column_mapping,
+        value_column_name=sql_value_column_name,
+        columns_to_keep=sql_columns_to_keep,
+        drop_other_columns=drop_other_sql_columns,
+    )
+
+    cube_name = target_metadata.get_cube_name()
+    cube_dims = target_metadata.get_cube_dims()
+
+    transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
+
+    if ignore_missing_elements:
+        transformer.dataframe_itemskip_elements(
+            dataframe=dataframe, check_dfs=target_metadata.get_dimension_check_dfs()
+        )
+
+    shared_mapping_df = None
+    if shared_mapping:
+        extractor.generate_dataframe_for_mapping_info(
+            mapping_info=shared_mapping,
+            tm1_service=tm1_service,
+            mdx_function=mdx_function,
+            sql_engine=sql_engine,
+            sql_function=sql_function
+        )
+        shared_mapping_df = shared_mapping["mapping_df"]
+
+    extractor.generate_step_specific_mapping_dataframes(
+        mapping_steps=mapping_steps,
+        tm1_service=tm1_service,
+        mdx_function=mdx_function,
+        sql_engine=sql_engine,
+        sql_function=sql_function
+    )
+
+    transformer.dataframe_execute_mappings(
+        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df
+    )
+
+    transformer.dataframe_redimension_and_transform(
+        dataframe=dataframe,
+        source_dim_mapping=source_dim_mapping,
+        related_dimensions=related_dimensions,
+        target_dim_mapping=target_dim_mapping
+    )
+
+    if value_function is not None:
+        transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
+
+    transformer.dataframe_reorder_dimensions(dataframe=dataframe, cube_dimensions=cube_dims)
+
+    if clear_target:
+        loader.clear_cube(
+            tm1_service=tm1_service,
+            cube_name=cube_name,
+            clear_set_mdx_list=clear_set_mdx_list,
+            **kwargs
+        )
+
+    loader.dataframe_to_cube(
+        tm1_service=tm1_service,
         dataframe=dataframe,
         cube_name=cube_name,
         cube_dims=cube_dims,

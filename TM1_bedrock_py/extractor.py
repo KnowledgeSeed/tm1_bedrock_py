@@ -144,7 +144,7 @@ def _handle_mapping_sql_query(
     column_mapping = step.get("sql_column_mapping")
     value_column = step.get("sql_value_column")
     drop_other = step.get("sql_drop_other_cols")
-    transformer.normalize_sql_dataframe(
+    transformer.normalize_table_source_dataframe(
         dataframe=dataframe,
         columns_to_keep=columns_to_keep, column_mapping=column_mapping, value_column_name=value_column,
         drop_other_columns=drop_other
