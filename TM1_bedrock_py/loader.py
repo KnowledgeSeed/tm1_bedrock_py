@@ -165,7 +165,7 @@ def __dataframe_to_sql_default(
         schema: Optional[str] = None,
         chunksize: Optional[int] = None,
         dtype: Optional[dict] = None,
-        method: Optional[Any] = None,
+        method: Optional[Any] = "multi",
         **kwargs
 ) -> None:
     if not engine:
@@ -180,6 +180,39 @@ def __dataframe_to_sql_default(
         method=method,
         index=index
     )
+
+
+@utility.log_exec_metrics
+def clear_table(
+        clear_function: Optional[Callable[..., Any]] = None,
+        **kwargs: Any
+) -> None:
+    """
+    Clears a cube with filters. If no custom function is provided, the default function is used.
+
+    Args:
+        clear_function (Optional[Callable]): A function to clear the cube using set MDXs.
+                                             Defaults to the built-in TM1 service function.
+        **kwargs (Any): Additional keyword arguments for the clear function, which may include:
+                        - tm1_service (TM1Service): An active TM1Service object for the server connection.
+                        - cube_name (str): The name of the cube to clear.
+                        - clear_set_mdx_list (List[str]): A list of valid MDX set expressions defining the clear space.
+    """
+    if clear_function is None:
+        clear_function = __clear_table_default
+    return clear_function(**kwargs)
+
+
+def __clear_table_default(
+        engine: Any,
+        table_name: Optional[str],
+        delete_statement: Optional[str]
+) -> None:
+    with engine.connect() as connection:
+        if delete_statement:
+            connection.execute(text(delete_statement))
+        elif table_name:
+            connection.execute(text("TRUNCATE TABLE [" + table_name + "]"))
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -215,38 +248,3 @@ def dataframe_to_csv(
           None
       """
     dataframe.to_csv(path_or_buf=csv_file_name, mode=mode, chunksize=chunksize, index=False)
-
-
-@utility.log_exec_metrics
-def clear_table(
-        clear_function: Optional[Callable[..., Any]] = None,
-        **kwargs: Any
-) -> None:
-    """
-    Clears a cube with filters. If no custom function is provided, the default function is used.
-
-    Args:
-        clear_function (Optional[Callable]): A function to clear the cube using set MDXs.
-                                             Defaults to the built-in TM1 service function.
-        **kwargs (Any): Additional keyword arguments for the clear function, which may include:
-                        - tm1_service (TM1Service): An active TM1Service object for the server connection.
-                        - cube_name (str): The name of the cube to clear.
-                        - clear_set_mdx_list (List[str]): A list of valid MDX set expressions defining the clear space.
-    """
-    if clear_function is None:
-        clear_function = __clear_table_default
-    return clear_function(**kwargs)
-
-
-def __clear_table_default(
-        engine: Any,
-        table_name: Optional[str],
-        delete_statement: Optional[str]
-) -> None:
-    with engine.connect() as connection:
-        if table_name:
-            connection.execute(text("TRUNCATE TABLE [" + table_name + "]"))
-        elif delete_statement:
-            connection.execute(text(delete_statement))
-
-
