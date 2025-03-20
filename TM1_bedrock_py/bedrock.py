@@ -11,6 +11,7 @@ from TM1_bedrock_py import utility, transformer, loader, extractor, basic_logger
 @utility.log_exec_metrics
 def data_copy_intercube(
         tm1_service: Optional[Any],
+        target_tm1_service: Optional[Any],
         data_mdx: Optional[str] = None,
         mdx_function: Optional[Callable[..., DataFrame]] = None,
         sql_engine: Optional[Any] = None,
@@ -247,16 +248,19 @@ def data_copy_intercube(
 
     transformer.dataframe_reorder_dimensions(dataframe=dataframe, cube_dimensions=target_metadata.get_cube_dims())
 
+    if not target_tm1_service:
+        target_tm1_service = tm1_service
+
     if clear_target:
         loader.clear_cube(
-            tm1_service=tm1_service,
+            tm1_service=target_tm1_service,
             cube_name=target_cube_name,
             clear_set_mdx_list=target_clear_set_mdx_list,
             **kwargs
         )
 
     loader.dataframe_to_cube(
-        tm1_service=tm1_service,
+        tm1_service=target_tm1_service,
         dataframe=dataframe,
         cube_name=target_cube_name,
         cube_dims=target_metadata.get_cube_dims(),
@@ -281,6 +285,7 @@ def data_copy_intercube(
 @utility.log_exec_metrics
 def data_copy(
         tm1_service: Optional[Any],
+        target_tm1_service: Optional[Any],
         data_mdx: Optional[str] = None,
         mdx_function: Optional[Callable[..., DataFrame]] = None,
         sql_engine: Optional[Any] = None,
@@ -472,16 +477,19 @@ def data_copy(
 
     transformer.dataframe_reorder_dimensions(dataframe=dataframe, cube_dimensions=cube_dims)
 
+    if not target_tm1_service:
+        target_tm1_service = tm1_service
+
     if clear_target:
         loader.clear_cube(
-            tm1_service=tm1_service,
+            tm1_service=target_tm1_service,
             cube_name=cube_name,
             clear_set_mdx_list=clear_set_mdx_list,
             **kwargs
         )
 
     loader.dataframe_to_cube(
-        tm1_service=tm1_service,
+        tm1_service=target_tm1_service,
         dataframe=dataframe,
         cube_name=cube_name,
         cube_dims=cube_dims,
