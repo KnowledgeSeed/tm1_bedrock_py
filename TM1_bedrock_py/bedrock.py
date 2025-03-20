@@ -432,6 +432,9 @@ def data_copy(
     utility.set_logging_level(logging_level=logging_level)
     basic_logger.info("Execution started.")
 
+    if not target_tm1_service:
+        target_tm1_service = tm1_service
+
     dataframe = extractor.tm1_mdx_to_dataframe(
         tm1_service=tm1_service,
         data_mdx=data_mdx,
@@ -490,9 +493,6 @@ def data_copy(
         transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
 
     transformer.dataframe_reorder_dimensions(dataframe=dataframe, cube_dimensions=cube_dims)
-
-    if not target_tm1_service:
-        target_tm1_service = tm1_service
 
     if clear_target:
         loader.clear_cube(
