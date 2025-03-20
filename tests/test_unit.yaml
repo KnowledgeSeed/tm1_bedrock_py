@@ -834,3 +834,14 @@ test_mssql_loader_replace:
     }
     table_name: "Write Test Table"
     if_exists: "append"
+
+test_dataframe_to_csv:
+  -
+    expected_dataframe: {
+      "ID": ["A001", "A002", "A003", "A004", "A005"],
+      "Name": ["Product A", "Product B", "Product C", "Product D", "Product E"],
+      "Category": ["Electronics", "Furniture", "Electronics", "Clothing", "Furniture"],
+      "Quantity": [10, 5, 8, 12, 7],
+      "Price": [199.99, 79.99, 149.99, 39.99, 99.99],
+      "Date": ["2024-02-01", "2024-02-02", "2024-02-03", "2024-02-04", "2024-02-05"],
+    }

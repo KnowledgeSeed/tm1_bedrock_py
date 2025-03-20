@@ -182,6 +182,41 @@ def __dataframe_to_sql_default(
     )
 
 
+# ------------------------------------------------------------------------------------------------------------
+# pandas dataframe into CSV functions
+# ------------------------------------------------------------------------------------------------------------
+
+
+@utility.log_exec_metrics
+def dataframe_to_csv(
+        dataframe: DataFrame,
+        csv_file_name: str,
+        mode: str = "a",
+        chunksize: int | None = None,
+        **kwargs
+) -> None:
+    """
+      Retrieves a DataFrame by executing the provided SQL function
+
+      Args:
+          dataframe (DataFrame): A DataFrame that is to be written into a CSV file.
+          csv_file_name (str): The name of the CSV file that is written into.
+          mode : {{'w', 'x', 'a'}}, default 'w'
+            Forwarded to either `open(mode=)` or `fsspec.open(mode=)` to control
+            the file opening. Typical values include:
+            - 'w', truncate the file first.
+            - 'x', exclusive creation, failing if the file already exists.
+            - 'a', append to the end of file if it exists.
+          chunksize : int or None
+            Rows to write at a time.
+          **kwargs (Any): Additional keyword arguments.
+
+      Returns:
+          None
+      """
+    dataframe.to_csv(path_or_buf=csv_file_name, mode=mode, chunksize=chunksize, index=False)
+
+
 @utility.log_exec_metrics
 def clear_table(
         clear_function: Optional[Callable[..., Any]] = None,

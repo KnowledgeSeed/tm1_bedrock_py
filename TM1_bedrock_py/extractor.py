@@ -1,5 +1,6 @@
 from typing import Callable, List, Dict, Optional, Any
 
+import pandas as pd
 from TM1py import TM1Service
 from pandas import DataFrame, read_sql_table, read_sql_query, concat
 
@@ -270,3 +271,27 @@ def __sql_to_dataframe_default(
             return concat(chunks, ignore_index=True)
         else:
             return read_sql_query(sql=sql_query, con=engine)
+
+
+# ------------------------------------------------------------------------------------------------------------
+# CSV query to pandas dataframe functions
+# ------------------------------------------------------------------------------------------------------------
+
+
+@utility.log_exec_metrics
+def csv_to_dataframe(
+        csv_file_name: str,
+        **kwargs: Any
+) -> DataFrame:
+    """
+    Retrieves a DataFrame from a CSV file.
+
+    Args:
+        csv_file_name: (Optional[str]): The name of the CSV file that is extracted to a DataFrame.
+        **kwargs (Any): Additional keyword arguments.
+
+    Returns:
+        DataFrame: The DataFrame resulting from the CSV file.
+    """
+
+    return pd.read_csv(csv_file_name)

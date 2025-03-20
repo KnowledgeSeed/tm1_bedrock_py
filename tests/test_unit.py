@@ -1,4 +1,5 @@
 import configparser
+import os
 from pathlib import Path
 
 from TM1py.Exceptions import TM1pyRestException
@@ -514,3 +515,20 @@ def test_sql_normalize_keep_and_drop(sql_engine, dataframe, expected, keep, drop
 def test_mssql_loader_replace(sql_engine, dataframe, if_exists, table_name):
     df = pd.DataFrame(dataframe)
     loader.dataframe_to_sql(dataframe=df, engine=sql_engine, table_name=table_name, if_exists=if_exists, index=False)
+
+
+@parametrize_from_file
+def test_dataframe_to_csv(expected_dataframe):
+    """
+        Loads data from DataFrame file to a CSV file then does the reverse. Checks if the DataFrame stayed the same after the operations.
+        Deletes CSV file after assertion.
+    """
+
+    csv_file_name = "sample_data.csv"
+    expected_df = pd.DataFrame(expected_dataframe)
+    loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name)
+    df = extractor.csv_to_dataframe(f"./{csv_file_name}")
+
+    pd.testing.assert_frame_equal(df, expected_df)
+    if os.path.exists(csv_file_name):
+        os.remove(csv_file_name)
