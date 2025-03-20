@@ -1,7 +1,7 @@
 """
 This file is a collection of upgraded TM1 bedrock functionality, ported to python / pandas with the help of TM1py.
 """
-from typing import Callable, List, Dict, Optional, Any
+from typing import Callable, List, Dict, Optional, Any, Literal
 
 from pandas import DataFrame
 
@@ -29,6 +29,7 @@ def data_copy_intercube(
         related_dimensions: Optional[dict] = None,
         target_dim_mapping: Optional[dict] = None,
         value_function: Optional[Callable[..., Any]] = None,
+        ignore_missing_elements: bool = False,
         clear_target: Optional[bool] = False,
         target_clear_set_mdx_list: Optional[List[str]] = None,
         clear_source: Optional[bool] = False,
@@ -206,12 +207,18 @@ def data_copy_intercube(
         tm1_service=tm1_service,
         cube_name=target_cube_name,
         metadata_function=target_metadata_function,
+        collect_dim_element_identifiers=ignore_missing_elements,
         **kwargs
     )
     target_cube_name = target_metadata.get_cube_name()
 
     transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
     transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
+
+    if ignore_missing_elements:
+        transformer.dataframe_itemskip_elements(
+            dataframe=dataframe, check_dfs=target_metadata.get_dimension_check_dfs()
+        )
 
     shared_mapping_df = None
     if shared_mapping:
@@ -298,6 +305,7 @@ def data_copy(
         mapping_steps: Optional[List[Dict]] = None,
         shared_mapping: Optional[Dict] = None,
         value_function: Optional[Callable[..., Any]] = None,
+        ignore_missing_elements: bool = False,
         clear_set_mdx_list: Optional[List[str]] = None,
         clear_target: Optional[bool] = False,
         async_write: bool = False,
@@ -441,6 +449,7 @@ def data_copy(
         tm1_service=tm1_service,
         mdx=data_mdx,
         metadata_function=data_metadata_function,
+        collect_dim_element_identifiers=ignore_missing_elements,
         **kwargs
     )
     cube_name = data_metadata.get_cube_name()
@@ -448,6 +457,11 @@ def data_copy(
 
     transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
     transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
+
+    if ignore_missing_elements:
+        transformer.dataframe_itemskip_elements(
+            dataframe=dataframe, check_dfs=data_metadata.get_dimension_check_dfs()
+        )
 
     shared_mapping_df = None
     if shared_mapping:

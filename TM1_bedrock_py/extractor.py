@@ -83,24 +83,6 @@ def __tm1_mdx_to_dataframe_default(
 
 
 # ------------------------------------------------------------------------------------------------------------
-# utility extractor for metadata
-# ------------------------------------------------------------------------------------------------------------
-
-
-@utility.log_exec_metrics
-def all_leaves_identifiers_to_dataframe(
-        tm1_service: Any, dimension_name: [str], hierarchy_name: Optional[str] = None
-) -> DataFrame:
-    # caseandspaceinsensitiveset datastruct to dataframe
-    if not hierarchy_name:
-        hierarchy_name = dimension_name
-    dataset = tm1_service.elements.get_all_leaf_element_identifiers(
-        dimension_name=dimension_name, hierarchy_name=hierarchy_name
-    )
-    return DataFrame({dimension_name: list(dataset)})
-
-
-# ------------------------------------------------------------------------------------------------------------
 # mapping handler extractors
 # ------------------------------------------------------------------------------------------------------------
 
