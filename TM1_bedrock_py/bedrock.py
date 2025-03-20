@@ -446,7 +446,7 @@ def data_copy(
         return
 
     data_metadata = utility.TM1CubeObjectMetadata.collect(
-        tm1_service=tm1_service,
+        tm1_service=target_tm1_service,
         mdx=data_mdx,
         metadata_function=data_metadata_function,
         collect_dim_element_identifiers=ignore_missing_elements,
