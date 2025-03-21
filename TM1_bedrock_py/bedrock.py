@@ -215,6 +215,7 @@ def data_copy_intercube(
     )
     target_cube_name = target_metadata.get_cube_name()
 
+    dataframe.fillna(0.0)
     transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
     transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
 
@@ -458,6 +459,7 @@ def data_copy(
     cube_name = data_metadata.get_cube_name()
     cube_dims = data_metadata.get_cube_dims()
 
+    dataframe.fillna(0.0)
     transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
     transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
 
@@ -590,6 +592,7 @@ def load_sql_data_to_tm1_cube(
     cube_name = target_metadata.get_cube_name()
     cube_dims = target_metadata.get_cube_dims()
 
+    dataframe.fillna(0.0)
     transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
 
     if ignore_missing_elements:
@@ -712,6 +715,7 @@ def load_tm1_cube_to_sql_table(
         **kwargs
     )
 
+    dataframe.fillna(0.0)
     transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
     transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
 

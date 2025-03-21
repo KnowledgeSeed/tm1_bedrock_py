@@ -122,6 +122,7 @@ def _handle_mapping_mdx(
         **kwargs
     )
     filter_dict = metadata_object.get_filter_dict()
+    dataframe.fillna(0.0)
     transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=filter_dict)
     transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
 
@@ -146,6 +147,8 @@ def _handle_mapping_sql_query(
     column_mapping = step.get("sql_column_mapping")
     value_column = step.get("sql_value_column")
     drop_other = step.get("sql_drop_other_cols")
+
+    dataframe.fillna(0.0)
     transformer.normalize_table_source_dataframe(
         dataframe=dataframe,
         columns_to_keep=columns_to_keep, column_mapping=column_mapping, value_column_name=value_column,
@@ -238,26 +241,22 @@ def __sql_to_dataframe_default(
 ) -> DataFrame:
     if not engine:
         engine = utility.create_sql_engine(**kwargs)
+
+    def fetch(func, **fetch_kwargs):
+        return (
+            concat(list(func(**fetch_kwargs)), ignore_index=True)
+            if chunksize else func(**fetch_kwargs)
+        )
+
     if table_name:
-        if chunksize:
-            chunks = []
-            for chunk in read_sql_table(
-                con=engine, table_name=table_name, columns=table_columns, schema=schema, chunksize=chunksize
-            ):
-                chunks.append(chunk)
-            return concat(chunks, ignore_index=True)
-        else:
-            return read_sql_table(
-                con=engine, table_name=table_name, columns=table_columns, schema=schema
-            )
+        return fetch(
+            read_sql_table, con=engine, table_name=table_name, columns=table_columns, schema=schema, chunksize=chunksize
+        )
+
     if sql_query:
-        if chunksize:
-            chunks = []
-            for chunk in read_sql_query(sql=sql_query, con=engine, chunksize=chunksize):
-                chunks.append(chunk)
-            return concat(chunks, ignore_index=True)
-        else:
-            return read_sql_query(sql=sql_query, con=engine)
+        return fetch(read_sql_query, sql=sql_query, con=engine, chunksize=chunksize)
+
+    raise ValueError("Either 'table_name' or 'sql_query' must be provided.")
 
 
 # ------------------------------------------------------------------------------------------------------------
