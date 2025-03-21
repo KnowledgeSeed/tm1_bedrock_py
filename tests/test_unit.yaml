@@ -837,6 +837,14 @@ test_mssql_loader_replace:
 
 test_dataframe_to_csv:
   -
+    data_dataframe: {
+      "ID": ["A001", "A002", "A003", "A004", "A005"],
+      "Name": ["Product A", "Product B", "Product C", "Product D", "Product E"],
+      "Category": ["Electronics", "Furniture", "Electronics", "Clothing", "Furniture"],
+      "Quantity": [10, 5, 8, 12, 7],
+      "Price": [199.99, 79.99, 149.99, 39.99, 99.99],
+      "Date": ["2024-02-01", "2024-02-02", "2024-02-03", "2024-02-04", "2024-02-05"],
+    }
     expected_dataframe: {
       "ID": ["A001", "A002", "A003", "A004", "A005"],
       "Name": ["Product A", "Product B", "Product C", "Product D", "Product E"],
@@ -846,13 +854,58 @@ test_dataframe_to_csv:
       "Date": ["2024-02-01", "2024-02-02", "2024-02-03", "2024-02-04", "2024-02-05"],
     }
   -
-    expected_dataframe: {
+    data_dataframe: {
       "ID": ["A001", "A002", "A003", "A004", "A005"],
       "Price": [199.99, NaN, 149.99, 39.99, NaN],
       "Quantity": [10, 5, NaN, 12, 7]
     }
+    expected_dataframe: {
+      "ID": [ "A001", "A002", "A003", "A004", "A005" ],
+      "Price": [ 199.99, 0.0, 149.99, 39.99, 0.0 ],
+      "Quantity": [ 10, 5, 0.0, 12, 7 ]
+    }
 
 test_dataframe_to_csv_build_dataframe_form_mdx:
+  -
+    data_mdx:
+      "SELECT 
+           {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],
+           [Periods].[Periods].[202304],[Periods].[Periods].[202305],[Periods].[Periods].[202306],
+           [Periods].[Periods].[202307],[Periods].[Periods].[202308],[Periods].[Periods].[202309],
+           [Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]}  
+          ON COLUMNS , 
+           {[Groups].[Groups].Members}
+           * {[Employees].[Employees].Members} 
+          ON ROWS 
+        FROM [Cost and FTE by Groups] 
+        WHERE 
+          (
+           [Versions].[Versions].[Base Plan], 
+           [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[FTE],
+           [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
+          )"
+
+test_dataframe_to_csv_build_dataframe_form_mdx_with_param_optimisation:
+  -
+    data_mdx:
+      "SELECT 
+           {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],
+           [Periods].[Periods].[202304],[Periods].[Periods].[202305],[Periods].[Periods].[202306],
+           [Periods].[Periods].[202307],[Periods].[Periods].[202308],[Periods].[Periods].[202309],
+           [Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]}  
+          ON COLUMNS , 
+           {[Groups].[Groups].Members}
+           * {[Employees].[Employees].Members} 
+          ON ROWS 
+        FROM [Cost and FTE by Groups] 
+        WHERE 
+          (
+           [Versions].[Versions].[Base Plan], 
+           [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[FTE],
+           [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
+          )"
+
+test_dataframe_to_csv_build_dataframe_form_mdx_fail:
   -
     data_mdx:
       "SELECT 

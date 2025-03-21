@@ -517,26 +517,33 @@ def test_mssql_loader_replace(sql_engine, dataframe, if_exists, table_name):
 
 
 @parametrize_from_file
-def test_dataframe_to_csv(expected_dataframe):
+def test_dataframe_to_csv(data_dataframe, expected_dataframe):
     """
         Loads data from DataFrame file to a CSV file then does the reverse. Checks if the DataFrame stayed the same after the operations.
         Deletes CSV file after assertion.
     """
     csv_file_name = "sample_data.csv"
     try:
-        expected_df = pd.DataFrame(expected_dataframe)
-        expected_df = expected_df.replace({"NaN": 0})  # Normalize NaNs
-        dtype_mapping = expected_df.dtypes.apply(lambda x: x.name).to_dict()
+        data_df = pd.DataFrame(data_dataframe)
+        data_df = data_df.replace({"NaN": np.nan})  # Normalize NaNs
+        dtype_mapping = data_df.dtypes.apply(lambda x: x.name).to_dict()
 
-        loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, decimal=".", mode="w")
-        df = extractor.csv_to_dataframe(csv_file_path=f"./{csv_file_name}", decimal=".", na_values=["NaN", "nan", "None", "NULL"], dtype=dtype_mapping)
-        df = df.replace({np.nan: 0})  # Normalize NaNs
+        loader.dataframe_to_csv(dataframe=data_df, csv_file_name=csv_file_name, decimal=".", mode="w")
+        df = extractor.csv_to_dataframe(
+            csv_file_path=f"./{csv_file_name}",
+            decimal=".",
+            dtype=dtype_mapping,
+            keep_default_na=False,
+            na_values=["NULL"]
+        )
+
+        expected_df = pd.DataFrame(expected_dataframe)
+
         pd.testing.assert_frame_equal(df, expected_df, check_dtype=True)
 
     finally:
         if os.path.exists(csv_file_name):
             os.remove(csv_file_name)
-
 
 
 @parametrize_from_file
@@ -545,7 +552,7 @@ def test_dataframe_to_csv_build_dataframe_form_mdx(tm1_connection, data_mdx):
         Loads data from DataFrame file to a CSV file then does the reverse. Checks if the DataFrame stayed the same after the operations.
         Deletes CSV file after assertion.
     """
-    csv_file_name = "sample_data.csv"
+    csv_file_name = "sample_data0.csv"
     try:
         expected_df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
         dtype_mapping = expected_df.dtypes.apply(lambda x: x.name).to_dict()
@@ -560,3 +567,52 @@ def test_dataframe_to_csv_build_dataframe_form_mdx(tm1_connection, data_mdx):
         if os.path.exists(csv_file_name):
             os.remove(csv_file_name)
 
+
+@parametrize_from_file
+def test_dataframe_to_csv_build_dataframe_form_mdx_with_param_optimisation(tm1_connection, data_mdx):
+    """
+        Loads data from DataFrame file to a CSV file then does the reverse. Checks if the DataFrame stayed the same after the operations.
+        Deletes CSV file after assertion.
+    """
+    csv_file_name = "sample_data1.csv"
+    try:
+        expected_df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
+        dtype_mapping = expected_df.dtypes.apply(lambda x: x.name).to_dict()
+
+        loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, decimal=".", mode="w")
+        #sleep(5)
+        df = extractor.csv_to_dataframe(
+                csv_file_path=f"./{csv_file_name}",
+                decimal=".",
+                dtype=dtype_mapping,
+                chunksize= 204
+        )
+
+        print(df)
+        pd.testing.assert_frame_equal(df, expected_df)
+
+    finally:
+        if os.path.exists(csv_file_name):
+            os.remove(csv_file_name)
+
+
+@parametrize_from_file
+def test_dataframe_to_csv_build_dataframe_form_mdx_fail(tm1_connection, data_mdx):
+    """
+        Loads data from DataFrame file to a CSV file then does the reverse. Checks if the DataFrame stayed the same after the operations.
+        As the original data types are not passed to the function, the types differ.
+        Expected to fail.
+        Deletes CSV file after assertion.
+    """
+    csv_file_name = "sample_data2.csv"
+    with pytest.raises(AssertionError):
+        try:
+            expected_df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
+
+            loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, decimal=".", mode="w")
+            df = extractor.csv_to_dataframe(csv_file_path=f"./{csv_file_name}", decimal=".")
+            pd.testing.assert_frame_equal(df, expected_df)
+
+        finally:
+            if os.path.exists(csv_file_name):
+                os.remove(csv_file_name)

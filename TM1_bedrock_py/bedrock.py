@@ -11,7 +11,7 @@ from TM1_bedrock_py import utility, transformer, loader, extractor, basic_logger
 @utility.log_exec_metrics
 def data_copy_intercube(
         tm1_service: Optional[Any],
-        target_tm1_service: Optional[Any],
+        target_tm1_service: Optional[Any] = None,
         data_mdx: Optional[str] = None,
         mdx_function: Optional[Callable[..., DataFrame]] = None,
         sql_engine: Optional[Any] = None,
@@ -292,7 +292,7 @@ def data_copy_intercube(
 @utility.log_exec_metrics
 def data_copy(
         tm1_service: Optional[Any],
-        target_tm1_service: Optional[Any],
+        target_tm1_service: Optional[Any] = None,
         data_mdx: Optional[str] = None,
         mdx_function: Optional[Callable[..., DataFrame]] = None,
         sql_engine: Optional[Any] = None,

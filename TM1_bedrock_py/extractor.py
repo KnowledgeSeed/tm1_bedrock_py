@@ -2,9 +2,8 @@ from typing import Callable, List, Dict, Optional, Any
 
 import pandas as pd
 from TM1py import TM1Service
-from pandas import DataFrame, read_sql_table, read_sql_query, concat
+from pandas import DataFrame, read_sql_table, read_sql_query, concat, read_csv
 from typing import Sequence, Hashable, Mapping, Iterable
-from pandas._typing import UsecolsArgType
 
 from TM1_bedrock_py import utility, transformer
 
@@ -33,7 +32,7 @@ def tm1_mdx_to_dataframe(
     if mdx_function is None:
         mdx_function = __tm1_mdx_to_dataframe_default
 
-    return mdx_function(**kwargs)
+    return mdx_function(**kwargs).fillna(0.0)
 
 
 def __tm1_mdx_to_dataframe_default(
@@ -224,7 +223,7 @@ def sql_to_dataframe(
     if sql_function is None:
         sql_function = __sql_to_dataframe_default
 
-    return sql_function(**kwargs)
+    return sql_function(**kwargs).fillna(0.0)
 
 
 def __sql_to_dataframe_default(
@@ -284,7 +283,7 @@ def csv_to_dataframe(
     if csv_function is None:
         csv_function = __csv_to_dataframe_default
 
-    return csv_function(**kwargs)
+    return csv_function(**kwargs).fillna(0.0)
 
 
 def __csv_to_dataframe_default(
@@ -292,7 +291,6 @@ def __csv_to_dataframe_default(
         sep: Optional[str] = None,
         decimal: Optional[str] = None,
         dtype: Optional[dict] = None,
-        usecols: Optional[UsecolsArgType] = None,
         nrows: Optional[int | None] = None,
         chunksize: Optional[int | None] = None,
         parse_dates: Optional[bool | Sequence[Hashable] | None] = None,
@@ -313,10 +311,6 @@ def __csv_to_dataframe_default(
         sep: (Optional[str]): Field delimiter for the output file. If None, it uses the local standard separator.
         decimal: (Optional[str]): Character recognized as decimal separator. If None, it uses the local standard separator.
         dtype: (Optional[dict]): Data types to apply to the whole dataset or individual columns.
-        usecols: (Optional[UsecolsArgType]):
-                Columns to select.
-                If List-like: Elements must be positional or strings matching corresponding column names.
-                If Callable: Evaluates the function against the column names.
         nrows: (Optional[int | None]): Number of rows to read.
         chunksize : (Optional[int | None]): Number of rows to read from file per chunk.
         parse_dates: (Optional[bool | Sequence[Hashable] | None]):
@@ -340,18 +334,36 @@ def __csv_to_dataframe_default(
     if sep is None:
         sep = utility.get_local_regex_separator()
 
-    return DataFrame(pd.read_csv(
-        filepath_or_buffer=csv_file_path,
-        sep=sep,
-        decimal=decimal,
-        dtype=dtype,
-        usecols=usecols,
-        nrows=nrows,
-        chunksize=chunksize,
-        parse_dates=parse_dates,
-        na_values=na_values,
-        keep_default_na=keep_default_na,
-        low_memory=low_memory,
-        memory_map=memory_map,
-        **kwargs
-    ))
+    if chunksize:
+        chunks = []
+        for chunk in read_csv(
+            filepath_or_buffer=csv_file_path,
+            sep=sep,
+            decimal=decimal,
+            dtype=dtype,
+            nrows=nrows,
+            chunksize=chunksize,
+            parse_dates=parse_dates,
+            na_values=na_values,
+            keep_default_na=keep_default_na,
+            low_memory=low_memory,
+            memory_map=memory_map,
+            **kwargs
+        ):
+            chunks.append(chunk)
+        return concat(chunks, ignore_index=True)
+    else:
+        return read_csv(
+            filepath_or_buffer=csv_file_path,
+            sep=sep,
+            decimal=decimal,
+            dtype=dtype,
+            nrows=nrows,
+            chunksize=chunksize,
+            parse_dates=parse_dates,
+            na_values=na_values,
+            keep_default_na=keep_default_na,
+            low_memory=low_memory,
+            memory_map=memory_map,
+            **kwargs
+        )
