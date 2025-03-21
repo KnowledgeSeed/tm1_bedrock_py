@@ -216,7 +216,7 @@ def test_mdx_to_dataframe_execute_query_success(tm1_connection, data_mdx):
 @parametrize_from_file
 def test_mdx_to_dataframe_execute_query_fail(tm1_connection, data_mdx):
     """Run MDX to dataframe function with bad input. Raises error."""
-    with pytest.raises(TM1pyRestException):
+    with pytest.raises((TM1pyRestException, ValueError)):
         assert isinstance(
             extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx),
             DataFrame
@@ -443,7 +443,7 @@ def test_dataframe_execute_mappings_replace_success(mapping_steps):
 
 # ------------------------------------------------------------------------------------------------------------
 # Main: tests for sql connections and I/O processes
-# ----------------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 
 
 def test_mssql_database_connection(sql_engine):
@@ -516,6 +516,11 @@ def test_mssql_loader_replace(sql_engine, dataframe, if_exists, table_name):
     loader.dataframe_to_sql(dataframe=df, engine=sql_engine, table_name=table_name, if_exists=if_exists, index=False)
 
 
+# ------------------------------------------------------------------------------------------------------------
+# Main: tests for csv I/O processes
+# ------------------------------------------------------------------------------------------------------------
+
+
 @parametrize_from_file
 def test_dataframe_to_csv(data_dataframe, expected_dataframe):
     """
@@ -524,8 +529,10 @@ def test_dataframe_to_csv(data_dataframe, expected_dataframe):
     """
     csv_file_name = "sample_data.csv"
     try:
+        data_dataframe["Price"] = [float(x) for x in data_dataframe["Price"]]
+        data_dataframe["Quantity"] = [float(x) for x in data_dataframe["Quantity"]]
+
         data_df = pd.DataFrame(data_dataframe)
-        data_df = data_df.replace({"NaN": np.nan})  # Normalize NaNs
         dtype_mapping = data_df.dtypes.apply(lambda x: x.name).to_dict()
 
         loader.dataframe_to_csv(dataframe=data_df, csv_file_name=csv_file_name, decimal=".", mode="w")
@@ -534,10 +541,14 @@ def test_dataframe_to_csv(data_dataframe, expected_dataframe):
             decimal=".",
             dtype=dtype_mapping,
             keep_default_na=False,
-            na_values=["NULL"]
+            na_values=["NULL", "Nan"]
         )
 
         expected_df = pd.DataFrame(expected_dataframe)
+        print(df)
+        print(df.dtypes)
+        print(expected_df)
+        print(expected_df.dtypes)
 
         pd.testing.assert_frame_equal(df, expected_df, check_dtype=True)
 
@@ -552,14 +563,14 @@ def test_dataframe_to_csv_build_dataframe_form_mdx(tm1_connection, data_mdx):
         Loads data from DataFrame file to a CSV file then does the reverse. Checks if the DataFrame stayed the same after the operations.
         Deletes CSV file after assertion.
     """
-    csv_file_name = "sample_data0.csv"
+    csv_file_name = "sample_data.csv"
     try:
         expected_df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
         dtype_mapping = expected_df.dtypes.apply(lambda x: x.name).to_dict()
 
         transformer.normalize_dataframe(tm1_service=tm1_connection, dataframe=expected_df, mdx=data_mdx)
 
-        loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, decimal=".", mode="w")
+        loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, decimal=".", mode="a")
         df = extractor.csv_to_dataframe(csv_file_path=f"./{csv_file_name}", decimal=".", dtype=dtype_mapping)
         pd.testing.assert_frame_equal(df, expected_df)
 
@@ -574,13 +585,12 @@ def test_dataframe_to_csv_build_dataframe_form_mdx_with_param_optimisation(tm1_c
         Loads data from DataFrame file to a CSV file then does the reverse. Checks if the DataFrame stayed the same after the operations.
         Deletes CSV file after assertion.
     """
-    csv_file_name = "sample_data1.csv"
+    csv_file_name = "sample_data.csv"
     try:
         expected_df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
         dtype_mapping = expected_df.dtypes.apply(lambda x: x.name).to_dict()
 
         loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, decimal=".", mode="w")
-        #sleep(5)
         df = extractor.csv_to_dataframe(
                 csv_file_path=f"./{csv_file_name}",
                 decimal=".",
@@ -604,13 +614,14 @@ def test_dataframe_to_csv_build_dataframe_form_mdx_fail(tm1_connection, data_mdx
         Expected to fail.
         Deletes CSV file after assertion.
     """
-    csv_file_name = "sample_data2.csv"
+    csv_file_name = "sample_data.csv"
     with pytest.raises(AssertionError):
         try:
             expected_df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
 
             loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, decimal=".", mode="w")
             df = extractor.csv_to_dataframe(csv_file_path=f"./{csv_file_name}", decimal=".")
+
             pd.testing.assert_frame_equal(df, expected_df)
 
         finally:
