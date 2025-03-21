@@ -122,7 +122,7 @@ def _handle_mapping_mdx(
         **kwargs
     )
     filter_dict = metadata_object.get_filter_dict()
-    dataframe.fillna(0.0)
+
     transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=filter_dict)
     transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
 
@@ -148,7 +148,6 @@ def _handle_mapping_sql_query(
     value_column = step.get("sql_value_column")
     drop_other = step.get("sql_drop_other_cols")
 
-    dataframe.fillna(0.0)
     transformer.normalize_table_source_dataframe(
         dataframe=dataframe,
         columns_to_keep=columns_to_keep, column_mapping=column_mapping, value_column_name=value_column,
