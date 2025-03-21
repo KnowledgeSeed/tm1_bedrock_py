@@ -5,7 +5,7 @@ from TM1py import TM1Service
 from pandas import DataFrame, read_sql_table, read_sql_query, concat, read_csv
 from typing import Sequence, Hashable, Mapping, Iterable
 
-from TM1_bedrock_py import utility, transformer
+from TM1_bedrock_py import utility, transformer, basic_logger
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -71,7 +71,7 @@ def __tm1_mdx_to_dataframe_default(
             use_blob=True,
             decimal=utility.get_local_decimal_separator()
         )
-    else:
+    elif data_mdx:
         return tm1_service.cells.execute_mdx_dataframe(
             mdx=data_mdx,
             skip_zeros=skip_zeros,
@@ -81,6 +81,10 @@ def __tm1_mdx_to_dataframe_default(
             use_blob=True,
             decimal=utility.get_local_decimal_separator()
         )
+
+    msg = "Either data_mdx or data_mdx_list has to be specified."
+    basic_logger.error(msg)
+    raise ValueError(msg)
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -121,6 +125,7 @@ def _handle_mapping_mdx(
         **kwargs
     )
     filter_dict = metadata_object.get_filter_dict()
+
     transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=filter_dict)
     transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
 
@@ -145,6 +150,7 @@ def _handle_mapping_sql_query(
     column_mapping = step.get("sql_column_mapping")
     value_column = step.get("sql_value_column")
     drop_other = step.get("sql_drop_other_cols")
+
     transformer.normalize_table_source_dataframe(
         dataframe=dataframe,
         columns_to_keep=columns_to_keep, column_mapping=column_mapping, value_column_name=value_column,
@@ -237,26 +243,24 @@ def __sql_to_dataframe_default(
 ) -> DataFrame:
     if not engine:
         engine = utility.create_sql_engine(**kwargs)
+
+    def fetch(func, **fetch_kwargs):
+        return (
+            concat(list(func(**fetch_kwargs)), ignore_index=True)
+            if chunksize else func(**fetch_kwargs)
+        )
+
     if table_name:
-        if chunksize:
-            chunks = []
-            for chunk in read_sql_table(
-                con=engine, table_name=table_name, columns=table_columns, schema=schema, chunksize=chunksize
-            ):
-                chunks.append(chunk)
-            return concat(chunks, ignore_index=True)
-        else:
-            return read_sql_table(
-                con=engine, table_name=table_name, columns=table_columns, schema=schema
-            )
+        return fetch(
+            read_sql_table, con=engine, table_name=table_name, columns=table_columns, schema=schema, chunksize=chunksize
+        )
+
     if sql_query:
-        if chunksize:
-            chunks = []
-            for chunk in read_sql_query(sql=sql_query, con=engine, chunksize=chunksize):
-                chunks.append(chunk)
-            return concat(chunks, ignore_index=True)
-        else:
-            return read_sql_query(sql=sql_query, con=engine)
+        return fetch(read_sql_query, sql=sql_query, con=engine, chunksize=chunksize)
+
+    msg = "Either 'table_name' or 'sql_query' must be provided."
+    basic_logger.error(msg)
+    raise ValueError(msg)
 
 
 # ------------------------------------------------------------------------------------------------------------
