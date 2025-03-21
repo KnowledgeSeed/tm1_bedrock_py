@@ -6,7 +6,7 @@ from pandas import DataFrame, read_sql_table, read_sql_query, concat
 from typing import Sequence, Hashable, Mapping, Iterable
 from pandas._typing import UsecolsArgType
 
-from TM1_bedrock_py import utility, transformer
+from TM1_bedrock_py import utility, transformer, basic_logger
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -72,7 +72,7 @@ def __tm1_mdx_to_dataframe_default(
             use_blob=True,
             decimal=utility.get_local_decimal_separator()
         )
-    else:
+    elif data_mdx:
         return tm1_service.cells.execute_mdx_dataframe(
             mdx=data_mdx,
             skip_zeros=skip_zeros,
@@ -82,6 +82,10 @@ def __tm1_mdx_to_dataframe_default(
             use_blob=True,
             decimal=utility.get_local_decimal_separator()
         )
+
+    msg = "Either data_mdx or data_mdx_list has to be specified."
+    basic_logger.error(msg)
+    raise ValueError(msg)
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -255,7 +259,9 @@ def __sql_to_dataframe_default(
     if sql_query:
         return fetch(read_sql_query, sql=sql_query, con=engine, chunksize=chunksize)
 
-    raise ValueError("Either 'table_name' or 'sql_query' must be provided.")
+    msg = "Either 'table_name' or 'sql_query' must be provided."
+    basic_logger.error(msg)
+    raise ValueError(msg)
 
 
 # ------------------------------------------------------------------------------------------------------------
