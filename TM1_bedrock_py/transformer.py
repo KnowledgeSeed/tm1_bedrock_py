@@ -276,7 +276,7 @@ def dataframe_redimension_and_transform(
         dataframe_add_column_assign_value(dataframe=dataframe, column_value=target_dim_mapping)
 
 
-def normalize_sql_dataframe(
+def normalize_table_source_dataframe(
         dataframe: DataFrame,
         column_mapping: Optional[dict] = None,
         value_column_name: Optional[str] = None,

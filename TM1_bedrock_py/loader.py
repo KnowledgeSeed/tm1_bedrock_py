@@ -165,7 +165,7 @@ def __dataframe_to_sql_default(
         schema: Optional[str] = None,
         chunksize: Optional[int] = None,
         dtype: Optional[dict] = None,
-        method: Optional[Any] = None,
+        method: Optional[Any] = "multi",
         **kwargs
 ) -> None:
     if not engine:
@@ -209,10 +209,10 @@ def __clear_table_default(
         delete_statement: Optional[str]
 ) -> None:
     with engine.connect() as connection:
-        if table_name:
-            connection.execute(text("TRUNCATE TABLE [" + table_name + "]"))
-        elif delete_statement:
+        if delete_statement:
             connection.execute(text(delete_statement))
+        elif table_name:
+            connection.execute(text("TRUNCATE TABLE [" + table_name + "]"))
 
 
 # ------------------------------------------------------------------------------------------------------------

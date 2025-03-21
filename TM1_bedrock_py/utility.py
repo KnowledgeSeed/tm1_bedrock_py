@@ -162,6 +162,7 @@ class TM1CubeObjectMetadata:
     _DIM_HIERS = "hierarchies"
     _DEFAULT_NAME = "default member name"
     _DEFAULT_TYPE = "default member type"
+    _DIM_CHECK_DFS = "dimension check dataframes"
 
     def __init__(self) -> None:
         self._data: Dict[str, Union['TM1CubeObjectMetadata', Any]] = {}
@@ -198,6 +199,9 @@ class TM1CubeObjectMetadata:
     def get_filter_dict(self):
         return self[self._QUERY_FILTER_DICT]
 
+    def get_dimension_check_dfs(self):
+        return self[self._DIM_CHECK_DFS]
+
     @classmethod
     def _expand_query_metadata(cls, mdx: str, metadata: "TM1CubeObjectMetadata") -> None:
         """
@@ -228,6 +232,7 @@ class TM1CubeObjectMetadata:
             retrieve_all_dimension_data: Optional[Callable[..., Any]] = None,
             retrieve_dimension_data: Optional[Callable[..., Any]] = None,
             collect_extended_cube_metadata: Optional[bool] = False,
+            collect_dim_element_identifiers: Optional[bool] = False,
             **kwargs
     ) -> "TM1CubeObjectMetadata":
         """
@@ -263,6 +268,11 @@ class TM1CubeObjectMetadata:
         if retrieve_dimension_data is None:
             retrieve_dimension_data = cls.__tm1_dimension_data_collector_default
 
+        if collect_dim_element_identifiers:
+            cls.__collect_element_check_dataframes(
+                tm1_service=tm1_service, cube_dimensions=metadata.get_cube_dims(), metadata=metadata
+            )
+
         if collect_extended_cube_metadata:
             retrieve_all_dimension_data(
                 tm1_service=tm1_service,
@@ -294,6 +304,19 @@ class TM1CubeObjectMetadata:
             metadata_function = cls.__collect_default
 
         return metadata_function(**kwargs)
+
+    @classmethod
+    def __collect_element_check_dataframes(
+            cls,
+            tm1_service: Any,
+            cube_dimensions: List[str],
+            metadata: "TM1CubeObjectMetadata"
+    ) -> None:
+        metadata[cls._DIM_CHECK_DFS] = []
+        for dimension in cube_dimensions:
+            metadata[cls._DIM_CHECK_DFS].append(
+                all_leaves_identifiers_to_dataframe(tm1_service=tm1_service, dimension_name=dimension)
+            )
 
     @classmethod
     def __tm1_dimension_data_collector_for_cube(
@@ -627,3 +650,16 @@ def create_sql_engine(
 
 def inspect_table(engine: Any, table_name: str) -> dict:
     return inspect(engine).get_columns(table_name)
+
+
+@log_exec_metrics
+def all_leaves_identifiers_to_dataframe(
+        tm1_service: Any, dimension_name: [str], hierarchy_name: Optional[str] = None
+) -> DataFrame:
+    # caseandspaceinsensitiveset datastruct to dataframe
+    if not hierarchy_name:
+        hierarchy_name = dimension_name
+    dataset = tm1_service.elements.get_all_leaf_element_identifiers(
+        dimension_name=dimension_name, hierarchy_name=hierarchy_name
+    )
+    return DataFrame({dimension_name: list(dataset)})

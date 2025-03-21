@@ -1,7 +1,7 @@
 from TM1py import TM1Service
 import pprint
 from TM1_bedrock_py import utility, extractor, transformer
-from TM1_bedrock_py.transformer import normalize_sql_dataframe
+from TM1_bedrock_py.transformer import normalize_table_source_dataframe
 
 
 def manage():

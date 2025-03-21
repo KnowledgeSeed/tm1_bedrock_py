@@ -85,24 +85,6 @@ def __tm1_mdx_to_dataframe_default(
 
 
 # ------------------------------------------------------------------------------------------------------------
-# utility extractor for metadata
-# ------------------------------------------------------------------------------------------------------------
-
-
-@utility.log_exec_metrics
-def all_leaves_identifiers_to_dataframe(
-        tm1_service: Any, dimension_name: [str], hierarchy_name: Optional[str] = None
-) -> DataFrame:
-    # caseandspaceinsensitiveset datastruct to dataframe
-    if not hierarchy_name:
-        hierarchy_name = dimension_name
-    dataset = tm1_service.elements.get_all_leaf_element_identifiers(
-        dimension_name=dimension_name, hierarchy_name=hierarchy_name
-    )
-    return DataFrame({dimension_name: list(dataset)})
-
-
-# ------------------------------------------------------------------------------------------------------------
 # mapping handler extractors
 # ------------------------------------------------------------------------------------------------------------
 
@@ -122,9 +104,12 @@ def _handle_mapping_mdx(
 ) -> DataFrame:
     """Execute MDX and augment the resulting DataFrame with metadata."""
     mdx = step["mapping_mdx"]
+    step_specific_tm1_service = step.get("tm1_service")
+    if not step_specific_tm1_service:
+        step_specific_tm1_service = tm1_service
     dataframe = tm1_mdx_to_dataframe(
         mdx_function=mdx_function,
-        tm1_service=tm1_service,
+        tm1_service=step_specific_tm1_service,
         data_mdx=mdx,
         skip_zeros=True,
         skip_consolidated_cells=True,
@@ -132,7 +117,7 @@ def _handle_mapping_mdx(
     )
     metadata_object = utility.TM1CubeObjectMetadata.collect(
         metadata_function=step.get("mapping_metadata_function"),
-        tm1_service=tm1_service,
+        tm1_service=step_specific_tm1_service,
         mdx=mdx,
         **kwargs
     )
@@ -161,7 +146,7 @@ def _handle_mapping_sql_query(
     column_mapping = step.get("sql_column_mapping")
     value_column = step.get("sql_value_column")
     drop_other = step.get("sql_drop_other_cols")
-    transformer.normalize_sql_dataframe(
+    transformer.normalize_table_source_dataframe(
         dataframe=dataframe,
         columns_to_keep=columns_to_keep, column_mapping=column_mapping, value_column_name=value_column,
         drop_other_columns=drop_other

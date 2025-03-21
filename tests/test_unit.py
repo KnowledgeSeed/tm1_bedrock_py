@@ -489,7 +489,7 @@ def test_mssq_extract_query_with_chunksize(sql_engine, query, expected, chunksiz
 @parametrize_from_file
 def test_sql_normalize_relabel(sql_engine, dataframe, expected, column_mapping):
     df = pd.DataFrame(dataframe)
-    transformer.normalize_sql_dataframe(dataframe=df, column_mapping=column_mapping)
+    transformer.normalize_table_source_dataframe(dataframe=df, column_mapping=column_mapping)
     expected_df = pd.DataFrame(expected)
     pd.testing.assert_frame_equal(df, expected_df)
 
@@ -497,7 +497,7 @@ def test_sql_normalize_relabel(sql_engine, dataframe, expected, column_mapping):
 @parametrize_from_file
 def test_sql_normalize_valuecol_assign(sql_engine, dataframe, expected, valuecol):
     df = pd.DataFrame(dataframe)
-    transformer.normalize_sql_dataframe(dataframe=df, value_column_name=valuecol)
+    transformer.normalize_table_source_dataframe(dataframe=df, value_column_name=valuecol)
     expected_df = pd.DataFrame(expected)
     pd.testing.assert_frame_equal(df, expected_df)
 
@@ -505,7 +505,7 @@ def test_sql_normalize_valuecol_assign(sql_engine, dataframe, expected, valuecol
 @parametrize_from_file
 def test_sql_normalize_keep_and_drop(sql_engine, dataframe, expected, keep, drop):
     df = pd.DataFrame(dataframe)
-    transformer.normalize_sql_dataframe(dataframe=df, columns_to_keep=keep, drop_other_columns=drop)
+    transformer.normalize_table_source_dataframe(dataframe=df, columns_to_keep=keep, drop_other_columns=drop)
     expected_df = pd.DataFrame(expected)
     pd.testing.assert_frame_equal(df, expected_df)
 
