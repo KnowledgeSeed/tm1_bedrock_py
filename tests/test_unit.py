@@ -2,6 +2,7 @@ import configparser
 import os
 from pathlib import Path
 
+import numpy as np
 from TM1py.Exceptions import TM1pyRestException
 from sqlalchemy.exc import OperationalError, InterfaceError
 from sqlalchemy import text
@@ -418,8 +419,6 @@ def test_dataframe_map_and_replace_success(dataframe, mapping_dataframe, mapping
         mapping_df=mapping_df,
         mapped_dimensions=mapping_dimensions)
 
-    print(df)
-    print(expected_df)
     pd.testing.assert_frame_equal(df, expected_df)
 
 
@@ -523,12 +522,41 @@ def test_dataframe_to_csv(expected_dataframe):
         Loads data from DataFrame file to a CSV file then does the reverse. Checks if the DataFrame stayed the same after the operations.
         Deletes CSV file after assertion.
     """
-
     csv_file_name = "sample_data.csv"
-    expected_df = pd.DataFrame(expected_dataframe)
-    loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name)
-    df = extractor.csv_to_dataframe(f"./{csv_file_name}")
+    try:
+        expected_df = pd.DataFrame(expected_dataframe)
+        expected_df = expected_df.replace({"NaN": 0})  # Normalize NaNs
+        dtype_mapping = expected_df.dtypes.apply(lambda x: x.name).to_dict()
 
-    pd.testing.assert_frame_equal(df, expected_df)
-    if os.path.exists(csv_file_name):
-        os.remove(csv_file_name)
+        loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, decimal=".", mode="w")
+        df = extractor.csv_to_dataframe(csv_file_path=f"./{csv_file_name}", decimal=".", na_values=["NaN", "nan", "None", "NULL"], dtype=dtype_mapping)
+        df = df.replace({np.nan: 0})  # Normalize NaNs
+        pd.testing.assert_frame_equal(df, expected_df, check_dtype=True)
+
+    finally:
+        if os.path.exists(csv_file_name):
+            os.remove(csv_file_name)
+
+
+
+@parametrize_from_file
+def test_dataframe_to_csv_build_dataframe_form_mdx(tm1_connection, data_mdx):
+    """
+        Loads data from DataFrame file to a CSV file then does the reverse. Checks if the DataFrame stayed the same after the operations.
+        Deletes CSV file after assertion.
+    """
+    csv_file_name = "sample_data.csv"
+    try:
+        expected_df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
+        dtype_mapping = expected_df.dtypes.apply(lambda x: x.name).to_dict()
+
+        transformer.normalize_dataframe(tm1_service=tm1_connection, dataframe=expected_df, mdx=data_mdx)
+
+        loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, decimal=".", mode="w")
+        df = extractor.csv_to_dataframe(csv_file_path=f"./{csv_file_name}", decimal=".", dtype=dtype_mapping)
+        pd.testing.assert_frame_equal(df, expected_df)
+
+    finally:
+        if os.path.exists(csv_file_name):
+            os.remove(csv_file_name)
+

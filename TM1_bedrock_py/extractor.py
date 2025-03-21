@@ -3,6 +3,8 @@ from typing import Callable, List, Dict, Optional, Any
 import pandas as pd
 from TM1py import TM1Service
 from pandas import DataFrame, read_sql_table, read_sql_query, concat
+from typing import Sequence, Hashable, Mapping, Iterable
+from pandas._typing import UsecolsArgType
 
 from TM1_bedrock_py import utility, transformer
 
@@ -280,18 +282,91 @@ def __sql_to_dataframe_default(
 
 @utility.log_exec_metrics
 def csv_to_dataframe(
-        csv_file_name: str,
+        csv_function: Optional[Callable[..., DataFrame]] = None,
+        **kwargs: Any
+) -> DataFrame:
+    """
+    Retrieves a DataFrame by executing the provided SQL function
+
+    Args:
+        csv_function (Optional[Callable]): A function to execute the CSV parsing function and return a DataFrame.
+                                           If None, the default function is used.
+        **kwargs (Any): Additional keyword arguments.
+
+    Returns:
+        DataFrame: The DataFrame resulting from the CSV parsing function.
+    """
+    if csv_function is None:
+        csv_function = __csv_to_dataframe_default
+
+    return csv_function(**kwargs)
+
+
+def __csv_to_dataframe_default(
+        csv_file_path: str,
+        sep: Optional[str] = None,
+        decimal: Optional[str] = None,
+        dtype: Optional[dict] = None,
+        usecols: Optional[UsecolsArgType] = None,
+        nrows: Optional[int | None] = None,
+        chunksize: Optional[int | None] = None,
+        parse_dates: Optional[bool | Sequence[Hashable] | None] = None,
+        na_values: Optional[Hashable
+                   | Iterable[Hashable]
+                   | Mapping[Hashable, Iterable[Hashable]]
+                   | None] = None,
+        keep_default_na: Optional[bool] = True,
+        low_memory: bool = True,
+        memory_map: bool = True,
         **kwargs: Any
 ) -> DataFrame:
     """
     Retrieves a DataFrame from a CSV file.
 
     Args:
-        csv_file_name: (Optional[str]): The name of the CSV file that is extracted to a DataFrame.
+        csv_file_path: (str): The name of the CSV file that is extracted to a DataFrame.
+        sep: (Optional[str]): Field delimiter for the output file. If None, it uses the local standard separator.
+        decimal: (Optional[str]): Character recognized as decimal separator. If None, it uses the local standard separator.
+        dtype: (Optional[dict]): Data types to apply to the whole dataset or individual columns.
+        usecols: (Optional[UsecolsArgType]):
+                Columns to select.
+                If List-like: Elements must be positional or strings matching corresponding column names.
+                If Callable: Evaluates the function against the column names.
+        nrows: (Optional[int | None]): Number of rows to read.
+        chunksize : (Optional[int | None]): Number of rows to read from file per chunk.
+        parse_dates: (Optional[bool | Sequence[Hashable] | None]):
+        na_values: (Optional[Hashable
+                   | Iterable[Hashable]
+                   | Mapping[Hashable, Iterable[Hashable]]
+                   | None]): Detect missing values
+        keep_default_na: (Optional[bool]): Whether or ot to keep NaN values when parsing.
+        low_memory: (bool):
+                Default True.
+                Internally processes the file in chunks. Use with dtype to eliminate possible mixed type inference.
+                Reads entire file into one DataFrame.
+        memory_map: (bool): If csv_file_path is given it maps the file object directly to memory and eliminates I/O overhead.
         **kwargs (Any): Additional keyword arguments.
 
     Returns:
         DataFrame: The DataFrame resulting from the CSV file.
     """
+    if decimal is None:
+        decimal = utility.get_local_decimal_separator()
+    if sep is None:
+        sep = utility.get_local_regex_separator()
 
-    return pd.read_csv(csv_file_name)
+    return DataFrame(pd.read_csv(
+        filepath_or_buffer=csv_file_path,
+        sep=sep,
+        decimal=decimal,
+        dtype=dtype,
+        usecols=usecols,
+        nrows=nrows,
+        chunksize=chunksize,
+        parse_dates=parse_dates,
+        na_values=na_values,
+        keep_default_na=keep_default_na,
+        low_memory=low_memory,
+        memory_map=memory_map,
+        **kwargs
+    ))

@@ -182,41 +182,6 @@ def __dataframe_to_sql_default(
     )
 
 
-# ------------------------------------------------------------------------------------------------------------
-# pandas dataframe into CSV functions
-# ------------------------------------------------------------------------------------------------------------
-
-
-@utility.log_exec_metrics
-def dataframe_to_csv(
-        dataframe: DataFrame,
-        csv_file_name: str,
-        mode: str = "a",
-        chunksize: int | None = None,
-        **kwargs
-) -> None:
-    """
-      Retrieves a DataFrame by executing the provided SQL function
-
-      Args:
-          dataframe (DataFrame): A DataFrame that is to be written into a CSV file.
-          csv_file_name (str): The name of the CSV file that is written into.
-          mode : {{'w', 'x', 'a'}}, default 'w'
-            Forwarded to either `open(mode=)` or `fsspec.open(mode=)` to control
-            the file opening. Typical values include:
-            - 'w', truncate the file first.
-            - 'x', exclusive creation, failing if the file already exists.
-            - 'a', append to the end of file if it exists.
-          chunksize : int or None
-            Rows to write at a time.
-          **kwargs (Any): Additional keyword arguments.
-
-      Returns:
-          None
-      """
-    dataframe.to_csv(path_or_buf=csv_file_name, mode=mode, chunksize=chunksize, index=False)
-
-
 @utility.log_exec_metrics
 def clear_table(
         clear_function: Optional[Callable[..., Any]] = None,
@@ -250,3 +215,62 @@ def __clear_table_default(
             connection.execute(text(delete_statement))
 
 
+# ------------------------------------------------------------------------------------------------------------
+# pandas dataframe into CSV functions
+# ------------------------------------------------------------------------------------------------------------
+
+
+@utility.log_exec_metrics
+def dataframe_to_csv(
+        dataframe: DataFrame,
+        csv_file_name: str,
+        mode: str = "a",
+        chunksize: Optional[int | None] = None,
+        float_format: Optional[str | Callable] = None,
+        sep: Optional[str] = None,
+        decimal: Optional[str] = None,
+        na_rep: Optional[str] = "NULL",
+        compression: Optional[str | dict] = None,
+        index: Optional[bool] = False,
+        **kwargs
+) -> None:
+    """
+      Retrieves a DataFrame by executing the provided SQL function
+
+      Args:
+          dataframe (DataFrame): A DataFrame that is to be written into a CSV file.
+          csv_file_name (str): The name of the CSV file that is written into.
+          mode : {{'w', 'x', 'a'}}, default 'w'
+            Forwarded to either `open(mode=)` or `fsspec.open(mode=)` to control
+            the file opening. Typical values include:
+            - 'w', truncate the file first.
+            - 'x', exclusive creation, failing if the file already exists.
+            - 'a', append to the end of file if it exists.
+          chunksize : (Optional[int | None]): Rows to write at a time.
+          float_format: (Optional[str]): Floating point format. Callable takes precedence over other numeric formatting like decimal.
+          sep: (Optional[str]): Field delimiter for the output file. If None, it uses the local standard separator.
+          decimal: (Optional[str]): Character recognized as decimal separator. If None, it uses the local standard separator.
+          na_rep: (Optional[str]): Missing data representation. Defaults to NULL.
+          compression: (Optional[str | dict]): For on-the-fly compression of the output data.
+          index: (Optional[bool]): Default False. If True, writes row indices.
+          **kwargs (Any): Additional keyword arguments.
+
+      Returns:
+          None
+      """
+    if decimal is None:
+        decimal = utility.get_local_decimal_separator()
+    if sep is None:
+        sep = utility.get_local_regex_separator()
+
+    dataframe.to_csv(
+        path_or_buf=csv_file_name,
+        mode=mode,
+        chunksize=chunksize,
+        float_format=float_format,
+        sep=sep,
+        decimal=decimal,
+        na_rep=na_rep,
+        compression=compression,
+        index=index
+    )

@@ -582,6 +582,20 @@ def get_local_decimal_separator() -> str:
     return locale.localeconv()['decimal_point']
 
 
+def get_local_regex_separator() -> str:
+    """Detects the CSV separator based on the system's locale settings with cross-platform support."""
+    try:
+        locale.setlocale(locale.LC_ALL, "")
+        decimal_sep = get_local_decimal_separator()
+
+        csv_sep = ";" if decimal_sep == "," else ","
+
+        return csv_sep
+    except Exception as e:
+        basic_logger.info(f"Warning: Unable to detect locale settings ({e}). Defaulting to comma (',').")
+        return ","
+
+
 def create_sql_engine(
         username: Optional[str] = None,
         password: Optional[str] = None,
