@@ -16,6 +16,7 @@ def data_copy_intercube(
         mdx_function: Optional[Callable[..., DataFrame]] = None,
         sql_engine: Optional[Any] = None,
         sql_function: Optional[Callable[..., DataFrame]] = None,
+        csv_function: Optional[Callable[..., DataFrame]] = None,
         data_mdx_list: Optional[list[str]] = None,
         skip_zeros: Optional[bool] = False,
         skip_consolidated_cells: Optional[bool] = False,
@@ -230,7 +231,8 @@ def data_copy_intercube(
             tm1_service=tm1_service,
             mdx_function=mdx_function,
             sql_engine=sql_engine,
-            sql_function=sql_function
+            sql_function=sql_function,
+            csv_function=csv_function
         )
         shared_mapping_df = shared_mapping["mapping_df"]
 
@@ -239,7 +241,8 @@ def data_copy_intercube(
         tm1_service=tm1_service,
         mdx_function=mdx_function,
         sql_engine=sql_engine,
-        sql_function=sql_function
+        sql_function=sql_function,
+        csv_function=csv_function
     )
 
     transformer.dataframe_execute_mappings(
@@ -297,6 +300,7 @@ def data_copy(
         mdx_function: Optional[Callable[..., DataFrame]] = None,
         sql_engine: Optional[Any] = None,
         sql_function: Optional[Callable[..., DataFrame]] = None,
+        csv_function: Optional[Callable[..., DataFrame]] = None,
         data_mdx_list: Optional[list[str]] = None,
         skip_zeros: Optional[bool] = False,
         skip_consolidated_cells: Optional[bool] = False,
@@ -473,7 +477,8 @@ def data_copy(
             tm1_service=tm1_service,
             mdx_function=mdx_function,
             sql_engine=sql_engine,
-            sql_function=sql_function
+            sql_function=sql_function,
+            csv_function=csv_function
         )
         shared_mapping_df = shared_mapping["mapping_df"]
 
@@ -482,7 +487,8 @@ def data_copy(
         tm1_service=tm1_service,
         mdx_function=mdx_function,
         sql_engine=sql_engine,
-        sql_function=sql_function
+        sql_function=sql_function,
+        csv_function=csv_function
     )
 
     transformer.dataframe_execute_mappings(
@@ -524,6 +530,7 @@ def load_sql_data_to_tm1_cube(
         tm1_service: Optional[Any],
         target_metadata_function: Optional[Callable[..., Any]] = None,
         mdx_function: Optional[Callable[..., DataFrame]] = None,
+        csv_function: Optional[Callable[..., DataFrame]] = None,
         sql_query: Optional[str] = None,
         sql_table_name: Optional[str] = None,
         sql_table_columns: Optional[str] = None,
@@ -604,7 +611,8 @@ def load_sql_data_to_tm1_cube(
             tm1_service=tm1_service,
             mdx_function=mdx_function,
             sql_engine=sql_engine,
-            sql_function=sql_function
+            sql_function=sql_function,
+            csv_function=csv_function
         )
         shared_mapping_df = shared_mapping["mapping_df"]
 
@@ -613,7 +621,8 @@ def load_sql_data_to_tm1_cube(
         tm1_service=tm1_service,
         mdx_function=mdx_function,
         sql_engine=sql_engine,
-        sql_function=sql_function
+        sql_function=sql_function,
+        csv_function=csv_function
     )
 
     transformer.dataframe_execute_mappings(
@@ -662,6 +671,7 @@ def load_tm1_cube_to_sql_table(
         target_table_name: str,
         sql_engine: Optional[Any] = None,
         sql_function: Optional[Callable[..., DataFrame]] = None,
+        csv_function: Optional[Callable[..., DataFrame]] = None,
         sql_schema: Optional[str] = None,
         chunksize: Optional[int] = None,
         data_mdx: Optional[str] = None,
@@ -722,7 +732,8 @@ def load_tm1_cube_to_sql_table(
             tm1_service=tm1_service,
             mdx_function=mdx_function,
             sql_engine=sql_engine,
-            sql_function=sql_function
+            sql_function=sql_function,
+            csv_function=csv_function
         )
         shared_mapping_df = shared_mapping["mapping_df"]
 
@@ -731,7 +742,8 @@ def load_tm1_cube_to_sql_table(
         tm1_service=tm1_service,
         mdx_function=mdx_function,
         sql_engine=sql_engine,
-        sql_function=sql_function
+        sql_function=sql_function,
+        csv_function=csv_function
     )
 
     transformer.dataframe_execute_mappings(

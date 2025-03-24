@@ -138,7 +138,7 @@ def _handle_mapping_sql_query(
         sql_function: Optional[Callable] = None,
         **kwargs
 ) -> DataFrame:
-    table_name = step.get("sql_table_name")
+    table_name = step.get("mapping_sql_table_name")
     schema = step.get("sql_schema")
     sql_query = step.get("mapping_sql_query")
     dataframe = sql_to_dataframe(
@@ -146,10 +146,10 @@ def _handle_mapping_sql_query(
         sql_query=sql_query, schema=schema, table_name=table_name,
         **kwargs
     )
-    columns_to_keep = step.get("sql_columns_to_keep")
-    column_mapping = step.get("sql_column_mapping")
-    value_column = step.get("sql_value_column")
-    drop_other = step.get("sql_drop_other_cols")
+    columns_to_keep = step.get("columns_to_keep")
+    column_mapping = step.get("column_mapping")
+    value_column = step.get("value_column")
+    drop_other = step.get("drop_other_cols")
 
     transformer.normalize_table_source_dataframe(
         dataframe=dataframe,
@@ -161,16 +161,50 @@ def _handle_mapping_sql_query(
 
 def _handle_mapping_csv(
         step: Dict[str, Any],
-        **_kwargs
+        csv_function: Optional[Callable] = None,
+        **kwargs
 ) -> None:
-    return None
+    """
+        csv_file_path: str,
+        sep: Optional[str] = None,
+        decimal: Optional[str] = None,
+        dtype: Optional[dict] = None,
+        chunksize: Optional[int | None] = None,
+    """
+    csv_file_path = step["mapping_csv_file_path"]
+    sep = step.get("csv_separator")
+    decimal = step.get("csv_decimal")
+    dtype = step.get("csv_dtype")
+    chunksize = step.get("csv_chunksize")
+    dataframe = csv_to_dataframe(
+        csv_function=csv_function,
+        csv_file_path=csv_file_path,
+        sep=sep, decimal=decimal,
+        dtype=dtype,
+        chunksize=chunksize
+    )
+
+    columns_to_keep = step.get("columns_to_keep")
+    column_mapping = step.get("column_mapping")
+    value_column = step.get("value_column")
+    drop_other = step.get("drop_other_cols")
+
+    transformer.normalize_table_source_dataframe(
+        dataframe=dataframe,
+        columns_to_keep=columns_to_keep, column_mapping=column_mapping, value_column_name=value_column,
+        drop_other_columns=drop_other
+    )
+    return dataframe
+
+
 
 
 MAPPING_HANDLERS = {
     "mapping_df": _handle_mapping_df,
     "mapping_mdx": _handle_mapping_mdx,
     "mapping_sql_query": _handle_mapping_sql_query,
-    "mapping_csv": _handle_mapping_csv
+    "mapping_sql_table_name": _handle_mapping_sql_query,
+    "mapping_csv_file_path": _handle_mapping_csv
 }
 
 
