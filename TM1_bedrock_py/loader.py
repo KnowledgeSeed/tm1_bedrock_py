@@ -274,3 +274,10 @@ def dataframe_to_csv(
         compression=compression,
         index=index
     )
+
+# ------------------------------------------------------------------------------------------------------------
+# continuation of tm1py's "relative proportional spread" input process - general input processes
+# ------------------------------------------------------------------------------------------------------------
+
+def relative_proportional_spread():
+    pass
