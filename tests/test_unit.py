@@ -627,3 +627,9 @@ def test_dataframe_to_csv_build_dataframe_form_mdx_fail(tm1_connection, data_mdx
         finally:
             if os.path.exists(csv_file_name):
                 os.remove(csv_file_name)
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Main: tests for input processes
+# ------------------------------------------------------------------------------------------------------------
+

@@ -1,6 +1,6 @@
 from TM1py import TM1Service
 import pprint
-from TM1_bedrock_py import utility, extractor, transformer
+from TM1_bedrock_py import utility, extractor, transformer, loader
 from TM1_bedrock_py.transformer import normalize_table_source_dataframe
 
 
@@ -76,14 +76,98 @@ def manage():
     print(columninfo)
     """
     tm1 = TM1Service(**tm1_params)
+
+
+    """
     
+    SELECT 
+       {[Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value],[Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Input]} 
+      ON COLUMNS , 
+       {[Versions].[Versions].[Base Plan],[Versions].[Versions].[Bedrock Input Test]} 
+      ON ROWS 
+    FROM [Cost and FTE by Groups] 
+    WHERE 
+      (
+       [Periods].[Periods].[202307],
+       [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[Caculated Salary],
+       [Employees].[Employees].[Total Employees],
+       [Groups].[Groups].[Total Groups]
+      )
+    
+    
+    unique_element_names=[
+                "[Groups].[Groups].[Total Groups]",
+                "[Employees].[Employees].[Total Employees]",
+                "[Periods].[Periods].[202307]",
+                "[Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[Caculated Salary]",
+                "[Versions].[Versions].[Bedrock Input Test]",
+                "[Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Input]"
+            ],
+    
+    
+    """
+
     try:
-        utility.set_logging_level("DEBUG")
-        data = extractor.all_leaves_identifiers_to_dataframe(tm1, "Periods")
-        print(data)
+        mdx = """
+            SELECT 
+               {[Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Input]} 
+              ON COLUMNS , 
+               {[Versions].[Versions].[Bedrock Input Test]} 
+              ON ROWS 
+            FROM [Cost and FTE by Groups] 
+            WHERE 
+              (
+               [Periods].[Periods].[202307],
+               [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[Caculated Salary],
+               [Employees].[Employees].[Total Employees],
+               [Groups].[Groups].[Total Groups]
+              )
+              """
+
+        """
+        loader.input_relative_proportional_spread(
+            tm1_service=tm1,
+            value=100000,
+            mdx=mdx,
+            reference_unique_element_names=[
+                "[Groups].[Groups].[Total Groups]",
+                "[Employees].[Employees].[Total Employees]",
+                "[Periods].[Periods].[202307]",
+                "[Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[Caculated Salary]",
+                "[Versions].[Versions].[Base Plan]",
+                "[Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]"
+            ],
+            cube="Cost and FTE by Groups"
+        )
+        """
+
+        mdx = """
+        SELECT 
+           {[Groups].[Groups].[Total Groups],[Groups].[Groups].[Total Groups^Group_1],[Groups].[Groups].[Total Groups^Group_2],[Groups].[Groups].[Total Groups^Group_3],[Groups].[Groups].[Group_4],[Groups].[Groups].[Group_5]} 
+          ON COLUMNS , 
+           {DRILLDOWNMEMBER({[Employees].[Employees].[Total Employees]}, {[Employees].[Employees].[Total Employees]})} 
+          ON ROWS 
+        FROM [Cost and FTE by Groups] 
+        WHERE 
+          (
+           [Periods].[Periods].[202307],
+           [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[Caculated Salary],
+           [Versions].[Versions].[Bedrock Input Test],
+           [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Input]
+          )
+        """
+
+        loader.input_repeat_value(
+            tm1_service=tm1,
+            value=5555,
+            mdx=mdx,
+            cube="Cost and FTE by Groups"
+        )
+
 
     finally:
         tm1.logout()
+
 
 
 if __name__ == '__main__':

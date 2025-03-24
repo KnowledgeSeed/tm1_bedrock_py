@@ -1,4 +1,4 @@
-from typing import Callable, List, Optional, Any, Literal
+from typing import Callable, List, Optional, Any, Literal, Dict
 from TM1py import TM1Service
 from pandas import DataFrame
 from sqlalchemy import text
@@ -7,8 +7,8 @@ from TM1_bedrock_py import utility
 # tm1py internal imports to implement function
 from typing import Iterable
 from requests import Response
-from TM1py.Utils import format_url, dimension_hierarchy_element_tuple_from_unique_name
-from TM1py.Services.CellService import CellService
+from TM1py.Utils import format_url, dimension_hierarchy_element_tuple_from_unique_name, add_url_parameters
+import json
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -285,10 +285,28 @@ def dataframe_to_csv(
 # ------------------------------------------------------------------------------------------------------------
 
 
-def relative_proportional_spread(
+def post_against_cellset(
+        tm1_service: Any, cellset_id: str, payload: Dict, sandbox_name: str = None, **kwargs
+) -> Response:
+    """ Execute a post request against a cellset
+
+    :param tm1_service:
+    :param cellset_id:
+    :param payload:
+    :param sandbox_name: str
+    :param kwargs:
+    :return:
+    """
+    url = format_url("/Cellsets('{}')/tm1.Update", cellset_id)
+    url = add_url_parameters(url, **{"!sandbox": sandbox_name})
+    return tm1_service._tm1_rest.POST(url=url, data=json.dumps(payload), **kwargs)
+
+
+def input_relative_proportional_spread(
+        tm1_service: Any,
+        mdx: [str],
         value: float,
         cube: str,
-        unique_element_names: Iterable[str],
         reference_unique_element_names: Iterable[str],
         reference_cube: str = None,
         sandbox_name: str = None,
@@ -296,20 +314,17 @@ def relative_proportional_spread(
 ) -> Response:
     """ Execute relative proportional spread
 
+    :param tm1_service:
     :param value: value to be spread
     :param cube: name of the cube
     :param unique_element_names: target cell coordinates as unique element names (e.g. ["[d1].[c1]","[d2].[e3]"])
     :param reference_cube: name of the reference cube. Can be None
     :param reference_unique_element_names: reference cell coordinates as unique element names
-    :param sandbox_name: str
+    :param sandbox_name: str,
+    :param mdx
     :return:
     """
-    mdx = """
-            SELECT
-            {{ {rows} }} ON 0
-            FROM [{cube}]
-            """.format(rows="}*{".join(unique_element_names), cube=cube)
-    cellset_id = CellService.create_cellset(mdx=mdx, sandbox_name=sandbox_name, **kwargs)
+    cellset_id = tm1_service.cells.create_cellset(mdx=mdx, sandbox_name=sandbox_name, **kwargs)
 
     payload = {
         "BeginOrdinal": 0,
@@ -323,6 +338,38 @@ def relative_proportional_spread(
                 "Dimensions('{}')/Hierarchies('{}')/Elements('{}')",
                 *dimension_hierarchy_element_tuple_from_unique_name(unique_element_name)))
 
-    return CellService._post_against_cellset(cellset_id=cellset_id, payload=payload, delete_cellset=True,
-                                      sandbox_name=sandbox_name, **kwargs)
+    return post_against_cellset(tm1_service=tm1_service, cellset_id=cellset_id, payload=payload, delete_cellset=True,
+                                sandbox_name=sandbox_name, **kwargs)
 
+
+def input_repeat_value(
+        tm1_service: Any,
+        mdx: [str],
+        value: float,
+        cube: str,
+        sandbox_name: str = None,
+        mode: str = '',
+        ** kwargs
+) -> Response:
+    """ Execute relative proportional spread
+
+    :param tm1_service:
+    :param value: value to be spread
+    :param cube: name of the cube
+    :param unique_element_names: target cell coordinates as unique element names (e.g. ["[d1].[c1]","[d2].[e3]"])
+    :param mode
+    :param mdx
+    :param sandbox_name: str
+    :return:
+    """
+    cellset_id = tm1_service.cells.create_cellset(mdx=mdx, sandbox_name=sandbox_name, **kwargs)
+
+    payload = {
+        "BeginOrdinal": 0,
+        "Value": "R" + mode + str(value),
+        "ReferenceCell@odata.bind": list(),
+        "ReferenceCube@odata.bind":
+            format_url("Cubes('{}')", cube)}
+
+    return post_against_cellset(tm1_service=tm1_service, cellset_id=cellset_id, payload=payload, delete_cellset=True,
+                                sandbox_name=sandbox_name, **kwargs)
