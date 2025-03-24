@@ -545,6 +545,21 @@ test_dataframe_value_scale:
       "Value": [ 242, 242, 242, 242 ]
     }
 
+test_dataframe_itemskip_elements:
+  -
+    source: {
+      "A": [ "apple", "banana", "cherry", "date" ],
+      "B": [ "x", "y", "z", "w" ],
+      "Value": [ 10, 20, 30, 40 ]
+    }
+    check1: {"A": ["apple", "cherry"]}
+    check2: {"B": ["x", "y"]}
+    expected: {
+      "A": [ "apple" ],
+      "B": [ "x" ],
+      "Value": [ 10 ]
+    }
+
 # Main: tests for dataframe remapping and copy functions
 test_dataframe_find_and_replace_success:
   -
@@ -709,3 +724,203 @@ test_dataframe_execute_mappings_map_and_join_shared_with_filter_and_drop_success
 
       }
     ]
+
+test_mssql_extract_full_table:
+  -
+    table_name: "Unit Test Table"
+    expected: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
+      "UnitTestFloatColumn1": [ 12.34, 12.34 ],
+      "UnitTestIntColumn2": [ 123, 123 ]
+    }
+
+test_mssql_extract_table_columns:
+  -
+    table_name: "Unit Test Table"
+    columns: ["UnitTestStringColumn1", "UnitTestFloatColumn1"]
+    expected: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestFloatColumn1": [ 12.34, 12.34 ],
+    }
+
+test_mssql_extract_query:
+  -
+    query: "SELECT [UnitTestStringColumn1], [UnitTestFloatColumn1] FROM dbo.[Unit Test Table]"
+    expected: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestFloatColumn1": [ 12.34, 12.34 ],
+    }
+  -
+    query: "SELECT * FROM dbo.[Unit Test Table]"
+    expected: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
+      "UnitTestFloatColumn1": [ 12.34, 12.34 ],
+      "UnitTestIntColumn2": [ 123, 123 ]
+    }
+
+test_mssq_extract_query_with_chunksize:
+  -
+    query: "SELECT [UnitTestStringColumn1], [UnitTestFloatColumn1] FROM dbo.[Unit Test Table]"
+    expected: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestFloatColumn1": [ 12.34, 12.34 ],
+    }
+    chunksize: 1
+  -
+    query: "SELECT * FROM dbo.[Unit Test Table]"
+    expected: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
+      "UnitTestFloatColumn1": [ 12.34, 12.34 ],
+      "UnitTestIntColumn2": [ 123, 123 ]
+    }
+    chunksize: 2
+
+test_sql_normalize_relabel:
+  -
+    dataframe: {
+      "UnitTestStringColumnX": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestStringColumnY": [ 'TestString1_2', 'TestString2_2' ]
+    }
+    column_mapping: {"UnitTestStringColumnX":"UnitTestStringColumn1",
+                     "UnitTestStringColumnY":"UnitTestStringColumn2"}
+    expected: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
+      "Value": [1.0, 1.0]
+    }
+
+test_sql_normalize_valuecol_assign:
+  -
+    dataframe: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
+      "UnitTestFloatColumn1": [ 12.34, 12.34 ],
+      "UnitTestIntColumn2": [ 123, 123 ]
+    }
+    valuecol: "UnitTestFloatColumn1"
+    expected: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
+      "Value": [ 12.34, 12.34 ],
+      "UnitTestIntColumn2": [ 123, 123 ]
+    }
+
+test_sql_normalize_keep_and_drop:
+  -
+    dataframe: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
+      "UnitTestFloatColumn1": [ 12.34, 12.34 ],
+      "UnitTestIntColumn2": [ 123, 123 ]
+    }
+    keep: ["UnitTestStringColumn1", "UnitTestStringColumn2"]
+    drop: True
+    expected: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
+      "Value": [ 1.0, 1.0]
+    }
+
+test_mssql_loader_replace:
+  -
+    dataframe: {
+      "VarcharColumn1X": ["WriteString1_1", "WriteString1_2"],
+      "VarcharColumn2X": ["WriteString2_1", "WriteString2_2"],
+      "FloatColumn1": [12, 56],
+      "Test": [9.331, 111.666]
+    }
+    table_name: "Write Test Table"
+    if_exists: "append"
+
+test_dataframe_to_csv:
+  -
+    data_dataframe: {
+      "ID": ["A001", "A002", "A003", "A004", "A005"],
+      "Name": ["Product A", "Product B", "Product C", "Product D", "Product E"],
+      "Category": ["Electronics", "Furniture", "Electronics", "Clothing", "Furniture"],
+      "Quantity": [10, 5, 8, 12, 7],
+      "Price": [199.99, 79.99, 149.99, 39.99, 99.99],
+      "Date": ["2024-02-01", "2024-02-02", "2024-02-03", "2024-02-04", "2024-02-05"],
+    }
+    expected_dataframe: {
+      "ID": ["A001", "A002", "A003", "A004", "A005"],
+      "Name": ["Product A", "Product B", "Product C", "Product D", "Product E"],
+      "Category": ["Electronics", "Furniture", "Electronics", "Clothing", "Furniture"],
+      "Quantity": [10.0, 5.0, 8.0, 12.0, 7.0],
+      "Price": [199.99, 79.99, 149.99, 39.99, 99.99],
+      "Date": ["2024-02-01", "2024-02-02", "2024-02-03", "2024-02-04", "2024-02-05"],
+    }
+  -
+    data_dataframe: {
+      "ID": ["A001", "A002", "A003", "A004", "A005"],
+      "Price": [199.99, nan, 149.99, 39.99, nan],
+      "Quantity": [10.0, 5.0, NaN, 12.0, 7.0]
+    }
+    expected_dataframe: {
+      "ID": [ "A001", "A002", "A003", "A004", "A005" ],
+      "Price": [ 199.99, 0.0, 149.99, 39.99, 0.0 ],
+      "Quantity": [ 10, 5, 0.0, 12, 7 ]
+    }
+
+test_dataframe_to_csv_build_dataframe_form_mdx:
+  -
+    data_mdx:
+      "SELECT 
+           {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],
+           [Periods].[Periods].[202304],[Periods].[Periods].[202305],[Periods].[Periods].[202306],
+           [Periods].[Periods].[202307],[Periods].[Periods].[202308],[Periods].[Periods].[202309],
+           [Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]}  
+          ON COLUMNS , 
+           {[Groups].[Groups].Members}
+           * {[Employees].[Employees].Members} 
+          ON ROWS 
+        FROM [Cost and FTE by Groups] 
+        WHERE 
+          (
+           [Versions].[Versions].[Base Plan], 
+           [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[FTE],
+           [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
+          )"
+
+test_dataframe_to_csv_build_dataframe_form_mdx_with_param_optimisation:
+  -
+    data_mdx:
+      "SELECT 
+           {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],
+           [Periods].[Periods].[202304],[Periods].[Periods].[202305],[Periods].[Periods].[202306],
+           [Periods].[Periods].[202307],[Periods].[Periods].[202308],[Periods].[Periods].[202309],
+           [Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]}  
+          ON COLUMNS , 
+           {[Groups].[Groups].Members}
+           * {[Employees].[Employees].Members} 
+          ON ROWS 
+        FROM [Cost and FTE by Groups] 
+        WHERE 
+          (
+           [Versions].[Versions].[Base Plan], 
+           [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[FTE],
+           [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
+          )"
+
+test_dataframe_to_csv_build_dataframe_form_mdx_fail:
+  -
+    data_mdx:
+      "SELECT 
+           {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],
+           [Periods].[Periods].[202304],[Periods].[Periods].[202305],[Periods].[Periods].[202306],
+           [Periods].[Periods].[202307],[Periods].[Periods].[202308],[Periods].[Periods].[202309],
+           [Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]}  
+          ON COLUMNS , 
+           {[Groups].[Groups].Members}
+           * {[Employees].[Employees].Members} 
+          ON ROWS 
+        FROM [Cost and FTE by Groups] 
+        WHERE 
+          (
+           [Versions].[Versions].[Base Plan], 
+           [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[FTE],
+           [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
+          )"

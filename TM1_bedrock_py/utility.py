@@ -6,7 +6,7 @@ import locale
 from typing import Callable, List, Dict, Optional, Any, Union, Iterator
 
 from mdxpy import MdxBuilder, MdxHierarchySet, Member
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect
 from pandas import DataFrame
 from numpy import float64
 from TM1_bedrock_py import exec_metrics_logger, basic_logger
@@ -162,6 +162,7 @@ class TM1CubeObjectMetadata:
     _DIM_HIERS = "hierarchies"
     _DEFAULT_NAME = "default member name"
     _DEFAULT_TYPE = "default member type"
+    _DIM_CHECK_DFS = "dimension check dataframes"
 
     def __init__(self) -> None:
         self._data: Dict[str, Union['TM1CubeObjectMetadata', Any]] = {}
@@ -198,6 +199,9 @@ class TM1CubeObjectMetadata:
     def get_filter_dict(self):
         return self[self._QUERY_FILTER_DICT]
 
+    def get_dimension_check_dfs(self):
+        return self[self._DIM_CHECK_DFS]
+
     @classmethod
     def _expand_query_metadata(cls, mdx: str, metadata: "TM1CubeObjectMetadata") -> None:
         """
@@ -227,7 +231,9 @@ class TM1CubeObjectMetadata:
             cube_name: Optional[str] = None,
             retrieve_all_dimension_data: Optional[Callable[..., Any]] = None,
             retrieve_dimension_data: Optional[Callable[..., Any]] = None,
-            collect_extended_cube_metadata: Optional[bool] = False
+            collect_extended_cube_metadata: Optional[bool] = False,
+            collect_dim_element_identifiers: Optional[bool] = False,
+            **kwargs
     ) -> "TM1CubeObjectMetadata":
         """
         Collects important data about the mdx query and/or it's cube based on either an MDX query or a cube name.
@@ -262,6 +268,11 @@ class TM1CubeObjectMetadata:
         if retrieve_dimension_data is None:
             retrieve_dimension_data = cls.__tm1_dimension_data_collector_default
 
+        if collect_dim_element_identifiers:
+            cls.__collect_element_check_dataframes(
+                tm1_service=tm1_service, cube_dimensions=metadata.get_cube_dims(), metadata=metadata
+            )
+
         if collect_extended_cube_metadata:
             retrieve_all_dimension_data(
                 tm1_service=tm1_service,
@@ -272,7 +283,6 @@ class TM1CubeObjectMetadata:
 
         return metadata
 
-    #@measure_time_decorator
     @classmethod
     def collect(
             cls,
@@ -294,6 +304,19 @@ class TM1CubeObjectMetadata:
             metadata_function = cls.__collect_default
 
         return metadata_function(**kwargs)
+
+    @classmethod
+    def __collect_element_check_dataframes(
+            cls,
+            tm1_service: Any,
+            cube_dimensions: List[str],
+            metadata: "TM1CubeObjectMetadata"
+    ) -> None:
+        metadata[cls._DIM_CHECK_DFS] = []
+        for dimension in cube_dimensions:
+            metadata[cls._DIM_CHECK_DFS].append(
+                all_leaves_identifiers_to_dataframe(tm1_service=tm1_service, dimension_name=dimension)
+            )
 
     @classmethod
     def __tm1_dimension_data_collector_for_cube(
@@ -582,6 +605,20 @@ def get_local_decimal_separator() -> str:
     return locale.localeconv()['decimal_point']
 
 
+def get_local_regex_separator() -> str:
+    """Detects the CSV separator based on the system's locale settings with cross-platform support."""
+    try:
+        locale.setlocale(locale.LC_ALL, "")
+        decimal_sep = get_local_decimal_separator()
+
+        csv_sep = ";" if decimal_sep == "," else ","
+
+        return csv_sep
+    except Exception as e:
+        basic_logger.info(f"Warning: Unable to detect locale settings ({e}). Defaulting to comma (',').")
+        return ","
+
+
 def create_sql_engine(
         username: Optional[str] = None,
         password: Optional[str] = None,
@@ -596,7 +633,7 @@ def create_sql_engine(
         **kwargs
 ) -> Any:
     connection_strings = {
-        'mssql': f"mssql+pyodbc://{username}:{password}@{host}:{port}/{database}?driver={mssql_driver}",
+        'mssql': f"mssql+pyodbc://{username}:{password}@{host}:{port}/{database}?driver={mssql_driver}&TrustServerCertificate=yes",
         'sqlite': f"sqlite:///{sqlite_file_path}",
         'postgresql': f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}",
         'mysql': f"mysql+mysqlconnector://{username}:{password}@{host}:{port}/{database}",
@@ -609,3 +646,20 @@ def create_sql_engine(
     if connection_type and not connection_string:
         connection_string = connection_strings.get(connection_type)
     return create_engine(connection_string)
+
+
+def inspect_table(engine: Any, table_name: str) -> dict:
+    return inspect(engine).get_columns(table_name)
+
+
+@log_exec_metrics
+def all_leaves_identifiers_to_dataframe(
+        tm1_service: Any, dimension_name: [str], hierarchy_name: Optional[str] = None
+) -> DataFrame:
+    # caseandspaceinsensitiveset datastruct to dataframe
+    if not hierarchy_name:
+        hierarchy_name = dimension_name
+    dataset = tm1_service.elements.get_all_leaf_element_identifiers(
+        dimension_name=dimension_name, hierarchy_name=hierarchy_name
+    )
+    return DataFrame({dimension_name: list(dataset)})

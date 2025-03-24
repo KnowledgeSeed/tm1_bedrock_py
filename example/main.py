@@ -1,7 +1,7 @@
 from TM1py import TM1Service
-
+import pprint
 from TM1_bedrock_py import utility, extractor, transformer
-from TM1_bedrock_py.transformer import normalize_sql_dataframe
+from TM1_bedrock_py.transformer import normalize_table_source_dataframe
 
 
 def manage():
@@ -70,20 +70,17 @@ def manage():
     clear_set_mdx_list = ["{[Versions].[TM1py Test Version]}",
                           "{[Periods].[Periods].[2023].Children}"]
 
-    tm1 = TM1Service(**tm1_params)
+    """
     sql = utility.create_sql_engine(**sql_params)
-
+    columninfo = utility.inspect_table(sql, "Write Test Table")
+    print(columninfo)
+    """
+    tm1 = TM1Service(**tm1_params)
+    
     try:
-
-        sql_to_df = extractor.sql_to_dataframe(table_name=sql_table_name, engine=sql)
-        print(sql_to_df)
-        transformer.normalize_sql_dataframe(
-            dataframe=sql_to_df,
-            columns_to_keep=["Employee"],
-            column_mapping={"Version": "Versions", "Group": "Groups"},
-            drop_other_columns=True
-        )
-        print(sql_to_df)
+        utility.set_logging_level("DEBUG")
+        data = extractor.all_leaves_identifiers_to_dataframe(tm1, "Periods")
+        print(data)
 
     finally:
         tm1.logout()
