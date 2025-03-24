@@ -40,7 +40,7 @@ def _post_against_cellset(
     return tm1_service._tm1_rest.POST(url=url, data=json.dumps(payload), **kwargs)
 
 
-def input_proportional_spread(
+def proportional_spread(
         tm1_service: Any,
         mdx: [str],
         value: float,
@@ -62,7 +62,7 @@ def input_proportional_spread(
                                  sandbox_name=sandbox_name, **kwargs)
 
 
-def input_equal_spread(
+def equal_spread(
         tm1_service: Any,
         mdx: [str],
         value: float,
@@ -84,7 +84,7 @@ def input_equal_spread(
                                  sandbox_name=sandbox_name, **kwargs)
 
 
-def input_repeat_value(
+def repeat_value(
         tm1_service: Any,
         mdx: [str],
         value: float,
@@ -106,7 +106,7 @@ def input_repeat_value(
                                  sandbox_name=sandbox_name, **kwargs)
 
 
-def input_percentage_change(
+def percentage_change(
         tm1_service: Any,
         mdx: [str],
         value: float,
@@ -128,7 +128,7 @@ def input_percentage_change(
                                  sandbox_name=sandbox_name, **kwargs)
 
 
-def input_relative_proportional_spread(
+def relative_proportional_spread(
         tm1_service: Any,
         mdx: [str],
         value: float,
