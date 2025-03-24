@@ -849,15 +849,15 @@ test_dataframe_to_csv:
       "ID": ["A001", "A002", "A003", "A004", "A005"],
       "Name": ["Product A", "Product B", "Product C", "Product D", "Product E"],
       "Category": ["Electronics", "Furniture", "Electronics", "Clothing", "Furniture"],
-      "Quantity": [10, 5, 8, 12, 7],
+      "Quantity": [10.0, 5.0, 8.0, 12.0, 7.0],
       "Price": [199.99, 79.99, 149.99, 39.99, 99.99],
       "Date": ["2024-02-01", "2024-02-02", "2024-02-03", "2024-02-04", "2024-02-05"],
     }
   -
     data_dataframe: {
       "ID": ["A001", "A002", "A003", "A004", "A005"],
-      "Price": [199.99, NaN, 149.99, 39.99, NaN],
-      "Quantity": [10, 5, NaN, 12, 7]
+      "Price": [199.99, nan, 149.99, 39.99, nan],
+      "Quantity": [10.0, 5.0, NaN, 12.0, 7.0]
     }
     expected_dataframe: {
       "ID": [ "A001", "A002", "A003", "A004", "A005" ],
