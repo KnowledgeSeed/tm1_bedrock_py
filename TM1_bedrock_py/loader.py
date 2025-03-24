@@ -1,13 +1,8 @@
-from typing import Callable, List, Optional, Any, Literal, Dict
+from typing import Callable, List, Optional, Any, Literal
 from TM1py import TM1Service
 from pandas import DataFrame
 from sqlalchemy import text
 from TM1_bedrock_py import utility
-
-# tm1py internal imports to implement function
-from requests import Response
-from TM1py.Utils import format_url, dimension_hierarchy_element_tuple_from_unique_name, add_url_parameters
-import json
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -251,9 +246,11 @@ def dataframe_to_csv(
             - 'x', exclusive creation, failing if the file already exists.
             - 'a', append to the end of file if it exists.
           chunksize : (Optional[int | None]): Rows to write at a time.
-          float_format: (Optional[str]): Floating point format. Callable takes precedence over other numeric formatting like decimal.
+          float_format: (Optional[str]): Floating point format.
+            Callable takes precedence over other numeric formatting like decimal.
           sep: (Optional[str]): Field delimiter for the output file. If None, it uses the local standard separator.
-          decimal: (Optional[str]): Character recognized as decimal separator. If None, it uses the local standard separator.
+          decimal: (Optional[str]): Character recognized as decimal separator.
+            If None, it uses the local standard separator.
           na_rep: (Optional[str]): Missing data representation. Defaults to NULL.
           compression: (Optional[str | dict]): For on-the-fly compression of the output data.
           index: (Optional[bool]): Default False. If True, writes row indices.
@@ -278,97 +275,3 @@ def dataframe_to_csv(
         compression=compression,
         index=index
     )
-
-# ------------------------------------------------------------------------------------------------------------
-# continuation of tm1py's "relative proportional spread" input process - general input processes
-# ------------------------------------------------------------------------------------------------------------
-
-
-def post_against_cellset(
-        tm1_service: Any, cellset_id: str, payload: Dict, sandbox_name: str = None, **kwargs
-) -> Response:
-    """ Execute a post request against a cellset
-
-    :param tm1_service:
-    :param cellset_id:
-    :param payload:
-    :param sandbox_name: str
-    :param kwargs:
-    :return:
-    """
-    url = format_url("/Cellsets('{}')/tm1.Update", cellset_id)
-    url = add_url_parameters(url, **{"!sandbox": sandbox_name})
-    return tm1_service._tm1_rest.POST(url=url, data=json.dumps(payload), **kwargs)
-
-
-def input_relative_proportional_spread(
-        tm1_service: Any,
-        mdx: [str],
-        value: float,
-        cube: str,
-        reference_unique_element_mdx: [str],
-        reference_cube: str = None,
-        sandbox_name: str = None,
-        ** kwargs
-) -> Response:
-    """ Execute relative proportional spread
-
-    :param tm1_service:
-    :param value: value to be spread
-    :param cube: name of the cube
-    :param reference_unique_element_mdx: mdx for extracting reference cell coordinates as unique element names
-    :param reference_cube: name of the reference cube. Can be None
-    :param sandbox_name: str,
-    :param mdx
-    :return:
-    """
-    cellset_id = tm1_service.cells.create_cellset(mdx=mdx, sandbox_name=sandbox_name, **kwargs)
-
-    payload = {
-        "BeginOrdinal": 0,
-        "Value": "RP" + str(value),
-        "ReferenceCell@odata.bind": list(),
-        "ReferenceCube@odata.bind":
-            format_url("Cubes('{}')", reference_cube if reference_cube else cube)}
-
-    reference_unique_element_names = utility.__parse_unique_element_names_from_mdx(reference_unique_element_mdx)
-    for unique_element_name in reference_unique_element_names:
-        payload["ReferenceCell@odata.bind"].append(
-            format_url(
-                "Dimensions('{}')/Hierarchies('{}')/Elements('{}')",
-                *dimension_hierarchy_element_tuple_from_unique_name(unique_element_name)))
-
-    return post_against_cellset(tm1_service=tm1_service, cellset_id=cellset_id, payload=payload, delete_cellset=True,
-                                sandbox_name=sandbox_name, **kwargs)
-
-
-def input_repeat_value(
-        tm1_service: Any,
-        mdx: [str],
-        value: float,
-        cube: str,
-        sandbox_name: str = None,
-        mode: str = '',
-        ** kwargs
-) -> Response:
-    """ Execute relative proportional spread
-
-    :param tm1_service:
-    :param value: value to be spread
-    :param cube: name of the cube
-    :param mode
-    :param mdx
-    :param sandbox_name: str
-    :return:
-    """
-    cellset_id = tm1_service.cells.create_cellset(mdx=mdx, sandbox_name=sandbox_name, **kwargs)
-
-    payload = {
-        "BeginOrdinal": 0,
-        "Value": "R" + mode + str(value),
-        "ReferenceCell@odata.bind": list(),
-        "ReferenceCube@odata.bind":
-            format_url("Cubes('{}')", cube)}
-
-    return post_against_cellset(tm1_service=tm1_service, cellset_id=cellset_id, payload=payload, delete_cellset=True,
-                                sandbox_name=sandbox_name, **kwargs)
