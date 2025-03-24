@@ -123,6 +123,23 @@ def __transform_set_mdx_list_to_tm1py_clear_kwargs(mdx_expressions: List[str]) -
     }
 
 
+def __parse_unique_element_names_from_mdx(mdx_string: str) -> List[str]:
+    """
+    Extracts unique [X].[Y].[Z] patterns from an MDX string,
+    where X, Y, and Z can contain spaces and special characters.
+
+    Parameters:
+        mdx_string (str): The input MDX query as a string.
+
+    Returns:
+        List[str]: A list of unique [X].[Y].[Z] style matches.
+    """
+    pattern = r'\[.*?\]\.\[.*?\]\.\[.*?\]'
+    matches = re.findall(pattern, mdx_string)
+    unique_matches = list(set(matches))
+    return unique_matches
+
+
 # ------------------------------------------------------------------------------------------------------------
 # Utility: Cube metadata collection using input MDXs and/or other cubes
 # ------------------------------------------------------------------------------------------------------------

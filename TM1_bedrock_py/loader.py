@@ -5,7 +5,6 @@ from sqlalchemy import text
 from TM1_bedrock_py import utility
 
 # tm1py internal imports to implement function
-from typing import Iterable
 from requests import Response
 from TM1py.Utils import format_url, dimension_hierarchy_element_tuple_from_unique_name, add_url_parameters
 import json
@@ -307,7 +306,7 @@ def input_relative_proportional_spread(
         mdx: [str],
         value: float,
         cube: str,
-        reference_unique_element_names: Iterable[str],
+        reference_unique_element_mdx: [str],
         reference_cube: str = None,
         sandbox_name: str = None,
         ** kwargs
@@ -317,9 +316,8 @@ def input_relative_proportional_spread(
     :param tm1_service:
     :param value: value to be spread
     :param cube: name of the cube
-    :param unique_element_names: target cell coordinates as unique element names (e.g. ["[d1].[c1]","[d2].[e3]"])
+    :param reference_unique_element_mdx: mdx for extracting reference cell coordinates as unique element names
     :param reference_cube: name of the reference cube. Can be None
-    :param reference_unique_element_names: reference cell coordinates as unique element names
     :param sandbox_name: str,
     :param mdx
     :return:
@@ -332,6 +330,8 @@ def input_relative_proportional_spread(
         "ReferenceCell@odata.bind": list(),
         "ReferenceCube@odata.bind":
             format_url("Cubes('{}')", reference_cube if reference_cube else cube)}
+
+    reference_unique_element_names = utility.__parse_unique_element_names_from_mdx(reference_unique_element_mdx)
     for unique_element_name in reference_unique_element_names:
         payload["ReferenceCell@odata.bind"].append(
             format_url(
@@ -356,7 +356,6 @@ def input_repeat_value(
     :param tm1_service:
     :param value: value to be spread
     :param cube: name of the cube
-    :param unique_element_names: target cell coordinates as unique element names (e.g. ["[d1].[c1]","[d2].[e3]"])
     :param mode
     :param mdx
     :param sandbox_name: str
