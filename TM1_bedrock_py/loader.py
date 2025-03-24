@@ -1,9 +1,14 @@
 from typing import Callable, List, Optional, Any, Literal
-
 from TM1py import TM1Service
 from pandas import DataFrame
 from sqlalchemy import text
 from TM1_bedrock_py import utility
+
+# tm1py internal imports to implement function
+from typing import Iterable
+from requests import Response
+from TM1py.Utils import format_url, dimension_hierarchy_element_tuple_from_unique_name
+from TM1py.Services.CellService import CellService
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -279,5 +284,45 @@ def dataframe_to_csv(
 # continuation of tm1py's "relative proportional spread" input process - general input processes
 # ------------------------------------------------------------------------------------------------------------
 
-def relative_proportional_spread():
-    pass
+
+def relative_proportional_spread(
+        value: float,
+        cube: str,
+        unique_element_names: Iterable[str],
+        reference_unique_element_names: Iterable[str],
+        reference_cube: str = None,
+        sandbox_name: str = None,
+        ** kwargs
+) -> Response:
+    """ Execute relative proportional spread
+
+    :param value: value to be spread
+    :param cube: name of the cube
+    :param unique_element_names: target cell coordinates as unique element names (e.g. ["[d1].[c1]","[d2].[e3]"])
+    :param reference_cube: name of the reference cube. Can be None
+    :param reference_unique_element_names: reference cell coordinates as unique element names
+    :param sandbox_name: str
+    :return:
+    """
+    mdx = """
+            SELECT
+            {{ {rows} }} ON 0
+            FROM [{cube}]
+            """.format(rows="}*{".join(unique_element_names), cube=cube)
+    cellset_id = CellService.create_cellset(mdx=mdx, sandbox_name=sandbox_name, **kwargs)
+
+    payload = {
+        "BeginOrdinal": 0,
+        "Value": "RP" + str(value),
+        "ReferenceCell@odata.bind": list(),
+        "ReferenceCube@odata.bind":
+            format_url("Cubes('{}')", reference_cube if reference_cube else cube)}
+    for unique_element_name in reference_unique_element_names:
+        payload["ReferenceCell@odata.bind"].append(
+            format_url(
+                "Dimensions('{}')/Hierarchies('{}')/Elements('{}')",
+                *dimension_hierarchy_element_tuple_from_unique_name(unique_element_name)))
+
+    return CellService._post_against_cellset(cellset_id=cellset_id, payload=payload, delete_cellset=True,
+                                      sandbox_name=sandbox_name, **kwargs)
+
