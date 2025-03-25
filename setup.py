@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="tm1_bedrock_py",
-    version="0.1.0",
+    version="0.3.0",
     description="A python modul for TM1 Bedrock.",
     readme = "README.md",
     packages=["TM1_bedrock_py"],
