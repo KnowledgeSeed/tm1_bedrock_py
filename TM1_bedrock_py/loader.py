@@ -1,5 +1,4 @@
 from typing import Callable, List, Optional, Any, Literal
-
 from TM1py import TM1Service
 from pandas import DataFrame
 from sqlalchemy import text
@@ -247,9 +246,11 @@ def dataframe_to_csv(
             - 'x', exclusive creation, failing if the file already exists.
             - 'a', append to the end of file if it exists.
           chunksize : (Optional[int | None]): Rows to write at a time.
-          float_format: (Optional[str]): Floating point format. Callable takes precedence over other numeric formatting like decimal.
+          float_format: (Optional[str]): Floating point format.
+            Callable takes precedence over other numeric formatting like decimal.
           sep: (Optional[str]): Field delimiter for the output file. If None, it uses the local standard separator.
-          decimal: (Optional[str]): Character recognized as decimal separator. If None, it uses the local standard separator.
+          decimal: (Optional[str]): Character recognized as decimal separator.
+            If None, it uses the local standard separator.
           na_rep: (Optional[str]): Missing data representation. Defaults to NULL.
           compression: (Optional[str | dict]): For on-the-fly compression of the output data.
           index: (Optional[bool]): Default False. If True, writes row indices.
