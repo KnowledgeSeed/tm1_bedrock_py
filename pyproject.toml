@@ -28,4 +28,4 @@ dependencies = [
 dev = ["build", "pytest", "parametrize_from_file", "apache_airflow", "airflow_provider_tm1"]
 
 [tool.setuptools]
-packages = ["tm1_bedrock_py"]
+packages = ["TM1_bedrock_py"]
