@@ -19,11 +19,13 @@ classifiers = [
 dependencies = [
     "TM1py",
     "mdxpy",
-    "pandas"
+    "pandas",
+    "json_logging",
+    "sqlalchemy"
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "parametrize_from_file"]
+dev = ["build", "pytest", "parametrize_from_file", "apache_airflow", "airflow_provider_tm1"]
 
 [tool.setuptools]
 packages = ["tm1_bedrock_py"]
