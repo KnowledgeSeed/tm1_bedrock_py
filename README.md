@@ -8,7 +8,14 @@ A python package by Knowledgeseed for TM1 Bedrock.
 * Pandas
 
 ## Usage
-#### Install dependencies
+
+#### Install without cloning
+Download the latest dist/tm1_bedrock_py-<version_number>-py3-none-any.whl and install in your project.
+```
+pip install dist/tm1_bedrock_py-<version_number>-py3-none-any.whl
+```
+
+#### Install with cloning
 ```
 git clone https://github.com/KnowledgeSeed/tm1_bedrock_py.git
 pip install -r requirements.txt
