@@ -1,6 +1,5 @@
 from typing import Callable, List, Dict, Optional, Any
 
-import pandas as pd
 from TM1py import TM1Service
 from pandas import DataFrame, read_sql_table, read_sql_query, concat, read_csv
 from typing import Sequence, Hashable, Mapping, Iterable
@@ -42,7 +41,7 @@ def __tm1_mdx_to_dataframe_default(
         skip_zeros: bool = False,
         skip_consolidated_cells: bool = False,
         skip_rule_derived_cells: bool = False,
-        **kwargs
+        **_kwargs
 ) -> DataFrame:
     """
     Executes an MDX query using the default TM1 service function and returns a DataFrame.
@@ -162,7 +161,7 @@ def _handle_mapping_sql_query(
 def _handle_mapping_csv(
         step: Dict[str, Any],
         csv_function: Optional[Callable] = None,
-        **kwargs
+        **_kwargs
 ) -> None:
     """
         csv_file_path: str,
@@ -194,9 +193,6 @@ def _handle_mapping_csv(
         columns_to_keep=columns_to_keep, column_mapping=column_mapping, value_column_name=value_column,
         drop_other_columns=drop_other
     )
-    return dataframe
-
-
 
 
 MAPPING_HANDLERS = {
@@ -333,9 +329,9 @@ def __csv_to_dataframe_default(
         chunksize: Optional[int | None] = None,
         parse_dates: Optional[bool | Sequence[Hashable] | None] = None,
         na_values: Optional[Hashable
-                   | Iterable[Hashable]
-                   | Mapping[Hashable, Iterable[Hashable]]
-                   | None] = None,
+                            | Iterable[Hashable]
+                            | Mapping[Hashable, Iterable[Hashable]]
+                            | None] = None,
         keep_default_na: Optional[bool] = True,
         low_memory: bool = True,
         memory_map: bool = True,
@@ -347,7 +343,8 @@ def __csv_to_dataframe_default(
     Args:
         csv_file_path: (str): The name of the CSV file that is extracted to a DataFrame.
         sep: (Optional[str]): Field delimiter for the output file. If None, it uses the local standard separator.
-        decimal: (Optional[str]): Character recognized as decimal separator. If None, it uses the local standard separator.
+        decimal: (Optional[str]): Character recognized as decimal separator.
+                If None, it uses the local standard separator.
         dtype: (Optional[dict]): Data types to apply to the whole dataset or individual columns.
         nrows: (Optional[int | None]): Number of rows to read.
         chunksize : (Optional[int | None]): Number of rows to read from file per chunk.
@@ -361,7 +358,8 @@ def __csv_to_dataframe_default(
                 Default True.
                 Internally processes the file in chunks. Use with dtype to eliminate possible mixed type inference.
                 Reads entire file into one DataFrame.
-        memory_map: (bool): If csv_file_path is given it maps the file object directly to memory and eliminates I/O overhead.
+        memory_map: (bool):
+            If csv_file_path is given it maps the file object directly to memory and eliminates I/O overhead.
         **kwargs (Any): Additional keyword arguments.
 
     Returns:
