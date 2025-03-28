@@ -88,33 +88,14 @@ def test_data_copy_for_multiple_steps(
     )
 
 
-@utility.log_exec_metrics
-def test_async_data_copy_intercube(tm1_connection):
-    list_periods = ['202201', '202202', '202203', '202204', '202205', '202206', '202207', '202208', '202209', '202210']
-    data_mdx_template = """
-         SELECT 
-            {[Groups].[Groups].[Total Groups],[Groups].[Groups].[Total Groups^Group_1],[Groups].[Groups].[Total Groups^Group_2],[Groups].[Groups].[Total Groups^Group_3],[Groups].[Groups].[Group_4],[Groups].[Groups].[Group_5]} 
-           ON COLUMNS , 
-            {DRILLDOWNMEMBER({[Employees].[Employees].[Total Employees]}, {[Employees].[Employees].[Total Employees]})} 
-           ON ROWS 
-         FROM [Cost and FTE by Groups] 
-         WHERE 
-           (
-            [Periods].[Periods].[$Period],
-            [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[Caculated Salary],
-            [Versions].[Versions].[Bedrock Input Test],
-            [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Input]
-           )
-         """
-
-    clear_param_template = "{[Periods].[Periods].[$Period]}"
+@parametrize_from_file
+def test_async_data_copy_intercube(tm1_connection, list_periods, data_mdx_template, clear_param_template):
 
     start_time = time.gmtime()
     start_time_total = time.time()
     print('Start time: ')
     print(time.strftime('{%Y%m%d %H:%M}', start_time))
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(bedrock.async_executor(
+    asyncio.run(bedrock.async_executor(
         data_copy_function=bedrock.data_copy_intercube,
         tm1_service=tm1_connection,
         data_mdx_template=data_mdx_template,
