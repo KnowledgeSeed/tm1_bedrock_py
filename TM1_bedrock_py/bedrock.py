@@ -1,11 +1,17 @@
 """
 This file is a collection of upgraded TM1 bedrock functionality, ported to python / pandas with the help of TM1py.
 """
+import asyncio
+import functools
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from functools import wraps
+from string import Template
 from typing import Callable, List, Dict, Optional, Any
-
 from pandas import DataFrame
 
 from TM1_bedrock_py import utility, transformer, loader, extractor, basic_logger
+
+
 
 
 @utility.log_exec_metrics
@@ -522,6 +528,94 @@ def data_copy(
     )
 
     basic_logger.info("Execution ended.")
+
+
+""" 
+target_tm1_service: Optional[Any] = None,
+data_mdx_template: Optional[str] = None,
+param: Optional[str] = None,
+#data_mdx: Optional[str] = None,
+list_of_params: Optional[List[str]] = None,
+mdx_function: Optional[Callable[..., DataFrame]] = None,
+sql_engine: Optional[Any] = None,
+sql_function: Optional[Callable[..., DataFrame]] = None,
+csv_function: Optional[Callable[..., DataFrame]] = None,
+data_mdx_list: Optional[list[str]] = None,
+skip_zeros: Optional[bool] = False,
+skip_consolidated_cells: Optional[bool] = False,
+skip_rule_derived_cells: Optional[bool] = False,
+target_cube_name: Optional[str] = None,
+target_metadata_function: Optional[Callable[..., Any]] = None,
+data_metadata_function: Optional[Callable[..., Any]] = None,
+mapping_steps: Optional[List[Dict]] = None,
+shared_mapping: Optional[Dict] = None,
+source_dim_mapping: Optional[dict] = None,
+related_dimensions: Optional[dict] = None,
+target_dim_mapping: Optional[dict] = None,
+value_function: Optional[Callable[..., Any]] = None,
+ignore_missing_elements: bool = False,
+clear_param_template: Optional[str] = None,
+clear_target: Optional[bool] = False,
+clear_source: Optional[bool] = False,
+target_clear_set_mdx_list: Optional[List[str]] = None,
+async_write: bool = False,
+use_ti: bool = False,
+use_blob: bool = False,
+increment: bool = False,
+sum_numeric_duplicates: bool = True,
+logging_level: str = "ERROR",
+_execution_id: int = 0,
+"""
+async def async_executor(
+        data_copy_function: Callable = data_copy,
+        data_mdx_template: str = None,
+        list_of_params: List[str] = None,
+        param: str = None,
+        clear_param_template: str = None,
+        **kwargs):
+
+    """
+    source_data_metadata = utility.TM1CubeObjectMetadata.collect(
+        tm1_service=tm1_service,
+        mdx=data_mdx,
+        metadata_function=data_metadata_function,
+        **kwargs
+    )
+    source_metadata_function = lambda: source_data_metadata
+
+    if (target_cube_name or target_metadata_function) is not None:
+        target_metadata = utility.TM1CubeObjectMetadata.collect(
+            tm1_service=target_tm1_service,
+            cube_name=target_cube_name,
+            metadata_function=target_metadata_function,
+            collect_dim_element_identifiers=ignore_missing_elements,
+            **kwargs
+        )
+        target_metadata_function = lambda: target_metadata
+    """
+    loop = asyncio.get_event_loop()
+    def wrapper(mdx, set_mdx_list, _execution_id):
+        data_copy_function(
+            data_mdx=mdx,
+            target_clear_set_mdx_list=set_mdx_list,
+            _execution_id=i,
+            **kwargs
+        )
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        futures = []
+        for i in range(len(list_of_params)):
+            data_mdx = str(Template(data_mdx_template).substitute({param: list_of_params[i]}))
+            target_clear_set_mdx_list = [
+                Template(clear_param_template).substitute({param: list_of_params[i]}),
+                "{[Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[Caculated Salary]}",
+                "{[Versions].[Versions].[Bedrock Input Test]}",
+                "{[Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Input]}"
+            ]
+            futures.append(loop.run_in_executor(executor, wrapper, data_mdx, target_clear_set_mdx_list, i))
+
+        for future in futures:
+            await future
+
 
 
 @utility.log_exec_metrics

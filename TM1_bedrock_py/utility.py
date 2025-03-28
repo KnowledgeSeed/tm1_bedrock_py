@@ -6,9 +6,12 @@ import locale
 from typing import Callable, List, Dict, Optional, Any, Union, Iterator
 
 from mdxpy import MdxBuilder, MdxHierarchySet, Member
+from TM1py.Objects.Element import Element
 from sqlalchemy import create_engine, inspect
 from pandas import DataFrame
 from numpy import float64
+from sqlalchemy.dialects.mysql import NUMERIC
+
 from TM1_bedrock_py import exec_metrics_logger, basic_logger
 
 
@@ -138,6 +141,16 @@ def __parse_unique_element_names_from_mdx(mdx_string: str) -> List[str]:
     matches = re.findall(pattern, mdx_string)
     unique_matches = list(set(matches))
     return unique_matches
+
+
+def _find_parameter_from_template(tm1_service: Any, mdx_string: str) -> tuple[str, list[str]]:
+    dimension = _mdx_filter_to_dictionary(mdx_string)
+    for key, value in dimension.items():
+        if isinstance(value, str) and value.startswith('$'):
+            elements = tm1_service.dimensions.hierarchies.elements.get_elements(key, key)
+            return value[1:], [el.name for el in elements if el.element_type == Element.Types.NUMERIC]
+
+    return "", []
 
 
 # ------------------------------------------------------------------------------------------------------------

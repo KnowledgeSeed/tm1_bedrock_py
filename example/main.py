@@ -2,6 +2,8 @@ from TM1py import TM1Service
 import pprint
 from TM1_bedrock_py import utility, extractor, transformer, loader
 from TM1_bedrock_py.transformer import normalize_table_source_dataframe
+from string import Template
+
 
 
 def manage():
@@ -150,19 +152,21 @@ def manage():
         FROM [Cost and FTE by Groups] 
         WHERE 
           (
-           [Periods].[Periods].[202307],
+           [Periods].[Periods].[$Period],
            [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[Caculated Salary],
            [Versions].[Versions].[Bedrock Input Test],
            [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Input]
           )
         """
 
-        loader.input_repeat_value(
-            tm1_service=tm1,
-            value=5555,
-            mdx=mdx,
-            cube="Cost and FTE by Groups"
-        )
+        print(mdx)
+        param_value, list_periods = utility._find_parameter_from_template(tm1_service=tm1, mdx_string=mdx)
+        print(list_periods)
+        #print(param_value)
+        mdx = Template(mdx).substitute({param_value: list_periods[0]})
+        #print("\n")
+        #print(mdx)
+
 
 
     finally:
