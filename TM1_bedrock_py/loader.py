@@ -44,7 +44,7 @@ def __clear_cube_default(
         cube_name (str): The name of the cube to clear.
         clear_set_mdx_list (List[str]): A list of valid MDX set expressions defining the clear space.
     """
-    clearing_kwargs = utility.__transform_set_mdx_list_to_tm1py_clear_kwargs(clear_set_mdx_list)
+    clearing_kwargs = utility.__get_kwargs_dict_from_set_mdx_list(clear_set_mdx_list)
     tm1_service.cells.clear(cube_name, **clearing_kwargs)
 
 

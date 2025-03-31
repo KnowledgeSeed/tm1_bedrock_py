@@ -3,7 +3,8 @@ import re
 import functools
 import time
 import locale
-from typing import Callable, List, Dict, Optional, Any, Union, Iterator
+import itertools
+from typing import Callable, List, Dict, Optional, Any, Union, Iterator, Tuple
 
 from mdxpy import MdxBuilder, MdxHierarchySet, Member
 from TM1py.Objects.Element import Element
@@ -107,7 +108,7 @@ def _mdx_filter_to_dictionary(mdx_query: str) -> Dict[str, str]:
     return mdx_dict
 
 
-def __transform_set_mdx_list_to_tm1py_clear_kwargs(mdx_expressions: List[str]) -> Dict[str, str]:
+def __get_kwargs_dict_from_set_mdx_list(mdx_expressions: List[str]) -> Dict[str, str]:
     """
     Generate a dictionary of kwargs from a list of MDX expressions.
 
@@ -124,6 +125,42 @@ def __transform_set_mdx_list_to_tm1py_clear_kwargs(mdx_expressions: List[str]) -
         for mdx in mdx_expressions
         if re.search(regex, mdx)
     }
+
+
+def __get_dimensions_from_set_mdx_list(mdx_sets: List[str]) -> List[str]:
+    """
+    Extracts unique dimension names from a list of MDX set strings,
+    preserving the order of their first appearance.
+
+    MDX members are expected in formats like:
+    [Dimension].[Hierarchy].[Element]
+    or
+    [Dimension].[Element]
+
+    Handles whitespace:
+    - Around braces {}, commas , dots . and brackets []
+    - Inside the first dimension bracket, e.g., [  Dimension Name  ]
+
+    Args:
+        mdx_sets: A list of strings, where each string represents an MDX set
+                  (e.g., '{[Dim].[Hier].[Elem], [Dim].[Elem]}').
+
+    Returns:
+        A list of unique dimension names found across all sets, ordered
+        by the sequence in which they were first encountered in the
+        input list. Returns an empty list if no valid MDX members are
+        found or the input list is empty.
+    """
+    pattern = r'\{\s*\[([^\]]+?)\]'
+    ordered_dimension_names = []
+
+    for mdx_set_string in mdx_sets:
+        match = re.search(pattern, mdx_set_string)
+        if match:
+            cleaned_name = match.group(1).strip()
+            ordered_dimension_names.append(cleaned_name)
+
+    return ordered_dimension_names
 
 
 def __parse_unique_element_names_from_mdx(mdx_string: str) -> List[str]:
@@ -151,6 +188,47 @@ def _find_parameter_from_template(tm1_service: Any, mdx_string: str) -> tuple[st
             return value[1:], [el.name for el in elements if el.element_type == Element.Types.NUMERIC]
 
     return "", []
+
+
+def __generate_cartesian_product(list_of_lists: List[List[Any]]) -> List[Tuple[Any, ...]]:
+    """
+    Generates the Cartesian product of a list of lists.
+
+    Takes a list containing multiple lists and returns a list of tuples,
+    where each tuple is a unique combination formed by taking one element
+    from each input list, in the order the lists were provided.
+
+    Args:
+        list_of_lists: A list where each element is itself a list.
+                       Example: [["a","b"], ["1","2"], ["y","z"]]
+
+    Returns:
+        A list of tuples representing the Cartesian product.
+    """
+    if not list_of_lists:
+        return []
+
+    product_iterator = itertools.product(*list_of_lists)
+    result = list(product_iterator)
+
+    return result
+
+
+def __generate_element_lists_from_set_mdx_list(tm1_service: Any, set_mdx_list: List[str]) -> List[List[str]]:
+    list_of_results = [
+        tm1_service.elements.execute_set_mdx(
+            mdx=query,
+            element_properties=None,
+            member_properties=None,
+            parent_properties=None
+        )
+        for query in set_mdx_list
+    ]
+    result = [
+        [inner_list[0]['Name'] for inner_list in middle_list]
+        for middle_list in list_of_results
+    ]
+    return result
 
 
 # ------------------------------------------------------------------------------------------------------------

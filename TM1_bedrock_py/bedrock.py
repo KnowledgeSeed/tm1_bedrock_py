@@ -12,8 +12,6 @@ from pandas import DataFrame
 from TM1_bedrock_py import utility, transformer, loader, extractor, basic_logger
 
 
-
-
 @utility.log_exec_metrics
 def data_copy_intercube(
         tm1_service: Optional[Any],
@@ -559,6 +557,7 @@ async def async_executor(
         target_metadata_function = lambda: target_metadata
     """
     loop = asyncio.get_event_loop()
+
     def wrapper(mdx, set_mdx_list, _execution_id):
         try:
             data_copy_function(
@@ -573,9 +572,9 @@ async def async_executor(
 
     with ThreadPoolExecutor(max_workers=8) as executor:
         futures = []
-        for i in range(len(list_of_params)):
-            data_mdx = str(Template(data_mdx_template).substitute({param: list_of_params[i]}))
-            target_clear_set_mdx_list = [Template(clear_param_template).substitute({param: list_of_params[i]})]
+        for i, current_param in enumerate(list_of_params):
+            data_mdx = str(Template(data_mdx_template).substitute({param: current_param}))
+            target_clear_set_mdx_list = [Template(clear_param_template).substitute({param: current_param})]
             futures.append(loop.run_in_executor(executor, wrapper, data_mdx, target_clear_set_mdx_list, i))
 
             await asyncio.gather(*futures, return_exceptions=True)

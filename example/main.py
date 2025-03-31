@@ -158,20 +158,19 @@ def manage():
            [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Input]
           )
         """
-
-        print(mdx)
-        param_value, list_periods = utility._find_parameter_from_template(tm1_service=tm1, mdx_string=mdx)
-        print(list_periods)
-        #print(param_value)
-        mdx = Template(mdx).substitute({param_value: list_periods[0]})
-        #print("\n")
-        #print(mdx)
-
-
+        set_mdx_list = [
+            " { [Periods].[Periods].[202203], [Periods].[Periods].[202204]}",
+            "{ [Versions].[BasePlan], [Versions].[Bedrock Input Test]}"
+        ]
+        dimnames = utility.__get_dimensions_from_set_mdx_list(set_mdx_list)
+        print(dimnames)
+        element_lists = utility.__generate_element_lists_from_set_mdx_list(tm1, set_mdx_list)
+        print(element_lists)
+        element_tuples = utility.__generate_cartesian_product(element_lists)
+        print(element_tuples)
 
     finally:
         tm1.logout()
-
 
 
 if __name__ == '__main__':
