@@ -107,6 +107,11 @@ def _handle_mapping_mdx(
     """Execute MDX and augment the resulting DataFrame with metadata."""
     mdx = step["mapping_mdx"]
     step_specific_tm1_service = step.get("tm1_service")
+
+    kwargs_copy = kwargs.copy()
+    kwargs_copy.pop("skip_zeros", None)
+    kwargs_copy.pop("skip_consolidated_cells", None)
+
     if not step_specific_tm1_service:
         step_specific_tm1_service = tm1_service
     dataframe = tm1_mdx_to_dataframe(
@@ -115,13 +120,13 @@ def _handle_mapping_mdx(
         data_mdx=mdx,
         skip_zeros=True,
         skip_consolidated_cells=True,
-        **kwargs
+        **kwargs_copy
     )
     metadata_object = utility.TM1CubeObjectMetadata.collect(
         metadata_function=step.get("mapping_metadata_function"),
         tm1_service=step_specific_tm1_service,
         mdx=mdx,
-        **kwargs
+        **kwargs_copy
     )
     filter_dict = metadata_object.get_filter_dict()
 

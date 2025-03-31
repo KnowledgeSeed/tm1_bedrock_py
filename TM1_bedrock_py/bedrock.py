@@ -533,6 +533,8 @@ async def async_executor(
         tm1_service: Any,
         param_set_mdx_list: List[str],
         data_mdx_template: str,
+        shared_mapping: Optional[Dict] = None,
+        mapping_steps: Optional[List[Dict]] = None,
         data_copy_function: Callable = data_copy,
         clear_param_templates: str = None,
         **kwargs):
@@ -561,13 +563,29 @@ async def async_executor(
     param_tuples = utility.__generate_cartesian_product(param_values)
     basic_logger.info("Parameter tuples ready. Count: " + str(len(param_tuples)))
 
+    if mapping_steps:
+        extractor.generate_step_specific_mapping_dataframes(
+            mapping_steps=mapping_steps,
+            tm1_service=tm1_service,
+            **kwargs
+        )
+
+    if shared_mapping:
+        extractor.generate_dataframe_for_mapping_info(
+            mapping_info=shared_mapping,
+            tm1_service=tm1_service,
+            **kwargs
+        )
+
     loop = asyncio.get_event_loop()
 
-    def wrapper(tm1, mdx, set_mdx_list, _execution_id):
+    def wrapper(tm1, mdx, set_mdx_list, steps, shared, _execution_id):
         try:
             data_copy_function(
                 tm1_service=tm1,
                 data_mdx=mdx,
+                shared_mapping=shared,
+                mapping_steps=steps,
                 target_clear_set_mdx_list=set_mdx_list,
                 _execution_id=_execution_id,
                 **kwargs
@@ -588,9 +606,9 @@ async def async_executor(
                 Template(clear_param_template).substitute(**template_kwargs)
                 for clear_param_template in clear_param_templates
             ]
-            basic_logger.info("Templates ready")
             futures.append(loop.run_in_executor(
-                executor, wrapper, tm1_service, data_mdx, target_clear_set_mdx_list, i
+                executor, wrapper,
+                tm1_service, data_mdx, target_clear_set_mdx_list, mapping_steps, shared_mapping, i
             ))
 
         for future in futures:

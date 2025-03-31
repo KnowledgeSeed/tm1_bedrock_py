@@ -99,13 +99,12 @@ def test_async_data_copy_intercube(
     print('Start time: ')
     print(time.strftime('{%Y%m%d %H:%M}', start_time))
     asyncio.run(bedrock.async_executor(
-        #data_copy_function=bedrock.data_copy_intercube,
-        data_copy_function=bedrock.data_copy,
+        data_copy_function=bedrock.data_copy_intercube,
         tm1_service=tm1_connection,
         data_mdx_template=data_mdx_template,
         skip_zeros=True,
         skip_consolidated_cells=True,
-        #target_cube_name=target_cube_name,
+        target_cube_name=target_cube_name,
         shared_mapping=shared_mapping,
         mapping_steps=mapping_steps,
         clear_target=True,
