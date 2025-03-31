@@ -111,7 +111,8 @@ def test_async_data_copy_intercube(
         async_write=True,
         logging_level="DEBUG",
         param_set_mdx_list=param_set_mdx_list,
-        clear_param_templates=clear_param_templates
+        clear_param_templates=clear_param_templates,
+        max_workers=8
     ))
     run_time = time.time() - start_time_total
     print('Time: {:.4f} sec'.format(run_time))

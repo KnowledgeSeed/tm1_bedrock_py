@@ -537,6 +537,7 @@ async def async_executor(
         mapping_steps: Optional[List[Dict]] = None,
         data_copy_function: Callable = data_copy,
         clear_param_templates: str = None,
+        max_workers: int = 8,
         **kwargs):
 
     """
@@ -594,7 +595,7 @@ async def async_executor(
             basic_logger.error(e)
             return e
 
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = []
         for i, current_tuple in enumerate(param_tuples):
             template_kwargs = {
