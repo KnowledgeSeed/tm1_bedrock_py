@@ -44,7 +44,6 @@ def data_copy_intercube(
         increment: Optional[bool] = False,
         sum_numeric_duplicates: Optional[bool] = True,
         logging_level: Optional[str] = "ERROR",
-        _execution_id: Optional[int] = 0,
         **kwargs
 ) -> None:
     """
@@ -198,6 +197,7 @@ def data_copy_intercube(
         skip_consolidated_cells=skip_consolidated_cells,
         skip_rule_derived_cells=skip_rule_derived_cells,
         mdx_function=mdx_function,
+        **kwargs
     )
 
     if dataframe.empty:
@@ -219,12 +219,16 @@ def data_copy_intercube(
     )
     target_cube_name = target_metadata.get_cube_name()
 
-    transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
-    transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
+    transformer.dataframe_add_column_assign_value(
+        dataframe=dataframe,
+        column_value=data_metadata.get_filter_dict(),
+        **kwargs
+    )
+    transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe, **kwargs)
 
     if ignore_missing_elements:
         transformer.dataframe_itemskip_elements(
-            dataframe=dataframe, check_dfs=target_metadata.get_dimension_check_dfs()
+            dataframe=dataframe, check_dfs=target_metadata.get_dimension_check_dfs(), **kwargs
         )
 
     shared_mapping_df = None
@@ -235,7 +239,8 @@ def data_copy_intercube(
             mdx_function=mdx_function,
             sql_engine=sql_engine,
             sql_function=sql_function,
-            csv_function=csv_function
+            csv_function=csv_function,
+            **kwargs
         )
         shared_mapping_df = shared_mapping["mapping_df"]
 
@@ -245,24 +250,30 @@ def data_copy_intercube(
         mdx_function=mdx_function,
         sql_engine=sql_engine,
         sql_function=sql_function,
-        csv_function=csv_function
+        csv_function=csv_function,
+        **kwargs
     )
 
     transformer.dataframe_execute_mappings(
-        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df
+        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df, **kwargs
     )
 
     transformer.dataframe_redimension_and_transform(
         dataframe=dataframe,
         source_dim_mapping=source_dim_mapping,
         related_dimensions=related_dimensions,
-        target_dim_mapping=target_dim_mapping
+        target_dim_mapping=target_dim_mapping,
+        **kwargs
     )
 
     if value_function is not None:
         transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
 
-    transformer.dataframe_reorder_dimensions(dataframe=dataframe, cube_dimensions=target_metadata.get_cube_dims())
+    transformer.dataframe_reorder_dimensions(
+        dataframe=dataframe,
+        cube_dimensions=target_metadata.get_cube_dims(),
+        **kwargs
+    )
 
     if clear_target:
         loader.clear_cube(
@@ -282,7 +293,8 @@ def data_copy_intercube(
         increment=increment,
         use_blob=use_blob,
         sum_numeric_duplicates=sum_numeric_duplicates,
-        slice_size_of_dataframe=slice_size_of_dataframe
+        slice_size_of_dataframe=slice_size_of_dataframe,
+        **kwargs
     )
 
     if clear_source:
@@ -323,7 +335,7 @@ def data_copy(
         increment: bool = False,
         sum_numeric_duplicates: bool = True,
         logging_level: str = "ERROR",
-        _execution_id: int = 0,
+        #_execution_id: int = 0,
         **kwargs
 ) -> None:
     """
@@ -451,6 +463,7 @@ def data_copy(
         skip_consolidated_cells=skip_consolidated_cells,
         skip_rule_derived_cells=skip_rule_derived_cells,
         mdx_function=mdx_function,
+        **kwargs
     )
 
     if dataframe.empty:
@@ -466,13 +479,16 @@ def data_copy(
     cube_name = data_metadata.get_cube_name()
     cube_dims = data_metadata.get_cube_dims()
 
-    transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
-    transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
+    transformer.dataframe_add_column_assign_value(
+        dataframe=dataframe,
+        column_value=data_metadata.get_filter_dict(),
+        **kwargs
+    )
+    transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe, **kwargs)
 
     if ignore_missing_elements:
         transformer.dataframe_itemskip_elements(
-            dataframe=dataframe, check_dfs=data_metadata.get_dimension_check_dfs()
-        )
+            dataframe=dataframe, check_dfs=data_metadata.get_dimension_check_dfs(), **kwargs)
 
     shared_mapping_df = None
     if shared_mapping:
@@ -482,7 +498,8 @@ def data_copy(
             mdx_function=mdx_function,
             sql_engine=sql_engine,
             sql_function=sql_function,
-            csv_function=csv_function
+            csv_function=csv_function,
+            **kwargs
         )
         shared_mapping_df = shared_mapping["mapping_df"]
 
@@ -492,17 +509,17 @@ def data_copy(
         mdx_function=mdx_function,
         sql_engine=sql_engine,
         sql_function=sql_function,
-        csv_function=csv_function
+        csv_function=csv_function,
+        **kwargs
     )
 
     transformer.dataframe_execute_mappings(
-        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df
-    )
+        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df, **kwargs)
 
     if value_function is not None:
         transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
 
-    transformer.dataframe_reorder_dimensions(dataframe=dataframe, cube_dimensions=cube_dims)
+    transformer.dataframe_reorder_dimensions(dataframe=dataframe, cube_dimensions=cube_dims, **kwargs)
 
     if clear_target:
         loader.clear_cube(
@@ -522,7 +539,8 @@ def data_copy(
         increment=increment,
         use_blob=use_blob,
         sum_numeric_duplicates=sum_numeric_duplicates,
-        slice_size_of_dataframe=slice_size_of_dataframe
+        slice_size_of_dataframe=slice_size_of_dataframe,
+        **kwargs
     )
 
     basic_logger.info("Execution ended.")

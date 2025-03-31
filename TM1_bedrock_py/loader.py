@@ -34,7 +34,8 @@ def clear_cube(
 def __clear_cube_default(
         tm1_service: TM1Service,
         cube_name: str,
-        clear_set_mdx_list: List[str]
+        clear_set_mdx_list: List[str],
+        **_kwargs
 ) -> None:
     """
     Clears a cube with filters by generating clear parameters from a list of set MDXs.
@@ -43,6 +44,7 @@ def __clear_cube_default(
         tm1_service (TM1Service): An active TM1Service object for the TM1 server connection.
         cube_name (str): The name of the cube to clear.
         clear_set_mdx_list (List[str]): A list of valid MDX set expressions defining the clear space.
+        **_kwargs (Any): Additional keyword arguments.
     """
     clearing_kwargs = utility.__get_kwargs_dict_from_set_mdx_list(clear_set_mdx_list)
     tm1_service.cells.clear(cube_name, **clearing_kwargs)
@@ -93,6 +95,7 @@ def __dataframe_to_cube_default(
         increment (bool, optional): Increments the values in the cube instead of replacing them. Defaults to False.
         sum_numeric_duplicates (bool, optional): Aggregate numerical values for duplicated intersections.
             Defaults to True.
+        **kwargs (Any): Additional keyword arguments.
 
     Returns:
         None
@@ -231,7 +234,7 @@ def dataframe_to_csv(
         na_rep: Optional[str] = "NULL",
         compression: Optional[str | dict] = None,
         index: Optional[bool] = False,
-        **kwargs
+        **_kwargs
 ) -> None:
     """
       Retrieves a DataFrame by executing the provided SQL function
@@ -254,7 +257,7 @@ def dataframe_to_csv(
           na_rep: (Optional[str]): Missing data representation. Defaults to NULL.
           compression: (Optional[str | dict]): For on-the-fly compression of the output data.
           index: (Optional[bool]): Default False. If True, writes row indices.
-          **kwargs (Any): Additional keyword arguments.
+          **_kwargs (Any): Additional keyword arguments.
 
       Returns:
           None
