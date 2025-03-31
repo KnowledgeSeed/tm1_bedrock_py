@@ -89,27 +89,30 @@ def test_data_copy_for_multiple_steps(
 
 
 @parametrize_from_file
-def test_async_data_copy_intercube(tm1_connection, list_periods, data_mdx_template, clear_param_template):
-
+def test_async_data_copy_intercube(
+        tm1_connection, param_set_mdx_list, data_mdx_template, clear_param_templates,
+        target_cube_name, shared_mapping, mapping_steps
+):
+    utility.set_logging_level("DEBUG")
     start_time = time.gmtime()
     start_time_total = time.time()
     print('Start time: ')
     print(time.strftime('{%Y%m%d %H:%M}', start_time))
     asyncio.run(bedrock.async_executor(
-        data_copy_function=bedrock.data_copy_intercube,
+        #data_copy_function=bedrock.data_copy_intercube,
+        data_copy_function=bedrock.data_copy,
         tm1_service=tm1_connection,
         data_mdx_template=data_mdx_template,
-        param="Period",
-        list_of_params=list_periods,
         skip_zeros=True,
-        skip_consolidated_cells=False,
-        target_cube_name="Group Employee DataCopy Test",
-        related_dimensions={"Groups": "Project A"},
-        mapping_steps=[],
+        skip_consolidated_cells=True,
+        #target_cube_name=target_cube_name,
+        shared_mapping=shared_mapping,
+        mapping_steps=mapping_steps,
         clear_target=True,
-        clear_param_template=clear_param_template,
         async_write=True,
         logging_level="DEBUG",
+        param_set_mdx_list=param_set_mdx_list,
+        clear_param_templates=clear_param_templates
     ))
     run_time = time.time() - start_time_total
     print('Time: {:.4f} sec'.format(run_time))

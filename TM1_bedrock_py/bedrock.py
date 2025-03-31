@@ -2,9 +2,7 @@
 This file is a collection of upgraded TM1 bedrock functionality, ported to python / pandas with the help of TM1py.
 """
 import asyncio
-import functools
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from functools import wraps
+from concurrent.futures import ThreadPoolExecutor
 from string import Template
 from typing import Callable, List, Dict, Optional, Any
 from pandas import DataFrame
@@ -39,13 +37,14 @@ def data_copy_intercube(
         target_clear_set_mdx_list: Optional[List[str]] = None,
         clear_source: Optional[bool] = False,
         source_clear_set_mdx_list: Optional[List[str]] = None,
-        async_write: bool = False,
-        use_ti: bool = False,
-        use_blob: bool = False,
-        increment: bool = False,
-        sum_numeric_duplicates: bool = True,
-        logging_level: str = "ERROR",
-        _execution_id: int = 0,
+        async_write: Optional[bool] = False,
+        slice_size_of_dataframe: Optional[int] = 50000,
+        use_ti: Optional[bool] = False,
+        use_blob: Optional[bool] = False,
+        increment: Optional[bool] = False,
+        sum_numeric_duplicates: Optional[bool] = True,
+        logging_level: Optional[str] = "ERROR",
+        _execution_id: Optional[int] = 0,
         **kwargs
 ) -> None:
     """
@@ -283,6 +282,7 @@ def data_copy_intercube(
         increment=increment,
         use_blob=use_blob,
         sum_numeric_duplicates=sum_numeric_duplicates,
+        slice_size_of_dataframe=slice_size_of_dataframe
     )
 
     if clear_source:
@@ -314,7 +314,7 @@ def data_copy(
         shared_mapping: Optional[Dict] = None,
         value_function: Optional[Callable[..., Any]] = None,
         ignore_missing_elements: bool = False,
-        clear_set_mdx_list: Optional[List[str]] = None,
+        target_clear_set_mdx_list: Optional[List[str]] = None,
         clear_target: Optional[bool] = False,
         async_write: bool = False,
         slice_size_of_dataframe: int = 250000,
@@ -508,7 +508,7 @@ def data_copy(
         loader.clear_cube(
             tm1_service=target_tm1_service,
             cube_name=cube_name,
-            clear_set_mdx_list=clear_set_mdx_list,
+            clear_set_mdx_list=target_clear_set_mdx_list,
             **kwargs
         )
 
@@ -530,11 +530,11 @@ def data_copy(
 
 @utility.log_exec_metrics
 async def async_executor(
+        tm1_service: Any,
+        param_set_mdx_list: List[str],
+        data_mdx_template: str,
         data_copy_function: Callable = data_copy,
-        data_mdx_template: str = None,
-        list_of_params: List[str] = None,
-        param: str = None,
-        clear_param_template: str = None,
+        clear_param_templates: str = None,
         **kwargs):
 
     """
@@ -556,11 +556,17 @@ async def async_executor(
         )
         target_metadata_function = lambda: target_metadata
     """
+    param_names = utility.__get_dimensions_from_set_mdx_list(param_set_mdx_list)
+    param_values = utility.__generate_element_lists_from_set_mdx_list(tm1_service, param_set_mdx_list)
+    param_tuples = utility.__generate_cartesian_product(param_values)
+    basic_logger.info("Parameter tuples ready. Count: " + str(len(param_tuples)))
+
     loop = asyncio.get_event_loop()
 
-    def wrapper(mdx, set_mdx_list, _execution_id):
+    def wrapper(tm1, mdx, set_mdx_list, _execution_id):
         try:
             data_copy_function(
+                tm1_service=tm1,
                 data_mdx=mdx,
                 target_clear_set_mdx_list=set_mdx_list,
                 _execution_id=_execution_id,
@@ -572,12 +578,23 @@ async def async_executor(
 
     with ThreadPoolExecutor(max_workers=8) as executor:
         futures = []
-        for i, current_param in enumerate(list_of_params):
-            data_mdx = str(Template(data_mdx_template).substitute({param: current_param}))
-            target_clear_set_mdx_list = [Template(clear_param_template).substitute({param: current_param})]
-            futures.append(loop.run_in_executor(executor, wrapper, data_mdx, target_clear_set_mdx_list, i))
+        for i, current_tuple in enumerate(param_tuples):
+            template_kwargs = {
+                param_name: current_tuple[j]
+                for j, param_name in enumerate(param_names)
+            }
+            data_mdx = Template(data_mdx_template).substitute(**template_kwargs)
+            target_clear_set_mdx_list = [
+                Template(clear_param_template).substitute(**template_kwargs)
+                for clear_param_template in clear_param_templates
+            ]
+            basic_logger.info("Templates ready")
+            futures.append(loop.run_in_executor(
+                executor, wrapper, tm1_service, data_mdx, target_clear_set_mdx_list, i
+            ))
 
-            await asyncio.gather(*futures, return_exceptions=True)
+        for future in futures:
+            await future
 
 
 @utility.log_exec_metrics
