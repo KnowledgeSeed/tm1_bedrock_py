@@ -231,6 +231,84 @@ def __generate_element_lists_from_set_mdx_list(tm1_service: Any, set_mdx_list: L
     return result
 
 
+def add_non_empty_to_mdx(mdx_string: str) -> str:
+    """
+    Adds 'NON EMPTY' before each axis definition ({...} ON ...) in an MDX
+    SELECT statement, if it's not already present.
+
+    Handles variations in whitespace, axis identifiers (COLUMNS, ROWS, 0, 1,
+    AXIS(n)), and case-insensitivity of keywords. It operates only between the
+    main SELECT and FROM clauses.
+
+    Args:
+        mdx_string: A string containing a potentially valid MDX VIEW query.
+
+    Returns:
+        A string with ' NON EMPTY ' prepended to each axis set definition
+        ({<set>} ON <axis>) that doesn't already have it,
+        or the original string if the structure isn't a recognizable
+        SELECT...FROM query.
+    """
+    select_match = re.search(r'\bSELECT\b', mdx_string, re.IGNORECASE)
+    if not select_match:
+        return mdx_string
+
+    from_match = re.search(r'\bFROM\b', mdx_string[select_match.end():], re.IGNORECASE)
+    if not from_match:
+        return mdx_string
+
+    select_start_index = select_match.start()
+    select_end_index = select_match.end()
+    from_start_index = select_end_index + from_match.start()
+
+    prefix = mdx_string[:select_start_index]
+    select_keyword_part = mdx_string[select_start_index:select_end_index]
+    axes_definition_part = mdx_string[select_end_index:from_start_index]
+    suffix = mdx_string[from_start_index:]
+
+    axis_pattern = re.compile(
+        r"""
+        # Negative Lookbehind Assertion:
+        # Ensures that the pattern is NOT preceded by 'NON EMPTY' (case-insensitive)
+        # Allows for flexible whitespace between NON and EMPTY and before the '{'
+        (?<!              # Start Negative Lookbehind
+            \b NON \s EMPTY \s
+        )                 # End Negative Lookbehind
+
+        # Capture Group 1: The actual axis definition to keep and prepend to.
+        (                 # Start Capture Group 1
+            # Start of the Set Definition
+            \{            # Literal opening brace of the set
+            [\s\S]*?      # The content of the set (any character, incl. newlines, non-greedy)
+                         # Use [\s\S] instead of . to match across lines
+            \s*           # Optional whitespace before the closing brace
+            \}            # Literal closing brace of the set
+
+            # Separator between Set and Axis Specifier
+            \s*           # Optional whitespace after the set
+            \b ON \b      # The keyword ON (case-insensitive, whole word)
+            \s*           # Optional whitespace after ON
+
+            # Axis Specifier (case-insensitive for names)
+            (?:           # Start Non-Capturing Group for axis identifier alternatives
+                COLUMNS|ROWS|PAGES|SECTIONS|CHAPTERS # Common axis names
+                |         # OR
+                AXIS \s* \( \s* \d+ \s* \)            # AXIS(n) function call (allowing whitespace)
+                |         # OR
+                \d+       # Axis ordinal number (0, 1, 2...)
+            )             # End Non-Capturing Group
+            \b            # Word boundary to ensure we don't match partial names/numbers
+        )                 # End Capture Group 1
+        """,
+        re.IGNORECASE | re.VERBOSE
+    )
+
+    replacement = r" NON EMPTY \1"
+    modified_axes_part = axis_pattern.sub(replacement, axes_definition_part)
+    final_mdx = prefix + select_keyword_part + modified_axes_part + suffix
+    return final_mdx
+
+
 # ------------------------------------------------------------------------------------------------------------
 # Utility: Cube metadata collection using input MDXs and/or other cubes
 # ------------------------------------------------------------------------------------------------------------

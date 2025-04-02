@@ -59,6 +59,180 @@ test_utility_float_casting_types:
     input_value: "test string 123"
     expected_type: "<class 'str'>"
 
+test_add_nonempty_to_mdx_all_modes:
+  -
+    input_mdx: "
+    SELECT
+    { [Measures].[Sales Amount],
+    [Measures].[Tax Amount] } ON COLUMNS,
+    { [Date].[Fiscal].[Fiscal Year].&[2002],
+    [Date].[Fiscal].[Fiscal Year].&[2003] } ON ROWS
+    FROM [Adventure Works]
+    WHERE ( [Sales Territory].[Southwest] )
+    "
+    expected_mdx: "
+    SELECT
+      NON EMPTY { [Measures].[Sales Amount],
+    [Measures].[Tax Amount] } ON COLUMNS,
+      NON EMPTY { [Date].[Fiscal].[Fiscal Year].&[2002],
+    [Date].[Fiscal].[Fiscal Year].&[2003] } ON ROWS
+    FROM [Adventure Works]
+    WHERE ( [Sales Territory].[Southwest] )
+    "
+  -
+    input_mdx: "
+    SELECT
+        { [Measures].[Sales Amount] } ON 0,
+        { [Date].[Fiscal Year].Members } ON 1
+    FROM [My Cube]
+    "
+    expected_mdx: "
+    SELECT
+          NON EMPTY { [Measures].[Sales Amount] } ON 0,
+          NON EMPTY { [Date].[Fiscal Year].Members } ON 1
+    FROM [My Cube]
+    "
+  -
+    input_mdx: "
+    SELECT
+    { [ Measures ].[ Amount ] } ON 0,
+    { [Date].[Year].Members } ON 1,
+    { [Region].[Country].Members } ON 2
+    FROM [Sales Cube]
+    "
+    expected_mdx: "
+    SELECT
+     NON EMPTY { [Measures].[Amount] } ON 0,
+     NON EMPTY { [Date].[Year].Members } ON 1,
+     NON EMPTY { [Region].[Country].Members } ON 2
+    FROM [Sales Cube]
+    "
+  -
+    input_mdx: "
+    SELECT
+    
+    { [ A ] }    ON   COLUMNS   ,
+    
+    { [B] }
+    ON
+    1
+    FROM    [Cube]
+    "
+    expected_mdx: "
+    SELECT
+    
+     NON EMPTY { [A] }    ON   COLUMNS   ,
+    
+     NON EMPTY { [B] }
+    ON
+    1
+    FROM    [Cube]
+    "
+  -
+    input_mdx: "
+    SELECT
+     NON EMPTY { [Measures].[Sales Amount] } ON COLUMNS,
+    { [Date].[Fiscal Year].Members } ON ROWS
+    FROM [Adventure Works]
+    "
+    expected_mdx: "
+    SELECT
+     NON EMPTY { [Measures].[Sales Amount] } ON COLUMNS,
+     NON EMPTY { [Date].[Fiscal Year].Members } ON ROWS
+    FROM [Adventure Works]
+    "
+  -
+    input_mdx: "
+    SELECT
+    { [Measures].[Sales Amount] } ON 0,
+     NON EMPTY { [Date].[Fiscal Year].Members } ON 1
+    FROM [Adventure Works]
+    "
+    expected_mdx: "
+    SELECT
+     NON EMPTY { [Measures].[Sales Amount] } ON 0,
+     NON EMPTY { [Date].[Fiscal Year].Members } ON 1
+    FROM [Adventure Works]
+    "
+  -
+    input_mdx: "
+    SELECT
+     NON EMPTY { [Measures].[Sales Amount] } ON COLUMNS,
+     NON EMPTY { [Date].[Fiscal Year].Members } ON ROWS
+    FROM [Adventure Works]
+    "
+    expected_mdx: "
+    SELECT
+     NON EMPTY { [Measures].[Sales Amount] } ON COLUMNS,
+     NON EMPTY { [Date].[Fiscal Year].Members } ON ROWS
+    FROM [Adventure Works]
+    "
+  -
+    input_mdx: "
+    select
+    { [ A ] } on columns,
+    { [B] } On rOwS
+    from [Cube]
+    "
+    expected_mdx: "
+    select
+     NON EMPTY { [A] } on columns,
+     NON EMPTY { [B] } On rOwS
+    from [Cube]
+    "
+  -
+    input_mdx: "
+    SELECT
+     non empty { [Measures].[Sales Amount] } ON COLUMNS, -- Should not add another
+    { [ Date ].[ Fiscal Year ].Members } ON ROWS
+    FROM [Adventure Works]
+    "
+    expected_mdx: "
+    SELECT
+     non empty { [Measures].[Sales Amount] } ON COLUMNS, -- Should not add another
+     NON EMPTY { [Date].[Fiscal Year].Members } ON ROWS
+    FROM [Adventure Works]
+    "
+  -
+    input_mdx: "
+    WITH MEMBER Measures.X AS 1
+    SELECT
+    { [ Measures ].[ Sales Amount ] } ON 0,
+    { [Date].[Fiscal Year].Members } ON 1
+    FROM [My Cube]
+    "
+    expected_mdx: "
+    WITH MEMBER Measures.X AS 1
+    SELECT
+     NON EMPTY { [Measures].[Sales Amount] } ON 0,
+     NON EMPTY { [Date].[Fiscal Year].Members } ON 1
+    FROM [My Cube]
+    "
+  -
+    input_mdx: "
+    SELECT
+    { Filter({[Product].[Product].Members}, [Measures].[Sales] > 100) } ON 0,
+    { [Customer].[City].Members } ON 1
+    FROM [Sales]
+    "
+    expected_mdx: "
+    SELECT
+     NON EMPTY { Filter({[Product].[Product].Members}, [Measures].[Sales] > 100) } ON 0,
+     NON EMPTY { [Customer].[City].Members } ON 1
+    FROM [Sales]
+    "
+  -
+    input_mdx: "
+    SELECT
+    FROM [Adventure Works]
+    WHERE ( [Sales Territory].[Southwest] )
+    "
+    expected_mdx: "
+    SELECT
+    FROM [Adventure Works]
+    WHERE ( [Sales Territory].[Southwest] )
+    "
+
 
 # Utility: Cube metadata collection using input MDXs and/or other cubes
 test_tm1_cube_object_metadata_collect_based_on_cube_name_success:

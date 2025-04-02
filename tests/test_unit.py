@@ -1,5 +1,6 @@
 import configparser
 import os
+import re
 from pathlib import Path
 
 import numpy as np
@@ -93,6 +94,13 @@ def test_utility_float_casting_types(input_value, expected_type):
     output_type = str(type(output_value))
     print(output_type)
     assert output_type == expected_type
+
+
+@parametrize_from_file
+def test_add_nonempty_to_mdx_all_modes(input_mdx, expected_mdx):
+    output_mdx = utility.add_non_empty_to_mdx(input_mdx)
+
+    assert "".join(output_mdx.split()) == "".join(expected_mdx.split())
 
 
 # ------------------------------------------------------------------------------------------------------------
