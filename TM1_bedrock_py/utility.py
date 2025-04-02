@@ -400,7 +400,7 @@ class TM1CubeObjectMetadata:
         Returns:
             TM1CubeObjectMetadata: The updated metadata object.
         """
-
+        metadata[cls._CUBE_NAME] = _get_cube_name_from_mdx(mdx)
         metadata[cls._QUERY_VAL] = mdx
         metadata[cls._QUERY_FILTER_DICT] = _mdx_filter_to_dictionary(mdx)
 
@@ -417,6 +417,7 @@ class TM1CubeObjectMetadata:
             cube_name: Optional[str] = None,
             retrieve_all_dimension_data: Optional[Callable[..., Any]] = None,
             retrieve_dimension_data: Optional[Callable[..., Any]] = None,
+            collect_base_cube_metadata: Optional[bool] = True,
             collect_extended_cube_metadata: Optional[bool] = False,
             collect_dim_element_identifiers: Optional[bool] = False,
             **kwargs
@@ -441,12 +442,14 @@ class TM1CubeObjectMetadata:
         metadata = TM1CubeObjectMetadata()
 
         if mdx:
-            cube_name = _get_cube_name_from_mdx(mdx)
             cls._expand_query_metadata(mdx, metadata)
-        cls._expand_base_cube_metadata(tm1_service=tm1_service, cube_name=cube_name, metadata=metadata)
+            cube_name = cls.get_cube_name(metadata)
 
         if not cube_name:
-            raise ValueError("No MDX or cube name was specified.")
+            basic_logger.error("You need to have either an MDX or a cube name specified.")
+
+        if collect_base_cube_metadata:
+            cls._expand_base_cube_metadata(tm1_service=tm1_service, cube_name=cube_name, metadata=metadata)
 
         if retrieve_all_dimension_data is None:
             retrieve_all_dimension_data = cls.__tm1_dimension_data_collector_for_cube
@@ -464,7 +467,8 @@ class TM1CubeObjectMetadata:
                 tm1_service=tm1_service,
                 cube_dimensions=metadata.get_cube_dims(),
                 metadata=metadata,
-                retrieve_dimension_data=retrieve_dimension_data
+                retrieve_dimension_data=retrieve_dimension_data,
+                **kwargs
             )
 
         return metadata
@@ -510,7 +514,8 @@ class TM1CubeObjectMetadata:
             tm1_service: Any,
             cube_dimensions: List[str],
             metadata: "TM1CubeObjectMetadata",
-            retrieve_dimension_data: Callable[..., Any]
+            retrieve_dimension_data: Callable[..., Any],
+            **_kwargs
     ) -> None:
         """
         Default implementation to retrieve and update metadata for all dimensions of a cube.
@@ -534,7 +539,8 @@ class TM1CubeObjectMetadata:
             tm1_service: Any,
             dimension: str,
             hierarchies: List[str],
-            metadata: "TM1CubeObjectMetadata"
+            metadata: "TM1CubeObjectMetadata",
+            **_kwargs
     ) -> None:
         """
         Default implementation to retrieve and collect metadata for a dimension and its hierarchies.

@@ -25,7 +25,6 @@ def data_copy_intercube(
         skip_rule_derived_cells: Optional[bool] = False,
         target_cube_name: Optional[str] = None,
         target_metadata_function: Optional[Callable[..., Any]] = None,
-        data_metadata_function: Optional[Callable[..., Any]] = None,
         mapping_steps: Optional[List[Dict]] = None,
         shared_mapping: Optional[Dict] = None,
         source_dim_mapping: Optional[dict] = None,
@@ -203,12 +202,11 @@ def data_copy_intercube(
     if dataframe.empty:
         return
 
-    data_metadata = utility.TM1CubeObjectMetadata.collect(
-        tm1_service=tm1_service,
+    data_metadata_queryspecific = utility.TM1CubeObjectMetadata.collect(
         mdx=data_mdx,
-        metadata_function=data_metadata_function,
-        **kwargs
+        collect_base_cube_metadata=False
     )
+    source_cube_name = data_metadata_queryspecific.get_cube_name()
 
     target_metadata = utility.TM1CubeObjectMetadata.collect(
         tm1_service=target_tm1_service,
@@ -221,7 +219,7 @@ def data_copy_intercube(
 
     transformer.dataframe_add_column_assign_value(
         dataframe=dataframe,
-        column_value=data_metadata.get_filter_dict(),
+        column_value=data_metadata_queryspecific.get_filter_dict(),
         **kwargs
     )
     transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe, **kwargs)
@@ -300,7 +298,7 @@ def data_copy_intercube(
     if clear_source:
         loader.clear_cube(
             tm1_service=tm1_service,
-            cube_name=data_metadata.get_cube_name(),
+            cube_name=source_cube_name,
             clear_set_mdx_list=source_clear_set_mdx_list,
             **kwargs
         )
@@ -335,7 +333,6 @@ def data_copy(
         increment: bool = False,
         sum_numeric_duplicates: bool = True,
         logging_level: str = "ERROR",
-        #_execution_id: int = 0,
         **kwargs
 ) -> None:
     """
@@ -469,19 +466,23 @@ def data_copy(
     if dataframe.empty:
         return
 
+    data_metadata_queryspecific = utility.TM1CubeObjectMetadata.collect(
+        mdx=data_mdx,
+        collect_base_cube_metadata=False
+    )
+    cube_name = data_metadata_queryspecific.get_cube_name()
     data_metadata = utility.TM1CubeObjectMetadata.collect(
         tm1_service=target_tm1_service,
-        mdx=data_mdx,
+        cube_name=cube_name,
         metadata_function=data_metadata_function,
         collect_dim_element_identifiers=ignore_missing_elements,
         **kwargs
     )
-    cube_name = data_metadata.get_cube_name()
     cube_dims = data_metadata.get_cube_dims()
 
     transformer.dataframe_add_column_assign_value(
         dataframe=dataframe,
-        column_value=data_metadata.get_filter_dict(),
+        column_value=data_metadata_queryspecific.get_filter_dict(),
         **kwargs
     )
     transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe, **kwargs)
@@ -558,25 +559,10 @@ async def async_executor(
         max_workers: int = 8,
         **kwargs):
 
-    """
-    source_data_metadata = utility.TM1CubeObjectMetadata.collect(
-        tm1_service=tm1_service,
-        mdx=data_mdx,
-        metadata_function=data_metadata_function,
-        **kwargs
-    )
-    source_metadata_function = lambda: source_data_metadata
+    target_tm1_service = kwargs.get("target_tm1_service")
+    if not target_tm1_service:
+        target_tm1_service = tm1_service
 
-    if (target_cube_name or target_metadata_function) is not None:
-        target_metadata = utility.TM1CubeObjectMetadata.collect(
-            tm1_service=target_tm1_service,
-            cube_name=target_cube_name,
-            metadata_function=target_metadata_function,
-            collect_dim_element_identifiers=ignore_missing_elements,
-            **kwargs
-        )
-        target_metadata_function = lambda: target_metadata
-    """
     param_names = utility.__get_dimensions_from_set_mdx_list(param_set_mdx_list)
     param_values = utility.__generate_element_lists_from_set_mdx_list(tm1_service, param_set_mdx_list)
     param_tuples = utility.__generate_cartesian_product(param_values)
@@ -596,9 +582,34 @@ async def async_executor(
             **kwargs
         )
 
+    target_metadata_function = None
+    if data_copy_function == (data_copy_intercube or load_sql_data_to_tm1_cube):
+        target_metadata = utility.TM1CubeObjectMetadata.collect(
+            tm1_service=target_tm1_service,
+            cube_name=kwargs.get("target_cube_name"),
+            metadata_function=kwargs.get("target_metadata_function"),
+            collect_dim_element_identifiers=kwargs.get("ignore_missing_elements"),
+            **kwargs
+        )
+        def target_metadata_function(): return target_metadata
+
+    source_cube_name = utility._get_cube_name_from_mdx(data_mdx_template)
+    data_metadata_function = None
+    if data_copy_function == (data_copy_intercube or load_tm1_cube_to_sql_table):
+        data_metadata = utility.TM1CubeObjectMetadata.collect(
+            tm1_service=target_tm1_service,
+            cube_name=source_cube_name,
+            metadata_function=kwargs.get("data_metadata_function"),
+            collect_dim_element_identifiers=kwargs.get("ignore_missing_elements"),
+            **kwargs
+        )
+        def data_metadata_function(): return data_metadata
+
+
+
     loop = asyncio.get_event_loop()
 
-    def wrapper(tm1, mdx, set_mdx_list, steps, shared, _execution_id):
+    def wrapper(tm1, mdx, set_mdx_list, steps, shared, d_md, t_md, _execution_id):
         try:
             data_copy_function(
                 tm1_service=tm1,
@@ -606,6 +617,8 @@ async def async_executor(
                 shared_mapping=shared,
                 mapping_steps=steps,
                 target_clear_set_mdx_list=set_mdx_list,
+                data_metadata_function=d_md,
+                target_metadata_function=t_md,
                 _execution_id=_execution_id,
                 **kwargs
             )
@@ -627,7 +640,10 @@ async def async_executor(
             ]
             futures.append(loop.run_in_executor(
                 executor, wrapper,
-                tm1_service, data_mdx, target_clear_set_mdx_list, mapping_steps, shared_mapping, i
+                tm1_service, data_mdx, target_clear_set_mdx_list,
+                mapping_steps, shared_mapping,
+                data_metadata_function, target_metadata_function,
+                i
             ))
 
         for future in futures:
