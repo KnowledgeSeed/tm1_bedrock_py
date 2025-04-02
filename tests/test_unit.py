@@ -2,7 +2,6 @@ import configparser
 import os
 from pathlib import Path
 
-import numpy as np
 from TM1py.Exceptions import TM1pyRestException
 from sqlalchemy.exc import OperationalError, InterfaceError
 from sqlalchemy import text

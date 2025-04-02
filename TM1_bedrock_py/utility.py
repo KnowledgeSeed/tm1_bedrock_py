@@ -11,7 +11,6 @@ from TM1py.Objects.Element import Element
 from sqlalchemy import create_engine, inspect
 from pandas import DataFrame
 from numpy import float64
-from sqlalchemy.dialects.mysql import NUMERIC
 
 from TM1_bedrock_py import exec_metrics_logger, basic_logger
 
