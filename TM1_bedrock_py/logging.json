@@ -21,7 +21,7 @@
 
       "json_exec_metrics": {
         "format": "%(asctime)s :: %(levelname)s :: %(name)s :: %(fileName)s :: %(func)s() :: %(exec_id)s :: %(message)s :: %(process)d - %(threadName)s",
-        "class": "json_logging.JSONLogFormatter"
+        "class": "TM1_bedrock_py.json_log_formatter.JSONLogFormatter"
       }
     },
 
