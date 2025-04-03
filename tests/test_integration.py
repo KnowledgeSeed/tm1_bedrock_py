@@ -89,6 +89,25 @@ def test_data_copy_for_multiple_steps(
 
 
 @parametrize_from_file
+def test_data_copy_intercube_for_multiple_steps(
+        tm1_connection, base_data_mdx, shared_mapping, mapping_steps, target_cube_name
+):
+    bedrock.data_copy_intercube(
+        tm1_service=tm1_connection,
+        shared_mapping=shared_mapping,
+        target_cube_name=target_cube_name,
+        data_mdx=base_data_mdx,
+        mapping_steps=mapping_steps,
+        clear_target=True,
+        target_clear_set_mdx_list=["{[Versions].[Versions].[DataCopy Integration Test]}"],
+        skip_zeros=True,
+        async_write=True,
+        logging_level="DEBUG",
+        _execution_id=1
+    )
+
+
+@parametrize_from_file
 def test_async_data_copy_intercube(
         tm1_connection, param_set_mdx_list, data_mdx_template, clear_param_templates,
         target_cube_name, shared_mapping, mapping_steps
@@ -109,7 +128,7 @@ def test_async_data_copy_intercube(
         mapping_steps=mapping_steps,
         clear_target=True,
         async_write=True,
-        logging_level="DEBUG",
+        logging_level="ERROR",
         param_set_mdx_list=param_set_mdx_list,
         clear_param_templates=clear_param_templates,
         max_workers=8

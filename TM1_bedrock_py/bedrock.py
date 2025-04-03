@@ -222,7 +222,7 @@ def data_copy_intercube(
         column_value=data_metadata_queryspecific.get_filter_dict(),
         **kwargs
     )
-    transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe, **kwargs)
+    #transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe, **kwargs)
 
     if ignore_missing_elements:
         transformer.dataframe_itemskip_elements(
@@ -273,6 +273,11 @@ def data_copy_intercube(
         **kwargs
     )
 
+    basic_logger.debug(', '.join(target_metadata.get_cube_dims()))
+    basic_logger.debug(', '.join(dataframe.columns))
+    basic_logger.debug(', '.join(map(str, dataframe.iloc[55].tolist())))
+    basic_logger.debug(','.join(f"{type(x).__name__}" for x in dataframe.iloc[55].tolist()))
+
     if clear_target:
         loader.clear_cube(
             tm1_service=target_tm1_service,
@@ -281,11 +286,12 @@ def data_copy_intercube(
             **kwargs
         )
 
+    target_cube_dims = target_metadata.get_cube_dims()
     loader.dataframe_to_cube(
         tm1_service=target_tm1_service,
         dataframe=dataframe,
         cube_name=target_cube_name,
-        cube_dims=target_metadata.get_cube_dims(),
+        cube_dims=target_cube_dims,
         async_write=async_write,
         use_ti=use_ti,
         increment=increment,
@@ -591,11 +597,12 @@ async def async_executor(
             collect_dim_element_identifiers=kwargs.get("ignore_missing_elements"),
             **kwargs
         )
-        def target_metadata_function(): return target_metadata
+        def target_metadata_function(**_kwargs): return target_metadata
 
     source_cube_name = utility._get_cube_name_from_mdx(data_mdx_template)
     data_metadata_function = None
-    if data_copy_function == (data_copy_intercube or load_tm1_cube_to_sql_table):
+
+    if data_copy_function == (data_copy or data_copy_intercube or load_tm1_cube_to_sql_table):
         data_metadata = utility.TM1CubeObjectMetadata.collect(
             tm1_service=target_tm1_service,
             cube_name=source_cube_name,
@@ -603,12 +610,11 @@ async def async_executor(
             collect_dim_element_identifiers=kwargs.get("ignore_missing_elements"),
             **kwargs
         )
-        def data_metadata_function(): return data_metadata
-
-
+        def data_metadata_function(**_kwargs): return data_metadata
 
     loop = asyncio.get_event_loop()
 
+    """
     def wrapper(tm1, mdx, set_mdx_list, steps, shared, d_md, t_md, _execution_id):
         try:
             data_copy_function(
@@ -625,6 +631,20 @@ async def async_executor(
         except Exception as e:
             basic_logger.error(e)
             return e
+    """
+
+    def wrapper(tm1, mdx, set_mdx_list, steps, shared, d_md, t_md, _execution_id):
+        data_copy_function(
+            tm1_service=tm1,
+            data_mdx=mdx,
+            shared_mapping=shared,
+            mapping_steps=steps,
+            target_clear_set_mdx_list=set_mdx_list,
+            data_metadata_function=d_md,
+            target_metadata_function=t_md,
+            _execution_id=_execution_id,
+            **kwargs
+        )
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = []
@@ -634,6 +654,7 @@ async def async_executor(
                 for j, param_name in enumerate(param_names)
             }
             data_mdx = Template(data_mdx_template).substitute(**template_kwargs)
+
             target_clear_set_mdx_list = [
                 Template(clear_param_template).substitute(**template_kwargs)
                 for clear_param_template in clear_param_templates

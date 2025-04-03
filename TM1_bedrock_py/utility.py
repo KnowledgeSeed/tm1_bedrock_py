@@ -412,7 +412,7 @@ class TM1CubeObjectMetadata:
     @classmethod
     def __collect_default(
             cls,
-            tm1_service: Any,
+            tm1_service: Optional[Any] = None,
             mdx: Optional[str] = None,
             cube_name: Optional[str] = None,
             retrieve_all_dimension_data: Optional[Callable[..., Any]] = None,
