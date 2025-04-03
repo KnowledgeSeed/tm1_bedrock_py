@@ -101,10 +101,9 @@ def test_data_copy_intercube_for_multiple_steps(
         clear_target=True,
         target_clear_set_mdx_list=["{[Versions].[Versions].[DataCopy Integration Test]}"],
         skip_zeros=True,
-        async_write=False,
+        async_write=True,
         slice_size_of_dataframe=2,
         use_blob=True,
-        #remove_blob=False,
         logging_level="DEBUG",
         _execution_id=1
     )
@@ -114,6 +113,37 @@ def test_data_copy_intercube_for_multiple_steps(
 def test_async_data_copy_intercube(
         tm1_connection, param_set_mdx_list, data_mdx_template, clear_param_templates,
         target_cube_name, shared_mapping, mapping_steps, param_set_mdx_list_single
+):
+    utility.set_logging_level("DEBUG")
+    start_time = time.gmtime()
+    start_time_total = time.time()
+    print('Start time: ')
+    print(time.strftime('{%Y%m%d %H:%M}', start_time))
+    asyncio.run(bedrock.async_executor(
+        data_copy_function=bedrock.data_copy_intercube,
+        tm1_service=tm1_connection,
+        data_mdx_template=data_mdx_template,
+        skip_zeros=True,
+        skip_consolidated_cells=True,
+        target_cube_name=target_cube_name,
+        shared_mapping=shared_mapping,
+        mapping_steps=mapping_steps,
+        clear_target=True,
+        async_write=True,
+        logging_level="DEBUG",
+        param_set_mdx_list=param_set_mdx_list,
+        clear_param_templates=clear_param_templates,
+        ignore_missing_elements=True,
+        max_workers=8
+    ))
+    run_time = time.time() - start_time_total
+    print('Time: {:.4f} sec'.format(run_time))
+
+
+@parametrize_from_file
+def test_async_data_copy_intercube_multi_parameter(
+        tm1_connection, param_set_mdx_list, data_mdx_template, clear_param_templates,
+        target_cube_name, shared_mapping, mapping_steps
 ):
     utility.set_logging_level("DEBUG")
     start_time = time.gmtime()
