@@ -125,8 +125,13 @@ def manage():
                [Groups].[Groups].[Total Groups]
               )
               """
-        mdx_out = utility._add_non_empty_to_mdx(mdx)
-        print(mdx_out)
+        try:
+            all_server_files = tm1.files.get_all_names()
+            print("Files found via TM1 REST API:")
+            print(all_server_files)
+            # Check if your expected file name (e.g., "your_unique_name.csv") is in the list
+        except Exception as e:
+            print(f"Error listing files via API: {e}")
 
 
 

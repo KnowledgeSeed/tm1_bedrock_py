@@ -181,7 +181,7 @@ def data_copy_intercube(
             }
         ]
     """
-
+    kwargs.pop("data_metadata_function")
     if not target_tm1_service:
         target_tm1_service = tm1_service
 
@@ -451,7 +451,7 @@ def data_copy(
     Map and join and the relabeling functonality of map and replace is not viable in case of in-cube transformations.
     Using them will raise an error at writing
     """
-
+    kwargs.pop("target_metadata_function")
     utility.set_logging_level(logging_level=logging_level)
     basic_logger.info("Execution started.")
 
@@ -601,7 +601,6 @@ async def async_executor(
 
     source_cube_name = utility._get_cube_name_from_mdx(data_mdx_template)
     data_metadata_function = None
-
     if data_copy_function == (data_copy or data_copy_intercube or load_tm1_cube_to_sql_table):
         data_metadata = utility.TM1CubeObjectMetadata.collect(
             tm1_service=target_tm1_service,
@@ -614,8 +613,7 @@ async def async_executor(
 
     loop = asyncio.get_event_loop()
 
-    """
-    def wrapper(tm1, mdx, set_mdx_list, steps, shared, d_md, t_md, _execution_id):
+    def wrapper(tm1, mdx, set_mdx_list, steps, shared, d_md, t_md, _execution_id, executor_kwargs):
         try:
             data_copy_function(
                 tm1_service=tm1,
@@ -626,25 +624,38 @@ async def async_executor(
                 data_metadata_function=d_md,
                 target_metadata_function=t_md,
                 _execution_id=_execution_id,
-                **kwargs
+                **executor_kwargs
             )
         except Exception as e:
             basic_logger.error(e)
             return e
-    """
 
+    """
     def wrapper(tm1, mdx, set_mdx_list, steps, shared, d_md, t_md, _execution_id):
-        data_copy_function(
-            tm1_service=tm1,
-            data_mdx=mdx,
-            shared_mapping=shared,
-            mapping_steps=steps,
-            target_clear_set_mdx_list=set_mdx_list,
-            data_metadata_function=d_md,
-            target_metadata_function=t_md,
-            _execution_id=_execution_id,
-            **kwargs
-        )
+        from TM1py import TM1Service  # Import TM1Service INSIDE the wrapper!
+
+        try:
+            with TM1Service(**tm1_params) as task_tm1_service:  # Create and use within 'with'
+                print(f"Thread starting with TM1 Service: {task_tm1_service}")  # Print to verify new instance each time
+
+                data_copy_function(
+                    tm1_service=task_tm1_service,  # Use task_tm1_service
+                    data_mdx=mdx,
+                    shared_mapping=shared,
+                    mapping_steps=steps,
+                    target_clear_set_mdx_list=set_mdx_list,
+                    data_metadata_function=d_md,
+                    target_metadata_function=t_md,
+                    _execution_id=_execution_id,
+                    **kwargs
+                )
+                print(f"Thread completed successfully: {_execution_id}")
+
+        except Exception as e:
+            import traceback
+            basic_logger.error(f"Task {_execution_id}: FAILED. Error: {e}\n{traceback.format_exc()}")
+            print(f"Thread FAILED: {_execution_id}, Error: {e}")  # Print error in thread context
+        """
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = []
@@ -659,12 +670,13 @@ async def async_executor(
                 Template(clear_param_template).substitute(**template_kwargs)
                 for clear_param_template in clear_param_templates
             ]
+
             futures.append(loop.run_in_executor(
                 executor, wrapper,
                 tm1_service, data_mdx, target_clear_set_mdx_list,
                 mapping_steps, shared_mapping,
                 data_metadata_function, target_metadata_function,
-                i
+                i, kwargs
             ))
 
         for future in futures:

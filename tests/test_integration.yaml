@@ -145,6 +145,9 @@ test_async_data_copy_intercube:
     param_set_mdx_list: [
       "{TM1FILTERBYLEVEL({DRILLDOWNMEMBER({[Periods].[Periods].[2023]}, {[Periods].[Periods].[2023]})}, 0)}"
     ]
+    param_set_mdx_list_single: [
+      "{[Periods].[Periods].[202301]}"
+    ]
     target_cube_name: "Cost and FTE by Groups"
     mapping_steps: [
       {
