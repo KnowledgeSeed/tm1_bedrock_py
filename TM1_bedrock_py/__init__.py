@@ -2,12 +2,6 @@ import logging.config
 import json
 import os
 
-# Define log directory and file
-log_dir = "logs"
-log_file = os.path.join(log_dir, "my_package.log")
-
-# Ensure the log directory exists
-os.makedirs(log_dir, exist_ok=True)
 
 # Get the path of the logging.json file
 log_config_path = os.path.join(os.path.dirname(__file__), "logging.json")
