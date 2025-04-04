@@ -483,6 +483,16 @@ test_add_nonempty_to_mdx_all_modes:
     WHERE ( [Sales Territory].[Southwest] )
     "
 
+test_all_leaves_identifiers_to_dataframe:
+  -
+    dimname: "Groups"
+    expected: {
+      "Groups": ["Group_1", "Marketing and Management",
+                 "Group_2", "Finance and HR",
+                 "Group_3", "Project A",
+                 "Group_4", "Project B",
+                 "Group_5", "Project C"]
+    }
 
 # Utility: Cube metadata collection using input MDXs and/or other cubes
 test_tm1_cube_object_metadata_collect_based_on_cube_name_success:
