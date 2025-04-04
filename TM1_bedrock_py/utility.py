@@ -4,10 +4,9 @@ import functools
 import time
 import locale
 import itertools
-from typing import Callable, List, Dict, Optional, Any, Union, Iterator, Tuple
+from typing import Iterable, Callable, List, Dict, Optional, Any, Union, Iterator, Tuple
 
 from mdxpy import MdxBuilder, MdxHierarchySet, Member
-from TM1py.Objects.Element import Element
 from sqlalchemy import create_engine, inspect
 from pandas import DataFrame
 from numpy import float64
@@ -119,93 +118,96 @@ def __get_kwargs_dict_from_set_mdx_list(mdx_expressions: List[str]) -> Dict[str,
             and values are the MDX expressions.
     """
     regex = r"\{\s*\[\s*([\w\s]+?)\s*\]\s*"
-    return {
-        re.search(regex, mdx).group(1).lower().replace(" ", ""): mdx
-        for mdx in mdx_expressions
-        if re.search(regex, mdx)
-    }
+    kwargs_dict = {}
+    for mdx in mdx_expressions:
+        match = re.search(regex, mdx)
+        if match:
+            key = match.group(1).lower().replace(" ", "")
+            kwargs_dict[key] = mdx
+    return kwargs_dict
 
 
-def __get_dimensions_from_set_mdx_list(mdx_sets: List[str]) -> List[str]:
+def __get_dimensions_from_set_mdx_list(mdx_sets: Optional[List[Optional[str]]]) -> List[str]:
     """
-    Extracts unique dimension names from a list of MDX set strings,
-    preserving the order of their first appearance.
+    Extracts the first dimension name found in each string of a list of MDX set strings.
+
+    Note: This function finds only the first dimension pattern '{[Dimension]' in each string.
+    It does not parse full MDX sets or guarantee uniqueness based on the strict implementation,
+    though the naming extraction attempts to isolate the dimension.
 
     MDX members are expected in formats like:
-    [Dimension].[Hierarchy].[Element]
+    {[Dimension].[Hierarchy].[Element]}
     or
-    [Dimension].[Element]
+    {[Dimension].[Element]}
 
     Handles whitespace:
-    - Around braces {}, commas , dots . and brackets []
-    - Inside the first dimension bracket, e.g., [  Dimension Name  ]
+    - Around braces {}, dots . and brackets []
+    - Inside the first dimension bracket, e.g., { [  Dimension Name  ] }
 
     Args:
-        mdx_sets: A list of strings, where each string represents an MDX set
-                  (e.g., '{[Dim].[Hier].[Elem], [Dim].[Elem]}').
+        mdx_sets: A list of strings, where each string might represent an MDX set.
+                  Can be None or contain None elements.
 
     Returns:
-        A list of unique dimension names found across all sets, ordered
-        by the sequence in which they were first encountered in the
-        input list. Returns an empty list if no valid MDX members are
-        found or the input list is empty.
+        A list of dimension names found (one per matching input string), ordered
+        according to the input list. Returns an empty list if no valid MDX patterns are
+        found or the input list is empty/None.
+
+    Raises:
+        TypeError: If mdx_sets is not a list or if any element
+                   (that is not None) is not a string.
     """
+    if mdx_sets is None:
+        return []
+    if not isinstance(mdx_sets, list):
+        raise TypeError(f"Expected mdx_sets to be a list, but got {type(mdx_sets).__name__}")
+
     pattern = r'\{\s*\[([^\]]+?)\]'
     ordered_dimension_names = []
 
     for mdx_set_string in mdx_sets:
+        if mdx_set_string is None:
+            continue
+        if not isinstance(mdx_set_string, str):
+            raise TypeError(f"Expected elements of mdx_sets to be strings, but found {type(mdx_set_string).__name__}")
+
         match = re.search(pattern, mdx_set_string)
         if match:
-            cleaned_name = match.group(1).strip()
-            ordered_dimension_names.append(cleaned_name)
+            full_match = match.group(1).strip()
+            dimension_part = full_match.split('.', 1)[0].strip()
+            if dimension_part:
+                ordered_dimension_names.append(dimension_part)
 
     return ordered_dimension_names
 
 
-def __parse_unique_element_names_from_mdx(mdx_string: str) -> List[str]:
+def __generate_cartesian_product(list_of_lists: Optional[List[Optional[Iterable[Any]]]]) -> List[Tuple[Any, ...]]:
     """
-    Extracts unique [X].[Y].[Z] patterns from an MDX string,
-    where X, Y, and Z can contain spaces and special characters.
+    Generates the Cartesian product of a list of lists (or other iterables).
 
-    Parameters:
-        mdx_string (str): The input MDX query as a string.
-
-    Returns:
-        List[str]: A list of unique [X].[Y].[Z] style matches.
-    """
-    pattern = r'\[.*?\]\.\[.*?\]\.\[.*?\]'
-    matches = re.findall(pattern, mdx_string)
-    unique_matches = list(set(matches))
-    return unique_matches
-
-
-def _find_parameter_from_template(tm1_service: Any, mdx_string: str) -> tuple[str, list[str]]:
-    dimension = _mdx_filter_to_dictionary(mdx_string)
-    for key, value in dimension.items():
-        if isinstance(value, str) and value.startswith('$'):
-            elements = tm1_service.dimensions.hierarchies.elements.get_elements(key, key)
-            return value[1:], [el.name for el in elements if el.element_type == Element.Types.NUMERIC]
-
-    return "", []
-
-
-def __generate_cartesian_product(list_of_lists: List[List[Any]]) -> List[Tuple[Any, ...]]:
-    """
-    Generates the Cartesian product of a list of lists.
-
-    Takes a list containing multiple lists and returns a list of tuples,
+    Takes a list containing multiple iterables (like lists) and returns a list of tuples,
     where each tuple is a unique combination formed by taking one element
-    from each input list, in the order the lists were provided.
+    from each input iterable, in the order they were provided.
 
     Args:
-        list_of_lists: A list where each element is itself a list.
+        list_of_lists: A list where each element is itself an iterable (e.g., list).
+                       Can be None or contain None elements (treated as empty iterables).
                        Example: [["a","b"], ["1","2"], ["y","z"]]
 
     Returns:
-        A list of tuples representing the Cartesian product.
+        A list of tuples representing the Cartesian product. Returns an empty list
+        if the input list is None, empty, or if any of the inner iterables result
+        in an empty product (e.g., an inner list is empty).
+
+    Raises:
+        TypeError: If list_of_lists is not a list, or if any element within
+                   list_of_lists is not None and not iterable.
     """
     if not list_of_lists:
         return []
+
+    if not isinstance(list_of_lists, list):
+        raise TypeError(f"Input must be a list, but got {type(list_of_lists).__name__}")
 
     product_iterator = itertools.product(*list_of_lists)
     result = list(product_iterator)
@@ -213,21 +215,73 @@ def __generate_cartesian_product(list_of_lists: List[List[Any]]) -> List[Tuple[A
     return result
 
 
-def __generate_element_lists_from_set_mdx_list(tm1_service: Any, set_mdx_list: List[str]) -> List[List[str]]:
-    list_of_results = [
-        tm1_service.elements.execute_set_mdx(
+def __generate_element_lists_from_set_mdx_list(
+        tm1_service: Optional[Any], set_mdx_list: Optional[List[Optional[str]]]) -> List[List[str]]:
+    """
+    Executes multiple MDX set queries and extracts element names.
+
+    For each MDX query string in the input list, this function calls the
+    `tm1_service.elements.execute_set_mdx` method. It then processes the
+    results, expecting a specific nested structure, to extract a list of
+    element names for each query.
+
+    Expected structure from tm1_service.elements.execute_set_mdx:
+    A list where each item corresponds to an element in the MDX result set.
+    Each item itself is expected to be a list containing at least one dictionary,
+    and that first dictionary must have a 'Name' key.
+    Example return for one query: [ [{'Name': 'ElementA'}], [{'Name': 'ElementB'}] ]
+
+    Args:
+        tm1_service: An object representing the TM1 service connection,
+                     expected to have an `elements.execute_set_mdx` method.
+                     Can be None.
+        set_mdx_list: A list of strings, where each string is an MDX query.
+                      Can be None or contain None elements (which are skipped).
+
+    Returns:
+        A list of lists of strings. Each inner list contains the element names
+        extracted from the result of the corresponding MDX query. Returns an
+        empty list if tm1_service or set_mdx_list is None or empty.
+
+    Raises:
+        ValueError: If tm1_service is None.
+        TypeError: If set_mdx_list is not a list, or if any non-None element
+                   within set_mdx_list is not a string.
+        AttributeError: If tm1_service does not have the expected
+                        `elements.execute_set_mdx` structure.
+        IndexError: If the data returned by `execute_set_mdx` does not conform
+                    to the expected nested list structure (e.g., inner list empty).
+        KeyError: If the dictionary within the nested structure does not contain
+                  the 'Name' key.
+    """
+    if tm1_service is None:
+        raise ValueError("tm1_service cannot be None")
+
+    if not set_mdx_list:
+        return []
+
+    if not isinstance(set_mdx_list, list):
+        raise TypeError(f"Expected set_mdx_list to be a list, but got {type(set_mdx_list).__name__}")
+
+    list_of_raw_results = []
+    for query in set_mdx_list:
+        if not isinstance(query, str):
+            raise TypeError(f"Expected elements of set_mdx_list to be strings, but found {type(query).__name__}")
+
+        raw_result = tm1_service.elements.execute_set_mdx(
             mdx=query,
             element_properties=None,
             member_properties=None,
             parent_properties=None
         )
-        for query in set_mdx_list
-    ]
-    result = [
-        [inner_list[0]['Name'] for inner_list in middle_list]
-        for middle_list in list_of_results
-    ]
-    return result
+        list_of_raw_results.append(raw_result)
+
+    final_result = []
+    for middle_list in list_of_raw_results:
+        element_names = [inner_list[0]['Name'] for inner_list in middle_list]
+        final_result.append(element_names)
+
+    return final_result
 
 
 def add_non_empty_to_mdx(mdx_string: str) -> str:

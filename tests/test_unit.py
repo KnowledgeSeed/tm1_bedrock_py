@@ -81,9 +81,90 @@ def test_mdx_filter_to_dictionary(mdx_query):
 
 
 @parametrize_from_file
-def test_get_kwargs_dict_from_set_mdx_list(set_mdx_list, expected_kwargs):
+def test_get_kwargs_dict_from_set_mdx_list_success(set_mdx_list, expected_kwargs):
+    """
+    Tests successful extraction of kwargs from various valid MDX lists.
+    """
     kwargs = utility.__get_kwargs_dict_from_set_mdx_list(set_mdx_list)
     assert kwargs == expected_kwargs
+
+
+# Test focusing on filtering, edge cases, and empty results
+@parametrize_from_file
+def test_get_kwargs_dict_from_set_mdx_list_filtering(set_mdx_list, expected_kwargs):
+    """
+    Tests filtering of invalid/non-matching strings and edge cases.
+    """
+    kwargs = utility.__get_kwargs_dict_from_set_mdx_list(set_mdx_list)
+    assert kwargs == expected_kwargs
+
+
+@parametrize_from_file
+def test_get_dimensions_from_set_mdx_list_success(mdx_sets, expected_dimensions):
+    """
+    Tests successful extraction of first dimension names from MDX strings.
+    """
+    result = utility.__get_dimensions_from_set_mdx_list(mdx_sets)
+    assert result == expected_dimensions
+
+
+@parametrize_from_file
+def test_get_dimensions_from_set_mdx_list_failure(mdx_sets, expected_exception, expected_message_part):
+    """
+    Tests type errors for invalid input.
+    """
+    exception_type = eval(expected_exception)
+    with pytest.raises(exception_type) as excinfo:
+        utility.__get_dimensions_from_set_mdx_list(mdx_sets)
+    assert expected_message_part in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_generate_cartesian_product_success(list_of_lists, expected_product):
+    """
+    Tests successful generation of Cartesian products.
+    """
+    expected_tuples = [tuple(item) for item in expected_product]
+    result = utility.__generate_cartesian_product(list_of_lists)
+    assert result == expected_tuples
+
+
+@parametrize_from_file
+def test_generate_cartesian_product_failure(list_of_lists, expected_exception, expected_message_part):
+    """
+    Tests failing scenarios due to invalid input types.
+    """
+    exception_type = eval(expected_exception)
+    with pytest.raises(exception_type) as excinfo:
+        utility.__generate_cartesian_product(list_of_lists)
+    assert expected_message_part in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_generate_element_lists_from_set_mdx_list_success(tm1_connection, set_mdx_list, expected_result):
+    """
+    Tests successful extraction of element lists using a fake TM1 service.
+    """
+    result = utility.__generate_element_lists_from_set_mdx_list(tm1_connection, set_mdx_list)
+    assert result == expected_result
+
+
+@parametrize_from_file
+def test_generate_element_lists_from_set_mdx_list_failure(
+        tm1_connection, use_none_service, set_mdx_list, expected_exception, expected_message_part):
+    """
+    Tests failing scenarios for element list extraction using fake or invalid service/inputs.
+    """
+    if use_none_service:
+        test_service = None
+    else:
+        test_service = tm1_connection
+
+    exception_type = eval(expected_exception)
+    with pytest.raises(exception_type) as excinfo:
+        utility.__generate_element_lists_from_set_mdx_list(test_service, set_mdx_list)
+
+    assert expected_message_part in str(excinfo.value)
 
 
 @parametrize_from_file
