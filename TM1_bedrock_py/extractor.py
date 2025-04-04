@@ -59,8 +59,11 @@ def __tm1_mdx_to_dataframe_default(
     Returns:
         DataFrame: A DataFrame containing the result of the MDX query.
     """
-
     if data_mdx_list:
+        if skip_zeros:
+            data_mdx_list = [utility.add_non_empty_to_mdx(current)
+                             for current in data_mdx_list]
+
         return tm1_service.cells.execute_mdx_dataframe_async(
             mdx_list=data_mdx_list,
             skip_zeros=skip_zeros,
@@ -71,6 +74,9 @@ def __tm1_mdx_to_dataframe_default(
             decimal=utility.get_local_decimal_separator()
         )
     elif data_mdx:
+        if skip_zeros:
+            data_mdx = utility.add_non_empty_to_mdx(data_mdx)
+
         return tm1_service.cells.execute_mdx_dataframe(
             mdx=data_mdx,
             skip_zeros=skip_zeros,

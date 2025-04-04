@@ -1,5 +1,6 @@
 import configparser
 import os
+import re
 from pathlib import Path
 
 from TM1py.Exceptions import TM1pyRestException
@@ -80,6 +81,12 @@ def test_mdx_filter_to_dictionary(mdx_query):
 
 
 @parametrize_from_file
+def test_get_kwargs_dict_from_set_mdx_list(set_mdx_list, expected_kwargs):
+    kwargs = utility.__get_kwargs_dict_from_set_mdx_list(set_mdx_list)
+    assert kwargs == expected_kwargs
+
+
+@parametrize_from_file
 def test_utility_float_casting_values(input_value, expected_value):
     output_value = utility.force_float64_on_numeric_values(input_value)
     print(f"input value: {input_value}, output_value: {output_value}")
@@ -92,6 +99,13 @@ def test_utility_float_casting_types(input_value, expected_type):
     output_type = str(type(output_value))
     print(output_type)
     assert output_type == expected_type
+
+
+@parametrize_from_file
+def test_add_nonempty_to_mdx_all_modes(input_mdx, expected_mdx):
+    output_mdx = utility.add_non_empty_to_mdx(input_mdx)
+
+    assert "".join(output_mdx.split()) == "".join(expected_mdx.split())
 
 
 # ------------------------------------------------------------------------------------------------------------

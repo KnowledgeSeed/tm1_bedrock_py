@@ -125,49 +125,16 @@ def manage():
                [Groups].[Groups].[Total Groups]
               )
               """
+        try:
+            all_server_files = tm1.files.get_all_names()
+            print("Files found via TM1 REST API:")
+            print(all_server_files)
+            # Check if your expected file name (e.g., "your_unique_name.csv") is in the list
+        except Exception as e:
+            print(f"Error listing files via API: {e}")
 
-        """
-        loader.input_relative_proportional_spread(
-            tm1_service=tm1,
-            value=100000,
-            mdx=mdx,
-            reference_unique_element_names=[
-                "[Groups].[Groups].[Total Groups]",
-                "[Employees].[Employees].[Total Employees]",
-                "[Periods].[Periods].[202307]",
-                "[Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[Caculated Salary]",
-                "[Versions].[Versions].[Base Plan]",
-                "[Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]"
-            ],
-            cube="Cost and FTE by Groups"
-        )
-        """
 
-        mdx = """
-        SELECT 
-           {[Groups].[Groups].[Total Groups],[Groups].[Groups].[Total Groups^Group_1],[Groups].[Groups].[Total Groups^Group_2],[Groups].[Groups].[Total Groups^Group_3],[Groups].[Groups].[Group_4],[Groups].[Groups].[Group_5]} 
-          ON COLUMNS , 
-           {DRILLDOWNMEMBER({[Employees].[Employees].[Total Employees]}, {[Employees].[Employees].[Total Employees]})} 
-          ON ROWS 
-        FROM [Cost and FTE by Groups] 
-        WHERE 
-          (
-           [Periods].[Periods].[$Period],
-           [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[Caculated Salary],
-           [Versions].[Versions].[Bedrock Input Test],
-           [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Input]
-          )
-        """
-        set_mdx_list = [
-            " { [Periods].[Periods].[202203], [Periods].[Periods].[202204]}",
-            "{ [Versions].[BasePlan], [Versions].[Bedrock Input Test]}"
-        ]
-        dimnames = utility.__get_dimensions_from_set_mdx_list(set_mdx_list)
-        print(dimnames)
-        element_lists = utility.__generate_element_lists_from_set_mdx_list(tm1, set_mdx_list)
-        print(element_lists)
-        element_tuples = utility.__generate_cartesian_product(element_lists)
-        print(element_tuples)
+
 
     finally:
         tm1.logout()

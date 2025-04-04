@@ -123,7 +123,6 @@ def __dataframe_to_cube_default(
             skip_non_updateable=True,
             use_ti=use_ti,
             use_blob=use_blob,
-            remove_blob=True,
             increment=increment,
             sum_numeric_duplicates=sum_numeric_duplicates,
             **kwargs
