@@ -25,6 +25,18 @@ test_mdx_filter_to_dictionary:
     mdx_query:
       ""
 
+test_get_kwargs_dict_from_set_mdx_list:
+  -
+    set_mdx_list: [
+      "{[Periods].[Periods].[2024]}",
+      "{Tm1FilterbyLevel({Tm1DrillDownMember({[Versions].[All Versions]}, ALL, RECURSIVE)}, 0)}"
+    ]
+    expected_kwargs: {
+      "Periods": "{[Periods].[Periods].[2024]}",
+      "Versions": "{Tm1FilterbyLevel({Tm1DrillDownMember({[Versions].[All Versions]}, ALL, RECURSIVE)}, 0)}"
+    }
+
+
 test_utility_float_casting_values:
   -
     input_value: 12.48

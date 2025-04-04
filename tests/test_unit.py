@@ -81,6 +81,12 @@ def test_mdx_filter_to_dictionary(mdx_query):
 
 
 @parametrize_from_file
+def test_get_kwargs_dict_from_set_mdx_list(set_mdx_list, expected_kwargs):
+    kwargs = utility.__get_kwargs_dict_from_set_mdx_list(set_mdx_list)
+    assert kwargs == expected_kwargs
+
+
+@parametrize_from_file
 def test_utility_float_casting_values(input_value, expected_value):
     output_value = utility.force_float64_on_numeric_values(input_value)
     print(f"input value: {input_value}, output_value: {output_value}")
