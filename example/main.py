@@ -3,6 +3,7 @@ import pprint
 from TM1_bedrock_py import utility, extractor, transformer, loader, bedrock
 from TM1_bedrock_py.transformer import normalize_table_source_dataframe
 from string import Template
+import re
 
 
 
@@ -153,31 +154,75 @@ def test_csrd_demo():
         version_source = "Actual"
         version_target = "Actual"
         year_source = "2023"
-        year_target = "2025"
+        year_target = "2026"
         entity_source = "Entity NA"
         entity_target = "Entity NA"
-        measures_list = "Tm1SubsetAll([Analogic ESRS Mapping Measure])"
+        measures_list = """
+            {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[ESRS Main Relevant]},
+            {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[Materiality Relevant]},
+            {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[SDG Relevant]},
+            {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[GRI Relevant]},
+            {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[Location Relevant]},
+            {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[Supplier Relvant]},
+            {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[CSRD Input  Relevant]},
+            {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[DMA Relevant]},
+            {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[Materiality Assessment]},
+            {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[SDG]},
+            {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[GRI]},
+            {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[Driver]}
+            """
+        measures_list = """
+            {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[ESRS Main Relevant]}
+            """
+
+        pattern = r'{(.*?)}'
+        measures_list_of_strings = re.findall(pattern, measures_list)
+        data_mdx_list=[]
+        for element_string in measures_list_of_strings:
+
+            data_mdx = f"""
+                       SELECT
+                           NON EMPTY
+                           {{{element_string}}}
+                       ON COLUMNS,
+                       NON EMPTY
+                           {{Tm1FilterByLevel(Tm1SubsetAll([ESRS Main]), 0)}}
+                            *{{Tm1FilterByLevel(Tm1SubsetAll([ESRS Details 1]), 0)}}
+                            *{{Tm1FilterByLevel(Tm1SubsetAll([ESRS Details 2]), 0)}}
+                            *{{Tm1FilterByLevel(Tm1SubsetAll([ESRS Geography]), 0)}}
+                            *{{Tm1FilterByLevel(Tm1SubsetAll([Custom 1]), 0)}}
+                            *{{Tm1FilterByLevel(Tm1SubsetAll([Custom 2]), 0)}}
+                       ON ROWS
+                       FROM [Analogic ESRS Mapping]
+                       WHERE (
+                           [Year].[Year].[{year_source}],
+                           [Entity].[Entity].[{entity_source}],
+                           [Version].[Version].[{version_source}]
+                       )
+                       """
+            data_mdx_list.append(data_mdx)
 
         data_mdx = f"""
-                   SELECT
-                       NON EMPTY
-                       {{Tm1SubsetAll([ESRS Main])}}
-                       * {{Tm1SubsetAll([ESRS Details 1])}}
-                       * {{Tm1SubsetAll([ESRS Details 2])}}
-                       * {{Tm1SubsetAll([ESRS Geography])}}
-                       * {{Tm1SubsetAll([Custom 1])}}
-                       * {{Tm1SubsetAll([Custom 2])}}
-                   ON ROWS,
-                       NON EMPTY
-                       {{{measures_list}}}
-                   ON COLUMNS
-                   FROM [Analogic ESRS Mapping]
-                   WHERE (
-                       [Year].[Year].[{year_source}],
-                       [Entity].[Entity].[{entity_source}],
-                       [Version].[Version].[{version_source}]
-                   )
-                   """
+        SELECT
+            NON EMPTY
+            {{{measures_list}}}
+        ON COLUMNS,
+        NON EMPTY
+            {{Tm1FilterByLevel(Tm1SubsetAll([ESRS Main]), 0)}}
+            *{{Tm1FilterByLevel(Tm1SubsetAll([ESRS Details 1]), 0)}}
+            *{{Tm1FilterByLevel(Tm1SubsetAll([ESRS Details 2]), 0)}}
+            *{{Tm1FilterByLevel(Tm1SubsetAll([ESRS Geography]), 0)}}
+            *{{Tm1FilterByLevel(Tm1SubsetAll([Custom 1]), 0)}}
+            *{{Tm1FilterByLevel(Tm1SubsetAll([Custom 2]), 0)}}
+        ON ROWS
+        FROM[Analogic ESRS Mapping]
+        WHERE(
+            [Year].[Year].[{year_source}],
+            [Entity].[Entity].[{entity_source}],
+            [Version].[Version].[{version_source}]
+        )
+        """
+
         mapping_steps = [
             {
                 "method": "replace",
@@ -195,7 +240,7 @@ def test_csrd_demo():
         clear_target = True
         clear_set_mdx_list = [f'{{[Version].[{version_target}]}}', f'{{[Entity].[{entity_target}]}}',
                               f'{{[Year].[{year_target}]}}']
-        """
+
         bedrock.data_copy(
             tm1_service=tm1,
             data_mdx=data_mdx,
@@ -204,10 +249,11 @@ def test_csrd_demo():
             skip_consolidated_cells=skip_consolidated_cells,
             clear_target=clear_target,
             async_write=async_write,
-            target_clear_set_mdx_list=clear_set_mdx_list)
-        """
-        data_mdx=utility.add_non_empty_to_mdx(data_mdx)
-        print(data_mdx)
+            logging_level="DEBUG",
+            target_clear_set_mdx_list=clear_set_mdx_list,
+            keep_default_na=True
+        )
+
     finally:
         tm1.logout()
 
