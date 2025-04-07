@@ -1,6 +1,6 @@
 from TM1py import TM1Service
 import pprint
-from TM1_bedrock_py import utility, extractor, transformer, loader
+from TM1_bedrock_py import utility, extractor, transformer, loader, bedrock
 from TM1_bedrock_py.transformer import normalize_table_source_dataframe
 from string import Template
 
@@ -140,5 +140,77 @@ def manage():
         tm1.logout()
 
 
+def test_csrd_demo():
+    tm1_params = {
+        "address": "localhost",
+        "port": 5382,
+        "user": "IM",
+        "password": "Washing2-Implosive-Nacho",
+        "ssl": False
+    }
+    tm1 = TM1Service(**tm1_params)
+    try:
+        version_source = "Actual"
+        version_target = "Actual"
+        year_source = "2023"
+        year_target = "2025"
+        entity_source = "Entity NA"
+        entity_target = "Entity NA"
+        measures_list = "Tm1SubsetAll([Analogic ESRS Mapping Measure])"
+
+        data_mdx = f"""
+                   SELECT
+                       NON EMPTY
+                       {{Tm1SubsetAll([ESRS Main])}}
+                       * {{Tm1SubsetAll([ESRS Details 1])}}
+                       * {{Tm1SubsetAll([ESRS Details 2])}}
+                       * {{Tm1SubsetAll([ESRS Geography])}}
+                       * {{Tm1SubsetAll([Custom 1])}}
+                       * {{Tm1SubsetAll([Custom 2])}}
+                   ON ROWS,
+                       NON EMPTY
+                       {{{measures_list}}}
+                   ON COLUMNS
+                   FROM [Analogic ESRS Mapping]
+                   WHERE (
+                       [Year].[Year].[{year_source}],
+                       [Entity].[Entity].[{entity_source}],
+                       [Version].[Version].[{version_source}]
+                   )
+                   """
+        mapping_steps = [
+            {
+                "method": "replace",
+                "mapping": {
+                    "Version": {version_source: version_target},
+                    "Entity": {entity_source: entity_target},
+                    "Year": {year_source: year_target}
+                }
+            }
+        ]
+
+        skip_zeros = True
+        skip_consolidated_cells = True
+        async_write = True
+        clear_target = True
+        clear_set_mdx_list = [f'{{[Version].[{version_target}]}}', f'{{[Entity].[{entity_target}]}}',
+                              f'{{[Year].[{year_target}]}}']
+        """
+        bedrock.data_copy(
+            tm1_service=tm1,
+            data_mdx=data_mdx,
+            mapping_steps=mapping_steps,
+            skip_zeros=skip_zeros,
+            skip_consolidated_cells=skip_consolidated_cells,
+            clear_target=clear_target,
+            async_write=async_write,
+            target_clear_set_mdx_list=clear_set_mdx_list)
+        """
+        data_mdx=utility.add_non_empty_to_mdx(data_mdx)
+        print(data_mdx)
+    finally:
+        tm1.logout()
+
 if __name__ == '__main__':
-    manage()
+    # manage()
+    test_csrd_demo()

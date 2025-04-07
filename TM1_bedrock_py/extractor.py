@@ -31,7 +31,7 @@ def tm1_mdx_to_dataframe(
     if mdx_function is None:
         mdx_function = __tm1_mdx_to_dataframe_default
 
-    return mdx_function(**kwargs).fillna(0.0)
+    return mdx_function(**kwargs)
 
 
 def __tm1_mdx_to_dataframe_default(
@@ -270,7 +270,7 @@ def sql_to_dataframe(
     if sql_function is None:
         sql_function = __sql_to_dataframe_default
 
-    return sql_function(**kwargs).fillna(0.0)
+    return sql_function(**kwargs)
 
 
 def __sql_to_dataframe_default(
@@ -328,7 +328,7 @@ def csv_to_dataframe(
     if csv_function is None:
         csv_function = __csv_to_dataframe_default
 
-    return csv_function(**kwargs).fillna(0.0)
+    return csv_function(**kwargs)
 
 
 def __csv_to_dataframe_default(

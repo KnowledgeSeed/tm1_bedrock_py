@@ -289,9 +289,9 @@ def add_non_empty_to_mdx(mdx_string: str) -> str:
     Adds 'NON EMPTY' before each axis definition ({...} ON ...) in an MDX
     SELECT statement, if it's not already present.
 
-    Handles variations in whitespace, axis identifiers (COLUMNS, ROWS, 0, 1,
-    AXIS(n)), and case-insensitivity of keywords. It operates only between the
-    main SELECT and FROM clauses.
+    Handles variations in whitespace (including newlines), axis identifiers
+    (COLUMNS, ROWS, 0, 1, AXIS(n)), and case-insensitivity of keywords.
+    It operates only between the main SELECT and FROM clauses.
 
     Args:
         mdx_string: A string containing a potentially valid MDX VIEW query.
@@ -300,7 +300,7 @@ def add_non_empty_to_mdx(mdx_string: str) -> str:
         A string with ' NON EMPTY ' prepended to each axis set definition
         ({<set>} ON <axis>) that doesn't already have it,
         or the original string if the structure isn't a recognizable
-        SELECT...FROM query.
+        SELECT...FROM query or if modifications are not needed.
     """
     select_match = re.search(r'\bSELECT\b', mdx_string, re.IGNORECASE)
     if not select_match:
@@ -312,7 +312,7 @@ def add_non_empty_to_mdx(mdx_string: str) -> str:
 
     select_start_index = select_match.start()
     select_end_index = select_match.end()
-    from_start_index = select_end_index + from_match.start()
+    from_start_index = select_match.end() + from_match.start()
 
     prefix = mdx_string[:select_start_index]
     select_keyword_part = mdx_string[select_start_index:select_end_index]
@@ -321,43 +321,47 @@ def add_non_empty_to_mdx(mdx_string: str) -> str:
 
     axis_pattern = re.compile(
         r"""
-        # Negative Lookbehind Assertion:
-        # Ensures that the pattern is NOT preceded by 'NON EMPTY' (case-insensitive)
-        # Allows for flexible whitespace between NON and EMPTY and before the '{'
-        (?<!              # Start Negative Lookbehind
-            \b NON \s EMPTY \s
-        )                 # End Negative Lookbehind
+        # Optional Capture Group 1: Potential 'NON EMPTY' prefix
+        # Allows variable whitespace between NON, EMPTY, and the axis definition
+        ( \b NON \s+ EMPTY \s+ )?
 
-        # Capture Group 1: The actual axis definition to keep and prepend to.
-        (                 # Start Capture Group 1
+        # Capture Group 2: The core axis definition ({...} ON <axis>)
+        (                 # Start Capture Group 2
             # Start of the Set Definition
             \{            # Literal opening brace of the set
-            [\s\S]*?      # The content of the set (any character, incl. newlines, non-greedy)
-                         # Use [\s\S] instead of . to match across lines
-            \s*           # Optional whitespace before the closing brace
+            [\s\S]*?      # The content of the set (any char, non-greedy)
+            \s*           # Optional whitespace before closing brace
             \}            # Literal closing brace of the set
 
             # Separator between Set and Axis Specifier
-            \s*           # Optional whitespace after the set
+            \s+           # Required whitespace after the set (use + for robustness)
             \b ON \b      # The keyword ON (case-insensitive, whole word)
-            \s*           # Optional whitespace after ON
+            \s+           # Required whitespace after ON (use + for robustness)
 
             # Axis Specifier (case-insensitive for names)
-            (?:           # Start Non-Capturing Group for axis identifier alternatives
+            (?:           # Start Non-Capturing Group for axis alternatives
                 COLUMNS|ROWS|PAGES|SECTIONS|CHAPTERS # Common axis names
                 |         # OR
-                AXIS \s* \( \s* \d+ \s* \)            # AXIS(n) function call (allowing whitespace)
+                AXIS \s* \( \s* \d+ \s* \)            # AXIS(n) function call
                 |         # OR
                 \d+       # Axis ordinal number (0, 1, 2...)
             )             # End Non-Capturing Group
-            \b            # Word boundary to ensure we don't match partial names/numbers
-        )                 # End Capture Group 1
+            \b            # Word boundary
+        )                 # End Capture Group 2
         """,
         re.IGNORECASE | re.VERBOSE
     )
 
-    replacement = r" NON EMPTY \1"
-    modified_axes_part = axis_pattern.sub(replacement, axes_definition_part)
+    def replacer(match):
+        non_empty_group = match.group(1)
+        axis_def_group = match.group(2)
+
+        if non_empty_group:
+            return match.group(0)
+        else:
+            return " NON EMPTY " + axis_def_group
+
+    modified_axes_part = axis_pattern.sub(replacer, axes_definition_part)
     final_mdx = prefix + select_keyword_part + modified_axes_part + suffix
     return final_mdx
 

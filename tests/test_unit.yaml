@@ -482,6 +482,43 @@ test_add_nonempty_to_mdx_all_modes:
     FROM [Adventure Works]
     WHERE ( [Sales Territory].[Southwest] )
     "
+  -
+    input_mdx: " SELECT
+                       NON EMPTY
+                       {Tm1SubsetAll([ESRS Main])}
+                       * {Tm1SubsetAll([ESRS Details 1])}
+                       * {Tm1SubsetAll([ESRS Details 2])}
+                       * {Tm1SubsetAll([ESRS Geography])}
+                       * {Tm1SubsetAll([Custom 1])}
+                       * {Tm1SubsetAll([Custom 2])}
+                   ON ROWS,
+                       NON EMPTY
+                       {Tm1SubsetAll([Analogic ESRS Mapping Measure])}
+                   ON COLUMNS
+                   FROM [Analogic ESRS Mapping]
+                   WHERE (
+                       [Year].[Year].[2023],
+                       [Entity].[Entity].[Entity NA],
+                       [Version].[Version].[Actual]
+                   )"
+    expected_mdx: " SELECT
+                       NON EMPTY
+                       {Tm1SubsetAll([ESRS Main])}
+                       * {Tm1SubsetAll([ESRS Details 1])}
+                       * {Tm1SubsetAll([ESRS Details 2])}
+                       * {Tm1SubsetAll([ESRS Geography])}
+                       * {Tm1SubsetAll([Custom 1])}
+                       * {Tm1SubsetAll([Custom 2])}
+                   ON ROWS,
+                       NON EMPTY
+                       {Tm1SubsetAll([Analogic ESRS Mapping Measure])}
+                   ON COLUMNS
+                   FROM [Analogic ESRS Mapping]
+                   WHERE (
+                       [Year].[Year].[2023],
+                       [Entity].[Entity].[Entity NA],
+                       [Version].[Version].[Actual]
+                   )"
 
 test_all_leaves_identifiers_to_dataframe:
   -
