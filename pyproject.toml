@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tm1_bedrock_py"
-version = "0.4.0"
+version = "0.4.1"
 authors = [
   { name="Example Author", email="author@example.com" },
 ]
