@@ -153,8 +153,8 @@ def test_csrd_demo():
     try:
         version_source = "Actual"
         version_target = "Actual"
-        year_source = "2023"
-        year_target = "2027"
+        year_source = "2032"
+        year_target = "2025"
         entity_source = "Entity NA"
         entity_target = "Entity NA"
         measures_list = """
@@ -174,7 +174,7 @@ def test_csrd_demo():
 
         pattern = r'{(.*?)}'
         measures_list_of_strings = re.findall(pattern, measures_list)
-        data_mdx_list=[]
+        data_mdx_list = []
         for element_string in measures_list_of_strings:
 
             data_mdx = f"""
@@ -200,12 +200,12 @@ def test_csrd_demo():
         data_mdx = f"""
         SELECT
             NON EMPTY
-            {{Tm1SubsetAll([Custom 1])}}
+            {{TM1FilterByLevel(Tm1SubsetAll([Custom 1]), 0)}}
             *{{Tm1SubsetAll([ESRS Main])}}
-            *{{Tm1SubsetAll([ESRS Details 1])}}
-            *{{Tm1SubsetAll([ESRS Details 2])}}
-            *{{Tm1SubsetAll([ESRS Geography])}}
-            *{{Tm1SubsetAll([Custom 2])}}
+            *{{TM1FilterByLevel(Tm1SubsetAll([ESRS Details 1]), 0)}}
+            *{{TM1FilterByLevel(Tm1SubsetAll([ESRS Details 2]), 0)}}
+            *{{TM1FilterByLevel(Tm1SubsetAll([ESRS Geography]), 0)}}
+            *{{TM1FilterByLevel(Tm1SubsetAll([Custom 2]), 0)}}
             *{{{measures_list}}}
         ON 0
         FROM[Analogic ESRS Mapping]

@@ -198,13 +198,8 @@ def data_copy_intercube(
         **kwargs
     )
 
-    if dataframe.empty:
-        return
-
     data_metadata_queryspecific = utility.TM1CubeObjectMetadata.collect(
-        mdx=data_mdx,
-        collect_base_cube_metadata=False
-    )
+        mdx=data_mdx, collect_base_cube_metadata=False)
     source_cube_name = data_metadata_queryspecific.get_cube_name()
 
     target_metadata = utility.TM1CubeObjectMetadata.collect(
@@ -216,17 +211,21 @@ def data_copy_intercube(
     )
     target_cube_name = target_metadata.get_cube_name()
 
+    if dataframe.empty:
+        if clear_target:
+            loader.clear_cube(tm1_service=target_tm1_service,
+                              cube_name=target_cube_name,
+                              clear_set_mdx_list=target_clear_set_mdx_list,
+                              **kwargs)
+        return
+
     transformer.dataframe_add_column_assign_value(
-        dataframe=dataframe,
-        column_value=data_metadata_queryspecific.get_filter_dict(),
-        **kwargs
-    )
+        dataframe=dataframe, column_value=data_metadata_queryspecific.get_filter_dict(), **kwargs)
     # transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe, **kwargs)
 
     if ignore_missing_elements:
         transformer.dataframe_itemskip_elements(
-            dataframe=dataframe, check_dfs=target_metadata.get_dimension_check_dfs(), **kwargs
-        )
+            dataframe=dataframe, check_dfs=target_metadata.get_dimension_check_dfs(), **kwargs)
 
     shared_mapping_df = None
     if shared_mapping:
@@ -252,8 +251,7 @@ def data_copy_intercube(
     )
 
     transformer.dataframe_execute_mappings(
-        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df, **kwargs
-    )
+        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df, **kwargs)
 
     transformer.dataframe_redimension_and_transform(
         dataframe=dataframe,
@@ -267,18 +265,13 @@ def data_copy_intercube(
         transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
 
     transformer.dataframe_reorder_dimensions(
-        dataframe=dataframe,
-        cube_dimensions=target_metadata.get_cube_dims(),
-        **kwargs
-    )
+        dataframe=dataframe, cube_dimensions=target_metadata.get_cube_dims(), **kwargs)
 
     if clear_target:
-        loader.clear_cube(
-            tm1_service=target_tm1_service,
-            cube_name=target_cube_name,
-            clear_set_mdx_list=target_clear_set_mdx_list,
-            **kwargs
-        )
+        loader.clear_cube(tm1_service=target_tm1_service,
+                          cube_name=target_cube_name,
+                          clear_set_mdx_list=target_clear_set_mdx_list,
+                          **kwargs)
 
     target_cube_dims = target_metadata.get_cube_dims()
     loader.dataframe_to_cube(
@@ -296,12 +289,10 @@ def data_copy_intercube(
     )
 
     if clear_source:
-        loader.clear_cube(
-            tm1_service=tm1_service,
-            cube_name=source_cube_name,
-            clear_set_mdx_list=source_clear_set_mdx_list,
-            **kwargs
-        )
+        loader.clear_cube(tm1_service=tm1_service,
+                          cube_name=source_cube_name,
+                          clear_set_mdx_list=source_clear_set_mdx_list,
+                          **kwargs)
 
     basic_logger.info("Execution ended.")
 
@@ -462,21 +453,23 @@ def data_copy(
         **kwargs
     )
 
+    data_metadata_queryspecific = utility.TM1CubeObjectMetadata.collect(
+        mdx=data_mdx, collect_base_cube_metadata=False)
+    cube_name = data_metadata_queryspecific.get_cube_name()
+
     if dataframe.empty:
+        if clear_target:
+            loader.clear_cube(tm1_service=target_tm1_service,
+                              cube_name=cube_name,
+                              clear_set_mdx_list=target_clear_set_mdx_list,
+                              **kwargs)
         return
 
-    data_metadata_queryspecific = utility.TM1CubeObjectMetadata.collect(
-        mdx=data_mdx,
-        collect_base_cube_metadata=False
-    )
-    cube_name = data_metadata_queryspecific.get_cube_name()
     data_metadata = utility.TM1CubeObjectMetadata.collect(
-        tm1_service=target_tm1_service,
-        cube_name=cube_name,
+        tm1_service=target_tm1_service, cube_name=cube_name,
         metadata_function=data_metadata_function,
         collect_dim_element_identifiers=ignore_missing_elements,
-        **kwargs
-    )
+        **kwargs)
     cube_dims = data_metadata.get_cube_dims()
 
     transformer.dataframe_add_column_assign_value(
@@ -522,12 +515,10 @@ def data_copy(
     transformer.dataframe_reorder_dimensions(dataframe=dataframe, cube_dimensions=cube_dims, **kwargs)
 
     if clear_target:
-        loader.clear_cube(
-            tm1_service=target_tm1_service,
-            cube_name=cube_name,
-            clear_set_mdx_list=target_clear_set_mdx_list,
-            **kwargs
-        )
+        loader.clear_cube(tm1_service=target_tm1_service,
+                          cube_name=cube_name,
+                          clear_set_mdx_list=target_clear_set_mdx_list,
+                          **kwargs)
 
     loader.dataframe_to_cube(
         tm1_service=target_tm1_service,
@@ -705,8 +696,10 @@ def load_sql_data_to_tm1_cube(
         target_dim_mapping: Optional[dict] = None,
         value_function: Optional[Callable[..., Any]] = None,
         ignore_missing_elements: bool = False,
-        clear_set_mdx_list: Optional[List[str]] = None,
+        target_clear_set_mdx_list: Optional[List[str]] = None,
         clear_target: Optional[bool] = False,
+        clear_source: Optional[bool] = False,
+        sql_delete_statement: Optional[List[str]] = None,
         async_write: bool = False,
         slice_size_of_dataframe: int = 250000,
         use_ti: bool = False,
@@ -751,14 +744,22 @@ def load_sql_data_to_tm1_cube(
     )
 
     cube_name = target_metadata.get_cube_name()
+
+    if dataframe.empty:
+        if clear_target:
+            loader.clear_cube(tm1_service=tm1_service,
+                              cube_name=cube_name,
+                              clear_set_mdx_list=target_clear_set_mdx_list,
+                              **kwargs)
+        return
+
     cube_dims = target_metadata.get_cube_dims()
 
     transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
 
     if ignore_missing_elements:
         transformer.dataframe_itemskip_elements(
-            dataframe=dataframe, check_dfs=target_metadata.get_dimension_check_dfs()
-        )
+            dataframe=dataframe, check_dfs=target_metadata.get_dimension_check_dfs())
 
     shared_mapping_df = None
     if shared_mapping:
@@ -782,8 +783,7 @@ def load_sql_data_to_tm1_cube(
     )
 
     transformer.dataframe_execute_mappings(
-        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df
-    )
+        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df)
 
     transformer.dataframe_redimension_and_transform(
         dataframe=dataframe,
@@ -798,12 +798,10 @@ def load_sql_data_to_tm1_cube(
     transformer.dataframe_reorder_dimensions(dataframe=dataframe, cube_dimensions=cube_dims)
 
     if clear_target:
-        loader.clear_cube(
-            tm1_service=tm1_service,
-            cube_name=cube_name,
-            clear_set_mdx_list=clear_set_mdx_list,
-            **kwargs
-        )
+        loader.clear_cube(tm1_service=tm1_service,
+                          cube_name=cube_name,
+                          clear_set_mdx_list=target_clear_set_mdx_list,
+                          **kwargs)
 
     loader.dataframe_to_cube(
         tm1_service=tm1_service,
@@ -817,6 +815,11 @@ def load_sql_data_to_tm1_cube(
         sum_numeric_duplicates=sum_numeric_duplicates,
         slice_size_of_dataframe=slice_size_of_dataframe
     )
+
+    if clear_source:
+        loader.clear_table(engine=sql_engine,
+                           table_name=sql_table_name,
+                           delete_statement=sql_delete_statement)
 
     basic_logger.info("Execution ended.")
 
@@ -869,14 +872,16 @@ def load_tm1_cube_to_sql_table(
     )
 
     if dataframe.empty:
+        if clear_target:
+            loader.clear_table(engine=sql_engine,
+                               table_name=target_table_name,
+                               delete_statement=sql_delete_statement)
         return
 
     data_metadata = utility.TM1CubeObjectMetadata.collect(
-        tm1_service=tm1_service,
-        mdx=data_mdx,
+        tm1_service=tm1_service, mdx=data_mdx,
         metadata_function=data_metadata_function,
-        **kwargs
-    )
+        **kwargs)
 
     transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
     transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
@@ -903,8 +908,7 @@ def load_tm1_cube_to_sql_table(
     )
 
     transformer.dataframe_execute_mappings(
-        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df
-    )
+        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df)
 
     transformer.dataframe_redimension_and_transform(
         dataframe=dataframe,
@@ -917,11 +921,9 @@ def load_tm1_cube_to_sql_table(
         transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
 
     if clear_target:
-        loader.clear_table(
-            engine=sql_engine,
-            table_name=target_table_name,
-            delete_statement=sql_delete_statement
-        )
+        loader.clear_table(engine=sql_engine,
+                           table_name=target_table_name,
+                           delete_statement=sql_delete_statement)
 
     loader.dataframe_to_sql(
         dataframe=dataframe,
@@ -932,11 +934,9 @@ def load_tm1_cube_to_sql_table(
     )
 
     if clear_source:
-        loader.clear_cube(
-            tm1_service=tm1_service,
-            cube_name=data_metadata.get_cube_name(),
-            clear_set_mdx_list=source_clear_set_mdx_list,
-            **kwargs
-        )
+        loader.clear_cube(tm1_service=tm1_service,
+                          cube_name=data_metadata.get_cube_name(),
+                          clear_set_mdx_list=source_clear_set_mdx_list,
+                          **kwargs)
 
     basic_logger.info("Execution ended.")
