@@ -154,7 +154,7 @@ def test_csrd_demo():
         version_source = "Actual"
         version_target = "Actual"
         year_source = "2023"
-        year_target = "2026"
+        year_target = "2027"
         entity_source = "Entity NA"
         entity_target = "Entity NA"
         measures_list = """
@@ -171,9 +171,6 @@ def test_csrd_demo():
             {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[GRI]},
             {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[Driver]}
             """
-        measures_list = """
-            {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[ESRS Main Relevant]}
-            """
 
         pattern = r'{(.*?)}'
         measures_list_of_strings = re.findall(pattern, measures_list)
@@ -182,17 +179,15 @@ def test_csrd_demo():
 
             data_mdx = f"""
                        SELECT
-                           NON EMPTY
-                           {{{element_string}}}
-                       ON COLUMNS,
-                       NON EMPTY
-                           {{Tm1FilterByLevel(Tm1SubsetAll([ESRS Main]), 0)}}
+                            NON EMPTY
+                            {{{element_string}}}
+                            *{{Tm1FilterByLevel(Tm1SubsetAll([ESRS Main]), 0)}}
                             *{{Tm1FilterByLevel(Tm1SubsetAll([ESRS Details 1]), 0)}}
                             *{{Tm1FilterByLevel(Tm1SubsetAll([ESRS Details 2]), 0)}}
                             *{{Tm1FilterByLevel(Tm1SubsetAll([ESRS Geography]), 0)}}
                             *{{Tm1FilterByLevel(Tm1SubsetAll([Custom 1]), 0)}}
                             *{{Tm1FilterByLevel(Tm1SubsetAll([Custom 2]), 0)}}
-                       ON ROWS
+                       ON 0
                        FROM [Analogic ESRS Mapping]
                        WHERE (
                            [Year].[Year].[{year_source}],
@@ -205,16 +200,14 @@ def test_csrd_demo():
         data_mdx = f"""
         SELECT
             NON EMPTY
-            {{{measures_list}}}
-        ON COLUMNS,
-        NON EMPTY
-            {{Tm1FilterByLevel(Tm1SubsetAll([ESRS Main]), 0)}}
-            *{{Tm1FilterByLevel(Tm1SubsetAll([ESRS Details 1]), 0)}}
-            *{{Tm1FilterByLevel(Tm1SubsetAll([ESRS Details 2]), 0)}}
-            *{{Tm1FilterByLevel(Tm1SubsetAll([ESRS Geography]), 0)}}
-            *{{Tm1FilterByLevel(Tm1SubsetAll([Custom 1]), 0)}}
-            *{{Tm1FilterByLevel(Tm1SubsetAll([Custom 2]), 0)}}
-        ON ROWS
+            {{Tm1SubsetAll([Custom 1])}}
+            *{{Tm1SubsetAll([ESRS Main])}}
+            *{{Tm1SubsetAll([ESRS Details 1])}}
+            *{{Tm1SubsetAll([ESRS Details 2])}}
+            *{{Tm1SubsetAll([ESRS Geography])}}
+            *{{Tm1SubsetAll([Custom 2])}}
+            *{{{measures_list}}}
+        ON 0
         FROM[Analogic ESRS Mapping]
         WHERE(
             [Year].[Year].[{year_source}],
@@ -235,7 +228,7 @@ def test_csrd_demo():
         ]
 
         skip_zeros = True
-        skip_consolidated_cells = True
+        skip_consolidated_cells = False
         async_write = True
         clear_target = True
         clear_set_mdx_list = [f'{{[Version].[{version_target}]}}', f'{{[Entity].[{entity_target}]}}',
@@ -251,7 +244,7 @@ def test_csrd_demo():
             async_write=async_write,
             logging_level="DEBUG",
             target_clear_set_mdx_list=clear_set_mdx_list,
-            keep_default_na=True
+            slice_size_of_dataframe=50000
         )
 
     finally:
