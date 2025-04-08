@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="tm1_bedrock_py",
-    version="0.3.0",
+    version="0.4.0",
     description="A python modul for TM1 Bedrock.",
     readme = "README.md",
     packages=["TM1_bedrock_py"],
@@ -10,16 +10,16 @@ setup(
     author_email="",
     url="",
     keywords=["TM1", "IBM Cognos TM1", "Planning Analytics", "PA", "Cognos"],
-    classifiers = [
+    classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
     install_requires=[
-        "TM1py",
-        "mdxpy",
-        "pandas",
-        "json_logging",
-        "sqlalchemy"
+        "TM1py==2.1",
+        "pandas==2.2.3",
+        "json_logging==1.3.0",
+        "numpy==2.2.3",
+        "sqlalchemy==2.0.39"
     ],
     extras_require={"dev": [
         "build",
