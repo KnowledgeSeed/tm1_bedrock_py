@@ -619,15 +619,18 @@ async def async_executor(
     ):
         try:
             copy_func_kwargs = {
+                **_executor_kwargs,
                 "tm1_service": _tm1_service,
                 "data_mdx": _data_mdx,
                 "shared_mapping": _shared_mapping,
                 "mapping_steps": _mapping_steps,
                 "target_clear_set_mdx_list": _target_clear_set_mdx_list,
                 "_execution_id": _execution_id,
-                "async_write": False,
-                **_executor_kwargs
+                "async_write": False
             }
+
+            print(copy_func_kwargs)
+
             if _data_metadata_func:
                 copy_func_kwargs["data_metadata_function"] = _data_metadata_func
             if _target_metadata_func:
