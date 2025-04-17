@@ -24,5 +24,6 @@ else:
 # Get the logger for the package
 basic_logger = logging.getLogger("TM1_bedrock_py")
 exec_metrics_logger = logging.getLogger("exec_metrics")
+benchmark_metrics_logger = logging.getLogger("benchmark_metrics")
 
-__all__ = ["basic_logger", "exec_metrics_logger"]
+__all__ = ["basic_logger", "exec_metrics_logger", "benchmark_metrics_logger"]

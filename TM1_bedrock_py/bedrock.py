@@ -10,6 +10,7 @@ from pandas import DataFrame
 from TM1_bedrock_py import utility, transformer, loader, extractor, basic_logger
 
 
+@utility.log_benchmark_metrics
 @utility.log_exec_metrics
 def data_copy_intercube(
         tm1_service: Optional[Any],

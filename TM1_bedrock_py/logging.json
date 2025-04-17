@@ -51,6 +51,15 @@
             "encoding": "utf8"
         },
 
+        "file_benchmark_metrics": {
+            "class": "logging.FileHandler",
+            "level": "DEBUG",
+            "formatter": "exec_metrics",
+            "filename": "../logs/TM1_bedrock_py_benchmark.log",
+            "mode": "a",
+            "encoding": "utf8"
+        },
+
         "json_file": {
             "class": "logging.FileHandler",
             "level": "DEBUG",
@@ -67,6 +76,15 @@
             "filename": "../logs/TM1_bedrock_py.json.log",
             "mode": "a",
             "encoding": "utf8"
+        },
+
+        "json_file_benchmark_metrics": {
+            "class": "logging.FileHandler",
+            "level": "DEBUG",
+            "formatter": "json_exec_metrics",
+            "filename": "../logs/TM1_bedrock_py_benchmark.json.log",
+            "mode": "a",
+            "encoding": "utf8"
         }
     },
 
@@ -79,6 +97,11 @@
         "exec_metrics": {
             "level": "WARNING",
             "handlers": ["file_exec_metrics", "json_file_exec_metrics"],
+            "propagate": false
+        },
+        "benchmark_metrics": {
+            "level": "WARNING",
+            "handlers": ["file_benchmark_metrics", "json_file_benchmark_metrics"],
             "propagate": false
         }
     },
