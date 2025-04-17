@@ -624,6 +624,7 @@ async def async_executor(
                 "mapping_steps": _mapping_steps,
                 "target_clear_set_mdx_list": _target_clear_set_mdx_list,
                 "_execution_id": _execution_id,
+                "async_write": False,
                 **_executor_kwargs
             }
             if _data_metadata_func:
