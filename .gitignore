@@ -25,3 +25,5 @@ build/
 *.log
 *.mdmp
 logs
+
+*.whl
