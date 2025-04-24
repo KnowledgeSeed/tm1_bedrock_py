@@ -3,7 +3,9 @@ import pprint
 from TM1_bedrock_py import utility, extractor, transformer, loader, bedrock
 from TM1_bedrock_py.transformer import normalize_table_source_dataframe
 from string import Template
+from tm1_bench_py import tm1_bench, df_generator_for_dataset, dimension_builder, dimension_period_builder
 import re
+import os
 
 
 
@@ -141,7 +143,7 @@ def manage():
         tm1.logout()
 
 
-def test_csrd_demo():
+def csrd_demo():
     tm1_params = {
         "address": "localhost",
         "port": 5382,
@@ -250,6 +252,32 @@ def test_csrd_demo():
     finally:
         tm1.logout()
 
+
+def benchpy_sample():
+    schema_dir = 'C:\\Users\\ullmann.david\\PycharmProjects\\tm1bedrockpy\\schema'
+    _ENV = 'bedrock_test_10000'
+    schemaloader = tm1_bench.SchemaLoader(schema_dir, _ENV)
+    schema = schemaloader.load_schema()
+
+    tm1_params = {
+        "address": "localhost",
+        "port": 5379,
+        "user": "testbench",
+        "password": "testbench",
+        "ssl": False
+    }
+
+    tm1 = TM1Service(**tm1_params)
+
+    _DEFAULT_DF_TO_CUBE_KWARGS = schema['config']['df_to_cube_default_kwargs']
+    try:
+        tm1_bench.build_model(tm1=tm1, schema=schema, env=_ENV, system_defaults=_DEFAULT_DF_TO_CUBE_KWARGS)
+        tm1_bench.destroy_model(tm1=tm1, schema=schema)
+    finally:
+        tm1.logout()
+
+
 if __name__ == '__main__':
     # manage()
-    test_csrd_demo()
+    # csrd_demo()
+    benchpy_sample()
