@@ -21,9 +21,19 @@ import matplotlib.pyplot as plt
 from TM1py import TM1Service
 from matplotlib.testing.decorators import image_comparison
 
+from tests import benchtest_config as cfg
+from tm1_bench_py import tm1_bench
+
 from TM1_bedrock_py import bedrock, basic_logger, benchmark_metrics_logger
 
-benchmark_metrics_logger.setLevel("WARNING")
+
+# benchmark_metrics_logger.setLevel("WARNING")
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Fixtures
+# ---------------------------------------------------------------------------------------------------------------------
+
 
 @pytest.fixture(scope="session")
 def tm1_connection():
@@ -43,14 +53,16 @@ def tm1_connection():
         basic_logger.error("Unable to connect to TM1: ", exc_info=True)
 
 
-def input_data():
-    num_runs = 2
-    identical_run_ids = [i for i in range(num_runs)]
-    number_of_cores = [4, 8]
-    number_of_records = [10000, 25000]
-    combinations = list(itertools.product(number_of_cores, number_of_records, identical_run_ids))
+"""
+@pytest.fixture(scope="module")
+def config():
+    file_path = "test_benchmark.yaml"
+    return load_config(file_path)
+"""
 
-    return combinations
+# ---------------------------------------------------------------------------------------------------------------------
+# Bench test utility
+# ---------------------------------------------------------------------------------------------------------------------
 
 
 def load_config(yaml_filepath):
@@ -73,12 +85,6 @@ def load_config(yaml_filepath):
     except Exception as e:
         print(f"An unexpected error occurred loading the config: {e}", file=sys.stderr)
         sys.exit(1)
-
-
-@pytest.fixture(scope="module")
-def config():
-    file_path = "test_benchmark.yaml"
-    return load_config(file_path)
 
 
 def load_benchmark_logs(run_ids):
@@ -138,17 +144,15 @@ def calculate_average_run_time(results: list):
 
 
 def test_process_benchmark_results():
-    combinations = input_data()
+    combinations = cfg.testcase_parameters()
     cases = get_exec_data(combinations)
     keys = cases.keys()
     for key in keys:
         cases[key] = calculate_average_run_time(cases.get(key))
     print(cases)
-    combinations = input_data()
+    combinations = cfg.testcase_parameters()
     nr_cores = list(set([core for core, record, n in combinations]))
     plot_results(cases, nr_cores)
-
-
 
 
 #@pytest.fixture(scope="session")
@@ -193,29 +197,6 @@ def plot_results(results, cores):
         plt.savefig("benchmark.png")
 
 
-def async_data_copy_intercube_multi_parameter(
-        tm1_connection, param_set_mdx_list, data_mdx_template, clear_param_templates,
-        target_cube_name, shared_mapping, mapping_steps, max_workers, **kwargs
-):
-    asyncio.run(bedrock.async_executor(
-        data_copy_function=bedrock.data_copy_intercube,
-        tm1_service=tm1_connection,
-        data_mdx_template=data_mdx_template,
-        skip_zeros=kwargs["skip_zeros"],
-        skip_consolidated_cells=kwargs["skip_consolidated_cells"],
-        target_cube_name=target_cube_name,
-        shared_mapping=shared_mapping,
-        mapping_steps=mapping_steps,
-        clear_target=kwargs["clear_target"],
-        async_write=kwargs["async_write"],
-        logging_level=kwargs["logging_level"],
-        param_set_mdx_list=param_set_mdx_list,
-        clear_param_templates=clear_param_templates,
-        ignore_missing_elements=kwargs["ignore_missing_elements"],
-        max_workers=max_workers
-    ))
-
-
 def update_benchmark_log_handler(run_id):
     for handler in benchmark_metrics_logger.handlers:
         if isinstance(handler, logging.FileHandler):
@@ -225,32 +206,37 @@ def update_benchmark_log_handler(run_id):
             break
 
 
-@pytest.mark.parametrize("nr_of_cores, nr_of_records, n", input_data())
-def test_parallel_sweep(plot_results, config, tm1_connection, nr_of_cores, nr_of_records, n):
+# ---------------------------------------------------------------------------------------------------------------------
+# Bench test main
+# ---------------------------------------------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("nr_of_cores, nr_of_records, n", cfg.testcase_parameters())
+def test_run_single_benchmark_case(tm1_connection, nr_of_cores, nr_of_records, n):
 
     update_benchmark_log_handler(f"{nr_of_cores}_{nr_of_records}_{n}")
 
     fix_kwargs = {
         "tm1_service": tm1_connection,
-        "data_mdx_template": config.get("data_mdx_template")[0],
+        "data_mdx_template": cfg.DATA_MDX_TEMPLATE,
         "skip_zeros": True,
         "skip_consolidated_cells": True,
-        "target_cube_name": config.get("target_cube_name")[0],
-        "shared_mapping": config.get("shared_mapping")[0],
-        "mapping_steps": config.get("mapping_steps")[0],
+        "target_cube_name": cfg.TARGET_CUBE_NAME,
+        "mapping_steps": cfg.MAPPING_STEPS,
         "clear_target": True,
-        "async_write": True,
         "logging_level": "DEBUG",
-        "param_set_mdx_list": config.get("param_set_mdx_list")[0],
-        "clear_param_templates": config.get("clear_param_templates")[0],
-        "ignore_missing_elements": True
+        "param_set_mdx_list": cfg.PARAM_SET_MDX_LIST,
+        "clear_param_templates": cfg.CLEAR_PARAM_TEMPLATES,
+        "target_dim_mapping": cfg.TARGET_DIM_MAPPING
     }
     basic_logger.info(f"Execution starting with {nr_of_cores} workers")
 
-    # number of records and test model build
-    print(nr_of_records)
+    envname = 'bedrock_test_' + str(nr_of_records)
+    schemaloader = tm1_bench.SchemaLoader(cfg.SCHEMA_DIR, envname)
+    schema = schemaloader.load_schema()
+    default_df_to_cube_kwargs = schema['config']['df_to_cube_default_kwargs']
 
-    # TODO: pass the test id generated from input tuple to benchmark logger
+    tm1_bench.build_model(tm1=tm1_connection, schema=schema, env=envname, system_defaults=default_df_to_cube_kwargs)
 
     asyncio.run(bedrock.async_executor(
         data_copy_function=bedrock.data_copy_intercube,
@@ -258,8 +244,7 @@ def test_parallel_sweep(plot_results, config, tm1_connection, nr_of_cores, nr_of
         **fix_kwargs
     ))
 
-    # destroy model
-    print("model destroyed")
+    tm1_bench.destroy_model(tm1=tm1_connection, schema=schema)
 
     basic_logger.info(f"Execution ended with {nr_of_cores} workers")
     """
@@ -274,6 +259,7 @@ def test_parallel_sweep(plot_results, config, tm1_connection, nr_of_cores, nr_of
     ))
     """
 
+"""
 #@parametrize_from_file
 def test_trace_malloc(tm1_connection, param_set_mdx_list, data_mdx_template,
         clear_param_templates, target_cube_name, shared_mapping, mapping_steps, max_workers):
@@ -325,3 +311,4 @@ def test_trace_malloc(tm1_connection, param_set_mdx_list, data_mdx_template,
         # And then show the size/count summary
         size_kb = stat.size / 1024
         print(f"↳ {size_kb:.1f} KiB in {stat.count} allocations\n")
+"""

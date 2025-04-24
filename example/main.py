@@ -272,7 +272,7 @@ def benchpy_sample():
     _DEFAULT_DF_TO_CUBE_KWARGS = schema['config']['df_to_cube_default_kwargs']
     try:
         tm1_bench.build_model(tm1=tm1, schema=schema, env=_ENV, system_defaults=_DEFAULT_DF_TO_CUBE_KWARGS)
-        tm1_bench.destroy_model(tm1=tm1, schema=schema)
+        #tm1_bench.destroy_model(tm1=tm1, schema=schema)
     finally:
         tm1.logout()
 
