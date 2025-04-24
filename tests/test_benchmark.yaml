@@ -1,6 +1,5 @@
-default_parameters: &defaults
-  data_mdx_template:
-    "
+data_mdx_template:
+  -  "
        SELECT 
           {[Groups].[Groups].[Group_1],[Groups].[Groups].[Group_2],[Groups].[Groups].[Group_3],[Groups].[Groups].[Group_4],[Groups].[Groups].[Group_5]} 
          ON COLUMNS , 
@@ -14,29 +13,34 @@ default_parameters: &defaults
           [Versions].[Versions].[$Versions],
           [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
          )
-       "
-  clear_param_templates: [ "{[Periods].[Periods].[$Periods]}", "{[Versions].[Versions].[$Versions]}" ]
-  param_set_mdx_list: [
-    "{{TM1FILTERBYLEVEL({DRILLDOWNMEMBER({[Periods].[Periods].[2022]}, {[Periods].[Periods].[2022]})}, 0)},
-    {TM1FILTERBYLEVEL({DRILLDOWNMEMBER({[Periods].[Periods].[2023]}, {[Periods].[Periods].[2023]})}, 0)},
-    {TM1FILTERBYLEVEL({DRILLDOWNMEMBER({[Periods].[Periods].[2024]}, {[Periods].[Periods].[2024]})}, 0)}}",
-    "{[Versions].[Versions].[Base Plan], [Versions].[Versions].[Budget]}"
-  ]
-  target_cube_name: "Cost and FTE by Groups"
-  mapping_steps: [
-    {
-      "method": "replace",
-      "mapping": {
-        "Versions": { "Base Plan": "DataCopy Integration Test 2",  "Budget": "DataCopy Integration Test 3"},
-        "Measures Cost and FTE by Groups": { "Value": "Input" }
+    "
+clear_param_templates:
+  - [ "{[Periods].[Periods].[$Periods]}", "{[Versions].[Versions].[$Versions]}" ]
+param_set_mdx_list:
+  - [
+      "{{TM1FILTERBYLEVEL({DRILLDOWNMEMBER({[Periods].[Periods].[2022]}, {[Periods].[Periods].[2022]})}, 0)},
+      {TM1FILTERBYLEVEL({DRILLDOWNMEMBER({[Periods].[Periods].[2023]}, {[Periods].[Periods].[2023]})}, 0)},
+      {TM1FILTERBYLEVEL({DRILLDOWNMEMBER({[Periods].[Periods].[2024]}, {[Periods].[Periods].[2024]})}, 0)}}",
+      "{[Versions].[Versions].[Base Plan], [Versions].[Versions].[Budget]}"
+    ]
+target_cube_name:
+  - "Cost and FTE by Groups"
+mapping_steps:
+  - [
+      {
+        "method": "replace",
+        "mapping": {
+          "Versions": { "Base Plan": "DataCopy Integration Test 2",  "Budget": "DataCopy Integration Test 3"},
+          "Measures Cost and FTE by Groups": { "Value": "Input" }
+        }
+      },
+      {
+        "method": "map_and_replace",
+        "mapping_dimensions": { "Groups": "Groups" },
       }
-    },
-    {
-      "method": "map_and_replace",
-      "mapping_dimensions": { "Groups": "Groups" },
-    }
-  ]
-  shared_mapping: {
+    ]
+shared_mapping:
+- {
     "mapping_mdx": "
       SELECT
       {[Groups].[Groups].[Group_1],[Groups].[Groups].[Group_2],[Groups].[Groups].[Group_3],[Groups].[Groups].[Group_4],[Groups].[Groups].[Group_5]}
@@ -49,10 +53,3 @@ default_parameters: &defaults
       [Measures Group Employee].[Measures Group Employee].[Assignment Flag]
       )"
   }
-
-
-test_parallel_sweep:
-  - <<: *defaults
-    max_workers: 4
-  - <<: *defaults
-    max_workers: 8

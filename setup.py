@@ -26,7 +26,9 @@ setup(
         "pytest",
         "parametrize_from_file",
         "apache_airflow",
-        "airflow_provider_tm1"
+        "airflow_provider_tm1",
+        "matplotlib",
+        "yaml"
     ]},
     python_requires=">=3.7"
 )
