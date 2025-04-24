@@ -538,7 +538,8 @@ def data_copy(
     basic_logger.info("Execution ended.")
 
 
-@utility.log_exec_metrics
+@utility.log_async_benchmark_metrics
+@utility.log_async_exec_metrics
 async def async_executor(
         tm1_service: Any,
         param_set_mdx_list: List[str],
@@ -628,8 +629,6 @@ async def async_executor(
                 "_execution_id": _execution_id,
                 "async_write": False
             }
-
-            print(copy_func_kwargs)
 
             if _data_metadata_func:
                 copy_func_kwargs["data_metadata_function"] = _data_metadata_func

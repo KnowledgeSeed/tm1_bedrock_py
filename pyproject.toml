@@ -25,7 +25,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["build", "pytest", "parametrize_from_file", "apache_airflow", "airflow_provider_tm1"]
+dev = ["build", "pytest", "parametrize_from_file", "apache_airflow", "airflow_provider_tm1", "matplotlib", "yaml"]
 
 [tool.setuptools]
 packages = ["TM1_bedrock_py"]
