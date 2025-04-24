@@ -254,6 +254,14 @@ def data_copy_intercube(
     transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df, **kwargs)
 
+    if dataframe.empty:
+        if clear_target:
+            loader.clear_cube(tm1_service=target_tm1_service,
+                              cube_name=target_cube_name,
+                              clear_set_mdx_list=target_clear_set_mdx_list,
+                              **kwargs)
+        return
+
     transformer.dataframe_redimension_and_transform(
         dataframe=dataframe,
         source_dim_mapping=source_dim_mapping,
@@ -509,6 +517,14 @@ def data_copy(
 
     transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df, **kwargs)
+
+    if dataframe.empty:
+        if clear_target:
+            loader.clear_cube(tm1_service=target_tm1_service,
+                              cube_name=cube_name,
+                              clear_set_mdx_list=target_clear_set_mdx_list,
+                              **kwargs)
+        return
 
     if value_function is not None:
         transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
