@@ -27,6 +27,7 @@ build/
 logs
 
 *.whl
+/schema/
 
 # Figures
 tests/*.png

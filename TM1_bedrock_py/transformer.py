@@ -386,7 +386,7 @@ def dataframe_map_and_replace(
 
     merged_df = data_df[shared_dimensions].merge(
         mapping_df[shared_dimensions + list(mapped_dimensions.values())],
-        how='left',
+        how='inner',
         on=shared_dimensions
     )
 
@@ -423,7 +423,7 @@ def dataframe_map_and_join(
 
     merged_df = data_df[shared_dimensions].merge(
         mapping_df[shared_dimensions + joined_columns],
-        how='left',
+        how='inner',
         on=shared_dimensions
     )
 
