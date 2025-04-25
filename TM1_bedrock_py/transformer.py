@@ -384,6 +384,7 @@ def dataframe_map_and_replace(
     """
 
     shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - set(mapped_dimensions.keys()) - {"Value"})
+    original_columns = data_df.columns
 
     data_df = data_df.merge(
         mapping_df[shared_dimensions + list(mapped_dimensions.values())],
@@ -392,13 +393,11 @@ def dataframe_map_and_replace(
         suffixes=('', '_mapped')
     )
 
+    columns_to_drop = []
     for data_col, map_col in mapped_dimensions.items():
+        map_col = f"{map_col}_mapped" if map_col == data_col or map_col in original_columns else map_col
         data_df[data_col] = data_df[map_col]
-
-    columns_to_drop = [
-        f"{map_col}_mapped" if data_col == map_col else map_col
-        for data_col, map_col in mapped_dimensions.items()
-    ]
+        columns_to_drop.append(map_col)
 
     data_df.drop(columns=columns_to_drop, inplace=True)
     return data_df
