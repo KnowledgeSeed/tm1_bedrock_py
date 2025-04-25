@@ -251,8 +251,13 @@ def data_copy_intercube(
         **kwargs
     )
 
+    initial_row_count = len(dataframe)
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df, **kwargs)
+    final_row_count = len(dataframe)
+    if initial_row_count != final_row_count:
+        filtered_count = initial_row_count - final_row_count
+        basic_logger.warning(f"Number of rows filtered out through inner joins: {filtered_count}/{initial_row_count}")
 
     if dataframe.empty:
         if clear_target:
@@ -515,8 +520,13 @@ def data_copy(
         **kwargs
     )
 
+    initial_row_count = len(dataframe)
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df, **kwargs)
+    final_row_count = len(dataframe)
+    if initial_row_count != final_row_count:
+        filtered_count = initial_row_count - final_row_count
+        basic_logger.warning(f"Number of rows filtered out through inner joins: {filtered_count}/{initial_row_count}")
 
     if dataframe.empty:
         if clear_target:
@@ -802,8 +812,13 @@ def load_sql_data_to_tm1_cube(
         csv_function=csv_function
     )
 
+    initial_row_count = len(dataframe)
     dataframe = transformer.dataframe_execute_mappings(
-        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df)
+        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df, **kwargs)
+    final_row_count = len(dataframe)
+    if initial_row_count != final_row_count:
+        filtered_count = initial_row_count - final_row_count
+        basic_logger.warning(f"Number of rows filtered out through inner joins: {filtered_count}/{initial_row_count}")
 
     transformer.dataframe_redimension_and_transform(
         dataframe=dataframe,
@@ -927,8 +942,13 @@ def load_tm1_cube_to_sql_table(
         csv_function=csv_function
     )
 
+    initial_row_count = len(dataframe)
     dataframe = transformer.dataframe_execute_mappings(
-        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df)
+        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df, **kwargs)
+    final_row_count = len(dataframe)
+    if initial_row_count != final_row_count:
+        filtered_count = initial_row_count - final_row_count
+        basic_logger.warning(f"Number of rows filtered out through inner joins: {filtered_count}/{initial_row_count}")
 
     transformer.dataframe_redimension_and_transform(
         dataframe=dataframe,
