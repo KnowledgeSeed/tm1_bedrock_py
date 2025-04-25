@@ -27,3 +27,6 @@ build/
 logs
 
 *.whl
+
+# Figures
+tests/*.png

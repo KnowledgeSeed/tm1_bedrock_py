@@ -143,77 +143,57 @@ def test_process_benchmark_results():
     keys = cases.keys()
     for key in keys:
         cases[key] = calculate_average_run_time(cases.get(key))
-    print(cases)
+
     combinations = input_data()
-    nr_cores = list(set([core for core, record, n in combinations]))
-    plot_results(cases, nr_cores)
+    cores = list(set([core for core, record, n in combinations]))
+
+    for core in cores:
+        results = {}
+        for key in cases.keys():
+            if key.startswith(f"{core}_"):
+                results[key] = cases.get(key)
+        plot_results(results, combinations, core)
 
 
+def plot_results(results, combinations, nr_cores):
+    cores = list(set([core for core, record, n in combinations]))
+    records = list(set([record for core, record, n in combinations]))
+    n = max([n for core, record, n in combinations]) + 1
+
+    min_times = []
+    max_times = []
+    avg_times = []
+    stdev_times = []
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    for key in results:
+        values = results.get(key)
+        min_times.append(values['min'])
+        max_times.append(values['max'])
+        avg_times.append(values['avg'])
+        stdev_times.append(values['stdev'])
 
 
-#@pytest.fixture(scope="session")
-def plot_results(results, cores):
-    #results = []
-    #yield results
+    ax.plot(records, avg_times, label='Average Time', marker='o', linestyle='-', linewidth=2)
+    ax.plot(records, min_times, label='Minimum Time', marker='^', linestyle='', color='black')
+    ax.plot(records, max_times, label='Maximum Time', marker='v', linestyle='', color='black')
+    #ax.plot(records, stdev_times, label='Standard Deviation', marker='x', linestyle='', color='orange')
 
-    if results:
-        print(results)
-        min_times = []
-        max_times = []
-        avg_times = []
-        stdev_times = []
+    ax.set_xlabel("number of records")
+    ax.set_ylabel(f'Execution Time [s]')
+    ax.set_title(f'Execution times based on number of records for {nr_cores} cores')
 
-        fig, ax = plt.subplots(2,2, figsize=(10, 6))
+    ax.get_xaxis().set_major_formatter(plt.ScalarFormatter())
 
-        for key in results:
-            print(key)
-            values = results.get(key)
-            min_times.append(values['min'])
-            max_times.append(values['max'])
-            avg_times.append(values['avg'])
-            stdev_times.append(values['stdev'])
-                #sweep.append(values['cores'])
+    ax.legend()
+    ax.grid(True, linestyle='--', alpha=0.6)
 
-            ax.plot(cores, avg_times, label='Average Time', marker='o', linestyle='-', linewidth=2)
-            ax.plot(cores, min_times, label='Minimum Time', marker='^', linestyle='--', color='green')
-            ax.plot(cores, max_times, label='Maximum Time', marker='v', linestyle=':', color='red')
-            ax.plot(cores, stdev_times, label='Standard Deviation', marker='x', linestyle='-.', color='orange')
+    fig.tight_layout()
 
-        ax.set_xlabel("max_workers")
-        ax.set_ylabel(f'Execution Time [s]')
-        ax.set_title(f'Execution times based on max_workers')
+    #plt.show()
+    plt.savefig(f"benchmark_for_{nr_cores}_cores.png")
 
-        ax.get_xaxis().set_major_formatter(plt.ScalarFormatter())
-
-        #ax.legend()
-        ax.grid(True, linestyle='--', alpha=0.6)
-
-        fig.tight_layout()
-        #plt.show()
-        plt.savefig("benchmark.png")
-
-
-def async_data_copy_intercube_multi_parameter(
-        tm1_connection, param_set_mdx_list, data_mdx_template, clear_param_templates,
-        target_cube_name, shared_mapping, mapping_steps, max_workers, **kwargs
-):
-    asyncio.run(bedrock.async_executor(
-        data_copy_function=bedrock.data_copy_intercube,
-        tm1_service=tm1_connection,
-        data_mdx_template=data_mdx_template,
-        skip_zeros=kwargs["skip_zeros"],
-        skip_consolidated_cells=kwargs["skip_consolidated_cells"],
-        target_cube_name=target_cube_name,
-        shared_mapping=shared_mapping,
-        mapping_steps=mapping_steps,
-        clear_target=kwargs["clear_target"],
-        async_write=kwargs["async_write"],
-        logging_level=kwargs["logging_level"],
-        param_set_mdx_list=param_set_mdx_list,
-        clear_param_templates=clear_param_templates,
-        ignore_missing_elements=kwargs["ignore_missing_elements"],
-        max_workers=max_workers
-    ))
 
 
 def update_benchmark_log_handler(run_id):
@@ -226,7 +206,7 @@ def update_benchmark_log_handler(run_id):
 
 
 @pytest.mark.parametrize("nr_of_cores, nr_of_records, n", input_data())
-def test_parallel_sweep(plot_results, config, tm1_connection, nr_of_cores, nr_of_records, n):
+def test_parallel_sweep(config, tm1_connection, nr_of_cores, nr_of_records, n):
 
     update_benchmark_log_handler(f"{nr_of_cores}_{nr_of_records}_{n}")
 
@@ -295,11 +275,11 @@ def test_trace_malloc(tm1_connection, param_set_mdx_list, data_mdx_template,
 
     tracemalloc.start()
 
-    async_data_copy_intercube_multi_parameter(
-        func_name=async_data_copy_intercube_multi_parameter,
-        num_times=1,
+    asyncio.run(bedrock.async_executor(
+        data_copy_function=bedrock.data_copy_intercube,
         max_workers=max_workers,
-        **fix_kwargs)
+        **fix_kwargs
+    ))
 
     snapshot = tracemalloc.take_snapshot()
     site_pkgs_dirs = site.getsitepackages()
