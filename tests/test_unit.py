@@ -495,7 +495,7 @@ def test_dataframe_find_and_replace_success(dataframe, mapping, expected_datafra
 
     df = pd.DataFrame(dataframe)
     expected_df = pd.DataFrame(expected_dataframe)
-    transformer.dataframe_find_and_replace(dataframe=df, mapping=mapping)
+    df = transformer.dataframe_find_and_replace(dataframe=df, mapping=mapping)
 
     pd.testing.assert_frame_equal(df, expected_df)
 
@@ -506,7 +506,7 @@ def test_dataframe_find_and_replace_fail(dataframe, mapping, expected_dataframe)
     df = pd.DataFrame(dataframe)
     expected_df = pd.DataFrame(expected_dataframe)
     with pytest.raises(AssertionError):
-        transformer.dataframe_find_and_replace(dataframe=df, mapping=mapping)
+        df = transformer.dataframe_find_and_replace(dataframe=df, mapping=mapping)
         pd.testing.assert_frame_equal(df, expected_df)
 
 
@@ -515,7 +515,7 @@ def test_dataframe_map_and_replace_success(dataframe, mapping_dataframe, mapping
     df = pd.DataFrame(dataframe)
     mapping_df = pd.DataFrame(mapping_dataframe)
     expected_df = pd.DataFrame(expected_dataframe)
-    transformer.dataframe_map_and_replace(
+    df = transformer.dataframe_map_and_replace(
         data_df=df,
         mapping_df=mapping_df,
         mapped_dimensions=mapping_dimensions)
@@ -528,7 +528,7 @@ def test_dataframe_map_and_join_success(dataframe, joined_cols, mapping_datafram
     df = pd.DataFrame(dataframe)
     mapping_df = pd.DataFrame(mapping_dataframe)
     expected_df = pd.DataFrame(expected_dataframe)
-    transformer.dataframe_map_and_join(
+    df = transformer.dataframe_map_and_join(
         data_df=df,
         mapping_df=mapping_df,
         joined_columns=joined_cols

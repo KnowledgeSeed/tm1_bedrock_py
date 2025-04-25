@@ -340,7 +340,7 @@ def dataframe_itemskip_elements(dataframe: DataFrame, check_dfs: list[DataFrame]
 def dataframe_find_and_replace(
         dataframe: DataFrame,
         mapping: Dict[str, Dict[Any, Any]]
-) -> None:
+) -> DataFrame:
     """
     Remaps elements in a DataFrame based on a provided mapping.
 
@@ -353,13 +353,14 @@ def dataframe_find_and_replace(
         DataFrame: The updated DataFrame with elements remapped.
     """
     dataframe.replace({col: mapping[col] for col in mapping.keys() if col in dataframe.columns}, inplace=True)
+    return dataframe
 
 
 def dataframe_map_and_replace(
         data_df: DataFrame,
         mapping_df: DataFrame,
         mapped_dimensions: Dict[str, str]
-) -> None:
+) -> DataFrame:
     """
     Map specified dimension columns in 'data_df' using 'mapping_df',
     optimized for memory efficiency by modifying dataframes in-place.
@@ -383,22 +384,30 @@ def dataframe_map_and_replace(
     """
 
     shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - set(mapped_dimensions.keys()) - {"Value"})
+    original_columns = data_df.columns
 
-    merged_df = data_df[shared_dimensions].merge(
+    data_df = data_df.merge(
         mapping_df[shared_dimensions + list(mapped_dimensions.values())],
         how='inner',
-        on=shared_dimensions
+        on=shared_dimensions,
+        suffixes=('', '_mapped')
     )
 
+    columns_to_drop = []
     for data_col, map_col in mapped_dimensions.items():
-        data_df[data_col] = merged_df[map_col]
+        map_col = f"{map_col}_mapped" if map_col == data_col or map_col in original_columns else map_col
+        data_df[data_col] = data_df[map_col]
+        columns_to_drop.append(map_col)
+
+    data_df.drop(columns=columns_to_drop, inplace=True)
+    return data_df
 
 
 def dataframe_map_and_join(
         data_df: DataFrame,
         mapping_df: DataFrame,
         joined_columns: List[str]
-) -> None:
+) -> DataFrame:
     """
     Joins specified columns from 'mapping_df' to 'data_df' based on shared dimensions.
 
@@ -421,14 +430,11 @@ def dataframe_map_and_join(
     """
     shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - set(joined_columns) - {"Value"})
 
-    merged_df = data_df[shared_dimensions].merge(
+    return data_df.merge(
         mapping_df[shared_dimensions + joined_columns],
         how='inner',
         on=shared_dimensions
     )
-
-    for col in joined_columns:
-        data_df[col] = merged_df[col]
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -440,7 +446,7 @@ def __apply_replace(
         data_df: DataFrame,
         mapping_step: Dict[str, Any],
         shared_mapping_df
-) -> None:
+) -> DataFrame:
     """
     Handle the 'replace' mapping step.
 
@@ -459,14 +465,14 @@ def __apply_replace(
         The modified DataFrame after applying the literal remap.
     """
     _ = shared_mapping_df
-    dataframe_find_and_replace(dataframe=data_df, mapping=mapping_step["mapping"])
+    return dataframe_find_and_replace(dataframe=data_df, mapping=mapping_step["mapping"])
 
 
 def __apply_map_and_replace(
         data_df: DataFrame,
         mapping_step: Dict[str, Any],
         shared_mapping_df: DataFrame
-) -> None:
+) -> DataFrame:
     """
     Handle the 'map_and_replace' mapping step.
 
@@ -501,19 +507,21 @@ def __apply_map_and_replace(
         else:
             mapping_df = dataframe_filter(dataframe=mapping_df, filter_condition=mapping_step["mapping_filter"])
 
-    dataframe_map_and_replace(
+    data_df = dataframe_map_and_replace(
         data_df=data_df, mapping_df=mapping_df, mapped_dimensions=mapping_step["mapping_dimensions"]
     )
 
     if mapping_step.get("relabel_dimensions"):
         dataframe_relabel(dataframe=data_df, columns=mapping_step["mapping_dimensions"])
 
+    return data_df
+
 
 def __apply_map_and_join(
         data_df: DataFrame,
         mapping_step: Dict[str, Any],
         shared_mapping_df
-) -> None:
+) -> DataFrame:
     """
     Handle the 'map_and_join' mapping step.
 
@@ -549,10 +557,12 @@ def __apply_map_and_join(
         else:
             mapping_df = dataframe_filter(dataframe=mapping_df, filter_condition=mapping_step["mapping_filter"])
 
-    dataframe_map_and_join(data_df=data_df, mapping_df=mapping_df, joined_columns=mapping_step["joined_columns"])
+    data_df = dataframe_map_and_join(data_df=data_df, mapping_df=mapping_df, joined_columns=mapping_step["joined_columns"])
 
     if "dropped_columns" in mapping_step:
         dataframe_drop_column(dataframe=data_df, column_list=mapping_step["dropped_columns"])
+
+    return data_df
 
 
 @utility.log_exec_metrics
@@ -561,7 +571,7 @@ def dataframe_execute_mappings(
         mapping_steps: List[Dict],
         shared_mapping_df: Optional[DataFrame] = None,
         **_kwargs
-) -> None:
+) -> DataFrame:
     """
     Execute a series of mapping steps on data_df.
     Uses mutation for memory efficiency.
@@ -628,6 +638,8 @@ def dataframe_execute_mappings(
     for step in mapping_steps:
         method = step["method"]
         if method in method_handlers:
-            method_handlers[method](data_df, step, shared_mapping_df)
+            data_df = method_handlers[method](data_df, step, shared_mapping_df)
         else:
             raise ValueError(f"Unsupported mapping method: {method}")
+
+    return data_df

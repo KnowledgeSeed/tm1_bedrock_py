@@ -1,4 +1,5 @@
 import itertools
+import os
 
 _SOURCE_VERSION = "Actual"
 _TARGET_VERSION = "ForeCast"
@@ -88,4 +89,4 @@ def testcase_parameters():
     return combinations
 
 
-SCHEMA_DIR = 'C:\\Users\\ullmann.david\\PycharmProjects\\tm1bedrockpy\\schema'
+SCHEMA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'schema')
