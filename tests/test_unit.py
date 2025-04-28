@@ -633,6 +633,9 @@ def test_dataframe_to_csv(data_dataframe, expected_dataframe):
         data_dataframe["Price"] = [float(x) for x in data_dataframe["Price"]]
         data_dataframe["Quantity"] = [float(x) for x in data_dataframe["Quantity"]]
 
+        expected_dataframe["Price"] = [float(x) for x in expected_dataframe["Price"]]
+        expected_dataframe["Quantity"] = [float(x) for x in expected_dataframe["Quantity"]]
+
         data_df = pd.DataFrame(data_dataframe)
         dtype_mapping = data_df.dtypes.apply(lambda x: x.name).to_dict()
 
@@ -646,10 +649,6 @@ def test_dataframe_to_csv(data_dataframe, expected_dataframe):
         )
 
         expected_df = pd.DataFrame(expected_dataframe)
-        print(df)
-        print(df.dtypes)
-        print(expected_df)
-        print(expected_df.dtypes)
 
         pd.testing.assert_frame_equal(df, expected_df, check_dtype=True)
 

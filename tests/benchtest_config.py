@@ -79,11 +79,11 @@ MAPPING_STEPS = [_STEP1, _STEP2, _STEP3]
 TARGET_DIM_MAPPING = {"testbenchMeasurePnL": "Calculated from Sales"}
 
 
-def testcase_parameters():
-    num_runs = 1
+def benchmark_testcase_parameters():
+    num_runs = 2
     identical_run_ids = [i for i in range(num_runs)]
-    number_of_cores = [8]
-    number_of_records = [10000]
+    number_of_cores = [4, 8]
+    number_of_records = [10000, 50000, 100000]
     combinations = list(itertools.product(number_of_cores, number_of_records, identical_run_ids))
 
     return combinations

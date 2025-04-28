@@ -1,9 +1,7 @@
 import configparser
 import logging
-import sys
 from pathlib import Path
 
-import yaml
 import json
 from TM1py.Exceptions import TM1pyRestException
 import pytest
@@ -43,38 +41,9 @@ def tm1_connection():
         basic_logger.error("Unable to connect to TM1: ", exc_info=True)
 
 
-"""
-@pytest.fixture(scope="module")
-def config():
-    file_path = "test_benchmark.yaml"
-    return load_config(file_path)
-"""
-
 # ---------------------------------------------------------------------------------------------------------------------
 # Bench test utility
 # ---------------------------------------------------------------------------------------------------------------------
-
-
-def load_config(yaml_filepath):
-    """Loads parameter configuration from a YAML file."""
-    try:
-        with open(yaml_filepath, 'r') as f:
-            config = yaml.safe_load(f)
-            if not isinstance(config, dict):
-                raise ValueError("YAML content should be a dictionary (mapping).")
-            return config
-    except FileNotFoundError:
-        print(f"Error: YAML file not found at '{yaml_filepath}'", file=sys.stderr)
-        sys.exit(1)
-    except yaml.YAMLError as e:
-        print(f"Error parsing YAML file '{yaml_filepath}': {e}", file=sys.stderr)
-        sys.exit(1)
-    except ValueError as e:
-        print(f"Error in YAML structure: {e}", file=sys.stderr)
-        sys.exit(1)
-    except Exception as e:
-        print(f"An unexpected error occurred loading the config: {e}", file=sys.stderr)
-        sys.exit(1)
 
 
 def load_benchmark_logs(run_ids):
@@ -113,8 +82,11 @@ def get_exec_data(test_cases):
     data = load_benchmark_logs(run_ids)
     total_runtimes = {}
     for run_id in run_ids:
-        exec_time_msg = data.get(run_id)[-1].get("msg").split(" ")
-        total_runtimes[run_id] = float(exec_time_msg[1])
+        run_logs = data.get(run_id)
+        if len(run_logs) > 0:
+            exec_time_msg = float(run_logs[-1].get("msg").split(" ")[1])
+        else: exec_time_msg = None
+        total_runtimes[run_id] = exec_time_msg
 
     partial_keys = [f"{nr_core}_{nr_record}" for nr_core, nr_record, n in test_cases]
     identical_cases = {}
@@ -125,79 +97,122 @@ def get_exec_data(test_cases):
 
 
 def calculate_average_run_time(results: list):
-    min_time = min(results)
-    max_time = max(results)
-    avg_time = statistics.mean(results)
-    stdev_time = statistics.stdev(results) if len(results) > 1 else 0.0
+    if results:
+        min_time = min(results)
+        max_time = max(results)
+        avg_time = statistics.mean(results)
+        stdev_time = statistics.stdev(results) if len(results) > 1 else 0.0
 
-    return {'min': min_time, 'max': max_time, 'avg': avg_time, 'stdev': stdev_time}
+        return {'min': min_time, 'max': max_time, 'avg': avg_time, 'stdev': stdev_time}
+    else: return {}
 
 
 def test_process_benchmark_results():
-    combinations = cfg.testcase_parameters()
+    combinations = cfg.benchmark_testcase_parameters()
     cases = get_exec_data(combinations)
     keys = cases.keys()
     for key in keys:
         cases[key] = calculate_average_run_time(cases.get(key))
 
-    combinations = cfg.testcase_parameters()
+    combinations = cfg.benchmark_testcase_parameters()
     cores = list(set([core for core, record, n in combinations]))
+
+    plot_average_times(cases, combinations)
 
     for core in cores:
         results = {}
         for key in cases.keys():
             if key.startswith(f"{core}_"):
                 results[key] = cases.get(key)
-        plot_results(results, combinations, core)
+        plot_statistics_for_core(results, combinations, core)
 
 
-def plot_results(results, combinations, nr_cores):
-    cores = list(set([core for core, record, n in combinations]))
+def plot_average_times(cases, combinations):
     records = list(set([record for core, record, n in combinations]))
-    n = max([n for core, record, n in combinations]) + 1
-
-    min_times = []
-    max_times = []
-    avg_times = []
-    stdev_times = []
+    cores = list(set([core for core, record, n in combinations]))
 
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    for key in results:
-        values = results.get(key)
-        min_times.append(values['min'])
-        max_times.append(values['max'])
-        avg_times.append(values['avg'])
-        stdev_times.append(values['stdev'])
+    for core in sorted(cores):
+        avg_times = []
 
+        for i in range(len(records)):
+            key = f"{core}_{records[i]}"
+            if key in cases:
+                avg_times.append(cases[key]['avg'])
+                ax.annotate(f"{avg_times[i]:.2f} s", (records[i], avg_times[i]),
+                            textcoords="offset points", xytext=(-5, 5), ha='center', fontsize=10)
+            else:
+                avg_times.append(None)
 
-    ax.plot(records, avg_times, label='Average Time', marker='o', linestyle='-', linewidth=2)
-    ax.plot(records, min_times, label='Minimum Time', marker='^', linestyle='', color='black')
-    ax.plot(records, max_times, label='Maximum Time', marker='v', linestyle='', color='black')
-    #ax.plot(records, stdev_times, label='Standard Deviation', marker='x', linestyle='', color='orange')
+        ax.plot(records, avg_times, marker='o', linestyle='-', label=f'{core} Cores')
 
-    ax.set_xlabel("number of records")
-    ax.set_ylabel(f'Execution Time [s]')
-    ax.set_title(f'Execution times based on number of records for {nr_cores} cores')
-
-    ax.get_xaxis().set_major_formatter(plt.ScalarFormatter())
-
+    ax.set_xlabel("Number of Records")
+    ax.set_ylabel("Average Execution Time [s]")
+    ax.set_title("Average Execution Time vs. Number of Records (All Cores)")
     ax.legend()
     ax.grid(True, linestyle='--', alpha=0.6)
+    plt.tight_layout()
+    plt.savefig("benchmark_results_avg_times.png")
 
-    fig.tight_layout()
 
-    #plt.show()
-    plt.savefig(f"benchmark_for_{nr_cores}_cores.png")
+def plot_statistics_for_core(results, combinations, nr_cores):
+    if results:
+        records = list(set([record for core, record, n in combinations]))
+
+        min_times = []
+        max_times = []
+        avg_times = []
+        stdev_times_pos = []
+        stdev_times_neg = []
+
+        fig, ax = plt.subplots(figsize=(10, 6))
+
+        for key in results:
+            values = results.get(key)
+            min_times.append(values['min'])
+            max_times.append(values['max'])
+            avg_times.append(values['avg'])
+            stdev_times_pos.append(values['avg'] + values['stdev'])
+            stdev_times_neg.append(values['avg'] - values['stdev'])
+
+        ax.plot(records, min_times, label='Minimum Time', marker='^', linestyle='', color='black')
+        ax.plot(records, max_times, label='Maximum Time', marker='v', linestyle='', color='black')
+        for i in range(len(records)):
+            ax.plot([records[i], records[i]], [min_times[i], max_times[i]], color='black', linewidth=0.5)
+
+            ax.annotate(f"{min_times[i]:.2f} s", (records[i], min_times[i]),
+                        textcoords="offset points", xytext=(0, -15), ha='right', fontsize=10)
+            ax.annotate(f"{max_times[i]:.2f} s", (records[i], max_times[i]),
+                        textcoords="offset points", xytext=(0, 10), ha='right', fontsize=10)
+            ax.annotate(f"{avg_times[i]:.2f} s", (records[i], avg_times[i]),
+                        textcoords="offset points", xytext=(5, 5), ha='left', fontsize=10, fontweight="bold")
+
+        ax.plot(records, stdev_times_pos, linestyle='', color='lightblue')
+        ax.plot(records, stdev_times_neg, linestyle='', color='lightblue')
+        ax.fill_between(records, stdev_times_neg, stdev_times_pos, color='lightblue', alpha=0.3, label='Standard Deviation')
+
+        ax.plot(records, avg_times, label='Average Time', marker='o', linestyle='-', linewidth=2)
+
+
+        ax.set_xlabel("Number of Records")
+        ax.set_ylabel(f'Execution Time [s]')
+        ax.set_title(f'Execution times based on number of records for {nr_cores} cores')
+
+        ax.legend()
+        ax.grid(True, linestyle='--', alpha=0.6)
+        plt.tight_layout()
+
+        plt.savefig(f"benchmark_for_{nr_cores}_cores.png")
 
 
 
 def update_benchmark_log_handler(run_id):
     for handler in benchmark_metrics_logger.handlers:
         if isinstance(handler, logging.FileHandler):
-            handler.close()  # Close the current file
+            handler.close()
             handler.baseFilename = f"../logs/TM1_bedrock_py_benchmark_{run_id}.json.log"
-            handler.stream = open(handler.baseFilename, handler.mode)  # Re-open with new filename
+            handler.stream = open(handler.baseFilename, handler.mode)
             break
 
 
@@ -206,7 +221,7 @@ def update_benchmark_log_handler(run_id):
 # ---------------------------------------------------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("nr_of_cores, nr_of_records, n", cfg.testcase_parameters())
+@pytest.mark.parametrize("nr_of_cores, nr_of_records, n", cfg.benchmark_testcase_parameters())
 def test_run_single_benchmark_case(tm1_connection, nr_of_cores, nr_of_records, n):
 
     update_benchmark_log_handler(f"{nr_of_cores}_{nr_of_records}_{n}")
