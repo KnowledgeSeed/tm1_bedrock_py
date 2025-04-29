@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tm1_bedrock_py"
-version = "0.1.0"
+version = "0.4.1"
 authors = [
   { name="Example Author", email="author@example.com" },
 ]
@@ -19,11 +19,13 @@ classifiers = [
 dependencies = [
     "TM1py",
     "mdxpy",
-    "pandas"
+    "pandas",
+    "json_logging",
+    "sqlalchemy"
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "parametrize_from_file"]
+dev = ["build", "pytest", "parametrize_from_file", "apache_airflow", "airflow_provider_tm1"]
 
 [tool.setuptools]
-packages = ["tm1_bedrock_py"]
+packages = ["TM1_bedrock_py"]

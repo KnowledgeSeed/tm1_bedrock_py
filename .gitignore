@@ -12,9 +12,18 @@ venv/
 # IDE settings
 .idea/
 
-# other data and test files
+# Other data and test files
 developer_test_files/
+example/main.py
 
+# Build artifacts
+*.egg-info/
+dist/
+build/
+
+# Log files
 *.log
 *.mdmp
 logs
+
+*.whl

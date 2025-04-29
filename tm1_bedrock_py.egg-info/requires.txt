@@ -1,7 +1,0 @@
-TM1py
-mdxpy
-pandas
-
-[dev]
-pytest
-parametrize_from_file

@@ -25,6 +25,512 @@ test_mdx_filter_to_dictionary:
     mdx_query:
       ""
 
+test_get_kwargs_dict_from_set_mdx_list_success:
+  -
+    # Basic example from prompt
+    set_mdx_list: [
+      "{[Periods].[Periods].[2024]}",
+      "{Tm1FilterbyLevel({Tm1DrillDownMember({[Versions].[All Versions]}, ALL, RECURSIVE)}, 0)}"
+    ]
+    expected_kwargs: {
+      "periods": "{[Periods].[Periods].[2024]}",
+      "versions": "{Tm1FilterbyLevel({Tm1DrillDownMember({[Versions].[All Versions]}, ALL, RECURSIVE)}, 0)}"
+    }
+  -
+    # Case variation and spaces in dimension name
+    set_mdx_list: [
+      "{[ Product Category ] . [ Members ] . [ All ] }",
+      "{ [TIME DIM   ].[H1].[Q1]}"
+    ]
+    expected_kwargs: {
+      "productcategory": "{[ Product Category ] . [ Members ] . [ All ] }",
+      "timedim": "{ [TIME DIM   ].[H1].[Q1]}"
+    }
+  -
+    # Underscores and numbers in dimension name
+    set_mdx_list: [
+      "{[Sales_Region].[North America]}",
+      "{[Scenario 1].[Actual]}"
+    ]
+    expected_kwargs: {
+      "sales_region": "{[Sales_Region].[North America]}",
+      "scenario1": "{[Scenario 1].[Actual]}"
+    }
+  -
+    # Mix of valid and invalid/non-matching strings
+    set_mdx_list: [
+      "{[Geography].[City].[London]}",
+      "This is just a string",
+      "{[Account].[Net Income]}",
+      "{Malformed Structure]"
+    ]
+    expected_kwargs: {
+      "geography": "{[Geography].[City].[London]}",
+      "account": "{[Account].[Net Income]}"
+    }
+  -
+    # Duplicate keys (after normalization) - last one should win
+    set_mdx_list: [
+      "{[ Measures ].[Sales Amount]}",
+      "{[ Measures].[Units Sold]}" # This should overwrite the previous "measures"
+    ]
+    expected_kwargs: {
+      "measures": "{[ Measures].[Units Sold]}"
+    }
+  -
+    # Duplicate keys (after normalization, different original case/spacing) - last one should win
+    set_mdx_list: [
+      "{[department].[HR]}",
+      "{[ Department ].[Finance]}" # This should overwrite the previous "department"
+    ]
+    expected_kwargs: {
+      "department": "{[ Department ].[Finance]}"
+    }
+
+test_get_kwargs_dict_from_set_mdx_list_filtering:
+  -
+    set_mdx_list: []
+    expected_kwargs: {}
+  -
+    set_mdx_list: [
+      "Just a plain string",
+      "Another string without the pattern",
+      "12345"
+    ]
+    expected_kwargs: {}
+  -
+    set_mdx_list: [
+      "{Dimension.Member}",
+      "[Dimension].[Member]",
+      "{[ Dimension Name ]",
+      " { [ Dim ] } extra text"
+    ]
+    expected_kwargs: {
+       "dimensionname": "{[ Dimension Name ]",
+       "dim": " { [ Dim ] } extra text"
+    }
+  -
+    set_mdx_list: [
+      "{Dimension.Member}",
+      "[Dimension].[Member]",
+      "{[ Dimension Name ]",
+      "{ [ ] }",
+      "{ [ No Closing Bracket "
+    ]
+    expected_kwargs: {
+        "dimensionname": "{[ Dimension Name ]",
+        "": "{ [ ] }"
+    }
+  -
+    set_mdx_list: ["", "   "]
+    expected_kwargs: {}
+  -
+    set_mdx_list: [None, "{[ValidDim].[Value]}"]
+    expected_kwargs: {
+       "validdim": "{[ValidDim].[Value]}"
+    }
+
+test_get_dimensions_from_set_mdx_list_success:
+  -
+    mdx_sets: [
+        "{[Periods].[Periods].[2024]}",
+        "{ [Versions] .[ Actual ] }"
+      ]
+    expected_dimensions: ["Periods", "Versions"]
+  -
+    mdx_sets: [
+        "{[Time].[Year].[2023]}",
+        "invalid string",
+        "{[ Geography ].[ Continent ].[Asia]}",
+        "{[Product]}"
+      ]
+    expected_dimensions: ["Time", "Geography", "Product"]
+  -
+    mdx_sets: [
+        "{ [ Measures ] . [ Sales ] }",
+        "{ [ Measures ] . [ Units ] }"
+      ]
+    expected_dimensions: ["Measures", "Measures"]
+  -
+    mdx_sets: []
+    expected_dimensions: []
+  -
+    mdx_sets: null
+    expected_dimensions: []
+  -
+    mdx_sets: ["No Match", "Another Miss"]
+    expected_dimensions: []
+  -
+    mdx_sets: ["{[Dim1]}", null, "{[Dim2].[Hier]}", "{[ Dim 3 ]}"]
+    expected_dimensions: ["Dim1", "Dim2", "Dim 3"]
+  -
+    mdx_sets: ["{[].[Element]}", "{[ Dim4 ]}"]
+    expected_dimensions: ["Dim4"]
+
+
+test_get_dimensions_from_set_mdx_list_failure:
+  -
+    mdx_sets: "not a list"
+    expected_exception: "TypeError"
+    expected_message_part: "Expected mdx_sets to be a list"
+  -
+    mdx_sets: 123
+    expected_exception: "TypeError"
+    expected_message_part: "Expected mdx_sets to be a list"
+  -
+    mdx_sets: ["[Dim1]", 123, "[Dim3]"]
+    expected_exception: "TypeError"
+    expected_message_part: "Expected elements of mdx_sets to be strings"
+  -
+    mdx_sets: [!!binary "Ynl0ZXM=", "{[Dim2]}"]
+    expected_exception: "TypeError"
+    expected_message_part: "Expected elements of mdx_sets to be strings"
+
+
+test_generate_cartesian_product_success:
+  -
+    list_of_lists: [["a", "b"], [1, 2]]
+    expected_product: [["a", 1], ["a", 2], ["b", 1], ["b", 2]]
+  -
+    list_of_lists: [[True, False], ["x"]]
+    expected_product: [[True, "x"], [False, "x"]]
+  -
+    list_of_lists: [["one"], ["two"], ["three"]]
+    expected_product: [["one", "two", "three"]]
+  -
+    list_of_lists: [[1, 2], [], [3, 4]]
+    expected_product: []
+  -
+    list_of_lists: [["a", "b"]]
+    expected_product: [["a"], ["b"]]
+  -
+    list_of_lists: []
+    expected_product: []
+  -
+    list_of_lists: null
+    expected_product: []
+  -
+    list_of_lists: [[10], [null, 20], [30]]
+    expected_product: [[10, null, 30], [10, 20, 30]]
+
+
+test_generate_cartesian_product_failure:
+  -
+    list_of_lists: "not a list"
+    expected_exception: "TypeError"
+    expected_message_part: "Input must be a list"
+  -
+    list_of_lists: 123
+    expected_exception: "TypeError"
+    expected_message_part: "Input must be a list"
+  -
+    list_of_lists: {"a": 1}
+    expected_exception: "TypeError"
+    expected_message_part: "Input must be a list"
+  -
+    list_of_lists: [[1, 2], 3, [4, 5]]
+    expected_exception: "TypeError"
+    expected_message_part: "'int' object is not iterable"
+  -
+    list_of_lists: [["a", "b"], ["c", "d"], 100]
+    expected_exception: "TypeError"
+    expected_message_part: "'int' object is not iterable"
+  -
+    list_of_lists: [[1], [2], null, [4]]
+    expected_exception: "TypeError"
+    expected_message_part: "'NoneType' object is not iterable"
+
+
+test_generate_element_lists_from_set_mdx_list_success:
+  -
+    set_mdx_list: [
+      "{TM1FILTERBYLEVEL({DRILLDOWNMEMBER({[Periods].[Periods].[2024]}, {[Periods].[Periods].[2024]})}, 0)}",
+      "{[Versions].[Versions].[Base Plan], [Versions].[Versions].[Budget]}"
+    ]
+    expected_result: [
+      ["202401", "202402", "202403", "202404", "202405", "202406", "202407", "202408", "202409", "202410", "202411", "202412"],
+      ["Base Plan", "Budget"]
+    ]
+
+test_generate_element_lists_from_set_mdx_list_failure:
+  -
+    use_none_service: true
+    set_mdx_list: ["Query1"]
+    expected_exception: "ValueError"
+    expected_message_part: "tm1_service cannot be None"
+  -
+    use_none_service: false
+    set_mdx_list: "not a list"
+    expected_exception: "TypeError"
+    expected_message_part: "Expected set_mdx_list to be a list"
+  -
+    use_none_service: false
+    set_mdx_list: ["{[Versions].[Versions].[Base Plan], [Versions].[Versions].[Budget]}", 123]
+    expected_exception: "TypeError"
+    expected_message_part: "Expected elements of set_mdx_list to be strings"
+  -
+    use_none_service: false
+    set_mdx_list: ["MDX_FOR_INDEX_ERROR"]
+    expected_exception: "TM1pyRestException"
+    expected_message_part: "Text: '{\"error\":{\"code\":\"501\",\"message\":\"Could not create MDX Set.\"}}' - Status Code: 400 - Reason: 'Bad Request' - Headers: {'Content-Length': '79', 'Connection': 'keep-alive', 'Content-Encoding': 'gzip', 'Cache-Control': 'no-cache', 'Content-Type': 'application/json; charset=utf-8', 'OData-Version': '4.0'}"
+
+
+test_utility_float_casting_values:
+  -
+    input_value: 12.48
+    expected_value: 12.48
+  -
+    input_value: "12.48"
+    expected_value: 12.48
+  -
+    input_value: "12,48"
+    expected_value: 12.48
+  -
+    input_value: 12
+    expected_value: 12.0
+  -
+    input_value: "test string 123"
+    expected_value: "test string 123"
+
+test_utility_float_casting_types:
+  -
+    input_value: 12.48
+    expected_type: "<class 'numpy.float64'>"
+  -
+    input_value: "12.48"
+    expected_type: "<class 'numpy.float64'>"
+  -
+    input_value: "12,48"
+    expected_type: "<class 'numpy.float64'>"
+  -
+    input_value: 12
+    expected_type: "<class 'numpy.float64'>"
+  -
+    input_value: "test string 123"
+    expected_type: "<class 'str'>"
+
+test_add_nonempty_to_mdx_all_modes:
+  -
+    input_mdx: "
+    SELECT
+    { [Measures].[Sales Amount],
+    [Measures].[Tax Amount] } ON COLUMNS,
+    { [Date].[Fiscal].[Fiscal Year].&[2002],
+    [Date].[Fiscal].[Fiscal Year].&[2003] } ON ROWS
+    FROM [Adventure Works]
+    WHERE ( [Sales Territory].[Southwest] )
+    "
+    expected_mdx: "
+    SELECT
+      NON EMPTY { [Measures].[Sales Amount],
+    [Measures].[Tax Amount] } ON COLUMNS,
+      NON EMPTY { [Date].[Fiscal].[Fiscal Year].&[2002],
+    [Date].[Fiscal].[Fiscal Year].&[2003] } ON ROWS
+    FROM [Adventure Works]
+    WHERE ( [Sales Territory].[Southwest] )
+    "
+  -
+    input_mdx: "
+    SELECT
+        { [Measures].[Sales Amount] } ON 0,
+        { [Date].[Fiscal Year].Members } ON 1
+    FROM [My Cube]
+    "
+    expected_mdx: "
+    SELECT
+          NON EMPTY { [Measures].[Sales Amount] } ON 0,
+          NON EMPTY { [Date].[Fiscal Year].Members } ON 1
+    FROM [My Cube]
+    "
+  -
+    input_mdx: "
+    SELECT
+    { [ Measures ].[ Amount ] } ON 0,
+    { [Date].[Year].Members } ON 1,
+    { [Region].[Country].Members } ON 2
+    FROM [Sales Cube]
+    "
+    expected_mdx: "
+    SELECT
+     NON EMPTY { [Measures].[Amount] } ON 0,
+     NON EMPTY { [Date].[Year].Members } ON 1,
+     NON EMPTY { [Region].[Country].Members } ON 2
+    FROM [Sales Cube]
+    "
+  -
+    input_mdx: "
+    SELECT
+    
+    { [ A ] }    ON   COLUMNS   ,
+    
+    { [B] }
+    ON
+    1
+    FROM    [Cube]
+    "
+    expected_mdx: "
+    SELECT
+    
+     NON EMPTY { [A] }    ON   COLUMNS   ,
+    
+     NON EMPTY { [B] }
+    ON
+    1
+    FROM    [Cube]
+    "
+  -
+    input_mdx: "
+    SELECT
+     NON EMPTY { [Measures].[Sales Amount] } ON COLUMNS,
+    { [Date].[Fiscal Year].Members } ON ROWS
+    FROM [Adventure Works]
+    "
+    expected_mdx: "
+    SELECT
+     NON EMPTY { [Measures].[Sales Amount] } ON COLUMNS,
+     NON EMPTY { [Date].[Fiscal Year].Members } ON ROWS
+    FROM [Adventure Works]
+    "
+  -
+    input_mdx: "
+    SELECT
+    { [Measures].[Sales Amount] } ON 0,
+     NON EMPTY { [Date].[Fiscal Year].Members } ON 1
+    FROM [Adventure Works]
+    "
+    expected_mdx: "
+    SELECT
+     NON EMPTY { [Measures].[Sales Amount] } ON 0,
+     NON EMPTY { [Date].[Fiscal Year].Members } ON 1
+    FROM [Adventure Works]
+    "
+  -
+    input_mdx: "
+    SELECT
+     NON EMPTY { [Measures].[Sales Amount] } ON COLUMNS,
+     NON EMPTY { [Date].[Fiscal Year].Members } ON ROWS
+    FROM [Adventure Works]
+    "
+    expected_mdx: "
+    SELECT
+     NON EMPTY { [Measures].[Sales Amount] } ON COLUMNS,
+     NON EMPTY { [Date].[Fiscal Year].Members } ON ROWS
+    FROM [Adventure Works]
+    "
+  -
+    input_mdx: "
+    select
+    { [ A ] } on columns,
+    { [B] } On rOwS
+    from [Cube]
+    "
+    expected_mdx: "
+    select
+     NON EMPTY { [A] } on columns,
+     NON EMPTY { [B] } On rOwS
+    from [Cube]
+    "
+  -
+    input_mdx: "
+    SELECT
+     non empty { [Measures].[Sales Amount] } ON COLUMNS, -- Should not add another
+    { [ Date ].[ Fiscal Year ].Members } ON ROWS
+    FROM [Adventure Works]
+    "
+    expected_mdx: "
+    SELECT
+     non empty { [Measures].[Sales Amount] } ON COLUMNS, -- Should not add another
+     NON EMPTY { [Date].[Fiscal Year].Members } ON ROWS
+    FROM [Adventure Works]
+    "
+  -
+    input_mdx: "
+    WITH MEMBER Measures.X AS 1
+    SELECT
+    { [ Measures ].[ Sales Amount ] } ON 0,
+    { [Date].[Fiscal Year].Members } ON 1
+    FROM [My Cube]
+    "
+    expected_mdx: "
+    WITH MEMBER Measures.X AS 1
+    SELECT
+     NON EMPTY { [Measures].[Sales Amount] } ON 0,
+     NON EMPTY { [Date].[Fiscal Year].Members } ON 1
+    FROM [My Cube]
+    "
+  -
+    input_mdx: "
+    SELECT
+    { Filter({[Product].[Product].Members}, [Measures].[Sales] > 100) } ON 0,
+    { [Customer].[City].Members } ON 1
+    FROM [Sales]
+    "
+    expected_mdx: "
+    SELECT
+     NON EMPTY { Filter({[Product].[Product].Members}, [Measures].[Sales] > 100) } ON 0,
+     NON EMPTY { [Customer].[City].Members } ON 1
+    FROM [Sales]
+    "
+  -
+    input_mdx: "
+    SELECT
+    FROM [Adventure Works]
+    WHERE ( [Sales Territory].[Southwest] )
+    "
+    expected_mdx: "
+    SELECT
+    FROM [Adventure Works]
+    WHERE ( [Sales Territory].[Southwest] )
+    "
+  -
+    input_mdx: " SELECT
+                       NON EMPTY
+                       {Tm1SubsetAll([ESRS Main])}
+                       * {Tm1SubsetAll([ESRS Details 1])}
+                       * {Tm1SubsetAll([ESRS Details 2])}
+                       * {Tm1SubsetAll([ESRS Geography])}
+                       * {Tm1SubsetAll([Custom 1])}
+                       * {Tm1SubsetAll([Custom 2])}
+                   ON ROWS,
+                       NON EMPTY
+                       {Tm1SubsetAll([Analogic ESRS Mapping Measure])}
+                   ON COLUMNS
+                   FROM [Analogic ESRS Mapping]
+                   WHERE (
+                       [Year].[Year].[2023],
+                       [Entity].[Entity].[Entity NA],
+                       [Version].[Version].[Actual]
+                   )"
+    expected_mdx: " SELECT
+                       NON EMPTY
+                       {Tm1SubsetAll([ESRS Main])}
+                       * {Tm1SubsetAll([ESRS Details 1])}
+                       * {Tm1SubsetAll([ESRS Details 2])}
+                       * {Tm1SubsetAll([ESRS Geography])}
+                       * {Tm1SubsetAll([Custom 1])}
+                       * {Tm1SubsetAll([Custom 2])}
+                   ON ROWS,
+                       NON EMPTY
+                       {Tm1SubsetAll([Analogic ESRS Mapping Measure])}
+                   ON COLUMNS
+                   FROM [Analogic ESRS Mapping]
+                   WHERE (
+                       [Year].[Year].[2023],
+                       [Entity].[Entity].[Entity NA],
+                       [Version].[Version].[Actual]
+                   )"
+
+test_all_leaves_identifiers_to_dataframe:
+  -
+    dimname: "Groups"
+    expected: {
+      "Groups": ["Group_1", "Marketing and Management",
+                 "Group_2", "Finance and HR",
+                 "Group_3", "Project A",
+                 "Group_4", "Project B",
+                 "Group_5", "Project C"]
+    }
+
 # Utility: Cube metadata collection using input MDXs and/or other cubes
 test_tm1_cube_object_metadata_collect_based_on_cube_name_success:
   -
@@ -436,6 +942,94 @@ test_dataframe_reorder_dimensions:
       "Value": [ 120, 120, 120, 120 ]
     }
 
+test_dataframe_force_float64_on_numerical_values:
+  -
+    dataframe: {
+      "Period": [ "202202", "202202", "202202", "202202" ],
+      "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
+      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
+      "Measure": [ "Value", "Value", "Value", "Value" ],
+      "Value": [ 120, 120, 120, 120 ]
+    }
+    expected_dataframe: {
+      "Period": [ "202202", "202202", "202202", "202202" ],
+      "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
+      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
+      "Measure": [ "Value", "Value", "Value", "Value" ],
+      "Value": [ 120.0, 120.0, 120.0, 120.0 ]
+    }
+  -
+    dataframe: {
+      "Period": [ "202202", "202202", "202202", "202202" ],
+      "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
+      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
+      "Measure": [ "Value", "Value", "Value", "Value" ],
+      "Value": [ "120,0", "120,0", "120,0", "120,0" ]
+    }
+    expected_dataframe: {
+      "Period": [ "202202", "202202", "202202", "202202" ],
+      "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
+      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
+      "Measure": [ "Value", "Value", "Value", "Value" ],
+      "Value": [ 120.0, 120.0, 120.0, 120.0 ]
+    }
+  -
+    dataframe: {
+      "Period": [ "202202", "202202", "202202", "202202" ],
+      "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
+      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
+      "Measure": [ "Value", "Value", "Value", "Value" ],
+      "Value": [ 120.0, 120.0, 120.0, 120.0 ]
+    }
+    expected_dataframe: {
+      "Period": [ "202202", "202202", "202202", "202202" ],
+      "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
+      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
+      "Measure": [ "Value", "Value", "Value", "Value" ],
+      "Value": [ 120.0, 120.0, 120.0, 120.0 ]
+    }
+  -
+    dataframe: {
+      "Period": [ "202202", "202202", "202202", "202202" ],
+      "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
+      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
+      "Measure": [ "Value", "Value", "Value", "Value" ],
+      "Value": [ "cost", "cost", "cost", "cost" ]
+    }
+    expected_dataframe: {
+      "Period": [ "202202", "202202", "202202", "202202" ],
+      "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
+      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
+      "Measure": [ "Value", "Value", "Value", "Value" ],
+      "Value": [ "cost", "cost", "cost", "cost" ]
+    }
+
+test_dataframe_value_scale:
+  -
+    dataframe: {
+      "Period": [ "202202", "202202", "202202", "202202" ],
+      "Value": [ 120, 120, 120, 120 ]
+    }
+    # after add one, multiply by two
+    expected_dataframe: {
+      "Period": [ "202202", "202202", "202202", "202202" ],
+      "Value": [ 242, 242, 242, 242 ]
+    }
+
+test_dataframe_itemskip_elements:
+  -
+    source: {
+      "A": [ "apple", "banana", "cherry", "date" ],
+      "B": [ "x", "y", "z", "w" ],
+      "Value": [ 10, 20, 30, 40 ]
+    }
+    check1: {"A": ["apple", "cherry"]}
+    check2: {"B": ["x", "y"]}
+    expected: {
+      "A": [ "apple" ],
+      "B": [ "x" ],
+      "Value": [ 10 ]
+    }
 
 # Main: tests for dataframe remapping and copy functions
 test_dataframe_find_and_replace_success:
@@ -601,3 +1195,203 @@ test_dataframe_execute_mappings_map_and_join_shared_with_filter_and_drop_success
 
       }
     ]
+
+test_mssql_extract_full_table:
+  -
+    table_name: "Unit Test Table"
+    expected: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
+      "UnitTestFloatColumn1": [ 12.34, 12.34 ],
+      "UnitTestIntColumn2": [ 123, 123 ]
+    }
+
+test_mssql_extract_table_columns:
+  -
+    table_name: "Unit Test Table"
+    columns: ["UnitTestStringColumn1", "UnitTestFloatColumn1"]
+    expected: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestFloatColumn1": [ 12.34, 12.34 ],
+    }
+
+test_mssql_extract_query:
+  -
+    query: "SELECT [UnitTestStringColumn1], [UnitTestFloatColumn1] FROM dbo.[Unit Test Table]"
+    expected: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestFloatColumn1": [ 12.34, 12.34 ],
+    }
+  -
+    query: "SELECT * FROM dbo.[Unit Test Table]"
+    expected: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
+      "UnitTestFloatColumn1": [ 12.34, 12.34 ],
+      "UnitTestIntColumn2": [ 123, 123 ]
+    }
+
+test_mssq_extract_query_with_chunksize:
+  -
+    query: "SELECT [UnitTestStringColumn1], [UnitTestFloatColumn1] FROM dbo.[Unit Test Table]"
+    expected: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestFloatColumn1": [ 12.34, 12.34 ],
+    }
+    chunksize: 1
+  -
+    query: "SELECT * FROM dbo.[Unit Test Table]"
+    expected: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
+      "UnitTestFloatColumn1": [ 12.34, 12.34 ],
+      "UnitTestIntColumn2": [ 123, 123 ]
+    }
+    chunksize: 2
+
+test_sql_normalize_relabel:
+  -
+    dataframe: {
+      "UnitTestStringColumnX": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestStringColumnY": [ 'TestString1_2', 'TestString2_2' ]
+    }
+    column_mapping: {"UnitTestStringColumnX":"UnitTestStringColumn1",
+                     "UnitTestStringColumnY":"UnitTestStringColumn2"}
+    expected: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
+      "Value": [1.0, 1.0]
+    }
+
+test_sql_normalize_valuecol_assign:
+  -
+    dataframe: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
+      "UnitTestFloatColumn1": [ 12.34, 12.34 ],
+      "UnitTestIntColumn2": [ 123, 123 ]
+    }
+    valuecol: "UnitTestFloatColumn1"
+    expected: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
+      "Value": [ 12.34, 12.34 ],
+      "UnitTestIntColumn2": [ 123, 123 ]
+    }
+
+test_sql_normalize_keep_and_drop:
+  -
+    dataframe: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
+      "UnitTestFloatColumn1": [ 12.34, 12.34 ],
+      "UnitTestIntColumn2": [ 123, 123 ]
+    }
+    keep: ["UnitTestStringColumn1", "UnitTestStringColumn2"]
+    drop: True
+    expected: {
+      "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
+      "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
+      "Value": [ 1.0, 1.0]
+    }
+
+test_mssql_loader_replace:
+  -
+    dataframe: {
+      "VarcharColumn1X": ["WriteString1_1", "WriteString1_2"],
+      "VarcharColumn2X": ["WriteString2_1", "WriteString2_2"],
+      "FloatColumn1": [12, 56],
+      "Test": [9.331, 111.666]
+    }
+    table_name: "Write Test Table"
+    if_exists: "append"
+
+test_dataframe_to_csv:
+  -
+    data_dataframe: {
+      "ID": ["A001", "A002", "A003", "A004", "A005"],
+      "Name": ["Product A", "Product B", "Product C", "Product D", "Product E"],
+      "Category": ["Electronics", "Furniture", "Electronics", "Clothing", "Furniture"],
+      "Quantity": [10, 5, 8, 12, 7],
+      "Price": [199.99, 79.99, 149.99, 39.99, 99.99],
+      "Date": ["2024-02-01", "2024-02-02", "2024-02-03", "2024-02-04", "2024-02-05"],
+    }
+    expected_dataframe: {
+      "ID": ["A001", "A002", "A003", "A004", "A005"],
+      "Name": ["Product A", "Product B", "Product C", "Product D", "Product E"],
+      "Category": ["Electronics", "Furniture", "Electronics", "Clothing", "Furniture"],
+      "Quantity": [10.0, 5.0, 8.0, 12.0, 7.0],
+      "Price": [199.99, 79.99, 149.99, 39.99, 99.99],
+      "Date": ["2024-02-01", "2024-02-02", "2024-02-03", "2024-02-04", "2024-02-05"],
+    }
+  -
+    data_dataframe: {
+      "ID": ["A001", "A002", "A003", "A004", "A005"],
+      "Price": [199.99, nan, 149.99, 39.99, nan],
+      "Quantity": [10.0, 5.0, NaN, 12.0, 7.0]
+    }
+    expected_dataframe: {
+      "ID": [ "A001", "A002", "A003", "A004", "A005" ],
+      "Price": [ 199.99, 0.0, 149.99, 39.99, 0.0 ],
+      "Quantity": [ 10, 5, 0.0, 12, 7 ]
+    }
+
+test_dataframe_to_csv_build_dataframe_form_mdx:
+  -
+    data_mdx:
+      "SELECT 
+           {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],
+           [Periods].[Periods].[202304],[Periods].[Periods].[202305],[Periods].[Periods].[202306],
+           [Periods].[Periods].[202307],[Periods].[Periods].[202308],[Periods].[Periods].[202309],
+           [Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]}  
+          ON COLUMNS , 
+           {[Groups].[Groups].Members}
+           * {[Employees].[Employees].Members} 
+          ON ROWS 
+        FROM [Cost and FTE by Groups] 
+        WHERE 
+          (
+           [Versions].[Versions].[Base Plan], 
+           [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[FTE],
+           [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
+          )"
+
+test_dataframe_to_csv_build_dataframe_form_mdx_with_param_optimisation:
+  -
+    data_mdx:
+      "SELECT 
+           {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],
+           [Periods].[Periods].[202304],[Periods].[Periods].[202305],[Periods].[Periods].[202306],
+           [Periods].[Periods].[202307],[Periods].[Periods].[202308],[Periods].[Periods].[202309],
+           [Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]}  
+          ON COLUMNS , 
+           {[Groups].[Groups].Members}
+           * {[Employees].[Employees].Members} 
+          ON ROWS 
+        FROM [Cost and FTE by Groups] 
+        WHERE 
+          (
+           [Versions].[Versions].[Base Plan], 
+           [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[FTE],
+           [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
+          )"
+
+test_dataframe_to_csv_build_dataframe_form_mdx_fail:
+  -
+    data_mdx:
+      "SELECT 
+           {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],
+           [Periods].[Periods].[202304],[Periods].[Periods].[202305],[Periods].[Periods].[202306],
+           [Periods].[Periods].[202307],[Periods].[Periods].[202308],[Periods].[Periods].[202309],
+           [Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]}  
+          ON COLUMNS , 
+           {[Groups].[Groups].Members}
+           * {[Employees].[Employees].Members} 
+          ON ROWS 
+        FROM [Cost and FTE by Groups] 
+        WHERE 
+          (
+           [Versions].[Versions].[Base Plan], 
+           [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[FTE],
+           [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
+          )"

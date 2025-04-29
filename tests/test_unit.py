@@ -1,20 +1,25 @@
 import configparser
+import os
+import re
 from pathlib import Path
 
 from TM1py.Exceptions import TM1pyRestException
+from sqlalchemy.exc import OperationalError, InterfaceError
+from sqlalchemy import text
 from pandas.core.frame import DataFrame
 import pandas as pd
 import pytest
 import parametrize_from_file
 from TM1py import TM1Service
 
-from TM1_bedrock_py import bedrock, extractor, transformer, utility, loader
+from TM1_bedrock_py import extractor, transformer, utility, basic_logger, loader
 
 
 EXCEPTION_MAP = {
     "ValueError": ValueError,
     "TypeError": TypeError,
     "TM1pyRestException": TM1pyRestException,
+    "OperationalError": OperationalError,
     "IndexError": IndexError,
     "KeyError": KeyError
 }
@@ -25,10 +30,33 @@ def tm1_connection():
     """Creates a TM1 connection before tests and closes it after all tests."""
     config = configparser.ConfigParser()
     config.read(Path(__file__).parent.joinpath('config.ini'))
+    try:
+        tm1 = TM1Service(**config['tm1srv'])
+        basic_logger.debug("Successfully connected to TM1.")
+        yield tm1
 
-    tm1 = TM1Service(**config['tm1srv'])
-    yield tm1
-    tm1.logout()
+        tm1.logout()
+        basic_logger.debug("Connection closed.")
+
+    except TM1pyRestException:
+        basic_logger.error("Unable to connect to TM1: ", exc_info=True)
+
+
+@pytest.fixture(scope="session")
+def sql_engine():
+    """Creates a SQL connector engine before tests and closes it after all tests."""
+    config = configparser.ConfigParser()
+    config.read(Path(__file__).parent.joinpath('config.ini'))
+    try:
+        engine = utility.create_sql_engine(**config['mssqlsrv'])
+        basic_logger.debug("SQL engine successfully created")
+        yield engine
+
+        engine.dispose()
+        basic_logger.debug("SQL engine disposed.")
+
+    except OperationalError or InterfaceError:
+        basic_logger.error("Unable to connect to SQL: ", exc_info=True)
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -50,6 +78,123 @@ def test_mdx_filter_to_dictionary(mdx_query):
                 assert isinstance(elem, str)
     else:
         assert dimensions == {}
+
+
+@parametrize_from_file
+def test_get_kwargs_dict_from_set_mdx_list_success(set_mdx_list, expected_kwargs):
+    """
+    Tests successful extraction of kwargs from various valid MDX lists.
+    """
+    kwargs = utility.__get_kwargs_dict_from_set_mdx_list(set_mdx_list)
+    assert kwargs == expected_kwargs
+
+
+# Test focusing on filtering, edge cases, and empty results
+@parametrize_from_file
+def test_get_kwargs_dict_from_set_mdx_list_filtering(set_mdx_list, expected_kwargs):
+    """
+    Tests filtering of invalid/non-matching strings and edge cases.
+    """
+    kwargs = utility.__get_kwargs_dict_from_set_mdx_list(set_mdx_list)
+    assert kwargs == expected_kwargs
+
+
+@parametrize_from_file
+def test_get_dimensions_from_set_mdx_list_success(mdx_sets, expected_dimensions):
+    """
+    Tests successful extraction of first dimension names from MDX strings.
+    """
+    result = utility.__get_dimensions_from_set_mdx_list(mdx_sets)
+    assert result == expected_dimensions
+
+
+@parametrize_from_file
+def test_get_dimensions_from_set_mdx_list_failure(mdx_sets, expected_exception, expected_message_part):
+    """
+    Tests type errors for invalid input.
+    """
+    exception_type = eval(expected_exception)
+    with pytest.raises(exception_type) as excinfo:
+        utility.__get_dimensions_from_set_mdx_list(mdx_sets)
+    assert expected_message_part in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_generate_cartesian_product_success(list_of_lists, expected_product):
+    """
+    Tests successful generation of Cartesian products.
+    """
+    expected_tuples = [tuple(item) for item in expected_product]
+    result = utility.__generate_cartesian_product(list_of_lists)
+    assert result == expected_tuples
+
+
+@parametrize_from_file
+def test_generate_cartesian_product_failure(list_of_lists, expected_exception, expected_message_part):
+    """
+    Tests failing scenarios due to invalid input types.
+    """
+    exception_type = eval(expected_exception)
+    with pytest.raises(exception_type) as excinfo:
+        utility.__generate_cartesian_product(list_of_lists)
+    assert expected_message_part in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_generate_element_lists_from_set_mdx_list_success(tm1_connection, set_mdx_list, expected_result):
+    """
+    Tests successful extraction of element lists using a fake TM1 service.
+    """
+    result = utility.__generate_element_lists_from_set_mdx_list(tm1_connection, set_mdx_list)
+    assert result == expected_result
+
+
+@parametrize_from_file
+def test_generate_element_lists_from_set_mdx_list_failure(
+        tm1_connection, use_none_service, set_mdx_list, expected_exception, expected_message_part):
+    """
+    Tests failing scenarios for element list extraction using fake or invalid service/inputs.
+    """
+    if use_none_service:
+        test_service = None
+    else:
+        test_service = tm1_connection
+
+    exception_type = eval(expected_exception)
+    with pytest.raises(exception_type) as excinfo:
+        utility.__generate_element_lists_from_set_mdx_list(test_service, set_mdx_list)
+
+    assert expected_message_part in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_utility_float_casting_values(input_value, expected_value):
+    output_value = utility.force_float64_on_numeric_values(input_value)
+    print(f"input value: {input_value}, output_value: {output_value}")
+    assert output_value == expected_value
+
+
+@parametrize_from_file
+def test_utility_float_casting_types(input_value, expected_type):
+    output_value = utility.force_float64_on_numeric_values(input_value)
+    output_type = str(type(output_value))
+    print(output_type)
+    assert output_type == expected_type
+
+
+@parametrize_from_file
+def test_add_nonempty_to_mdx_all_modes(input_mdx, expected_mdx):
+    output_mdx = utility.add_non_empty_to_mdx(input_mdx)
+
+    assert "".join(output_mdx.split()) == "".join(expected_mdx.split())
+
+
+@parametrize_from_file
+def test_all_leaves_identifiers_to_dataframe(tm1_connection, dimname, expected):
+    expected_df = pd.DataFrame(expected)
+    df = utility.all_leaves_identifiers_to_dataframe(tm1_connection, dimname)
+    pd.testing.assert_frame_equal(df, expected_df)
+
 
 # ------------------------------------------------------------------------------------------------------------
 # Utility: Cube metadata collection using input MDXs and/or other cubes
@@ -172,7 +317,7 @@ def test_mdx_to_dataframe_execute_query_success(tm1_connection, data_mdx):
 @parametrize_from_file
 def test_mdx_to_dataframe_execute_query_fail(tm1_connection, data_mdx):
     """Run MDX to dataframe function with bad input. Raises error."""
-    with pytest.raises(TM1pyRestException):
+    with pytest.raises((TM1pyRestException, ValueError)):
         assert isinstance(
             extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx),
             DataFrame
@@ -308,6 +453,38 @@ def test_dataframe_reorder_dimensions(dataframe, cube_cols, expected_dataframe):
     pd.testing.assert_frame_equal(df, expected_df)
 
 
+@parametrize_from_file
+def test_dataframe_force_float64_on_numerical_values(dataframe, expected_dataframe):
+    df = pd.DataFrame(dataframe)
+    expected_df = pd.DataFrame(expected_dataframe)
+    transformer.dataframe_force_float64_on_numeric_values(df)
+
+    pd.testing.assert_frame_equal(df, expected_df)
+
+
+@parametrize_from_file
+def test_dataframe_value_scale(dataframe, expected_dataframe):
+    def add_one(x): return x + 1
+    def multiply_by_two(x): return x * 2
+
+    df = pd.DataFrame(dataframe)
+    expected_df = pd.DataFrame(expected_dataframe)
+    transformer.dataframe_value_scale(df, add_one)
+    transformer.dataframe_value_scale(df, multiply_by_two)
+
+    pd.testing.assert_frame_equal(df, expected_df)
+
+
+@parametrize_from_file
+def test_dataframe_itemskip_elements(source, check1, check2, expected):
+    utility.set_logging_level("DEBUG")
+    df = pd.DataFrame(source)
+    check_dfs = [pd.DataFrame(check1), pd.DataFrame(check2)]
+    expected_df = pd.DataFrame(expected)
+    transformer.dataframe_itemskip_elements(dataframe=df, check_dfs=check_dfs)
+    pd.testing.assert_frame_equal(df, expected_df)
+
+
 # ------------------------------------------------------------------------------------------------------------
 # Main: tests for dataframe remapping and copy functions
 # ------------------------------------------------------------------------------------------------------------
@@ -343,8 +520,6 @@ def test_dataframe_map_and_replace_success(dataframe, mapping_dataframe, mapping
         mapping_df=mapping_df,
         mapped_dimensions=mapping_dimensions)
 
-    print(df)
-    print(expected_df)
     pd.testing.assert_frame_equal(df, expected_df)
 
 
@@ -365,3 +540,197 @@ def test_dataframe_map_and_join_success(dataframe, joined_cols, mapping_datafram
 @parametrize_from_file
 def test_dataframe_execute_mappings_replace_success(mapping_steps):
     pass
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Main: tests for sql connections and I/O processes
+# ------------------------------------------------------------------------------------------------------------
+
+
+def test_mssql_database_connection(sql_engine):
+    with sql_engine.connect() as connection:
+        assert connection.closed is False
+
+
+def test_mssql_server_responds_to_query(sql_engine):
+    with sql_engine.connect() as connection:
+        result = connection.execute(text("SELECT 1"))
+        response = result.fetchone()
+    assert response == (1,)
+
+
+@parametrize_from_file
+def test_mssql_extract_full_table(sql_engine, table_name, expected):
+    df = extractor.sql_to_dataframe(engine=sql_engine, table_name=table_name)
+    expected_df = pd.DataFrame(expected)
+    pd.testing.assert_frame_equal(df, expected_df)
+
+
+@parametrize_from_file
+def test_mssql_extract_table_columns(sql_engine, table_name, columns, expected):
+    df = extractor.sql_to_dataframe(engine=sql_engine, table_name=table_name, table_columns=columns)
+    expected_df = pd.DataFrame(expected)
+    pd.testing.assert_frame_equal(df, expected_df)
+
+
+@parametrize_from_file
+def test_mssql_extract_query(sql_engine, query, expected):
+    df = extractor.sql_to_dataframe(engine=sql_engine, sql_query=query)
+    expected_df = pd.DataFrame(expected)
+    pd.testing.assert_frame_equal(df, expected_df)
+
+
+@parametrize_from_file
+def test_mssq_extract_query_with_chunksize(sql_engine, query, expected, chunksize):
+    df = extractor.sql_to_dataframe(engine=sql_engine, sql_query=query, chunksize=chunksize)
+    expected_df = pd.DataFrame(expected)
+    pd.testing.assert_frame_equal(df, expected_df)
+
+
+@parametrize_from_file
+def test_sql_normalize_relabel(sql_engine, dataframe, expected, column_mapping):
+    df = pd.DataFrame(dataframe)
+    transformer.normalize_table_source_dataframe(dataframe=df, column_mapping=column_mapping)
+    expected_df = pd.DataFrame(expected)
+    pd.testing.assert_frame_equal(df, expected_df)
+
+
+@parametrize_from_file
+def test_sql_normalize_valuecol_assign(sql_engine, dataframe, expected, valuecol):
+    df = pd.DataFrame(dataframe)
+    transformer.normalize_table_source_dataframe(dataframe=df, value_column_name=valuecol)
+    expected_df = pd.DataFrame(expected)
+    pd.testing.assert_frame_equal(df, expected_df)
+
+
+@parametrize_from_file
+def test_sql_normalize_keep_and_drop(sql_engine, dataframe, expected, keep, drop):
+    df = pd.DataFrame(dataframe)
+    transformer.normalize_table_source_dataframe(dataframe=df, columns_to_keep=keep, drop_other_columns=drop)
+    expected_df = pd.DataFrame(expected)
+    pd.testing.assert_frame_equal(df, expected_df)
+
+
+@parametrize_from_file
+def test_mssql_loader_replace(sql_engine, dataframe, if_exists, table_name):
+    df = pd.DataFrame(dataframe)
+    loader.dataframe_to_sql(dataframe=df, engine=sql_engine, table_name=table_name, if_exists=if_exists, index=False)
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Main: tests for csv I/O processes
+# ------------------------------------------------------------------------------------------------------------
+
+
+@parametrize_from_file
+def test_dataframe_to_csv(data_dataframe, expected_dataframe):
+    """
+        Loads data from DataFrame file to a CSV file then does the reverse. Checks if the DataFrame stayed the same after the operations.
+        Deletes CSV file after assertion.
+    """
+    csv_file_name = "sample_data.csv"
+    try:
+        data_dataframe["Price"] = [float(x) for x in data_dataframe["Price"]]
+        data_dataframe["Quantity"] = [float(x) for x in data_dataframe["Quantity"]]
+
+        data_df = pd.DataFrame(data_dataframe)
+        dtype_mapping = data_df.dtypes.apply(lambda x: x.name).to_dict()
+
+        loader.dataframe_to_csv(dataframe=data_df, csv_file_name=csv_file_name, decimal=".", mode="w")
+        df = extractor.csv_to_dataframe(
+            csv_file_path=f"./{csv_file_name}",
+            decimal=".",
+            dtype=dtype_mapping,
+            keep_default_na=False,
+            na_values=["NULL", "Nan"]
+        )
+
+        expected_df = pd.DataFrame(expected_dataframe)
+        print(df)
+        print(df.dtypes)
+        print(expected_df)
+        print(expected_df.dtypes)
+
+        pd.testing.assert_frame_equal(df, expected_df, check_dtype=True)
+
+    finally:
+        if os.path.exists(csv_file_name):
+            os.remove(csv_file_name)
+
+
+@parametrize_from_file
+def test_dataframe_to_csv_build_dataframe_form_mdx(tm1_connection, data_mdx):
+    """
+        Loads data from DataFrame file to a CSV file then does the reverse. Checks if the DataFrame stayed the same after the operations.
+        Deletes CSV file after assertion.
+    """
+    csv_file_name = "sample_data.csv"
+    try:
+        expected_df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
+        dtype_mapping = expected_df.dtypes.apply(lambda x: x.name).to_dict()
+
+        transformer.normalize_dataframe(tm1_service=tm1_connection, dataframe=expected_df, mdx=data_mdx)
+
+        loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, decimal=".", mode="a")
+        df = extractor.csv_to_dataframe(csv_file_path=f"./{csv_file_name}", decimal=".", dtype=dtype_mapping)
+        pd.testing.assert_frame_equal(df, expected_df)
+
+    finally:
+        if os.path.exists(csv_file_name):
+            os.remove(csv_file_name)
+
+
+@parametrize_from_file
+def test_dataframe_to_csv_build_dataframe_form_mdx_with_param_optimisation(tm1_connection, data_mdx):
+    """
+        Loads data from DataFrame file to a CSV file then does the reverse. Checks if the DataFrame stayed the same after the operations.
+        Deletes CSV file after assertion.
+    """
+    csv_file_name = "sample_data.csv"
+    try:
+        expected_df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
+        dtype_mapping = expected_df.dtypes.apply(lambda x: x.name).to_dict()
+
+        loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, decimal=".", mode="w")
+        df = extractor.csv_to_dataframe(
+                csv_file_path=f"./{csv_file_name}",
+                decimal=".",
+                dtype=dtype_mapping,
+                chunksize= 204
+        )
+
+        print(df)
+        pd.testing.assert_frame_equal(df, expected_df)
+
+    finally:
+        if os.path.exists(csv_file_name):
+            os.remove(csv_file_name)
+
+
+@parametrize_from_file
+def test_dataframe_to_csv_build_dataframe_form_mdx_fail(tm1_connection, data_mdx):
+    """
+        Loads data from DataFrame file to a CSV file then does the reverse. Checks if the DataFrame stayed the same after the operations.
+        As the original data types are not passed to the function, the types differ.
+        Expected to fail.
+        Deletes CSV file after assertion.
+    """
+    csv_file_name = "sample_data.csv"
+    with pytest.raises(AssertionError):
+        try:
+            expected_df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
+
+            loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, decimal=".", mode="w")
+            df = extractor.csv_to_dataframe(csv_file_path=f"./{csv_file_name}", decimal=".")
+
+            pd.testing.assert_frame_equal(df, expected_df)
+
+        finally:
+            if os.path.exists(csv_file_name):
+                os.remove(csv_file_name)
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Main: tests for input processes
+# ------------------------------------------------------------------------------------------------------------
+

@@ -1,6 +1,7 @@
 from typing import Callable, List, Dict, Optional, Any
 
 import pandas as pd
+import numpy as np
 from pandas import DataFrame
 
 from TM1_bedrock_py import utility
@@ -32,9 +33,11 @@ def normalize_dataframe(
     dataframe_reorder_dimensions(dataframe=dataframe, cube_dimensions=metadata.get_cube_dims())
 
 
+@utility.log_exec_metrics
 def dataframe_reorder_dimensions(
         dataframe: DataFrame,
-        cube_dimensions: List[str]
+        cube_dimensions: List[str],
+        **_kwargs
 ) -> None:
     """
     Rearranges the columns of a DataFrame based on the specified cube dimensions.
@@ -49,6 +52,7 @@ def dataframe_reorder_dimensions(
     cube_dimensions : List[str]
         A list of column names defining the order of dimensions. The "Value"
         column will be appended if it is not already included.
+    **kwargs (Any): Additional keyword arguments.
 
     Returns:
     --------
@@ -65,9 +69,21 @@ def dataframe_reorder_dimensions(
         dataframe[col] = temp_reordered[col]
 
 
-# ------------------------------------------------------------------------------------------------------------
-# Main: dataframe transform utility functions
-# ------------------------------------------------------------------------------------------------------------
+@utility.log_exec_metrics
+def dataframe_force_float64_on_numeric_values(dataframe: DataFrame, **_kwargs) -> None:
+    """
+    Format and then enforce numpy float values in pandas dataframes, if the value is numeric, otherwise keep strings.
+
+    Parameter:
+    --------
+    dataframe: DataFrame - the input dataframe to mutate
+    **kwargs (Any): Additional keyword arguments.
+
+    Returns:
+    --------
+    None, mutates the dataframe in place
+    """
+    dataframe["Value"] = dataframe["Value"].apply(utility.force_float64_on_numeric_values)
 
 
 def dataframe_filter_inplace(
@@ -90,7 +106,7 @@ def dataframe_filter_inplace(
     valid_columns = [col for col in filter_condition.keys() if col in dataframe.columns]
 
     if not valid_columns:
-        dataframe.drop(dataframe.index, inplace=True)  # Clears DataFrame
+        dataframe.drop(dataframe.index, inplace=True)
         return
 
     condition = dataframe[valid_columns].eq(
@@ -152,9 +168,11 @@ def dataframe_drop_column(
         dataframe.reset_index(drop=True, inplace=True)
 
 
+@utility.log_exec_metrics
 def dataframe_add_column_assign_value(
         dataframe: DataFrame,
-        column_value: dict
+        column_value: dict,
+        **_kwargs
 ) -> None:
     """
     Ads columns with assigned values to DataFrame if the column_value pairs are not found in the DataFrame.
@@ -163,6 +181,8 @@ def dataframe_add_column_assign_value(
     Args:
         dataframe: (DataFrame): The DataFrame to which columns are to be added.
         column_value: (dict): Column:value pairs to be added.
+        **_kwargs (Any): Additional keyword arguments.
+
     Returns:
         DataFrame: The updated DataFrame.
     """
@@ -227,9 +247,11 @@ def dataframe_relabel(
     dataframe.rename(columns=columns, inplace=True)
 
 
+@utility.log_exec_metrics
 def dataframe_value_scale(
         dataframe: DataFrame,
-        value_function: callable
+        value_function: callable,
+        **_kwargs
 ) -> None:
     """
     Applies an input function to the 'Value' column of the DataFrame.
@@ -237,6 +259,7 @@ def dataframe_value_scale(
     Args:
         dataframe (DataFrame): The input DataFrame.
         value_function (callable): A function to apply to the 'Value' column.
+        **_kwargs (Any): Additional keyword arguments.
 
     Returns:
         DataFrame: The modified DataFrame (in place).
@@ -248,7 +271,8 @@ def dataframe_redimension_and_transform(
         dataframe: DataFrame,
         source_dim_mapping: Optional[dict] = None,
         related_dimensions: Optional[dict] = None,
-        target_dim_mapping: Optional[dict] = None
+        target_dim_mapping: Optional[dict] = None,
+        **_kwargs
 ) -> None:
 
     if source_dim_mapping is not None:
@@ -259,6 +283,53 @@ def dataframe_redimension_and_transform(
 
     if target_dim_mapping is not None:
         dataframe_add_column_assign_value(dataframe=dataframe, column_value=target_dim_mapping)
+
+
+def normalize_table_source_dataframe(
+        dataframe: DataFrame,
+        column_mapping: Optional[dict] = None,
+        value_column_name: Optional[str] = None,
+        columns_to_keep: Optional[list] = None,
+        drop_other_columns: bool = False
+) -> None:
+    if column_mapping is None:
+        column_mapping = {}
+    if columns_to_keep is None:
+        columns_to_keep = []
+    if column_mapping:
+        dataframe_relabel(dataframe=dataframe, columns=column_mapping)
+    if value_column_name:
+        dataframe_relabel(dataframe=dataframe, columns={value_column_name: "Value"})
+    if "Value" not in dataframe.columns:
+        dataframe_add_column_assign_value(dataframe=dataframe, column_value={"Value": 1.0})
+    if drop_other_columns:
+        columns_to_drop = list(
+            set(dataframe.columns) - set(columns_to_keep) - set(column_mapping.values()) - {'Value'}
+        )
+        dataframe_drop_column(dataframe=dataframe, column_list=columns_to_drop)
+
+
+@utility.log_exec_metrics
+def dataframe_itemskip_elements(dataframe: DataFrame, check_dfs: list[DataFrame], **_kwargs) -> None:
+    """
+    Filters the given dataframe in place based on valid values from check dataframes.
+
+    Optimized for when check_dfs are always single-column DataFrames.
+
+    Parameters:
+    - dataframe: The main DataFrame containing multiple columns + a 'Value' column.
+    - check_dfs: A list of single-column check DataFrames,
+                 where each one corresponds to a column in df_source (in order).
+    **_kwargs (Any): Additional keyword arguments.
+
+    Modifies df_source in place, removing rows that do not match the valid values.
+    """
+    mask = np.ones(len(dataframe), dtype=bool)
+    for df_check in check_dfs:
+        col = df_check.columns[0]
+        valid_values = df_check[col].to_numpy()
+        mask &= np.isin(dataframe[col].to_numpy(), valid_values)
+    dataframe.drop(index=dataframe.index[~mask], inplace=True)
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -358,6 +429,11 @@ def dataframe_map_and_join(
 
     for col in joined_columns:
         data_df[col] = merged_df[col]
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Main: mapping executor and its apply functions
+# ------------------------------------------------------------------------------------------------------------
 
 
 def __apply_replace(
@@ -479,10 +555,12 @@ def __apply_map_and_join(
         dataframe_drop_column(dataframe=data_df, column_list=mapping_step["dropped_columns"])
 
 
+@utility.log_exec_metrics
 def dataframe_execute_mappings(
         data_df: DataFrame,
         mapping_steps: List[Dict],
-        shared_mapping_df: Optional[DataFrame] = None
+        shared_mapping_df: Optional[DataFrame] = None,
+        **_kwargs
 ) -> None:
     """
     Execute a series of mapping steps on data_df.
@@ -497,6 +575,7 @@ def dataframe_execute_mappings(
         A list of dicts specifying each mapping step procedure
     shared_mapping_df: Optional[DataFrame]
         A shared DataFrame that may be used by multiple steps.
+    **_kwargs (Any): Additional keyword arguments.
 
     Returns
     -------
