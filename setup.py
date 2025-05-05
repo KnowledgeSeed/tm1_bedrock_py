@@ -37,6 +37,9 @@ setup(
         "apache_airflow==2.10.5,<3.0.0",
         "build==1.2.2.post1,<2.0.0",
         "airflow_provider_tm1==0.3.0,<1.0.0"
+        "build",
+        "matplotlib",
+        "yaml"
     ]},
     python_requires=">=3.7"
 )

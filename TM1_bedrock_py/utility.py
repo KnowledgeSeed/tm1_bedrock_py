@@ -1,3 +1,4 @@
+import asyncio
 import os
 import re
 import functools
@@ -11,7 +12,7 @@ from sqlalchemy import create_engine, inspect
 from pandas import DataFrame
 from numpy import float64
 
-from TM1_bedrock_py import exec_metrics_logger, basic_logger
+from TM1_bedrock_py import exec_metrics_logger, basic_logger, benchmark_metrics_logger
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -19,7 +20,7 @@ from TM1_bedrock_py import exec_metrics_logger, basic_logger
 # ------------------------------------------------------------------------------------------------------------
 
 
-def execution_metrics_logger(func, *args, **kwargs):
+def execution_metrics_logger(logger, func, *args, **kwargs):
     """Measures and logs the runtime of any function."""
     start_time = time.perf_counter()
     result = func(*args, **kwargs)
@@ -30,7 +31,26 @@ def execution_metrics_logger(func, *args, **kwargs):
 
     end_time = time.perf_counter()
     execution_time = end_time - start_time
-    exec_metrics_logger.debug(f"exec_time {execution_time:.2f} s", extra={
+    logger.debug(f"exec_time {execution_time:.2f} s", extra={
+        "func": func.__name__,
+        "fileName": os.path.basename(func.__code__.co_filename),
+        "exec_id": f"exec_id {exec_id}"
+    })
+
+    return result
+
+async def async_execution_metrics_logger(logger, func, *args, **kwargs):
+    """Measures and logs the runtime of any function."""
+    start_time = time.perf_counter()
+    result = await func(*args, **kwargs)
+    exec_id = kwargs.get("_execution_id")
+
+    if exec_id is None:
+        exec_id = 0
+
+    end_time = time.perf_counter()
+    execution_time = end_time - start_time
+    logger.debug(f"exec_time {execution_time:.2f} s", extra={
         "func": func.__name__,
         "fileName": os.path.basename(func.__code__.co_filename),
         "exec_id": f"exec_id {exec_id}"
@@ -43,13 +63,38 @@ def log_exec_metrics(func):
     """Decorator to measure function execution time."""
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        return execution_metrics_logger(func, *args, **kwargs)
+        return execution_metrics_logger(exec_metrics_logger, func, *args, **kwargs)
+    return wrapper
+
+
+def log_async_exec_metrics(func):
+    """Decorator to measure function execution time."""
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        return await execution_metrics_logger(exec_metrics_logger, func, *args, **kwargs)
+    return wrapper
+
+
+def log_benchmark_metrics(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        return execution_metrics_logger(benchmark_metrics_logger, func, *args, **kwargs)
+
+    return wrapper
+
+
+def log_async_benchmark_metrics(func):
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        return await async_execution_metrics_logger(benchmark_metrics_logger, func, *args, **kwargs)
+
     return wrapper
 
 
 def set_logging_level(logging_level: str):
     basic_logger.setLevel(logging_level)
     exec_metrics_logger.setLevel(logging_level)
+    benchmark_metrics_logger.setLevel(logging_level)
 
 
 # ------------------------------------------------------------------------------------------------------------

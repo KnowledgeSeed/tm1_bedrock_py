@@ -10,6 +10,7 @@ from pandas import DataFrame
 from TM1_bedrock_py import utility, transformer, loader, extractor, basic_logger
 
 
+@utility.log_benchmark_metrics
 @utility.log_exec_metrics
 def data_copy_intercube(
         tm1_service: Optional[Any],
@@ -250,8 +251,21 @@ def data_copy_intercube(
         **kwargs
     )
 
-    transformer.dataframe_execute_mappings(
+    initial_row_count = len(dataframe)
+    dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df, **kwargs)
+    final_row_count = len(dataframe)
+    if initial_row_count != final_row_count:
+        filtered_count = initial_row_count - final_row_count
+        basic_logger.warning(f"Number of rows filtered out through inner joins: {filtered_count}/{initial_row_count}")
+
+    if dataframe.empty:
+        if clear_target:
+            loader.clear_cube(tm1_service=target_tm1_service,
+                              cube_name=target_cube_name,
+                              clear_set_mdx_list=target_clear_set_mdx_list,
+                              **kwargs)
+        return
 
     transformer.dataframe_redimension_and_transform(
         dataframe=dataframe,
@@ -506,8 +520,21 @@ def data_copy(
         **kwargs
     )
 
-    transformer.dataframe_execute_mappings(
+    initial_row_count = len(dataframe)
+    dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df, **kwargs)
+    final_row_count = len(dataframe)
+    if initial_row_count != final_row_count:
+        filtered_count = initial_row_count - final_row_count
+        basic_logger.warning(f"Number of rows filtered out through inner joins: {filtered_count}/{initial_row_count}")
+
+    if dataframe.empty:
+        if clear_target:
+            loader.clear_cube(tm1_service=target_tm1_service,
+                              cube_name=cube_name,
+                              clear_set_mdx_list=target_clear_set_mdx_list,
+                              **kwargs)
+        return
 
     if value_function is not None:
         transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
@@ -537,7 +564,8 @@ def data_copy(
     basic_logger.info("Execution ended.")
 
 
-@utility.log_exec_metrics
+@utility.log_async_benchmark_metrics
+@utility.log_async_exec_metrics
 async def async_executor(
         tm1_service: Any,
         param_set_mdx_list: List[str],
@@ -618,15 +646,16 @@ async def async_executor(
     ):
         try:
             copy_func_kwargs = {
+                **_executor_kwargs,
                 "tm1_service": _tm1_service,
                 "data_mdx": _data_mdx,
                 "shared_mapping": _shared_mapping,
                 "mapping_steps": _mapping_steps,
                 "target_clear_set_mdx_list": _target_clear_set_mdx_list,
                 "_execution_id": _execution_id,
-                "async_write": False,
-                **_executor_kwargs
+                "async_write": False
             }
+
             if _data_metadata_func:
                 copy_func_kwargs["data_metadata_function"] = _data_metadata_func
             if _target_metadata_func:
@@ -756,7 +785,7 @@ def load_sql_data_to_tm1_cube(
 
     cube_dims = target_metadata.get_cube_dims()
 
-    transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
+    # transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
 
     if ignore_missing_elements:
         transformer.dataframe_itemskip_elements(
@@ -783,8 +812,13 @@ def load_sql_data_to_tm1_cube(
         csv_function=csv_function
     )
 
-    transformer.dataframe_execute_mappings(
-        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df)
+    initial_row_count = len(dataframe)
+    dataframe = transformer.dataframe_execute_mappings(
+        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df, **kwargs)
+    final_row_count = len(dataframe)
+    if initial_row_count != final_row_count:
+        filtered_count = initial_row_count - final_row_count
+        basic_logger.warning(f"Number of rows filtered out through inner joins: {filtered_count}/{initial_row_count}")
 
     transformer.dataframe_redimension_and_transform(
         dataframe=dataframe,
@@ -885,7 +919,7 @@ def load_tm1_cube_to_sql_table(
         **kwargs)
 
     transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
-    transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
+    # transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
 
     shared_mapping_df = None
     if shared_mapping:
@@ -908,8 +942,13 @@ def load_tm1_cube_to_sql_table(
         csv_function=csv_function
     )
 
-    transformer.dataframe_execute_mappings(
-        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df)
+    initial_row_count = len(dataframe)
+    dataframe = transformer.dataframe_execute_mappings(
+        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df, **kwargs)
+    final_row_count = len(dataframe)
+    if initial_row_count != final_row_count:
+        filtered_count = initial_row_count - final_row_count
+        basic_logger.warning(f"Number of rows filtered out through inner joins: {filtered_count}/{initial_row_count}")
 
     transformer.dataframe_redimension_and_transform(
         dataframe=dataframe,
