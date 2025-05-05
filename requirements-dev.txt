@@ -1,6 +1,6 @@
 -r requirements.txt
-parametrize_from_file==0.20.0
-pytest==8.3.4
-apache_airflow==2.10.5
-build==1.2.2.post1
-airflow_provider_tm1==0.3.0
+parametrize_from_file==0.20.0,<1.0.0
+pytest==8.3.4,<9.0.0
+apache_airflow==2.10.5,<3.0.0
+build==1.2.2.post1,<2.0.0
+airflow_provider_tm1==0.3.0,<1.0.0
