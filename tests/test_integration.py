@@ -160,12 +160,10 @@ def test_async_data_copy_intercube_multi_parameter(
         shared_mapping=shared_mapping,
         mapping_steps=mapping_steps,
         clear_target=True,
-        async_write=True,
         logging_level="DEBUG",
         param_set_mdx_list=param_set_mdx_list,
         clear_param_templates=clear_param_templates,
-        ignore_missing_elements=True,
-        max_workers=8
+        ignore_missing_elements=True
     ))
     run_time = time.time() - start_time_total
     print('Time: {:.4f} sec'.format(run_time))
