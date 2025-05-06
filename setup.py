@@ -14,7 +14,6 @@ setup(
     name="tm1_bedrock_py",
     version=read_version(),
     description="A python modul for TM1 Bedrock.",
-    readme = "README.md",
     packages=["TM1_bedrock_py"],
     author="",
     author_email="",
