@@ -30,13 +30,15 @@ setup(
         "numpy>=2.2.3, <2.0.0",
         "sqlalchemy>=1.4.36, <3.0.0"
     ],
-    extras_require={"dev": [
-        "parametrize_from_file>=0.20.0,<1.0.0",
-        "pytest>=8.3.4,<9.0.0",
-        "apache_airflow>=2.10.5,<3.0.0",
-        "build>=1.2.2.post1,<2.0.0",
-        "airflow_provider_tm1>=0.3.0,<1.0.0"
-        "matplotlib>=3.10.1,<4.0.0",
-    ]},
+    extras_require={
+        "dev": [
+            "parametrize_from_file>=0.20.0,<1.0.0",
+            "pytest>=8.3.4,<9.0.0",
+            "apache_airflow>=2.10.5,<3.0.0",
+            "build>=1.2.2.post1,<2.0.0",
+            "airflow_provider_tm1>=0.3.0,<1.0.0",
+            "matplotlib>=3.10.1,<4.0.0",
+        ]
+    },
     python_requires=">=3.7"
 )
