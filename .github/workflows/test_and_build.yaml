@@ -47,5 +47,5 @@ jobs:
     - name: Run unit tests
       run: |
         cd tests
-        echo "Running unit tests...'
+        echo "Running unit tests..."
         pytest test_unit.py
