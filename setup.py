@@ -29,7 +29,7 @@ setup(
         "pandas>=2.2.3, <3.0.0",
         "json_logging>=1.3.0, <2.0.0",
         "numpy>=2.2.3, <2.0.0",
-        "sqlalchemy>=2.0.39, <3.0.0"
+        "sqlalchemy>=1.4.36, <3.0.0"
     ],
     extras_require={"dev": [
         "parametrize_from_file>=0.20.0,<1.0.0",
