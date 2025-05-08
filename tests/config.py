@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from TM1py import TM1Service
 from TM1py.Exceptions import TM1pyRestException
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 from sqlalchemy.exc import OperationalError, InterfaceError, ArgumentError
 
 from TM1_bedrock_py import utility, basic_logger
@@ -136,7 +136,7 @@ def tm1_connection():
 @pytest.fixture(scope="session")
 def sql_engine():
     """Creates a SQL connector engine before tests and closes it after all tests."""
-    load_dotenv()
+    #load_dotenv()
     engine = None
     try:
         engine = utility.create_sql_engine(
