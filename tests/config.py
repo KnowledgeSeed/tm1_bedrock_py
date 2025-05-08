@@ -105,7 +105,7 @@ SCHEMA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file
 @pytest.fixture(scope="session")
 def tm1_connection():
     """Creates a TM1 connection before tests and closes it after all tests."""
-    load_dotenv()
+    #load_dotenv()
     tm1 = None
     try:
         tm1 = TM1Service(
