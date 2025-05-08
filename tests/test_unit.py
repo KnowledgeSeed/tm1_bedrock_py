@@ -1,19 +1,15 @@
-import configparser
 import os
-import re
-from pathlib import Path
 
-from TM1py.Exceptions import TM1pyRestException
-from sqlalchemy.exc import OperationalError, InterfaceError
-from sqlalchemy import text
-from pandas.core.frame import DataFrame
 import pandas as pd
-import pytest
 import parametrize_from_file
-from TM1py import TM1Service
+import pytest
+from TM1py.Exceptions import TM1pyRestException
+from pandas.core.frame import DataFrame
+from sqlalchemy import text
+from sqlalchemy.exc import OperationalError
 
-from TM1_bedrock_py import extractor, transformer, utility, basic_logger, loader
-
+from TM1_bedrock_py import extractor, transformer, utility, loader
+from tests.config import tm1_connection, sql_engine
 
 EXCEPTION_MAP = {
     "ValueError": ValueError,
@@ -23,40 +19,6 @@ EXCEPTION_MAP = {
     "IndexError": IndexError,
     "KeyError": KeyError
 }
-
-
-@pytest.fixture(scope="session")
-def tm1_connection():
-    """Creates a TM1 connection before tests and closes it after all tests."""
-    config = configparser.ConfigParser()
-    config.read(Path(__file__).parent.joinpath('config.ini'))
-    try:
-        tm1 = TM1Service(**config['tm1srv'])
-        basic_logger.debug("Successfully connected to TM1.")
-        yield tm1
-
-        tm1.logout()
-        basic_logger.debug("Connection closed.")
-
-    except TM1pyRestException:
-        basic_logger.error("Unable to connect to TM1: ", exc_info=True)
-
-
-@pytest.fixture(scope="session")
-def sql_engine():
-    """Creates a SQL connector engine before tests and closes it after all tests."""
-    config = configparser.ConfigParser()
-    config.read(Path(__file__).parent.joinpath('config.ini'))
-    try:
-        engine = utility.create_sql_engine(**config['mssqlsrv'])
-        basic_logger.debug("SQL engine successfully created")
-        yield engine
-
-        engine.dispose()
-        basic_logger.debug("SQL engine disposed.")
-
-    except OperationalError or InterfaceError:
-        basic_logger.error("Unable to connect to SQL: ", exc_info=True)
 
 
 # ------------------------------------------------------------------------------------------------------------

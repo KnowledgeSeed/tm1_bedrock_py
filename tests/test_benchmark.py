@@ -1,44 +1,15 @@
-import configparser
-import logging
-from pathlib import Path
-
-import json
-from TM1py.Exceptions import TM1pyRestException
-import pytest
 import asyncio
+import json
+import logging
 import statistics
+
 import matplotlib.pyplot as plt
-
-from TM1py import TM1Service
-
-from tests import benchtest_config as cfg
+import pytest
 from tm1_bench_py import tm1_bench
 
 from TM1_bedrock_py import bedrock, basic_logger, benchmark_metrics_logger
-
-
-
-# ---------------------------------------------------------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------------------------------------------------------
-
-
-@pytest.fixture(scope="session")
-def tm1_connection():
-    """Creates a TM1 connection before tests and closes it after all tests."""
-    config = configparser.ConfigParser()
-    config.read(Path(__file__).parent.joinpath('config.ini'))
-
-    try:
-        tm1 = TM1Service(**config['tm1srv'])
-        basic_logger.debug("Successfully connected to TM1.")
-        yield tm1
-
-        tm1.logout()
-        basic_logger.debug("Connection closed.")
-
-    except TM1pyRestException:
-        basic_logger.error("Unable to connect to TM1: ", exc_info=True)
+from tests import config as cfg
+from tests.config import tm1_connection
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -128,12 +99,11 @@ def test_process_benchmark_results():
 
 
 def plot_average_times(cases, combinations):
-    records = list(set([record for core, record, n in combinations]))
-    cores = list(set([core for core, record, n in combinations]))
-
+    records = sorted(list(set([record for core, record, n in combinations])))
+    cores = sorted(list(set([core for core, record, n in combinations])))
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    for core in sorted(cores):
+    for core in cores:
         avg_times = []
 
         for i in range(len(records)):
@@ -153,12 +123,14 @@ def plot_average_times(cases, combinations):
     ax.legend()
     ax.grid(True, linestyle='--', alpha=0.6)
     plt.tight_layout()
+    plt.xscale('log', base=10)
+
     plt.savefig("benchmark_results_avg_times.png")
 
 
 def plot_statistics_for_core(results, combinations, nr_cores):
     if results:
-        records = list(set([record for core, record, n in combinations]))
+        records = sorted(list(set([record for core, record, n in combinations])))
 
         min_times = []
         max_times = []
@@ -202,6 +174,7 @@ def plot_statistics_for_core(results, combinations, nr_cores):
         ax.legend()
         ax.grid(True, linestyle='--', alpha=0.6)
         plt.tight_layout()
+        plt.xscale('log', base=10)
 
         plt.savefig(f"benchmark_for_{nr_cores}_cores.png")
 

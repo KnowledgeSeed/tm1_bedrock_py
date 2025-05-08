@@ -38,6 +38,7 @@ setup(
             "build>=1.2.2.post1,<2.0.0",
             "airflow_provider_tm1>=0.3.0,<1.0.0",
             "matplotlib>=3.10.1,<4.0.0",
+            "pyodbc>=5.2.0,<6.0.0"
         ]
     },
     python_requires=">=3.7"

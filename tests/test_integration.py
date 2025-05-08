@@ -1,17 +1,12 @@
-import configparser
-from pathlib import Path
-
-from TM1py.Exceptions import TM1pyRestException
-import pandas as pd
-import pytest
-import time
 import asyncio
+import time
+
+import pandas as pd
 import parametrize_from_file
+from TM1py.Exceptions import TM1pyRestException
 
-from TM1py import TM1Service
-
-from TM1_bedrock_py import bedrock, extractor, transformer, basic_logger, utility
-
+from TM1_bedrock_py import bedrock, extractor, transformer, utility
+from tests.config import tm1_connection
 
 EXCEPTION_MAP = {
     "ValueError": ValueError,
@@ -20,24 +15,6 @@ EXCEPTION_MAP = {
     "IndexError": IndexError,
     "KeyError": KeyError
 }
-
-
-@pytest.fixture(scope="session")
-def tm1_connection():
-    """Creates a TM1 connection before tests and closes it after all tests."""
-    config = configparser.ConfigParser()
-    config.read(Path(__file__).parent.joinpath('config.ini'))
-
-    try:
-        tm1 = TM1Service(**config['tm1srv'])
-        basic_logger.debug("Successfully connected to TM1.")
-        yield tm1
-
-        tm1.logout()
-        basic_logger.debug("Connection closed.")
-
-    except TM1pyRestException:
-        basic_logger.error("Unable to connect to TM1: ", exc_info=True)
 
 
 @parametrize_from_file

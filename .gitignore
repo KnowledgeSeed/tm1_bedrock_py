@@ -29,5 +29,6 @@ logs
 *.whl
 /schema/
 
-# Figures
+# Tests
 tests/*.png
+tests/config.ini
