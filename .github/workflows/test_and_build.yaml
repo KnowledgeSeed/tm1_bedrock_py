@@ -42,7 +42,6 @@ jobs:
       run: |
         echo '{"insecure-registries": ["kseed-docker1.knowledgeseed.local:3000"]}' | sudo tee /etc/docker/daemon.json
         sudo systemctl restart docker
-        ping kseed-win1.knowledgeseed.local
 
     - uses: actions/checkout@v3
 
