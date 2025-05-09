@@ -512,6 +512,7 @@ def test_dataframe_execute_mappings_replace_success(mapping_steps):
 def test_mssql_database_connection(sql_engine):
     with sql_engine.connect() as connection:
         assert connection.closed is False
+        assert str(sql_engine.url.get_backend_name()) == "mssql", f"Wrong backend: {sql_engine.url.get_backend_name()}"
 
 
 def test_mssql_server_responds_to_query(sql_engine):
