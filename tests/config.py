@@ -144,7 +144,8 @@ def sql_engine():
             password=os.environ.get("SQL_PASSWORD"),
             host=os.environ.get("SQL_HOST"),
             port=os.environ.get("SQL_PORT"),
-            connection_type=os.environ.get("SQL_CONN_TYPE"),
+            #connection_type=os.environ.get("SQL_CONN_TYPE"),
+            connection_type="mssql",
             database=os.environ.get("SQL_DB")
         )
         basic_logger.debug("SQL engine successfully created")
