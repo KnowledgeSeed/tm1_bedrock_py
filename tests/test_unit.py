@@ -9,7 +9,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
 from TM1_bedrock_py import extractor, transformer, utility, loader
-from tests.config import tm1_connection, sql_engine
+from tests.config import tm1_connection_factory, sql_engine
 
 EXCEPTION_MAP = {
     "ValueError": ValueError,
@@ -19,6 +19,12 @@ EXCEPTION_MAP = {
     "IndexError": IndexError,
     "KeyError": KeyError
 }
+
+
+def test_tm1_connection(tm1_connection_factory):
+    with tm1_connection_factory("tm1srv") as conn:
+        server_name = conn.server.get_server_name()
+        print("Connection to TM1 established! Your server name is: {}".format(server_name))
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -103,30 +109,32 @@ def test_generate_cartesian_product_failure(list_of_lists, expected_exception, e
 
 
 @parametrize_from_file
-def test_generate_element_lists_from_set_mdx_list_success(tm1_connection, set_mdx_list, expected_result):
+def test_generate_element_lists_from_set_mdx_list_success(tm1_connection_factory, set_mdx_list, expected_result):
     """
     Tests successful extraction of element lists using a fake TM1 service.
     """
-    result = utility.__generate_element_lists_from_set_mdx_list(tm1_connection, set_mdx_list)
-    assert result == expected_result
+    with tm1_connection_factory("tm1srv") as conn:
+        result = utility.__generate_element_lists_from_set_mdx_list(conn, set_mdx_list)
+        assert result == expected_result
 
 
 @parametrize_from_file
 def test_generate_element_lists_from_set_mdx_list_failure(
-        tm1_connection, use_none_service, set_mdx_list, expected_exception, expected_message_part):
+        tm1_connection_factory, use_none_service, set_mdx_list, expected_exception, expected_message_part):
     """
     Tests failing scenarios for element list extraction using fake or invalid service/inputs.
     """
-    if use_none_service:
-        test_service = None
-    else:
-        test_service = tm1_connection
-
-    exception_type = eval(expected_exception)
-    with pytest.raises(exception_type) as excinfo:
-        utility.__generate_element_lists_from_set_mdx_list(test_service, set_mdx_list)
-
-    assert expected_message_part in str(excinfo.value)
+    with tm1_connection_factory("tm1srv") as conn:
+        if use_none_service:
+            test_service = None
+        else:
+            test_service = conn
+    
+        exception_type = eval(expected_exception)
+        with pytest.raises(exception_type) as excinfo:
+            utility.__generate_element_lists_from_set_mdx_list(test_service, set_mdx_list)
+    
+        assert expected_message_part in str(excinfo.value)
 
 
 @parametrize_from_file
@@ -152,10 +160,11 @@ def test_add_nonempty_to_mdx_all_modes(input_mdx, expected_mdx):
 
 
 @parametrize_from_file
-def test_all_leaves_identifiers_to_dataframe(tm1_connection, dimname, expected):
-    expected_df = pd.DataFrame(expected)
-    df = utility.all_leaves_identifiers_to_dataframe(tm1_connection, dimname)
-    pd.testing.assert_frame_equal(df, expected_df)
+def test_all_leaves_identifiers_to_dataframe(tm1_connection_factory, dimname, expected):
+    with tm1_connection_factory("tm1srv") as conn:
+        expected_df = pd.DataFrame(expected)
+        df = utility.all_leaves_identifiers_to_dataframe(conn, dimname)
+        pd.testing.assert_frame_equal(df, expected_df)
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -164,91 +173,99 @@ def test_all_leaves_identifiers_to_dataframe(tm1_connection, dimname, expected):
 
 
 @parametrize_from_file
-def test_tm1_cube_object_metadata_collect_based_on_cube_name_success(tm1_connection, cube_name):
+def test_tm1_cube_object_metadata_collect_based_on_cube_name_success(tm1_connection_factory, cube_name):
     """Collects metadata based on cube name and checks if the method's output is a Metadata object"""
-    try:
-        metadata = utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, cube_name=cube_name)
-        print(metadata.to_dict())
-        assert isinstance(metadata, utility.TM1CubeObjectMetadata)
-    except TM1pyRestException as e:
-        pytest.fail(f"Cube name not found: {e}")
+    with tm1_connection_factory("tm1srv") as conn:
+        try:
+            metadata = utility.TM1CubeObjectMetadata.collect(tm1_service=conn, cube_name=cube_name)
+            print(metadata.to_dict())
+            assert isinstance(metadata, utility.TM1CubeObjectMetadata)
+        except TM1pyRestException as e:
+            pytest.fail(f"Cube name not found: {e}")
 
 
 @parametrize_from_file
-def test_tm1_cube_object_metadata_collect_based_on_cube_name_fail(tm1_connection, cube_name, exception):
+def test_tm1_cube_object_metadata_collect_based_on_cube_name_fail(tm1_connection_factory, cube_name, exception):
     """Runs collect_metadata based with bad cube name and checks if the method's output is a Metadata object."""
-    with pytest.raises(EXCEPTION_MAP[exception]):
-        metadata = utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, cube_name=cube_name)
-        print(metadata.to_dict())
-        assert isinstance(metadata, utility.TM1CubeObjectMetadata)
+    with tm1_connection_factory("tm1srv") as conn:
+        with pytest.raises(EXCEPTION_MAP[exception]):
+            metadata = utility.TM1CubeObjectMetadata.collect(tm1_service=conn, cube_name=cube_name)
+            print(metadata.to_dict())
+            assert isinstance(metadata, utility.TM1CubeObjectMetadata)
 
 
 @parametrize_from_file
-def test_tm1_cube_object_metadata_collect_based_on_mdx_name_success(tm1_connection, data_mdx):
+def test_tm1_cube_object_metadata_collect_based_on_mdx_name_success(tm1_connection_factory, data_mdx):
     """Collects metadata based on MDX and checks if the method's output is a Metadata object"""
-    try:
-        assert isinstance(
-            utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, mdx=data_mdx),
-            utility.TM1CubeObjectMetadata
-        )
-    except TM1pyRestException as e:
-        pytest.fail(f"Cube not found based on MDX: {e}")
+    with tm1_connection_factory("tm1srv") as conn:
+        try:
+            assert isinstance(
+                utility.TM1CubeObjectMetadata.collect(tm1_service=conn, mdx=data_mdx),
+                utility.TM1CubeObjectMetadata
+            )
+        except TM1pyRestException as e:
+            pytest.fail(f"Cube not found based on MDX: {e}")
 
 
 @parametrize_from_file
-def test_tm1_cube_object_metadata_collect_based_on_mdx_name_fail(tm1_connection, data_mdx, exception):
+def test_tm1_cube_object_metadata_collect_based_on_mdx_name_fail(tm1_connection_factory, data_mdx, exception):
     """Runs collect_metadata with bad input for MDX and checks if the method's output is a Metadata object."""
-    with pytest.raises(EXCEPTION_MAP[exception]):
-        assert isinstance(
-            utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, mdx=data_mdx),
-            utility.TM1CubeObjectMetadata
-        )
+    with tm1_connection_factory("tm1srv") as conn:
+        with pytest.raises(EXCEPTION_MAP[exception]):
+            assert isinstance(
+                utility.TM1CubeObjectMetadata.collect(tm1_service=conn, mdx=data_mdx),
+                utility.TM1CubeObjectMetadata
+            )
 
 
 @parametrize_from_file
-def test_tm1_cube_object_metadata_collect_cube_dimensions_not_empty(tm1_connection, cube_name):
+def test_tm1_cube_object_metadata_collect_cube_dimensions_not_empty(tm1_connection_factory, cube_name):
     """Collects metadata and verifies that cube dimensions are not empty."""
-    try:
-        metadata = utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, cube_name=cube_name)
-        cube_dims = metadata.get_cube_dims()
-        assert cube_dims != 0
-    except TM1pyRestException as e:
-        pytest.fail(f"Cube name not found: {e}")
+    with tm1_connection_factory("tm1srv") as conn:
+        try:
+            metadata = utility.TM1CubeObjectMetadata.collect(tm1_service=conn, cube_name=cube_name)
+            cube_dims = metadata.get_cube_dims()
+            assert cube_dims != 0
+        except TM1pyRestException as e:
+            pytest.fail(f"Cube name not found: {e}")
 
 
 @parametrize_from_file
 def test_tm1_cube_object_metadata_collect_cube_dimensions_match_dimensions(
-        tm1_connection, cube_name, expected_dimensions
+        tm1_connection_factory, cube_name, expected_dimensions
 ):
     """Collects metadata and verifies that cube dimensions match the expected dimensions."""
-    try:
-        metadata = utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, cube_name=cube_name)
-        cube_dims = metadata.get_cube_dims()
-        assert cube_dims == expected_dimensions
-    except TM1pyRestException as e:
-        pytest.fail(f"Cube name not found: {e}")
+    with tm1_connection_factory("tm1srv") as conn:
+        try:
+            metadata = utility.TM1CubeObjectMetadata.collect(tm1_service=conn, cube_name=cube_name)
+            cube_dims = metadata.get_cube_dims()
+            assert cube_dims == expected_dimensions
+        except TM1pyRestException as e:
+            pytest.fail(f"Cube name not found: {e}")
 
 
 @parametrize_from_file
-def test_tm1_cube_object_metadata_collect_filter_dict_not_empty(tm1_connection, data_mdx):
+def test_tm1_cube_object_metadata_collect_filter_dict_not_empty(tm1_connection_factory, data_mdx):
     """Collects metadata and verifies that filter dimensions are not empty."""
-    try:
-        metadata = utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, mdx=data_mdx)
-        filter_dims = metadata.get_filter_dict()
-        assert filter_dims
-    except TM1pyRestException as e:
-        pytest.fail(f"Cube name not found: {e}")
+    with tm1_connection_factory("tm1srv") as conn:
+        try:
+            metadata = utility.TM1CubeObjectMetadata.collect(tm1_service=conn, mdx=data_mdx)
+            filter_dims = metadata.get_filter_dict()
+            assert filter_dims
+        except TM1pyRestException as e:
+            pytest.fail(f"Cube name not found: {e}")
 
 
 @parametrize_from_file
-def test_tm1_cube_object_metadata_collect_filter_dict_match(tm1_connection, data_mdx, expected_filter_dict):
+def test_tm1_cube_object_metadata_collect_filter_dict_match(tm1_connection_factory, data_mdx, expected_filter_dict):
     """Collects metadata and verifies that filter dimensions are not empty."""
-    try:
-        metadata = utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_connection, mdx=data_mdx)
-        filter_dict = metadata.get_filter_dict()
-        assert filter_dict == expected_filter_dict
-    except TM1pyRestException as e:
-        pytest.fail(f"Cube name not found: {e}")
+    with tm1_connection_factory("tm1srv") as conn:
+        try:
+            metadata = utility.TM1CubeObjectMetadata.collect(tm1_service=conn, mdx=data_mdx)
+            filter_dict = metadata.get_filter_dict()
+            assert filter_dict == expected_filter_dict
+        except TM1pyRestException as e:
+            pytest.fail(f"Cube name not found: {e}")
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -256,84 +273,89 @@ def test_tm1_cube_object_metadata_collect_filter_dict_match(tm1_connection, data
 # ------------------------------------------------------------------------------------------------------------
 
 @parametrize_from_file
-def test_build_mdx_from_cube_filter_is_valid_format_true(tm1_connection, cube_filter, cube_name, expected_mdx):
+def test_build_mdx_from_cube_filter_is_valid_format_true(tm1_connection_factory, cube_filter, cube_name, expected_mdx):
     """Build MDX from cube name and dimension and check if the returned MDX matches the expected."""
+    with tm1_connection_factory("tm1srv") as conn:
+        mdx = utility.build_mdx_from_cube_filter(tm1_service=conn, cube_name=cube_name, cube_filter=cube_filter)
+        mdx = mdx.replace(" ", "")
+        expected_mdx = expected_mdx.replace(" ", "")
 
-    mdx = utility.build_mdx_from_cube_filter(tm1_service=tm1_connection, cube_name=cube_name, cube_filter=cube_filter)
-    mdx = mdx.replace(" ", "")
-    expected_mdx = expected_mdx.replace(" ", "")
-
-    assert mdx == expected_mdx
+        assert mdx == expected_mdx
 
 
 @parametrize_from_file
-def test_mdx_to_dataframe_execute_query_success(tm1_connection, data_mdx):
+def test_mdx_to_dataframe_execute_query_success(tm1_connection_factory, data_mdx):
     """Run MDX to dataframe function and verifies that the output is a DataFrame object."""
-    try:
-        df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
-        assert isinstance(df, DataFrame)
-    except Exception as e:
-        pytest.fail(f"MDX query execution failed: {e}")
+    with tm1_connection_factory("tm1srv") as conn:
+        try:
+            df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=data_mdx)
+            assert isinstance(df, DataFrame)
+        except Exception as e:
+            pytest.fail(f"MDX query execution failed: {e}")
 
 
 @parametrize_from_file
-def test_mdx_to_dataframe_execute_query_fail(tm1_connection, data_mdx):
+def test_mdx_to_dataframe_execute_query_fail(tm1_connection_factory, data_mdx):
     """Run MDX to dataframe function with bad input. Raises error."""
-    with pytest.raises((TM1pyRestException, ValueError)):
-        assert isinstance(
-            extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx),
-            DataFrame
-        )
+    with tm1_connection_factory("tm1srv") as conn:
+        with pytest.raises((TM1pyRestException, ValueError)):
+            assert isinstance(
+                extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=data_mdx),
+                DataFrame
+            )
 
 
 @parametrize_from_file
-def test_normalize_dataframe_is_dataframe_true(tm1_connection, data_mdx):
+def test_normalize_dataframe_is_dataframe_true(tm1_connection_factory, data_mdx):
     """Run normalize dataframe function and check for if output is dataframe"""
-    try:
-        df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
-        transformer.normalize_dataframe(tm1_service=tm1_connection, dataframe=df, mdx=data_mdx)
-        assert isinstance(df, DataFrame)
-    except Exception as e:
-        pytest.fail(f"MDX query execution failed: {e}")
+    with tm1_connection_factory("tm1srv") as conn:
+        try:
+            df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=data_mdx)
+            transformer.normalize_dataframe(tm1_service=conn, dataframe=df, mdx=data_mdx)
+            assert isinstance(df, DataFrame)
+        except Exception as e:
+            pytest.fail(f"MDX query execution failed: {e}")
 
 
 @parametrize_from_file
-def test_normalize_dataframe_match_number_of_dimensions_success(tm1_connection, data_mdx, expected_dimensions):
+def test_normalize_dataframe_match_number_of_dimensions_success(tm1_connection_factory, data_mdx, expected_dimensions):
     """Run normalize dataframe function and check if the output has the correct number of dimensions"""
-    try:
-        df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
-        transformer.normalize_dataframe(tm1_service=tm1_connection, dataframe=df, mdx=data_mdx)
-        df.keys()
-        assert len(df.keys()) == expected_dimensions
-    except Exception as e:
-        pytest.fail(f"MDX query execution failed: {e}")
+    with tm1_connection_factory("tm1srv") as conn:
+        try:
+            df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=data_mdx)
+            transformer.normalize_dataframe(tm1_service=conn, dataframe=df, mdx=data_mdx)
+            df.keys()
+            assert len(df.keys()) == expected_dimensions
+        except Exception as e:
+            pytest.fail(f"MDX query execution failed: {e}")
 
 
 @parametrize_from_file
-def test_normalize_dataframe_match_dimensions_success(tm1_connection, data_mdx, expected_dimensions):
+def test_normalize_dataframe_match_dimensions_success(tm1_connection_factory, data_mdx, expected_dimensions):
     """Runs normalize dataframe function and validates that the output's dimension keys match the expected"""
-    try:
-        df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
-        transformer.normalize_dataframe(tm1_service=tm1_connection, dataframe=df, mdx=data_mdx)
-        keys = [key for key in df.keys()]
-        assert expected_dimensions == keys
-    except Exception as e:
-        pytest.fail(f"MDX query execution failed: {e}")
+    with tm1_connection_factory("tm1srv") as conn:
+        try:
+            df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=data_mdx)
+            transformer.normalize_dataframe(tm1_service=conn, dataframe=df, mdx=data_mdx)
+            keys = [key for key in df.keys()]
+            assert expected_dimensions == keys
+        except Exception as e:
+            pytest.fail(f"MDX query execution failed: {e}")
 
 
 @parametrize_from_file
-def test_build_mdx_from_cube_filter_create_dataframe_success(tm1_connection, cube_filter, cube_name):
+def test_build_mdx_from_cube_filter_create_dataframe_success(tm1_connection_factory, cube_filter, cube_name):
     """Run MDX query created by the MDX builder and verifies that the output is a DataFrame object"""
-
-    data_mdx = utility.build_mdx_from_cube_filter(
-        tm1_service=tm1_connection, cube_name=cube_name, cube_filter=cube_filter
-    )
-    try:
-        df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
-        transformer.normalize_dataframe(tm1_service=tm1_connection, dataframe=df, mdx=data_mdx)
-        assert isinstance(df, DataFrame)
-    except Exception as e:
-        pytest.fail(f"MDX query execution failed: {e}")
+    with tm1_connection_factory("tm1srv") as conn:
+        data_mdx = utility.build_mdx_from_cube_filter(
+            tm1_service=conn, cube_name=cube_name, cube_filter=cube_filter
+        )
+        try:
+            df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=data_mdx)
+            transformer.normalize_dataframe(tm1_service=conn, dataframe=df, mdx=data_mdx)
+            assert isinstance(df, DataFrame)
+        except Exception as e:
+            pytest.fail(f"MDX query execution failed: {e}")
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -621,75 +643,77 @@ def test_dataframe_to_csv(data_dataframe, expected_dataframe):
 
 
 @parametrize_from_file
-def test_dataframe_to_csv_build_dataframe_form_mdx(tm1_connection, data_mdx):
+def test_dataframe_to_csv_build_dataframe_form_mdx(tm1_connection_factory, data_mdx):
     """
         Loads data from DataFrame file to a CSV file then does the reverse. Checks if the DataFrame stayed the same after the operations.
         Deletes CSV file after assertion.
     """
-    csv_file_name = "sample_data.csv"
-    try:
-        expected_df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
-        dtype_mapping = expected_df.dtypes.apply(lambda x: x.name).to_dict()
-
-        transformer.normalize_dataframe(tm1_service=tm1_connection, dataframe=expected_df, mdx=data_mdx)
-
-        loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, decimal=".", mode="a")
-        df = extractor.csv_to_dataframe(csv_file_path=f"./{csv_file_name}", decimal=".", dtype=dtype_mapping)
-        pd.testing.assert_frame_equal(df, expected_df)
-
-    finally:
-        if os.path.exists(csv_file_name):
-            os.remove(csv_file_name)
-
-
-@parametrize_from_file
-def test_dataframe_to_csv_build_dataframe_form_mdx_with_param_optimisation(tm1_connection, data_mdx):
-    """
-        Loads data from DataFrame file to a CSV file then does the reverse. Checks if the DataFrame stayed the same after the operations.
-        Deletes CSV file after assertion.
-    """
-    csv_file_name = "sample_data.csv"
-    try:
-        expected_df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
-        dtype_mapping = expected_df.dtypes.apply(lambda x: x.name).to_dict()
-
-        loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, decimal=".", mode="w")
-        df = extractor.csv_to_dataframe(
-                csv_file_path=f"./{csv_file_name}",
-                decimal=".",
-                dtype=dtype_mapping,
-                chunksize= 204
-        )
-
-        print(df)
-        pd.testing.assert_frame_equal(df, expected_df)
-
-    finally:
-        if os.path.exists(csv_file_name):
-            os.remove(csv_file_name)
-
-
-@parametrize_from_file
-def test_dataframe_to_csv_build_dataframe_form_mdx_fail(tm1_connection, data_mdx):
-    """
-        Loads data from DataFrame file to a CSV file then does the reverse. Checks if the DataFrame stayed the same after the operations.
-        As the original data types are not passed to the function, the types differ.
-        Expected to fail.
-        Deletes CSV file after assertion.
-    """
-    csv_file_name = "sample_data.csv"
-    with pytest.raises(AssertionError):
+    with tm1_connection_factory("tm1srv") as conn:
+        csv_file_name = "sample_data.csv"
         try:
-            expected_df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_connection, data_mdx=data_mdx)
+            expected_df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=data_mdx)
+            dtype_mapping = expected_df.dtypes.apply(lambda x: x.name).to_dict()
+
+            transformer.normalize_dataframe(tm1_service=conn, dataframe=expected_df, mdx=data_mdx)
+
+            loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, decimal=".", mode="a")
+            df = extractor.csv_to_dataframe(csv_file_path=f"./{csv_file_name}", decimal=".", dtype=dtype_mapping)
+            pd.testing.assert_frame_equal(df, expected_df)
+
+        finally:
+            if os.path.exists(csv_file_name):
+                os.remove(csv_file_name)
+
+
+@parametrize_from_file
+def test_dataframe_to_csv_build_dataframe_form_mdx_with_param_optimisation(tm1_connection_factory, data_mdx):
+    """
+        Loads data from DataFrame file to a CSV file then does the reverse. Checks if the DataFrame stayed the same after the operations.
+        Deletes CSV file after assertion.
+    """
+    with tm1_connection_factory("tm1srv") as conn:
+        csv_file_name = "sample_data.csv"
+        try:
+            expected_df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=data_mdx)
+            dtype_mapping = expected_df.dtypes.apply(lambda x: x.name).to_dict()
 
             loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, decimal=".", mode="w")
-            df = extractor.csv_to_dataframe(csv_file_path=f"./{csv_file_name}", decimal=".")
+            df = extractor.csv_to_dataframe(
+                    csv_file_path=f"./{csv_file_name}",
+                    decimal=".",
+                    dtype=dtype_mapping,
+                    chunksize= 204
+            )
 
             pd.testing.assert_frame_equal(df, expected_df)
 
         finally:
             if os.path.exists(csv_file_name):
                 os.remove(csv_file_name)
+
+
+@parametrize_from_file
+def test_dataframe_to_csv_build_dataframe_form_mdx_fail(tm1_connection_factory, data_mdx):
+    """
+        Loads data from DataFrame file to a CSV file then does the reverse. Checks if the DataFrame stayed the same after the operations.
+        As the original data types are not passed to the function, the types differ.
+        Expected to fail.
+        Deletes CSV file after assertion.
+    """
+    with tm1_connection_factory("tm1srv") as conn:
+        csv_file_name = "sample_data.csv"
+        with pytest.raises(AssertionError):
+            try:
+                expected_df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=data_mdx)
+
+                loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, decimal=".", mode="w")
+                df = extractor.csv_to_dataframe(csv_file_path=f"./{csv_file_name}", decimal=".")
+
+                pd.testing.assert_frame_equal(df, expected_df)
+
+            finally:
+                if os.path.exists(csv_file_name):
+                    os.remove(csv_file_name)
 
 
 # ------------------------------------------------------------------------------------------------------------
