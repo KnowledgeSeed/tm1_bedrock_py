@@ -228,7 +228,7 @@ def test_run_single_benchmark_case(tm1_connection_factory, nr_of_cores, nr_of_re
         schema = schemaloader.load_schema()
         default_df_to_cube_kwargs = schema['config']['df_to_cube_default_kwargs']
         try:
-            tm1_bench.build_model(tm1=tm1_connection_factory, schema=schema, env=envname, system_defaults=default_df_to_cube_kwargs)
+            tm1_bench.build_model(tm1=conn, schema=schema, env=envname, system_defaults=default_df_to_cube_kwargs)
 
             asyncio.run(bedrock.async_executor(
                 data_copy_function=bedrock.data_copy_intercube,
@@ -238,7 +238,7 @@ def test_run_single_benchmark_case(tm1_connection_factory, nr_of_cores, nr_of_re
             ))
         finally:
             print("exec ended")
-            tm1_bench.destroy_model(tm1=tm1_connection_factory, schema=schema)
+            tm1_bench.destroy_model(tm1=conn, schema=schema)
 
         basic_logger.info(f"Execution ended with {nr_of_cores} workers")
 
