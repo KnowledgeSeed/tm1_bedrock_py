@@ -1,44 +1,15 @@
-import configparser
-import logging
-from pathlib import Path
-
-import json
-from TM1py.Exceptions import TM1pyRestException
-import pytest
 import asyncio
+import json
+import logging
 import statistics
+
 import matplotlib.pyplot as plt
-
-from TM1py import TM1Service
-
-from tests import benchtest_config as cfg
+import pytest
 from tm1_bench_py import tm1_bench
 
 from TM1_bedrock_py import bedrock, basic_logger, benchmark_metrics_logger
-
-
-
-# ---------------------------------------------------------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------------------------------------------------------
-
-
-@pytest.fixture(scope="session")
-def tm1_connection():
-    """Creates a TM1 connection before tests and closes it after all tests."""
-    config = configparser.ConfigParser()
-    config.read(Path(__file__).parent.joinpath('config.ini'))
-
-    try:
-        tm1 = TM1Service(**config['tm1srv'])
-        basic_logger.debug("Successfully connected to TM1.")
-        yield tm1
-
-        tm1.logout()
-        basic_logger.debug("Connection closed.")
-
-    except TM1pyRestException:
-        basic_logger.error("Unable to connect to TM1: ", exc_info=True)
+from tests import config as cfg
+from tests.config import tm1_connection_factory
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -79,6 +50,7 @@ def load_benchmark_logs(run_ids):
 
 def get_exec_data(test_cases):
     run_ids = [f"{nr_core}_{nr_record}_{n}" for nr_core, nr_record, n in test_cases]
+    number_of_runs = max([n for nr_core, nr_record, n in test_cases])
     data = load_benchmark_logs(run_ids)
     total_runtimes = {}
     for run_id in run_ids:
@@ -88,10 +60,15 @@ def get_exec_data(test_cases):
         else: exec_time_msg = None
         total_runtimes[run_id] = exec_time_msg
 
-    partial_keys = [f"{nr_core}_{nr_record}" for nr_core, nr_record, n in test_cases]
+    partial_keys = list(set([f"{nr_core}_{nr_record}" for nr_core, nr_record, n in test_cases]))
+    partial_keys = sorted(partial_keys, key=lambda x: int(x.replace('_', '')))
     identical_cases = {}
     for key in partial_keys:
-        identical_cases[key] = [val for k, val in total_runtimes.items() if key in k]
+        #identical_cases[key] = [val for k, val in total_runtimes.get(key) if key in k]
+        values = []
+        for i in range(number_of_runs+1):
+            values.append(total_runtimes.get(f"{key}_{i}"))
+        identical_cases[key] = values
 
     return identical_cases
 
@@ -128,12 +105,11 @@ def test_process_benchmark_results():
 
 
 def plot_average_times(cases, combinations):
-    records = list(set([record for core, record, n in combinations]))
-    cores = list(set([core for core, record, n in combinations]))
-
+    records = sorted(list(set([record for core, record, n in combinations])))
+    cores = sorted(list(set([core for core, record, n in combinations])))
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    for core in sorted(cores):
+    for core in cores:
         avg_times = []
 
         for i in range(len(records)):
@@ -153,12 +129,15 @@ def plot_average_times(cases, combinations):
     ax.legend()
     ax.grid(True, linestyle='--', alpha=0.6)
     plt.tight_layout()
+    plt.xscale('log', base=10)
+    plt.yscale('log', base=10)
+
     plt.savefig("benchmark_results_avg_times.png")
 
 
 def plot_statistics_for_core(results, combinations, nr_cores):
     if results:
-        records = list(set([record for core, record, n in combinations]))
+        records = sorted(list(set([record for core, record, n in combinations])))
 
         min_times = []
         max_times = []
@@ -202,6 +181,8 @@ def plot_statistics_for_core(results, combinations, nr_cores):
         ax.legend()
         ax.grid(True, linestyle='--', alpha=0.6)
         plt.tight_layout()
+        plt.xscale('log', base=10)
+        plt.yscale('log', base=10)
 
         plt.savefig(f"benchmark_for_{nr_cores}_cores.png")
 
@@ -222,41 +203,44 @@ def update_benchmark_log_handler(run_id):
 
 
 @pytest.mark.parametrize("nr_of_cores, nr_of_records, n", cfg.benchmark_testcase_parameters())
-def test_run_single_benchmark_case(tm1_connection, nr_of_cores, nr_of_records, n):
+def test_run_single_benchmark_case(tm1_connection_factory, nr_of_cores, nr_of_records, n):
+    with tm1_connection_factory("testbench") as conn:
 
-    update_benchmark_log_handler(f"{nr_of_cores}_{nr_of_records}_{n}")
+        update_benchmark_log_handler(f"{nr_of_cores}_{nr_of_records}_{n}")
 
-    fix_kwargs = {
-        "tm1_service": tm1_connection,
-        "data_mdx_template": cfg.DATA_MDX_TEMPLATE,
-        "skip_zeros": True,
-        "skip_consolidated_cells": True,
-        "target_cube_name": cfg.TARGET_CUBE_NAME,
-        "mapping_steps": cfg.MAPPING_STEPS,
-        "clear_target": True,
-        "logging_level": "DEBUG",
-        "param_set_mdx_list": cfg.PARAM_SET_MDX_LIST,
-        "clear_param_templates": cfg.CLEAR_PARAM_TEMPLATES,
-        "target_dim_mapping": cfg.TARGET_DIM_MAPPING
-    }
-    basic_logger.info(f"Execution starting with {nr_of_cores} workers")
+        fix_kwargs = {
+            "tm1_service": conn,
+            "data_mdx_template": cfg.DATA_MDX_TEMPLATE,
+            "skip_zeros": True,
+            "skip_consolidated_cells": True,
+            "target_cube_name": cfg.TARGET_CUBE_NAME,
+            "mapping_steps": cfg.MAPPING_STEPS,
+            "clear_target": True,
+            "logging_level": "DEBUG",
+            "param_set_mdx_list": cfg.PARAM_SET_MDX_LIST,
+            "clear_param_templates": cfg.CLEAR_PARAM_TEMPLATES,
+            "target_dim_mapping": cfg.TARGET_DIM_MAPPING
+        }
+        basic_logger.info(f"Execution starting with {nr_of_cores} workers")
 
-    envname = 'bedrock_test_' + str(nr_of_records)
-    schemaloader = tm1_bench.SchemaLoader(cfg.SCHEMA_DIR, envname)
-    schema = schemaloader.load_schema()
-    default_df_to_cube_kwargs = schema['config']['df_to_cube_default_kwargs']
+        envname = 'bedrock_test_' + str(nr_of_records)
+        schemaloader = tm1_bench.SchemaLoader(cfg.SCHEMA_DIR, envname)
+        schema = schemaloader.load_schema()
+        default_df_to_cube_kwargs = schema['config']['df_to_cube_default_kwargs']
+        try:
+            tm1_bench.build_model(tm1=conn, schema=schema, env=envname, system_defaults=default_df_to_cube_kwargs)
 
-    tm1_bench.build_model(tm1=tm1_connection, schema=schema, env=envname, system_defaults=default_df_to_cube_kwargs)
+            asyncio.run(bedrock.async_executor(
+                data_copy_function=bedrock.data_copy_intercube,
+                max_workers=nr_of_cores,
+                df_verbose_logging=False,
+                **fix_kwargs
+            ))
+        finally:
+            print("exec ended")
+            tm1_bench.destroy_model(tm1=conn, schema=schema)
 
-    asyncio.run(bedrock.async_executor(
-        data_copy_function=bedrock.data_copy_intercube,
-        max_workers=nr_of_cores,
-        **fix_kwargs
-    ))
-
-    tm1_bench.destroy_model(tm1=tm1_connection, schema=schema)
-
-    basic_logger.info(f"Execution ended with {nr_of_cores} workers")
+        basic_logger.info(f"Execution ended with {nr_of_cores} workers")
 
 
 """
