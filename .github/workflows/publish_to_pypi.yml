@@ -22,7 +22,7 @@ jobs:
          pip install build twine
 
       #- name: Update version with release tag
-      #  run: VERSION="${{ github.event.release.tag_name }}" python -c "from airflow_provider_tm1.__init__ import update_version; update_version()"
+      #  run: VERSION="${{ github.event.release.tag_name }}" python -c "from TM1_bedrock_py.__init__ import update_version; update_version()"
 
       - name: Build
         run: python -m build
