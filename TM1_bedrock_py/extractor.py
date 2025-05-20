@@ -231,6 +231,7 @@ def generate_dataframe_for_mapping_info(
         if found_key
         else None
     )
+    utility.dataframe_verbose_logger(mapping_info["mapping_df"], "generate_dataframe_for_mapping_info", **kwargs)
 
 
 @utility.log_exec_metrics

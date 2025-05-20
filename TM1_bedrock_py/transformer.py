@@ -570,7 +570,7 @@ def dataframe_execute_mappings(
         data_df: DataFrame,
         mapping_steps: List[Dict],
         shared_mapping_df: Optional[DataFrame] = None,
-        **_kwargs
+        **kwargs
 ) -> DataFrame:
     """
     Execute a series of mapping steps on data_df.
@@ -635,10 +635,13 @@ def dataframe_execute_mappings(
         "map_and_replace": __apply_map_and_replace,
         "map_and_join": __apply_map_and_join,
     }
+    i = 1
     for step in mapping_steps:
         method = step["method"]
         if method in method_handlers:
             data_df = method_handlers[method](data_df, step, shared_mapping_df)
+            utility.dataframe_verbose_logger(data_df, f"step_{i}_result", **kwargs)
+            i += 1
         else:
             raise ValueError(f"Unsupported mapping method: {method}")
 
