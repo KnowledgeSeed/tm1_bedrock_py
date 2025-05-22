@@ -100,7 +100,7 @@ def test_async_data_copy_intercube(
         start_time_total = time.time()
         print('Start time: ')
         print(time.strftime('{%Y%m%d %H:%M}', start_time))
-        asyncio.run(bedrock.async_executor(
+        asyncio.run(bedrock.async_executor_tm1(
             data_copy_function=bedrock.data_copy_intercube,
             tm1_service=conn,
             data_mdx_template=data_mdx_template,
@@ -132,7 +132,7 @@ def test_async_data_copy_intercube_multi_parameter(
         start_time_total = time.time()
         print('Start time: ')
         print(time.strftime('{%Y%m%d %H:%M}', start_time))
-        asyncio.run(bedrock.async_executor(
+        asyncio.run(bedrock.async_executor_tm1(
             data_copy_function=bedrock.data_copy_intercube,
             tm1_service=conn,
             data_mdx_template=data_mdx_template,

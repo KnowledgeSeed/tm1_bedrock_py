@@ -566,7 +566,7 @@ def data_copy(
 
 @utility.log_async_benchmark_metrics
 @utility.log_async_exec_metrics
-async def async_executor(
+async def async_executor_tm1(
         tm1_service: Any,
         param_set_mdx_list: List[str],
         data_mdx_template: str,
@@ -607,7 +607,7 @@ async def async_executor(
         source_cube_name = utility._get_cube_name_from_mdx(data_mdx_template)
         if source_cube_name:
             data_metadata = utility.TM1CubeObjectMetadata.collect(
-                tm1_service=target_tm1_service,
+                tm1_service=tm1_service,
                 cube_name=source_cube_name,
                 metadata_function=kwargs.get("data_metadata_function"),
                 collect_dim_element_identifiers=kwargs.get("ignore_missing_elements", False),
@@ -980,3 +980,122 @@ def load_tm1_cube_to_sql_table(
                           **kwargs)
 
     basic_logger.info("Execution ended.")
+
+
+@utility.log_async_benchmark_metrics
+@utility.log_async_exec_metrics
+async def async_executor_tm1_to_sql(
+        tm1_service: Any,
+        target_table_name: str,
+        sql_engine: Any,
+        param_set_mdx_list: List[str],
+        data_mdx_template: str,
+        shared_mapping: Optional[Dict] = None,
+        mapping_steps: Optional[List[Dict]] = None,
+        data_copy_function: Callable = data_copy,
+        clear_target: Optional[bool] = False,
+        sql_delete_statement: Optional[List[str]] = None,
+        max_workers: int = 8,
+        **kwargs):
+
+    param_names = utility.__get_dimensions_from_set_mdx_list(param_set_mdx_list)
+    param_values = utility.__generate_element_lists_from_set_mdx_list(tm1_service, param_set_mdx_list)
+    param_tuples = utility.__generate_cartesian_product(param_values)
+    basic_logger.info(f"Parameter tuples ready. Count: {len(param_tuples)}")
+
+    target_metadata_provider = None
+    data_metadata_provider = None
+
+    if clear_target:
+        loader.clear_table(engine=sql_engine,
+                           table_name=target_table_name,
+                           delete_statement=sql_delete_statement)
+
+    if data_copy_function in (load_tm1_cube_to_sql_table):
+        source_cube_name = utility._get_cube_name_from_mdx(data_mdx_template)
+        if source_cube_name:
+            data_metadata = utility.TM1CubeObjectMetadata.collect(
+                tm1_service=tm1_service,
+                cube_name=source_cube_name,
+                metadata_function=kwargs.get("data_metadata_function"),
+                collect_dim_element_identifiers=kwargs.get("ignore_missing_elements", False),
+                **kwargs
+            )
+            def get_data_metadata(**_kwargs): return data_metadata
+            data_metadata_provider = get_data_metadata
+        else:
+            basic_logger.warning(
+                f"Could not determine cube name from MDX, skipping metadata collection.")
+
+    if mapping_steps:
+        extractor.generate_step_specific_mapping_dataframes(
+            mapping_steps=mapping_steps,
+            tm1_service=tm1_service,
+            **kwargs
+        )
+
+    if shared_mapping:
+        extractor.generate_dataframe_for_mapping_info(
+            mapping_info=shared_mapping,
+            tm1_service=tm1_service,
+            **kwargs
+        )
+
+    def wrapper(
+        _tm1_service: Any,
+        _sql_engine: Any,
+        _target_table_name: str,
+        _data_mdx: str,
+        _mapping_steps: Optional[List[Dict]],
+        _shared_mapping: Optional[Dict],
+        _data_metadata_func: Optional[Callable],
+        _target_metadata_func: Optional[Callable],
+        _execution_id: int,
+        _executor_kwargs: Dict
+    ):
+        try:
+            copy_func_kwargs = {
+                **_executor_kwargs,
+                "tm1_service": _tm1_service,
+                "data_mdx": _data_mdx,
+                "shared_mapping": _shared_mapping,
+                "mapping_steps": _mapping_steps,
+                "clear_target": False,
+                "_execution_id": _execution_id,
+                "async_write": False
+            }
+
+            if _data_metadata_func:
+                copy_func_kwargs["data_metadata_function"] = _data_metadata_func
+            data_copy_function(**copy_func_kwargs)
+
+        except Exception as e:
+            basic_logger.error(
+                f"Error during execution {_execution_id} with MDX: {_data_mdx}. Error: {e}", exc_info=True)
+            return e
+
+    loop = asyncio.get_event_loop()
+    futures = []
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        for i, current_tuple in enumerate(param_tuples):
+            template_kwargs = {
+                param_name: current_tuple[j]
+                for j, param_name in enumerate(param_names)
+            }
+            data_mdx = Template(data_mdx_template).substitute(**template_kwargs)
+
+            futures.append(loop.run_in_executor(
+                executor, wrapper,
+                tm1_service, sql_engine,
+                target_table_name, data_mdx,
+                mapping_steps, shared_mapping,
+                data_metadata_provider, target_metadata_provider,
+                i, kwargs
+            ))
+
+        results = await asyncio.gather(*futures, return_exceptions=True)
+
+        for i, result in enumerate(results):
+            if isinstance(result, Exception):
+                basic_logger.error(f"Task {i} failed with exception: {result}")

@@ -230,7 +230,7 @@ def test_run_single_benchmark_case(tm1_connection_factory, nr_of_cores, nr_of_re
         try:
             tm1_bench.build_model(tm1=conn, schema=schema, env=envname, system_defaults=default_df_to_cube_kwargs)
 
-            asyncio.run(bedrock.async_executor(
+            asyncio.run(bedrock.async_executor_tm1(
                 data_copy_function=bedrock.data_copy_intercube,
                 max_workers=nr_of_cores,
                 df_verbose_logging=False,
@@ -265,7 +265,7 @@ def test_trace_malloc(tm1_connection, param_set_mdx_list, data_mdx_template,
 
     tracemalloc.start()
 
-    asyncio.run(bedrock.async_executor(
+    asyncio.run(bedrock.async_executor_tm1(
         data_copy_function=bedrock.data_copy_intercube,
         max_workers=max_workers,
         **fix_kwargs
