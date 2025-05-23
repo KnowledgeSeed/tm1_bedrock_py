@@ -635,13 +635,11 @@ def dataframe_execute_mappings(
         "map_and_replace": __apply_map_and_replace,
         "map_and_join": __apply_map_and_join,
     }
-    i = 1
-    for step in mapping_steps:
+    for i, step in enumerate(mapping_steps):
         method = step["method"]
         if method in method_handlers:
             data_df = method_handlers[method](data_df, step, shared_mapping_df)
-            utility.dataframe_verbose_logger(data_df, f"step_{i}_result", **kwargs)
-            i += 1
+            utility.dataframe_verbose_logger(data_df, f"mapping_step_{i+1}_result", **kwargs)
         else:
             raise ValueError(f"Unsupported mapping method: {method}")
 

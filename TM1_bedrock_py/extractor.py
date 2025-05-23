@@ -217,6 +217,7 @@ MAPPING_HANDLERS = {
 @utility.log_exec_metrics
 def generate_dataframe_for_mapping_info(
         mapping_info: Dict[str, Any],
+        step_specific_string: Optional[str] = "shared",
         **kwargs
 ) -> None:
     """
@@ -231,7 +232,7 @@ def generate_dataframe_for_mapping_info(
         if found_key
         else None
     )
-    utility.dataframe_verbose_logger(mapping_info["mapping_df"], "generate_dataframe_for_mapping_info", **kwargs)
+    utility.dataframe_verbose_logger(mapping_info["mapping_df"], f"mapping_step_{step_specific_string}", **kwargs)
 
 
 @utility.log_exec_metrics
@@ -242,8 +243,8 @@ def generate_step_specific_mapping_dataframes(
     """
     Mutates each step in mapping_steps by assigning 'mapping_df'.
     """
-    for step in mapping_steps:
-        generate_dataframe_for_mapping_info(step, **kwargs)
+    for i, step in enumerate(mapping_steps):
+        generate_dataframe_for_mapping_info(mapping_info=step, step_specific_string=str(i+1), **kwargs)
 
 
 # ------------------------------------------------------------------------------------------------------------

@@ -22,10 +22,9 @@ from TM1_bedrock_py import exec_metrics_logger, basic_logger, benchmark_metrics_
 # ------------------------------------------------------------------------------------------------------------
 
 
-def dataframe_verbose_logger(df: DataFrame, step_number: str = None, output_dir="logs",
+def dataframe_verbose_logger(df: DataFrame, step_number: str = None, output_dir="../logs/dataframe_logs",
                              df_verbose_logging: bool = False, **_kwargs):
     if df_verbose_logging and df is not None:
-        output_dir = "../logs/df_test_log"
         os.makedirs(output_dir, exist_ok=True)
 
         thread_id = threading.get_ident()
