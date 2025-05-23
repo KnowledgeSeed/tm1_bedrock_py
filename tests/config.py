@@ -155,7 +155,7 @@ def sql_engine():
         basic_logger.debug("SQL engine successfully created")
         yield engine
 
-    except ArgumentError:
+    except (ArgumentError, AttributeError):
         try:
             config = configparser.ConfigParser()
             config.read(Path(__file__).parent.joinpath('config.ini'))

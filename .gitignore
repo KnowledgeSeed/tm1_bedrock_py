@@ -32,3 +32,4 @@ logs
 # Tests
 tests/*.png
 tests/config.ini
+.env
