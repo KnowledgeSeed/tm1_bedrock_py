@@ -1,4 +1,3 @@
-import asyncio
 import os
 import re
 import functools
@@ -21,17 +20,21 @@ from TM1_bedrock_py import exec_metrics_logger, basic_logger, benchmark_metrics_
 # Utility: Logging helper functions
 # ------------------------------------------------------------------------------------------------------------
 
+def generate_valid_file_path(output_dir: str, filename: str):
+    os.makedirs(output_dir, exist_ok=True)
+    filepath = os.path.join(output_dir, filename)
+
+    return filepath
+
 
 def dataframe_verbose_logger(df: DataFrame, step_number: str = None, output_dir="../logs/dataframe_logs",
                              df_verbose_logging: bool = False, **_kwargs):
     if df_verbose_logging and df is not None:
-        os.makedirs(output_dir, exist_ok=True)
-
         thread_id = threading.get_ident()
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
         filename = f"{step_number}_{thread_id}_{timestamp}.csv"
-        filepath = os.path.join(output_dir, filename)
+        filepath = generate_valid_file_path(output_dir, filename)
 
         df.to_csv(path_or_buf=filepath, index=False)
         basic_logger.debug(f"DataFrame logged to {filepath}")

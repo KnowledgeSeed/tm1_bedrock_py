@@ -150,3 +150,26 @@ def test_async_data_copy_intercube_multi_parameter(
         ))
         run_time = time.time() - start_time_total
         print('Time: {:.4f} sec'.format(run_time))
+
+
+# ------------------------------------------------------------------------------------------------------------
+# TM1 <-> CSV data copy integration tests
+# ------------------------------------------------------------------------------------------------------------
+
+@parametrize_from_file
+def test_load_tm1_cube_to_csv_file(
+        tm1_connection_factory, base_data_mdx, shared_mapping, mapping_steps
+):
+    with tm1_connection_factory("tm1srv") as conn:
+        bedrock.load_tm1_cube_to_csv_file(
+            tm1_service=conn,
+            shared_mapping=shared_mapping,
+            data_mdx=base_data_mdx,
+            mapping_steps=mapping_steps,
+            clear_target=True,
+            target_clear_set_mdx_list=["{[Versions].[Versions].[DataCopy Integration Test]}"],
+            skip_zeros=True,
+            async_write=True,
+            logging_level="DEBUG",
+            _execution_id=1
+        )

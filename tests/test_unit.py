@@ -614,6 +614,8 @@ def test_dataframe_to_csv(data_dataframe, expected_dataframe):
         Deletes CSV file after assertion.
     """
     csv_file_name = "sample_data.csv"
+    output_dir = "./dataframe_to_csv"
+    csv_file_path = f"{output_dir}/{csv_file_name}"
     try:
         data_dataframe["Price"] = [float(x) for x in data_dataframe["Price"]]
         data_dataframe["Quantity"] = [float(x) for x in data_dataframe["Quantity"]]
@@ -626,7 +628,7 @@ def test_dataframe_to_csv(data_dataframe, expected_dataframe):
 
         loader.dataframe_to_csv(dataframe=data_df, csv_file_name=csv_file_name, decimal=".", mode="w")
         df = extractor.csv_to_dataframe(
-            csv_file_path=f"./{csv_file_name}",
+            csv_file_path=csv_file_path,
             decimal=".",
             dtype=dtype_mapping,
             keep_default_na=False,
@@ -638,8 +640,9 @@ def test_dataframe_to_csv(data_dataframe, expected_dataframe):
         pd.testing.assert_frame_equal(df, expected_df, check_dtype=True)
 
     finally:
-        if os.path.exists(csv_file_name):
-            os.remove(csv_file_name)
+        if os.path.exists(csv_file_path):
+            os.remove(csv_file_path)
+            os.rmdir(output_dir)
 
 
 @parametrize_from_file
@@ -656,7 +659,7 @@ def test_dataframe_to_csv_build_dataframe_form_mdx(tm1_connection_factory, data_
 
             transformer.normalize_dataframe(tm1_service=conn, dataframe=expected_df, mdx=data_mdx)
 
-            loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, decimal=".", mode="a")
+            loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, csv_output_dir="./", decimal=".", mode="a")
             df = extractor.csv_to_dataframe(csv_file_path=f"./{csv_file_name}", decimal=".", dtype=dtype_mapping)
             pd.testing.assert_frame_equal(df, expected_df)
 
@@ -677,7 +680,7 @@ def test_dataframe_to_csv_build_dataframe_form_mdx_with_param_optimisation(tm1_c
             expected_df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=data_mdx)
             dtype_mapping = expected_df.dtypes.apply(lambda x: x.name).to_dict()
 
-            loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, decimal=".", mode="w")
+            loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, csv_output_dir="./", decimal=".", mode="w")
             df = extractor.csv_to_dataframe(
                     csv_file_path=f"./{csv_file_name}",
                     decimal=".",
@@ -706,7 +709,7 @@ def test_dataframe_to_csv_build_dataframe_form_mdx_fail(tm1_connection_factory, 
             try:
                 expected_df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=data_mdx)
 
-                loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, decimal=".", mode="w")
+                loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, csv_output_dir="./", decimal=".", mode="w")
                 df = extractor.csv_to_dataframe(csv_file_path=f"./{csv_file_name}", decimal=".")
 
                 pd.testing.assert_frame_equal(df, expected_df)

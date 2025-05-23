@@ -2,9 +2,10 @@
 This file is a collection of upgraded TM1 bedrock functionality, ported to python / pandas with the help of TM1py.
 """
 import asyncio
+from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 from string import Template
-from typing import Callable, List, Dict, Optional, Any
+from typing import Callable, List, Dict, Optional, Any, Sequence, Hashable, Mapping, Iterable
 from pandas import DataFrame
 
 from TM1_bedrock_py import utility, transformer, loader, extractor, basic_logger
@@ -714,6 +715,10 @@ async def async_executor_tm1(
                 basic_logger.error(f"Task {i} failed with exception: {result}")
 
 
+# ------------------------------------------------------------------------------------------------------------
+# TM1 <-> SQL data copy functions
+# ------------------------------------------------------------------------------------------------------------
+
 @utility.log_exec_metrics
 def load_sql_data_to_tm1_cube(
         target_cube_name: str,
@@ -1112,3 +1117,294 @@ async def async_executor_tm1_to_sql(
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 basic_logger.error(f"Task {i} failed with exception: {result}")
+
+
+# ------------------------------------------------------------------------------------------------------------
+# TM1 <-> CSV data copy functions
+# ------------------------------------------------------------------------------------------------------------
+
+@utility.log_exec_metrics
+def load_csv_data_to_tm1_cube(
+        target_cube_name: str,
+        source_csv_file_path: str,
+        tm1_service: Optional[Any],
+        target_metadata_function: Optional[Callable[..., Any]] = None,
+        mdx_function: Optional[Callable[..., DataFrame]] = None,
+        csv_function: Optional[Callable[..., DataFrame]] = None,
+        csv_column_mapping: Optional[dict] = None,
+        csv_value_column_name: Optional[str] = None,
+        csv_columns_to_keep: Optional[list] = None,
+        delimiter: Optional[str] = None,
+        decimal: Optional[str] = None,
+        dtype: Optional[dict] = None,
+        nrows: Optional[int] = None,
+        chunksize: Optional[int] = None,
+        parse_dates: Optional[bool | Sequence[Hashable]] = None,
+        na_values: Optional[Hashable
+                            | Iterable[Hashable]
+                            | Mapping[Hashable, Iterable[Hashable]]
+                            ] = None,
+        keep_default_na: Optional[bool] = True,
+        low_memory: bool = True,
+        memory_map: bool = True,
+        mapping_steps: Optional[List[Dict]] = None,
+        shared_mapping: Optional[Dict] = None,
+        source_dim_mapping: Optional[dict] = None,
+        related_dimensions: Optional[dict] = None,
+        target_dim_mapping: Optional[dict] = None,
+        value_function: Optional[Callable[..., Any]] = None,
+        drop_other_csv_columns: bool = False,
+        ignore_missing_elements: bool = False,
+        target_clear_set_mdx_list: Optional[List[str]] = None,
+        clear_target: Optional[bool] = False,
+        async_write: bool = False,
+        slice_size_of_dataframe: int = 250000,
+        use_ti: bool = False,
+        use_blob: bool = False,
+        increment: bool = False,
+        sum_numeric_duplicates: bool = True,
+        logging_level: str = "ERROR",
+        _execution_id: int = 0,
+        **kwargs
+) -> None:
+    """
+
+    """
+
+    utility.set_logging_level(logging_level=logging_level)
+    basic_logger.info("Execution started.")
+
+    target_metadata = utility.TM1CubeObjectMetadata.collect(
+        tm1_service=tm1_service,
+        cube_name=target_cube_name,
+        metadata_function=target_metadata_function,
+        collect_dim_element_identifiers=ignore_missing_elements,
+        **kwargs
+    )
+
+    dataframe = extractor.csv_to_dataframe(
+        csv_file_path=source_csv_file_path,
+        sep=delimiter,
+        decimal=decimal,
+        dtype=dtype,
+        nrows=nrows,
+        chunksize=chunksize,
+        parse_dates=parse_dates,
+        na_values=na_values,
+        keep_default_na=keep_default_na,
+        low_memory=low_memory,
+        memory_map=memory_map,
+        **kwargs
+    )
+
+    transformer.normalize_table_source_dataframe(
+        dataframe=dataframe,
+        column_mapping=csv_column_mapping,
+        value_column_name=csv_value_column_name,
+        columns_to_keep=csv_columns_to_keep,
+        drop_other_columns=drop_other_csv_columns,
+    )
+
+    cube_name = target_metadata.get_cube_name()
+
+    if dataframe.empty:
+        if clear_target:
+            loader.clear_cube(tm1_service=tm1_service,
+                              cube_name=cube_name,
+                              clear_set_mdx_list=target_clear_set_mdx_list,
+                              **kwargs)
+        return
+
+    cube_dims = target_metadata.get_cube_dims()
+
+    # transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
+
+    if ignore_missing_elements:
+        transformer.dataframe_itemskip_elements(
+            dataframe=dataframe, check_dfs=target_metadata.get_dimension_check_dfs())
+
+    shared_mapping_df = None
+    if shared_mapping:
+        extractor.generate_dataframe_for_mapping_info(
+            mapping_info=shared_mapping,
+            tm1_service=tm1_service,
+            mdx_function=mdx_function,
+            csv_function=csv_function
+        )
+        shared_mapping_df = shared_mapping["mapping_df"]
+
+    extractor.generate_step_specific_mapping_dataframes(
+        mapping_steps=mapping_steps,
+        tm1_service=tm1_service,
+        mdx_function=mdx_function,
+        csv_function=csv_function
+    )
+
+    initial_row_count = len(dataframe)
+    dataframe = transformer.dataframe_execute_mappings(
+        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df, **kwargs)
+    final_row_count = len(dataframe)
+    if initial_row_count != final_row_count:
+        filtered_count = initial_row_count - final_row_count
+        basic_logger.warning(f"Number of rows filtered out through inner joins: {filtered_count}/{initial_row_count}")
+
+    transformer.dataframe_redimension_and_transform(
+        dataframe=dataframe,
+        source_dim_mapping=source_dim_mapping,
+        related_dimensions=related_dimensions,
+        target_dim_mapping=target_dim_mapping
+    )
+
+    if value_function is not None:
+        transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
+
+    transformer.dataframe_reorder_dimensions(dataframe=dataframe, cube_dimensions=cube_dims)
+
+    if clear_target:
+        loader.clear_cube(tm1_service=tm1_service,
+                          cube_name=cube_name,
+                          clear_set_mdx_list=target_clear_set_mdx_list,
+                          **kwargs)
+
+    loader.dataframe_to_cube(
+        tm1_service=tm1_service,
+        dataframe=dataframe,
+        cube_name=cube_name,
+        cube_dims=cube_dims,
+        async_write=async_write,
+        use_ti=use_ti,
+        increment=increment,
+        use_blob=use_blob,
+        sum_numeric_duplicates=sum_numeric_duplicates,
+        slice_size_of_dataframe=slice_size_of_dataframe
+    )
+
+    basic_logger.info("Execution ended.")
+
+
+@utility.log_exec_metrics
+def load_tm1_cube_to_csv_file(
+        tm1_service: Optional[Any],
+        target_csv_file_name: Optional[str] = None,
+        target_csv_output_dir: Optional[str] = None,
+        csv_function: Optional[Callable[..., DataFrame]] = None,
+        mode: str = "w",
+        chunksize: Optional[int] = None,
+        float_format: Optional[str | Callable] = None,
+        delimiter: Optional[str] = None,
+        decimal: Optional[str] = None,
+        na_rep: Optional[str] = "NULL",
+        compression: Optional[str | dict] = None,
+        index: Optional[bool] = False,
+        data_mdx: Optional[str] = None,
+        mdx_function: Optional[Callable[..., DataFrame]] = None,
+        data_mdx_list: Optional[list[str]] = None,
+        skip_zeros: Optional[bool] = False,
+        skip_consolidated_cells: Optional[bool] = False,
+        skip_rule_derived_cells: Optional[bool] = False,
+        data_metadata_function: Optional[Callable[..., Any]] = None,
+        mapping_steps: Optional[List[Dict]] = None,
+        shared_mapping: Optional[Dict] = None,
+        source_dim_mapping: Optional[dict] = None,
+        related_dimensions: Optional[dict] = None,
+        target_dim_mapping: Optional[dict] = None,
+        value_function: Optional[Callable[..., Any]] = None,
+        clear_source: Optional[bool] = False,
+        source_clear_set_mdx_list: Optional[List[str]] = None,
+        logging_level: str = "ERROR",
+        _execution_id: int = 0,
+        **kwargs
+) -> None:
+    """
+
+    """
+
+    utility.set_logging_level(logging_level=logging_level)
+    basic_logger.info("Execution started.")
+
+    dataframe = extractor.tm1_mdx_to_dataframe(
+        tm1_service=tm1_service,
+        data_mdx=data_mdx,
+        data_mdx_list=data_mdx_list,
+        skip_zeros=skip_zeros,
+        skip_consolidated_cells=skip_consolidated_cells,
+        skip_rule_derived_cells=skip_rule_derived_cells,
+        mdx_function=mdx_function,
+    )
+
+    if dataframe.empty:
+        return
+
+    data_metadata = utility.TM1CubeObjectMetadata.collect(
+        tm1_service=tm1_service, mdx=data_mdx,
+        metadata_function=data_metadata_function,
+        **kwargs)
+
+    transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
+    # transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
+
+    shared_mapping_df = None
+    if shared_mapping:
+        extractor.generate_dataframe_for_mapping_info(
+            mapping_info=shared_mapping,
+            tm1_service=tm1_service,
+            mdx_function=mdx_function,
+            csv_function=csv_function
+        )
+        shared_mapping_df = shared_mapping["mapping_df"]
+
+    extractor.generate_step_specific_mapping_dataframes(
+        mapping_steps=mapping_steps,
+        tm1_service=tm1_service,
+        mdx_function=mdx_function,
+        csv_function=csv_function
+    )
+
+    initial_row_count = len(dataframe)
+    dataframe = transformer.dataframe_execute_mappings(
+        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df, **kwargs)
+    final_row_count = len(dataframe)
+    if initial_row_count != final_row_count:
+        filtered_count = initial_row_count - final_row_count
+        basic_logger.warning(f"Number of rows filtered out through inner joins: {filtered_count}/{initial_row_count}")
+
+    transformer.dataframe_redimension_and_transform(
+        dataframe=dataframe,
+        source_dim_mapping=source_dim_mapping,
+        related_dimensions=related_dimensions,
+        target_dim_mapping=target_dim_mapping
+    )
+
+    if value_function is not None:
+        transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
+
+    if target_csv_file_name is None:
+        data_metadata_query_specific = utility.TM1CubeObjectMetadata.collect(
+            mdx=data_mdx, collect_base_cube_metadata=False)
+        source_cube_name = data_metadata_query_specific.get_cube_name()
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+
+        target_csv_file_name = f"{source_cube_name}_{timestamp}.csv"
+
+    loader.dataframe_to_csv(
+        dataframe=dataframe,
+        csv_file_name=target_csv_file_name,
+        csv_output_dir=target_csv_output_dir,
+        mode=mode,
+        chunsize=chunksize,
+        float_format=float_format,
+        sep=delimiter,
+        decimal=decimal,
+        na_rep=na_rep,
+        compression=compression,
+        index=index,
+        **kwargs
+    )
+
+    if clear_source:
+        loader.clear_cube(tm1_service=tm1_service,
+                          cube_name=data_metadata.get_cube_name(),
+                          clear_set_mdx_list=source_clear_set_mdx_list,
+                          **kwargs)
+
+    basic_logger.info("Execution ended.")

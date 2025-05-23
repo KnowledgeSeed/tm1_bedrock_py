@@ -1,3 +1,4 @@
+import os
 from typing import Callable, List, Optional, Any, Literal
 from TM1py import TM1Service
 from pandas import DataFrame
@@ -225,7 +226,7 @@ def __clear_table_default(
 def dataframe_to_csv(
         dataframe: DataFrame,
         csv_file_name: str,
-        mode: str = "a",
+        csv_output_dir: Optional[str] = None,
         chunksize: Optional[int | None] = None,
         float_format: Optional[str | Callable] = None,
         sep: Optional[str] = None,
@@ -233,12 +234,14 @@ def dataframe_to_csv(
         na_rep: Optional[str] = "NULL",
         compression: Optional[str | dict] = None,
         index: Optional[bool] = False,
+        mode: str = "w",
         **_kwargs
 ) -> None:
     """
       Retrieves a DataFrame by executing the provided SQL function
 
       Args:
+          csv_output_dir:
           dataframe (DataFrame): A DataFrame that is to be written into a CSV file.
           csv_file_name (str): The name of the CSV file that is written into.
           mode : {{'w', 'x', 'a'}}, default 'w'
@@ -266,8 +269,13 @@ def dataframe_to_csv(
     if sep is None:
         sep = utility.get_local_regex_separator()
 
+    if csv_output_dir is None:
+        csv_output_dir = "./dataframe_to_csv"
+
+    filepath = utility.generate_valid_file_path(output_dir=csv_output_dir, filename=csv_file_name)
+
     dataframe.to_csv(
-        path_or_buf=csv_file_name,
+        path_or_buf=filepath,
         mode=mode,
         chunksize=chunksize,
         float_format=float_format,
