@@ -33,7 +33,7 @@ setup(
     extras_require={
         "airflow": [
             "airflow_provider_tm1>=0.3.0,<1.0.0",
-            "apache_airflow==2.10.5"
+            "apache_airflow>=2.4.0,<=2.10.5"
         ],
         "dev": [
             "parametrize_from_file>=0.20.0,<1.0.0",
