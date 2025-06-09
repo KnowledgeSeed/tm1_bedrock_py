@@ -6,6 +6,7 @@ A python package by Knowledgeseed for TM1 Bedrock.
 * TM1py
 * mdxpy
 * Pandas
+* sqlalchemy
 
 ## Usage
 

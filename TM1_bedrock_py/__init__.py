@@ -31,11 +31,10 @@ benchmark_metrics_logger = logging.getLogger("benchmark_metrics")
 __all__ = ["basic_logger", "exec_metrics_logger", "benchmark_metrics_logger"]
 
 
-def update_version():
+def update_version(new_version):
     version_file = os.path.join(os.path.dirname(__file__), '__init__.py')
     with open(version_file, 'r') as f:
         content = f.read()
-    new_version = os.environ.get('VERSION')
     content_new = re.sub(r'__version__ = ["\'].*["\']', f'__version__ = "{new_version}"', content, 1)
     with open(version_file, 'w') as f:
         f.write(content_new)

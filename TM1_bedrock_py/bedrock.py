@@ -44,6 +44,7 @@ def data_copy_intercube(
         increment: Optional[bool] = False,
         sum_numeric_duplicates: Optional[bool] = True,
         logging_level: Optional[str] = "ERROR",
+        df_verbose_logging: Optional[bool] = False,
         **kwargs
 ) -> None:
     """
@@ -223,6 +224,7 @@ def data_copy_intercube(
     transformer.dataframe_add_column_assign_value(
         dataframe=dataframe, column_value=data_metadata_queryspecific.get_filter_dict(), **kwargs)
     # transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe, **kwargs)
+    utility.dataframe_verbose_logger(dataframe, "start_data_copy_intercube", df_verbose_logging=df_verbose_logging)
 
     if ignore_missing_elements:
         transformer.dataframe_itemskip_elements(
@@ -237,6 +239,7 @@ def data_copy_intercube(
             sql_engine=sql_engine,
             sql_function=sql_function,
             csv_function=csv_function,
+            df_verbose_logging=df_verbose_logging,
             **kwargs
         )
         shared_mapping_df = shared_mapping["mapping_df"]
@@ -253,11 +256,14 @@ def data_copy_intercube(
 
     initial_row_count = len(dataframe)
     dataframe = transformer.dataframe_execute_mappings(
-        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df, **kwargs)
+        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
+        df_verbose_logging=df_verbose_logging, **kwargs)
     final_row_count = len(dataframe)
-    if initial_row_count != final_row_count:
-        filtered_count = initial_row_count - final_row_count
-        basic_logger.warning(f"Number of rows filtered out through inner joins: {filtered_count}/{initial_row_count}")
+    basic_logger.debug(f"initial row count was: {initial_row_count}, Final row count was: {final_row_count}")
+    if initial_row_count < final_row_count:
+        msg = f"Initial row count: {initial_row_count} does not match Final row count: {final_row_count}"
+        basic_logger.error(msg)
+        raise ValueError(msg)
 
     if dataframe.empty:
         if clear_target:
@@ -286,6 +292,7 @@ def data_copy_intercube(
                           cube_name=target_cube_name,
                           clear_set_mdx_list=target_clear_set_mdx_list,
                           **kwargs)
+    utility.dataframe_verbose_logger(dataframe, "end_data_copy_intercube", df_verbose_logging=df_verbose_logging)
 
     target_cube_dims = target_metadata.get_cube_dims()
     loader.dataframe_to_cube(
@@ -338,6 +345,7 @@ def data_copy(
         increment: bool = False,
         sum_numeric_duplicates: bool = True,
         logging_level: str = "ERROR",
+        df_verbose_logging: Optional[bool] = False,
         **kwargs
 ) -> None:
     """
@@ -492,6 +500,7 @@ def data_copy(
         **kwargs
     )
     # transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe, **kwargs)
+    utility.dataframe_verbose_logger(dataframe, "start_data_copy", df_verbose_logging=df_verbose_logging)
 
     if ignore_missing_elements:
         transformer.dataframe_itemskip_elements(
@@ -506,6 +515,7 @@ def data_copy(
             sql_engine=sql_engine,
             sql_function=sql_function,
             csv_function=csv_function,
+            df_verbose_logging=df_verbose_logging,
             **kwargs
         )
         shared_mapping_df = shared_mapping["mapping_df"]
@@ -524,9 +534,11 @@ def data_copy(
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df, **kwargs)
     final_row_count = len(dataframe)
-    if initial_row_count != final_row_count:
-        filtered_count = initial_row_count - final_row_count
-        basic_logger.warning(f"Number of rows filtered out through inner joins: {filtered_count}/{initial_row_count}")
+    basic_logger.debug(f"initial row count was: {initial_row_count}, Final row count was: {final_row_count}")
+    if initial_row_count < final_row_count:
+        msg = f"Initial row count: {initial_row_count} does not match Final row count: {final_row_count}"
+        basic_logger.error(msg)
+        raise ValueError(msg)
 
     if dataframe.empty:
         if clear_target:
@@ -546,6 +558,7 @@ def data_copy(
                           cube_name=cube_name,
                           clear_set_mdx_list=target_clear_set_mdx_list,
                           **kwargs)
+    utility.dataframe_verbose_logger(dataframe, "end_data_copy", df_verbose_logging=df_verbose_logging)
 
     loader.dataframe_to_cube(
         tm1_service=target_tm1_service,

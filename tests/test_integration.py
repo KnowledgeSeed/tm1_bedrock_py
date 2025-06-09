@@ -85,7 +85,7 @@ def test_data_copy_intercube_for_multiple_steps(
             slice_size_of_dataframe=2,
             use_blob=True,
             logging_level="DEBUG",
-            _execution_id=1
+            df_verbose_logging=False
         )
 
 
@@ -146,7 +146,7 @@ def test_async_data_copy_intercube_multi_parameter(
             param_set_mdx_list=param_set_mdx_list,
             clear_param_templates=clear_param_templates,
             ignore_missing_elements=True,
-            df_verbose_logging=True
+            df_verbose_logging=False
         ))
         run_time = time.time() - start_time_total
         print('Time: {:.4f} sec'.format(run_time))
