@@ -32,7 +32,7 @@ def deserialize_model(dir) -> Model:
 
     # _processes, _process_errors = deserialize_cubes(cubes_dir)
 
-    return Model(cubes=None, dimensions=_dimensions.values(), processes=None, chores=None)
+    return Model(cubes=None, dimensions=_dimensions.values(), processes=_processes.values(), chores=None)
 
 
 def deserialize_processes(process_dir) -> tuple[Dict[str, Process], Dict[str, str]]:
@@ -40,38 +40,41 @@ def deserialize_processes(process_dir) -> tuple[Dict[str, Process], Dict[str, st
     processes: Dict[str, Process] = {}
     process_errors: Dict[str, str] = {}
 
-    process_jsons: Dict[str, object] = {}
-    for file_name in os.listdir(process_dir):
+    files = directory_to_dict(process_dir)
+    for file_name in list(files.keys()):
         file_name_base, dot, file_name_ext = file_name.rpartition('.')
-        if not process_jsons.get(file_name_base):
-            process_jsons[file_name_base] = {}
-        file_path = os.path.join(process_dir, file_name)
-        if file_name.endswith('.json'):
-            with open(file_path, 'r') as file:
+        
+        process_json = None
+        process_ti = None
+        
+        if file_name_ext == 'json':
+            with open(os.path.join(process_dir, file_name), 'r') as file:
                 try:
                     data = file.read()
-                    process_jsons[file_name_base]['process'] = json.loads(data)
+                    process_json = json.loads(data)
                 except Exception as e:
                     process_errors[file_name] = e.__repr__
-        elif file_name.endswith('.ti'):
-            with open(file_path, 'r') as file:
-                data = file.read()
-                process_jsons[file_name_base]['ti'] = TI.from_string(data)
+                finally:
+                    files.pop(file_name, None)
         else:
-            process_errors[file_name] = 'Invalid process or ti file'
-
-    for file_name, process_wrapper in process_jsons.items():
-        process = process_wrapper.get('process')
-        ti = process_wrapper.get('ti')
-        if not process:
-            process_errors[file_name] = 'ti file missing'
-        elif not ti:
-            process_errors[file_name] = 'process file missing'
+            continue
+            
+        ti_file_name = file_name_base + '.ti'
+        if ti_file_name in files:
+            with open(os.path.join(process_dir, ti_file_name), 'r') as file:
+                try:
+                    data = file.read()
+                    process_ti = TI.from_string(data)
+                except Exception as e:
+                    process_errors[file_name_base + '.ti'] = e.__repr__
+            files.pop(ti_file_name, None)
         else:
-            _process = Process(
-                name=process['Name'], hasSecurityAccess=process['HasSecurityAccess'], code_link=process['Code@Code.link'], datasource=None,
-                parameters=process['Parameters'], variables=process['Variables'], ti=ti)
-            processes[process['Name']] = _process
+            process_errors[ti_file_name] = 'ti not found'
+        
+        _process = Process(
+            name=process_json['Name'], hasSecurityAccess=process_json['HasSecurityAccess'], code_link=process_json['Code@Code.link'], datasource=None,
+            parameters=process_json['Parameters'], variables=process_json['Variables'], ti=process_ti)
+        processes[process_json['Name']] = _process
 
     return processes, process_errors
 
@@ -81,82 +84,74 @@ def deserialize_dimensions(dimension_dir) -> tuple[Dict[str, Dimension], Dict[st
     dimensions: Dict[str, Dimension] = {}
     dimension_errors: Dict[str, str] = {}
 
-    dimension_jsons: Dict[str, object] = {}
-    for file_name in os.listdir(dimension_dir):
-        file_path = os.path.join(dimension_dir, file_name)
+    files = directory_to_dict(dimension_dir)
+    for file_name in list(files.keys()):
         file_name_base, dot, file_name_ext = file_name.rpartition('.')
-        if not dimension_jsons.get(file_name_base):
-            dimension_jsons[file_name_base] = {}
-            dimension_jsons[file_name_base]['hiers'] = {}
-
-        if os.path.isfile(file_path):
-            if file_name.endswith('.json'):
-                with open(file_path, 'r') as file:
-                    try:
-                        data = file.read()
-                        dimension_jsons[file_name_base]['dim'] = json.loads(data)
-                    except Exception as e:
-                        dimension_errors[file_name] = e.__repr__
-            else:
-                dimension_errors[file_name] = 'Invalid dimension file'
+        
+        dim_json = None
+        process_ti = None
+        
+        if file_name_ext == 'json':
+            with open(os.path.join(dimension_dir, file_name), 'r') as file:
+                try:
+                    data = file.read()
+                    dim_json = json.loads(data)
+                except Exception as e:
+                    dimension_errors[file_name] = e.__repr__
+                finally:
+                    files.pop(file_name, None)
         else:
-            for hier_file_name in os.listdir(file_path):
+            continue
+
+        _dimension = Dimension(name=dim_json['Name'], hierarchies=[], defaultHierarchy=None)
+
+        hier_dir_name = file_name_base + '.hierarchies'
+        hier_dir_path = file_path = os.path.join(dimension_dir, hier_dir_name)
+        if hier_dir_name in files and os.path.isdir(hier_dir_path):
+            hiers = files.get(hier_dir_name)
+            for hier_file_name in list(hiers.keys()):
                 hier_file_name_base, dot, file_name_ext = hier_file_name.rpartition('.')
-                if not dimension_jsons[file_name_base]['hiers'].get(hier_file_name_base):
-                    dimension_jsons[file_name_base]['hiers'][hier_file_name_base] = {}
-                    dimension_jsons[file_name_base]['hiers'][hier_file_name_base]['subsets'] = {}
-                hier_file_path = os.path.join(file_path, hier_file_name)
-                if os.path.isfile(hier_file_path):
-                    if hier_file_name.endswith('.json'):
-                        with open(hier_file_path, 'r') as file:
-                            try:
-                                data = file.read()
-                                dimension_jsons[file_name_base]['hiers'][hier_file_name_base]['json'] = json.loads(data)
-                            except Exception as e:
-                                dimension_jsons[file_name] = e.__repr__
-                    else:
-                        dimension_errors[file_name] = 'Invalid hier file'
-                else:
-                    for subset_file_name in os.listdir(hier_file_path):
-                        subset_file_name_base, dot, file_name_ext = subset_file_name.rpartition('.')
-                        subset_file_path = os.path.join(hier_file_path, subset_file_name)
-                        if subset_file_name.endswith('.json'):
-                            with open(subset_file_path, 'r') as file:
-                                try:
-                                    data = file.read()
-                                    dimension_jsons[file_name_base]['hiers'][hier_file_name_base]['subsets'][subset_file_name_base] = json.loads(data)
-                                except Exception as e:
-                                    dimension_jsons[file_name] = e.__repr__
-                        else:
-                            dimension_errors[file_name] = 'Invalid subset file'
+                if file_name_ext == 'json':
+                    with open(os.path.join(hier_dir_path, hier_file_name), 'r') as file:
+                        try:
+                            data = file.read()
+                            hier_json = json.loads(data)
+                            _hierarchy = Hierarchy(name=hier_json['Name'], elements=[Element(v) for v in hier_json['Elements']],
+                                   edges=[Element(v) for v in hier_json['Edges']],
+                                   subsets=[]) 
+                            _dimension.hierarchies.append(_hierarchy)
+                            pattern = r"Dimensions\('([^']*)'\)/Hierarchies\('([^']*)'\)"
+                            match = re.search(pattern, dim_json['DefaultHierarchy'])
+                            if match:
+                                dimension, hierarchy = match.groups()
+                                if hierarchy == hier_file_name_base:
+                                    _dimension.defaultHierarchy = _hierarchy
+                        except Exception as e:
+                            dimension_errors[file_name+ '/' + hier_file_name] = e.__repr__
+                        finally:
+                            files.pop(file_name, None)
 
-    for file_name, dim_wrapper in dimension_jsons.items():
-        dim = dim_wrapper.get('dim')
-        hiers = dim_wrapper.get('hiers')
-        if not dim:
-            dimension_errors[file_name] = 'dim json file missing'
-        else:
-            _dimension = Dimension(name=dim['Name'], hierarchies=[], defaultHierarchy=None)
-            dimensions[_dimension.name] = _dimension
-            for hier_name, hier_wrapper in hiers.items():
-                hier = hier_wrapper['json']
-                _hierarchy = Hierarchy(name=hier['Name'], elements=[Element(v) for v in hier['Elements']],
-                                   edges=[Element(v) for v in hier['Edges']],
-                                   subsets=[])                         
-                _dimension.hierarchies.append(_hierarchy)
-                pattern = r"Dimensions\('([^']*)'\)/Hierarchies\('([^']*)'\)"
-                match = re.search(pattern, dim['DefaultHierarchy'])
-                if match:
-                    dimension, hierarchy = match.groups()
-                    if hierarchy == hier_name:
-                        _dimension.defaultHierarchy = _hierarchy
-                subsets = hier_wrapper['subsets']
-                for subset_name, subset_wrapper in subsets.items():
-                    _subset = Subset(name=subset_wrapper['Name'],
-                                         expression=subset_wrapper['Expression'])
-                    _hierarchy.subsets.append(_subset)
-                
-    return dimensions, dimension_errors
+                        subset_dir_name = hier_file_name_base + '.subsets'
+                        subset_dir_path = os.path.join(hier_dir_path, subset_dir_name)
+                        if subset_dir_name in hiers and os.path.isdir(subset_dir_path):
+                            subsets = hiers.get(subset_dir_name)
+                            for subset_file_name in list(subsets.keys()):
+                                with open(os.path.join(subset_dir_path, subset_file_name), 'r') as file:
+                                    try:
+                                        data = file.read()
+                                        subset_json = json.loads(data)
+                                        _subset = Subset(name=subset_json['Name'],
+                                                            expression=subset_json['Expression'])
+                                        _hierarchy.subsets.append(_subset)
+                                    except Exception as e:
+                                        dimension_errors[file_name+ '/' + hier_file_name + '/' + subset_file_name] = e.__repr__
+                                    #  finally:
+                                    #     files.pop(file_name, None)
+        dimensions[_dimension.name] = _dimension
+    return dimensions, dimension_errors       
+                                        
+
+
 
 
 def deserialize_cubes(cubes_dir) -> tuple[Dict[str, Cube], Dict[str, str]]:
@@ -231,3 +226,17 @@ def deserialize_cubes(cubes_dir) -> tuple[Dict[str, Cube], Dict[str, str]]:
             #     _cube.views.append(_mdxview)
 
     return rules, process_errors
+
+
+def directory_to_dict(path):
+    """Converts a directory structure to a nested dictionary."""
+    directory_dict = {}
+    for item in os.listdir(path):
+        item_path = os.path.join(path, item)
+        if os.path.isdir(item_path):
+            # If the item is a directory, recursively populate its contents
+            directory_dict[item] = directory_to_dict(item_path)
+        else:
+            # If the item is a file, set it to None or any specific value if needed
+            directory_dict[item] = None
+    return directory_dict
