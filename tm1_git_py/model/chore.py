@@ -34,3 +34,8 @@ class Chore:
             "Frequency": self.frequency,
             "Tasks": self.tasks,
         }, indent='\t')
+    
+    @staticmethod
+    def as_link(name :str):
+        # /chores/chore.json
+        return '/chore/' + name

@@ -20,6 +20,7 @@ class Subset:
             "Expression": self.expression
         }, indent='\t')
 
-    def asLink(self, dimension_name, hierarchy_name):
+    @staticmethod
+    def as_link(dimension_name_base, hierarchy_name_base, name):
         # /dimensions/Dimension_A.hierarchies/Dimension_A.subsets/Subset_A.json
-        return '/dimensions/' + dimension_name + '.hierarchies/' + hierarchy_name + '.subsets/' + self.name + '.json'
+        return '/dimensions/' + dimension_name_base + '.hierarchies/' + hierarchy_name_base + '.subsets/' + name

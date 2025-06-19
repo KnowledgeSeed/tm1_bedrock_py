@@ -44,8 +44,6 @@ class Hierarchy:
         self.subsets = subsets
 
     def as_json(self):
-        for obj in self.elements:
-            print(obj)
         return json.dumps({
             "@type": self.type,
             "Name": self.name,
@@ -57,3 +55,8 @@ class Hierarchy:
     def asLink(self, dimension_name):
         # /dimensions/Dimension_A.hierarchies/Dimension_A.json
         return '/dimensions/' + dimension_name + '.hierarchies/' + self.name + '.json'
+    
+    @staticmethod
+    def as_link(dimension_name_base, name):
+        # /dimensions/Dimension_A.json
+        return '/dimensions/' + dimension_name_base + '.hierarchies/' + name

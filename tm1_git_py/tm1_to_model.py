@@ -165,6 +165,5 @@ def dimensions_to_model(tm1_conn) -> tuple[Dict[str, Dimension], Dict[str, str]]
                                          expression=subset.expression)
                         _hierarchy.subsets.append(_subset)
                     except Exception as e:
-                        print("not found" + str(e))
                         _errors[dim_name] = str(e)
     return _dimensions, _errors

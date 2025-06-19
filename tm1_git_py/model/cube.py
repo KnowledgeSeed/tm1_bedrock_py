@@ -52,10 +52,8 @@ class Cube:
             "Views@Code.links" : [format_url("{}.views/{}.json", self.name, v.name) for v in self.views],
         }, indent='\t')
     
-    def asCubeLink(self):
+    @staticmethod
+    def as_link(name):
         # /cubes/Cube_A.json
-        return '/cubes/' + self.name + '.json'
-    
-    def asRuleLink(self):
         # /cubes/Cube_A.rules
-        return '/cubes/' + self.name + '.rules'
+        return '/cubes/' + name

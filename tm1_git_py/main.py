@@ -36,8 +36,10 @@ def tm1_connection() -> TM1Service:
 
 
 # _model, _errors = tm1_to_model(tm1_conn=tm1_connection())
+# serialize_model(_model, dir='export')
 
 # export_dir(_model=_model, export_dir=os.environ.get("EXPORT_DIR"))
 
-_model = deserialize_model(dir=os.environ.get("EXPORT_DIR"))
+_model, _errors = deserialize_model(dir='export')
 serialize_model(_model, dir='export2')
+

@@ -34,6 +34,7 @@ class Dimension:
             "DefaultHierarchy": format_url("Dimensions('{}')/Hierarchies('{}')", self.name, self.defaultHierarchy.name)
         }, indent='\t')
     
-    def asLink(self):
+    @staticmethod
+    def as_link(name):
         # /dimensions/Dimension_A.json
-        return '/dimensions/' + self.name + '.json'
+        return '/dimensions/' + name
