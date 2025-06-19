@@ -69,7 +69,7 @@ def chores_to_model(tm1_conn) -> tuple[Dict[str, Chore], Dict[str, str]]:
         _chore = Chore(
             name=chore.name,
             start_time=chore.start_time.start_time_string,
-            dst_sensitivity=chore.dst_sensitivity,
+            dst_sensitive=chore.dst_sensitivity,
             active=chore.active,
             execution_mode=chore.execution_mode,
             frequency=chore.frequency.frequency_string,

@@ -46,8 +46,16 @@ class Cube:
     def as_json(self):
         return json.dumps({
             "@type": self.type,
-            "name": self.name,
+            "Name": self.name,
             "Dimensions": [{"@id" : format_url("Dimensions('{}')", d.name)} for d in self.dimensions],
             "Rules@Code.link": format_url("{}.rules", self.name),
             "Views@Code.links" : [format_url("{}.views/{}.json", self.name, v.name) for v in self.views],
         }, indent='\t')
+    
+    def asCubeLink(self):
+        # /cubes/Cube_A.json
+        return '/cubes/' + self.name + '.json'
+    
+    def asRuleLink(self):
+        # /cubes/Cube_A.rules
+        return '/cubes/' + self.name + '.rules'

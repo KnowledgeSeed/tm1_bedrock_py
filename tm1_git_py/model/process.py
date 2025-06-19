@@ -35,3 +35,11 @@ class Process:
             "Parameters": self.parameters,
             "Variables": self.variables
         }, indent='\t')
+    
+    def asProcessLink(self, dimension_name, hierarchy_name):
+        # /processes/Process_A.json
+        return '/processes/' + self.name + ".json"
+    
+    def asTILink(self, dimension_name, hierarchy_name):
+        # /processes/Process_A.ti
+        return '/processes/' + self.name + ".ti"

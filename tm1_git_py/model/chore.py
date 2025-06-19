@@ -13,11 +13,11 @@ import json
 
 
 class Chore:
-    def __init__(self, name, start_time, dst_sensitivity, active, execution_mode, frequency, tasks):
+    def __init__(self, name, start_time, dst_sensitive, active, execution_mode, frequency, tasks):
         self.type = 'Chore'
         self.name = name
         self.start_time = start_time
-        self.dst_sensitivity = dst_sensitivity
+        self.dst_sensitivity = dst_sensitive
         self.active = active
         self.execution_mode = execution_mode
         self.frequency = frequency

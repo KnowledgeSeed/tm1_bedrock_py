@@ -19,7 +19,6 @@ from TM1py.Utils import format_url
 # 	}
 # }
 
-
 class Dimension:
     def __init__(self, name, hierarchies: List[Hierarchy], defaultHierarchy: Hierarchy):
         self.type = 'Dimension'
@@ -34,3 +33,7 @@ class Dimension:
             "Hierarchies@Code.links": [format_url("{}.hierarchies/{}.json", self.name, h) for h in self.hierarchies],
             "DefaultHierarchy": format_url("Dimensions('{}')/Hierarchies('{}')", self.name, self.defaultHierarchy.name)
         }, indent='\t')
+    
+    def asLink(self):
+        # /dimensions/Dimension_A.json
+        return '/dimensions/' + self.name + '.json'

@@ -19,3 +19,7 @@ class Subset:
             "Name": self.name,
             "Expression": self.expression
         }, indent='\t')
+
+    def asLink(self, dimension_name, hierarchy_name):
+        # /dimensions/Dimension_A.hierarchies/Dimension_A.subsets/Subset_A.json
+        return '/dimensions/' + dimension_name + '.hierarchies/' + hierarchy_name + '.subsets/' + self.name + '.json'

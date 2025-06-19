@@ -26,13 +26,50 @@ def deserialize_model(dir) -> Model:
     processes_dir = dir + '/processes'
     chores_dir = dir + '/chores'
 
-    _dimensions, _process_errors = deserialize_dimensions(dimensions_dir)
-
     _processes, _process_errors = deserialize_processes(processes_dir)
 
-    # _processes, _process_errors = deserialize_cubes(cubes_dir)
+    _chores, _chore_errors = deserialize_chores(chores_dir)
+    
+    _dimensions, _process_errors = deserialize_dimensions(dimensions_dir)
 
-    return Model(cubes=None, dimensions=_dimensions.values(), processes=_processes.values(), chores=None)
+    _cubes, _cube_errors = deserialize_cubes(cubes_dir, _dimensions)
+
+    return Model(cubes=_cubes.values(), dimensions=_dimensions.values(), processes=_processes.values(), chores=_chores.values())
+
+def deserialize_chores(chore_dir) -> tuple[Dict[str, Chore], Dict[str, str]]:
+
+    chores: Dict[str, Process] = {}
+    chores_errors: Dict[str, str] = {}
+
+    files = directory_to_dict(chore_dir)
+    for file_name in list(files.keys()):
+        file_name_base, dot, file_name_ext = file_name.rpartition('.')
+        
+        chore_json = None
+        
+        if file_name_ext == 'json':
+            with open(os.path.join(chore_dir, file_name), 'r') as file:
+                try:
+                    data = file.read()
+                    chore_json = json.loads(data)
+                except Exception as e:
+                    chores_errors[file_name] = e.__repr__
+                finally:
+                    files.pop(file_name, None)
+        else:
+            continue
+            
+        _chore = Chore(
+            name=chore_json['Name'],
+            start_time=chore_json['StartTime'],
+            dst_sensitive=chore_json['DSTSensitive'],
+            active=chore_json['Active'],
+            execution_mode=chore_json['ExecutionMode'],
+            frequency=chore_json['Frequency'],
+            tasks=[task for task in chore_json['Tasks']])
+        chores[chore_json['Name']] = _chore
+
+    return chores, chores_errors
 
 
 def deserialize_processes(process_dir) -> tuple[Dict[str, Process], Dict[str, str]]:
@@ -150,82 +187,164 @@ def deserialize_dimensions(dimension_dir) -> tuple[Dict[str, Dimension], Dict[st
         dimensions[_dimension.name] = _dimension
     return dimensions, dimension_errors       
                                         
+def deserialize_cubes(cubes_dir, _dimensions: Dict[str, Dimension]) -> tuple[Dict[str, Cube], Dict[str, str]]:
 
-
-
-
-def deserialize_cubes(cubes_dir) -> tuple[Dict[str, Cube], Dict[str, str]]:
-
-    cube_errors: Dict[str, str] = {}
     cubes: Dict[str, Cube] = {}
+    cube_errors: Dict[str, str] = {}
 
-    cubes_json = {}
-    for file_name in os.listdir(cubes_dir):
+    files = directory_to_dict(cubes_dir)
+    for file_name in list(files.keys()):
         file_name_base, dot, file_name_ext = file_name.rpartition('.')
-        if not cubes_json.get(file_name_base):
-            cubes_json[file_name_base] = {}
-            cubes_json[file_name_base]['views'] = {}
-        file_path = os.path.join(cubes_dir, file_name)
-        if os.path.isfile(file_path):
-            if file_name.endswith('.json'):
-                with open(file_path, 'r') as file:
-                    try:
-                        data = file.read()
-                        cubes_json[file_name_base]['cube'] = json.loads(data)
-                    except Exception as e:
-                        cube_errors[file_name] = e.__repr__
-            elif file_name.endswith('.rules'):
-                with open(file_path, 'r') as file:
-                    try:
-                        data = file.read()
-                        cubes_json[file_name_base]['rule'] = data
-                    except Exception as e:
-                        cube_errors[file_name] = e.__repr__
-            else:
-                cube_errors[file_name] = 'Invalid cube or rule file'
-        elif os.path.isdir(file_path):
-            for view_file_name in os.listdir(file_path):
-                view_file_name_base, dot, file_name_ext = view_file_name.rpartition(
-                    '.')
-                if not cubes_json[file_name_base]['views'].get(view_file_name_base):
-                    cubes_json[file_name_base]['views'][view_file_name_base] = {}
-                view_file_path = os.path.join(file_path, view_file_name)
-                if view_file_name.endswith('.json'):
-                    with open(view_file_path, 'r') as file:
+        
+        cube_json = None
+        rule = None
+        
+        if file_name_ext == 'json':
+            with open(os.path.join(cubes_dir, file_name), 'r') as file:
+                try:
+                    data = file.read()
+                    cube_json = json.loads(data)
+                except Exception as e:
+                    cube_errors[file_name] = e.__repr__
+                finally:
+                    files.pop(file_name, None)
+        else:
+            continue
+
+        rule_file_name = file_name_base + '.rules'
+        if rule_file_name in files:
+            with open(os.path.join(cubes_dir, rule_file_name), 'r') as file:
+                try:
+                    rule = file.read()
+                except Exception as e:
+                    cube_errors[file_name_base + '.rules'] = e.__repr__
+            files.pop(rule_file_name, None)
+        else:
+            cube_errors[rule_file_name] = 'rule not found'
+            continue
+
+        if not rule:
+            cube_errors[rule_file_name] = 'rule cannot be parsed'
+
+        _cube = Cube(name=cube_json['Name'], dimensions=[], rule=rule, views=[])
+
+        for dim in cube_json['Dimensions']:
+            pattern = r"Dimensions\('([^']*)'\)"
+            match = re.search(pattern, dim['@id'])
+            if match:
+                dimension = match.groups()
+                _dimension = _dimensions.get(dimension[0])
+                if _dimension:
+                    _cube.dimensions.append(_dimension)
+        
+
+        view_dir_name = file_name_base + '.views'
+        view_dir_path = file_path = os.path.join(cubes_dir, view_dir_name)
+        if view_dir_name in files and os.path.isdir(view_dir_path):
+            views = files.get(view_dir_name)
+            for view_file_name in list(views.keys()):
+                view_file_name_base, dot, file_name_ext = view_file_name.rpartition('.')
+
+                view = None
+                mdx = None
+                if file_name_ext == 'json':
+                    with open(os.path.join(view_dir_path, view_file_name), 'r') as file:
                         try:
                             data = file.read()
-                            cubes_json[file_name_base]['views'][view_file_name_base]['view'] = json.loads(
-                                data)
+                            view = json.loads(data)
                         except Exception as e:
-                            cube_errors[file_name] = e.__repr__
-
-                elif view_file_name.endswith('.mdx'):
-                    with open(view_file_path, 'r') as file:
-                        data = file.read()
-                        cubes_json[file_name_base]['views'][view_file_name_base]['mdx'] = data
+                            cube_errors[file_name_base + '.views/' + view_file_name] = e.__repr__
                 else:
-                    cube_errors[file_name] = 'Invalid view or mdx file'
+                     continue
+                
+                mdx_file_name = view_file_name_base + '.mdx'
+                if mdx_file_name in views:
+                    with open(os.path.join(view_dir_path, mdx_file_name), 'r') as file:
+                        try:
+                            mdx = file.read()
+                        except Exception as e:
+                            cube_errors[file_name_base + '.mdx'] = e.__repr__
+                    files.pop(mdx_file_name, None)
+                else:
+                    cube_errors[mdx_file_name] = 'rule not found'
+                    continue
+                
+                if not mdx:
+                    cube_errors[mdx_file_name] = 'mdx cannot be parsed'
 
-    for file_name, cube_wrapper in cubes_json.items():
+                _mdxview = MDXView(name=view['Name'], mdx=mdx)
+                _cube.views.append(_mdxview)
+        cubes[_cube.name] = _cube
+    return cubes, cube_errors
 
-        cube = cube_wrapper.get('cube')
-        rule = cube_wrapper.get('rule')
-        views = cube_wrapper.get('views')
-        if not cube:
-            cube_errors[file_name] = 'cube file missing'
-        elif not rule:
-            cube_errors[file_name] = 'rule file missing'
-        else:
-            _cube = Cube(name=cube.name, dimensions=[],
-                         rule=cube.rules.body_as_dict['Rules'] if cube.has_rules else None, views=[])
-            # cubes[cube_name] = _cube
-            # for view in views:
-            #     view = view.get('view')
-            #     mdx = view.get('mdx')
-            #     _mdxview = MDXView(name=view.name, mdx=mdx)
-            #     _cube.views.append(_mdxview)
 
-    return rules, process_errors
+    # cubes_json = {}
+    # for file_name in os.listdir(cubes_dir):
+    #     file_name_base, dot, file_name_ext = file_name.rpartition('.')
+    #     if not cubes_json.get(file_name_base):
+    #         cubes_json[file_name_base] = {}
+    #         cubes_json[file_name_base]['views'] = {}
+    #     file_path = os.path.join(cubes_dir, file_name)
+    #     if os.path.isfile(file_path):
+    #         if file_name.endswith('.json'):
+    #             with open(file_path, 'r') as file:
+    #                 try:
+    #                     data = file.read()
+    #                     cubes_json[file_name_base]['cube'] = json.loads(data)
+    #                 except Exception as e:
+    #                     cube_errors[file_name] = e.__repr__
+    #         elif file_name.endswith('.rules'):
+    #             with open(file_path, 'r') as file:
+    #                 try:
+    #                     data = file.read()
+    #                     cubes_json[file_name_base]['rule'] = data
+    #                 except Exception as e:
+    #                     cube_errors[file_name] = e.__repr__
+    #         else:
+    #             cube_errors[file_name] = 'Invalid cube or rule file'
+    #     elif os.path.isdir(file_path):
+    #         for view_file_name in os.listdir(file_path):
+    #             view_file_name_base, dot, file_name_ext = view_file_name.rpartition(
+    #                 '.')
+    #             if not cubes_json[file_name_base]['views'].get(view_file_name_base):
+    #                 cubes_json[file_name_base]['views'][view_file_name_base] = {}
+    #             view_file_path = os.path.join(file_path, view_file_name)
+    #             if view_file_name.endswith('.json'):
+    #                 with open(view_file_path, 'r') as file:
+    #                     try:
+    #                         data = file.read()
+    #                         cubes_json[file_name_base]['views'][view_file_name_base]['view'] = json.loads(
+    #                             data)
+    #                     except Exception as e:
+    #                         cube_errors[file_name] = e.__repr__
+
+    #             elif view_file_name.endswith('.mdx'):
+    #                 with open(view_file_path, 'r') as file:
+    #                     data = file.read()
+    #                     cubes_json[file_name_base]['views'][view_file_name_base]['mdx'] = data
+    #             else:
+    #                 cube_errors[file_name] = 'Invalid view or mdx file'
+
+    # for file_name, cube_wrapper in cubes_json.items():
+
+    #     cube = cube_wrapper.get('cube')
+    #     rule = cube_wrapper.get('rule')
+    #     views = cube_wrapper.get('views')
+    #     if not cube:
+    #         cube_errors[file_name] = 'cube file missing'
+    #     elif not rule:
+    #         cube_errors[file_name] = 'rule file missing'
+    #     else:
+    #         _cube = Cube(name=cube.name, dimensions=[],
+    #                      rule=cube.rules.body_as_dict['Rules'] if cube.has_rules else None, views=[])
+    #         # cubes[cube_name] = _cube
+    #         # for view in views:
+    #         #     view = view.get('view')
+    #         #     mdx = view.get('mdx')
+    #         #     _mdxview = MDXView(name=view.name, mdx=mdx)
+    #         #     _cube.views.append(_mdxview)
+
+    # return rules, process_errors
 
 
 def directory_to_dict(path):

@@ -53,3 +53,7 @@ class Hierarchy:
             "Edges": [obj.__dict__ for obj in self.edges],
             "Subsets@Code.links": [format_url("{}.subsets/{}.json", self.name, s.name) for s in self.subsets]
         }, indent='\t')
+
+    def asLink(self, dimension_name):
+        # /dimensions/Dimension_A.hierarchies/Dimension_A.json
+        return '/dimensions/' + dimension_name + '.hierarchies/' + self.name + '.json'
