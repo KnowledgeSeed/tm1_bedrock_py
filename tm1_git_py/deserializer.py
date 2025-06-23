@@ -235,8 +235,8 @@ def deserialize_cubes(cubes_dir, _dimensions: Dict[str, Dimension]) -> tuple[Dic
         file_name_base, dot, file_name_ext = file_name.rpartition('.')
         cube_link = Cube.as_link(file_name)
 
-        if file_name_ext not in ['json', 'rules']:
-            cube_errors[cube_link] = 'not a dimension json or .hierarchies folder'
+        if file_name_ext not in ['json', 'rules', 'views']:
+            cube_errors[cube_link] = 'not a dimension json or .rules or .views folder'
             continue
         if file_name_ext != 'json':
             continue
