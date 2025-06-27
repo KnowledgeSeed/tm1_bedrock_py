@@ -1,0 +1,30 @@
+{
+  "definitions": {
+    "system_objects": "^zSYS.*",
+    "test_objects": ".*[_-]test[_-].*",
+    "comment_cubes": "Comment By ID"
+  },
+  "cubes": {
+    "rules": [
+      "+*",
+      "-Taxes"
+    ]
+  },
+  "processes": {
+    "rules": [
+      "+*"
+    ]
+  },
+  "dimensions": {
+    "rules": [
+      "+*"
+    ]
+  },
+  "chores": {
+    "rules": [
+      "+*",
+      "-test3*",
+      "-asas"
+    ]
+  }
+}

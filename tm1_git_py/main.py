@@ -21,7 +21,7 @@ from changeset import Changeset
 
 from model.ti import TI
 from tm1_to_model import tm1_to_model
-
+from filter import ModelFilter
 
 def tm1_connection() -> TM1Service:
     """Creates a TM1 connection before tests and closes it after all tests."""
@@ -45,6 +45,26 @@ def tm1_connection() -> TM1Service:
 #_model, _errors = deserialize_model(dir='export')
 #serialize_model(_model, dir='export2')
 
+# def export_filtered_model():
+#     model, errors = deserialize_model(dir='export')
+#     if any(errors.values()):
+#         print("Hibák az export betöltésénél:", errors)
+
+#     model_filter = ModelFilter("tm1project.json")
+#     removal = model_filter.apply(model)
+
+#     def remove_filtered(model: Model, changeset: Changeset) -> Model:
+#         model.cubes = [c for c in model.cubes if c not in changeset.removed_cubes]
+#         model.processes = [p for p in model.processes if p not in changeset.removed_processes]
+#         model.chores = [ch for ch in model.chores if ch not in changeset.removed_chores]
+#         model.dimensions = [d for d in model.dimensions if d not in changeset.removed_dimensions]
+#         return model
+
+#     filtered_model = remove_filtered(model, removal)
+
+#     serialize_model(filtered_model, dir='export3')
+#     print("export3")
+
 def compare_tm1():
     model_from_export, export_errors = deserialize_model(dir='export')
     if any(export_errors.values()):
@@ -53,7 +73,7 @@ def compare_tm1():
     model_from_export2, export_errors = deserialize_model(dir='export2')
     if any(export_errors.values()):
         print(export_errors)
-
+    print("-- comparator --")
     comparator = Comparator()
 
 
@@ -62,5 +82,6 @@ def compare_tm1():
     print(changeset)
 
 compare_tm1()
+#export_filtered_model()
 print("")
 
