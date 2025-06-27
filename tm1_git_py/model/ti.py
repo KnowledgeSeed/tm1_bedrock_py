@@ -18,6 +18,22 @@ class TI:
         else:
             print("Keywords not found")
 
+    def __eq__(self, other):
+        if not isinstance(other, TI):
+            return NotImplemented
+        return self.to_dict() == other.to_dict()
+
+    def __hash__(self):
+        return hash(tuple(sorted(self.to_dict().items())))
+
+    def to_dict(self):
+        return {
+            'prolog_procedure': self.prolog_procedure,
+            'metadata_procedure': self.metadata_procedure,
+            'data_procedure': self.data_procedure,
+            'epilog_procedure': self.epilog_procedure,
+        }
+
     @classmethod
     def from_string(cls, ti):
         return TI(

@@ -1,4 +1,5 @@
 import json
+from typing import Any
 
 # {
 #     "ParentName":"Provider Total",
@@ -12,6 +13,23 @@ class Edge:
         self.componentName = componentName
         self.weight = weight
 
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, Edge):
+            return NotImplemented
+        return self.parent == other.parent and \
+               self.child == other.child and \
+               self.weight == other.weight
+
+    def __hash__(self) -> int:
+        return hash((self.parent, self.child, self.weight))
+    
+    def to_dict(self):
+        return {
+            'parentName': self.parentName,
+            'componentName': self.componentName,
+            'weight': self.weight
+        }
+    
     def as_json(self):
         return json.dumps({
             "ParentName": self.parentName,

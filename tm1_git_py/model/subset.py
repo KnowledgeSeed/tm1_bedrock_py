@@ -1,4 +1,5 @@
 import json
+from typing import Any
 
 # {
 # 	"@type":"Subset",
@@ -19,6 +20,21 @@ class Subset:
             "Name": self.name,
             "Expression": self.expression
         }, indent='\t')
+    
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, Subset):
+            return NotImplemented
+        return self.name == other.name and \
+               self.expression == other.expression
+
+    def __hash__(self) -> int:
+        return hash((self.name, self.expression))
+    
+    def to_dict(self):
+        return {
+            'name': self.name,
+            'expression': self.expression
+        }
 
     @staticmethod
     def as_link(dimension_name_base, hierarchy_name_base, name):

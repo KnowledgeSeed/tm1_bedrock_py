@@ -14,3 +14,11 @@ class Model:
         self.dimensions = dimensions
         self.processes = processes
         self.chores = chores
+
+    def to_dict(self):
+        return {
+            'cubes': [c.to_dict() for c in self.cubes],
+            'dimensions': [d.to_dict() for d in self.dimensions],
+            'processes': [p.to_dict() for p in self.processes],
+            'chores': [c.to_dict() for c in self.chores]
+        }

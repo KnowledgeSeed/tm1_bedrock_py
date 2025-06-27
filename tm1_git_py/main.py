@@ -16,6 +16,8 @@ from model.model import Model
 from model.subset import Subset
 from model.process import Process
 import TM1py
+from comparator import Comparator
+from changeset import Changeset
 
 from model.ti import TI
 from tm1_to_model import tm1_to_model
@@ -31,15 +33,34 @@ def tm1_connection() -> TM1Service:
         password="",
         ssl=os.environ.get("TM1_SSL")
     )
-    # basic_logger.debug("Successfully connected to TM1.")
+    #basic_logger.debug("Successfully connected to TM1.")
     return tm1
 
 
-# _model, _errors = tm1_to_model(tm1_conn=tm1_connection())
-# serialize_model(_model, dir='export')
+#_model, _errors = tm1_to_model(tm1_conn=tm1_connection())
+#serialize_model(_model, dir='export')
 
 # export_dir(_model=_model, export_dir=os.environ.get("EXPORT_DIR"))
 
-_model, _errors = deserialize_model(dir='export')
-serialize_model(_model, dir='export2')
+#_model, _errors = deserialize_model(dir='export')
+#serialize_model(_model, dir='export2')
+
+def compare_tm1():
+    model_from_export, export_errors = deserialize_model(dir='export')
+    if any(export_errors.values()):
+        print(export_errors)
+
+    model_from_export2, export_errors = deserialize_model(dir='export2')
+    if any(export_errors.values()):
+        print(export_errors)
+
+    comparator = Comparator()
+
+
+    changeset = comparator.compare(model_from_export, model_from_export2)
+    
+    print(changeset)
+
+compare_tm1()
+print("")
 

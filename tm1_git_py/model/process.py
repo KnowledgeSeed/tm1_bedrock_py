@@ -1,5 +1,9 @@
 import json
+from typing import Any, List, Dict, TYPE_CHECKING
 
+# Importáljuk a TI osztályt a típus-ellenőrzéshez (type hinting)
+if TYPE_CHECKING:
+    from model.ti import TI 
 # {
 #   "@type":"Process",
 # 	"Name":"airflow_test_success",
@@ -13,7 +17,6 @@ import json
 # 	"Variables":[]
 # }
 
-
 class Process:
     def __init__(self, name, hasSecurityAccess, code_link, datasource, parameters, variables, ti):
         self.type = 'Process'
@@ -24,6 +27,18 @@ class Process:
         self.parameters = parameters
         self.variables = variables
         self.ti = ti
+
+    # def __init__(self, name: str, hasSecurityAccess: bool, parameters: List[Dict], variables: List[Dict], data_source: Dict, ti: 'TI', code_link: str):
+    #     self.name = name
+    #     self.hasSecurityAccess = hasSecurityAccess
+    #     self.parameters = parameters
+    #     self.variables = variables
+    #     self.code_link = code_link
+
+    #     self.data_source_type = data_source.get('Type')
+    #     self.data_source_name = data_source.get('Name')
+
+    #     self.ti = ti
 
     def as_json(self):
         return json.dumps({
@@ -36,6 +51,35 @@ class Process:
             "Variables": self.variables
         }, indent='\t')
     
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, Process):
+            return NotImplemented
+        return self.to_dict() == other.to_dict()
+
+    def __hash__(self) -> int:
+        return hash((
+            self.name,
+            self.hasSecurityAccess,
+            #self.data_source_type,
+            #self.data_source_name,
+            self.datasource,
+            json.dumps(self.parameters, sort_keys=True),
+            json.dumps(self.variables, sort_keys=True),
+            self.ti
+        ))
+
+    def to_dict(self):
+        return {
+            'name': self.name,
+            'has_security_access': self.hasSecurityAccess,
+            #'data_source_type': self.data_source_type,
+            #'data_source_name': self.data_source_name,
+            'datasource' : self.datasource,
+            'parameters': self.parameters,
+            'variables': self.variables,
+            'ti': self.ti.to_dict()
+        }
+
     @staticmethod
     def as_link(name : str):
         # /processes/Process_A.json

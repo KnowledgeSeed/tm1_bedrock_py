@@ -54,7 +54,7 @@ def deserialize_chores(chore_dir) -> tuple[Dict[str, Chore], Dict[str, str]]:
             continue
 
         chore_json = None        
-        with open(os.path.join(chore_dir, file_name), 'r') as file:
+        with open(os.path.join(chore_dir, file_name), 'r', encoding='utf-8') as file:
             try:
                 data = file.read()
                 chore_json = json.loads(data)
@@ -99,7 +99,7 @@ def deserialize_processes(process_dir) -> tuple[Dict[str, Process], Dict[str, st
         process_json = None
         process_ti = None
         
-        with open(os.path.join(process_dir, file_name), 'r') as file:
+        with open(os.path.join(process_dir, file_name), 'r', encoding='utf-8') as file:
             try:
                 data = file.read()
                 process_json = json.loads(data)
@@ -112,7 +112,7 @@ def deserialize_processes(process_dir) -> tuple[Dict[str, Process], Dict[str, st
             process_errors[process_link] = 'related ti not found at ' + Process.as_link(ti_file_name)
             continue
 
-        with open(os.path.join(process_dir, ti_file_name), 'r') as file:
+        with open(os.path.join(process_dir, ti_file_name), 'r', encoding='utf-8') as file:
             try:
                 data = file.read()
                 process_ti = TI.from_string(data)
@@ -151,7 +151,7 @@ def deserialize_dimensions(dimension_dir) -> tuple[Dict[str, Dimension], Dict[st
         files.pop(file_name, None)
         dim_json = None
 
-        with open(os.path.join(dimension_dir, file_name), 'r') as file:
+        with open(os.path.join(dimension_dir, file_name), 'r', encoding='utf-8') as file:
             try:
                 data = file.read()
                 dim_json = json.loads(data)
@@ -186,7 +186,7 @@ def deserialize_dimensions(dimension_dir) -> tuple[Dict[str, Dimension], Dict[st
             hiers.pop(hier_file_name, None)
 
             hier_json = None
-            with open(os.path.join(hier_dir_path, hier_file_name), 'r') as file:
+            with open(os.path.join(hier_dir_path, hier_file_name), 'r', encoding='utf-8') as file:
                 try:
                     data = file.read()
                     hier_json = json.loads(data)
@@ -209,7 +209,7 @@ def deserialize_dimensions(dimension_dir) -> tuple[Dict[str, Dimension], Dict[st
                     subsets = hiers.get(subset_dir_name)
                     for subset_file_name in list(subsets.keys()):
                         subset_link = Subset.as_link(file_name_base, hier_file_name_base, subset_file_name)
-                        with open(os.path.join(subset_dir_path, subset_file_name), 'r') as file:
+                        with open(os.path.join(subset_dir_path, subset_file_name), 'r', encoding='utf-8') as file:
                             try:
                                 data = file.read()
                                 subset_json = json.loads(data)
@@ -235,8 +235,8 @@ def deserialize_cubes(cubes_dir, _dimensions: Dict[str, Dimension]) -> tuple[Dic
         file_name_base, dot, file_name_ext = file_name.rpartition('.')
         cube_link = Cube.as_link(file_name)
 
-        if file_name_ext not in ['json', 'rules']:
-            cube_errors[cube_link] = 'not a dimension json or .hierarchies folder'
+        if file_name_ext not in ['json', 'rules', 'views']:
+            cube_errors[cube_link] = 'not a dimension json or .rules or .views folder'
             continue
         if file_name_ext != 'json':
             continue
@@ -246,7 +246,7 @@ def deserialize_cubes(cubes_dir, _dimensions: Dict[str, Dimension]) -> tuple[Dic
         cube_json = None
         rule = None
         
-        with open(os.path.join(cubes_dir, file_name), 'r') as file:
+        with open(os.path.join(cubes_dir, file_name), 'r', encoding='utf-8') as file:
             try:
                 data = file.read()
                 cube_json = json.loads(data)
@@ -259,7 +259,7 @@ def deserialize_cubes(cubes_dir, _dimensions: Dict[str, Dimension]) -> tuple[Dic
             cube_errors[cube_link] = 'rule not found'
             continue
             
-        with open(os.path.join(cubes_dir, rule_file_name), 'r') as file:
+        with open(os.path.join(cubes_dir, rule_file_name), 'r', encoding='utf-8') as file:
                 try:
                     rule = file.read()
                     files.pop(rule_file_name, None)
@@ -293,7 +293,7 @@ def deserialize_cubes(cubes_dir, _dimensions: Dict[str, Dimension]) -> tuple[Dic
                 view = None
                 mdx = None
                 if file_name_ext == 'json':
-                    with open(os.path.join(view_dir_path, view_file_name), 'r') as file:
+                    with open(os.path.join(view_dir_path, view_file_name), 'r', encoding='utf-8') as file:
                         try:
                             data = file.read()
                             view = json.loads(data)
@@ -304,7 +304,7 @@ def deserialize_cubes(cubes_dir, _dimensions: Dict[str, Dimension]) -> tuple[Dic
                 
                 mdx_file_name = view_file_name_base + '.mdx'
                 if mdx_file_name in views:
-                    with open(os.path.join(view_dir_path, mdx_file_name), 'r') as file:
+                    with open(os.path.join(view_dir_path, mdx_file_name), 'r', encoding='utf-8') as file:
                         try:
                             mdx = file.read()
                         except Exception as e:
