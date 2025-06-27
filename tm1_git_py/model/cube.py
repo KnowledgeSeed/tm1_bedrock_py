@@ -1,5 +1,5 @@
 import json
-from typing import List
+from typing import List, Any
 
 from model.dimension import Dimension
 from model.element import Element
@@ -52,6 +52,42 @@ class Cube:
             "Views@Code.links" : [format_url("{}.views/{}.json", self.name, v.name) for v in self.views],
         }, indent='\t')
     
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, Cube):
+            return NotImplemented
+        
+        if self.name != other.name:
+            return False
+        
+        self_dim_names = sorted([d.name for d in self.dimensions])
+        other_dim_names = sorted([d.name for d in other.dimensions])
+        if self_dim_names != other_dim_names:
+            return False
+
+        if self.rule != other.rule:
+            return False
+
+        if set(self.views) != set(other.views):
+            return False
+            
+        return True
+
+    def __hash__(self) -> int:
+        return hash((
+            self.name,
+            tuple(sorted([d.name for d in self.dimensions])),
+            self.rule,
+            frozenset(self.views)
+        ))
+    
+    def to_dict(self):
+        return {
+            'name': self.name,
+            'dimensions': [d.to_dict() for d in self.dimensions],
+            'rule': self.rule,
+            'views': [v.to_dict() for v in self.views]
+        }
+
     @staticmethod
     def as_link(name):
         # /cubes/Cube_A.json

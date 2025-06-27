@@ -1,5 +1,5 @@
 import json
-from typing import List
+from typing import List, Any
 
 from model.edge import Edge
 from model.element import Element
@@ -51,6 +51,40 @@ class Hierarchy:
             "Edges": [obj.__dict__ for obj in self.edges],
             "Subsets@Code.links": [format_url("{}.subsets/{}.json", self.name, s.name) for s in self.subsets]
         }, indent='\t')
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, Hierarchy):
+            return NotImplemented
+        
+        if self.name != other.name:
+            return False
+        
+        if set(self.elements) != set(other.elements):
+            return False
+
+        if set(self.edges) != set(other.edges):
+            return False
+        
+        if set(self.subsets) != set(other.subsets):
+            return False
+            
+        return True
+
+    def __hash__(self) -> int:
+        return hash((
+            self.name,
+            frozenset(self.elements),
+            frozenset(self.edges),
+            frozenset(self.subsets)
+        ))
+
+    def to_dict(self):
+        return {
+            'name': self.name,
+            'elements': [e.to_dict() for e in self.elements],
+            'edges': [e.to_dict() for e in self.edges],
+            'subsets': [s.to_dict() for s in self.subsets]
+        }
 
     def asLink(self, dimension_name):
         # /dimensions/Dimension_A.hierarchies/Dimension_A.json

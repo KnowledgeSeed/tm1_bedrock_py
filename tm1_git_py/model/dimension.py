@@ -1,5 +1,5 @@
 import json
-from typing import List
+from typing import List, Any
 
 from model.element import Element
 from model.hierarchy import Hierarchy
@@ -34,6 +34,36 @@ class Dimension:
             "DefaultHierarchy": format_url("Dimensions('{}')/Hierarchies('{}')", self.name, self.defaultHierarchy.name)
         }, indent='\t')
     
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, Dimension):
+            return NotImplemented
+        
+        if self.name != other.name:
+            return False
+        
+        if self.defaultHierarchy.name != other.defaultHierarchy.name:
+            return False
+
+        if set(self.hierarchies) != set(other.hierarchies):
+            return False
+            
+        return True
+
+    def __hash__(self) -> int:
+        return hash((
+            self.name,
+            self.defaultHierarchy.name,
+            frozenset(self.hierarchies)
+        ))
+
+    def to_dict(self):
+        return {
+            'name': self.name,
+            'hierarchies': [h.to_dict() for h in self.hierarchies],
+            'defaultHierarchy': self.defaultHierarchy.to_dict()
+        }
+        
+
     @staticmethod
     def as_link(name):
         # /dimensions/Dimension_A.json

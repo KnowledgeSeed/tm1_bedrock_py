@@ -51,7 +51,7 @@ def serialize_dimensions(dimensions: List[Dimension], dim_dir):
                     subset_file.write(_subset.as_json())
             with open(hierarchy_dir + '/' + _hierarchy.name+'.json', 'w', encoding='utf-8') as hierarchy_file:
                 hierarchy_file.write(_hierarchy.as_json())
-        with open(dim_dir + '/' + dim.name+'.json', 'w') as dim_file:
+        with open(dim_dir + '/' + dim.name+'.json', 'w', encoding='utf-8') as dim_file:
             dim_file.write(dim.as_json())
 
 
