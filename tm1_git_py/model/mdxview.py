@@ -9,10 +9,11 @@ from typing import Any
 
 
 class MDXView:
-    def __init__(self, name, mdx):
+    def __init__(self, name, mdx, source_path: str):
         self.type = 'MDXView'
         self.name = name
         self.mdx = mdx
+        self.source_path = source_path
 
     def as_json(self):
         return json.dumps({

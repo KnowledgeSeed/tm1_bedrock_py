@@ -21,7 +21,7 @@ from changeset import Changeset
 
 from model.ti import TI
 from tm1_to_model import tm1_to_model
-from filter import ModelFilter
+from filter import filter
 
 def tm1_connection() -> TM1Service:
     """Creates a TM1 connection before tests and closes it after all tests."""
@@ -45,43 +45,49 @@ def tm1_connection() -> TM1Service:
 #_model, _errors = deserialize_model(dir='export')
 #serialize_model(_model, dir='export2')
 
-# def export_filtered_model():
-#     model, errors = deserialize_model(dir='export')
-#     if any(errors.values()):
-#         print("Hibák az export betöltésénél:", errors)
+# def compare_tm1():
+#     model_from_export, export_errors = deserialize_model(dir='export')
+#     if any(export_errors.values()):
+#         print(export_errors)
 
-#     model_filter = ModelFilter("tm1project.json")
-#     removal = model_filter.apply(model)
-
-#     def remove_filtered(model: Model, changeset: Changeset) -> Model:
-#         model.cubes = [c for c in model.cubes if c not in changeset.removed_cubes]
-#         model.processes = [p for p in model.processes if p not in changeset.removed_processes]
-#         model.chores = [ch for ch in model.chores if ch not in changeset.removed_chores]
-#         model.dimensions = [d for d in model.dimensions if d not in changeset.removed_dimensions]
-#         return model
-
-#     filtered_model = remove_filtered(model, removal)
-
-#     serialize_model(filtered_model, dir='export3')
-#     print("export3")
-
-def compare_tm1():
-    model_from_export, export_errors = deserialize_model(dir='export')
-    if any(export_errors.values()):
-        print(export_errors)
-
-    model_from_export2, export_errors = deserialize_model(dir='export2')
-    if any(export_errors.values()):
-        print(export_errors)
-    print("-- comparator --")
-    comparator = Comparator()
+#     model_from_export2, export_errors = deserialize_model(dir='export2')
+#     if any(export_errors.values()):
+#         print(export_errors)
+#     print("-- comparator --")
+#     comparator = Comparator()
 
 
-    changeset = comparator.compare(model_from_export, model_from_export2)
+#     changeset = comparator.compare(model_from_export, model_from_export2)
     
-    print(changeset)
+#     print(changeset)
 
-compare_tm1()
+# compare_tm1()
 #export_filtered_model()
+def run_filter_and_export():
+    source_directory = 'export'
+    print(f"1. Modell betöltése innen'{source_directory}'")
+    original_model, errors = deserialize_model(dir=source_directory)
+    if errors:
+        print("modell betöltés hiba", errors)
+
+    rules_path = 'filter.txt'
+    filter_rules = []
+    try:
+        with open(rules_path, 'r', encoding='utf-8') as f:
+            filter_rules = [line.strip() for line in f if line.strip() and not line.strip().startswith('#')]
+        print(f"\n2. '{rules_path}' létezik:")
+    except FileNotFoundError:
+        print(f"\n2. nincs: '{rules_path}'")
+
+    print("\n3. Filtering")
+    filtered_model = filter(original_model, filter_rules)
+
+    export_directory = 'export3'
+    print(f"\n4. A filtered modell mentése '{export_directory}'")
+    serialize_model(filtered_model, dir=export_directory)
+
+
+run_filter_and_export()
+
 print("")
 

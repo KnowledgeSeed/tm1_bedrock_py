@@ -9,10 +9,11 @@ from typing import Any
 
 
 class Subset:
-    def __init__(self, name, expression):
+    def __init__(self, name, expression, source_path: str):
         self.type = 'Subset'
         self.name = name
         self.expression = expression
+        self.source_path = source_path
 
     def as_json(self):
         return json.dumps({
