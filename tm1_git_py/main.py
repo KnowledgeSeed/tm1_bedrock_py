@@ -53,41 +53,40 @@ def tm1_connection() -> TM1Service:
 #     model_from_export2, export_errors = deserialize_model(dir='export2')
 #     if any(export_errors.values()):
 #         print(export_errors)
-#     print("-- comparator --")
 #     comparator = Comparator()
 
+#     print("\n--- full ---")
+#     changeset_full = comparator.compare(model_from_export, model_from_export2, mode='full')
+#     print(changeset_full)
 
-#     changeset = comparator.compare(model_from_export, model_from_export2)
-    
-#     print(changeset)
-
+#     print("\n--- add_only ---")
+#     changeset_add_only = comparator.compare(model_from_export, model_from_export2, mode='add_only')
+#     print(changeset_add_only)
 # compare_tm1()
-#export_filtered_model()
-def run_filter_and_export():
-    source_directory = 'export'
-    print(f"1. Modell betöltése innen'{source_directory}'")
-    original_model, errors = deserialize_model(dir=source_directory)
-    if errors:
-        print("modell betöltés hiba", errors)
 
-    rules_path = 'filter.txt'
-    filter_rules = []
-    try:
-        with open(rules_path, 'r', encoding='utf-8') as f:
-            filter_rules = [line.strip() for line in f if line.strip() and not line.strip().startswith('#')]
-        print(f"\n2. '{rules_path}' létezik:")
-    except FileNotFoundError:
-        print(f"\n2. nincs: '{rules_path}'")
+# def run_filter_and_export():
+#     source_directory = 'export'
+#     print(f"1. Modell betöltése innen'{source_directory}'")
+#     original_model, errors = deserialize_model(dir=source_directory)
+#     if errors:
+#         print("modell betöltés hiba", errors)
 
-    print("\n3. Filtering")
-    filtered_model = filter(original_model, filter_rules)
+#     rules_path = 'filter.txt'
+#     filter_rules = []
+#     try:
+#         with open(rules_path, 'r', encoding='utf-8') as f:
+#             filter_rules = [line.strip() for line in f if line.strip() and not line.strip().startswith('#')]
+#         print(f"\n2. '{rules_path}' létezik:")
+#     except FileNotFoundError:
+#         print(f"\n2. nincs: '{rules_path}'")
 
-    export_directory = 'export3'
-    print(f"\n4. A filtered modell mentése '{export_directory}'")
-    serialize_model(filtered_model, dir=export_directory)
+#     print("\n3. Filtering")
+#     filtered_model = filter(original_model, filter_rules)
 
-
-run_filter_and_export()
+#     export_directory = 'export3'
+#     print(f"\n4. A filtered modell mentése '{export_directory}'")
+#     serialize_model(filtered_model, dir=export_directory)
+# run_filter_and_export()
 
 print("")
 

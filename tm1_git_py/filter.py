@@ -5,19 +5,19 @@ from typing import List, Any, Dict, Tuple
 
 from model.model import Model
 
-def _perform_dependency_check(model: Model):
-    kept_dim_names = {d.name for d in model.dimensions}
+# def _perform_dependency_check(model: Model):
+#     kept_dim_names = {d.name for d in model.dimensions}
     
-    final_kept_cubes = []
-    for cube in model.cubes:
-        cube_dim_names = {d.name for d in cube.dimensions}
-        if cube_dim_names.issubset(kept_dim_names):
-            final_kept_cubes.append(cube)
-        else:
-            broken_links = cube_dim_names - kept_dim_names
-            print(f"'{cube.name}' removed, filtered dimenziokra hivatkozik: {list(broken_links)}")
+#     final_kept_cubes = []
+#     for cube in model.cubes:
+#         cube_dim_names = {d.name for d in cube.dimensions}
+#         if cube_dim_names.issubset(kept_dim_names):
+#             final_kept_cubes.append(cube)
+#         else:
+#             broken_links = cube_dim_names - kept_dim_names
+#             print(f"'{cube.name}' removed, filtered dimenziokra hivatkozik: {list(broken_links)}")
     
-    model.cubes = final_kept_cubes
+#     model.cubes = final_kept_cubes
 
 
 def filter(model: Model, filter_rules: List[str]) -> Model:
@@ -60,6 +60,6 @@ def filter(model: Model, filter_rules: List[str]) -> Model:
             getattr(filtered_model, obj_type_list_name).append(obj)
 
 
-    _perform_dependency_check(filtered_model)
+    # _perform_dependency_check(filtered_model)
 
     return filtered_model
