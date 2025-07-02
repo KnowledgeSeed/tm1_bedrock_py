@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 # }
 
 class Process:
-    def __init__(self, name, hasSecurityAccess, code_link, datasource, parameters, variables, ti):
+    def __init__(self, name, hasSecurityAccess, code_link, datasource, parameters, variables, ti, source_path: str):
         self.type = 'Process'
         self.name = name
         self.hasSecurityAccess = hasSecurityAccess
@@ -27,6 +27,7 @@ class Process:
         self.parameters = parameters
         self.variables = variables
         self.ti = ti
+        self.source_path = source_path
 
     # def __init__(self, name: str, hasSecurityAccess: bool, parameters: List[Dict], variables: List[Dict], data_source: Dict, ti: 'TI', code_link: str):
     #     self.name = name

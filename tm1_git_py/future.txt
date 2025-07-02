@@ -1,9 +1,0 @@
-model filter ami filterezi, h mi kell, changesetet ad, (changeset template) imput output: model
-tm1project.json, hierarhi ignore, generic python filtering (gemini rule driven include exclude, ami hierarchy modelben szegmentálni tud)
-+, - generickus, whitecard groupok (regex)
-ruleok preproc, link vizsgálás
-
-utána
-testek
-python CLI tool
-tm1 entity relációk

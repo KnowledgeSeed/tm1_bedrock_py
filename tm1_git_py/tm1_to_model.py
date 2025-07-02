@@ -73,7 +73,8 @@ def chores_to_model(tm1_conn) -> tuple[Dict[str, Chore], Dict[str, str]]:
             active=chore.active,
             execution_mode=chore.execution_mode,
             frequency=chore.frequency.frequency_string,
-            tasks=[task.body_as_dict for task in chore.tasks])
+            tasks=[task.body_as_dict for task in chore.tasks],
+            source_path=os.path.join('chores', f"{chore_name}.json").replace('\\', '/'))
         _chores[chore.name] = _chore
     return _chores, _errors
 
@@ -97,7 +98,8 @@ def procs_to_model(tm1_conn) -> tuple[Dict[str, Process], Dict[str, str]]:
         _process = Process(name=process.name, hasSecurityAccess=process.has_security_access,
                            code_link=process_name + '.ti',
                            datasource='',
-                           parameters=process.parameters, variables=process.variables, ti=_ti)
+                           parameters=process.parameters, variables=process.variables, ti=_ti,
+                           source_path=os.path.join('processes', f"{process_name}.json").replace('\\', '/'))
         _processes[process.name] = _process
     return _processes, _errors
 
@@ -114,7 +116,8 @@ def cubes_to_model(tm1_conn, _dimensions: Dict[str, Dimension]) -> tuple[Dict[st
         cube = tm1_conn.cubes.get(cube_name=cube_name)
 
         _cube = Cube(name=cube_name, dimensions=[],
-                     rule=cube.rules.body_as_dict['Rules'] if cube.has_rules else None, views=[])
+                     rule=cube.rules.body_as_dict['Rules'] if cube.has_rules else None, views=[],
+                     source_path=os.path.join('cubes', f"{cube_name}.json").replace('\\', '/'))
         _cubes[cube_name] = _cube
         if cube.dimensions:
             for dimension in cube.dimensions:
@@ -127,7 +130,8 @@ def cubes_to_model(tm1_conn, _dimensions: Dict[str, Dimension]) -> tuple[Dict[st
         mdxviews = tm1_conn.views.get_all(cube_name=cube_name)[1]
         if mdxviews:
             for view in mdxviews:
-                _mdxview = MDXView(name=view.name, mdx=view.mdx)
+                _mdxview = MDXView(name=view.name, mdx=view.mdx,
+                                   source_path=os.path.join('cubes', f"{cube_name}.views", f"{view.name}.json").replace('\\', '/'))
                 _cube.views.append(_mdxview)
     return _cubes, _errors
 
@@ -143,7 +147,8 @@ def dimensions_to_model(tm1_conn) -> tuple[Dict[str, Dimension], Dict[str, str]]
         dim = tm1_conn.dimensions.get(dimension_name=dim_name)
 
         _dimension = Dimension(name=dim.name, hierarchies=[],
-                               defaultHierarchy=dim.default_hierarchy)
+                               defaultHierarchy=dim.default_hierarchy,
+                               source_path=os.path.join('dimensions', f"{dim_name}.json").replace('\\', '/'))
         _dimensions[dim.name] = _dimension
 
         for hierarchy in dim.hierarchies:
@@ -152,7 +157,8 @@ def dimensions_to_model(tm1_conn) -> tuple[Dict[str, Dimension], Dict[str, str]]
                                              for k, v in hierarchy.elements.items()],
                                    edges=[Edge(k[0], k[1], v)
                                           for k, v in hierarchy.edges.items()],
-                                   subsets=[])
+                                   subsets=[],
+                                   source_path=os.path.join('dimensions', f"{dim_name}.hierarchies", f"{hierarchy.name}.json").replace('\\', '/'))
 
             _dimension.hierarchies.append(_hierarchy)
 
@@ -162,7 +168,8 @@ def dimensions_to_model(tm1_conn) -> tuple[Dict[str, Dimension], Dict[str, str]]
                         subset = tm1_conn.subsets.get(
                             dimension_name=dim_name, subset_name=subset_name)
                         _subset = Subset(name=subset_name,
-                                         expression=subset.expression)
+                                         expression=subset.expression,
+                                         source_path=os.path.join('dimensions', f"{dim_name}.hierarchies", f"{hierarchy.name}.subsets", f"{subset.name}.json").replace('\\', '/'))
                         _hierarchy.subsets.append(_subset)
                     except Exception as e:
                         _errors[dim_name] = str(e)

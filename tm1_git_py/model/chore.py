@@ -14,7 +14,7 @@ from typing import Any
 
 
 class Chore:
-    def __init__(self, name, start_time, dst_sensitive, active, execution_mode, frequency, tasks):
+    def __init__(self, name, start_time, dst_sensitive, active, execution_mode, frequency, tasks, source_path: str):
         self.type = 'Chore'
         self.name = name
         self.start_time = start_time
@@ -24,6 +24,7 @@ class Chore:
         self.execution_mode = execution_mode
         self.frequency = frequency
         self.tasks = tasks
+        self.source_path = source_path
 
     def as_json(self):
         return json.dumps({
