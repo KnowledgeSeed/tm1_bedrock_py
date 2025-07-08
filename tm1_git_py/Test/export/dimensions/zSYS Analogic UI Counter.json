@@ -1,0 +1,8 @@
+{
+	"@type": "Dimension",
+	"Name": "zSYS Analogic UI Counter",
+	"Hierarchies@Code.links": [
+		"zSYS Analogic UI Counter.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE29A33B0>.json"
+	],
+	"DefaultHierarchy": "Dimensions('zSYS Analogic UI Counter')/Hierarchies('zSYS Analogic UI Counter')"
+}

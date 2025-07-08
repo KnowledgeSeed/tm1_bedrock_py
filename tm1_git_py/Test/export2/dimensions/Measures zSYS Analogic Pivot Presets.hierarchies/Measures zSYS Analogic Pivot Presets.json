@@ -1,0 +1,16 @@
+{
+	"@type": "Hierarchy",
+	"Name": "Measures zSYS Analogic Pivot Presets",
+	"Elements": [
+		{
+			"name": "sName",
+			"type": "String"
+		},
+		{
+			"name": "sValue",
+			"type": "String"
+		}
+	],
+	"Edges": [],
+	"Subsets@Code.links": []
+}

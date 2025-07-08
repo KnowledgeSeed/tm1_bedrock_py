@@ -1,0 +1,42 @@
+{
+	"@type": "Cube",
+	"Name": "Subscription Plan",
+	"Dimensions": [
+		{
+			"@id": "Dimensions('Version')"
+		},
+		{
+			"@id": "Dimensions('Period')"
+		},
+		{
+			"@id": "Dimensions('Loyalty')"
+		},
+		{
+			"@id": "Dimensions('Sales Channel')"
+		},
+		{
+			"@id": "Dimensions('Source Product')"
+		},
+		{
+			"@id": "Dimensions('Target Product')"
+		},
+		{
+			"@id": "Dimensions('Subscription Plan Movement')"
+		},
+		{
+			"@id": "Dimensions('Subscription Plan Measure')"
+		}
+	],
+	"Rules@Code.link": "Subscription Plan.rules",
+	"Views@Code.links": [
+		"Subscription Plan.views/Algorithm.json",
+		"Subscription Plan.views/algorithm_M2.json",
+		"Subscription Plan.views/Lefele_KPI.json",
+		"Subscription Plan.views/ModyTESZT.json",
+		"Subscription Plan.views/teszt.json",
+		"Subscription Plan.views/U.D - Movement Test View for Digitalis Csaladi - 2023.09.25.json",
+		"Subscription Plan.views/U.D - Naturalia Test View Telefon IV. - sp tp movements.json",
+		"Subscription Plan.views/U.D - Naturalia Test View VNET200 - sp tp movements.json",
+		"Subscription Plan.views/U.D.  20231011 - Base Correction Test.json"
+	]
+}

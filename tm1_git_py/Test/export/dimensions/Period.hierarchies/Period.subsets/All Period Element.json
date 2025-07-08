@@ -1,0 +1,5 @@
+{
+	"@type": "Subset",
+	"Name": "All Period Element",
+	"Expression": "{[Period].[Period].[All Period]}"
+}

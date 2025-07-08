@@ -1,0 +1,42 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Cube ViewZeroOut",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Cube ViewZeroOut.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pCubeName",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pRandomIdentifier",
+			"Prompt": "",
+			"Value": 0,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pDebug",
+			"Prompt": "",
+			"Value": 0,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pCallerID",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pLogging",
+			"Prompt": "",
+			"Value": 1,
+			"Type": "Numeric"
+		}
+	],
+	"Variables": []
+}

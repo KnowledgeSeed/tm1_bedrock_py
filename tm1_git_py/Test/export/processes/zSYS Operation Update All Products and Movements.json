@@ -1,0 +1,11 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Operation Update All Products and Movements",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Operation Update All Products and Movements.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [],
+	"Variables": []
+}

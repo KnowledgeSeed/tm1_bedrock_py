@@ -1,0 +1,8 @@
+{
+	"@type": "Dimension",
+	"Name": "Measures Comments by ID",
+	"Hierarchies@Code.links": [
+		"Measures Comments by ID.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1EFAEA0>.json"
+	],
+	"DefaultHierarchy": "Dimensions('Measures Comments by ID')/Hierarchies('Measures Comments by ID')"
+}

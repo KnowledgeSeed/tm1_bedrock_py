@@ -1,0 +1,8 @@
+{
+	"@type": "Dimension",
+	"Name": "Source Product",
+	"Hierarchies@Code.links": [
+		"Source Product.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE2593CE0>.json"
+	],
+	"DefaultHierarchy": "Dimensions('Source Product')/Hierarchies('Source Product')"
+}

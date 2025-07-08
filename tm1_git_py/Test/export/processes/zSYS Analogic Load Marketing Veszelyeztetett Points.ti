@@ -1,0 +1,111 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# =========================================================
+# Original Date Created              2024.06.27
+# Originator                         Modos David
+# Purpose                            
+# Change Date                           
+# Change Request Reference    
+# Change Made by                     Módos Dávid
+# =========================================================
+
+
+# Ez a szerződések lista
+# A veszélyeztetett pontok vannak benne
+
+# 1, értékek kinullázása
+# 2, értékek feltöltése increase
+
+
+
+sPeriodDim = 'Period';
+
+sActualMon = CellGetS('zSYS Maintenance Parameter', 'ActualMonth', 'S Type');
+
+IF( pAllPeriod @= '1');
+  sAllNTimeSubset = 'All N Level Element';
+  nStartPeriod = SubsetGetElementName(sPeriodDim, 'Actual Period', 2);
+  nStartPeriodIndex = SubsetElementGetIndex(sPeriodDim, sAllNTimeSubset, nStartPeriod);
+  nEndPeriodIndex = SubsetElementGetIndex(sPeriodDim, sAllNTimeSubset, sActualMon);
+  
+  i = nStartPeriodIndex;
+  While(i < nEndPeriodIndex);
+    sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+    CellPutN(0, 'Marketing Cost', pVersion, sInputPeriod, 'Veszelyeztett teruletertekert jaro pontok' , 'Value');
+    CellPutN(0, 'Marketing Cost', pVersion, sInputPeriod, 'Osszes bevaltott pontok teny' , 'Value');
+    CellPutN(0, 'Marketing Cost', pVersion, sInputPeriod, 'Gift Cost Fact' , 'Value');
+    CellPutN(0, 'Marketing Cost', pVersion, sInputPeriod, 'Logistics Cost Fact' , 'Value');
+    CellPutN(0, 'Marketing Cost', pVersion, sInputPeriod, 'Osszes kiosztott pont' , 'Value');
+    i = i+1;
+  END;
+  
+ENDIF;
+
+
+
+IF( pLastYear @= '1');
+ nStartPeriodIndex = 1;
+ sAllNTimeSubset = 'Last_Actual_Year';
+ nEndPeriodIndex = SubsetGetSize(sPeriodDim, sAllNTimeSubset);
+ i = nStartPeriodIndex;
+  While(i <= nEndPeriodIndex);
+    sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+    CellPutN(0, 'Marketing Cost', pVersion, sInputPeriod, 'Veszelyeztett teruletertekert jaro pontok' , 'Value');
+    CellPutN(0, 'Marketing Cost', pVersion, sInputPeriod, 'Osszes bevaltott pontok teny' , 'Value');
+    CellPutN(0, 'Marketing Cost', pVersion, sInputPeriod, 'Gift Cost Fact' , 'Value');
+    CellPutN(0, 'Marketing Cost', pVersion, sInputPeriod, 'Logistics Cost Fact' , 'Value');
+    CellPutN(0, 'Marketing Cost', pVersion, sInputPeriod, 'Osszes kiosztott pont' , 'Value');
+    i = i+1;
+ END;
+ 
+ 
+ 
+ENDIF;
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+#vDatum formázása
+sPeriod = DELET (vDatum, 8, 9);
+sPeriod = DELET (sPeriod, 5, 1);
+
+IF( SubsetElementExists(sPeriodDim, sAllNTimeSubset, sPeriod) = 0 );
+  itemskip;
+ENDIF;
+
+IF( sPeriod @=  sActualMon);
+  itemskip;
+ENDIF;
+
+nVeszelyeztetettPont = StringToNumber(vVeszelyeztetettPont);
+CellIncrementN(nVeszelyeztetettPont, 'Marketing Cost', pVersion, sPeriod, 'Veszelyeztett teruletertekert jaro pontok', 'Value');
+
+
+nBevaltottPontok = StringToNumber(vBevaltottPontok);
+CellIncrementN(nBevaltottPontok, 'Marketing Cost', pVersion, sPeriod, 'Osszes bevaltott pontok teny', 'Value');
+
+
+nAjandekKoltseg = StringToNumber(vAjandekokOsszkoltsege);
+CellIncrementN(nAjandekKoltseg, 'Marketing Cost', pVersion, sPeriod, 'Gift Cost Fact', 'Value');
+
+nLogisztikaiKoltseg = StringToNumber(vLogisztikaiKoltseg);
+CellIncrementN(nLogisztikaiKoltseg, 'Marketing Cost', pVersion, sPeriod, 'Logistics Cost Fact', 'Value');
+
+
+
+nKiosztottOsszesPont = StringToNumber(vKapottpontokOsszerteke);
+CellIncrementN(nKiosztottOsszesPont, 'Marketing Cost', pVersion, sPeriod, 'Osszes kiosztott pont', 'Value');
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+#endregion

@@ -1,0 +1,5 @@
+{
+	"@type": "Subset",
+	"Name": "allProviderSubset",
+	"Expression": "{TM1FILTERBYLEVEL({\t\tTM1DRILLDOWNMEMBER({\t\t\t[Provider].[Provider].[Provider Total]\t\t}, ALL, RECURSIVE)\t}, 0)}"
+}

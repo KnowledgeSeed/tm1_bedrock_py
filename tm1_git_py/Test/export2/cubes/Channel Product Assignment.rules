@@ -1,0 +1,33 @@
+#SEEDER;
+#TITLE: 
+#VIEWS:
+#LINKED:
+SKIPCHECK;
+
+#TITLE: 
+#VIEWS:
+#LINKED:
+# verzo szabályok
+[]= N:
+IF(ELISPAR('Version','Report',!Version) = 1,
+STET,Continue);
+
+#TITLE: 
+#VIEWS:
+#LINKED:
+#[] =N:
+# IF( DB('}ElementAttributes_Product', !Product, 'KTV kiegészítő') = 1,
+# STET,
+# Continue
+# );
+
+
+
+FEEDERS;
+
+#TITLE: test
+#VIEWS:
+#LINKED:
+['Version':'Forecast'] =>
+DB('Channel Cost', !Version, !Period, !Channel, !Product, 'Currency':'Currency Total','EFI', 'Value');
+

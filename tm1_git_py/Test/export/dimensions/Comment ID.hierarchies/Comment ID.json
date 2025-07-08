@@ -1,0 +1,444 @@
+{
+	"@type": "Hierarchy",
+	"Name": "Comment ID",
+	"Elements": [
+		{
+			"name": "comment00000001",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000003",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000006",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000009",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000010",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000013",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000017",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000019",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000021",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000023",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000024",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000026",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000027",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000034",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000042",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000043",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000044",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000046",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000047",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000048",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000050",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000051",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000054",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000056",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000058",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000059",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000061",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000063",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000064",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000065",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000066",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000067",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000068",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000069",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000070",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000071",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000072",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000073",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000074",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000075",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000076",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000077",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000078",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000079",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000080",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000081",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000082",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000083",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000084",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000085",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000086",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000087",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000088",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000089",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000090",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000091",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000092",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000093",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000094",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000095",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000096",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000097",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000098",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000099",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000100",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000101",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000102",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000103",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000104",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000105",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000106",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000107",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000108",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000109",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000110",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000111",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000112",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000113",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000114",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000115",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000116",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000117",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000118",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000119",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000120",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000121",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000122",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000123",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000124",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000125",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000126",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000127",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000128",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000129",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000130",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000131",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000132",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000133",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000134",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000135",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000136",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000137",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000138",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000139",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000140",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000141",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000149",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000150",
+			"type": "Numeric"
+		},
+		{
+			"name": "comment00000151",
+			"type": "Numeric"
+		}
+	],
+	"Edges": [],
+	"Subsets@Code.links": []
+}

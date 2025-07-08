@@ -1,0 +1,32 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Maintenance Create All Cube",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Maintenance Create All Cube.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pRebuildCubes",
+			"Prompt": "If yes the process delete all cube before building.",
+			"Value": "no",
+			"Type": "String"
+		},
+		{
+			"Name": "pDebug",
+			"Prompt": "",
+			"Value": 0,
+			"Type": "Numeric"
+		}
+	],
+	"Variables": [
+		{
+			"Name": "cube",
+			"Type": "String",
+			"Position": 1,
+			"StartByte": 0,
+			"EndByte": 0
+		}
+	]
+}

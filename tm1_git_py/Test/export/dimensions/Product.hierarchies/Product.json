@@ -1,0 +1,11266 @@
+{
+	"@type": "Hierarchy",
+	"Name": "Product",
+	"Elements": [
+		{
+			"name": "Total Products",
+			"type": "Consolidated"
+		},
+		{
+			"name": "6",
+			"type": "Numeric"
+		},
+		{
+			"name": "24",
+			"type": "Numeric"
+		},
+		{
+			"name": "32",
+			"type": "Numeric"
+		},
+		{
+			"name": "34",
+			"type": "Numeric"
+		},
+		{
+			"name": "41",
+			"type": "Numeric"
+		},
+		{
+			"name": "54",
+			"type": "Numeric"
+		},
+		{
+			"name": "56",
+			"type": "Numeric"
+		},
+		{
+			"name": "64",
+			"type": "Numeric"
+		},
+		{
+			"name": "73",
+			"type": "Numeric"
+		},
+		{
+			"name": "78",
+			"type": "Numeric"
+		},
+		{
+			"name": "82",
+			"type": "Numeric"
+		},
+		{
+			"name": "83",
+			"type": "Numeric"
+		},
+		{
+			"name": "89",
+			"type": "Numeric"
+		},
+		{
+			"name": "121",
+			"type": "Numeric"
+		},
+		{
+			"name": "133",
+			"type": "Numeric"
+		},
+		{
+			"name": "137",
+			"type": "Numeric"
+		},
+		{
+			"name": "1024",
+			"type": "Numeric"
+		},
+		{
+			"name": "176",
+			"type": "Numeric"
+		},
+		{
+			"name": "1026",
+			"type": "Numeric"
+		},
+		{
+			"name": "194",
+			"type": "Numeric"
+		},
+		{
+			"name": "197",
+			"type": "Numeric"
+		},
+		{
+			"name": "199",
+			"type": "Numeric"
+		},
+		{
+			"name": "200",
+			"type": "Numeric"
+		},
+		{
+			"name": "201",
+			"type": "Numeric"
+		},
+		{
+			"name": "202",
+			"type": "Numeric"
+		},
+		{
+			"name": "203",
+			"type": "Numeric"
+		},
+		{
+			"name": "206",
+			"type": "Numeric"
+		},
+		{
+			"name": "208",
+			"type": "Numeric"
+		},
+		{
+			"name": "209",
+			"type": "Numeric"
+		},
+		{
+			"name": "210",
+			"type": "Numeric"
+		},
+		{
+			"name": "211",
+			"type": "Numeric"
+		},
+		{
+			"name": "213",
+			"type": "Numeric"
+		},
+		{
+			"name": "214",
+			"type": "Numeric"
+		},
+		{
+			"name": "221",
+			"type": "Numeric"
+		},
+		{
+			"name": "226",
+			"type": "Numeric"
+		},
+		{
+			"name": "229",
+			"type": "Numeric"
+		},
+		{
+			"name": "232",
+			"type": "Numeric"
+		},
+		{
+			"name": "233",
+			"type": "Numeric"
+		},
+		{
+			"name": "234",
+			"type": "Numeric"
+		},
+		{
+			"name": "246",
+			"type": "Numeric"
+		},
+		{
+			"name": "247",
+			"type": "Numeric"
+		},
+		{
+			"name": "248",
+			"type": "Numeric"
+		},
+		{
+			"name": "258",
+			"type": "Numeric"
+		},
+		{
+			"name": "264",
+			"type": "Numeric"
+		},
+		{
+			"name": "265",
+			"type": "Numeric"
+		},
+		{
+			"name": "267",
+			"type": "Numeric"
+		},
+		{
+			"name": "268",
+			"type": "Numeric"
+		},
+		{
+			"name": "270",
+			"type": "Numeric"
+		},
+		{
+			"name": "271",
+			"type": "Numeric"
+		},
+		{
+			"name": "272",
+			"type": "Numeric"
+		},
+		{
+			"name": "273",
+			"type": "Numeric"
+		},
+		{
+			"name": "274",
+			"type": "Numeric"
+		},
+		{
+			"name": "278",
+			"type": "Numeric"
+		},
+		{
+			"name": "286",
+			"type": "Numeric"
+		},
+		{
+			"name": "291",
+			"type": "Numeric"
+		},
+		{
+			"name": "295",
+			"type": "Numeric"
+		},
+		{
+			"name": "303",
+			"type": "Numeric"
+		},
+		{
+			"name": "305",
+			"type": "Numeric"
+		},
+		{
+			"name": "308",
+			"type": "Numeric"
+		},
+		{
+			"name": "331",
+			"type": "Numeric"
+		},
+		{
+			"name": "334",
+			"type": "Numeric"
+		},
+		{
+			"name": "353",
+			"type": "Numeric"
+		},
+		{
+			"name": "354",
+			"type": "Numeric"
+		},
+		{
+			"name": "358",
+			"type": "Numeric"
+		},
+		{
+			"name": "359",
+			"type": "Numeric"
+		},
+		{
+			"name": "360",
+			"type": "Numeric"
+		},
+		{
+			"name": "361",
+			"type": "Numeric"
+		},
+		{
+			"name": "362",
+			"type": "Numeric"
+		},
+		{
+			"name": "366",
+			"type": "Numeric"
+		},
+		{
+			"name": "367",
+			"type": "Numeric"
+		},
+		{
+			"name": "368",
+			"type": "Numeric"
+		},
+		{
+			"name": "369",
+			"type": "Numeric"
+		},
+		{
+			"name": "370",
+			"type": "Numeric"
+		},
+		{
+			"name": "371",
+			"type": "Numeric"
+		},
+		{
+			"name": "373",
+			"type": "Numeric"
+		},
+		{
+			"name": "374",
+			"type": "Numeric"
+		},
+		{
+			"name": "375",
+			"type": "Numeric"
+		},
+		{
+			"name": "376",
+			"type": "Numeric"
+		},
+		{
+			"name": "377",
+			"type": "Numeric"
+		},
+		{
+			"name": "378",
+			"type": "Numeric"
+		},
+		{
+			"name": "379",
+			"type": "Numeric"
+		},
+		{
+			"name": "381",
+			"type": "Numeric"
+		},
+		{
+			"name": "382",
+			"type": "Numeric"
+		},
+		{
+			"name": "383",
+			"type": "Numeric"
+		},
+		{
+			"name": "384",
+			"type": "Numeric"
+		},
+		{
+			"name": "385",
+			"type": "Numeric"
+		},
+		{
+			"name": "388",
+			"type": "Numeric"
+		},
+		{
+			"name": "390",
+			"type": "Numeric"
+		},
+		{
+			"name": "392",
+			"type": "Numeric"
+		},
+		{
+			"name": "395",
+			"type": "Numeric"
+		},
+		{
+			"name": "397",
+			"type": "Numeric"
+		},
+		{
+			"name": "405",
+			"type": "Numeric"
+		},
+		{
+			"name": "406",
+			"type": "Numeric"
+		},
+		{
+			"name": "407",
+			"type": "Numeric"
+		},
+		{
+			"name": "419",
+			"type": "Numeric"
+		},
+		{
+			"name": "429",
+			"type": "Numeric"
+		},
+		{
+			"name": "449",
+			"type": "Numeric"
+		},
+		{
+			"name": "450",
+			"type": "Numeric"
+		},
+		{
+			"name": "451",
+			"type": "Numeric"
+		},
+		{
+			"name": "452",
+			"type": "Numeric"
+		},
+		{
+			"name": "465",
+			"type": "Numeric"
+		},
+		{
+			"name": "467",
+			"type": "Numeric"
+		},
+		{
+			"name": "469",
+			"type": "Numeric"
+		},
+		{
+			"name": "474",
+			"type": "Numeric"
+		},
+		{
+			"name": "476",
+			"type": "Numeric"
+		},
+		{
+			"name": "477",
+			"type": "Numeric"
+		},
+		{
+			"name": "479",
+			"type": "Numeric"
+		},
+		{
+			"name": "480",
+			"type": "Numeric"
+		},
+		{
+			"name": "482",
+			"type": "Numeric"
+		},
+		{
+			"name": "483",
+			"type": "Numeric"
+		},
+		{
+			"name": "484",
+			"type": "Numeric"
+		},
+		{
+			"name": "485",
+			"type": "Numeric"
+		},
+		{
+			"name": "486",
+			"type": "Numeric"
+		},
+		{
+			"name": "487",
+			"type": "Numeric"
+		},
+		{
+			"name": "488",
+			"type": "Numeric"
+		},
+		{
+			"name": "491",
+			"type": "Numeric"
+		},
+		{
+			"name": "492",
+			"type": "Numeric"
+		},
+		{
+			"name": "494",
+			"type": "Numeric"
+		},
+		{
+			"name": "495",
+			"type": "Numeric"
+		},
+		{
+			"name": "496",
+			"type": "Numeric"
+		},
+		{
+			"name": "498",
+			"type": "Numeric"
+		},
+		{
+			"name": "499",
+			"type": "Numeric"
+		},
+		{
+			"name": "503",
+			"type": "Numeric"
+		},
+		{
+			"name": "506",
+			"type": "Numeric"
+		},
+		{
+			"name": "508",
+			"type": "Numeric"
+		},
+		{
+			"name": "509",
+			"type": "Numeric"
+		},
+		{
+			"name": "512",
+			"type": "Numeric"
+		},
+		{
+			"name": "513",
+			"type": "Numeric"
+		},
+		{
+			"name": "526",
+			"type": "Numeric"
+		},
+		{
+			"name": "1029",
+			"type": "Numeric"
+		},
+		{
+			"name": "543",
+			"type": "Numeric"
+		},
+		{
+			"name": "563",
+			"type": "Numeric"
+		},
+		{
+			"name": "570",
+			"type": "Numeric"
+		},
+		{
+			"name": "600",
+			"type": "Numeric"
+		},
+		{
+			"name": "603",
+			"type": "Numeric"
+		},
+		{
+			"name": "604",
+			"type": "Numeric"
+		},
+		{
+			"name": "605",
+			"type": "Numeric"
+		},
+		{
+			"name": "606",
+			"type": "Numeric"
+		},
+		{
+			"name": "607",
+			"type": "Numeric"
+		},
+		{
+			"name": "611",
+			"type": "Numeric"
+		},
+		{
+			"name": "613",
+			"type": "Numeric"
+		},
+		{
+			"name": "614",
+			"type": "Numeric"
+		},
+		{
+			"name": "615",
+			"type": "Numeric"
+		},
+		{
+			"name": "621",
+			"type": "Numeric"
+		},
+		{
+			"name": "626",
+			"type": "Numeric"
+		},
+		{
+			"name": "627",
+			"type": "Numeric"
+		},
+		{
+			"name": "634",
+			"type": "Numeric"
+		},
+		{
+			"name": "1025",
+			"type": "Numeric"
+		},
+		{
+			"name": "642",
+			"type": "Numeric"
+		},
+		{
+			"name": "643",
+			"type": "Numeric"
+		},
+		{
+			"name": "653",
+			"type": "Numeric"
+		},
+		{
+			"name": "654",
+			"type": "Numeric"
+		},
+		{
+			"name": "655",
+			"type": "Numeric"
+		},
+		{
+			"name": "656",
+			"type": "Numeric"
+		},
+		{
+			"name": "657",
+			"type": "Numeric"
+		},
+		{
+			"name": "663",
+			"type": "Numeric"
+		},
+		{
+			"name": "666",
+			"type": "Numeric"
+		},
+		{
+			"name": "668",
+			"type": "Numeric"
+		},
+		{
+			"name": "673",
+			"type": "Numeric"
+		},
+		{
+			"name": "700",
+			"type": "Numeric"
+		},
+		{
+			"name": "701",
+			"type": "Numeric"
+		},
+		{
+			"name": "702",
+			"type": "Numeric"
+		},
+		{
+			"name": "703",
+			"type": "Numeric"
+		},
+		{
+			"name": "704",
+			"type": "Numeric"
+		},
+		{
+			"name": "705",
+			"type": "Numeric"
+		},
+		{
+			"name": "706",
+			"type": "Numeric"
+		},
+		{
+			"name": "708",
+			"type": "Numeric"
+		},
+		{
+			"name": "710",
+			"type": "Numeric"
+		},
+		{
+			"name": "712",
+			"type": "Numeric"
+		},
+		{
+			"name": "714",
+			"type": "Numeric"
+		},
+		{
+			"name": "716",
+			"type": "Numeric"
+		},
+		{
+			"name": "720",
+			"type": "Numeric"
+		},
+		{
+			"name": "722",
+			"type": "Numeric"
+		},
+		{
+			"name": "725",
+			"type": "Numeric"
+		},
+		{
+			"name": "728",
+			"type": "Numeric"
+		},
+		{
+			"name": "731",
+			"type": "Numeric"
+		},
+		{
+			"name": "732",
+			"type": "Numeric"
+		},
+		{
+			"name": "737",
+			"type": "Numeric"
+		},
+		{
+			"name": "739",
+			"type": "Numeric"
+		},
+		{
+			"name": "746",
+			"type": "Numeric"
+		},
+		{
+			"name": "747",
+			"type": "Numeric"
+		},
+		{
+			"name": "748",
+			"type": "Numeric"
+		},
+		{
+			"name": "761",
+			"type": "Numeric"
+		},
+		{
+			"name": "762",
+			"type": "Numeric"
+		},
+		{
+			"name": "763",
+			"type": "Numeric"
+		},
+		{
+			"name": "764",
+			"type": "Numeric"
+		},
+		{
+			"name": "765",
+			"type": "Numeric"
+		},
+		{
+			"name": "766",
+			"type": "Numeric"
+		},
+		{
+			"name": "767",
+			"type": "Numeric"
+		},
+		{
+			"name": "768",
+			"type": "Numeric"
+		},
+		{
+			"name": "769",
+			"type": "Numeric"
+		},
+		{
+			"name": "770",
+			"type": "Numeric"
+		},
+		{
+			"name": "771",
+			"type": "Numeric"
+		},
+		{
+			"name": "772",
+			"type": "Numeric"
+		},
+		{
+			"name": "774",
+			"type": "Numeric"
+		},
+		{
+			"name": "792",
+			"type": "Numeric"
+		},
+		{
+			"name": "793",
+			"type": "Numeric"
+		},
+		{
+			"name": "794",
+			"type": "Numeric"
+		},
+		{
+			"name": "796",
+			"type": "Numeric"
+		},
+		{
+			"name": "797",
+			"type": "Numeric"
+		},
+		{
+			"name": "798",
+			"type": "Numeric"
+		},
+		{
+			"name": "799",
+			"type": "Numeric"
+		},
+		{
+			"name": "800",
+			"type": "Numeric"
+		},
+		{
+			"name": "801",
+			"type": "Numeric"
+		},
+		{
+			"name": "802",
+			"type": "Numeric"
+		},
+		{
+			"name": "803",
+			"type": "Numeric"
+		},
+		{
+			"name": "806",
+			"type": "Numeric"
+		},
+		{
+			"name": "807",
+			"type": "Numeric"
+		},
+		{
+			"name": "808",
+			"type": "Numeric"
+		},
+		{
+			"name": "810",
+			"type": "Numeric"
+		},
+		{
+			"name": "New",
+			"type": "Numeric"
+		},
+		{
+			"name": "Nem tartozik termekhez",
+			"type": "Numeric"
+		},
+		{
+			"name": "Terminated",
+			"type": "Numeric"
+		},
+		{
+			"name": "15",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Total Products Archive",
+			"type": "Consolidated"
+		},
+		{
+			"name": "1",
+			"type": "Numeric"
+		},
+		{
+			"name": "3",
+			"type": "Numeric"
+		},
+		{
+			"name": "4",
+			"type": "Numeric"
+		},
+		{
+			"name": "5",
+			"type": "Numeric"
+		},
+		{
+			"name": "7",
+			"type": "Numeric"
+		},
+		{
+			"name": "8",
+			"type": "Numeric"
+		},
+		{
+			"name": "9",
+			"type": "Numeric"
+		},
+		{
+			"name": "10",
+			"type": "Numeric"
+		},
+		{
+			"name": "11",
+			"type": "Numeric"
+		},
+		{
+			"name": "12",
+			"type": "Numeric"
+		},
+		{
+			"name": "13",
+			"type": "Numeric"
+		},
+		{
+			"name": "14",
+			"type": "Numeric"
+		},
+		{
+			"name": "16",
+			"type": "Numeric"
+		},
+		{
+			"name": "17",
+			"type": "Numeric"
+		},
+		{
+			"name": "18",
+			"type": "Numeric"
+		},
+		{
+			"name": "19",
+			"type": "Numeric"
+		},
+		{
+			"name": "20",
+			"type": "Numeric"
+		},
+		{
+			"name": "21",
+			"type": "Numeric"
+		},
+		{
+			"name": "22",
+			"type": "Numeric"
+		},
+		{
+			"name": "25",
+			"type": "Numeric"
+		},
+		{
+			"name": "26",
+			"type": "Numeric"
+		},
+		{
+			"name": "28",
+			"type": "Numeric"
+		},
+		{
+			"name": "29",
+			"type": "Numeric"
+		},
+		{
+			"name": "30",
+			"type": "Numeric"
+		},
+		{
+			"name": "31",
+			"type": "Numeric"
+		},
+		{
+			"name": "33",
+			"type": "Numeric"
+		},
+		{
+			"name": "35",
+			"type": "Numeric"
+		},
+		{
+			"name": "36",
+			"type": "Numeric"
+		},
+		{
+			"name": "37",
+			"type": "Numeric"
+		},
+		{
+			"name": "38",
+			"type": "Numeric"
+		},
+		{
+			"name": "39",
+			"type": "Numeric"
+		},
+		{
+			"name": "40",
+			"type": "Numeric"
+		},
+		{
+			"name": "42",
+			"type": "Numeric"
+		},
+		{
+			"name": "43",
+			"type": "Numeric"
+		},
+		{
+			"name": "44",
+			"type": "Numeric"
+		},
+		{
+			"name": "45",
+			"type": "Numeric"
+		},
+		{
+			"name": "46",
+			"type": "Numeric"
+		},
+		{
+			"name": "47",
+			"type": "Numeric"
+		},
+		{
+			"name": "48",
+			"type": "Numeric"
+		},
+		{
+			"name": "49",
+			"type": "Numeric"
+		},
+		{
+			"name": "50",
+			"type": "Numeric"
+		},
+		{
+			"name": "51",
+			"type": "Numeric"
+		},
+		{
+			"name": "52",
+			"type": "Numeric"
+		},
+		{
+			"name": "53",
+			"type": "Numeric"
+		},
+		{
+			"name": "55",
+			"type": "Numeric"
+		},
+		{
+			"name": "57",
+			"type": "Numeric"
+		},
+		{
+			"name": "58",
+			"type": "Numeric"
+		},
+		{
+			"name": "59",
+			"type": "Numeric"
+		},
+		{
+			"name": "60",
+			"type": "Numeric"
+		},
+		{
+			"name": "61",
+			"type": "Numeric"
+		},
+		{
+			"name": "62",
+			"type": "Numeric"
+		},
+		{
+			"name": "63",
+			"type": "Numeric"
+		},
+		{
+			"name": "65",
+			"type": "Numeric"
+		},
+		{
+			"name": "66",
+			"type": "Numeric"
+		},
+		{
+			"name": "67",
+			"type": "Numeric"
+		},
+		{
+			"name": "68",
+			"type": "Numeric"
+		},
+		{
+			"name": "69",
+			"type": "Numeric"
+		},
+		{
+			"name": "70",
+			"type": "Numeric"
+		},
+		{
+			"name": "71",
+			"type": "Numeric"
+		},
+		{
+			"name": "72",
+			"type": "Numeric"
+		},
+		{
+			"name": "74",
+			"type": "Numeric"
+		},
+		{
+			"name": "75",
+			"type": "Numeric"
+		},
+		{
+			"name": "76",
+			"type": "Numeric"
+		},
+		{
+			"name": "77",
+			"type": "Numeric"
+		},
+		{
+			"name": "79",
+			"type": "Numeric"
+		},
+		{
+			"name": "80",
+			"type": "Numeric"
+		},
+		{
+			"name": "81",
+			"type": "Numeric"
+		},
+		{
+			"name": "84",
+			"type": "Numeric"
+		},
+		{
+			"name": "85",
+			"type": "Numeric"
+		},
+		{
+			"name": "86",
+			"type": "Numeric"
+		},
+		{
+			"name": "87",
+			"type": "Numeric"
+		},
+		{
+			"name": "88",
+			"type": "Numeric"
+		},
+		{
+			"name": "90",
+			"type": "Numeric"
+		},
+		{
+			"name": "91",
+			"type": "Numeric"
+		},
+		{
+			"name": "92",
+			"type": "Numeric"
+		},
+		{
+			"name": "93",
+			"type": "Numeric"
+		},
+		{
+			"name": "94",
+			"type": "Numeric"
+		},
+		{
+			"name": "95",
+			"type": "Numeric"
+		},
+		{
+			"name": "96",
+			"type": "Numeric"
+		},
+		{
+			"name": "97",
+			"type": "Numeric"
+		},
+		{
+			"name": "98",
+			"type": "Numeric"
+		},
+		{
+			"name": "99",
+			"type": "Numeric"
+		},
+		{
+			"name": "100",
+			"type": "Numeric"
+		},
+		{
+			"name": "101",
+			"type": "Numeric"
+		},
+		{
+			"name": "102",
+			"type": "Numeric"
+		},
+		{
+			"name": "103",
+			"type": "Numeric"
+		},
+		{
+			"name": "104",
+			"type": "Numeric"
+		},
+		{
+			"name": "105",
+			"type": "Numeric"
+		},
+		{
+			"name": "106",
+			"type": "Numeric"
+		},
+		{
+			"name": "107",
+			"type": "Numeric"
+		},
+		{
+			"name": "108",
+			"type": "Numeric"
+		},
+		{
+			"name": "109",
+			"type": "Numeric"
+		},
+		{
+			"name": "110",
+			"type": "Numeric"
+		},
+		{
+			"name": "111",
+			"type": "Numeric"
+		},
+		{
+			"name": "112",
+			"type": "Numeric"
+		},
+		{
+			"name": "113",
+			"type": "Numeric"
+		},
+		{
+			"name": "114",
+			"type": "Numeric"
+		},
+		{
+			"name": "115",
+			"type": "Numeric"
+		},
+		{
+			"name": "116",
+			"type": "Numeric"
+		},
+		{
+			"name": "117",
+			"type": "Numeric"
+		},
+		{
+			"name": "118",
+			"type": "Numeric"
+		},
+		{
+			"name": "119",
+			"type": "Numeric"
+		},
+		{
+			"name": "120",
+			"type": "Numeric"
+		},
+		{
+			"name": "122",
+			"type": "Numeric"
+		},
+		{
+			"name": "123",
+			"type": "Numeric"
+		},
+		{
+			"name": "124",
+			"type": "Numeric"
+		},
+		{
+			"name": "125",
+			"type": "Numeric"
+		},
+		{
+			"name": "126",
+			"type": "Numeric"
+		},
+		{
+			"name": "127",
+			"type": "Numeric"
+		},
+		{
+			"name": "128",
+			"type": "Numeric"
+		},
+		{
+			"name": "129",
+			"type": "Numeric"
+		},
+		{
+			"name": "130",
+			"type": "Numeric"
+		},
+		{
+			"name": "131",
+			"type": "Numeric"
+		},
+		{
+			"name": "132",
+			"type": "Numeric"
+		},
+		{
+			"name": "134",
+			"type": "Numeric"
+		},
+		{
+			"name": "135",
+			"type": "Numeric"
+		},
+		{
+			"name": "136",
+			"type": "Numeric"
+		},
+		{
+			"name": "138",
+			"type": "Numeric"
+		},
+		{
+			"name": "139",
+			"type": "Numeric"
+		},
+		{
+			"name": "140",
+			"type": "Numeric"
+		},
+		{
+			"name": "141",
+			"type": "Numeric"
+		},
+		{
+			"name": "142",
+			"type": "Numeric"
+		},
+		{
+			"name": "143",
+			"type": "Numeric"
+		},
+		{
+			"name": "144",
+			"type": "Numeric"
+		},
+		{
+			"name": "145",
+			"type": "Numeric"
+		},
+		{
+			"name": "146",
+			"type": "Numeric"
+		},
+		{
+			"name": "147",
+			"type": "Numeric"
+		},
+		{
+			"name": "148",
+			"type": "Numeric"
+		},
+		{
+			"name": "149",
+			"type": "Numeric"
+		},
+		{
+			"name": "150",
+			"type": "Numeric"
+		},
+		{
+			"name": "151",
+			"type": "Numeric"
+		},
+		{
+			"name": "152",
+			"type": "Numeric"
+		},
+		{
+			"name": "153",
+			"type": "Numeric"
+		},
+		{
+			"name": "154",
+			"type": "Numeric"
+		},
+		{
+			"name": "155",
+			"type": "Numeric"
+		},
+		{
+			"name": "156",
+			"type": "Numeric"
+		},
+		{
+			"name": "157",
+			"type": "Numeric"
+		},
+		{
+			"name": "158",
+			"type": "Numeric"
+		},
+		{
+			"name": "159",
+			"type": "Numeric"
+		},
+		{
+			"name": "160",
+			"type": "Numeric"
+		},
+		{
+			"name": "161",
+			"type": "Numeric"
+		},
+		{
+			"name": "162",
+			"type": "Numeric"
+		},
+		{
+			"name": "163",
+			"type": "Numeric"
+		},
+		{
+			"name": "164",
+			"type": "Numeric"
+		},
+		{
+			"name": "165",
+			"type": "Numeric"
+		},
+		{
+			"name": "166",
+			"type": "Numeric"
+		},
+		{
+			"name": "167",
+			"type": "Numeric"
+		},
+		{
+			"name": "168",
+			"type": "Numeric"
+		},
+		{
+			"name": "169",
+			"type": "Numeric"
+		},
+		{
+			"name": "170",
+			"type": "Numeric"
+		},
+		{
+			"name": "171",
+			"type": "Numeric"
+		},
+		{
+			"name": "172",
+			"type": "Numeric"
+		},
+		{
+			"name": "173",
+			"type": "Numeric"
+		},
+		{
+			"name": "174",
+			"type": "Numeric"
+		},
+		{
+			"name": "175",
+			"type": "Numeric"
+		},
+		{
+			"name": "177",
+			"type": "Numeric"
+		},
+		{
+			"name": "178",
+			"type": "Numeric"
+		},
+		{
+			"name": "179",
+			"type": "Numeric"
+		},
+		{
+			"name": "180",
+			"type": "Numeric"
+		},
+		{
+			"name": "181",
+			"type": "Numeric"
+		},
+		{
+			"name": "182",
+			"type": "Numeric"
+		},
+		{
+			"name": "183",
+			"type": "Numeric"
+		},
+		{
+			"name": "184",
+			"type": "Numeric"
+		},
+		{
+			"name": "185",
+			"type": "Numeric"
+		},
+		{
+			"name": "186",
+			"type": "Numeric"
+		},
+		{
+			"name": "187",
+			"type": "Numeric"
+		},
+		{
+			"name": "188",
+			"type": "Numeric"
+		},
+		{
+			"name": "189",
+			"type": "Numeric"
+		},
+		{
+			"name": "190",
+			"type": "Numeric"
+		},
+		{
+			"name": "191",
+			"type": "Numeric"
+		},
+		{
+			"name": "192",
+			"type": "Numeric"
+		},
+		{
+			"name": "193",
+			"type": "Numeric"
+		},
+		{
+			"name": "195",
+			"type": "Numeric"
+		},
+		{
+			"name": "196",
+			"type": "Numeric"
+		},
+		{
+			"name": "198",
+			"type": "Numeric"
+		},
+		{
+			"name": "204",
+			"type": "Numeric"
+		},
+		{
+			"name": "205",
+			"type": "Numeric"
+		},
+		{
+			"name": "215",
+			"type": "Numeric"
+		},
+		{
+			"name": "216",
+			"type": "Numeric"
+		},
+		{
+			"name": "217",
+			"type": "Numeric"
+		},
+		{
+			"name": "218",
+			"type": "Numeric"
+		},
+		{
+			"name": "222",
+			"type": "Numeric"
+		},
+		{
+			"name": "223",
+			"type": "Numeric"
+		},
+		{
+			"name": "224",
+			"type": "Numeric"
+		},
+		{
+			"name": "225",
+			"type": "Numeric"
+		},
+		{
+			"name": "230",
+			"type": "Numeric"
+		},
+		{
+			"name": "235",
+			"type": "Numeric"
+		},
+		{
+			"name": "237",
+			"type": "Numeric"
+		},
+		{
+			"name": "238",
+			"type": "Numeric"
+		},
+		{
+			"name": "239",
+			"type": "Numeric"
+		},
+		{
+			"name": "240",
+			"type": "Numeric"
+		},
+		{
+			"name": "241",
+			"type": "Numeric"
+		},
+		{
+			"name": "242",
+			"type": "Numeric"
+		},
+		{
+			"name": "243",
+			"type": "Numeric"
+		},
+		{
+			"name": "244",
+			"type": "Numeric"
+		},
+		{
+			"name": "245",
+			"type": "Numeric"
+		},
+		{
+			"name": "249",
+			"type": "Numeric"
+		},
+		{
+			"name": "250",
+			"type": "Numeric"
+		},
+		{
+			"name": "251",
+			"type": "Numeric"
+		},
+		{
+			"name": "252",
+			"type": "Numeric"
+		},
+		{
+			"name": "253",
+			"type": "Numeric"
+		},
+		{
+			"name": "254",
+			"type": "Numeric"
+		},
+		{
+			"name": "255",
+			"type": "Numeric"
+		},
+		{
+			"name": "256",
+			"type": "Numeric"
+		},
+		{
+			"name": "257",
+			"type": "Numeric"
+		},
+		{
+			"name": "259",
+			"type": "Numeric"
+		},
+		{
+			"name": "260",
+			"type": "Numeric"
+		},
+		{
+			"name": "261",
+			"type": "Numeric"
+		},
+		{
+			"name": "262",
+			"type": "Numeric"
+		},
+		{
+			"name": "263",
+			"type": "Numeric"
+		},
+		{
+			"name": "266",
+			"type": "Numeric"
+		},
+		{
+			"name": "269",
+			"type": "Numeric"
+		},
+		{
+			"name": "275",
+			"type": "Numeric"
+		},
+		{
+			"name": "276",
+			"type": "Numeric"
+		},
+		{
+			"name": "277",
+			"type": "Numeric"
+		},
+		{
+			"name": "279",
+			"type": "Numeric"
+		},
+		{
+			"name": "280",
+			"type": "Numeric"
+		},
+		{
+			"name": "282",
+			"type": "Numeric"
+		},
+		{
+			"name": "284",
+			"type": "Numeric"
+		},
+		{
+			"name": "285",
+			"type": "Numeric"
+		},
+		{
+			"name": "287",
+			"type": "Numeric"
+		},
+		{
+			"name": "289",
+			"type": "Numeric"
+		},
+		{
+			"name": "290",
+			"type": "Numeric"
+		},
+		{
+			"name": "292",
+			"type": "Numeric"
+		},
+		{
+			"name": "293",
+			"type": "Numeric"
+		},
+		{
+			"name": "294",
+			"type": "Numeric"
+		},
+		{
+			"name": "296",
+			"type": "Numeric"
+		},
+		{
+			"name": "297",
+			"type": "Numeric"
+		},
+		{
+			"name": "298",
+			"type": "Numeric"
+		},
+		{
+			"name": "299",
+			"type": "Numeric"
+		},
+		{
+			"name": "300",
+			"type": "Numeric"
+		},
+		{
+			"name": "301",
+			"type": "Numeric"
+		},
+		{
+			"name": "302",
+			"type": "Numeric"
+		},
+		{
+			"name": "304",
+			"type": "Numeric"
+		},
+		{
+			"name": "306",
+			"type": "Numeric"
+		},
+		{
+			"name": "307",
+			"type": "Numeric"
+		},
+		{
+			"name": "309",
+			"type": "Numeric"
+		},
+		{
+			"name": "310",
+			"type": "Numeric"
+		},
+		{
+			"name": "311",
+			"type": "Numeric"
+		},
+		{
+			"name": "312",
+			"type": "Numeric"
+		},
+		{
+			"name": "313",
+			"type": "Numeric"
+		},
+		{
+			"name": "314",
+			"type": "Numeric"
+		},
+		{
+			"name": "315",
+			"type": "Numeric"
+		},
+		{
+			"name": "316",
+			"type": "Numeric"
+		},
+		{
+			"name": "317",
+			"type": "Numeric"
+		},
+		{
+			"name": "318",
+			"type": "Numeric"
+		},
+		{
+			"name": "319",
+			"type": "Numeric"
+		},
+		{
+			"name": "320",
+			"type": "Numeric"
+		},
+		{
+			"name": "321",
+			"type": "Numeric"
+		},
+		{
+			"name": "322",
+			"type": "Numeric"
+		},
+		{
+			"name": "323",
+			"type": "Numeric"
+		},
+		{
+			"name": "324",
+			"type": "Numeric"
+		},
+		{
+			"name": "325",
+			"type": "Numeric"
+		},
+		{
+			"name": "326",
+			"type": "Numeric"
+		},
+		{
+			"name": "327",
+			"type": "Numeric"
+		},
+		{
+			"name": "328",
+			"type": "Numeric"
+		},
+		{
+			"name": "329",
+			"type": "Numeric"
+		},
+		{
+			"name": "332",
+			"type": "Numeric"
+		},
+		{
+			"name": "333",
+			"type": "Numeric"
+		},
+		{
+			"name": "335",
+			"type": "Numeric"
+		},
+		{
+			"name": "337",
+			"type": "Numeric"
+		},
+		{
+			"name": "338",
+			"type": "Numeric"
+		},
+		{
+			"name": "339",
+			"type": "Numeric"
+		},
+		{
+			"name": "340",
+			"type": "Numeric"
+		},
+		{
+			"name": "341",
+			"type": "Numeric"
+		},
+		{
+			"name": "342",
+			"type": "Numeric"
+		},
+		{
+			"name": "343",
+			"type": "Numeric"
+		},
+		{
+			"name": "344",
+			"type": "Numeric"
+		},
+		{
+			"name": "345",
+			"type": "Numeric"
+		},
+		{
+			"name": "346",
+			"type": "Numeric"
+		},
+		{
+			"name": "347",
+			"type": "Numeric"
+		},
+		{
+			"name": "348",
+			"type": "Numeric"
+		},
+		{
+			"name": "349",
+			"type": "Numeric"
+		},
+		{
+			"name": "350",
+			"type": "Numeric"
+		},
+		{
+			"name": "351",
+			"type": "Numeric"
+		},
+		{
+			"name": "352",
+			"type": "Numeric"
+		},
+		{
+			"name": "355",
+			"type": "Numeric"
+		},
+		{
+			"name": "356",
+			"type": "Numeric"
+		},
+		{
+			"name": "357",
+			"type": "Numeric"
+		},
+		{
+			"name": "363",
+			"type": "Numeric"
+		},
+		{
+			"name": "364",
+			"type": "Numeric"
+		},
+		{
+			"name": "365",
+			"type": "Numeric"
+		},
+		{
+			"name": "372",
+			"type": "Numeric"
+		},
+		{
+			"name": "380",
+			"type": "Numeric"
+		},
+		{
+			"name": "386",
+			"type": "Numeric"
+		},
+		{
+			"name": "387",
+			"type": "Numeric"
+		},
+		{
+			"name": "389",
+			"type": "Numeric"
+		},
+		{
+			"name": "391",
+			"type": "Numeric"
+		},
+		{
+			"name": "393",
+			"type": "Numeric"
+		},
+		{
+			"name": "394",
+			"type": "Numeric"
+		},
+		{
+			"name": "396",
+			"type": "Numeric"
+		},
+		{
+			"name": "398",
+			"type": "Numeric"
+		},
+		{
+			"name": "399",
+			"type": "Numeric"
+		},
+		{
+			"name": "400",
+			"type": "Numeric"
+		},
+		{
+			"name": "401",
+			"type": "Numeric"
+		},
+		{
+			"name": "402",
+			"type": "Numeric"
+		},
+		{
+			"name": "403",
+			"type": "Numeric"
+		},
+		{
+			"name": "404",
+			"type": "Numeric"
+		},
+		{
+			"name": "408",
+			"type": "Numeric"
+		},
+		{
+			"name": "409",
+			"type": "Numeric"
+		},
+		{
+			"name": "410",
+			"type": "Numeric"
+		},
+		{
+			"name": "411",
+			"type": "Numeric"
+		},
+		{
+			"name": "412",
+			"type": "Numeric"
+		},
+		{
+			"name": "413",
+			"type": "Numeric"
+		},
+		{
+			"name": "414",
+			"type": "Numeric"
+		},
+		{
+			"name": "415",
+			"type": "Numeric"
+		},
+		{
+			"name": "416",
+			"type": "Numeric"
+		},
+		{
+			"name": "417",
+			"type": "Numeric"
+		},
+		{
+			"name": "418",
+			"type": "Numeric"
+		},
+		{
+			"name": "420",
+			"type": "Numeric"
+		},
+		{
+			"name": "421",
+			"type": "Numeric"
+		},
+		{
+			"name": "422",
+			"type": "Numeric"
+		},
+		{
+			"name": "423",
+			"type": "Numeric"
+		},
+		{
+			"name": "424",
+			"type": "Numeric"
+		},
+		{
+			"name": "425",
+			"type": "Numeric"
+		},
+		{
+			"name": "426",
+			"type": "Numeric"
+		},
+		{
+			"name": "427",
+			"type": "Numeric"
+		},
+		{
+			"name": "428",
+			"type": "Numeric"
+		},
+		{
+			"name": "430",
+			"type": "Numeric"
+		},
+		{
+			"name": "431",
+			"type": "Numeric"
+		},
+		{
+			"name": "432",
+			"type": "Numeric"
+		},
+		{
+			"name": "433",
+			"type": "Numeric"
+		},
+		{
+			"name": "434",
+			"type": "Numeric"
+		},
+		{
+			"name": "435",
+			"type": "Numeric"
+		},
+		{
+			"name": "436",
+			"type": "Numeric"
+		},
+		{
+			"name": "437",
+			"type": "Numeric"
+		},
+		{
+			"name": "438",
+			"type": "Numeric"
+		},
+		{
+			"name": "439",
+			"type": "Numeric"
+		},
+		{
+			"name": "440",
+			"type": "Numeric"
+		},
+		{
+			"name": "441",
+			"type": "Numeric"
+		},
+		{
+			"name": "442",
+			"type": "Numeric"
+		},
+		{
+			"name": "443",
+			"type": "Numeric"
+		},
+		{
+			"name": "594",
+			"type": "Numeric"
+		},
+		{
+			"name": "444",
+			"type": "Numeric"
+		},
+		{
+			"name": "445",
+			"type": "Numeric"
+		},
+		{
+			"name": "446",
+			"type": "Numeric"
+		},
+		{
+			"name": "447",
+			"type": "Numeric"
+		},
+		{
+			"name": "448",
+			"type": "Numeric"
+		},
+		{
+			"name": "453",
+			"type": "Numeric"
+		},
+		{
+			"name": "454",
+			"type": "Numeric"
+		},
+		{
+			"name": "455",
+			"type": "Numeric"
+		},
+		{
+			"name": "456",
+			"type": "Numeric"
+		},
+		{
+			"name": "457",
+			"type": "Numeric"
+		},
+		{
+			"name": "458",
+			"type": "Numeric"
+		},
+		{
+			"name": "459",
+			"type": "Numeric"
+		},
+		{
+			"name": "460",
+			"type": "Numeric"
+		},
+		{
+			"name": "461",
+			"type": "Numeric"
+		},
+		{
+			"name": "463",
+			"type": "Numeric"
+		},
+		{
+			"name": "464",
+			"type": "Numeric"
+		},
+		{
+			"name": "468",
+			"type": "Numeric"
+		},
+		{
+			"name": "470",
+			"type": "Numeric"
+		},
+		{
+			"name": "473",
+			"type": "Numeric"
+		},
+		{
+			"name": "478",
+			"type": "Numeric"
+		},
+		{
+			"name": "481",
+			"type": "Numeric"
+		},
+		{
+			"name": "489",
+			"type": "Numeric"
+		},
+		{
+			"name": "490",
+			"type": "Numeric"
+		},
+		{
+			"name": "510",
+			"type": "Numeric"
+		},
+		{
+			"name": "514",
+			"type": "Numeric"
+		},
+		{
+			"name": "515",
+			"type": "Numeric"
+		},
+		{
+			"name": "516",
+			"type": "Numeric"
+		},
+		{
+			"name": "517",
+			"type": "Numeric"
+		},
+		{
+			"name": "518",
+			"type": "Numeric"
+		},
+		{
+			"name": "519",
+			"type": "Numeric"
+		},
+		{
+			"name": "520",
+			"type": "Numeric"
+		},
+		{
+			"name": "521",
+			"type": "Numeric"
+		},
+		{
+			"name": "522",
+			"type": "Numeric"
+		},
+		{
+			"name": "523",
+			"type": "Numeric"
+		},
+		{
+			"name": "524",
+			"type": "Numeric"
+		},
+		{
+			"name": "525",
+			"type": "Numeric"
+		},
+		{
+			"name": "527",
+			"type": "Numeric"
+		},
+		{
+			"name": "528",
+			"type": "Numeric"
+		},
+		{
+			"name": "529",
+			"type": "Numeric"
+		},
+		{
+			"name": "530",
+			"type": "Numeric"
+		},
+		{
+			"name": "531",
+			"type": "Numeric"
+		},
+		{
+			"name": "532",
+			"type": "Numeric"
+		},
+		{
+			"name": "533",
+			"type": "Numeric"
+		},
+		{
+			"name": "534",
+			"type": "Numeric"
+		},
+		{
+			"name": "535",
+			"type": "Numeric"
+		},
+		{
+			"name": "536",
+			"type": "Numeric"
+		},
+		{
+			"name": "537",
+			"type": "Numeric"
+		},
+		{
+			"name": "538",
+			"type": "Numeric"
+		},
+		{
+			"name": "539",
+			"type": "Numeric"
+		},
+		{
+			"name": "540",
+			"type": "Numeric"
+		},
+		{
+			"name": "541",
+			"type": "Numeric"
+		},
+		{
+			"name": "542",
+			"type": "Numeric"
+		},
+		{
+			"name": "544",
+			"type": "Numeric"
+		},
+		{
+			"name": "545",
+			"type": "Numeric"
+		},
+		{
+			"name": "546",
+			"type": "Numeric"
+		},
+		{
+			"name": "547",
+			"type": "Numeric"
+		},
+		{
+			"name": "548",
+			"type": "Numeric"
+		},
+		{
+			"name": "549",
+			"type": "Numeric"
+		},
+		{
+			"name": "550",
+			"type": "Numeric"
+		},
+		{
+			"name": "551",
+			"type": "Numeric"
+		},
+		{
+			"name": "552",
+			"type": "Numeric"
+		},
+		{
+			"name": "553",
+			"type": "Numeric"
+		},
+		{
+			"name": "554",
+			"type": "Numeric"
+		},
+		{
+			"name": "555",
+			"type": "Numeric"
+		},
+		{
+			"name": "556",
+			"type": "Numeric"
+		},
+		{
+			"name": "557",
+			"type": "Numeric"
+		},
+		{
+			"name": "558",
+			"type": "Numeric"
+		},
+		{
+			"name": "559",
+			"type": "Numeric"
+		},
+		{
+			"name": "560",
+			"type": "Numeric"
+		},
+		{
+			"name": "561",
+			"type": "Numeric"
+		},
+		{
+			"name": "562",
+			"type": "Numeric"
+		},
+		{
+			"name": "564",
+			"type": "Numeric"
+		},
+		{
+			"name": "565",
+			"type": "Numeric"
+		},
+		{
+			"name": "566",
+			"type": "Numeric"
+		},
+		{
+			"name": "567",
+			"type": "Numeric"
+		},
+		{
+			"name": "568",
+			"type": "Numeric"
+		},
+		{
+			"name": "569",
+			"type": "Numeric"
+		},
+		{
+			"name": "571",
+			"type": "Numeric"
+		},
+		{
+			"name": "572",
+			"type": "Numeric"
+		},
+		{
+			"name": "573",
+			"type": "Numeric"
+		},
+		{
+			"name": "574",
+			"type": "Numeric"
+		},
+		{
+			"name": "575",
+			"type": "Numeric"
+		},
+		{
+			"name": "576",
+			"type": "Numeric"
+		},
+		{
+			"name": "577",
+			"type": "Numeric"
+		},
+		{
+			"name": "578",
+			"type": "Numeric"
+		},
+		{
+			"name": "579",
+			"type": "Numeric"
+		},
+		{
+			"name": "580",
+			"type": "Numeric"
+		},
+		{
+			"name": "581",
+			"type": "Numeric"
+		},
+		{
+			"name": "582",
+			"type": "Numeric"
+		},
+		{
+			"name": "583",
+			"type": "Numeric"
+		},
+		{
+			"name": "584",
+			"type": "Numeric"
+		},
+		{
+			"name": "585",
+			"type": "Numeric"
+		},
+		{
+			"name": "586",
+			"type": "Numeric"
+		},
+		{
+			"name": "587",
+			"type": "Numeric"
+		},
+		{
+			"name": "588",
+			"type": "Numeric"
+		},
+		{
+			"name": "589",
+			"type": "Numeric"
+		},
+		{
+			"name": "590",
+			"type": "Numeric"
+		},
+		{
+			"name": "591",
+			"type": "Numeric"
+		},
+		{
+			"name": "592",
+			"type": "Numeric"
+		},
+		{
+			"name": "593",
+			"type": "Numeric"
+		},
+		{
+			"name": "595",
+			"type": "Numeric"
+		},
+		{
+			"name": "596",
+			"type": "Numeric"
+		},
+		{
+			"name": "597",
+			"type": "Numeric"
+		},
+		{
+			"name": "598",
+			"type": "Numeric"
+		},
+		{
+			"name": "599",
+			"type": "Numeric"
+		},
+		{
+			"name": "601",
+			"type": "Numeric"
+		},
+		{
+			"name": "609",
+			"type": "Numeric"
+		},
+		{
+			"name": "610",
+			"type": "Numeric"
+		},
+		{
+			"name": "612",
+			"type": "Numeric"
+		},
+		{
+			"name": "616",
+			"type": "Numeric"
+		},
+		{
+			"name": "617",
+			"type": "Numeric"
+		},
+		{
+			"name": "619",
+			"type": "Numeric"
+		},
+		{
+			"name": "620",
+			"type": "Numeric"
+		},
+		{
+			"name": "622",
+			"type": "Numeric"
+		},
+		{
+			"name": "623",
+			"type": "Numeric"
+		},
+		{
+			"name": "624",
+			"type": "Numeric"
+		},
+		{
+			"name": "625",
+			"type": "Numeric"
+		},
+		{
+			"name": "628",
+			"type": "Numeric"
+		},
+		{
+			"name": "629",
+			"type": "Numeric"
+		},
+		{
+			"name": "630",
+			"type": "Numeric"
+		},
+		{
+			"name": "631",
+			"type": "Numeric"
+		},
+		{
+			"name": "632",
+			"type": "Numeric"
+		},
+		{
+			"name": "633",
+			"type": "Numeric"
+		},
+		{
+			"name": "635",
+			"type": "Numeric"
+		},
+		{
+			"name": "636",
+			"type": "Numeric"
+		},
+		{
+			"name": "637",
+			"type": "Numeric"
+		},
+		{
+			"name": "638",
+			"type": "Numeric"
+		},
+		{
+			"name": "639",
+			"type": "Numeric"
+		},
+		{
+			"name": "641",
+			"type": "Numeric"
+		},
+		{
+			"name": "644",
+			"type": "Numeric"
+		},
+		{
+			"name": "645",
+			"type": "Numeric"
+		},
+		{
+			"name": "646",
+			"type": "Numeric"
+		},
+		{
+			"name": "647",
+			"type": "Numeric"
+		},
+		{
+			"name": "648",
+			"type": "Numeric"
+		},
+		{
+			"name": "649",
+			"type": "Numeric"
+		},
+		{
+			"name": "650",
+			"type": "Numeric"
+		},
+		{
+			"name": "651",
+			"type": "Numeric"
+		},
+		{
+			"name": "652",
+			"type": "Numeric"
+		},
+		{
+			"name": "658",
+			"type": "Numeric"
+		},
+		{
+			"name": "659",
+			"type": "Numeric"
+		},
+		{
+			"name": "660",
+			"type": "Numeric"
+		},
+		{
+			"name": "661",
+			"type": "Numeric"
+		},
+		{
+			"name": "662",
+			"type": "Numeric"
+		},
+		{
+			"name": "667",
+			"type": "Numeric"
+		},
+		{
+			"name": "669",
+			"type": "Numeric"
+		},
+		{
+			"name": "670",
+			"type": "Numeric"
+		},
+		{
+			"name": "672",
+			"type": "Numeric"
+		},
+		{
+			"name": "674",
+			"type": "Numeric"
+		},
+		{
+			"name": "675",
+			"type": "Numeric"
+		},
+		{
+			"name": "676",
+			"type": "Numeric"
+		},
+		{
+			"name": "677",
+			"type": "Numeric"
+		},
+		{
+			"name": "678",
+			"type": "Numeric"
+		},
+		{
+			"name": "679",
+			"type": "Numeric"
+		},
+		{
+			"name": "680",
+			"type": "Numeric"
+		},
+		{
+			"name": "681",
+			"type": "Numeric"
+		},
+		{
+			"name": "682",
+			"type": "Numeric"
+		},
+		{
+			"name": "683",
+			"type": "Numeric"
+		},
+		{
+			"name": "684",
+			"type": "Numeric"
+		},
+		{
+			"name": "685",
+			"type": "Numeric"
+		},
+		{
+			"name": "686",
+			"type": "Numeric"
+		},
+		{
+			"name": "687",
+			"type": "Numeric"
+		},
+		{
+			"name": "688",
+			"type": "Numeric"
+		},
+		{
+			"name": "689",
+			"type": "Numeric"
+		},
+		{
+			"name": "690",
+			"type": "Numeric"
+		},
+		{
+			"name": "691",
+			"type": "Numeric"
+		},
+		{
+			"name": "692",
+			"type": "Numeric"
+		},
+		{
+			"name": "693",
+			"type": "Numeric"
+		},
+		{
+			"name": "694",
+			"type": "Numeric"
+		},
+		{
+			"name": "695",
+			"type": "Numeric"
+		},
+		{
+			"name": "696",
+			"type": "Numeric"
+		},
+		{
+			"name": "697",
+			"type": "Numeric"
+		},
+		{
+			"name": "698",
+			"type": "Numeric"
+		},
+		{
+			"name": "699",
+			"type": "Numeric"
+		},
+		{
+			"name": "707",
+			"type": "Numeric"
+		},
+		{
+			"name": "709",
+			"type": "Numeric"
+		},
+		{
+			"name": "711",
+			"type": "Numeric"
+		},
+		{
+			"name": "713",
+			"type": "Numeric"
+		},
+		{
+			"name": "715",
+			"type": "Numeric"
+		},
+		{
+			"name": "717",
+			"type": "Numeric"
+		},
+		{
+			"name": "718",
+			"type": "Numeric"
+		},
+		{
+			"name": "719",
+			"type": "Numeric"
+		},
+		{
+			"name": "721",
+			"type": "Numeric"
+		},
+		{
+			"name": "724",
+			"type": "Numeric"
+		},
+		{
+			"name": "726",
+			"type": "Numeric"
+		},
+		{
+			"name": "727",
+			"type": "Numeric"
+		},
+		{
+			"name": "730",
+			"type": "Numeric"
+		},
+		{
+			"name": "733",
+			"type": "Numeric"
+		},
+		{
+			"name": "734",
+			"type": "Numeric"
+		},
+		{
+			"name": "735",
+			"type": "Numeric"
+		},
+		{
+			"name": "738",
+			"type": "Numeric"
+		},
+		{
+			"name": "740",
+			"type": "Numeric"
+		},
+		{
+			"name": "741",
+			"type": "Numeric"
+		},
+		{
+			"name": "742",
+			"type": "Numeric"
+		},
+		{
+			"name": "743",
+			"type": "Numeric"
+		},
+		{
+			"name": "744",
+			"type": "Numeric"
+		},
+		{
+			"name": "745",
+			"type": "Numeric"
+		},
+		{
+			"name": "749",
+			"type": "Numeric"
+		},
+		{
+			"name": "750",
+			"type": "Numeric"
+		},
+		{
+			"name": "751",
+			"type": "Numeric"
+		},
+		{
+			"name": "752",
+			"type": "Numeric"
+		},
+		{
+			"name": "753",
+			"type": "Numeric"
+		},
+		{
+			"name": "754",
+			"type": "Numeric"
+		},
+		{
+			"name": "755",
+			"type": "Numeric"
+		},
+		{
+			"name": "756",
+			"type": "Numeric"
+		},
+		{
+			"name": "757",
+			"type": "Numeric"
+		},
+		{
+			"name": "758",
+			"type": "Numeric"
+		},
+		{
+			"name": "759",
+			"type": "Numeric"
+		},
+		{
+			"name": "760",
+			"type": "Numeric"
+		},
+		{
+			"name": "775",
+			"type": "Numeric"
+		},
+		{
+			"name": "776",
+			"type": "Numeric"
+		},
+		{
+			"name": "777",
+			"type": "Numeric"
+		},
+		{
+			"name": "778",
+			"type": "Numeric"
+		},
+		{
+			"name": "779",
+			"type": "Numeric"
+		},
+		{
+			"name": "780",
+			"type": "Numeric"
+		},
+		{
+			"name": "781",
+			"type": "Numeric"
+		},
+		{
+			"name": "782",
+			"type": "Numeric"
+		},
+		{
+			"name": "783",
+			"type": "Numeric"
+		},
+		{
+			"name": "784",
+			"type": "Numeric"
+		},
+		{
+			"name": "785",
+			"type": "Numeric"
+		},
+		{
+			"name": "786",
+			"type": "Numeric"
+		},
+		{
+			"name": "787",
+			"type": "Numeric"
+		},
+		{
+			"name": "788",
+			"type": "Numeric"
+		},
+		{
+			"name": "789",
+			"type": "Numeric"
+		},
+		{
+			"name": "790",
+			"type": "Numeric"
+		},
+		{
+			"name": "791",
+			"type": "Numeric"
+		},
+		{
+			"name": "795",
+			"type": "Numeric"
+		},
+		{
+			"name": "804",
+			"type": "Numeric"
+		},
+		{
+			"name": "805",
+			"type": "Numeric"
+		},
+		{
+			"name": "729",
+			"type": "Numeric"
+		},
+		{
+			"name": "2",
+			"type": "Numeric"
+		},
+		{
+			"name": "23",
+			"type": "Numeric"
+		},
+		{
+			"name": "27",
+			"type": "Numeric"
+		},
+		{
+			"name": "207",
+			"type": "Numeric"
+		},
+		{
+			"name": "212",
+			"type": "Numeric"
+		},
+		{
+			"name": "219",
+			"type": "Numeric"
+		},
+		{
+			"name": "220",
+			"type": "Numeric"
+		},
+		{
+			"name": "227",
+			"type": "Numeric"
+		},
+		{
+			"name": "228",
+			"type": "Numeric"
+		},
+		{
+			"name": "231",
+			"type": "Numeric"
+		},
+		{
+			"name": "236",
+			"type": "Numeric"
+		},
+		{
+			"name": "1027",
+			"type": "Numeric"
+		},
+		{
+			"name": "1028",
+			"type": "Numeric"
+		},
+		{
+			"name": "281",
+			"type": "Numeric"
+		},
+		{
+			"name": "283",
+			"type": "Numeric"
+		},
+		{
+			"name": "288",
+			"type": "Numeric"
+		},
+		{
+			"name": "330",
+			"type": "Numeric"
+		},
+		{
+			"name": "336",
+			"type": "Numeric"
+		},
+		{
+			"name": "462",
+			"type": "Numeric"
+		},
+		{
+			"name": "466",
+			"type": "Numeric"
+		},
+		{
+			"name": "471",
+			"type": "Numeric"
+		},
+		{
+			"name": "472",
+			"type": "Numeric"
+		},
+		{
+			"name": "475",
+			"type": "Numeric"
+		},
+		{
+			"name": "493",
+			"type": "Numeric"
+		},
+		{
+			"name": "497",
+			"type": "Numeric"
+		},
+		{
+			"name": "500",
+			"type": "Numeric"
+		},
+		{
+			"name": "501",
+			"type": "Numeric"
+		},
+		{
+			"name": "502",
+			"type": "Numeric"
+		},
+		{
+			"name": "504",
+			"type": "Numeric"
+		},
+		{
+			"name": "505",
+			"type": "Numeric"
+		},
+		{
+			"name": "507",
+			"type": "Numeric"
+		},
+		{
+			"name": "511",
+			"type": "Numeric"
+		},
+		{
+			"name": "602",
+			"type": "Numeric"
+		},
+		{
+			"name": "608",
+			"type": "Numeric"
+		},
+		{
+			"name": "618",
+			"type": "Numeric"
+		},
+		{
+			"name": "640",
+			"type": "Numeric"
+		},
+		{
+			"name": "664",
+			"type": "Numeric"
+		},
+		{
+			"name": "665",
+			"type": "Numeric"
+		},
+		{
+			"name": "671",
+			"type": "Numeric"
+		},
+		{
+			"name": "723",
+			"type": "Numeric"
+		},
+		{
+			"name": "736",
+			"type": "Numeric"
+		},
+		{
+			"name": "773",
+			"type": "Numeric"
+		},
+		{
+			"name": "809",
+			"type": "Numeric"
+		},
+		{
+			"name": "XP Total",
+			"type": "Consolidated"
+		},
+		{
+			"name": "NET",
+			"type": "Consolidated"
+		},
+		{
+			"name": "TEL",
+			"type": "Consolidated"
+		},
+		{
+			"name": "TV",
+			"type": "Consolidated"
+		},
+		{
+			"name": "KTV Alapterm\u00e9k Lakoss\u00e1gi Total",
+			"type": "Consolidated"
+		},
+		{
+			"name": "KTV Alapterm\u00e9k \u00dczleti Total",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Internet Lakoss\u00e1gi Total",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Internet \u00dczleti Total",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Telefon Lakoss\u00e1gi Total",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Telefon \u00dczleti Total",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Telefon ADSL Total",
+			"type": "Consolidated"
+		},
+		{
+			"name": "KTV Kieg\u00e9sz\u00edt\u0151 Lakoss\u00e1gi Total",
+			"type": "Consolidated"
+		},
+		{
+			"name": "KTV Kieg\u00e9sz\u00edt\u0151 \u00dczleti Total",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Eszk\u00f6zb\u00e9rlet Total",
+			"type": "Consolidated"
+		},
+		{
+			"name": "DSL Total",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Nagyker Total",
+			"type": "Consolidated"
+		},
+		{
+			"name": "OTT Total",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Egy\u00e9b Total",
+			"type": "Consolidated"
+		}
+	],
+	"Edges": [
+		{
+			"parentName": "Total Products",
+			"componentName": "6",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "24",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "32",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "34",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "41",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "54",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "56",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "64",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "73",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "78",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "82",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "83",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "89",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "121",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "133",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "137",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "1024",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "176",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "1026",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "194",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "197",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "199",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "200",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "201",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "202",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "203",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "206",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "208",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "209",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "210",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "211",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "213",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "214",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "221",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "226",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "229",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "232",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "233",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "234",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "246",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "247",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "248",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "258",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "264",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "265",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "267",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "268",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "270",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "271",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "272",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "273",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "274",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "278",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "286",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "291",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "295",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "303",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "305",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "308",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "331",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "334",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "353",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "354",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "358",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "359",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "360",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "361",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "362",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "366",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "367",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "368",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "369",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "370",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "371",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "373",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "374",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "375",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "376",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "377",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "378",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "379",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "381",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "382",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "383",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "384",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "385",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "388",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "390",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "392",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "395",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "397",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "405",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "406",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "407",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "419",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "429",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "449",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "450",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "451",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "452",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "465",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "467",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "469",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "474",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "476",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "477",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "479",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "480",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "482",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "483",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "484",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "485",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "486",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "487",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "488",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "491",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "492",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "494",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "495",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "496",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "498",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "499",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "503",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "506",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "508",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "509",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "512",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "513",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "526",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "1029",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "543",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "563",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "570",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "600",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "603",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "604",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "605",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "606",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "607",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "611",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "613",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "614",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "615",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "621",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "626",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "627",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "634",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "1025",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "642",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "643",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "653",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "654",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "655",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "656",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "657",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "663",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "666",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "668",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "673",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "700",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "701",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "702",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "703",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "704",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "705",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "706",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "708",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "710",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "712",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "714",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "716",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "720",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "722",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "725",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "728",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "731",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "732",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "737",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "739",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "746",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "747",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "748",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "761",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "762",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "763",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "764",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "765",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "766",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "767",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "768",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "769",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "770",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "771",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "772",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "774",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "792",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "793",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "794",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "796",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "797",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "798",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "799",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "800",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "801",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "802",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "803",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "806",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "807",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "808",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "810",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "New",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "Nem tartozik termekhez",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products",
+			"componentName": "Terminated",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "1",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "3",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "4",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "5",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "7",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "8",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "9",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "10",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "11",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "12",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "13",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "14",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "16",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "17",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "18",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "19",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "20",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "21",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "22",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "25",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "26",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "28",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "29",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "30",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "31",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "33",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "35",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "36",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "37",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "38",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "39",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "40",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "42",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "43",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "44",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "45",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "46",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "47",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "48",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "49",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "50",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "51",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "52",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "53",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "55",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "57",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "58",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "59",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "60",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "61",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "62",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "63",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "65",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "66",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "67",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "68",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "69",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "70",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "71",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "72",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "74",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "75",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "76",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "77",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "79",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "80",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "81",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "84",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "85",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "86",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "87",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "88",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "90",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "91",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "92",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "93",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "94",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "95",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "96",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "97",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "98",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "99",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "100",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "101",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "102",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "103",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "104",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "105",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "106",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "107",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "108",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "109",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "110",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "111",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "112",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "113",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "114",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "115",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "116",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "117",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "118",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "119",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "120",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "122",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "123",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "124",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "125",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "126",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "127",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "128",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "129",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "130",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "131",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "132",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "134",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "135",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "136",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "138",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "139",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "140",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "141",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "142",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "143",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "144",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "145",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "146",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "147",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "148",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "149",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "150",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "151",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "152",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "153",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "154",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "155",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "156",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "157",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "158",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "159",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "160",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "161",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "162",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "163",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "164",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "165",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "166",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "167",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "168",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "169",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "170",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "171",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "172",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "173",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "174",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "175",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "177",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "178",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "179",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "180",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "181",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "182",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "183",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "184",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "185",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "186",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "187",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "188",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "189",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "190",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "191",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "192",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "193",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "195",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "196",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "198",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "204",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "205",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "215",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "216",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "217",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "218",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "222",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "223",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "224",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "225",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "230",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "235",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "237",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "238",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "239",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "240",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "241",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "242",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "243",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "244",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "245",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "249",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "250",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "251",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "252",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "253",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "254",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "255",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "256",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "257",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "259",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "260",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "261",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "262",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "263",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "266",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "269",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "275",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "276",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "277",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "279",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "280",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "282",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "284",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "285",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "287",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "289",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "290",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "292",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "293",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "294",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "296",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "297",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "298",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "299",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "300",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "301",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "302",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "304",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "306",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "307",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "309",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "310",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "311",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "312",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "313",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "314",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "315",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "316",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "317",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "318",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "319",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "320",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "321",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "322",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "323",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "324",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "325",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "326",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "327",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "328",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "329",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "332",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "333",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "335",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "337",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "338",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "339",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "340",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "341",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "342",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "343",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "344",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "345",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "346",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "347",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "348",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "349",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "350",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "351",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "352",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "355",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "356",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "357",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "363",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "364",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "365",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "372",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "380",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "386",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "387",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "389",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "391",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "393",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "394",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "396",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "398",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "399",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "400",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "401",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "402",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "403",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "404",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "408",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "409",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "410",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "411",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "412",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "413",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "414",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "415",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "416",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "417",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "418",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "420",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "421",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "422",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "423",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "424",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "425",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "426",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "427",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "428",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "430",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "431",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "432",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "433",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "434",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "435",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "436",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "437",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "438",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "439",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "440",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "441",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "442",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "443",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "594",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "444",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "445",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "446",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "447",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "448",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "453",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "454",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "455",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "456",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "457",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "458",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "459",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "460",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "461",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "463",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "464",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "468",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "470",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "473",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "478",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "481",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "489",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "490",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "510",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "514",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "515",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "516",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "517",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "518",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "519",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "520",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "521",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "522",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "523",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "524",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "525",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "527",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "528",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "529",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "530",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "531",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "532",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "533",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "534",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "535",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "536",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "537",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "538",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "539",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "540",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "541",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "542",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "544",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "545",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "546",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "547",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "548",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "549",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "550",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "551",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "552",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "553",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "554",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "555",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "556",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "557",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "558",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "559",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "560",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "561",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "562",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "564",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "565",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "566",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "567",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "568",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "569",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "571",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "572",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "573",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "574",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "575",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "576",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "577",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "578",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "579",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "580",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "581",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "582",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "583",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "584",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "585",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "586",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "587",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "588",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "589",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "590",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "591",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "592",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "593",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "595",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "596",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "597",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "598",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "599",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "601",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "609",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "610",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "612",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "616",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "617",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "619",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "620",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "622",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "623",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "624",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "625",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "628",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "629",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "630",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "631",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "632",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "633",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "635",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "636",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "637",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "638",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "639",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "641",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "644",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "645",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "646",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "647",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "648",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "649",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "650",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "651",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "652",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "658",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "659",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "660",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "661",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "662",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "667",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "669",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "670",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "672",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "674",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "675",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "676",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "677",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "678",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "679",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "680",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "681",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "682",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "683",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "684",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "685",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "686",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "687",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "688",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "689",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "690",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "691",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "692",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "693",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "694",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "695",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "696",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "697",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "698",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "699",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "707",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "709",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "711",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "713",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "715",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "717",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "718",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "719",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "721",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "724",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "726",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "727",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "730",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "733",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "734",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "735",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "738",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "740",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "741",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "742",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "743",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "744",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "745",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "749",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "750",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "751",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "752",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "753",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "754",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "755",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "756",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "757",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "758",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "759",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "760",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "775",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "776",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "777",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "778",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "779",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "780",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "781",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "782",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "783",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "784",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "785",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "786",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "787",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "788",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "789",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "790",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "791",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "795",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "804",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "805",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "Nem tartozik termekhez",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "New",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "Terminated",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "729",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "2",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "23",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "27",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "207",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "212",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "219",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "220",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "227",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "228",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "231",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "236",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "1027",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "1028",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "281",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "283",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "288",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "330",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "336",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "462",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "466",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "471",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "472",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "475",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "493",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "497",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "500",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "501",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "502",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "504",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "505",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "507",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "511",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "602",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "608",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "618",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "640",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "664",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "665",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "671",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "723",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "736",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "773",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Products Archive",
+			"componentName": "809",
+			"weight": 1
+		},
+		{
+			"parentName": "XP Total",
+			"componentName": "NET",
+			"weight": 1
+		},
+		{
+			"parentName": "XP Total",
+			"componentName": "TEL",
+			"weight": 1
+		},
+		{
+			"parentName": "XP Total",
+			"componentName": "TV",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "1",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "21",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "26",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "27",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "31",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "32",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "33",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "34",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "35",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "36",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "37",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "38",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "39",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "40",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "41",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "42",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "43",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "44",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "45",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "46",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "47",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "48",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "49",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "50",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "51",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "52",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "53",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "54",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "55",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "56",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "57",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "58",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "59",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "60",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "61",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "62",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "63",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "64",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "65",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "66",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "67",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "68",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "69",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "70",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "71",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "72",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "73",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "74",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "75",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "76",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "77",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "78",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "79",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "80",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "81",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "82",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "83",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "84",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "85",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "86",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "87",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "88",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "89",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "90",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "91",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "92",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "93",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "94",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "95",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "96",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "97",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "98",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "99",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "100",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "101",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "102",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "103",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "104",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "105",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "106",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "107",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "108",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "109",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "110",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "111",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "112",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "113",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "114",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "115",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "116",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "117",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "118",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "119",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "120",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "122",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "123",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "124",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "125",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "126",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "127",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "128",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "129",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "130",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "131",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "132",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "133",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "134",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "135",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "136",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "137",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "138",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "139",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "140",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "141",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "142",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "143",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "144",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "145",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "146",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "147",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "148",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "149",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "170",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "171",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "172",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "179",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "180",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "181",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "182",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "183",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "184",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "185",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "186",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "187",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "188",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "189",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "190",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "191",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "226",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "227",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "245",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "1027",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "250",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "251",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "253",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "254",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "255",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "256",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "309",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "310",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "312",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "313",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "314",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "315",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "316",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "321",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "322",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "323",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "324",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "325",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "326",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "327",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "330",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "331",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "332",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "333",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "334",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "335",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "339",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "340",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "341",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "351",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "352",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "354",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "358",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "359",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "360",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "361",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "362",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "363",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "364",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "365",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "366",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "367",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "368",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "369",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "370",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "371",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "372",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "373",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "374",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "375",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "376",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "377",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "378",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "379",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "380",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "381",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "382",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "383",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "384",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "385",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "386",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "387",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "388",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "389",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "390",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "391",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "392",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "393",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "394",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "395",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "396",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "397",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "398",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "399",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "400",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "401",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "402",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "403",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "404",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "405",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "406",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "407",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "408",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "409",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "410",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "411",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "412",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "413",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "414",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "415",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "416",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "417",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "418",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "419",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "421",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "422",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "423",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "424",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "425",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "426",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "427",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "428",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "449",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "450",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "451",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "452",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "523",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "527",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "528",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "529",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "530",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "531",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "532",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "533",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "534",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "535",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "536",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "546",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "547",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "548",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "549",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "550",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "551",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "552",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "553",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "554",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "555",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "556",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "557",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "558",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "559",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "560",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "561",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "562",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "563",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "564",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "565",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "566",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "567",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "568",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "569",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "570",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "571",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "572",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "573",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "574",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "575",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "576",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "577",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "578",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "579",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "580",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "581",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "582",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "583",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "584",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "585",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "586",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "587",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "588",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "589",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "590",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "591",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "592",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "593",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "597",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "598",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "600",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "601",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "635",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "636",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "652",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "682",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "684",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "685",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "687",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "690",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "692",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "693",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "700",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "701",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "702",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "703",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "704",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "705",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "706",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "707",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "708",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "709",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "710",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "711",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "712",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "713",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "714",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "715",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "716",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "717",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "718",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "719",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "720",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "721",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "722",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "723",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "733",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "737",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "738",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "739",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "740",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "741",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "742",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "743",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "744",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "745",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "746",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "747",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "749",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "750",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "751",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "752",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "753",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "754",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "755",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "756",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "757",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "758",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "759",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "760",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "761",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "762",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "763",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "764",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "765",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "766",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "767",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "768",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "769",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "770",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "771",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "772",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "773",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "774",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "775",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "776",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "777",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "778",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "779",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "780",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "781",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "782",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "783",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "784",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "785",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "786",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "787",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "788",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "789",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "790",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "796",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "797",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "798",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "799",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "800",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "801",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "802",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "803",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "804",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "805",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "New",
+			"weight": 1
+		},
+		{
+			"parentName": "NET",
+			"componentName": "Terminated",
+			"weight": 1
+		},
+		{
+			"parentName": "TEL",
+			"componentName": "121",
+			"weight": 1
+		},
+		{
+			"parentName": "TEL",
+			"componentName": "1028",
+			"weight": 1
+		},
+		{
+			"parentName": "TEL",
+			"componentName": "257",
+			"weight": 1
+		},
+		{
+			"parentName": "TEL",
+			"componentName": "653",
+			"weight": 1
+		},
+		{
+			"parentName": "TEL",
+			"componentName": "654",
+			"weight": 1
+		},
+		{
+			"parentName": "TEL",
+			"componentName": "655",
+			"weight": 1
+		},
+		{
+			"parentName": "TEL",
+			"componentName": "656",
+			"weight": 1
+		},
+		{
+			"parentName": "TEL",
+			"componentName": "657",
+			"weight": 1
+		},
+		{
+			"parentName": "TEL",
+			"componentName": "725",
+			"weight": 1
+		},
+		{
+			"parentName": "TEL",
+			"componentName": "729",
+			"weight": 1
+		},
+		{
+			"parentName": "TEL",
+			"componentName": "791",
+			"weight": 1
+		},
+		{
+			"parentName": "TEL",
+			"componentName": "806",
+			"weight": 1
+		},
+		{
+			"parentName": "TEL",
+			"componentName": "807",
+			"weight": 1
+		},
+		{
+			"parentName": "TEL",
+			"componentName": "808",
+			"weight": 1
+		},
+		{
+			"parentName": "TEL",
+			"componentName": "809",
+			"weight": 1
+		},
+		{
+			"parentName": "TEL",
+			"componentName": "810",
+			"weight": 1
+		},
+		{
+			"parentName": "TEL",
+			"componentName": "New",
+			"weight": 1
+		},
+		{
+			"parentName": "TEL",
+			"componentName": "Terminated",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "4",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "7",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "8",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "10",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "12",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "16",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "28",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "29",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "30",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "152",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "153",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "154",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "155",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "156",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "157",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "158",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "159",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "160",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "161",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "162",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "163",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "164",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "165",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "166",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "173",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "174",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "175",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "193",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "194",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "195",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "196",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "197",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "206",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "207",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "208",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "209",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "210",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "211",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "212",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "213",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "214",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "215",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "216",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "217",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "218",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "219",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "220",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "221",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "224",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "225",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "228",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "229",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "230",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "231",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "232",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "233",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "269",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "285",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "430",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "431",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "520",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "521",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "620",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "629",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "633",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "641",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "667",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "683",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "688",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "691",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "694",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "695",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "696",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "697",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "698",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "734",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "735",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "736",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "New",
+			"weight": 1
+		},
+		{
+			"parentName": "TV",
+			"componentName": "Terminated",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Alapterm\u00e9k Lakoss\u00e1gi Total",
+			"componentName": "194",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Alapterm\u00e9k Lakoss\u00e1gi Total",
+			"componentName": "197",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Alapterm\u00e9k Lakoss\u00e1gi Total",
+			"componentName": "206",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Alapterm\u00e9k Lakoss\u00e1gi Total",
+			"componentName": "210",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Alapterm\u00e9k Lakoss\u00e1gi Total",
+			"componentName": "214",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Alapterm\u00e9k Lakoss\u00e1gi Total",
+			"componentName": "229",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Alapterm\u00e9k Lakoss\u00e1gi Total",
+			"componentName": "New",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Alapterm\u00e9k Lakoss\u00e1gi Total",
+			"componentName": "Terminated",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Alapterm\u00e9k \u00dczleti Total",
+			"componentName": "208",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Alapterm\u00e9k \u00dczleti Total",
+			"componentName": "209",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Alapterm\u00e9k \u00dczleti Total",
+			"componentName": "211",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Alapterm\u00e9k \u00dczleti Total",
+			"componentName": "213",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Alapterm\u00e9k \u00dczleti Total",
+			"componentName": "221",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Alapterm\u00e9k \u00dczleti Total",
+			"componentName": "232",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Alapterm\u00e9k \u00dczleti Total",
+			"componentName": "233",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Alapterm\u00e9k \u00dczleti Total",
+			"componentName": "New",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Alapterm\u00e9k \u00dczleti Total",
+			"componentName": "Terminated",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "226",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "358",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "359",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "360",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "361",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "362",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "366",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "367",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "368",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "369",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "370",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "371",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "373",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "374",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "375",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "376",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "377",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "378",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "379",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "381",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "382",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "383",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "384",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "385",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "388",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "390",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "392",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "395",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "397",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "405",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "406",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "407",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "419",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "449",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "450",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "451",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "452",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "600",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "761",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "762",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "763",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "764",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "765",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "766",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "767",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "796",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "797",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "798",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "799",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "800",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "New",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet Lakoss\u00e1gi Total",
+			"componentName": "Terminated",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet \u00dczleti Total",
+			"componentName": "331",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet \u00dczleti Total",
+			"componentName": "334",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet \u00dczleti Total",
+			"componentName": "706",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet \u00dczleti Total",
+			"componentName": "708",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet \u00dczleti Total",
+			"componentName": "710",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet \u00dczleti Total",
+			"componentName": "712",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet \u00dczleti Total",
+			"componentName": "714",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet \u00dczleti Total",
+			"componentName": "716",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet \u00dczleti Total",
+			"componentName": "720",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet \u00dczleti Total",
+			"componentName": "722",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet \u00dczleti Total",
+			"componentName": "768",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet \u00dczleti Total",
+			"componentName": "769",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet \u00dczleti Total",
+			"componentName": "770",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet \u00dczleti Total",
+			"componentName": "771",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet \u00dczleti Total",
+			"componentName": "772",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet \u00dczleti Total",
+			"componentName": "774",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet \u00dczleti Total",
+			"componentName": "801",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet \u00dczleti Total",
+			"componentName": "802",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet \u00dczleti Total",
+			"componentName": "803",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet \u00dczleti Total",
+			"componentName": "New",
+			"weight": 1
+		},
+		{
+			"parentName": "Internet \u00dczleti Total",
+			"componentName": "Terminated",
+			"weight": 1
+		},
+		{
+			"parentName": "Telefon Lakoss\u00e1gi Total",
+			"componentName": "653",
+			"weight": 1
+		},
+		{
+			"parentName": "Telefon Lakoss\u00e1gi Total",
+			"componentName": "654",
+			"weight": 1
+		},
+		{
+			"parentName": "Telefon Lakoss\u00e1gi Total",
+			"componentName": "655",
+			"weight": 1
+		},
+		{
+			"parentName": "Telefon Lakoss\u00e1gi Total",
+			"componentName": "656",
+			"weight": 1
+		},
+		{
+			"parentName": "Telefon Lakoss\u00e1gi Total",
+			"componentName": "657",
+			"weight": 1
+		},
+		{
+			"parentName": "Telefon Lakoss\u00e1gi Total",
+			"componentName": "806",
+			"weight": 1
+		},
+		{
+			"parentName": "Telefon Lakoss\u00e1gi Total",
+			"componentName": "807",
+			"weight": 1
+		},
+		{
+			"parentName": "Telefon Lakoss\u00e1gi Total",
+			"componentName": "808",
+			"weight": 1
+		},
+		{
+			"parentName": "Telefon Lakoss\u00e1gi Total",
+			"componentName": "810",
+			"weight": 1
+		},
+		{
+			"parentName": "Telefon Lakoss\u00e1gi Total",
+			"componentName": "New",
+			"weight": 1
+		},
+		{
+			"parentName": "Telefon Lakoss\u00e1gi Total",
+			"componentName": "Terminated",
+			"weight": 1
+		},
+		{
+			"parentName": "Telefon \u00dczleti Total",
+			"componentName": "725",
+			"weight": 1
+		},
+		{
+			"parentName": "Telefon \u00dczleti Total",
+			"componentName": "New",
+			"weight": 1
+		},
+		{
+			"parentName": "Telefon \u00dczleti Total",
+			"componentName": "Terminated",
+			"weight": 1
+		},
+		{
+			"parentName": "Telefon ADSL Total",
+			"componentName": "121",
+			"weight": 1
+		},
+		{
+			"parentName": "Telefon ADSL Total",
+			"componentName": "New",
+			"weight": 1
+		},
+		{
+			"parentName": "Telefon ADSL Total",
+			"componentName": "Terminated",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Kieg\u00e9sz\u00edt\u0151 Lakoss\u00e1gi Total",
+			"componentName": "1024",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Kieg\u00e9sz\u00edt\u0151 Lakoss\u00e1gi Total",
+			"componentName": "1026",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Kieg\u00e9sz\u00edt\u0151 Lakoss\u00e1gi Total",
+			"componentName": "258",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Kieg\u00e9sz\u00edt\u0151 Lakoss\u00e1gi Total",
+			"componentName": "264",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Kieg\u00e9sz\u00edt\u0151 Lakoss\u00e1gi Total",
+			"componentName": "265",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Kieg\u00e9sz\u00edt\u0151 Lakoss\u00e1gi Total",
+			"componentName": "267",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Kieg\u00e9sz\u00edt\u0151 Lakoss\u00e1gi Total",
+			"componentName": "286",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Kieg\u00e9sz\u00edt\u0151 Lakoss\u00e1gi Total",
+			"componentName": "303",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Kieg\u00e9sz\u00edt\u0151 Lakoss\u00e1gi Total",
+			"componentName": "305",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Kieg\u00e9sz\u00edt\u0151 Lakoss\u00e1gi Total",
+			"componentName": "308",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Kieg\u00e9sz\u00edt\u0151 Lakoss\u00e1gi Total",
+			"componentName": "1029",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Kieg\u00e9sz\u00edt\u0151 Lakoss\u00e1gi Total",
+			"componentName": "626",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Kieg\u00e9sz\u00edt\u0151 Lakoss\u00e1gi Total",
+			"componentName": "634",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Kieg\u00e9sz\u00edt\u0151 Lakoss\u00e1gi Total",
+			"componentName": "1025",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Kieg\u00e9sz\u00edt\u0151 Lakoss\u00e1gi Total",
+			"componentName": "642",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Kieg\u00e9sz\u00edt\u0151 Lakoss\u00e1gi Total",
+			"componentName": "668",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Kieg\u00e9sz\u00edt\u0151 Lakoss\u00e1gi Total",
+			"componentName": "731",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Kieg\u00e9sz\u00edt\u0151 Lakoss\u00e1gi Total",
+			"componentName": "New",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Kieg\u00e9sz\u00edt\u0151 Lakoss\u00e1gi Total",
+			"componentName": "Terminated",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Kieg\u00e9sz\u00edt\u0151 \u00dczleti Total",
+			"componentName": "732",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Kieg\u00e9sz\u00edt\u0151 \u00dczleti Total",
+			"componentName": "New",
+			"weight": 1
+		},
+		{
+			"parentName": "KTV Kieg\u00e9sz\u00edt\u0151 \u00dczleti Total",
+			"componentName": "Terminated",
+			"weight": 1
+		},
+		{
+			"parentName": "Eszk\u00f6zb\u00e9rlet Total",
+			"componentName": "6",
+			"weight": 1
+		},
+		{
+			"parentName": "Eszk\u00f6zb\u00e9rlet Total",
+			"componentName": "24",
+			"weight": 1
+		},
+		{
+			"parentName": "Eszk\u00f6zb\u00e9rlet Total",
+			"componentName": "199",
+			"weight": 1
+		},
+		{
+			"parentName": "Eszk\u00f6zb\u00e9rlet Total",
+			"componentName": "200",
+			"weight": 1
+		},
+		{
+			"parentName": "Eszk\u00f6zb\u00e9rlet Total",
+			"componentName": "201",
+			"weight": 1
+		},
+		{
+			"parentName": "Eszk\u00f6zb\u00e9rlet Total",
+			"componentName": "202",
+			"weight": 1
+		},
+		{
+			"parentName": "Eszk\u00f6zb\u00e9rlet Total",
+			"componentName": "203",
+			"weight": 1
+		},
+		{
+			"parentName": "Eszk\u00f6zb\u00e9rlet Total",
+			"componentName": "543",
+			"weight": 1
+		},
+		{
+			"parentName": "Eszk\u00f6zb\u00e9rlet Total",
+			"componentName": "621",
+			"weight": 1
+		},
+		{
+			"parentName": "Eszk\u00f6zb\u00e9rlet Total",
+			"componentName": "794",
+			"weight": 1
+		},
+		{
+			"parentName": "Eszk\u00f6zb\u00e9rlet Total",
+			"componentName": "New",
+			"weight": 1
+		},
+		{
+			"parentName": "Eszk\u00f6zb\u00e9rlet Total",
+			"componentName": "Terminated",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "32",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "34",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "41",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "54",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "56",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "64",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "73",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "78",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "82",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "83",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "89",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "133",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "137",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "354",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "563",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "570",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "700",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "701",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "702",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "703",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "704",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "705",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "737",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "739",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "746",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "747",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "New",
+			"weight": 1
+		},
+		{
+			"parentName": "DSL Total",
+			"componentName": "Terminated",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "465",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "467",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "469",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "474",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "476",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "477",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "479",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "480",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "482",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "483",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "484",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "485",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "486",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "487",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "488",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "491",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "492",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "494",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "495",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "496",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "498",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "499",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "503",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "506",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "508",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "509",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "512",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "513",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "611",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "613",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "614",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "615",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "663",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "666",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "New",
+			"weight": 1
+		},
+		{
+			"parentName": "Nagyker Total",
+			"componentName": "Terminated",
+			"weight": 1
+		},
+		{
+			"parentName": "OTT Total",
+			"componentName": "268",
+			"weight": 1
+		},
+		{
+			"parentName": "OTT Total",
+			"componentName": "291",
+			"weight": 1
+		},
+		{
+			"parentName": "OTT Total",
+			"componentName": "295",
+			"weight": 1
+		},
+		{
+			"parentName": "OTT Total",
+			"componentName": "728",
+			"weight": 1
+		},
+		{
+			"parentName": "OTT Total",
+			"componentName": "New",
+			"weight": 1
+		},
+		{
+			"parentName": "OTT Total",
+			"componentName": "Terminated",
+			"weight": 1
+		},
+		{
+			"parentName": "Egy\u00e9b Total",
+			"componentName": "176",
+			"weight": 1
+		},
+		{
+			"parentName": "Egy\u00e9b Total",
+			"componentName": "234",
+			"weight": 1
+		},
+		{
+			"parentName": "Egy\u00e9b Total",
+			"componentName": "246",
+			"weight": 1
+		},
+		{
+			"parentName": "Egy\u00e9b Total",
+			"componentName": "247",
+			"weight": 1
+		},
+		{
+			"parentName": "Egy\u00e9b Total",
+			"componentName": "248",
+			"weight": 1
+		},
+		{
+			"parentName": "Egy\u00e9b Total",
+			"componentName": "270",
+			"weight": 1
+		},
+		{
+			"parentName": "Egy\u00e9b Total",
+			"componentName": "271",
+			"weight": 1
+		},
+		{
+			"parentName": "Egy\u00e9b Total",
+			"componentName": "272",
+			"weight": 1
+		},
+		{
+			"parentName": "Egy\u00e9b Total",
+			"componentName": "273",
+			"weight": 1
+		},
+		{
+			"parentName": "Egy\u00e9b Total",
+			"componentName": "274",
+			"weight": 1
+		},
+		{
+			"parentName": "Egy\u00e9b Total",
+			"componentName": "278",
+			"weight": 1
+		},
+		{
+			"parentName": "Egy\u00e9b Total",
+			"componentName": "353",
+			"weight": 1
+		},
+		{
+			"parentName": "Egy\u00e9b Total",
+			"componentName": "429",
+			"weight": 1
+		},
+		{
+			"parentName": "Egy\u00e9b Total",
+			"componentName": "526",
+			"weight": 1
+		},
+		{
+			"parentName": "Egy\u00e9b Total",
+			"componentName": "603",
+			"weight": 1
+		},
+		{
+			"parentName": "Egy\u00e9b Total",
+			"componentName": "604",
+			"weight": 1
+		},
+		{
+			"parentName": "Egy\u00e9b Total",
+			"componentName": "605",
+			"weight": 1
+		},
+		{
+			"parentName": "Egy\u00e9b Total",
+			"componentName": "627",
+			"weight": 1
+		},
+		{
+			"parentName": "Egy\u00e9b Total",
+			"componentName": "643",
+			"weight": 1
+		},
+		{
+			"parentName": "Egy\u00e9b Total",
+			"componentName": "748",
+			"weight": 1
+		},
+		{
+			"parentName": "Egy\u00e9b Total",
+			"componentName": "792",
+			"weight": 1
+		},
+		{
+			"parentName": "Egy\u00e9b Total",
+			"componentName": "793",
+			"weight": 1
+		},
+		{
+			"parentName": "Egy\u00e9b Total",
+			"componentName": "New",
+			"weight": 1
+		},
+		{
+			"parentName": "Egy\u00e9b Total",
+			"componentName": "Terminated",
+			"weight": 1
+		}
+	],
+	"Subsets@Code.links": [
+		"Product.subsets/0.json",
+		"Product.subsets/1.json",
+		"Product.subsets/ADSL Total.json",
+		"Product.subsets/All N Level Element.json",
+		"Product.subsets/All N Level Product Subset.json",
+		"Product.subsets/Cable Television.json",
+		"Product.subsets/Cable Television Active.json",
+		"Product.subsets/Default.json",
+		"Product.subsets/DSL.json",
+		"Product.subsets/DSL All Active.json",
+		"Product.subsets/DSL Naturalia.json",
+		"Product.subsets/Egy\u00e9b.json",
+		"Product.subsets/Egy\u00e9b All Active.json",
+		"Product.subsets/Egy\u00e9b Naturalia.json",
+		"Product.subsets/Eszk\u00f6zb\u00e9rlet.json",
+		"Product.subsets/Eszk\u00f6zb\u00e9rlet All Active.json",
+		"Product.subsets/Eszk\u00f6zb\u00e9rlet Naturalia.json",
+		"Product.subsets/Internet.json",
+		"Product.subsets/Internet Active.json",
+		"Product.subsets/Internet All Active.json",
+		"Product.subsets/Internet Lakoss\u00e1gi.json",
+		"Product.subsets/Internet Lakoss\u00e1gi Naturalia.json",
+		"Product.subsets/Internet Naturalia.json",
+		"Product.subsets/Internet \u00dczleti.json",
+		"Product.subsets/Internet \u00dczleti Naturalia.json",
+		"Product.subsets/kabelTV.json",
+		"Product.subsets/KTV Alapterm\u00e9k.json",
+		"Product.subsets/KTV Alapterm\u00e9k All Active.json",
+		"Product.subsets/KTV Alapterm\u00e9k Lakoss\u00e1gi.json",
+		"Product.subsets/KTV Alapterm\u00e9k Lakoss\u00e1gi Naturalia.json",
+		"Product.subsets/KTV Alapterm\u00e9k Naturalia.json",
+		"Product.subsets/KTV Alapterm\u00e9k \u00dczleti.json",
+		"Product.subsets/KTV Alapterm\u00e9k \u00dczleti Naturalia.json",
+		"Product.subsets/KTV kieg\u00e9sz\u00edt\u0151.json",
+		"Product.subsets/KTV kieg\u00e9sz\u00edt\u0151 All Active.json",
+		"Product.subsets/KTV Kieg\u00e9sz\u00edt\u0151 Lakoss\u00e1gi.json",
+		"Product.subsets/KTV Kieg\u00e9sz\u00edt\u0151 Lakoss\u00e1gi Naturalia.json",
+		"Product.subsets/KTV kieg\u00e9sz\u00edt\u0151 Naturalia.json",
+		"Product.subsets/KTV Kieg\u00e9sz\u00edt\u0151 \u00dczleti.json",
+		"Product.subsets/KTV Kieg\u00e9sz\u00edt\u0151 \u00dczleti Naturalia.json",
+		"Product.subsets/Nagyker.json",
+		"Product.subsets/Nagyker All Active.json",
+		"Product.subsets/Nagyker Naturalia.json",
+		"Product.subsets/OTT.json",
+		"Product.subsets/OTT All Active.json",
+		"Product.subsets/OTT Naturalia.json",
+		"Product.subsets/Telefon.json",
+		"Product.subsets/Telefon Active.json",
+		"Product.subsets/Telefon ADSL.json",
+		"Product.subsets/Telefon ADSL Naturalia.json",
+		"Product.subsets/Telefon All Active.json",
+		"Product.subsets/Telefon Lakoss\u00e1gi.json",
+		"Product.subsets/Telefon Lakoss\u00e1gi Naturalia.json",
+		"Product.subsets/Telefon Naturalia.json",
+		"Product.subsets/Telefon \u00dczleti.json",
+		"Product.subsets/Telefon \u00dczleti Naturalia.json",
+		"Product.subsets/Total Products All N.json",
+		"Product.subsets/\u00dczleti.json",
+		"Product.subsets/\u00dczleti All Active.json",
+		"Product.subsets/\u00dczleti Naturalia.json"
+	]
+}

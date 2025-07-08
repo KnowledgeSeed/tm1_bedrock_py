@@ -1,0 +1,223 @@
+#region Prolog
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+# =========================================================
+# Original Date Created              2015-05-06
+# Originator                                 Jozsef Buzas
+# Purpose                                   Deletes unused technical Views and Subsets
+# Change Date                           
+# Change Request Reference    
+# Change Made by                     
+# =========================================================
+
+
+
+####General LOGGING frame###
+nRandomNumber = Round ( RAND * 1000000);
+sRandomNumber = NumberToString(nRandomNumber);
+pStartTime=NumberToString(NOW());
+pProcessName =  GetProcessName();
+pParams= 'pDebug|'|NumberToString(pDebug);
+#ExecuteProcess ('zSYS Process Log Create Entry','pProcessName',pProcessName,'pStartTime',pStartTime,'pParams',pParams,'pRandomNumber',sRandomNumber,'pCallerID',pCallerID);
+#OwnCallerID
+sCallerID = pStartTime |' - '| pProcessName|'-'|sRandomNumber;
+####General LOGGING frame###
+
+
+### General Variables
+
+sSysControl = 'zSYS Maintenance Parameter';
+sDimensionExportUNC = CellGetS(sSysControl, 'Dimension Export UNC','S type');
+sProcessDebuggingUNC = CellGetS(sSysControl,'Process Debugging UNC' ,'S type');
+sModelUNC = CellGetS(sSysControl,'Model UNC' ,'S type');
+sLogDirectoryPath = CellGetS(sSysControl,'Log Directory Path' ,'Stype');
+sTimeStamp = TIMST(NOW(),'\Y\m\d\h\i\s');
+sDebugFile = sProcessDebuggingUNC | pProcessName | ' ' | sTimeStamp | '.txt';
+sDebugFile2 = sProcessDebuggingUNC | pProcessName | '-Dim ' | sTimeStamp | '.txt';
+sDebugFile3 = sProcessDebuggingUNC | pProcessName | '-ZeroOut ' | sTimeStamp | '.txt';
+sLogFile = sLogDirectoryPath | pProcessName | ' ' | sTimeStamp | '.txt';
+
+## Local variables
+
+sSourceViewName = pProcessName|sRandomNumber;
+sCurrentPlanCycle = CellGetS('CO Planning Parameter','Current Plan Cycle','S type');
+nPlanCycleYear = CellGetN('CO Planning Parameter','Current Plan Cycle','N type');
+sCurrentPlanVersion = CellGetS('CO Planning Parameter','Current Plan Version','S type');
+
+
+
+# validate path
+IF ( sModelUNC @= '' );
+  ProcessError;
+ENDIF;
+
+# check path ends in \
+IF ( SUBST ( sModelUNC, LONG ( sModelUNC ), 1 ) @<> '\' );
+  sModelUNC = sModelUNC | '\';
+ENDIF;
+
+nMaxCubeCount = DIMSIZ ('}Cubes');
+nMaxDimCount = DIMSIZ ('}Dimensions');
+
+#endregion
+#region Metadata
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+##### Check if the process is technical or Bedrock. If yes, we skip it.
+IF ( SUBST( vProc, 1, 1 ) @= '}'  % 
+#SCAN( 'zBedrock', vProc) <> 0 % 
+vProc @= 'Default' );
+         ITEMSKIP;
+ENDIF;
+
+
+##### Deleting Views
+nCubeCounter = 1;
+sThisFileName = '';
+sPrevFileName = '';
+
+
+WHILE ( nCubeCounter <= nMaxCubeCount );
+  sCubeName = DIMNM ( '}Cubes', nCubeCounter );
+  sPath = sModelUNC | sCubeName | '}vues\*' | vProc | '*.vue';
+  nContinue = 1;
+
+  WHILE ( nContinue = 1 );
+    sThisFileName = WildcardFileSearch ( sPath, sPrevFileName );
+
+    IF ( sThisFileName @= '' );
+      nContinue = 0;
+
+    ELSE;
+      # get view name by dropping .vue
+      sVueName = SUBST ( sThisFileName, 1, LONG ( sThisFileName ) - 4 );
+
+      # Debug
+      IF ( pDebug = 0 );
+        # delete it
+        IF(ViewExists(sCubeName,sVueName)=1);
+          ViewDestroy ( sCubeName, sVueName );
+        ENDIF;
+        ELSE;
+        ASCIIOutput(sDebugFile, vProc, sCubeName, sVueName);
+      ENDIF;
+
+    ENDIF;
+    
+    sPrevFileName = sThisFileName;
+
+  END;
+  nCubeCounter = nCubeCounter + 1;
+
+END;
+
+
+##### Deleting Subsets
+nDimCounter = 1;
+sThisFileName = '';
+sPrevFileName = '';
+
+WHILE ( nDimCounter <= nMaxDimCount );
+  sDimName = DIMNM ( '}Dimensions', nDimCounter );
+  sPath = sModelUNC | sDimName | '}subs\*' | vProc | '*.sub';
+  nContinue = 1;
+
+  WHILE ( nContinue = 1 );
+    sThisFileName = WildcardFileSearch ( sPath, sPrevFileName );
+
+    IF ( sThisFileName @= '' );
+      nContinue = 0;
+
+    ELSE;
+      # get subset name by dropping .sub
+      sSubName = SUBST ( sThisFileName, 1, LONG ( sThisFileName ) - 4 );
+
+      # Debug
+       IF ( pDebug = 0 );
+        # delete it
+        IF(SubsetExists(sDimName,sSubName)=1);
+          SubsetDestroy ( sDimName, sSubName );
+        ENDIF;
+        ELSE;
+        ASCIIOutput(sDebugFile2, vProc, sDimName, sSubName);
+      ENDIF;
+
+    ENDIF;
+
+    sPrevFileName = sThisFileName;
+
+  END;
+  nDimCounter = nDimCounter + 1;
+
+END;
+
+#endregion
+#region Data
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+
+
+
+#endregion
+#region Epilog
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+##### Deleting z_sys_viewzero Subsets
+nDimCounter = 1;
+sThisFileName = '';
+sPrevFileName = '';
+
+WHILE ( nDimCounter <= nMaxDimCount );
+  sDimName = DIMNM ( '}Dimensions', nDimCounter );
+  sPath = sModelUNC | sDimName | '}subs\z_sys_viewzero*.sub';
+  nContinue = 1;
+
+  WHILE ( nContinue = 1 );
+    sThisFileName = WildcardFileSearch ( sPath, sPrevFileName );
+
+    IF ( sThisFileName @= '' );
+      nContinue = 0;
+
+    ELSE;
+      # get subset name by dropping .sub
+      sSubName = SUBST ( sThisFileName, 1, LONG ( sThisFileName ) - 4 );
+
+      # Debug
+       IF ( pDebug = 0 );
+        # delete it
+        IF(SubsetExists(sDimName,sSubName)=1);
+          SubsetDestroy ( sDimName, sSubName );
+        ENDIF;
+        ELSE;
+        ASCIIOutput(sDebugFile3, sDimName, sSubName);
+      ENDIF;
+
+    ENDIF;
+
+    sPrevFileName = sThisFileName;
+
+  END;
+  nDimCounter = nDimCounter + 1;
+
+END;
+
+
+
+####General LOGGING frame###
+#ExecuteProcess('zSYS Process Log Close Entry','pProcessName',pProcessName,'pStartTime',pStartTime,'pRandomNumber',sRandomNumber,'pProcessErrorLogFile',GetProcessErrorFilename);
+####General LOGGING frame###
+
+
+#endregion

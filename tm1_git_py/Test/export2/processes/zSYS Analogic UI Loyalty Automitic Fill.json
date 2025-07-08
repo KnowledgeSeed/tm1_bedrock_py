@@ -1,0 +1,26 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI Loyalty Automitic Fill",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic UI Loyalty Automitic Fill.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pVersion",
+			"Prompt": "Base",
+			"Value": "Base",
+			"Type": "String"
+		}
+	],
+	"Variables": [
+		{
+			"Name": "vProduct",
+			"Type": "String",
+			"Position": 1,
+			"StartByte": 0,
+			"EndByte": 0
+		}
+	]
+}

@@ -1,0 +1,107 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# =======================================================================================================================================
+# Original Date Created              2023.06.22
+# Originator                         Ullmann Dávid
+# Purpose                            Process to calculate the two attributes (biggerthanzero, active) for the actual period and set them as product attributes
+# Change Date                         
+# Change Request Reference    
+# Change Made by                     
+# =======================================================================================================================================
+
+RUNSWITCH = 0;
+
+sCubeName_Attributes      = 'Time Dependent ' | pDimensionName | ' Attribute';
+sDimensionName_Version    = 'Version';
+sDimensionName_Period     = 'Period';
+sDimensionName_Measure    = 'Time Dependent Product Attribute Measure';
+
+sElementName_Version      = 'Base';
+sElementName_Period       = TimSt(Now(), '\Y\m');
+sElementName_PeriodTotal  = 'All Period';
+sElementName_Measure      = 'Active';
+sElementName_Measure2     = 'BiggerThanZero';
+sElementName_ProductTotal = 'Total Products';
+
+sAttributeName_ActualActive = 'Actual Period Active';
+sAttributeName_ActualNonzero = 'Actual Period BiggerThanZero';
+
+sSubsetName_Period = 'Actual Period';
+
+pVersion = 'Base';
+
+# input validation for no real reason
+
+IF(RUNSWITCH = 1);
+
+if(CubeExists(sCubeName_Attributes) = 0);
+#  LogOutput('ERROR', 'Cube called ' | sCubeName_Attributes | ' does not exist');
+  ProcessQuit;
+endif;
+  
+# set MDXs to the source view filter subsets
+
+sMDX = '{TM1FilterByLevel({TM1DrillDownMember({['|pDimensionName|'].['|pDimensionName|'].['|sElementName_ProductTotal|']},ALL,RECURSIVE)},0)}';
+sSubname = 'Product Attribute Sum Temp';
+SubsetCreate(pDimensionName, sSubname, 1);
+SubsetMDXSet(pDimensionName, sSubname, sMDX);
+SubsetMDXSet(pDimensionName, sSubname, '');
+
+DataSourceType            = 'SUBSET';
+DatasourceNameForServer   = pDimensionName;
+DatasourceNameForClient   = pDimensionName;
+DataSourceDimensionSubset = sSubname;
+
+
+
+
+
+
+ENDIF;
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+IF(RUNSWITCH = 1);
+
+
+
+
+
+nIndex = 1;
+nMaxIndex = SubsetGetSize(sDimensionName_Period, sSubsetName_Period);
+
+nActiveTotal = 0;
+nNonzeroTotal = 0;
+
+while(nIndex <= nMaxIndex);
+  sCurrentPeriod = SubsetGetElementName(sDimensionName_Period, sSubsetName_Period, nIndex);
+  
+  nActiveTotal = nActiveTotal + CellGetN(sCubeName_Attributes, pVersion, sCurrentPeriod, vProduct, sElementName_Measure);
+  nNonzeroTotal = nNonzeroTotal + CellGetN(sCubeName_Attributes, pVersion, sCurrentPeriod, vProduct, sElementName_Measure2);
+  
+  nIndex = nIndex + 1;
+end;
+
+AttrPutN(sign(nActiveTotal), pDimensionName, vProduct, sAttributeName_ActualActive);
+AttrPutN(sign(nNonzeroTotal), pDimensionName, vProduct, sAttributeName_ActualNonzero);
+
+#LogOutput('INFO', 'Done with ' | vProduct | ' in dim ' | pDimensionName);
+
+
+
+
+
+
+ENDIF;
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

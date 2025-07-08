@@ -1,0 +1,14 @@
+{
+	"@type": "Cube",
+	"Name": "zSYS Analogic Pivot Presets",
+	"Dimensions": [
+		{
+			"@id": "Dimensions('zSYS Analogic Pivot Presets')"
+		},
+		{
+			"@id": "Dimensions('Measures zSYS Analogic Pivot Presets')"
+		}
+	],
+	"Rules@Code.link": "zSYS Analogic Pivot Presets.rules",
+	"Views@Code.links": []
+}

@@ -1,0 +1,164 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# Mody 2024 01 12
+
+#pMode
+#1: one month
+#2: more month
+
+#Bandi komment
+
+nInputValue = stringToNumber(pValue);
+sRevenueMeasre = 'Value';
+sLedger = 'Nem tartozik fokonyhoz';
+sLineitem = 'ARPU';
+
+sAllNTimeSubset = 'Actual Period N level';
+sPeriodDim = 'Period';
+
+
+IF(pProduct @= 'stb');
+  sLedger = '91501';
+  pProduct = 'Nem tartozik termekhez';
+ENDIF;
+
+
+IF(pProduct @= 'modem');
+  sLedger = '91502';
+  pProduct = 'Nem tartozik termekhez';
+ENDIF;
+
+
+#1: one value
+# sima hónap
+# éves
+IF(pMode = 1);
+  # sima hónap
+  IF( Long(pPeriod) = 6);
+    CellPutN(nInputValue, 'Revenue', pVersion, pPeriod, sLedger, pProduct, sLineitem, sRevenueMeasre);
+    CellPutN(nInputValue, 'Revenue', pVersion, pPeriod, '91101', pProduct, sLineitem, sRevenueMeasre);
+    CellPutN(nInputValue, 'Revenue', pVersion, pPeriod, '91201', pProduct, sLineitem, sRevenueMeasre);
+    CellPutN(nInputValue, 'Revenue', pVersion, pPeriod, '91202', pProduct, sLineitem, sRevenueMeasre);
+    CellPutN(nInputValue, 'Revenue', pVersion, pPeriod, '91301', pProduct, sLineitem, sRevenueMeasre);
+    CellPutN(nInputValue, 'Revenue', pVersion, pPeriod, '91302', pProduct, sLineitem, sRevenueMeasre);
+    CellPutN(nInputValue, 'Revenue', pVersion, pPeriod, '91303', pProduct, sLineitem, sRevenueMeasre);
+  ENDIF;
+  
+  # éves
+  IF( Long(pPeriod) = 4);
+    nInputValueHavi = nInputValue;
+    i=1;
+    WHILE( i<=12);
+      sActualPeriod = pPeriod | numberToString(i);
+      IF( i<10);
+        sActualPeriod = pPeriod | '0' | numberToString(i);
+      ENDIF;
+      CellPutN(nInputValueHavi, 'Revenue', pVersion, sActualPeriod, sLedger, pProduct, sLineitem, sRevenueMeasre);
+      CellPutN(nInputValueHavi, 'Revenue', pVersion, sActualPeriod, '91101', pProduct, sLineitem, sRevenueMeasre);
+      CellPutN(nInputValueHavi, 'Revenue', pVersion, sActualPeriod, '91201', pProduct, sLineitem, sRevenueMeasre);
+      CellPutN(nInputValueHavi, 'Revenue', pVersion, sActualPeriod, '91202', pProduct, sLineitem, sRevenueMeasre);
+      CellPutN(nInputValueHavi, 'Revenue', pVersion, sActualPeriod, '91301', pProduct, sLineitem, sRevenueMeasre);
+      CellPutN(nInputValueHavi, 'Revenue', pVersion, sActualPeriod, '91302', pProduct, sLineitem, sRevenueMeasre);
+      CellPutN(nInputValueHavi, 'Revenue', pVersion, sActualPeriod, '91303', pProduct, sLineitem, sRevenueMeasre);
+      i=i+1;
+    END;
+  ENDIF;
+
+
+
+
+
+
+
+
+#1: one value end
+ENDIF;
+
+
+
+#2: more month
+# sima hónap
+# éves
+IF(pMode = 2);
+  # sima hónap
+  IF( Long(pPeriod) = 6);
+    sPeriodStartMonth = pPeriod;
+    nMaxPlanningPeriodSubsetLen = SubsetGetSize(sPeriodDim, sAllNTimeSubset);
+    i = SubsetElementGetIndex(sPeriodDim, sAllNTimeSubset, sPeriodStartMonth);
+    While(i <= nMaxPlanningPeriodSubsetLen);
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      CellPutN(nInputValue, 'Revenue', pVersion, sInputPeriod, sLedger, pProduct, sLineitem, sRevenueMeasre);
+      CellPutN(nInputValue, 'Revenue', pVersion, sInputPeriod, '91101', pProduct, sLineitem, sRevenueMeasre);
+      CellPutN(nInputValue, 'Revenue', pVersion, sInputPeriod, '91201', pProduct, sLineitem, sRevenueMeasre);
+      CellPutN(nInputValue, 'Revenue', pVersion, sInputPeriod, '91202', pProduct, sLineitem, sRevenueMeasre);
+      CellPutN(nInputValue, 'Revenue', pVersion, sInputPeriod, '91301', pProduct, sLineitem, sRevenueMeasre);
+      CellPutN(nInputValue, 'Revenue', pVersion, sInputPeriod, '91302', pProduct, sLineitem, sRevenueMeasre);
+      CellPutN(nInputValue, 'Revenue', pVersion, sInputPeriod, '91303', pProduct, sLineitem, sRevenueMeasre);
+      i = i+1;
+    END;
+  ENDIF;
+  
+  # éves
+  IF( Long(pPeriod) = 4);
+    nInputValueHavi = nInputValue;
+    sPeriodStartMonth = pPeriod | '01';
+    nMaxPlanningPeriodSubsetLen = SubsetGetSize(sPeriodDim, sAllNTimeSubset);
+    i = SubsetElementGetIndex(sPeriodDim, sAllNTimeSubset, sPeriodStartMonth);
+    While(i <= nMaxPlanningPeriodSubsetLen);
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      CellPutN(nInputValueHavi, 'Revenue', pVersion, sInputPeriod, sLedger, pProduct, sLineitem, sRevenueMeasre);
+      CellPutN(nInputValueHavi, 'Revenue', pVersion, sActualPeriod, '91101', pProduct, sLineitem, sRevenueMeasre);
+      CellPutN(nInputValueHavi, 'Revenue', pVersion, sActualPeriod, '91201', pProduct, sLineitem, sRevenueMeasre);
+      CellPutN(nInputValueHavi, 'Revenue', pVersion, sActualPeriod, '91202', pProduct, sLineitem, sRevenueMeasre);
+      CellPutN(nInputValueHavi, 'Revenue', pVersion, sActualPeriod, '91301', pProduct, sLineitem, sRevenueMeasre);
+      CellPutN(nInputValueHavi, 'Revenue', pVersion, sActualPeriod, '91302', pProduct, sLineitem, sRevenueMeasre);
+      CellPutN(nInputValueHavi, 'Revenue', pVersion, sActualPeriod, '91303', pProduct, sLineitem, sRevenueMeasre);
+      i = i+1;
+    END;
+  
+  ENDIF;
+
+##2: more month end
+ENDIF;
+
+
+
+
+
+
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+
+
+
+
+
+
+
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+
+# Módos Dávid 2024 02 13
+
+sToday = Today(1);
+CellPutS(sToday, '}ElementAttributes_Version', pVersion, 'Last Updated');
+CellPutS(pUser, '}ElementAttributes_Version', pVersion, 'Last Updated By');
+
+
+#endregion

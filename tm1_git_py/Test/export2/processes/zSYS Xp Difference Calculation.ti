@@ -1,0 +1,84 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+nActTV = CellGetN('XP Planning', 'Base', pPeriod, 'TV', 'Color');
+nActNET = CellGetN('XP Planning', 'Base', pPeriod, 'NET', 'Color');
+nActTEL = CellGetN('XP Planning', 'Base', pPeriod, 'TEL', 'Color');
+
+s3P = CellGetN('XP Planning', 'Base', pPeriod, 'TEL + NET + TV', 'Value');
+sNetTel = CellGetN('XP Planning', 'Base', pPeriod, 'NET + TEL', 'Value');
+sNetTV = CellGetN('XP Planning', 'Base', pPeriod, 'NET + TV', 'Value');
+sTvTel = CellGetN('XP Planning', 'Base', pPeriod, 'TV + TEL', 'Value');
+sSumTV = s3P + sNetTV + sTvTel;
+sSumNET = s3P + sNetTel + sNetTV;
+sSumTEL = s3P + sNetTel + sTvTel;
+
+nTV = CellGetN('Subscription Report', 'Base', pPeriod, 'Total', 'Total', 'TV', 'Value') - sSumTV;
+nNET = CellGetN('Subscription Report', 'Base', pPeriod, 'Total', 'Total', 'NET', 'Value') - sSumNET;
+nTEL = CellGetN('Subscription Report', 'Base', pPeriod, 'Total', 'Total', 'TEL', 'Value') - sSumTEL;
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+  
+if(pXP@<>'TV' & pXP@<>'NET' & pXP@<>'TEL');
+
+  nActTV = CellGetN('XP Planning', 'Base', pPeriod, 'TV', 'Color');
+  nActNET = CellGetN('XP Planning', 'Base', pPeriod, 'NET', 'Color');
+  nActTEL = CellGetN('XP Planning', 'Base', pPeriod, 'TEL', 'Color');
+  
+  s3P = CellGetN('XP Planning', 'Base', pPeriod, 'TEL + NET + TV', 'Value');
+  sNetTel = CellGetN('XP Planning', 'Base', pPeriod, 'NET + TEL', 'Value');
+  sNetTV = CellGetN('XP Planning', 'Base', pPeriod, 'NET + TV', 'Value');
+  sTvTel = CellGetN('XP Planning', 'Base', pPeriod, 'TV + TEL', 'Value');
+  sSumTV = s3P + sNetTV + sTvTel;
+  sSumNET = s3P + sNetTel + sNetTV;
+  sSumTEL = s3P + sNetTel + sTvTel;
+  
+  nTV = CellGetN('Subscription Report', 'Base', pPeriod, 'Total', 'Total', 'TV', 'Value') - sSumTV;
+  nNET = CellGetN('Subscription Report', 'Base', pPeriod, 'Total', 'Total', 'NET', 'Value') - sSumNET;
+  nTEL = CellGetN('Subscription Report', 'Base', pPeriod, 'Total', 'Total', 'TEL', 'Value') - sSumTEL;
+  
+  
+  if(nActTV > 0 & nActNET > 0);
+    CellPutN(nTEL, 'XP Planning', 'Base', pPeriod, 'TEL', 'Value');
+  
+  elseif(nActTV > 0 & nActTEL > 0);
+    CellPutN(nNET, 'XP Planning', 'Base', pPeriod, 'NET', 'Value');
+    
+  elseif(nActNET > 0 & nActTEL > 0);
+    CellPutN(nTV, 'XP Planning', 'Base', pPeriod, 'TV', 'Value');
+    
+  elseif(nActTV > 0);
+    CellPutN(nNET, 'XP Planning', 'Base', pPeriod, 'NET', 'Value');
+    CellPutN(nTEL, 'XP Planning', 'Base', pPeriod, 'TEL', 'Value');
+  
+  elseif(nActNET > 0);  
+    CellPutN(nTV, 'XP Planning', 'Base', pPeriod, 'TV', 'Value');
+    CellPutN(nTEL, 'XP Planning', 'Base', pPeriod, 'TEL', 'Value');
+  
+  elseif(nActTEL > 0);
+    CellPutN(nTV, 'XP Planning', 'Base', pPeriod, 'TV', 'Value');
+    CellPutN(nNET, 'XP Planning', 'Base', pPeriod, 'NET', 'Value');
+     
+  else;
+    CellPutN(nTV, 'XP Planning', 'Base', pPeriod, 'TV', 'Value');
+    CellPutN(nNET, 'XP Planning', 'Base', pPeriod, 'NET', 'Value');
+    CellPutN(nTEL, 'XP Planning', 'Base', pPeriod, 'TEL', 'Value');
+  endif;
+
+
+endif;
+
+
+#endregion

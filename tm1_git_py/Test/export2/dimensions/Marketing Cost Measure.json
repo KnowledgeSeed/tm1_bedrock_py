@@ -1,0 +1,8 @@
+{
+	"@type": "Dimension",
+	"Name": "Marketing Cost Measure",
+	"Hierarchies@Code.links": [
+		"Marketing Cost Measure.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1EFBC80>.json"
+	],
+	"DefaultHierarchy": "Dimensions('Marketing Cost Measure')/Hierarchies('Marketing Cost Measure')"
+}

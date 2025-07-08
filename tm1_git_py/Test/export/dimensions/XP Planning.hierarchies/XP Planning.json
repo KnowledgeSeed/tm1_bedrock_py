@@ -1,0 +1,204 @@
+{
+	"@type": "Hierarchy",
+	"Name": "XP Planning",
+	"Elements": [
+		{
+			"name": "Total",
+			"type": "Consolidated"
+		},
+		{
+			"name": "TEL + NET + TV",
+			"type": "Numeric"
+		},
+		{
+			"name": "NET + TV",
+			"type": "Numeric"
+		},
+		{
+			"name": "TV + TEL",
+			"type": "Numeric"
+		},
+		{
+			"name": "NET + TEL",
+			"type": "Numeric"
+		},
+		{
+			"name": "TV",
+			"type": "Numeric"
+		},
+		{
+			"name": "NET",
+			"type": "Numeric"
+		},
+		{
+			"name": "TEL",
+			"type": "Numeric"
+		},
+		{
+			"name": "TV difference",
+			"type": "Consolidated"
+		},
+		{
+			"name": "TV Calculated from XP",
+			"type": "Consolidated"
+		},
+		{
+			"name": "TV Calculated from Naturalia",
+			"type": "Numeric"
+		},
+		{
+			"name": "NET difference",
+			"type": "Consolidated"
+		},
+		{
+			"name": "NET Calculated from XP",
+			"type": "Consolidated"
+		},
+		{
+			"name": "NET Calculated from Naturalia",
+			"type": "Numeric"
+		},
+		{
+			"name": "TEL difference",
+			"type": "Consolidated"
+		},
+		{
+			"name": "TEL Calculated from XP",
+			"type": "Consolidated"
+		},
+		{
+			"name": "TEL Calculated from Naturalia",
+			"type": "Numeric"
+		}
+	],
+	"Edges": [
+		{
+			"parentName": "Total",
+			"componentName": "TEL + NET + TV",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NET + TV",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TV + TEL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NET + TEL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TV",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NET",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TEL",
+			"weight": 1
+		},
+		{
+			"parentName": "TV difference",
+			"componentName": "TV Calculated from XP",
+			"weight": 1
+		},
+		{
+			"parentName": "TV difference",
+			"componentName": "TV Calculated from Naturalia",
+			"weight": -1
+		},
+		{
+			"parentName": "TV Calculated from XP",
+			"componentName": "TEL + NET + TV",
+			"weight": 1
+		},
+		{
+			"parentName": "TV Calculated from XP",
+			"componentName": "NET + TV",
+			"weight": 1
+		},
+		{
+			"parentName": "TV Calculated from XP",
+			"componentName": "TV + TEL",
+			"weight": 1
+		},
+		{
+			"parentName": "TV Calculated from XP",
+			"componentName": "TV",
+			"weight": 1
+		},
+		{
+			"parentName": "NET difference",
+			"componentName": "NET Calculated from XP",
+			"weight": 1
+		},
+		{
+			"parentName": "NET difference",
+			"componentName": "NET Calculated from Naturalia",
+			"weight": -1
+		},
+		{
+			"parentName": "NET Calculated from XP",
+			"componentName": "TEL + NET + TV",
+			"weight": 1
+		},
+		{
+			"parentName": "NET Calculated from XP",
+			"componentName": "NET + TV",
+			"weight": 1
+		},
+		{
+			"parentName": "NET Calculated from XP",
+			"componentName": "NET + TEL",
+			"weight": 1
+		},
+		{
+			"parentName": "NET Calculated from XP",
+			"componentName": "NET",
+			"weight": 1
+		},
+		{
+			"parentName": "TEL difference",
+			"componentName": "TEL Calculated from XP",
+			"weight": 1
+		},
+		{
+			"parentName": "TEL difference",
+			"componentName": "TEL Calculated from Naturalia",
+			"weight": -1
+		},
+		{
+			"parentName": "TEL Calculated from XP",
+			"componentName": "TEL + NET + TV",
+			"weight": 1
+		},
+		{
+			"parentName": "TEL Calculated from XP",
+			"componentName": "TV + TEL",
+			"weight": 1
+		},
+		{
+			"parentName": "TEL Calculated from XP",
+			"componentName": "NET + TEL",
+			"weight": 1
+		},
+		{
+			"parentName": "TEL Calculated from XP",
+			"componentName": "TEL",
+			"weight": 1
+		}
+	],
+	"Subsets@Code.links": [
+		"XP Planning.subsets/XP.json"
+	]
+}

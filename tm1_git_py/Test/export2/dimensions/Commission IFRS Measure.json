@@ -1,0 +1,8 @@
+{
+	"@type": "Dimension",
+	"Name": "Commission IFRS Measure",
+	"Hierarchies@Code.links": [
+		"Commission IFRS Measure.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1BF89E0>.json"
+	],
+	"DefaultHierarchy": "Dimensions('Commission IFRS Measure')/Hierarchies('Commission IFRS Measure')"
+}

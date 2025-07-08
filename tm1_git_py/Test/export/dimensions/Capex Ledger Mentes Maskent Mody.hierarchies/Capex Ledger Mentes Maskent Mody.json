@@ -1,0 +1,371 @@
+{
+	"@type": "Hierarchy",
+	"Name": "Capex Ledger Mentes Maskent Mody",
+	"Elements": [
+		{
+			"name": "Total",
+			"type": "Consolidated"
+		},
+		{
+			"name": "0403",
+			"type": "Numeric"
+		},
+		{
+			"name": "0404",
+			"type": "Numeric"
+		},
+		{
+			"name": "14",
+			"type": "Consolidated"
+		},
+		{
+			"name": "1403",
+			"type": "Numeric"
+		},
+		{
+			"name": "1402",
+			"type": "Numeric"
+		},
+		{
+			"name": "Fejallomas",
+			"type": "Numeric"
+		},
+		{
+			"name": "1406",
+			"type": "Numeric"
+		},
+		{
+			"name": "1408",
+			"type": "Numeric"
+		},
+		{
+			"name": "1405",
+			"type": "Numeric"
+		},
+		{
+			"name": "1407",
+			"type": "Numeric"
+		},
+		{
+			"name": "1404",
+			"type": "Numeric"
+		},
+		{
+			"name": "1409",
+			"type": "Numeric"
+		},
+		{
+			"name": "011410",
+			"type": "Numeric"
+		},
+		{
+			"name": "011411",
+			"type": "Numeric"
+		},
+		{
+			"name": "01",
+			"type": "Consolidated"
+		},
+		{
+			"name": "0108",
+			"type": "Numeric"
+		},
+		{
+			"name": "0109",
+			"type": "Numeric"
+		},
+		{
+			"name": "0106",
+			"type": "Numeric"
+		},
+		{
+			"name": "0102",
+			"type": "Numeric"
+		},
+		{
+			"name": "0107",
+			"type": "Numeric"
+		},
+		{
+			"name": "0111",
+			"type": "Numeric"
+		},
+		{
+			"name": "0105",
+			"type": "Numeric"
+		},
+		{
+			"name": "0103",
+			"type": "Numeric"
+		},
+		{
+			"name": "0104",
+			"type": "Numeric"
+		},
+		{
+			"name": "03",
+			"type": "Consolidated"
+		},
+		{
+			"name": "0301",
+			"type": "Numeric"
+		},
+		{
+			"name": "0302",
+			"type": "Numeric"
+		},
+		{
+			"name": "02",
+			"type": "Consolidated"
+		},
+		{
+			"name": "0201",
+			"type": "Numeric"
+		},
+		{
+			"name": "0202",
+			"type": "Numeric"
+		},
+		{
+			"name": "13",
+			"type": "Consolidated"
+		},
+		{
+			"name": "1304",
+			"type": "Numeric"
+		},
+		{
+			"name": "1301",
+			"type": "Numeric"
+		},
+		{
+			"name": "1313",
+			"type": "Numeric"
+		},
+		{
+			"name": "1308",
+			"type": "Numeric"
+		},
+		{
+			"name": "1312",
+			"type": "Numeric"
+		},
+		{
+			"name": "1309",
+			"type": "Numeric"
+		},
+		{
+			"name": "1305",
+			"type": "Numeric"
+		},
+		{
+			"name": "1303",
+			"type": "Numeric"
+		},
+		{
+			"name": "1302",
+			"type": "Numeric"
+		},
+		{
+			"name": "Nem tartozik Capexhez",
+			"type": "String"
+		}
+	],
+	"Edges": [
+		{
+			"parentName": "Total",
+			"componentName": "14",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "01",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "03",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "02",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "13",
+			"weight": 1
+		},
+		{
+			"parentName": "14",
+			"componentName": "1403",
+			"weight": 1
+		},
+		{
+			"parentName": "14",
+			"componentName": "1402",
+			"weight": 1
+		},
+		{
+			"parentName": "14",
+			"componentName": "Fejallomas",
+			"weight": 1
+		},
+		{
+			"parentName": "14",
+			"componentName": "1406",
+			"weight": 1
+		},
+		{
+			"parentName": "14",
+			"componentName": "1408",
+			"weight": 1
+		},
+		{
+			"parentName": "14",
+			"componentName": "1405",
+			"weight": 1
+		},
+		{
+			"parentName": "14",
+			"componentName": "1407",
+			"weight": 1
+		},
+		{
+			"parentName": "14",
+			"componentName": "1404",
+			"weight": 1
+		},
+		{
+			"parentName": "14",
+			"componentName": "1409",
+			"weight": 1
+		},
+		{
+			"parentName": "14",
+			"componentName": "011410",
+			"weight": 1
+		},
+		{
+			"parentName": "14",
+			"componentName": "011411",
+			"weight": 1
+		},
+		{
+			"parentName": "01",
+			"componentName": "0108",
+			"weight": 1
+		},
+		{
+			"parentName": "01",
+			"componentName": "0109",
+			"weight": 1
+		},
+		{
+			"parentName": "01",
+			"componentName": "0106",
+			"weight": 1
+		},
+		{
+			"parentName": "01",
+			"componentName": "0102",
+			"weight": 1
+		},
+		{
+			"parentName": "01",
+			"componentName": "0107",
+			"weight": 1
+		},
+		{
+			"parentName": "01",
+			"componentName": "0111",
+			"weight": 1
+		},
+		{
+			"parentName": "01",
+			"componentName": "0105",
+			"weight": 1
+		},
+		{
+			"parentName": "01",
+			"componentName": "0103",
+			"weight": 1
+		},
+		{
+			"parentName": "01",
+			"componentName": "0104",
+			"weight": 1
+		},
+		{
+			"parentName": "03",
+			"componentName": "0301",
+			"weight": 1
+		},
+		{
+			"parentName": "03",
+			"componentName": "0302",
+			"weight": 1
+		},
+		{
+			"parentName": "02",
+			"componentName": "0201",
+			"weight": 1
+		},
+		{
+			"parentName": "02",
+			"componentName": "0202",
+			"weight": 1
+		},
+		{
+			"parentName": "13",
+			"componentName": "1304",
+			"weight": 1
+		},
+		{
+			"parentName": "13",
+			"componentName": "1301",
+			"weight": 1
+		},
+		{
+			"parentName": "13",
+			"componentName": "1313",
+			"weight": 1
+		},
+		{
+			"parentName": "13",
+			"componentName": "1308",
+			"weight": 1
+		},
+		{
+			"parentName": "13",
+			"componentName": "1312",
+			"weight": 1
+		},
+		{
+			"parentName": "13",
+			"componentName": "1309",
+			"weight": 1
+		},
+		{
+			"parentName": "13",
+			"componentName": "1305",
+			"weight": 1
+		},
+		{
+			"parentName": "13",
+			"componentName": "1303",
+			"weight": 1
+		},
+		{
+			"parentName": "13",
+			"componentName": "1302",
+			"weight": 1
+		}
+	],
+	"Subsets@Code.links": [
+		"Capex Ledger Mentes Maskent Mody.subsets/Default.json",
+		"Capex Ledger Mentes Maskent Mody.subsets/mody valami.json",
+		"Capex Ledger Mentes Maskent Mody.subsets/mody valami uj subset mert az elozo nev mar volt.json"
+	]
+}

@@ -1,0 +1,72 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic Load",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic Load.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pEnableDeleteAll",
+			"Prompt": "1: delete all previous dimension elements - 0: additive mode || !!! warning: only works if Attribute Rebuild is Enabled !!!",
+			"Value": 0,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pEnableUpdateBase",
+			"Prompt": "1: Update base total, dimension elements",
+			"Value": 1,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pEnableUpdateMovements",
+			"Prompt": "1: Update movement flags and names in the cube \"Subscription Movement Assignment'",
+			"Value": 0,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pEnableUpdateOpening",
+			"Prompt": "",
+			"Value": 0,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pEnableUpdateTransactions",
+			"Prompt": "",
+			"Value": 0,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pEnableUpdateTDAttributes",
+			"Prompt": "1: Update Time Dependent Attributes Active - 0: no update on active statuses",
+			"Value": 1,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pEnableUpdateSubsets",
+			"Prompt": "1: Update custom totals, dimension components and subsets",
+			"Value": 1,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pEnableUpdateOther",
+			"Prompt": "",
+			"Value": 0,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pElementsFileName",
+			"Prompt": "",
+			"Value": "termek.csv",
+			"Type": "String"
+		},
+		{
+			"Name": "pDimensionFileName",
+			"Prompt": "",
+			"Value": "Product.csv",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

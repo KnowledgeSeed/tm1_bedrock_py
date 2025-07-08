@@ -1,0 +1,11 @@
+{
+	"@type": "Process",
+	"Name": "test_delete_this",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "test_delete_this.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [],
+	"Variables": []
+}

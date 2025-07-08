@@ -1,0 +1,74 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#Miki 2023.06.07.
+
+If( 1 = 0 );
+    ExecuteProcess('zSYS Analogic Load XP Values',
+                  'pSourceFile', pSourceFile);
+EndIf;
+
+# Attach the source file
+If(CubeExists('zSYS Maintenance Parameter')=1);
+sSourceFolder = CellGetS ('zSYS Maintenance Parameter', 'Inbound Data Directory Path', 'S Type');
+Else;
+  sSourceFolder='';
+Endif;
+sSourceFile = sSourceFolder | pSourceFile;
+DatasourceNameForServer = sSourceFile;
+DatasourceNameForClient = sSourceFile;
+DatasourceASCIIDelimiter=';';
+DatasourceASCIIDecimalSeparator='.';
+DatasourceASCIIQuoteCharacter='"';
+DataSourceType='CHARACTERDELIMITED';
+DatasourceASCIIHeaderRecords = 1;
+
+# Fix Parameters
+sCubeName = 'XP Planning';
+
+
+
+
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+If(vXP @= '1P KTV');
+    vXP = 'TV';
+ELSEIF(vXP @= '1P NET');
+    vXP = 'NET';
+ELSEIF(vXP @= '1P TEL');
+    vXP = 'TEL';
+ELSEIF(vXP @= '2P KTV+NET');
+    vXP = 'NET + TV';
+ELSEIF(vXP @= '2P KTV+TEL');
+    vXP = 'TV + TEL';
+ELSEIF(vXP @= '2P TEL+NET');
+    vXP = 'NET + TEL';
+ELSEIF(vXP @= '3P');
+    vXP = 'TEL + NET + TV';
+EndIf;
+
+IF(vLocalDateYear @= '2020');
+    ItemSkip;
+EndIf;
+
+IF(vLocalDateMonthNo @= '10' % vLocalDateMonthNo @= '11' % vLocalDateMonthNo @= '12');
+CellPutN(vXPValue, 'XP Planning', 'Base', vLocalDateYear|vLocalDateMonthNo, vXP, 'Value');
+Else;
+CellPutN(vXPValue, 'XP Planning', 'Base', vLocalDateYear|'0'|vLocalDateMonthNo, vXP, 'Value');
+ENDIF;
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+#endregion

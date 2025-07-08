@@ -1,0 +1,5 @@
+{
+	"@type": "Subset",
+	"Name": "Planning Parameters Import",
+	"Expression": "{EXCEPT({[Planning Parameters].[Planning Parameters].Members},{[Planning Parameters].[Planning Parameters].[Total]})}"
+}

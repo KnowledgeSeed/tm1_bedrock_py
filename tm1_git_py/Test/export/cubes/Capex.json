@@ -1,0 +1,22 @@
+{
+	"@type": "Cube",
+	"Name": "Capex",
+	"Dimensions": [
+		{
+			"@id": "Dimensions('Version')"
+		},
+		{
+			"@id": "Dimensions('Period')"
+		},
+		{
+			"@id": "Dimensions('Capex Ledger')"
+		},
+		{
+			"@id": "Dimensions('Capex Measure')"
+		}
+	],
+	"Rules@Code.link": "Capex.rules",
+	"Views@Code.links": [
+		"Capex.views/qwe.json"
+	]
+}

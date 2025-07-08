@@ -1,0 +1,75 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# vDtum
+# vSzmla
+# vEgyenleg
+#
+IF(
+  vSzmla @= '52610'
+  % 
+  vSzmla @= '52609'
+  % 
+  vSzmla @= '81502'
+  % 
+  vSzmla @= '81503'
+);
+  nNumberValue = StringToNumber(vEgyenleg);
+  nNumberSzamla = StringToNumber(vSzmla);
+  vSzmla = vSzmla | ' Fact';
+ELSE;
+  Itemskip;
+ENDIF;
+
+#IF(
+#  vSzmla @<> '52610'
+#  % 
+#  vSzmla @<> '52609'
+#  % 
+#  vSzmla @<> '81502'
+#  % 
+#  vSzmla @<> '81503'
+#);  itemskip;
+#ENDIF;
+#
+#nNumberValue = StringToNumber(vEgyenleg);
+#nNumberSzamla = StringToNumber(vSzmla);
+#vSzmla = vSzmla | ' Fact';
+
+# rendes process
+IF( pAllPeriod = 1);
+  sPeriodSubsetName = 'Planning Period';
+  sDate = DELET(vDtum, 5, 1);
+  IF ( SubsetElementExists('Period', sPeriodSubsetName, sDate) = 0); 
+    CellPutN(nNumberValue, 'Individual Cost', pVersion, sDate, vSzmla, 'Cost', 'Value');
+    
+  ENDIF;
+
+ENDIF;
+
+
+IF( pLastYear = 1);
+  sPeriodSubsetName = 'Last_Actual_Year';
+  sDate = DELET(vDtum, 5, 1);
+  IF ( SubsetElementExists('Period', sPeriodSubsetName, sDate) = 1);
+    CellPutN(nNumberValue, 'Individual Cost', pVersion, sDate, vSzmla, 'Cost', 'Value');
+    
+  ENDIF;
+  
+ENDIF;
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

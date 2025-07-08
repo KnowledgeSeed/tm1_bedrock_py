@@ -1,0 +1,102 @@
+#SKIPCHECK;
+
+# verzió szabályok
+[]= N:
+IF(ELISPAR('Version','Report',!Version) = 1,
+STET,Continue);
+
+#ertekesites netto arbevetele (pozitivval) áthúzni
+##I. Bevételek/I.VOIP, II. Internet bev,III. KTV bevétel,IV. Eszköz értékesítés, V. hálózatbérlet
+['Taxes':'Ertekesites netto arbevetele (pozitivval)','Taxes Measure':'Value']= N:
+(DB('Erkim', !Version, !Period, 'I. VOIP bevetel', 'Value')
++
+DB('Erkim', !Version, !Period, 'II. Internet bevetel', 'Value')
++
+DB('Erkim', !Version, !Period, 'III. KTV bevetel', 'Value')
++
+DB('Erkim', !Version, !Period, 'IV. Eszköz értékesítés', 'Value')
++
+DB('Erkim', !Version, !Period, 'V. Hálózatbérlet, végberendezés bevétele', 'Value'))
+*-1
+;
+
+#Anyagköltség (pozitívval)
+##II Egyéb működési ktg/Anyagköltség
+['Taxes':'Anyagkoltseg (pozitivval)']= N:
+DB('Erkim', !Version, !Period, 'Anyagköltség', 'Value')
+;
+
+#ELÁBÉ (pozitívval)
+##I Közvetlen ktg/ELÁBÉ
+['Taxes':'ELABE(pozitivval)','Taxes Measure':'Value']= N:
+DB('Erkim', !Version, !Period, '81401', 'Value');
+
+#Közvetített szolg. (pozitívval)
+##I Közvetlen ktg/52610,81501,81502,81503,81505,52609
+['Taxes':'Kozvetitett szolg. (pozitivval)','Taxes Measure':'Value']= N:
+(DB('Erkim', !Version, !Period, '52610', 'Value')
++
+DB('Erkim', !Version, !Period, '81501', 'Value')
++
+DB('Erkim', !Version, !Period, '81502', 'Value')
++
+DB('Erkim', !Version, !Period, '81503', 'Value')
++
+DB('Erkim', !Version, !Period, '81505', 'Value')
++
+DB('Erkim', !Version, !Period, '52609', 'Value'));
+
+#IPA
+['Taxes':'Iparuzesi ado','Taxes Measure':'Value']= C:
+DB('Taxes', !Version, !Period, 'Adoalap IPA', 'Value')
+*
+DB('Planning Driver', !Version, !Period, 'Iparuzesi ado', 'N Type');
+
+#Innovációs járulék
+['Taxes':'Innovacios jarulek','Taxes Measure':'Value']= C:
+DB('Taxes', !Version, !Period, 'Adoalap IPA', 'Value')
+*
+DB('Planning Driver', !Version, !Period, 'Innovacios jarulek', 'N Type');
+
+########### TAO #########################################################
+
+#ipa, innov konyveltetes (pozitivval):
+['Taxes':'ipa, innov konyveltetes (pozitivval):','Taxes Measure':'Value']= N:
+DB('Taxes', !Version, !Period, 'Iparuzesi ado', 'Value')
++
+DB('Taxes', !Version, !Period, 'Innovacios jarulek', 'Value');
+
+#AEE IPA, Innov elott, nyereseg pozitivval: Bevételek - II.Költség - ÉCS(57) - Pénzügyi eredmény
+['Taxes':'AEE IPA, Innov elott, nyereseg pozitivval:','Taxes Measure':'Value']= N:
+(DB('Erkim', !Version, !Period, 'Revenue', 'Value')*-1)
+-
+DB('Erkim', !Version, !Period, 'II. Koltseg', 'Value')
+-
+DB('Erkim', !Version, !Period, 'Pénzügyi eredmény', 'Value');
+
+#Kalkulált TAO
+['Taxes':'Kalkulalt tarsasagi ado','Taxes Measure':'Value']= C:
+DB('Taxes', !Version, !Period, 'Adoalap TAO', 'Value')
+*
+DB('Planning Driver', !Version, !Period, 'Tarsasagi ado', 'N Type');
+
+#70%-os teszt
+['Taxes':'70%-os teszt','Taxes Measure':'Value']= C:
+(DB('Taxes', !Version, !Period, 'Kalkulalt tarsasagi ado', 'Value')
+-
+DB('Taxes', !Version, !Period, 'Fejlesztesi adokedvezmeny', 'Value'))
+*0.8;
+
+#TAO adokötelezettség
+['Taxes':'Tarsasagi adokotelezettseg','Taxes Measure':'Value']= C:
+DB('Taxes', !Version, !Period, 'Kalkulalt tarsasagi ado', 'Value')
+-
+DB('Taxes', !Version, !Period, 'Fejlesztesi adokedvezmeny', 'Value')
+-
+IF(DB('Taxes', !Version, !Period, 'Film, sporttamogatas', 'Value') > DB('Taxes', !Version, !Period, '70%-os teszt', 'Value'),
+  DB('Taxes', !Version, !Period, '70%-os teszt', 'Value'),
+  DB('Taxes', !Version, !Period, 'Film, sporttamogatas', 'Value'));
+  
+
+
+#FEEDERS;

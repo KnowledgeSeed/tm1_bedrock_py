@@ -1,0 +1,179 @@
+{
+	"@type": "Hierarchy",
+	"Name": "Commission IFRS",
+	"Elements": [
+		{
+			"name": "Customer Service Cost",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Customer Service Transaction Cost",
+			"type": "Numeric"
+		},
+		{
+			"name": "Customer Service Incentive Cost",
+			"type": "Numeric"
+		},
+		{
+			"name": "Customer Service Incentive Cost Percentage",
+			"type": "Numeric"
+		},
+		{
+			"name": "52405",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Call Center Transaction Cost",
+			"type": "Numeric"
+		},
+		{
+			"name": "Call Center Incentive Cost",
+			"type": "Numeric"
+		},
+		{
+			"name": "Call Center Incentive Cost Percentage",
+			"type": "Numeric"
+		},
+		{
+			"name": "IFRS Total",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Commission Current Month",
+			"type": "Numeric"
+		},
+		{
+			"name": "Commission from- 1 Month",
+			"type": "Numeric"
+		},
+		{
+			"name": "Commission from- 2 Month",
+			"type": "Numeric"
+		},
+		{
+			"name": "Commission from- 3 Month",
+			"type": "Numeric"
+		},
+		{
+			"name": "Commission from- 4 Month",
+			"type": "Numeric"
+		},
+		{
+			"name": "Commission from- 5 Month",
+			"type": "Numeric"
+		},
+		{
+			"name": "Commission from- 6 Month",
+			"type": "Numeric"
+		},
+		{
+			"name": "Commission from-7 Month",
+			"type": "Numeric"
+		},
+		{
+			"name": "Commission from-8 Month",
+			"type": "Numeric"
+		},
+		{
+			"name": "Commission from-9 Month",
+			"type": "Numeric"
+		},
+		{
+			"name": "Commission from -10 Month",
+			"type": "Numeric"
+		},
+		{
+			"name": "Commission from -11 Month",
+			"type": "Numeric"
+		},
+		{
+			"name": "052405",
+			"type": "Numeric"
+		}
+	],
+	"Edges": [
+		{
+			"parentName": "Customer Service Cost",
+			"componentName": "Customer Service Transaction Cost",
+			"weight": 1
+		},
+		{
+			"parentName": "Customer Service Cost",
+			"componentName": "Customer Service Incentive Cost",
+			"weight": 1
+		},
+		{
+			"parentName": "52405",
+			"componentName": "Call Center Transaction Cost",
+			"weight": 1
+		},
+		{
+			"parentName": "52405",
+			"componentName": "Call Center Incentive Cost",
+			"weight": 1
+		},
+		{
+			"parentName": "IFRS Total",
+			"componentName": "Commission Current Month",
+			"weight": 1
+		},
+		{
+			"parentName": "IFRS Total",
+			"componentName": "Commission from- 1 Month",
+			"weight": 1
+		},
+		{
+			"parentName": "IFRS Total",
+			"componentName": "Commission from- 2 Month",
+			"weight": 1
+		},
+		{
+			"parentName": "IFRS Total",
+			"componentName": "Commission from- 3 Month",
+			"weight": 1
+		},
+		{
+			"parentName": "IFRS Total",
+			"componentName": "Commission from- 4 Month",
+			"weight": 1
+		},
+		{
+			"parentName": "IFRS Total",
+			"componentName": "Commission from- 5 Month",
+			"weight": 1
+		},
+		{
+			"parentName": "IFRS Total",
+			"componentName": "Commission from- 6 Month",
+			"weight": 1
+		},
+		{
+			"parentName": "IFRS Total",
+			"componentName": "Commission from-7 Month",
+			"weight": 1
+		},
+		{
+			"parentName": "IFRS Total",
+			"componentName": "Commission from-8 Month",
+			"weight": 1
+		},
+		{
+			"parentName": "IFRS Total",
+			"componentName": "Commission from-9 Month",
+			"weight": 1
+		},
+		{
+			"parentName": "IFRS Total",
+			"componentName": "Commission from -10 Month",
+			"weight": 1
+		},
+		{
+			"parentName": "IFRS Total",
+			"componentName": "Commission from -11 Month",
+			"weight": 1
+		}
+	],
+	"Subsets@Code.links": [
+		"Commission IFRS.subsets/Commission IFRS Import.json"
+	]
+}

@@ -1,0 +1,20 @@
+{
+	"@type": "Cube",
+	"Name": "Channel Time Dependent Attributes",
+	"Dimensions": [
+		{
+			"@id": "Dimensions('Version')"
+		},
+		{
+			"@id": "Dimensions('Period')"
+		},
+		{
+			"@id": "Dimensions('Channel')"
+		},
+		{
+			"@id": "Dimensions('Channel Time Dependent Attributes Measure')"
+		}
+	],
+	"Rules@Code.link": "Channel Time Dependent Attributes.rules",
+	"Views@Code.links": []
+}

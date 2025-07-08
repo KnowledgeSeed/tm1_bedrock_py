@@ -1,0 +1,10 @@
+#### Get full name of the User from Client-attributes.
+
+['FullName'] =S:
+DB('}ElementAttributes_}Clients',!}Clients,'Full Name');
+
+
+#### Set default security for the buttons
+
+[{'ButtonBCAndSalesAtRiskEnabled','ButtonPanelPlanningEnabled','ButtonVolumePlanningEnabled','ButtonICBPlanningEnabled'}] = S: 'true';
+[{'ButtonBusinessPlanningEnabled','ButtonPortfolioManagementEnabled'}] = S: 'false';

@@ -1,0 +1,37 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+nMode = stringToNumber(pMode);
+
+# email
+IF( nMode = 1 );
+
+CellPutS(pName, '}ElementAttributes_zSYS Analogic UserPool', pUserID, 'email');
+  
+ENDIF;
+
+
+# name
+IF( nMode = 2 );
+  
+CellPutS(pName, '}ElementAttributes_zSYS Analogic UserPool', pUserID, 'Full Name');
+
+ENDIF;
+
+
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

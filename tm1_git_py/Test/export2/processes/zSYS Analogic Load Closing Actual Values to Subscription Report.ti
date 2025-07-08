@@ -1,0 +1,135 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# =========================================================
+# Original Date Created              2023.09.20
+# Originator                         Ullmann David
+# Purpose                            for some odd reason I cannot comprehend, I have to do the corrected closing value in the report cube. whatever. if you read this in the future, please don't judge me, "I was following orders"
+# Change Date                           
+# Change Request Reference    
+# Change Made by                     
+# =========================================================
+
+# declare variables
+
+sCubeName_Report = 'Subscription Report';
+sDimensionName_EcosoftId = 'Ecosoft ID';
+sAttributeName_EcosoftId = 'id';
+sMeasureName_Report = 'Corrected Closing Value';
+sLoyalty = '1';
+sChannel = 'Call Center';
+
+if(pVersion @= '');
+  pVersion = 'Base';
+endif;
+
+DataSourceType = 'ODBC';
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+IF( vEcosoftId @= 'KAMAT SZERZŐDÉS SZERINT');
+  itemskip;
+ENDIF;
+
+#IF( vEcosoftId @= 'ALAP+');
+#  itemskip;
+#ENDIF;
+
+#IF( vEcosoftId @= 'MAX');
+#  itemskip;
+#ENDIF;
+
+#IF( vEcosoftId @= 'CSALÁDI+');
+#  itemskip;
+#ENDIF;
+
+#IF( vEcosoftId @= 'START+');
+#  itemskip;
+#ENDIF;
+#
+#IF( vEcosoftId @= 'VNET BUSINESS 500 GPON');
+#  itemskip;
+#ENDIF;
+
+# ezek nem kellenek 07 08 mody
+# nem volt benne a Csabitól kapott listában
+IF( vEcosoftId @= 'EGYETEMES INTERNET');
+  itemskip;
+ENDIF;
+
+IF( vEcosoftId @= 'ANALÓG KÖZSZOLGÁLATI (GYŐR)');
+  itemskip;
+ENDIF;
+
+IF( vEcosoftId @= 'ANALÓG START (GYŐR)');
+  itemskip;
+ENDIF;
+
+
+
+
+
+
+
+
+
+sPeriod = Subst(vPeriod, 1, 4) | Subst(vPeriod, 6, 2);
+sProductId = CellGetS('}ElementAttributes_'|sDimensionName_EcosoftId, vEcosoftId, sAttributeName_EcosoftId);
+
+CellPutN(0, sCubeName_Report, pVersion, sPeriod, sLoyalty, sChannel, sProductId, sMeasureName_Report);
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+IF( vEcosoftId @= 'KAMAT SZERZŐDÉS SZERINT');
+  itemskip;
+ENDIF;
+
+#IF( vEcosoftId @= 'ALAP+');
+#  itemskip;
+#ENDIF;
+
+#IF( vEcosoftId @= 'MAX');
+#  itemskip;
+#ENDIF;
+
+#IF( vEcosoftId @= 'CSALÁDI+');
+#  itemskip;
+#ENDIF;
+
+#IF( vEcosoftId @= 'START+');
+#  itemskip;
+#ENDIF;
+#
+#IF( vEcosoftId @= 'VNET BUSINESS 500 GPON');
+#  itemskip;
+#ENDIF;
+
+# ezek nem kellenek 07 08 mody
+# nem volt benne a Csabitól kapott listában
+IF( vEcosoftId @= 'EGYETEMES INTERNET');
+  itemskip;
+ENDIF;
+
+IF( vEcosoftId @= 'ANALÓG KÖZSZOLGÁLATI (GYŐR)');
+  itemskip;
+ENDIF;
+
+IF( vEcosoftId @= 'ANALÓG START (GYŐR)');
+  itemskip;
+ENDIF;
+
+
+sPeriod = Subst(vPeriod, 1, 4) | Subst(vPeriod, 6, 2);
+sProductId = CellGetS('}ElementAttributes_'|sDimensionName_EcosoftId, vEcosoftId, sAttributeName_EcosoftId);
+
+CellIncrementN(vClosingValue, sCubeName_Report, pVersion, sPeriod, sLoyalty, sChannel, sProductId, sMeasureName_Report);
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

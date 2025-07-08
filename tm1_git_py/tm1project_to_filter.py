@@ -26,7 +26,14 @@ def convert_json_to_filter_txt(json_path: str, output_path: str):
         print(f"'{json_path}' fájl formátuma nem megfelelő.")
         return
 
-    output_rules = []
+    default_rules = [
+        "+/cubes/*",
+        "+/dimensions/*",
+        "+/processes/*",
+        "+/chores/*"
+    ]
+
+    output_rules = default_rules.copy()
 
     include_files = data.get("Files", [])
     for item in include_files:
@@ -45,8 +52,9 @@ def convert_json_to_filter_txt(json_path: str, output_path: str):
     except IOError:
         print(f"'{output_path}'")
 
-# if __name__ == "__main__":
-#     input_json_file = 'tm1project.json'
-#     output_filter_file = 'tm1project_filter.txt'
+
+if __name__ == "__main__":
+     input_json_file = 'tm1project.json'
+     output_filter_file = 'tm1project_filter.txt'
     
-#     convert_json_to_filter_txt(input_json_file, output_filter_file)
+     convert_json_to_filter_txt(input_json_file, output_filter_file)

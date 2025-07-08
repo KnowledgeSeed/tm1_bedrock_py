@@ -1,0 +1,42 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI Incentive Cost Input",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic UI Incentive Cost Input.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pValue",
+			"Prompt": "69",
+			"Value": "69",
+			"Type": "String"
+		},
+		{
+			"Name": "pVersion",
+			"Prompt": "Base",
+			"Value": "Base",
+			"Type": "String"
+		},
+		{
+			"Name": "pPeriod",
+			"Prompt": "202405",
+			"Value": "202405",
+			"Type": "String"
+		},
+		{
+			"Name": "pUser",
+			"Prompt": "Mody",
+			"Value": "Mody",
+			"Type": "String"
+		},
+		{
+			"Name": "pMode",
+			"Prompt": "1:= Incentive Cost, 2:= Incentive Cost Percentage",
+			"Value": "",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

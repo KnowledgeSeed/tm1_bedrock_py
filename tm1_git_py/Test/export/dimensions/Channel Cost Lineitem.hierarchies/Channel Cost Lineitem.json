@@ -1,0 +1,79 @@
+{
+	"@type": "Hierarchy",
+	"Name": "Channel Cost Lineitem",
+	"Elements": [
+		{
+			"name": "Channel Cost And Royalty",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Channel Cost Total",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Flat",
+			"type": "Numeric"
+		},
+		{
+			"name": "CS.FL",
+			"type": "Numeric"
+		},
+		{
+			"name": "EFI Cost",
+			"type": "Numeric"
+		},
+		{
+			"name": "Royalty",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Royalty EFI Cost",
+			"type": "Numeric"
+		},
+		{
+			"name": "EFI",
+			"type": "Numeric"
+		},
+		{
+			"name": "CPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "cpsReport",
+			"type": "Numeric"
+		}
+	],
+	"Edges": [
+		{
+			"parentName": "Channel Cost And Royalty",
+			"componentName": "Channel Cost Total",
+			"weight": 1
+		},
+		{
+			"parentName": "Channel Cost And Royalty",
+			"componentName": "Royalty",
+			"weight": 1
+		},
+		{
+			"parentName": "Channel Cost Total",
+			"componentName": "Flat",
+			"weight": 1
+		},
+		{
+			"parentName": "Channel Cost Total",
+			"componentName": "CS.FL",
+			"weight": 1
+		},
+		{
+			"parentName": "Channel Cost Total",
+			"componentName": "EFI Cost",
+			"weight": 1
+		},
+		{
+			"parentName": "Royalty",
+			"componentName": "Royalty EFI Cost",
+			"weight": 1
+		}
+	],
+	"Subsets@Code.links": []
+}

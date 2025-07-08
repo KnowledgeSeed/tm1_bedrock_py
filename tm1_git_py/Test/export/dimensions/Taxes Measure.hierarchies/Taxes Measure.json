@@ -1,0 +1,16 @@
+{
+	"@type": "Hierarchy",
+	"Name": "Taxes Measure",
+	"Elements": [
+		{
+			"name": "Value",
+			"type": "Numeric"
+		},
+		{
+			"name": "Comment",
+			"type": "String"
+		}
+	],
+	"Edges": [],
+	"Subsets@Code.links": []
+}

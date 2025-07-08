@@ -1,0 +1,132 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# =======================================================================================================================================
+# Original Date Created              2023.06.22
+# Originator                         Ullmann Dávid
+# Purpose                            Process to set product active flags correctly
+# Change Date                        Deletes present and future predicted active statuses, and then fills them back with fact data   
+# Change Request Reference    
+# Change Made by                     
+# =======================================================================================================================================
+
+RUNSWITCH = 0;
+
+
+
+sCubeName_Attributes      = 'Time Dependent ' | pDimensionName | ' Attribute';
+sDimensionName_Version    = 'Version';
+sDimensionName_Period     = 'Period';
+sDimensionName_Measure    = 'Time Dependent Product Attribute Measure';
+
+sElementName_Version      = 'Base';
+sElementName_Period       = TimSt(Now(), '\Y\m');
+sElementName_PeriodTotal  = 'All Period';
+sElementName_Measure      = 'Active';
+sElementName_ProductTotal = 'Total Products';
+
+pVersion = 'Base';
+
+IF(RUNSWITCH = 1);
+
+# input validation for no real reason
+
+if(CubeExists(sCubeName_Attributes) = 0);
+#  LogOutput('ERROR', 'Cube called ' | sCubeName_Attributes | ' does not exist');
+  ProcessQuit;
+endif;
+
+# in case of first run, fill values backwards as well
+
+nTotalActiveSum = CellGetN(sCubeName_Attributes, pVersion, sElementName_PeriodTotal, sElementName_ProductTotal, sElementName_Measure);
+nFirstRun = 0;
+if(nTotalActiveSum = 0);
+#  LogOutput('INFO', 'First run mode initiated, filling active status backwards as well');
+  nFirstRun = 1;
+endif;
+
+# generate source view
+
+sViewName = 'Attribute Fill Temp';
+sFilter =          sDimensionName_Version  | ' ¦ '| pVersion |' & ';
+sFilter = sFilter |sDimensionName_Period   | ' ¦ '| sElementName_PeriodTotal |' & ';
+sFilter = sFilter |pDimensionName          | ' ¦ '| sElementName_ProductTotal |' & ';
+sFilter = sFilter |sDimensionName_Measure  | ' ¦ '| sElementName_Measure;
+
+ExecuteProcess('}bedrock.cube.view.create',
+   'pLogOutput', 0,
+   'pStrictErrorHandling', 0,
+   'pCube', sCubeName_Attributes,
+   'pView', sViewName,
+   'pFilter', sFilter,
+   'pSuppressZero', 0,
+   'pSuppressConsol', 1,
+   'pSuppressRules', 0,
+   'pSuppressConsolStrings', -1,
+   'pDimDelim', '&',
+   'pEleStartDelim', '¦',
+   'pEleDelim', '+',
+   'pTemp',1,
+   'pSubN', 0
+  );
+  
+# set MDXs to the source view filter subsets
+
+sMDX = '{TM1FilterByLevel({TM1DrillDownMember({['|pDimensionName|'].['|pDimensionName|'].['|sElementName_ProductTotal|']},ALL,RECURSIVE)},0)}';
+SubsetMDXSet(pDimensionName, sViewName, sMDX);
+SubsetMDXSet(pDimensionName, sViewName, '');
+
+sMDX = 
+'{Filter(
+  {Filter(
+    {TM1FilterByLevel({TM1DrillDownMember({['|sDimensionName_Period|'].['|sDimensionName_Period|'].['|sElementName_PeriodTotal|']},ALL,RECURSIVE)},0)},
+    InStr(['|sDimensionName_Period|'].['|sDimensionName_Period|'].CurrentMember.Name, "_Input") = 0
+  )},
+  ['|sDimensionName_Period|'].['|sDimensionName_Period|'].CurrentMember.Name >= "'|sElementName_Period|'"
+)}';
+if(nFirstRun = 1);
+  sMDX = 
+  '{Filter( 
+    {TM1FilterByLevel( {TM1DrillDownMember( {['|sDimensionName_Period|'].['|sDimensionName_Period|'].['|sElementName_PeriodTotal|']}, ALL, RECURSIVE )}, 0 )},
+    InStr(['|sDimensionName_Period|'].['|sDimensionName_Period|'].CurrentMember.Name, "_Input") = 0 
+  )}';
+endif;
+
+# set view as data source
+
+DataSourceType          = 'VIEW';
+DatasourceNameForServer = sCubeName_Attributes;
+DatasourceNameForClient = sCubeName_Attributes;
+DatasourceCubeView      = sViewName;
+
+# clear data before filling
+
+ViewZeroOut(sCubeName_Attributes, sViewName);
+
+
+
+
+ENDIF;
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+IF(RUNSWITCH = 1);
+
+nCurrentProductActiveStatus = AttrN(pDimensionName, vProduct, sElementName_Measure);
+if(CellIsUpdateable(sCubeName_Attributes, vVersion, vPeriod, vProduct, vMeasure) = 1);
+  CellPutN(nCurrentProductActiveStatus, sCubeName_Attributes, vVersion, vPeriod, vProduct, vMeasure);
+endif;
+
+ENDIF;
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

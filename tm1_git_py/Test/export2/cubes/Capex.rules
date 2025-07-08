@@ -1,0 +1,9 @@
+SKIPCHECK;
+
+# verzió szabályok
+# test_modositas
+[]= N:
+IF(ELISPAR('Version','Report',!Version) = 1,
+STET,Continue);
+
+FEEDERS;

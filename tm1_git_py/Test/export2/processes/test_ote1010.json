@@ -1,0 +1,11 @@
+{
+	"@type": "Process",
+	"Name": "test_ote1010",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "test_ote1010.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [],
+	"Variables": []
+}

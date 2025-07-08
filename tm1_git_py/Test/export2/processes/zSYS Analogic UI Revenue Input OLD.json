@@ -1,0 +1,48 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI Revenue Input OLD",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic UI Revenue Input OLD.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pMode",
+			"Prompt": "1:one month,2: more month, 3:Growth rate, 4, CAGR 12 h\u00f3nap, 5:inflation 6: CAGR 6 h\u00f3nap",
+			"Value": 1,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pLedger",
+			"Prompt": "f\u00f6k\u00f6nyv, 96801",
+			"Value": "96801",
+			"Type": "String"
+		},
+		{
+			"Name": "pValue",
+			"Prompt": "69",
+			"Value": "69",
+			"Type": "String"
+		},
+		{
+			"Name": "pVersion",
+			"Prompt": "Base",
+			"Value": "Base",
+			"Type": "String"
+		},
+		{
+			"Name": "pPeriod",
+			"Prompt": "202402",
+			"Value": "202402",
+			"Type": "String"
+		},
+		{
+			"Name": "pUser",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

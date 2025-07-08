@@ -1,0 +1,36 @@
+{
+	"@type": "Cube",
+	"Name": "Channel Cost",
+	"Dimensions": [
+		{
+			"@id": "Dimensions('Version')"
+		},
+		{
+			"@id": "Dimensions('Period')"
+		},
+		{
+			"@id": "Dimensions('Channel')"
+		},
+		{
+			"@id": "Dimensions('Product')"
+		},
+		{
+			"@id": "Dimensions('Currency')"
+		},
+		{
+			"@id": "Dimensions('Channel Cost Lineitem')"
+		},
+		{
+			"@id": "Dimensions('Channel Cost Measure')"
+		}
+	],
+	"Rules@Code.link": "Channel Cost.rules",
+	"Views@Code.links": [
+		"Channel Cost.views/csatoran k\u00f6lts\u00e9gek \u00f6sszesen.json",
+		"Channel Cost.views/csoportos flat test.json",
+		"Channel Cost.views/EFI Cost ell.json",
+		"Channel Cost.views/Mody Channel test.json",
+		"Channel Cost.views/qwe.json",
+		"Channel Cost.views/test nezet mody.json"
+	]
+}

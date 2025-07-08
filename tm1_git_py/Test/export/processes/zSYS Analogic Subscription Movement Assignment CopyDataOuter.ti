@@ -1,0 +1,56 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# =========================================================
+# Original Date Created              2024.01.05
+# Originator                         Ullmann Dávid
+# Purpose                            Process to threadsafe parallel copy from base assignment cube to input assignment cube
+# Change Date                        using threadsafe bedrock data copy intercube 
+# Change Request Reference    
+# Change Made by                     
+# =========================================================
+
+# version section
+pVersion = 'Base';
+
+# period section
+sPeriodMDX = 
+'{EXCEPT(
+  { TM1FILTERBYLEVEL({[Period].[Period].Members}, 0) },
+  { TM1FILTERBYPATTERN({ TM1SubsetAll([Period])}, "*IN*")}
+)})';
+sPeriodTempSubsetName = 'Period subset temp';
+SubsetCreate('Period', sPeriodTempSubsetName, 1);
+SubsetMDXSet('Period', sPeriodTempSubsetName, sPeriodMDX);
+nIMax = SubsetMDXSet('Period', sPeriodTempSubsetName, '');
+
+# wrapper loop
+j = 1;
+i = 1;
+while(j <= 1);
+  while(i <= nIMax);
+    pPeriod = SubsetGetElementName('Period', sPeriodTempSubsetName, i);
+    ExecuteProcess('zSYS Analogic Subscription Movement Assignment CopyDataInner',
+       'pVersion', pVersion,
+       'pPeriod', pPeriod
+    );
+    i = i + 1;
+  end;
+  j = j + 1;
+end;
+
+# todo: implement versions
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

@@ -1,0 +1,5 @@
+{
+	"@type": "Subset",
+	"Name": "Version",
+	"Expression": "{[Version].[Version].[Optikai Net Kampany],[Version].[Version].[TV Migracios Akcio],[Version].[Version].[KTV Kivezetes]}"
+}

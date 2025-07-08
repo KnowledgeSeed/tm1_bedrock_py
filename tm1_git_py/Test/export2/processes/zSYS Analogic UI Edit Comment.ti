@@ -1,0 +1,31 @@
+#region Prolog
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+sCommentCube = 'Comment By ID';
+sDim='Comment ID';
+
+
+#endregion
+#region Metadata
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+Cellputs(pUser,sCommentCube,pCommentID,'CommentUser');
+Cellputs(pText,sCommentCube,pCommentID,'CommentText');
+sTime= TimSt(NOW(), '\Y.\m.\d \h:\i');
+Cellputs(sTime,sCommentCube,pCommentID,'CommentDate');
+
+#endregion

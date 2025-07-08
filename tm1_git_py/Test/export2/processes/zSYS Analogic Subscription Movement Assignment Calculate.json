@@ -1,0 +1,47 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic Subscription Movement Assignment Calculate",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic Subscription Movement Assignment Calculate.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pRun",
+			"Prompt": "1: yes - 0: no",
+			"Value": 0,
+			"Type": "Numeric"
+		}
+	],
+	"Variables": [
+		{
+			"Name": "vSourceProduct",
+			"Type": "String",
+			"Position": 1,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vTargetProduct",
+			"Type": "String",
+			"Position": 2,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vMovementName",
+			"Type": "String",
+			"Position": 3,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vMeasure",
+			"Type": "String",
+			"Position": 4,
+			"StartByte": 0,
+			"EndByte": 0
+		}
+	]
+}

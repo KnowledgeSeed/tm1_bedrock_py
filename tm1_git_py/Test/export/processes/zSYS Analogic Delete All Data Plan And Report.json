@@ -1,0 +1,11 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic Delete All Data Plan And Report",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic Delete All Data Plan And Report.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [],
+	"Variables": []
+}

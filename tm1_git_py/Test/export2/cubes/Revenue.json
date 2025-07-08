@@ -1,0 +1,35 @@
+{
+	"@type": "Cube",
+	"Name": "Revenue",
+	"Dimensions": [
+		{
+			"@id": "Dimensions('Version')"
+		},
+		{
+			"@id": "Dimensions('Period')"
+		},
+		{
+			"@id": "Dimensions('ledger')"
+		},
+		{
+			"@id": "Dimensions('Product')"
+		},
+		{
+			"@id": "Dimensions('Revenue Lineitem')"
+		},
+		{
+			"@id": "Dimensions('Revenue Measure')"
+		}
+	],
+	"Rules@Code.link": "Revenue.rules",
+	"Views@Code.links": [
+		"Revenue.views/ARPU nezet.json",
+		"Revenue.views/attekintes oldal.json",
+		"Revenue.views/bevetel osszes nezet.json",
+		"Revenue.views/EFI sz\u00e1mok.json",
+		"Revenue.views/Egyeb bev\u00e9telek.json",
+		"Revenue.views/keszulek eladas.json",
+		"Revenue.views/Modem berlet.json",
+		"Revenue.views/STB berlet.json"
+	]
+}

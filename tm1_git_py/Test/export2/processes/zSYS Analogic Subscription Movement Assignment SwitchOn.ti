@@ -1,0 +1,27 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# =========================================================
+# Original Date Created              2024.01.05
+# Originator                         Ullmann Dávid
+# Purpose                            Process to threadsafe parallel copy from base assignment cube to input assignment cube
+# Change Date                        using threadsafe bedrock data copy intercube 
+# Change Request Reference    
+# Change Made by                     
+# =========================================================
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

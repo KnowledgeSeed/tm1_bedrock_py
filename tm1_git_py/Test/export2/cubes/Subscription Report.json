@@ -1,0 +1,28 @@
+{
+	"@type": "Cube",
+	"Name": "Subscription Report",
+	"Dimensions": [
+		{
+			"@id": "Dimensions('Version')"
+		},
+		{
+			"@id": "Dimensions('Period')"
+		},
+		{
+			"@id": "Dimensions('Loyalty')"
+		},
+		{
+			"@id": "Dimensions('Sales Channel')"
+		},
+		{
+			"@id": "Dimensions('Product')"
+		},
+		{
+			"@id": "Dimensions('Subscription Report Measure')"
+		}
+	],
+	"Rules@Code.link": "Subscription Report.rules",
+	"Views@Code.links": [
+		"Subscription Report.views/U.D - Movement Test View for Digitalis Csaladi - 2023.09.25.json"
+	]
+}

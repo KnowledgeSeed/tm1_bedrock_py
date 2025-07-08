@@ -1,0 +1,51 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+sMeasure = 'Assignment';
+sPeriodDim = 'Period';
+sAllNTimeSubset = 'Actual Period N level';
+
+nLastValue = CellGetN('Channel Product Assignment', pVersion, pPeriod, pChannel, pProduct, sMeasure);
+IF( nLastValue = 1);
+  nInputValue = 0;
+ENDIF;
+IF( nLastValue = 0);
+  nInputValue = 1;
+ENDIF;
+
+nFirstPeriodIndex = SubsetElementGetIndex(sPeriodDim, sAllNTimeSubset, pPeriod);
+nLastPeriodIndex = SubsetGetSize(sPeriodDim, sAllNTimeSubset);
+
+
+i = nFirstPeriodIndex;
+While(i <= nLastPeriodIndex);
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      CellPutN(nInputValue, 'Channel Product Assignment', pVersion, sInputPeriod, pChannel, pProduct, sMeasure);
+      i = i+1;
+END;
+
+
+
+
+
+
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+sToday = Today(1);
+CellPutS(sToday, '}ElementAttributes_Version', pVersion, 'Last Updated');
+CellPutS(pUser, '}ElementAttributes_Version', pVersion, 'Last Updated By');
+#endregion

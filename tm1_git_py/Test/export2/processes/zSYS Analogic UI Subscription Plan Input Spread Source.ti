@@ -1,0 +1,191 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# =========================================================
+# Original Date Created              2023.06.12
+# Originator                         Ullmann Dávid
+# Purpose                            Process to spread the input in fourth dimension (in case of group source) in the cube Subscription Plan
+# Change Date                             Fourth layer, source product
+# Change Request Reference                
+# Change Made by                     
+# =========================================================
+
+# collection of variables with possible use
+
+sCubeName_Main          = 'Subscription Plan';
+sCubeName_Assignment    = 'Subscription Movement Assignment';
+sCubeName_WeightLimit   = 'Weight and Limit';
+sDimensionName_Period   = 'Period';
+sDimensionName_Loyalty  = 'Loyalty';
+sDimensionName_Channel  = 'Sales Channel';
+sDimensionName_SProduct = 'Source Product';
+sDimensionName_TProduct = 'Target Product';
+sDimensionName_Version  = 'Version';
+sDimensionName_Movement = 'Subscription Plan Movement';
+sDimensionName_Measure  = 'Subscription Plan Measure';
+sHierarchyName_Period   = 'Period';
+sHierarchyName_Loyalty  = 'Loyalty';
+sHierarchyName_Channel  = 'Sales Channel';
+sHierarchyName_SProduct = 'Source Product';
+sHierarchyName_TProduct = 'Target Product';
+sHierarchyName_Version  = 'Version';
+sHierarchyName_Movement = 'Subscription Plan Movement';
+
+sElementName_MovementMeasure = 'Stored';
+sElementName_MovementTotal   = 'Closing';
+sSubsetName_Period           = 'All N';
+sValue_Version               = 'Base';
+sValue_MeasureRead_Direct  = 'Value';  
+sValue_MeasureWrite_Direct = 'Direct Input Override';
+sValue_MeasureDelta_Direct = 'Direct Input Delta';
+sValue_MeasureZero_Direct  = 'Direct Input Zero Flag';
+sValue_MeasureRead_Spread  = 'Base';
+sValue_MeasureWrite_Spread = 'Final Value Override';
+sValue_MeasureDelta_Spread = 'Spread Input Delta';
+sValue_MeasureResidual     = 'Spread Res';
+sValue_MeasureZero_Spread  = 'Final Value Zero Flag';
+svalue_MeasureFinal        = 'Final Value Snapshot';
+
+# define next process name in chain
+
+sProcessName_Next = 'zSYS Analogic UI Subscription Plan Input Spread Final';
+
+
+
+if(pSourceBypass = 0);
+  
+  # generate subset of month
+  sTempSubsetName_Source = 'Source Spread Temp';
+  sMDX = 
+#  '{Filter(
+#    {Tm1SubsetToSet([Source Product], "'|pMaincategory|'")},
+#    [Subscription Movement Assignment].(
+#      [Target Product].[Target Product].['|pTargetProduct|'],
+#      [Subscription Plan Movement].[Subscription Plan Movement].['|pMovement|'],
+#      [Subscription Movement Assignment Measure].[Subscription Movement Assignment Measure].[Stored]) > 0
+#  )}';
+
+
+
+# Ez az új MDX
+  '{Filter(
+      {Tm1SubsetToSet([Source Product], "'|pMaincategory|'")},
+      [Subscription Movement Assignment for Input].(
+        [Period].['|pPeriod|'],
+        [Version].['|pVersion|'],
+        [Target Product].[Target Product].['|pTargetProduct|'],
+        [Subscription Plan Movement].[Subscription Plan Movement].['|pMovement|'],
+        [Subscription Movement Assignment Measure].[Subscription Movement Assignment Measure].[source_flag_mult]) > 0
+    )}';
+
+
+# ez lett kommnetálva 07. 16.
+#  if(pTargetBypass = 0);
+#    sMDX =             
+#    'GENERATE(
+#      { 
+#        Tm1SubsetToSet([Target Product], "'|pMaincategory|'") 
+#      },
+#      { 
+#        Filter(
+#          {Tm1SubsetToSet([Source Product], "'|pMaincategory|'")},
+#          [Subscription Movement Assignment for Input].(
+#              [Period].['|pPeriod|'],
+#              [Version].['|pVersion|'],
+#              [Target Product].CurrentMember,
+#              [Subscription Plan Movement].[Subscription Plan Movement].['|pMovement|'],
+#              [Subscription Movement Assignment Measure].[Subscription Movement Assignment Measure].[source_target_flag_mult]
+#          ) > 0 
+#        )
+#      }
+#    )';
+#  endif;
+
+LogOutput('INFO', sMDX);
+  
+#  if(SubsetExists(sDimensionName_SProduct, sTempSubsetName_Source) = 0);
+#    SubsetCreate(sDimensionName_SProduct, sTempSubsetName_Source, 1);
+#  endif;
+  SubsetMDXSet(sDimensionName_SProduct, sTempSubsetName_Source, sMDX);
+  SubsetMDXSet(sDimensionName_SProduct, sTempSubsetName_Source, '');
+  
+  nCount = SubsetGetSize(sDimensionName_SProduct, sTempSubsetName_Source);
+  nTotalWeight = 0;
+  nTotalWeight_sign = 0;
+
+  # set subset as data source 
+  DataSourceType            = 'SUBSET';
+  DatasourceNameForServer   = sDimensionName_SProduct;
+  DatasourceNameForClient   = sDimensionName_SProduct;
+  DatasourceDimensionsubset = sTempSubsetName_Source;
+endif;
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+nTotalWeight = nTotalWeight + CellGetN(sCubeName_WeightLimit, pVersion, pPeriod, pMaincategory,  vSourceProduct,  'Switch off weight', 'Value');
+nTotalWeight_sign = abs(sign(nTotalWeight));
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+if(pSourceBypass = 1);
+  itemskip;
+endif;
+
+# in case total is zero before writing
+nFallbackRatio = 1 / nCount;
+
+# in case there is data on total
+nCurrentWeight = CellGetN(sCubeName_WeightLimit, pVersion, pPeriod, pMaincategory,  vSourceProduct, 'Switch off weight', 'Value');
+nBaseRatio     = nCurrentWeight \ nTotalWeight;
+nRatio         = nTotalWeight_sign * nBaseRatio + (1 - nTotalWeight_sign) * nFallbackRatio;
+nOverridepart  = pInput * nRatio;
+
+# if ratio is zero, stop branch
+if(nOverridepart = 0);
+  itemskip;
+endif;
+
+#LogOutput('INFO', '----------------------------------------------');
+#LogOutput('INFO', '----------------------------------------------');
+#LogOutput('INFO', '');
+#LogOutput('INFO', 'nCurrentWeight: ' | numbertostring(nCurrentWeight) | ' nTotalWeight:' | numbertostring(nTotalWeight));
+#LogOutput('INFO', 'Current source: ' | vSourceProduct | ' - Override part: ' | numberTostring(nOverridepart));
+#LogOutput('INFO', '');
+#LogOutput('INFO', '----------------------------------------------');
+#LogOutput('INFO', '----------------------------------------------');
+
+# call subprocess to divide further
+ExecuteProcess(sProcessName_Next,
+ 'pSourceProduct', vSourceProduct,
+ 'pTargetProduct', pTargetProduct,
+ 'pMovement',      pMovement,
+ 'pOppositeMovement', pOppositeMovement,
+ 'pLoyalty',       pLoyalty,
+ 'pChannel',       pChannel,
+ 'pPeriod',        pPeriod,
+ 'pVersion',       pVersion,
+ 'pInput',         nOverridepart);
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+if(pSourceBypass = 1);
+  
+  ExecuteProcess(sProcessName_Next, 
+  'pSourceProduct', pSourceProduct, 
+  'pTargetProduct', pTargetProduct, 
+  'pMovement', pMovement, 
+  'pOppositeMovement', pOppositeMovement,
+  'pLoyalty', pLoyalty, 
+  'pChannel', pChannel, 
+  'pPeriod', pPeriod,
+  'pVersion', pVersion,
+  'pInput', pInput);
+endif;
+#endregion

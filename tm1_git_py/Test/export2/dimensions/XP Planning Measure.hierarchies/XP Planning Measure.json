@@ -1,0 +1,24 @@
+{
+	"@type": "Hierarchy",
+	"Name": "XP Planning Measure",
+	"Elements": [
+		{
+			"name": "Value",
+			"type": "Numeric"
+		},
+		{
+			"name": "Colors",
+			"type": "Numeric"
+		},
+		{
+			"name": "Comment",
+			"type": "String"
+		},
+		{
+			"name": "Reset",
+			"type": "Numeric"
+		}
+	],
+	"Edges": [],
+	"Subsets@Code.links": []
+}

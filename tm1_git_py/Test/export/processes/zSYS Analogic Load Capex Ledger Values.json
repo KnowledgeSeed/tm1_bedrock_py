@@ -1,0 +1,59 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic Load Capex Ledger Values",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic Load Capex Ledger Values.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pVersion",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pAllPeriod",
+			"Prompt": "",
+			"Value": 0,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pLastYear",
+			"Prompt": "",
+			"Value": 0,
+			"Type": "Numeric"
+		}
+	],
+	"Variables": [
+		{
+			"Name": "vDtum",
+			"Type": "String",
+			"Position": 1,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vEgyenleg",
+			"Type": "String",
+			"Position": 2,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vProjektKod",
+			"Type": "String",
+			"Position": 3,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vMegnevezes",
+			"Type": "String",
+			"Position": 4,
+			"StartByte": 0,
+			"EndByte": 0
+		}
+	]
+}

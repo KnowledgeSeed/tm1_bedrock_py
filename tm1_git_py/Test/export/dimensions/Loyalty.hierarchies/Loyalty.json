@@ -1,0 +1,37 @@
+{
+	"@type": "Hierarchy",
+	"Name": "Loyalty",
+	"Elements": [
+		{
+			"name": "Total",
+			"type": "Consolidated"
+		},
+		{
+			"name": "0",
+			"type": "Numeric"
+		},
+		{
+			"name": "1",
+			"type": "Numeric"
+		},
+		{
+			"name": "NA",
+			"type": "Numeric"
+		}
+	],
+	"Edges": [
+		{
+			"parentName": "Total",
+			"componentName": "0",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "1",
+			"weight": 1
+		}
+	],
+	"Subsets@Code.links": [
+		"Loyalty.subsets/All N Level Element.json"
+	]
+}

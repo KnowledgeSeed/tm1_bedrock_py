@@ -1,0 +1,5 @@
+{
+	"@type": "Subset",
+	"Name": "Direct Cost Overview Import",
+	"Expression": "{\rEXCEPT({\rTM1DRILLDOWNMEMBER({\r[ledger].[ledger].[K\u00f6zvetlen k\u00f6lts\u00e9g]\r}, ALL, RECURSIVE)\r},{\r[ledger].[ledger].[K\u00f6zvetlen k\u00f6lts\u00e9g]\r})\r}"
+}

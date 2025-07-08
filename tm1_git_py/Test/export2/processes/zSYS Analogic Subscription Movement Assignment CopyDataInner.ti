@@ -1,0 +1,113 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# =========================================================
+# Original Date Created              2024.01.05
+# Originator                         Ullmann Dávid
+# Purpose                            Process to threadsafe parallel copy from base assignment cube to input assignment cube
+# Change Date                        using threadsafe bedrock data copy intercube 
+# Change Request Reference    
+# Change Made by                     
+# =========================================================
+
+pCubeFrom = 'Subscription Movement Assignment';
+pCubeTo = 'Subscription Movement Assignment for Input';
+
+# MAX number of treads at the moment 12 becasue we have that many avaialble core in the server
+#paralellization done by Periods
+
+
+### SMALLEST batchsize 1 period
+pBatchSize = 10;
+N_PARALLEL_THREADS = 10;
+S_PARALLEL_FILTER = 'Source Product¦';
+# input validation
+
+
+if(DimensionElementExists('Versions', pVersion) = 0); 
+#  LogOutput('ERROR', 'There is no Version named ' | pVersion | '.'); 
+  ProcessQuit; 
+endif;
+if(DimensionElementExists('Period', pPeriod) = 0); 
+#  LogOutput('ERROR', 'There is no Period named ' | pPeriod | '.'); 
+  ProcessQuit; 
+endif;
+
+# Define slicer for paralelization
+# generating the parallel filter value
+  ### – Initialize dividend and modulus
+        nModDividend = 0;
+        nModulus = N_PARALLEL_THREADS;
+  ### – End
+  sMDX = 
+  '{ TM1FILTERBYLEVEL({[Source Product].[Source Product].Members}, 0) }';
+  sTempSubsetName = 'ParallelCase'|pVersion|pPeriod;
+  SubsetCreate('Source Product', sTempSubsetName, 1);
+  SubsetMDXSet('Source Product', sTempSubsetName, sMDX);
+  nMaxNumberofExecution = SubsetMDXSet('Source Product', sTempSubsetName, '');
+  ### Loop through all periods
+  i = 1;
+  ### Batching by j
+  j=1;
+  WHILE (i <= nMaxNumberofExecution);
+    ### Create lock object
+    sRemainder = NUMBERTOSTRING(MOD(nModDividend, nModulus));
+    sLockObj = 'MovementAssignment' | sRemainder;
+    if(j< pBatchSize);
+      S_PARALLEL_FILTER = S_PARALLEL_FILTER | SubsetGetElementName('Source Product', sTempSubsetName, i) |'+';
+    else;
+      S_PARALLEL_FILTER = S_PARALLEL_FILTER | SubsetGetElementName('Source Product', sTempSubsetName, i) ;
+    Endif;
+    ### if batch filter collected then execute
+    if(pBatchSize = j);
+#    LogOutput('INFO', 'Lock Object:' | Numbertostring(nMaxNumberofExecution) |' \ '| Numbertostring(nModulus) |' \ '|Numbertostring(nModDividend)|S_PARALLEL_FILTER);
+  
+    RunProcess('}bedrock.cube.data.copy.intercube.threadsafe',
+       'pLogOutput', 0,
+       'pSrcCube', pCubeFrom,
+       'pFilter', '',
+       'pFilterParallel', S_PARALLEL_FILTER,
+       'pParallelThreads', N_PARALLEL_THREADS,
+       'pTgtCube', pCubeTo,
+       'pMappingToNewDims', 'Period¦'|pPeriod|' & Version¦'|pVersion,
+       'pSuppressConsol', 1,
+       'pSuppressRules', 0,
+       'pZeroTarget', 0,
+       'pZeroSource', 0,
+       'pFactor', 1,
+       'pDimDelim', '&',
+       'pEleStartDelim', '¦',
+       'pEleDelim', '+',
+       'pTemp', 1,
+       'pCubeLogging', 2,
+       'pSandbox', '',
+       'pFile', 0,
+       'pThreadMode', 0,
+       'pLockObj', ''
+      );
+    
+    ### Reset batch size
+    j=0;
+    ### Reset the filer for new batch
+    S_PARALLEL_FILTER = 'Source Product¦';
+    ### increase lock object id
+    nModDividend = nModDividend + 1;
+    Endif;
+    i= i+1;
+    j= j+1;
+  END;  
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

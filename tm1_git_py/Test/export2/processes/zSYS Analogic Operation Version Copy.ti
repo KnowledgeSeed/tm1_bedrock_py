@@ -1,0 +1,191 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# =========================================================
+# Original Date Created              2024.01.29
+# Originator                         Ullmann Dávid
+# Purpose                            Process to copy all data from a source verstion to a target version for all cubes 
+# Change Date                           
+# Change Request Reference    
+# Change Made by                     
+# =========================================================
+
+# list of all cubes that have to be copied
+#Direct Cost 
+#Planning Driver
+#Product Ledger Assignments
+#Revenue
+#Subscription Movement Assignment for Input
+#Subscription Plan
+#Weight and Limit
+#XP Planning
+
+sFilePath = CellGetS('zSYS Maintenance Parameter', 'Inbound Data Directory Path', 'S Type');
+sDimensionName_Cubes = '}Cubes';
+sDimensionName_Version = 'Version';
+
+
+# Módos Dávid 07 19
+# Subscription Movement Assignment  => ebben a kockában nincs verzió !!!!
+
+sCubeListMDX = '{
+[}Cubes].[}Cubes].[Direct Cost],
+[}Cubes].[}Cubes].[Planning Driver],
+[}Cubes].[}Cubes].[Product Ledger Assignment],
+[}Cubes].[}Cubes].[Revenue],
+[}Cubes].[}Cubes].[Subscription Movement Assignment for Input],
+[}Cubes].[}Cubes].[Subscription Plan],
+[}Cubes].[}Cubes].[Subscription Report],
+[}Cubes].[}Cubes].[Weight and Limit],
+[}Cubes].[}Cubes].[XP Planning],
+[}Cubes].[}Cubes].[Channel Cost],
+[}Cubes].[}Cubes].[Channel Cost Report],
+[}Cubes].[}Cubes].[Channel Csoportos Flat Assignment],
+[}Cubes].[}Cubes].[Channel Product Assignment],
+[}Cubes].[}Cubes].[Channel Provider Assignment],
+[}Cubes].[}Cubes].[Channel Time Dependent Attributes],
+[}Cubes].[}Cubes].[Commission],
+[}Cubes].[}Cubes].[Commisson IFRS],
+[}Cubes].[}Cubes].[EBITDA],
+[}Cubes].[}Cubes].[Erkim],
+[}Cubes].[}Cubes].[Individual Cost],
+[}Cubes].[}Cubes].[Marketing Cost],
+[}Cubes].[}Cubes].[Other Cost]
+}';
+
+# debug test cube list for only one cube
+#sCubeListMDX = '{
+#[}Cubes].[}Cubes].[Subscription Plan]
+#}';
+
+# input validation
+if(DimensionElementExists(sDimensionName_Version, pSourceVersion) = 0);
+#  LogOutput('ERROR', 'pSourceVersion is invalid');
+  ProcessQuit;
+endif;
+
+# target version creation (if needed)
+if(DimensionElementExists(sDimensionName_Version, pTargetVersion) = 0);
+#  LogOutput('WARNING', 'pTargetVersion does not exist yet. Creating it...');
+  DimensionElementInsertDirect(sDimensionName_Version, '', pTargetVersion, 'N');
+endif;
+
+
+sTempSubsetName = 'Temporary Cube Subset for Version Copy';
+if(SubsetExists(sDimensionName_Cubes, sTempSubsetName) = 0);
+  SubsetCreate(sDimensionName_Cubes, sTempSubsetName, 1);
+endif;
+SubsetMDXSet(sDimensionName_Cubes, sTempSubsetName, sCubeListMDX);
+SubsetMDXSet(sDimensionName_Cubes, sTempSubsetName, '');
+
+DataSourceType            = 'SUBSET';
+DatasourceNameForServer   = sDimensionName_Cubes;
+DatasourceNameForClient   = sDimensionName_Cubes;
+DatasourceDimensionsubset = sTempSubsetName;
+
+
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+sFileName = vCubeName|'_'|pSourceVersion|'.csv';
+
+ExecuteProcess('}bedrock.cube.data.export.ks',
+   'pLogoutput', 0,
+   'pCube', vCubeName,
+   'pView', '',
+   'pFilter', 'Version¦'|pSourceVersion,
+   'pFilterParallel', '',
+   'pParallelThreads', 0,
+   'pDimDelim', '&',
+   'pEleStartDelim', '¦',
+   'pEleDelim', '+',
+   'pSuppressZero', 1,
+   'pSuppressConsol', 1,
+   'pSuppressRules', 0,
+   'pZeroSource', 0,
+   'pCubeLogging', 2,
+   'pTemp', 1,
+   'pFilePath', sFilePath,
+   'pFileName', sFileName,
+   'pDelim', ',',
+   'pQuote', '"',
+   'pTitleRecord', 1,
+   'pSandbox', '',
+   'pSuppressConsolStrings', 0
+  );
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+sFileName = vCubeName|'_'|pSourceVersion|'.csv';
+
+# only attempt importing, if exportfile exists. if export does not exist, dont even clear target 
+if(WildcardFileSearch(sFilePath|sFileName, '') @<> '');
+
+  if(pClearTargetBeforeCopy = 1);
+    
+#    LogOutput('INFO', 'Clearing target version called '|pTargetVersion|' before copying anything to it.');
+    
+    sViewName = 'Target Version Delete Temp';
+    sFilter = sDimensionName_Version | ' ¦ '| pTargetVersion;
+    if(ViewExists(vCubeName, sViewName) = 0);
+      ExecuteProcess('}bedrock.cube.view.create',
+         'pLogOutput', 0,
+         'pStrictErrorHandling', 0,
+         'pCube', vCubeName,
+         'pView', sViewName,
+         'pFilter', sFilter,
+         'pSuppressZero', 0,
+         'pSuppressConsol', 1,
+         'pSuppressRules', 0,
+         'pSuppressConsolStrings', -1,
+         'pDimDelim', '&',
+         'pEleStartDelim', '¦',
+         'pEleDelim', '+',
+         'pTemp',1,
+         'pSubN', 0
+        );
+    endif;
+  
+    SubsetMDXSet(sDimensionName_Version, sViewName, '{[Version].[Version].['|pTargetVersion|']}');
+    SubsetMDXSet(sDimensionName_Version, sViewName, '');
+    
+    ViewZeroOut(vCubeName, sViewName);
+  endif;
+  
+  ExecuteProcess('}bedrock.cube.data.import',
+     'pLogOutput', 0,
+     'pCube', vCubeName,
+     'pSrcDir', sFilePath,
+     'pSrcFile', sFileName,
+     'pDim', sDimensionName_Version,
+     'pSrcEle', pSourceVersion,
+     'pTgtEle', pTargetVersion,
+     'pTitleRows', 1,
+     'pDelim', ',',
+     'pQuote', '"',
+     'pCumulate', 0,
+     'pCubeLogging', 2,
+     'pSandbox', '',
+     'pZeroFilter', 0,
+     'pMappingToNewDims', '',
+     'pDimDelim', '&',
+     'pEleStartDelim', '¦',
+     'pEleDelim', '+'
+    );
+    
+#else;
+#  LogOutput('INFO', 'There is no available export file for the cube '|vCubeName|' on the path: '|sFilePath|sFileName);
+endif;
+
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

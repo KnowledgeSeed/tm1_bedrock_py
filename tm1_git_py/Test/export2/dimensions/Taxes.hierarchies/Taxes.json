@@ -1,0 +1,553 @@
+{
+	"@type": "Hierarchy",
+	"Name": "Taxes",
+	"Elements": [
+		{
+			"name": "Iparuzesi ado",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Adoalap IPA",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Ertekesites netto arbevetele (pozitivval)",
+			"type": "Numeric"
+		},
+		{
+			"name": "Anyagkoltseg (pozitivval)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ELABE(pozitivval)",
+			"type": "Numeric"
+		},
+		{
+			"name": "Kozvetitett szolg. (pozitivval)",
+			"type": "Numeric"
+		},
+		{
+			"name": "K+F (pozitivval)",
+			"type": "Numeric"
+		},
+		{
+			"name": "Onreviziok IPA",
+			"type": "Numeric"
+		},
+		{
+			"name": "Ado revizio IPA",
+			"type": "Numeric"
+		},
+		{
+			"name": "Elozo evi 13. periodusbeli konyvelesek IPA",
+			"type": "Numeric"
+		},
+		{
+			"name": "Innovacios jarulek",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Innovacios jarulek onreviziok",
+			"type": "Numeric"
+		},
+		{
+			"name": "Ado revizio Innov",
+			"type": "Numeric"
+		},
+		{
+			"name": "Elozo evi 13. periodusbeli konyvelesek Innov",
+			"type": "Numeric"
+		},
+		{
+			"name": "Tarsasagi adokotelezettseg",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Onreviziok TAO",
+			"type": "Numeric"
+		},
+		{
+			"name": "Ado revizio",
+			"type": "Numeric"
+		},
+		{
+			"name": "Elozo evi 13. periodusbeli konyvelesek",
+			"type": "Numeric"
+		},
+		{
+			"name": "Forrasado (IFRS)",
+			"type": "Numeric"
+		},
+		{
+			"name": "Kalkulalt tarsasagi ado",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Adoalap TAO",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Elvart adoalap",
+			"type": "Numeric"
+		},
+		{
+			"name": "Adozas elotti eredmeny",
+			"type": "Consolidated"
+		},
+		{
+			"name": "AEE IPA, Innov elott, nyereseg pozitivval:",
+			"type": "Numeric"
+		},
+		{
+			"name": "ipa, innov konyveltetes (pozitivval):",
+			"type": "Numeric"
+		},
+		{
+			"name": "Novelo tetelek osszesen",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Varhato kotelezettsegre, jovobeni ktgre kepzett celtartalek",
+			"type": "Numeric"
+		},
+		{
+			"name": "Szamviteli ertekcsokkenes, kivezetett eszk. konyv szerinti e",
+			"type": "Numeric"
+		},
+		{
+			"name": "Adott tamogatasok",
+			"type": "Numeric"
+		},
+		{
+			"name": "Ktg ellentet adott tam",
+			"type": "Numeric"
+		},
+		{
+			"name": "Birosag elott nem ervenyesitheto, elevult koveteles",
+			"type": "Numeric"
+		},
+		{
+			"name": "atharitott baleseti tappenz",
+			"type": "Numeric"
+		},
+		{
+			"name": "Egyeb novelo tetel",
+			"type": "Numeric"
+		},
+		{
+			"name": "Egyeb novelo tetel kerekites",
+			"type": "Numeric"
+		},
+		{
+			"name": "Egyeb novelo tetel - leltarhiany, karesemeny",
+			"type": "Numeric"
+		},
+		{
+			"name": "Egyeb novelo tetel - reklamados tetelek",
+			"type": "Numeric"
+		},
+		{
+			"name": "Birsag, jogkovetkezmeny",
+			"type": "Numeric"
+		},
+		{
+			"name": "Kovetelesekre elszamolt ertekvesztes",
+			"type": "Numeric"
+		},
+		{
+			"name": "Elengedett koveteles (leanyvallalati)",
+			"type": "Numeric"
+		},
+		{
+			"name": "onreviziok (novelo tetelek osszesen)",
+			"type": "Numeric"
+		},
+		{
+			"name": "Korabban csokkento tetelkent figyelembe vett nem realizalt arfolyam kulonbozet",
+			"type": "Numeric"
+		},
+		{
+			"name": "Csokkento tetelek osszesen",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Elhatarolt veszteseg felhasznalasa",
+			"type": "Numeric"
+		},
+		{
+			"name": "Varhato kotelezettsegre, jovobeni ktgre kepzett celtartalek feloldas",
+			"type": "Numeric"
+		},
+		{
+			"name": "Adotorveny szerinti ecs., kivezetett eszk. szamitott nyilvan",
+			"type": "Numeric"
+		},
+		{
+			"name": "Fejlesztesi tartalek",
+			"type": "Numeric"
+		},
+		{
+			"name": "Bevetelkent elszamolt osztalek",
+			"type": "Numeric"
+		},
+		{
+			"name": "Befektetes megszunesen realizalt nyereseg",
+			"type": "Numeric"
+		},
+		{
+			"name": "Behajthatatlan kovetelesre befolyt osszeg: 7. \u00a7 (1) n) pont",
+			"type": "Numeric"
+		},
+		{
+			"name": "Faktoralas bevetele (behajthatatlanra befolyt osszeg)",
+			"type": "Numeric"
+		},
+		{
+			"name": "Behajthatatlanna valt ertekvesztett koveteles",
+			"type": "Numeric"
+		},
+		{
+			"name": "Kovetelesek visszairt ertekvesztese",
+			"type": "Numeric"
+		},
+		{
+			"name": "Elengedett birsag",
+			"type": "Numeric"
+		},
+		{
+			"name": "K + F koltsegek",
+			"type": "Numeric"
+		},
+		{
+			"name": "onreviziok (csokkento tetelek osszesen)",
+			"type": "Numeric"
+		},
+		{
+			"name": "Adofelajanlassal osszefuggesben egyeb bevetelkent elsz.jovairas",
+			"type": "Numeric"
+		},
+		{
+			"name": "Adomany",
+			"type": "Numeric"
+		},
+		{
+			"name": "Nem realizalt arfolyamnyereseg",
+			"type": "Numeric"
+		},
+		{
+			"name": "70%-os teszt",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Fejlesztesi adokedvezmeny",
+			"type": "Numeric"
+		},
+		{
+			"name": "Film, sporttamogatas",
+			"type": "Numeric"
+		}
+	],
+	"Edges": [
+		{
+			"parentName": "Iparuzesi ado",
+			"componentName": "Adoalap IPA",
+			"weight": 1
+		},
+		{
+			"parentName": "Iparuzesi ado",
+			"componentName": "Onreviziok IPA",
+			"weight": 0
+		},
+		{
+			"parentName": "Iparuzesi ado",
+			"componentName": "Ado revizio IPA",
+			"weight": 0
+		},
+		{
+			"parentName": "Iparuzesi ado",
+			"componentName": "Elozo evi 13. periodusbeli konyvelesek IPA",
+			"weight": 0
+		},
+		{
+			"parentName": "Adoalap IPA",
+			"componentName": "Ertekesites netto arbevetele (pozitivval)",
+			"weight": 1
+		},
+		{
+			"parentName": "Adoalap IPA",
+			"componentName": "Anyagkoltseg (pozitivval)",
+			"weight": -1
+		},
+		{
+			"parentName": "Adoalap IPA",
+			"componentName": "ELABE(pozitivval)",
+			"weight": -1
+		},
+		{
+			"parentName": "Adoalap IPA",
+			"componentName": "Kozvetitett szolg. (pozitivval)",
+			"weight": -1
+		},
+		{
+			"parentName": "Adoalap IPA",
+			"componentName": "K+F (pozitivval)",
+			"weight": -1
+		},
+		{
+			"parentName": "Innovacios jarulek",
+			"componentName": "Adoalap IPA",
+			"weight": 1
+		},
+		{
+			"parentName": "Innovacios jarulek",
+			"componentName": "Innovacios jarulek onreviziok",
+			"weight": 0
+		},
+		{
+			"parentName": "Innovacios jarulek",
+			"componentName": "Ado revizio Innov",
+			"weight": 0
+		},
+		{
+			"parentName": "Innovacios jarulek",
+			"componentName": "Elozo evi 13. periodusbeli konyvelesek Innov",
+			"weight": 0
+		},
+		{
+			"parentName": "Tarsasagi adokotelezettseg",
+			"componentName": "Onreviziok TAO",
+			"weight": 0
+		},
+		{
+			"parentName": "Tarsasagi adokotelezettseg",
+			"componentName": "Ado revizio",
+			"weight": 0
+		},
+		{
+			"parentName": "Tarsasagi adokotelezettseg",
+			"componentName": "Elozo evi 13. periodusbeli konyvelesek",
+			"weight": 0
+		},
+		{
+			"parentName": "Tarsasagi adokotelezettseg",
+			"componentName": "Forrasado (IFRS)",
+			"weight": 0
+		},
+		{
+			"parentName": "Tarsasagi adokotelezettseg",
+			"componentName": "Kalkulalt tarsasagi ado",
+			"weight": 1
+		},
+		{
+			"parentName": "Tarsasagi adokotelezettseg",
+			"componentName": "70%-os teszt",
+			"weight": 1
+		},
+		{
+			"parentName": "Tarsasagi adokotelezettseg",
+			"componentName": "Film, sporttamogatas",
+			"weight": 1
+		},
+		{
+			"parentName": "Kalkulalt tarsasagi ado",
+			"componentName": "Adoalap TAO",
+			"weight": 1
+		},
+		{
+			"parentName": "Adoalap TAO",
+			"componentName": "Elvart adoalap",
+			"weight": 0
+		},
+		{
+			"parentName": "Adoalap TAO",
+			"componentName": "Adozas elotti eredmeny",
+			"weight": 1
+		},
+		{
+			"parentName": "Adoalap TAO",
+			"componentName": "Novelo tetelek osszesen",
+			"weight": 1
+		},
+		{
+			"parentName": "Adoalap TAO",
+			"componentName": "Csokkento tetelek osszesen",
+			"weight": -1
+		},
+		{
+			"parentName": "Adozas elotti eredmeny",
+			"componentName": "AEE IPA, Innov elott, nyereseg pozitivval:",
+			"weight": 1
+		},
+		{
+			"parentName": "Adozas elotti eredmeny",
+			"componentName": "ipa, innov konyveltetes (pozitivval):",
+			"weight": -1
+		},
+		{
+			"parentName": "Novelo tetelek osszesen",
+			"componentName": "Varhato kotelezettsegre, jovobeni ktgre kepzett celtartalek",
+			"weight": 1
+		},
+		{
+			"parentName": "Novelo tetelek osszesen",
+			"componentName": "Szamviteli ertekcsokkenes, kivezetett eszk. konyv szerinti e",
+			"weight": 1
+		},
+		{
+			"parentName": "Novelo tetelek osszesen",
+			"componentName": "Adott tamogatasok",
+			"weight": 1
+		},
+		{
+			"parentName": "Novelo tetelek osszesen",
+			"componentName": "Ktg ellentet adott tam",
+			"weight": 1
+		},
+		{
+			"parentName": "Novelo tetelek osszesen",
+			"componentName": "Birosag elott nem ervenyesitheto, elevult koveteles",
+			"weight": 1
+		},
+		{
+			"parentName": "Novelo tetelek osszesen",
+			"componentName": "atharitott baleseti tappenz",
+			"weight": 1
+		},
+		{
+			"parentName": "Novelo tetelek osszesen",
+			"componentName": "Egyeb novelo tetel",
+			"weight": 1
+		},
+		{
+			"parentName": "Novelo tetelek osszesen",
+			"componentName": "Egyeb novelo tetel kerekites",
+			"weight": 1
+		},
+		{
+			"parentName": "Novelo tetelek osszesen",
+			"componentName": "Egyeb novelo tetel - leltarhiany, karesemeny",
+			"weight": 1
+		},
+		{
+			"parentName": "Novelo tetelek osszesen",
+			"componentName": "Egyeb novelo tetel - reklamados tetelek",
+			"weight": 1
+		},
+		{
+			"parentName": "Novelo tetelek osszesen",
+			"componentName": "Birsag, jogkovetkezmeny",
+			"weight": 1
+		},
+		{
+			"parentName": "Novelo tetelek osszesen",
+			"componentName": "Kovetelesekre elszamolt ertekvesztes",
+			"weight": 1
+		},
+		{
+			"parentName": "Novelo tetelek osszesen",
+			"componentName": "Elengedett koveteles (leanyvallalati)",
+			"weight": 1
+		},
+		{
+			"parentName": "Novelo tetelek osszesen",
+			"componentName": "onreviziok (novelo tetelek osszesen)",
+			"weight": 1
+		},
+		{
+			"parentName": "Novelo tetelek osszesen",
+			"componentName": "Korabban csokkento tetelkent figyelembe vett nem realizalt arfolyam kulonbozet",
+			"weight": 1
+		},
+		{
+			"parentName": "Csokkento tetelek osszesen",
+			"componentName": "Elhatarolt veszteseg felhasznalasa",
+			"weight": 1
+		},
+		{
+			"parentName": "Csokkento tetelek osszesen",
+			"componentName": "Varhato kotelezettsegre, jovobeni ktgre kepzett celtartalek feloldas",
+			"weight": 1
+		},
+		{
+			"parentName": "Csokkento tetelek osszesen",
+			"componentName": "Adotorveny szerinti ecs., kivezetett eszk. szamitott nyilvan",
+			"weight": 1
+		},
+		{
+			"parentName": "Csokkento tetelek osszesen",
+			"componentName": "Fejlesztesi tartalek",
+			"weight": 1
+		},
+		{
+			"parentName": "Csokkento tetelek osszesen",
+			"componentName": "Bevetelkent elszamolt osztalek",
+			"weight": 1
+		},
+		{
+			"parentName": "Csokkento tetelek osszesen",
+			"componentName": "Befektetes megszunesen realizalt nyereseg",
+			"weight": 1
+		},
+		{
+			"parentName": "Csokkento tetelek osszesen",
+			"componentName": "Behajthatatlan kovetelesre befolyt osszeg: 7. \u00a7 (1) n) pont",
+			"weight": 1
+		},
+		{
+			"parentName": "Csokkento tetelek osszesen",
+			"componentName": "Faktoralas bevetele (behajthatatlanra befolyt osszeg)",
+			"weight": 1
+		},
+		{
+			"parentName": "Csokkento tetelek osszesen",
+			"componentName": "Behajthatatlanna valt ertekvesztett koveteles",
+			"weight": 1
+		},
+		{
+			"parentName": "Csokkento tetelek osszesen",
+			"componentName": "Kovetelesek visszairt ertekvesztese",
+			"weight": 1
+		},
+		{
+			"parentName": "Csokkento tetelek osszesen",
+			"componentName": "Elengedett birsag",
+			"weight": 1
+		},
+		{
+			"parentName": "Csokkento tetelek osszesen",
+			"componentName": "K + F koltsegek",
+			"weight": 1
+		},
+		{
+			"parentName": "Csokkento tetelek osszesen",
+			"componentName": "onreviziok (csokkento tetelek osszesen)",
+			"weight": 1
+		},
+		{
+			"parentName": "Csokkento tetelek osszesen",
+			"componentName": "Adofelajanlassal osszefuggesben egyeb bevetelkent elsz.jovairas",
+			"weight": 1
+		},
+		{
+			"parentName": "Csokkento tetelek osszesen",
+			"componentName": "Adomany",
+			"weight": 1
+		},
+		{
+			"parentName": "Csokkento tetelek osszesen",
+			"componentName": "Nem realizalt arfolyamnyereseg",
+			"weight": 1
+		},
+		{
+			"parentName": "70%-os teszt",
+			"componentName": "Kalkulalt tarsasagi ado",
+			"weight": 1
+		},
+		{
+			"parentName": "70%-os teszt",
+			"componentName": "Fejlesztesi adokedvezmeny",
+			"weight": 1
+		}
+	],
+	"Subsets@Code.links": []
+}

@@ -1,0 +1,60 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Cube Clear",
+	"HasSecurityAccess": true,
+	"Code@Code.link": "zSYS Cube Clear.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pCube",
+			"Prompt": "",
+			"Value": "SC Underwriting Valuation LH Input",
+			"Type": "String"
+		},
+		{
+			"Name": "pPlanCycle",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pPlanVersion",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pFinancialYear",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pValueType",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pBusinessSegment",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pDebug",
+			"Prompt": "",
+			"Value": "0",
+			"Type": "String"
+		},
+		{
+			"Name": "pCallerID",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

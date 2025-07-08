@@ -1,0 +1,18 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI User Authentication",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic UI User Authentication.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pUser",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

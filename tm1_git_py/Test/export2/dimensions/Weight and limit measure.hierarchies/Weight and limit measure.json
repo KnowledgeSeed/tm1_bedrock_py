@@ -1,0 +1,28 @@
+{
+	"@type": "Hierarchy",
+	"Name": "Weight and limit measure",
+	"Elements": [
+		{
+			"name": "Value",
+			"type": "Numeric"
+		},
+		{
+			"name": "Comment",
+			"type": "String"
+		},
+		{
+			"name": "ValueInverseFlag",
+			"type": "Numeric"
+		},
+		{
+			"name": "FeederFlag",
+			"type": "Numeric"
+		},
+		{
+			"name": "RoundingCorrFlag",
+			"type": "Numeric"
+		}
+	],
+	"Edges": [],
+	"Subsets@Code.links": []
+}

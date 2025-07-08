@@ -1,0 +1,18 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI New Provider",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic UI New Provider.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pName",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

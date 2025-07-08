@@ -1,0 +1,11 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic Load Channel Cost Cube Feeders",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic Load Channel Cost Cube Feeders.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [],
+	"Variables": []
+}

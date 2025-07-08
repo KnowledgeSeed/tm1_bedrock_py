@@ -1,0 +1,18 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic Subscription Movement Assignment CopyDataOuter",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic Subscription Movement Assignment CopyDataOuter.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pRun",
+			"Prompt": "REQUIRED: 1",
+			"Value": 0,
+			"Type": "Numeric"
+		}
+	],
+	"Variables": []
+}

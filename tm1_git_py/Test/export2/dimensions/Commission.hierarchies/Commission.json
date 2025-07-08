@@ -1,0 +1,49 @@
+{
+	"@type": "Hierarchy",
+	"Name": "Commission",
+	"Elements": [
+		{
+			"name": "Total",
+			"type": "Consolidated"
+		},
+		{
+			"name": "New",
+			"type": "Numeric"
+		},
+		{
+			"name": "Upward Migration Small",
+			"type": "Numeric"
+		},
+		{
+			"name": "Upward Migration Big",
+			"type": "Numeric"
+		},
+		{
+			"name": "Retainer",
+			"type": "Numeric"
+		}
+	],
+	"Edges": [
+		{
+			"parentName": "Total",
+			"componentName": "New",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "Upward Migration Small",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "Upward Migration Big",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "Retainer",
+			"weight": 1
+		}
+	],
+	"Subsets@Code.links": []
+}

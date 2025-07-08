@@ -1,0 +1,8 @@
+SKIPCHECK;
+
+# verzió szabályok
+[]= N:
+IF(ELISPAR('Version','Report',!Version) = 1,
+STET,Continue);
+
+FEEDERS;

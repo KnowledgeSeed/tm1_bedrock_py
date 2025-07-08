@@ -1,0 +1,32 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic Load Subscription Report Cube",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic Load Subscription Report Cube.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pSourceVersion",
+			"Prompt": "Base",
+			"Value": "Base",
+			"Type": "String"
+		},
+		{
+			"Name": "pTargetVersion",
+			"Prompt": "Base",
+			"Value": "Base",
+			"Type": "String"
+		}
+	],
+	"Variables": [
+		{
+			"Name": "vProduct",
+			"Type": "String",
+			"Position": 1,
+			"StartByte": 0,
+			"EndByte": 0
+		}
+	]
+}

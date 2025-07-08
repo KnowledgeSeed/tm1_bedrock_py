@@ -1,0 +1,150 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# made by David Ullmann - 20231106
+# This process is responsible for building the "Planning Period" total and subset and its components based on the actual period
+
+# declaring parameter variables
+sBuildSubsetName = 'Planning Period';
+sBuildTotalName = 'Planning Period';
+
+# declaring other variables
+sDimensionName_Period = 'Period';
+sActualMonth = CellGetS('zSYS Maintenance Parameter', 'ActualMonth', 'S Type');
+sDataSubsetName = 'Planning Period Subset Temp';
+
+
+#sToday = Today(1);
+#sDeleteKotojel = DELET(sToday, 5,1);
+#sActualMonth = DELET(sDeleteKotojel, 7,3);
+
+
+# Módos Dávid
+# lastActual year
+
+sLastActualYearSubset = 'Last_Actual_Year';
+
+IF( SubsetExists(sDimensionName_Period, sLastActualYearSubset) = 0);
+  SubsetCreate(sDimensionName_Period, sLastActualYearSubset, 0);
+ENDIF;  
+
+SubsetDeleteAllElements(sDimensionName_Period, sLastActualYearSubset);
+
+sAllNSubset = 'All N';
+nCurrentMonthIndex =  SubsetElementGetIndex(sDimensionName_Period, sAllNSubset, sActualMonth, 1);
+nFirstMonthIndex = nCurrentMonthIndex - 13;
+nLastMonthIndex = nCurrentMonthIndex - 1;
+i = nFirstMonthIndex;
+j = 1;
+
+While(i <= nLastMonthIndex);
+  sPeriod = SubsetGetElementName(sDimensionName_Period, sAllNSubset, i);
+  
+  SubsetElementInsert(sDimensionName_Period, sLastActualYearSubset, sPeriod, j);
+  
+  i = i+1;
+  j = j+1;
+END;
+
+
+
+
+
+# generating an empty total
+sMDX = 
+'{Filter( 
+  {[Period].[Period].Members},
+  InStr([Period].[Period].CurrentMember.Name, "_Planning") > 0 
+)}';
+SubsetCreate(sDimensionName_Period, sDataSubsetName, 1);
+SubsetMDXSet(sDimensionName_Period, sDataSubsetName, sMDX);
+SubsetMDXSet(sDimensionName_Period, sDataSubsetName, '');
+
+i = SubsetGetSize(sDimensionName_Period, sDataSubsetName);
+while(i>=1);
+  sCurrentPlanningTotal = SubsetGetElementName(sDimensionName_Period, sDataSubsetName, i);
+#  LogOutput('INFO', sCurrentPlanningTotal);
+  DimensionElementDeleteDirect(sDimensionName_Period, sCurrentPlanningTotal);
+  i = i - 1;
+end;
+if(DimensionElementExists(sDimensionName_Period, sBuildTotalName) = 1);
+  DimensionElementDeleteDirect(sDimensionName_Period, sBuildTotalName);
+endif;
+DimensionElementInsertDirect(sDimensionName_Period, '', sBuildTotalName, 'C');
+
+# making sure empty subset is ready
+if(SubsetExists(sDimensionName_Period, sBuildSubsetName) = 0);
+  SubsetCreate(sDimensionName_Period, sBuildSubsetName);
+endif;
+SubsetDeleteAllElements(sDimensionName_Period, sBuildSubsetName);
+
+# setting planning period subset as data source to insert elements
+sMDX ='
+{Filter(
+  {Filter( 
+    {TM1FilterByLevel( {TM1DrillDownMember( {[Period].[Period].[All Period]}, ALL, RECURSIVE )}, 0 )},
+    InStr([Period].[Period].CurrentMember.Name, "_Input") = 0 
+  )},
+  [Period].[Period].CurrentMember.Name >= "'|sActualMonth|'"
+)}';
+
+SubsetMDXSet(sDimensionName_Period, sDataSubsetName, sMDX);
+SubsetMDXSet(sDimensionName_Period, sDataSubsetName, '');
+
+DataSourceType            = 'SUBSET';
+DatasourceNameForServer   = sDimensionName_Period;
+DatasourceNameForClient   = sDimensionName_Period;
+DatasourceDimensionsubset = sDataSubsetName;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+sCurrentPlanningTotal = AttrS(sDimensionName_Period, vPeriod, 'Year') | '_Planning';
+
+#LogOutput('INFO', 'Period: '|vPeriod | ' PlanningTotal: ' | sCurrentPlanningTotal);
+
+if(DimensionElementExists(sDimensionName_Period, sCurrentPlanningTotal) = 0);
+  DimensionElementInsertDirect(sDimensionName_Period, '', sCurrentPlanningTotal, 'C');
+  DimensionElementComponentAddDirect(sDimensionName_Period, sBuildTotalName, sCurrentPlanningTotal, 1);
+  SubsetElementInsert(sDimensionName_Period, sBuildSubsetName, sCurrentPlanningTotal, SubsetGetSize(sDimensionName_Period, sBuildSubsetName) + 1);
+endif;
+
+DimensionElementComponentAddDirect(sDimensionName_Period, sCurrentPlanningTotal, vPeriod, 1);
+if(SubsetElementExists(sDimensionName_Period, sBuildSubsetName, vPeriod) = 0);
+  SubsetElementInsert(sDimensionName_Period, sBuildSubsetName, vPeriod, SubsetGetSize(sDimensionName_Period, sBuildSubsetName) + 1);
+endif;
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

@@ -1,0 +1,11 @@
+{
+	"@type": "Process",
+	"Name": "zTesting Process",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zTesting Process.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [],
+	"Variables": []
+}

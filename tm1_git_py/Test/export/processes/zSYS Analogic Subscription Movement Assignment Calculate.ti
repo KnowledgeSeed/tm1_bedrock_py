@@ -1,0 +1,195 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# =========================================================
+# Original Date Created              2023.05.31
+# Originator                         Ullmann Dávid
+# Purpose                            Process to calculate all movement assignment flags in the helper cube
+# Change Date                           
+# Change Request Reference    
+# Change Made by                     
+# =========================================================
+
+# variable declaration
+
+sCubeName_Movement    = 'Subscription Movement Assignment';
+
+sDimensionName_Source = 'Source Product';
+sDimensionName_Target = 'Target Product';
+sDimensionName_Movement = 'Subscription Plan Movement';
+sDimensionName_Measure = 'Subscription Movement Assignment Measure';
+
+sAttributeName_Points = 'Migration Point';
+
+sSubsetName_MainMovements = 'Main Movements';
+sPostFix_New = 'New';
+sPostFix_Terminated = 'Terminated';
+sElementName_Movement = 'Closing';
+sElementName_MovementN = 'New increase';
+sElementName_MeasureMain = 'Stored';
+sElementName_MeasureName = 'Movement Name';
+sElementName_Product = 'Total Products';
+
+# quitting if flag was set to 0
+
+if(pRun = 0);
+  ProcessQuit;
+endif;
+
+# creating source view
+
+sViewName = 'Movement Assignment Temp';
+sFilter = sDimensionName_Source | ' ¦ '| sElementName_Product |' & ';
+sFilter = sFilter |sDimensionName_Target | ' ¦ '| sElementName_Product |' & ';
+sFilter = sFilter |sDimensionName_Movement | ' ¦ '| sElementName_MovementN |' & ';
+sFilter = sFilter |sDimensionName_Measure | ' ¦ '| sElementName_MeasureMain;
+
+ExecuteProcess('}bedrock.cube.view.create',
+   'pLogOutput', 0,
+   'pStrictErrorHandling', 0,
+   'pCube', sCubeName_Movement,
+   'pView', sViewName,
+   'pFilter', sFilter,
+   'pSuppressZero', 0,
+   'pSuppressConsol', 1,
+   'pSuppressRules', 0,
+   'pSuppressConsolStrings', -1,
+   'pDimDelim', '&',
+   'pEleStartDelim', '¦',
+   'pEleDelim', '+',
+   'pTemp',1,
+   'pSubN', 0
+  );
+  
+  
+  
+# set MDXs to the source view filter subsets
+
+sMDX = '
+  {Except(
+    {Tm1FilterByLevel(
+      {Tm1DrillDownMember(
+        {[Source Product].[Source Product].[Total Products]}, 
+        ALL, RECURSIVE
+      )},
+      0
+    )},
+    {[Source Product].[Source Product].[Terminated]}
+  )}
+';
+SubsetMDXSet(sDimensionName_Source, sViewName, sMDX);
+SubsetMDXSet(sDimensionName_Source, sViewName, '');
+
+sMDX = '
+  {Except(
+    {Tm1FilterByLevel(
+      {Tm1DrillDownMember(
+        {[Target Product].[Target Product].[Total Products]}, 
+        ALL, RECURSIVE
+      )},
+      0
+    )},
+    {[Target Product].[Target Product].[New]}
+  )}
+';
+SubsetMDXSet(sDimensionName_Target, sViewName, sMDX);
+SubsetMDXSet(sDimensionName_Target, sViewName, '');
+
+sMDX = '{['|sDimensionName_Movement|'].['|sDimensionName_Movement|'].Members}';
+SubsetMDXSet(sDimensionName_Movement, sViewName, sMDX);
+SubsetMDXSet(sDimensionName_Movement, sViewName, '');
+
+# set view as data source
+
+DataSourceType          = 'VIEW';
+DatasourceNameForServer = sCubeName_Movement;
+DatasourceNameForClient = sCubeName_Movement;
+DatasourceCubeView      = sViewName;
+
+# reset values to 0 before new assign
+
+CubeClearData(sCubeName_Movement);
+
+# reset movement MDX to N type member
+
+sMDX = '{['|sDimensionName_Movement|'].['|sDimensionName_Movement|'].['|sElementName_MovementN|']}';
+SubsetMDXSet(sDimensionName_Movement, sViewName, sMDX);
+SubsetMDXSet(sDimensionName_Movement, sViewName, '');
+
+#LogOutput('INFO', 'View created, running loop');
+
+counter = 0;
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+#LogOutput('INFO', 'Source: ' | vSourceProduct | ' Target: ' | vTargetProduct);
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# Javítva 2023.06.05 Downward lemaradt  Miki
+
+nSourceIsNew = 0;
+if(Scan(sPostFix_New, vSourceProduct) > 0);
+  nSourceIsNew = 1;
+endif;
+
+nTargetIsTerminated = 0;
+if(Scan(sPostFix_Terminated, vTargetProduct) > 0);
+  nTargetIsTerminated = 1;
+endif;
+
+if(nSourceIsNew = 1 & nTargetIsTerminated = 1);
+  itemskip;
+endif;
+
+sSourceType = AttrS('Source Product', vSourceProduct, 'Product Category');
+sTargetType = AttrS('Target Product', vTargetProduct, 'Product Category');
+if(nSourceIsNew = 0 & nTargetIsTerminated = 0 & sSourceType @<> sTargetType);
+  itemskip;
+endif;
+
+#nSourceMigr = AttrN('Source Product', vSourceProduct, 'Migration Available');
+#nTargetMigr = AttrN('Target Product', vTargetProduct, 'Migration Available');
+#if(nSourceIsNew = 0 & nTargetIsTerminated = 0 & nSourceMigr + nTargetMigr <> 2);
+#  itemskip;
+#endif;
+
+
+nSourcePoints = ElementAttrN(sDimensionName_Source, sDimensionName_Source, vSourceProduct, sAttributeName_Points);
+nTargetPoints = ElementAttrN(sDimensionName_Target, sDimensionName_Target, vTargetProduct, sAttributeName_Points);
+
+if(nSourceIsNew = 1);
+  CellPutN(1, sCubeName_Movement, vSourceProduct, vTargetProduct, 'New increase', sElementName_MeasureMain);
+  CellPutS('New increase', sCubeName_Movement, vSourceProduct, vTargetProduct, sElementName_Movement, sElementName_MeasureName);
+elseif(nTargetIsTerminated = 1);
+  CellPutN(1, sCubeName_Movement, vSourceProduct, vTargetProduct, 'Terminated increase', sElementName_MeasureMain);
+  CellPutS('Terminated increase', sCubeName_Movement, vSourceProduct, vTargetProduct, sElementName_Movement, sElementName_MeasureName);
+elseif(nTargetPoints > nSourcePoints);
+  CellPutN(1, sCubeName_Movement, vSourceProduct, vTargetProduct, 'Upward migration increase', sElementName_MeasureMain);
+  CellPutS('Upward migration increase', sCubeName_Movement, vSourceProduct, vTargetProduct, sElementName_Movement, sElementName_MeasureName);
+elseif(nTargetPoints < nSourcePoints);
+  CellPutN(1, sCubeName_Movement, vSourceProduct, vTargetProduct, 'Downward migration increase', sElementName_MeasureMain);
+  CellPutS('Downward migration increase', sCubeName_Movement, vSourceProduct, vTargetProduct, sElementName_Movement, sElementName_MeasureName);
+else;
+  if(vSourceProduct @= vTargetProduct);
+    CellPutN(1, sCubeName_Movement, vSourceProduct, vTargetProduct, 'Loyalty extension increase', sElementName_MeasureMain);
+    CellPutS('Loyalty extension increase', sCubeName_Movement, vSourceProduct, vTargetProduct, sElementName_Movement, sElementName_MeasureName);
+  else;
+    CellPutN(1, sCubeName_Movement, vSourceProduct, vTargetProduct, 'Retainer increase', sElementName_MeasureMain);
+    CellPutS('Retainer increase', sCubeName_Movement, vSourceProduct, vTargetProduct, sElementName_Movement, sElementName_MeasureName);
+  endif;
+endif;
+
+counter = counter + 1;
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+LogOutput('INFO', 'Number of flags set is '|numbertostring(counter));
+#endregion

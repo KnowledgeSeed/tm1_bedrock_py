@@ -1,0 +1,82 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# Modos David 2024 02 02
+# 1, létrehozzuk a verziót
+# 2, kitöltjük az attributumokat
+# 3, átmásoljuk az alapverzióról az adatokat
+
+
+# 1, létrehozzuk a verziót
+# DimensionElementInsert(DimName, InsertionPoint, ElName,ElType);
+DimName = 'Version';
+ConsolidatedElName = 'Report';
+
+ElType = 'N';
+
+DimensionElementComponentAdd(DimName, ConsolidatedElName, pNewVersionName, 1);
+
+
+
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+
+
+# kapott caption beállítása
+DimName = 'Version';
+HierName = 'Version';
+
+#Type
+ElementAttrPutS('Report', DimName, HierName, pNewVersionName, 'Type');
+
+# name
+ElementAttrPutS(pNewVersionName, DimName, HierName, pNewVersionName, 'Long_name');
+
+
+# last fact
+sLastFact = CellGetS('}ElementAttributes_Version', pSourceVersion, 'Last Fact Date');
+ElementAttrPutS(sLastFact, DimName, HierName, pNewVersionName, 'Last Fact Date');
+
+
+# created
+sToday = Today(1);
+ElementAttrPutS(sToday, DimName, HierName, pNewVersionName, 'Created');
+
+
+# created BY
+ElementAttrPutS(pUser, DimName, HierName, pNewVersionName, 'Created By');
+
+
+# Last Copy Date
+sToday = Today(1);
+ElementAttrPutS(sToday, DimName, HierName, pNewVersionName, 'Last Updated');
+
+
+# Last Copy By
+ElementAttrPutS(pUser, DimName, HierName, pNewVersionName, 'Last Updated By');
+
+sProcessName = 'zSYS Analogic Operation Version Copy';
+
+ExecuteProcess(sProcessName,
+ 'pSourceVersion', pSourceVersion,
+ 'pTargetVersion', pNewVersionName,
+ 'pClearTargetBeforeCopy', 1);
+ 
+ 
+ 
+#endregion

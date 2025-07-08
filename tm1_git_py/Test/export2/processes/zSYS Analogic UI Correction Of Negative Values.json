@@ -1,0 +1,30 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI Correction Of Negative Values",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic UI Correction Of Negative Values.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pProductCategory",
+			"Prompt": "KTV Alapterm\u00e9k",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pVersion",
+			"Prompt": "Base",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pUser",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

@@ -1,0 +1,61 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+# elem hozzáadása a ledger dimhez
+# egyéb bev elem alá
+
+DimName = 'ledger';
+ConsolidatedElName = 'VII. Egyéb bevételek';
+
+ElType = 'N';
+
+nBooleanID = DimensionElementExists('ledger', pLedgerName);
+nBooleanName =  DimensionElementExists('ledger', pLedger);
+IF( (nBooleanID = 1) % (nBooleanName = 1) );
+  
+  ProcessError;
+  
+ENDIF;
+
+DimensionElementComponentAdd(DimName, ConsolidatedElName, pLedger, 1);
+
+
+
+
+
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+
+# kapott caption beállítása
+DimName = 'ledger';
+HierName = 'ledger';
+
+ElementAttrPutS(pLedgerName, DimName, HierName, pLedger, 'Caption'  );
+
+ElementAttrPutS('none', DimName, HierName, pLedger, 'Efi szam kalkulacio'  );
+
+ElementAttrPutS('input', DimName, HierName, pLedger, 'Calculations And Logic');
+
+ElementAttrPutS('5', DimName, HierName, pLedger, 'UI Level');
+
+ElementAttrPutS('1', DimName, HierName, pLedger, 'editable');
+
+
+
+#endregion

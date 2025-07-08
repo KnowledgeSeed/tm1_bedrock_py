@@ -1,0 +1,98 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI Subscription Plan Input Spread Target",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic UI Subscription Plan Input Spread Target.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pSourceProduct",
+			"Prompt": "any",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pTargetProduct",
+			"Prompt": "any",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pMovement",
+			"Prompt": "comes always as an N type",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pLoyalty",
+			"Prompt": "any",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pChannel",
+			"Prompt": "any",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pPeriod",
+			"Prompt": "comes always as an N type",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pVersion",
+			"Prompt": "N type",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pMaincategory",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pInput",
+			"Prompt": "",
+			"Value": 0,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pMovementBypass",
+			"Prompt": "",
+			"Value": 0,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pTargetBypass",
+			"Prompt": "",
+			"Value": 0,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pSourceBypass",
+			"Prompt": "",
+			"Value": 0,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pOppositeMovement",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		}
+	],
+	"Variables": [
+		{
+			"Name": "vTargetProduct",
+			"Type": "String",
+			"Position": 1,
+			"StartByte": 0,
+			"EndByte": 0
+		}
+	]
+}

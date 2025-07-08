@@ -1,0 +1,136 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#2023.07.04. U.Dávid - update-eltem, összeraktam a két processzt egybe, egy réteggel kijjebb mozgattam a product totálokat
+#2023.07.07. U.Dávid - beleraktam az időben előre töltést, amennyiben tényadat még nincsen
+#                       megoldás: amennyiben a súly totál a csoportra/időre 0, betöltöm az előző hónap adatát
+
+if(pRun = 0);
+  ProcessQuit;
+endif;
+
+sDimName_Subsets = '}Subsets_Product';
+sDimName = 'Period';
+sSubName = 'Actual Period N level';
+sCurrentMonth = CellGetS('zSYS Maintenance Parameter', 'ActualMonth','S Type');
+sLen = SubsetGetSize(sDimName, sSubName);
+#sSubName javítva input periodról Botond 09.06
+sMDX = 
+'{Filter(
+  {[}Subsets_Product].[}Subsets_Product].Members},
+  [}Subsets_Product].[}Subsets_Product].[UI Flag] = 1
+)}';
+
+#sMDX = '{[}Subsets_Product].[}Subsets_Product].[KTV Alaptermék Lakossági]}';
+
+sActualPeriod = CellGetS('zSYS Maintenance Parameter', 'Actual Month', 'S Type');
+
+sTempName = 'Subsets temp';
+if(SubsetExists(sDimName_Subsets, sTempName) = 0);
+  #1 indicates a temporary subset
+  SubsetCreate(sDimName_Subsets, sTempName, 1);
+endif;
+SubsetMDXSet(sDimName_Subsets, sTempName, sMDX);
+SubsetMDXSet(sDimName_Subsets, sTempName, '');
+
+DataSourceType            = 'SUBSET';
+DatasourceNameForServer   = sDimName_Subsets;
+DatasourceNameForClient   = sDimName_Subsets;
+DatasourceDimensionSubset = sTempName;
+
+
+
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+LogOutput('INFO', vSubsetName);
+
+nCurrentSize = SubsetGetSize('Product', vSubsetName);
+
+i=1;
+While(i <= sLen);
+  sPeriod = SubsetGetElementName(sDimName, sSubName, i);
+  #sPeriod_Previous = SubsetGetElementName(sDimName, sSubName, max(1, i-1));
+  
+  CellPutN(0.00001, 'Weight and Limit', 'Base', sPeriod,  'New', 'Switch off weight', 'Value');
+  CellPutN(0.00001, 'Weight and Limit', 'Base', sPeriod,  'New', 'Switch on weight', 'Value');
+  CellPutN(0.00001, 'Weight and Limit', 'Base', sPeriod,  'Terminated', 'Switch off weight', 'Value');
+  CellPutN(0.00001, 'Weight and Limit', 'Base', sPeriod,  'Terminated', 'Switch on weight', 'Value');
+
+  
+  nValTotal_off = CellGetN('Subscription Plan', 'Base', sPeriod, 'Total', 'Total', vSubsetName | ' Total', vSubsetName | ' Total', 'Subscription Plan Movement:Naturalia Page Movement: Gross decrease', 'Base');
+  nValTotal_on = CellGetN('Subscription Plan', 'Base', sPeriod, 'Total', 'Total', vSubsetName | ' Total', vSubsetName | ' Total', 'Subscription Plan Movement:Naturalia Page Movement: Gross increase', 'Base');
+  
+  if(stringtonumber(sPeriod) < stringtonumber(sActualPeriod));
+  
+    j=1;
+    While(j <= nCurrentSize);
+      sProduct = SubsetGetElementName('Product', vSubsetName, j);
+      
+      # switch off weights
+      
+      nVal_off=CellGetN('Subscription Plan', 'Base', sPeriod, 'Total', 'Total',  vSubsetName | ' Total', sProduct, 'Subscription Plan Movement:Naturalia Page Movement: Gross decrease', 'Base');
+      nValOff = nVal_off;
+      nVal_off = nVal_off \ nValTotal_off*100;
+      
+  
+      # switch on weights
+      
+      nVal_on=CellGetN('Subscription Plan', 'Base', sPeriod, 'Total', 'Total',vSubsetName | ' Total', sProduct, 'Subscription Plan Movement:Naturalia Page Movement: Gross increase', 'Base');
+      nValOn = nVal_on;
+      nVal_on = nVal_on \ nValTotal_on*100;
+      
+      
+      CellPutN(nVal_off, 'Weight and Limit', 'Base', sPeriod,  sProduct,'Switch off weight', 'Value');
+      CellPutN(nVal_on, 'Weight and Limit', 'Base', sPeriod,  sProduct, 'Switch on weight', 'Value');
+
+      
+      CellPutN(0, 'Weight and Limit', 'Base', sPeriod,  sProduct,'Minimum', 'Value');
+      CellPutN(50000, 'Weight and Limit', 'Base', sPeriod,  sProduct, 'Maximum', 'Value');
+      
+      CellPutN(1, 'Weight and Limit', 'Base', sPeriod,  sProduct,'Switch off weight', 'FeederFlag');
+      CellPutN(1, 'Weight and Limit', 'Base', sPeriod,  sProduct,'Switch on weight', 'FeederFlag');
+  
+      j = j+1;
+    END;
+  else;
+    
+    sPeriod_Previous = CellGetS('}ElementAttributes_Period', sPeriod, 'PREV_Y');
+    
+    
+    j=1;
+    While(j <= nCurrentSize);
+      sProduct = SubsetGetElementName('Product', vSubsetName, j);
+      
+      nVal_on_Previous = CellGetN('Weight and Limit', 'Base', sPeriod_Previous,  sProduct,'Switch on weight', 'Value');
+      nVal_off_Previous = CellGetN('Weight and Limit', 'Base', sPeriod_Previous,  sProduct,'Switch off weight', 'Value');
+      
+      CellPutN(nVal_off_Previous, 'Weight and Limit', 'Base', sPeriod,  sProduct,'Switch off weight', 'Value');
+      CellPutN(nVal_on_Previous, 'Weight and Limit', 'Base', sPeriod,  sProduct, 'Switch on weight', 'Value');
+      
+      CellPutN(0, 'Weight and Limit', 'Base', sPeriod,  sProduct,'Minimum', 'Value');
+      CellPutN(50000, 'Weight and Limit', 'Base', sPeriod,  sProduct, 'Maximum', 'Value');
+      
+      CellPutN(1, 'Weight and Limit', 'Base', sPeriod,  sProduct,'Switch off weight', 'FeederFlag');
+      CellPutN(1, 'Weight and Limit', 'Base', sPeriod,  sProduct,'Switch on weight', 'FeederFlag');
+  
+      j = j+1;
+    END;
+  endif;
+  i = i+1;
+END;
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+#LogOutput('INFO', 'Weight calculation ended');
+#endregion

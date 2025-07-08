@@ -1,0 +1,40 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic Load Closing Actual Values to Subscription Report",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic Load Closing Actual Values to Subscription Report.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pVersion",
+			"Prompt": "",
+			"Value": "Base",
+			"Type": "String"
+		}
+	],
+	"Variables": [
+		{
+			"Name": "vPeriod",
+			"Type": "String",
+			"Position": 1,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vEcosoftId",
+			"Type": "String",
+			"Position": 2,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vClosingValue",
+			"Type": "Numeric",
+			"Position": 3,
+			"StartByte": 0,
+			"EndByte": 0
+		}
+	]
+}

@@ -1,0 +1,8 @@
+{
+	"@type": "Dimension",
+	"Name": "Individual Cost Ledger",
+	"Hierarchies@Code.links": [
+		"Individual Cost Ledger.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1BCB140>.json"
+	],
+	"DefaultHierarchy": "Dimensions('Individual Cost Ledger')/Hierarchies('Individual Cost Ledger')"
+}

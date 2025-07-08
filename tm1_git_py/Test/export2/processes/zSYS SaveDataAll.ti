@@ -1,0 +1,36 @@
+#region Prolog
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# =========================================================
+# Original Date Created              2015/02/11
+# Originator                                 Erin Lalor
+# Purpose                                   Save Cube Data from memory to disk 
+# Change Date                           2014-04-29
+# Change Request Reference    Moving SaveDataAll to Epilog
+# Change Made by                     Tomas Bernard
+# =========================================================
+
+
+
+
+#endregion
+#region Metadata
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# Save all data from RAM to disk
+SaveDataAll;
+#endregion

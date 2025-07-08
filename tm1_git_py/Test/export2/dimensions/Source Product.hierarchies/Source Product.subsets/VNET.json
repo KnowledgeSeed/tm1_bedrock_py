@@ -1,0 +1,5 @@
+{
+	"@type": "Subset",
+	"Name": "VNET",
+	"Expression": "{[Source Product].[Source Product].[Internet New],[Source Product].[Source Product].[1508],[Source Product].[Source Product].[1481],[Source Product].[Source Product].[1483],[Source Product].[Source Product].[1485],[Source Product].[Source Product].[1487],[Source Product].[Source Product].[1533],[Source Product].[Source Product].[1530]}"
+}

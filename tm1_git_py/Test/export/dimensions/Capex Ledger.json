@@ -1,0 +1,8 @@
+{
+	"@type": "Dimension",
+	"Name": "Capex Ledger",
+	"Hierarchies@Code.links": [
+		"Capex Ledger.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1B166C0>.json"
+	],
+	"DefaultHierarchy": "Dimensions('Capex Ledger')/Hierarchies('Capex Ledger')"
+}

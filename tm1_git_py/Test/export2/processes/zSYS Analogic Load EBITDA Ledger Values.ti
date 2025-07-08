@@ -1,0 +1,245 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+pLedgerDimensionName = 'ledger';
+sSubsetName_EBITDACostETL = 'EBITDACostETL';
+sMDX = '
+{
+	TM1FILTERBYLEVEL({
+		TM1DRILLDOWNMEMBER({
+			[ledger].[ledger].[EBITDA]
+		}, ALL, RECURSIVE)
+	}, 0)
+}
+';
+
+HierarchySubsetCreate(pLedgerDimensionName, pLedgerDimensionName, sSubsetName_EBITDACostETL, 1);
+HierarchySubsetMDXSet(pLedgerDimensionName, pLedgerDimensionName, sSubsetName_EBITDACostETL, sMDX);
+
+
+# Mody 10.14.
+# last year mindent ki kell nullázni utána felül lehet írni
+# all periodnál minden törlése az adott kockában
+
+
+pLedgerDimensionName = 'ledger';
+EbitdaAllNElement = 'EbitdaAllNElement';
+
+# subsetet atirni
+sMDXEbitdaAllNElement = '
+{
+	TM1FILTERBYLEVEL({
+		TM1DRILLDOWNMEMBER({
+			[ledger].[ledger].[EBITDA]
+		}, ALL, RECURSIVE )
+	}, 0)
+}
+	';
+
+	
+HierarchySubsetCreate(pLedgerDimensionName, pLedgerDimensionName, EbitdaAllNElement, 1);
+HierarchySubsetMDXSet(pLedgerDimensionName, pLedgerDimensionName, EbitdaAllNElement, sMDXEbitdaAllNElement);
+nStartLedger = 1;
+nMaxledgerLen = SubsetGetSize(pLedgerDimensionName, EbitdaAllNElement);
+j = nStartLedger;
+While( j <= nMaxledgerLen);
+  sInputLedger = SubsetGetElementName(pLedgerDimensionName, EbitdaAllNElement, j);
+    #IF( pLastYear = 1);
+      sPeriodSubset = 'Last_Actual_Year';
+    #ENDIF;
+#    IF( pAllPeriod = 1);
+#      sPeriodSubset = 'All N';
+#    ENDIF;
+      sPeriodDim = 'Period';
+      nStartPeriod = 1;
+      nMaxPeriodLen = SubsetGetSize(sPeriodDim, sPeriodSubset);
+      i = nStartPeriod;
+      While(i <= nMaxPeriodLen);
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sPeriodSubset, i);
+      
+      # kockat atirni
+      CellPutN(0, 'EBITDA', pVersion, sInputPeriod, sInputLedger, 'Value');
+      i = i+1;
+    END;
+j = j+ 1;
+#END ledger while
+END;
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+#Botond 05.09
+
+IF( LONG(vSzmla) = 5);
+  sLedgerFilter = DELET(vSzmla, 2, 4);
+  IF( sLedgerFilter @= '1');
+    itemskip;
+  ENDIF;
+  IF( sLedgerFilter @= '2');
+    itemskip;
+  ENDIF;
+  IF( sLedgerFilter @= '3');
+    itemskip;
+  ENDIF;
+  IF( sLedgerFilter @= '4');
+    itemskip;
+  ENDIF;
+ENDIF;
+
+IF( LONG(vSzmla) = 6);
+  sLedgerFilterIFRS = DELET(vSzmla, 3, 4);
+  IF( sLedgerFilterIFRS @= '01');
+    itemskip;
+  ENDIF;
+  IF( sLedgerFilterIFRS @= '02');
+    itemskip;
+  ENDIF;
+  IF( sLedgerFilterIFRS @= '03');
+    itemskip;
+  ENDIF;
+  IF( sLedgerFilterIFRS @= '04');
+    itemskip;
+  ENDIF;
+ENDIF;
+
+# tevhnikai főkönyv nem kell
+IF( vSzmla @= '491' );
+    itemskip;
+ENDIF;
+IF( vSzmla @= '0491' );
+    itemskip;
+ENDIF;
+
+IF( vSzmla @= '86607' );
+    itemskip;
+ENDIF;
+
+IF( vSzmla @= '086607' );
+    itemskip;
+ENDIF;
+
+sLedgerDim = 'ledger';
+
+IF ( DimensionElementExists(sLedgerDim , vSzmla) = 0);
+  sElementNameParent = vFőknyvalcsoport;
+  DimensionElementComponentAddDirect(sLedgerDim, sElementNameParent, vSzmla, 1);
+  
+  CellPutS('automatikusan kerult be', '}ElementAttributes_ledger', vSzmla, 'megjegyzes');
+  CellPutS(vSzmla, '}ElementAttributes_ledger', vSzmla, 'Caption');
+  CellPutS('1', '}ElementAttributes_ledger', vSzmla, 'editable');
+  CellPutS('', '}ElementAttributes_ledger', vSzmla, 'Expand');
+  CellPutS('5', '}ElementAttributes_ledger', vSzmla, 'UI Level');
+  CellPutS('input', '}ElementAttributes_ledger', vSzmla, 'Calculations And Logic');
+  CellPutS('input', '}ElementAttributes_ledger', vSzmla, 'Efi szam kalkulacio');
+  
+ENDIF;
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+#Botond 05.08
+
+# vDtum
+# vSzmla
+# vEgyenleg
+
+# 1 2 3 4 eredménykimutatáshoz nem kell csak a mérleghez
+
+IF( LONG(vSzmla) = 5);
+  sLedgerFilter = DELET(vSzmla, 2, 4);
+  IF( sLedgerFilter @= '1');
+    itemskip;
+  ENDIF;
+  IF( sLedgerFilter @= '2');
+    itemskip;
+  ENDIF;
+  IF( sLedgerFilter @= '3');
+    itemskip;
+  ENDIF;
+  IF( sLedgerFilter @= '4');
+    itemskip;
+  ENDIF;
+ENDIF;
+
+IF( LONG(vSzmla) = 6);
+  sLedgerFilterIFRS = DELET(vSzmla, 3, 4);
+  IF( sLedgerFilterIFRS @= '01');
+    itemskip;
+  ENDIF;
+  IF( sLedgerFilterIFRS @= '02');
+    itemskip;
+  ENDIF;
+  IF( sLedgerFilterIFRS @= '03');
+    itemskip;
+  ENDIF;
+  IF( sLedgerFilterIFRS @= '04');
+    itemskip;
+  ENDIF;
+ENDIF;
+
+# tevhnikai főkönyv nem kell
+IF( vSzmla @= '491' );
+    itemskip;
+ENDIF;
+IF( vSzmla @= '0491' );
+    itemskip;
+ENDIF;
+
+IF( vSzmla @= '86607' );
+    itemskip;
+ENDIF;
+
+IF( vSzmla @= '086607' );
+    itemskip;
+ENDIF;
+
+# újonnan lett nyitva de kell
+# Ügynöki jutalék
+#IF( vSzmla @= '052405' );
+#    itemskip;
+#ENDIF;
+# 
+## újonnan lett nyitva de kell Készletek elszámolt értékvesztése
+#IF( vSzmla @= '86302' );
+#    itemskip;
+#ENDIF;
+
+
+nNumberValue = StringToNumber(vEgyenleg);
+nNumberSzamla = StringToNumber(vSzmla);
+
+IF ( SubsetElementExists(pLedgerDimensionName, sSubsetName_EBITDACostETL, vSzmla) = 0); 
+    itemskip;
+endif;
+
+
+# rendes process
+IF( pAllPeriod = 1);
+  sPeriodSubsetName = 'Planning Period';
+  sDate = DELET(vDtum, 5, 1);
+  IF ( SubsetElementExists('Period', sPeriodSubsetName, sDate) = 0); 
+    CellPutN(nNumberValue, 'EBITDA', pVersion, sDate, vSzmla, 'Value');
+    
+  ENDIF;
+
+ENDIF;
+
+
+IF( pLastYear = 1);
+  sPeriodSubsetName = 'Last_Actual_Year';
+  sDate = DELET(vDtum, 5, 1);
+  IF ( SubsetElementExists('Period', sPeriodSubsetName, sDate) = 1);
+    CellPutN(nNumberValue, 'EBITDA', pVersion, sDate, vSzmla, 'Value');
+    
+  ENDIF;
+  
+ENDIF;
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

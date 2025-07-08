@@ -1,0 +1,1 @@
+SELECT {TM1SubsetToSet([Period].[Period], "Actual Period")}  ON COLUMNS , {TM1DRILLDOWNMEMBER({[ledger].[ledger].[Revenue]}, ALL, RECURSIVE)} * {[Product].[Product].[Total Products]} ON ROWS FROM [Revenue] WHERE ([Version].[Version].[Base],[Revenue Lineitem].[Revenue Lineitem].[Bevetel],[Revenue Measure].[Revenue Measure].[Value])

@@ -1,0 +1,25 @@
+{
+	"@type": "Cube",
+	"Name": "Direct Cost",
+	"Dimensions": [
+		{
+			"@id": "Dimensions('Version')"
+		},
+		{
+			"@id": "Dimensions('Period')"
+		},
+		{
+			"@id": "Dimensions('ledger')"
+		},
+		{
+			"@id": "Dimensions('Direct Cost Lineitem')"
+		},
+		{
+			"@id": "Dimensions('Direct Cost Measure')"
+		}
+	],
+	"Rules@Code.link": "Direct Cost.rules",
+	"Views@Code.links": [
+		"Direct Cost.views/test nezet.json"
+	]
+}

@@ -1,0 +1,5 @@
+{
+	"@type": "Subset",
+	"Name": "kabelTV",
+	"Expression": "{ORDER({FILTER({TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[Product].[Product].[Cable Television]}, ALL, RECURSIVE)}, 0)}, [Product].[Product].[Active] = 1)},[Product].[ Migration Point], DESC )}"
+}

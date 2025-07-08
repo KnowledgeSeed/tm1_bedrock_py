@@ -1,0 +1,51 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+nInputValue = stringToNumber(pValue);
+
+sAllNTimeSubset = 'Actual Period N level';
+sPeriodDim = 'Period';
+
+  IF( Long(pPeriod) = 6);
+    sPeriodStartMonth = pPeriod;
+    nMaxPlanningPeriodSubsetLen = SubsetGetSize(sPeriodDim, sAllNTimeSubset);
+    i = SubsetElementGetIndex(sPeriodDim, sAllNTimeSubset, sPeriodStartMonth);
+    While(i <= nMaxPlanningPeriodSubsetLen);
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      CellPutN(nInputValue, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, pChannel, 'Jogdíj');
+      i = i+1;
+    END;
+  ENDIF;
+  
+  # éves
+  IF( Long(pPeriod) = 4);
+    nInputValueHavi = nInputValue;
+    sPeriodStartMonth = pPeriod | '01';
+    nMaxPlanningPeriodSubsetLen = SubsetGetSize(sPeriodDim, sAllNTimeSubset);
+    i = SubsetElementGetIndex(sPeriodDim, sAllNTimeSubset, sPeriodStartMonth);
+    While(i <= nMaxPlanningPeriodSubsetLen);
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      CellPutN(nInputValue, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, pChannel, 'Jogdíj');
+      i = i+1;
+    END;
+  
+  ENDIF;
+
+
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

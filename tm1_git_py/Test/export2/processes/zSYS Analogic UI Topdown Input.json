@@ -1,0 +1,50 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI Topdown Input",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic UI Topdown Input.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pVersion",
+			"Prompt": "Base",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pPeriod",
+			"Prompt": "202412",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pProduct",
+			"Prompt": "Telefon Lakoss\u00e1gi Total",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pMovement",
+			"Prompt": "Migration increase",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pInput",
+			"Prompt": "100",
+			"Value": 0,
+			"Type": "Numeric"
+		}
+	],
+	"Variables": [
+		{
+			"Name": "vProduct",
+			"Type": "String",
+			"Position": 1,
+			"StartByte": 0,
+			"EndByte": 0
+		}
+	]
+}

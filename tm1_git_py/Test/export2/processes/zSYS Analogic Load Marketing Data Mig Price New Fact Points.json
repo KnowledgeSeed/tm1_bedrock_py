@@ -1,0 +1,164 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic Load Marketing Data Mig Price New Fact Points",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic Load Marketing Data Mig Price New Fact Points.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pVersion",
+			"Prompt": "Base",
+			"Value": "Base",
+			"Type": "String"
+		},
+		{
+			"Name": "pAllPeriod",
+			"Prompt": "0",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pLastYear",
+			"Prompt": "1",
+			"Value": "",
+			"Type": "String"
+		}
+	],
+	"Variables": [
+		{
+			"Name": "vDatum",
+			"Type": "String",
+			"Position": 2,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vUgyfelszam",
+			"Type": "String",
+			"Position": 3,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vSzerzodesID",
+			"Type": "String",
+			"Position": 4,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vKorabbiTermekID",
+			"Type": "String",
+			"Position": 5,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vKorabbiTermekEgysegesNev",
+			"Type": "String",
+			"Position": 6,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vKor\u00e1bbiTerm\u00e9kMigraciosPonterteke",
+			"Type": "String",
+			"Position": 7,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vKorabbiTermekAr",
+			"Type": "String",
+			"Position": 8,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vUjTermekID",
+			"Type": "String",
+			"Position": 9,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vUjTermekEgysegesNev",
+			"Type": "String",
+			"Position": 10,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vUjTermekMigraciosPonterteke",
+			"Type": "String",
+			"Position": 11,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vUjtermekAr",
+			"Type": "String",
+			"Position": 12,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vUjTermekArkat",
+			"Type": "String",
+			"Position": 13,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vAdottTerm\u00e9k\u00e9rtKapottAjandekpont",
+			"Type": "String",
+			"Position": 14,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vAdottTermekertKapottTranzakcioertJaroAjandekPont",
+			"Type": "String",
+			"Position": 15,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vAdottTermekertArkategoriaertKapottAjandekPont",
+			"Type": "String",
+			"Position": 16,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vTranzakcioTipusa",
+			"Type": "String",
+			"Position": 17,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vRatarheltAjandekKoltsege",
+			"Type": "String",
+			"Position": 21,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vRaterheltLogisztikaiKtg",
+			"Type": "String",
+			"Position": 22,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vErtekesittesiCsatorna",
+			"Type": "String",
+			"Position": 24,
+			"StartByte": 0,
+			"EndByte": 0
+		}
+	]
+}

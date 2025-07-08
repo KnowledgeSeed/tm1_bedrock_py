@@ -1,0 +1,5 @@
+{
+	"@type": "Subset",
+	"Name": "All N Element",
+	"Expression": "{TM1FILTERBYLEVEL({[ledger].[ledger].Members}, 0)}"
+}

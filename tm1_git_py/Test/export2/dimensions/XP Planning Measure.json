@@ -1,0 +1,8 @@
+{
+	"@type": "Dimension",
+	"Name": "XP Planning Measure",
+	"Hierarchies@Code.links": [
+		"XP Planning Measure.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE23E9FD0>.json"
+	],
+	"DefaultHierarchy": "Dimensions('XP Planning Measure')/Hierarchies('XP Planning Measure')"
+}

@@ -1,0 +1,32 @@
+{
+	"@type": "Hierarchy",
+	"Name": "zSYS Analogic UI User Data Measure",
+	"Elements": [
+		{
+			"name": "sValue",
+			"type": "String"
+		},
+		{
+			"name": "sMessageBoardWidgetSender",
+			"type": "String"
+		},
+		{
+			"name": "sMessageBoardWidgetSentDate",
+			"type": "String"
+		},
+		{
+			"name": "sMessageBoardWidgetTitle",
+			"type": "String"
+		},
+		{
+			"name": "nValue",
+			"type": "Numeric"
+		},
+		{
+			"name": "Saved Preset",
+			"type": "String"
+		}
+	],
+	"Edges": [],
+	"Subsets@Code.links": []
+}

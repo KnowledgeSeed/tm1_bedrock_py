@@ -1,0 +1,48 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Cube Destroy View",
+	"HasSecurityAccess": true,
+	"Code@Code.link": "zSYS Cube Destroy View.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pCubeName",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pViewName",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pSubName",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pDebug",
+			"Prompt": "",
+			"Value": 0,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pCallerID",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pLogging",
+			"Prompt": "",
+			"Value": 1,
+			"Type": "Numeric"
+		}
+	],
+	"Variables": []
+}

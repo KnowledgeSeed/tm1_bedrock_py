@@ -1,0 +1,94 @@
+skipcheck;
+# év összesen szabály
+['Weight and limit':'Weight and limit':{'Switch off weight','Switch on weight','Minimum','Maximum'},'Weight and limit measure':'Weight and limit measure':'Value'] = C:
+IF( ELLEV('Period',!Period)>0,
+   DB('Weight and Limit', !Version, DB('}ElementAttributes_Period', !Period, 'Last_M_Y'), !Product, !Weight and limit, !Weight and limit measure),
+STET);
+
+# verziószabály
+[]= N:
+IF(ELISPAR('Version','Report',!Version) = 1,
+STET,Continue);
+
+
+# Ullmann Dávid - 2024.01.06 - inverse flag, hogy tudjak szűrni nullás súlyokra viewban (suppresszero)
+
+['Weight and limit':'Switch off weight','Weight and limit measure':'ValueInverseFlag'] = N:
+1-abs(sign(['Weight and limit':'Switch off weight','Weight and limit measure':'Value']));
+
+['Weight and limit':'Switch on weight','Weight and limit measure':'ValueInverseFlag'] = N:
+1-abs(sign(['Weight and limit':'Switch on weight','Weight and limit measure':'Value']));
+
+
+# RoundingCorrFlag
+['Product':{'New','Terminated'},'Weight and limit measure':'RoundingCorrFlag'] =
+0;
+
+['Weight and limit':'Switch off weight','Weight and limit measure':'RoundingCorrFlag'] = C:
+IF(ELLEV ('product', !product) > 0 ,
+ConsolidatedMax(2, '', !version,!period,!product,!Weight and limit, 'Value'),
+Continue);
+
+['Weight and limit':'Switch off weight','Weight and limit measure':'RoundingCorrFlag'] = N:
+IF(['Weight and limit measure':'Value'] =
+DB('Weight and Limit', !Version, !Period, DB('}ElementAttributes_Product', !Product, 'Product Category')|' Total','Switch off weight',  !Weight and limit measure),1,0);
+
+['Weight and limit':'Switch on weight','Weight and limit measure':'RoundingCorrFlag'] = C:
+IF(ELLEV ('product', !product) > 0 ,
+ConsolidatedMax(2, '', !version,!period,!product,!Weight and limit, 'Value'),
+Continue);
+
+['Weight and limit':'Switch on weight','Weight and limit measure':'RoundingCorrFlag'] = N:
+IF(['Weight and limit measure':'Value'] =
+DB('Weight and Limit', !Version, !Period, DB('}ElementAttributes_Product', !Product, 'Product Category')|' Total','Switch on weight',  !Weight and limit measure),1,0);
+
+
+
+
+FEEDERS;
+
+
+
+
+
+#TITLE: 
+#VIEWS:
+#LINKED:
+['Weight and limit':'Maximum', 'Weight and limit measure':'Value','Version':'Forecast'] =>
+DB('Subscription Report', !Version, !Period, '0', 'Customer Service', !Product, 'Maximum');
+
+#TITLE: 
+#VIEWS:
+#LINKED:
+['Weight and limit':'Minimum', 'Weight and limit measure':'Value','Version':'Forecast'] =>
+DB('Subscription Report', !Version, !Period, '0', 'Customer Service', !Product, 'Minimum');
+
+#TITLE: 
+#VIEWS:
+#LINKED:
+['Weight and limit':'Switch off weight', 'Weight and limit measure':'FeederFlag','Version':'Forecast'] =>
+['Weight and limit':'Switch off weight', 'Weight and limit measure':'ValueInverseFlag'];
+
+#TITLE: 
+#VIEWS:
+#LINKED:
+['Weight and limit':'Switch on weight', 'Weight and limit measure':'FeederFlag','Version':'Forecast'] =>
+['Weight and limit':'Switch on weight', 'Weight and limit measure':'ValueInverseFlag'];
+
+# A Total Product-ot ki lehet cserélni majd a diszjunkt Product kategória értékére -> így nem feederelnénk annyit túl 
+
+['Weight and limit':'Switch on weight', 'Weight and limit measure':'Value','Version':'Forecast'] =>
+DB('Subscription Movement Assignment for Input', !Version, !Period, DB('}ElementAttributes_Product', !Product, 'Product Category')|' Total', !Product, 'Migration increase', 'Rule driven');
+
+['Weight and limit':'Switch off weight', 'Weight and limit measure':'Value','Version':'Forecast'] =>
+DB('Subscription Movement Assignment for Input', !Version, !Period, !Product, DB('}ElementAttributes_Product', !Product, 'Product Category')|' Total', 'Total decrease', 'Rule driven');
+
+
+['Weight and limit':'Loyalty Extension Ratio','Weight and limit measure':'Value'] =>
+DB('Subscription Plan', !Version, !Period, 'Total', 'Total', !Product, !Product, 'Loyalty extension increase', 'Base Input');
+
+
+
+
+
+

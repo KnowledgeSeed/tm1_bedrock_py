@@ -1,0 +1,23 @@
+{
+	"@type": "Cube",
+	"Name": "Marketing Cost",
+	"Dimensions": [
+		{
+			"@id": "Dimensions('Version')"
+		},
+		{
+			"@id": "Dimensions('Period')"
+		},
+		{
+			"@id": "Dimensions('Marketing Cost')"
+		},
+		{
+			"@id": "Dimensions('Marketing Cost Measure')"
+		}
+	],
+	"Rules@Code.link": "Marketing Cost.rules",
+	"Views@Code.links": [
+		"Marketing Cost.views/Default.json",
+		"Marketing Cost.views/test nezet.json"
+	]
+}

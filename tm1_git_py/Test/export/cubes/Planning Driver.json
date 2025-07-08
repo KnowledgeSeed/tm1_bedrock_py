@@ -1,0 +1,20 @@
+{
+	"@type": "Cube",
+	"Name": "Planning Driver",
+	"Dimensions": [
+		{
+			"@id": "Dimensions('Version')"
+		},
+		{
+			"@id": "Dimensions('Period')"
+		},
+		{
+			"@id": "Dimensions('Planning Parameters')"
+		},
+		{
+			"@id": "Dimensions('Planning Driver Measure')"
+		}
+	],
+	"Rules@Code.link": "Planning Driver.rules",
+	"Views@Code.links": []
+}

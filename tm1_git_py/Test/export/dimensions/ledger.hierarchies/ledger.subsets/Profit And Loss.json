@@ -1,0 +1,5 @@
+{
+	"@type": "Subset",
+	"Name": "Profit And Loss",
+	"Expression": "{DRILLDOWNMEMBER({{[ledger].[ledger].[Profit And Loss]} }, {[ledger].[ledger].[Profit And Loss]})}"
+}

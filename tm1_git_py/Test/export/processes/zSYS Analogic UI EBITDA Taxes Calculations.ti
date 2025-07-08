@@ -1,0 +1,119 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+nLedgerIndex = 1;
+
+sSub = 'Income Taxes Import';
+sDim = 'ledger';
+sMdx = 
+'{
+	EXCEPT({
+		TM1DRILLDOWNMEMBER({
+			[ledger].[ledger].[Jövedelem adók Alcsoport]
+		}, ALL, RECURSIVE)
+	},{
+		[ledger].[ledger].[Jövedelem adók Alcsoport]
+	})
+}';
+
+
+SubsetCreateByMDX(sSub ,sMdx , sDim, 1);
+
+nSubsetSize = SubsetGetSize('Ledger', 'Income Taxes Import');
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#Botond 08.14
+
+sLedgerSubset = 'Income Taxes Import';
+sLedger = HierarchySubsetGetElementName('Ledger', 'Ledger', sLedgerSubset, nLedgerIndex);
+
+#Ha egyezik a változó a subset elemével akkor végezze el a számítást
+IF(vLedger @= sLedger);
+
+IF(pMode = 3);  
+  
+sEditable = CellGetS('}ElementAttributes_Ledger', vLedger, 'Efi szam kalkulacio');
+IF( sEditable @= 'input' );
+  
+    ExecuteProcess('zSYS Analogic UI EBITDA Input',
+   'pMode', pMode,
+   'pLedger', vLedger,
+   'pValue', pValue,
+   'pVersion', pVersion,
+   'pUser', pUser
+  );
+
+ENDIF;
+ENDIF;
+
+IF(pMode = 4);  
+  
+sEditable = CellGetS('}ElementAttributes_Ledger', vLedger, 'Efi szam kalkulacio');
+IF( sEditable @= 'input' );
+  
+    ExecuteProcess('zSYS Analogic UI EBITDA Input',
+   'pMode', pMode,
+   'pLedger', vLedger,
+   'pVersion', pVersion,
+   'pUser', pUser
+  );
+
+ENDIF;
+ENDIF;
+
+IF(pMode = 5);  
+  
+sEditable = CellGetS('}ElementAttributes_Ledger', vLedger, 'Efi szam kalkulacio');
+IF( sEditable @= 'input' );
+  
+    ExecuteProcess('zSYS Analogic UI EBITDA Input',
+   'pMode', pMode,
+   'pLedger', vLedger,
+   'pVersion', pVersion,
+   'pUser', pUser
+  );
+
+ENDIF;
+ENDIF;
+
+IF(pMode = 6);  
+  
+sEditable = CellGetS('}ElementAttributes_Ledger', vLedger, 'Efi szam kalkulacio');
+IF( sEditable @= 'input' );
+  
+    ExecuteProcess('zSYS Analogic UI EBITDA Input',
+   'pMode', pMode,
+   'pLedger', vLedger,
+   'pVersion', pVersion,
+   'pUser', pUser
+  );
+  
+ENDIF;
+ENDIF;
+
+nLedgerIndex = nLedgerIndex + 1;
+
+#Ha végigment a process a subset összes elemén akkor allítsa le
+IF(nLedgerIndex > nSubsetSize);
+  ProcessBreak;
+ENDIF;
+
+ENDIF;
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+sToday = Today(1);
+CellPutS(sToday, '}ElementAttributes_Version', pVersion, 'Last Updated');
+CellPutS(pUser, '}ElementAttributes_Version', pVersion, 'Last Updated By');
+#endregion

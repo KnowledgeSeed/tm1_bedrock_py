@@ -1,0 +1,94 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI Channel Cost Royalty Import",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic UI Channel Cost Royalty Import.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pVersion",
+			"Prompt": "",
+			"Value": "Base",
+			"Type": "String"
+		},
+		{
+			"Name": "pFileName",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pUser",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		}
+	],
+	"Variables": [
+		{
+			"Name": "v1",
+			"Type": "String",
+			"Position": 1,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v2",
+			"Type": "String",
+			"Position": 2,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v3",
+			"Type": "String",
+			"Position": 3,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v4",
+			"Type": "String",
+			"Position": 4,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v5",
+			"Type": "String",
+			"Position": 5,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v6",
+			"Type": "String",
+			"Position": 6,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v7",
+			"Type": "String",
+			"Position": 7,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v8",
+			"Type": "String",
+			"Position": 8,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v9",
+			"Type": "String",
+			"Position": 9,
+			"StartByte": 0,
+			"EndByte": 0
+		}
+	]
+}

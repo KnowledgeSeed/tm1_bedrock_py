@@ -1,0 +1,5 @@
+{
+	"@type": "Subset",
+	"Name": "All Period",
+	"Expression": "{EXCEPT({[Period].[Period].Members},{[Period].[Period].[All Period]})}"
+}

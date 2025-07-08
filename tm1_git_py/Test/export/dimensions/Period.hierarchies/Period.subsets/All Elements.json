@@ -1,0 +1,5 @@
+{
+	"@type": "Subset",
+	"Name": "All Elements",
+	"Expression": "{EXCEPT({Tm1SubsetAll([Period])},{[Period].[Period].[2027_Input],[Period].[Period].[2026_Input],[Period].[Period].[2025_Input],[Period].[Period].[2024_Input],[Period].[Period].[2023_Input],[Period].[Period].[2022_Input],[Period].[Period].[2021_Input]})}"
+}

@@ -1,0 +1,167 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# =========================================================
+# Original Date Created              2023.05.18
+# Originator                         Ullmann Dávid
+# Purpose                            Process to input data into the cube 'Subscription Plan', fifth and final layer
+# Change Date                             spreads the input value to the loyalty and sales channel dimensions, for a given source and target product duo.
+# Change Request Reference                it is called by the fourth layer
+# Change Made by                     
+# =========================================================
+
+# enough parameters to work with
+
+sCubeName_Main          = 'Subscription Plan';
+sCubeName_Assignment    = 'Subscription Movement Assignment';
+sCubeName_WeightLimit   = 'Weight and Limit';
+sDimensionName_Period   = 'Period';
+sDimensionName_Loyalty  = 'Loyalty';
+sDimensionName_Channel  = 'Sales Channel';
+sDimensionName_SProduct = 'Source Product';
+sDimensionName_TProduct = 'Target Product';
+sDimensionName_Version  = 'Version';
+sDimensionName_Movement = 'Subscription Plan Movement';
+sDimensionName_Measure  = 'Subscription Plan Measure';
+sHierarchyName_Period   = 'Period';
+sHierarchyName_Loyalty  = 'Loyalty';
+sHierarchyName_Channel  = 'Sales Channel';
+sHierarchyName_SProduct = 'Source Product';
+sHierarchyName_TProduct = 'Target Product';
+sHierarchyName_Version  = 'Version';
+sHierarchyName_Movement = 'Subscription Plan Movement';
+
+sElementName_MovementMeasure = 'Stored';
+sElementName_MovementTotal   = 'Closing';
+sSubsetName_Period           = 'All N';
+sValue_Version               = 'Base';
+sValue_BestMonth             = '05';
+sValue_MeasureRead_Direct  = 'Value';  
+sValue_MeasureWrite_Direct = 'Direct Input Override';
+sValue_MeasureDelta_Direct = 'Direct Input Delta';
+sValue_MeasureZero_Direct  = 'Direct Input Zero Flag';
+sValue_MeasureRead_Spread  = 'Final Value Snapshot';
+sValue_MeasureRead_SpreadBase = 'Base';
+sValue_MeasureWrite_Spread = 'Final Value Override';
+sValue_MeasureDelta_Spread = 'Spread Input Delta';
+sValue_MeasureResidual     = 'Spread Res';
+sValue_MeasureZero_Spread  = 'Final Value Zero Flag';
+svalue_MeasureFinal        = 'Final Value';
+
+# calculate opening value total and its signum - will be used as a logical operator
+
+nTotalValue = CellGetN(sCubeName_Main, pVersion, pPeriod, pLoyalty, pChannel, pSourceProduct, pTargetProduct, pMovement, sValue_MeasureRead_Spread);
+nTotalValue_Sign = Abs(Sign(nTotalValue));
+
+pOppositeMovement = CellGetS('}ElementAttributes_Subscription Plan Movement', pMovement, 'Opposite');
+
+# creating source view filter
+
+sViewName = 'Input Temp Inner';
+sFilter =          sDimensionName_SProduct | ' ¦ '| pSourceProduct |' & ';
+sFilter = sFilter |sDimensionName_TProduct | ' ¦ '| pTargetProduct |' & ';
+sFilter = sFilter |sDimensionName_Period   | ' ¦ '| pPeriod |' & ';
+sFilter = sFilter |sDimensionName_Loyalty  | ' ¦ '| pLoyalty |' & ';
+sFilter = sFilter |sDimensionName_Version  | ' ¦ '| pVersion |' & ';
+sFilter = sFilter |sDimensionName_Channel  | ' ¦ '| pChannel |' & ';
+sFilter = sFilter |sDimensionName_Measure  | ' ¦ '| sValue_MeasureWrite_Spread |' & ';
+sFilter = sFilter |sDimensionName_Movement | ' ¦ '| pMovement;
+
+sMDX_Loyalty = '{TM1FilterByLevel({TM1DrillDownMember({['|sDimensionName_Loyalty|'].['|sDimensionName_Loyalty|'].['|pLoyalty|']},ALL,RECURSIVE)},0)}';
+sMDX_Channel = '{TM1FilterByLevel({TM1DrillDownMember({['|sDimensionName_Channel|'].['|sDimensionName_Channel|'].['|pChannel|']},ALL,RECURSIVE)},0)}';
+
+if(ViewExists(sCubeName_Main, sViewName) = 0);
+  ExecuteProcess('}bedrock.cube.view.create',
+   'pLogOutput', 0,
+   'pStrictErrorHandling', 0,
+   'pCube', sCubeName_Main,
+   'pView', sViewName,
+   'pFilter', sFilter,
+   'pSuppressZero', 0,
+   'pSuppressConsol', 1,
+   'pSuppressRules', 0,
+   'pSuppressConsolStrings', -1,
+   'pDimDelim', '&',
+   'pEleStartDelim', '¦',
+   'pEleDelim', '+',
+   'pTemp',1,
+   'pSubN', 0
+  );
+  
+  SubsetMDXSet(sDimensionName_Loyalty, sViewName, sMDX_Loyalty);
+  SubsetMDXSet(sDimensionName_Loyalty, sViewName, '');
+  SubsetMDXSet(sDimensionName_Channel, sViewName, sMDX_Channel);
+  SubsetMDXSet(sDimensionName_Channel, sViewName, '');
+endif;
+  
+# set MDXs to the source view filter subsets
+
+sMDX = '{['|sDimensionName_SProduct|'].['|sDimensionName_SProduct|'].['|pSourceProduct|']}';
+SubsetMDXSet(sDimensionName_SProduct, sViewName, sMDX);
+SubsetMDXSet(sDimensionName_SProduct, sViewName, '');
+sMDX = '{['|sDimensionName_TProduct|'].['|sDimensionName_TProduct|'].['|pTargetProduct|']}';
+SubsetMDXSet(sDimensionName_TProduct, sViewName, sMDX);
+SubsetMDXSet(sDimensionName_TProduct, sViewName, '');
+sMDX = '{['|sDimensionName_Movement|'].['|sDimensionName_Movement|'].['|pMovement|']}';
+SubsetMDXSet(sDimensionName_Movement, sViewName, sMDX);
+SubsetMDXSet(sDimensionName_Movement, sViewName, '');
+sMDX = '{['|sDimensionName_Period|'].['|sDimensionName_Period|'].['|pPeriod|']}';
+SubsetMDXSet(sDimensionName_Period, sViewName, sMDX);
+SubsetMDXSet(sDimensionName_Period, sViewName, '');
+
+# set view as data source
+
+DataSourceType          = 'VIEW';
+DatasourceNameForServer = sCubeName_Main;
+DatasourceNameForClient = sCubeName_Main;
+DatasourceCubeView      = sViewName;
+
+# calculate cell count for fallback distribution ratio
+
+nCellCount = SubsetGetSize(sDimensionName_Loyalty, sViewName);
+nCellCount = nCellCount * SubsetGetSize(sDimensionName_Channel, sViewName);
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# no cell precalculation needed
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# calculate spread ratio - in case any value is present - distribution: value weighted
+nCurrentValue   = CellGetN(sCubeName_Main, pVersion, vPeriod, vLoyalty, vChannel, vSource, vTarget, pMovement, sValue_MeasureRead_Spread);
+nCurrentValue_Base = CellGetN(sCubeName_Main, pVersion, vPeriod, vLoyalty, vChannel, vSource, vTarget, pMovement, sValue_MeasureRead_SpreadBase);
+nBaseRatio = nCurrentValue \ nTotalValue;
+
+# calculate fallback ratio - in case all values are 0 - distribution: even between cells
+nFallbackRatio = 1 \ nCellCount;
+
+# ratio selector logic: in case total value is not zero, choose spread ratio, otherwise choose fallback ratio
+nRatio = nTotalValue_Sign * nBaseRatio + (1 - nTotalValue_Sign) * nFallbackRatio;
+
+# calculate spread delta according to the input (override / zero)
+nOverridePart = pInput * nRatio;
+nFinalValueDelta = round(nOverridePart - nCurrentValue_Base);
+
+# if ratio is zero, stop branch
+if(nRatio = 0);
+  itemskip;
+endif;
+
+# write calculated data into cube
+# energy conservation - source decreases, target increases - closed system
+
+CellPutN(nOverridePart,    sCubeName_Main, pVersion, vPeriod, vLoyalty, vChannel, vSource, vTarget, pMovement, sValue_MeasureWrite_Spread);
+CellPutN(nFinalValueDelta, sCubeName_Main, pVersion, vPeriod, vLoyalty, vChannel, vSource, vTarget, pMovement, sValue_MeasureDelta_Spread);
+CellPutN(nOverridePart,    sCubeName_Main, pVersion, vPeriod, vLoyalty, vChannel, vTarget, vSource, pOppositeMovement, sValue_MeasureWrite_Spread);
+CellPutN(nFinalValueDelta, sCubeName_Main, pVersion, vPeriod, vLoyalty, vChannel, vTarget, vSource, pOppositeMovement, sValue_MeasureDelta_Spread);
+
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

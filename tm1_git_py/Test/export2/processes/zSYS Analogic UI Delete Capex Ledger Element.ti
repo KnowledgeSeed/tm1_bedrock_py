@@ -1,0 +1,65 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+sMeasure = 'Assignment';
+sPeriodDim = 'Period';
+sAllNTimeSubset = 'Actual Period N level';
+nFirstPeriodIndex = 1;
+nLastPeriodIndex = SubsetGetSize(sPeriodDim, sAllNTimeSubset);
+
+BalanceSheetDimName = 'Balance Sheet Planning Ledger';
+BalanceSheetHierName = 'Balance Sheet Planning Ledger';
+
+pLedgerDimensionName = 'Balance Sheet Planning Ledger';
+sSubsetName_BalanceSheetPlanningAllN = 'BalanceSheetPlanningAllN';
+sMDXBalanceSheetPlanning = '
+{
+TM1FILTERBYLEVEL({
+	TM1DRILLDOWNMEMBER({
+		[Balance Sheet Planning Ledger].[Balance Sheet Planning Ledger].[Eszkozok],
+		[Balance Sheet Planning Ledger].[Balance Sheet Planning Ledger].[Forrasok]
+	}, ALL, RECURSIVE)}, 0)
+}
+';
+HierarchySubsetCreate(pLedgerDimensionName, pLedgerDimensionName, sSubsetName_BalanceSheetPlanningAllN, 1);
+HierarchySubsetMDXSet(pLedgerDimensionName, pLedgerDimensionName, sSubsetName_BalanceSheetPlanningAllN, sMDXBalanceSheetPlanning);
+
+nBalanceSheetLedgerSize = SubsetGetSize(BalanceSheetDimName, sSubsetName_BalanceSheetPlanningAllN);
+
+# 1. Ha az adott Capex-es tétel egy Mérleggel volt összerendelve az adott időszakon akkor nullázza
+
+j = 1;
+
+WHILE(j <= nBalanceSheetLedgerSize);
+  sBalanceSheetLedgerName = SubsetGetElementName(BalanceSheetDimName, sSubsetName_BalanceSheetPlanningAllN, j);
+  i = nFirstPeriodIndex;
+  WHILE(i <= nLastPeriodIndex);
+    sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);   
+    nCapexFlag = CellGetN('Capex Balance Sheet Assignment', pVersion, sInputPeriod, pLedger, sBalanceSheetLedgerName, sMeasure);
+    IF(nCapexFlag = 1);
+      CellPutS('', 'Capex Balance Sheet Assignment', pVersion, sInputPeriod, 'Nem tartozik Capexhez', sBalanceSheetLedgerName, 'CapexName');
+      ElementAttrPutS('0' , 'Balance Sheet Planning Ledger' , 'Balance Sheet Planning Ledger', sBalanceSheetLedgerName, 'Capex tetel');
+    ENDIF;
+        i = i+1;
+    END;
+  j = j+1;
+END;
+
+DimName = 'Capex Ledger';
+
+DimensionElementDelete(DimName, pLedger);
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

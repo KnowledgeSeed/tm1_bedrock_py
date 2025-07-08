@@ -1,0 +1,8 @@
+{
+	"@type": "Dimension",
+	"Name": "Sales Channel",
+	"Hierarchies@Code.links": [
+		"Sales Channel.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1ED30E0>.json"
+	],
+	"DefaultHierarchy": "Dimensions('Sales Channel')/Hierarchies('Sales Channel')"
+}

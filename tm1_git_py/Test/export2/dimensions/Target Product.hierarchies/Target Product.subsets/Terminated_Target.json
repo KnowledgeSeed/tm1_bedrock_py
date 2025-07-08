@@ -1,0 +1,5 @@
+{
+	"@type": "Subset",
+	"Name": "Terminated_Target",
+	"Expression": "{EXCEPT({EXCEPT({[Target Product].[Target Product].[Total],[Target Product].[Target Product].[Cable Television Terminated],[Target Product].[Target Product].[Telefon Terminated],[Target Product].[Target Product].[Internet Terminated],[Target Product].[Target Product].[92]},{[Target Product].[Target Product].[92]})},{[Target Product].[Target Product].[Total]})}"
+}

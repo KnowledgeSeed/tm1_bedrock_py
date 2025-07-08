@@ -1,0 +1,56 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#Miki 2023.06.05.
+
+If( 1 = 0 );
+    ExecuteProcess( 'zSYS Analogic UI XP Planning Flow Input',
+    'pValue', pValue,
+    'pVersion', pVersion,
+    'pPeriod', pPeriod,
+    'pXP', pXP
+    );
+EndIf;
+
+sCubeName = 'XP Planning';
+sDimensionName_Period     = 'Period';
+sHierarchyName_Period     = 'Period';
+sSubsetName_Period        = 'Input Period';
+
+
+# calculating index boundaries
+
+nLastIndex_Period    = HierarchySubsetGetSize(sDimensionName_Period, sHierarchyName_Period, sSubsetName_Period);
+nStartIndex_Period   = HierarchySubsetElementGetIndex(sDimensionName_Period, sHierarchyName_Period, sSubsetName_Period, pPeriod, 1);
+nEndIndex_Period     = nStartIndex_Period + pSpreadForward * (nLastIndex_Period - nStartIndex_Period);
+
+
+# editing cell override values, iterating on period subset
+
+nCurrentIndex_Period = nStartIndex_Period;
+
+while(nCurrentIndex_Period <= nEndIndex_Period);
+
+  sCurrentPeriod = HierarchySubsetGetElementName(sDimensionName_Period, sHierarchyName_Period, sSubsetName_Period, nCurrentIndex_Period);
+
+    CellPutN(pValue, sCubeName, pVersion, sCurrentPeriod, pXP,  'Value');
+  
+#  LogOutput('INFO', 'ciklus: '|sCurrentPeriod);
+  
+  nCurrentIndex_Period = nCurrentIndex_Period + 1;
+end;
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+ExecuteProcess('zSYS Xp Difference Calculation');
+#endregion

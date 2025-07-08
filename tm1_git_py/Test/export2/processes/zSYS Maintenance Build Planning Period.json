@@ -1,0 +1,26 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Maintenance Build Planning Period",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Maintenance Build Planning Period.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pRun",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		}
+	],
+	"Variables": [
+		{
+			"Name": "vPeriod",
+			"Type": "String",
+			"Position": 1,
+			"StartByte": 0,
+			"EndByte": 0
+		}
+	]
+}

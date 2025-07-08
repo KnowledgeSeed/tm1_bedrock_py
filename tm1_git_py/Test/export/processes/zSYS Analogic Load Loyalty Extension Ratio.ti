@@ -1,0 +1,99 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# Módos Dávid 2024 10 22
+
+
+# az összes termékre
+# az összes kategóriára
+# az összes időszakban kitölti
+
+pTargetProductDimensionName = 'Target Product';
+sAllProductN = 'all_product';
+
+sActualPeriod = CellGetS('zSYS Maintenance Parameter', 'ActualMonth', 'S Type');
+
+# subsetet atirni
+sMDXAllProductN = '
+{TM1FILTERBYLEVEL({
+		TM1DRILLDOWNMEMBER({
+			[Target Product].[Target Product].[Total Products]
+		}, ALL, RECURSIVE)}, 0)}
+	';
+
+IF( HierarchySubsetExists(pTargetProductDimensionName, pTargetProductDimensionName, sAllProductN) = 0);
+  HierarchySubsetCreate(pTargetProductDimensionName, pTargetProductDimensionName, sAllProductN, 0);
+ENDIF;
+HierarchySubsetMDXSet(pTargetProductDimensionName, pTargetProductDimensionName, sAllProductN, sMDXAllProductN);
+
+nStartProduct = 1;
+nMaxProductLen = SubsetGetSize(pTargetProductDimensionName, sAllProductN);
+j = nStartProduct;
+While( j <= nMaxProductLen);
+  sInputProduct = SubsetGetElementName(pTargetProductDimensionName, sAllProductN, j);
+  sPeriodSubset = 'Actual Period N Level';
+  sPeriodDim = 'Period';
+    nStartPeriod = 1;
+    nMaxPeriodLen = SubsetGetSize(sPeriodDim, sPeriodSubset);
+    i = nStartPeriod;
+    While(i <= nMaxPeriodLen);
+      
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sPeriodSubset, i);
+      
+      if(stringtonumber(sInputPeriod) < stringtonumber(sActualPeriod));
+      
+        nZaroertek = CellGetN('Subscription Plan', pVersion, sInputPeriod, 'Total', 'Total', 'Total Products', sInputProduct, 'Closing', 'Final Value');
+        nLoyaltyExtension = CellGetN('Subscription Plan', pVersion, sInputPeriod, 'Total', 'Total', sInputProduct, sInputProduct, 'Loyalty extension increase', 'Final Value');
+        nRatio = nLoyaltyExtension \ nZaroertek * 100;
+      
+        CellPutN(nRatio, 'Weight and Limit', pVersion, sInputPeriod, sInputProduct,'Loyalty Extension Ratio', 'Value');
+      else;
+        
+        sPeriod_Previous = CellGetS('}ElementAttributes_Period', sInputPeriod, 'PREV_Y');
+        
+        nValuePrevious = CellGetN('Weight and Limit', pVersion, sPeriod_Previous, sInputProduct, 'Loyalty Extension Ratio', 'Value');
+        
+        CellPutN(nValuePrevious, 'Weight and Limit', pVersion, sInputPeriod, sInputProduct,'Loyalty Extension Ratio', 'Value');
+        
+      endif;
+      #period while
+      i = i+1;
+    END;
+    
+  
+    
+j = j+ 1;
+#END prduct while
+END;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

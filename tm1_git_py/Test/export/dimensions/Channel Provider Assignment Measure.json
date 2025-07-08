@@ -1,0 +1,8 @@
+{
+	"@type": "Dimension",
+	"Name": "Channel Provider Assignment Measure",
+	"Hierarchies@Code.links": [
+		"Channel Provider Assignment Measure.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1BF9250>.json"
+	],
+	"DefaultHierarchy": "Dimensions('Channel Provider Assignment Measure')/Hierarchies('Channel Provider Assignment Measure')"
+}

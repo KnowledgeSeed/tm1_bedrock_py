@@ -1,0 +1,643 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# =========================================================
+# Original Date Created              2024.03.02
+# Originator                         Modos David
+# Purpose                            
+# Change Date                           
+# Change Request Reference    
+# Change Made by                     Módos Dávid
+# =========================================================
+
+# Az adott időszakra csatornánként díj beírása
+
+pChannelDimensionName = 'Channel';
+sElementName_Total = 'Channel List Total';
+
+
+sPeriodDim = 'Period';
+sAllNTimeSubset = 'All N';
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+# csatrona ellenőrzése
+IF ( DimensionElementExists(pChannelDimensionName , vchannel_id) = 0);
+ itemskip;
+ENDIF;
+
+
+# Nicktoon adatok bugosak
+IF ( vchannel_id @= '249');
+ itemskip;
+ENDIF;
+
+
+# startData
+sStartDate = vstart_date;
+sStartDate = DELET(sStartDate, 8,3);
+sStartDate = DELET(sStartDate, 5,1);
+
+# idáig
+sEndDate = vend_date;
+sEndDate = DELET(sEndDate, 8,3);
+sEndDate = DELET(sEndDate, 5,1);
+nEllEgy = DimensionElementExists(sPeriodDim , sStartDate);
+IF( vend_date @='');
+  nMaxLong = SubsetGetSize(sPeriodDim, sAllNTimeSubset);
+  sEndDate = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, nMaxLong);
+ENDIF;
+nEllKetto = DimensionElementExists(sPeriodDim , sEndDate);
+nEll = nEllEgy + nEllKetto;
+IF ( nEll = 0 );
+  sBejon = '';
+  itemskip;
+ENDIF;
+
+
+IF ( DimensionElementExists(sPeriodDim , sStartDate) = 0);
+ sStartDate = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, 1);
+ENDIF;
+
+starDateIndex = SubsetElementGetIndex(sPeriodDim, sAllNTimeSubset, sStartDate);
+endDateIndex = SubsetElementGetIndex(sPeriodDim, sAllNTimeSubset, sEndDate);
+
+
+IF(stringToNumber(pAllPeriod) = 1);
+##### FLAT #####
+IF( vpayment_type @= 'Flate rate');
+i = starDateIndex;
+    While(i <= endDateIndex);
+      sCurrencyOppositeOne = CellGetS('}ElementAttributes_Currency', vcurrency, 'CurrencyOppositeOne');
+      sCurrencyOppositeTwo = CellGetS('}ElementAttributes_Currency', vcurrency, 'CurrencyOppositeTwo');
+      
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      nPrice = StringToNumber(vprice);
+      nPrice = nPrice /12;
+      
+      CellPutS('Flat', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Payment Type');
+      CellPutS(vcurrency, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Currency');
+      CellPutN(1, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'FLAT');
+      CellPutN(0, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'CS.FL');
+      CellPutN(0, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'EFI');
+      
+      
+      i = i+1;
+    END;
+ENDIF;
+##### FLAT #####
+
+##### Előfizetőszám alapú #####
+IF( vpayment_type @= 'Előfizetőszám alapú');
+  nPrice = StringToNumber(vprice);
+  i = starDateIndex;
+    While(i <= endDateIndex);
+      sCurrencyOppositeOne = CellGetS('}ElementAttributes_Currency', vcurrency, 'CurrencyOppositeOne');
+      sCurrencyOppositeTwo = CellGetS('}ElementAttributes_Currency', vcurrency, 'CurrencyOppositeTwo');
+      
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      CellPutS('EFI Cost', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Payment Type');
+      CellPutN(1, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'EFI');
+      CellPutN(nPrice, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'EFI Cost');
+      CellPutS(vcurrency, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Currency');
+      CellPutN(0, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'FLAT');
+      CellPutN(0, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'CS.FL');
+
+      
+      i = i+1;
+    END;
+ 
+ENDIF;
+##### Előfizetőszám alapú vége #####
+
+
+
+##### Csoportos Flat-ek #####
+IF( vpayment_type @= 'Csoportos Flate rate');
+  sCsFlatID = 'CsFlatID' | vchannel_price_group_id;
+  IF ( DimensionElementExists(pChannelDimensionName , sCsFlatID) = 0);
+  itemskip;
+  ENDIF;
+  
+i = starDateIndex;
+    While(i <= endDateIndex);
+      sCurrencyOppositeOne = CellGetS('}ElementAttributes_Currency', vcurrency, 'CurrencyOppositeOne');
+      sCurrencyOppositeTwo = CellGetS('}ElementAttributes_Currency', vcurrency, 'CurrencyOppositeTwo');
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      nPrice = StringToNumber(vprice);
+      nPrice = nPrice /12;
+      
+      # a csoportos flat
+      CellPutS('CS.FL', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, sCsFlatID, 'Payment Type');
+      CellPutN(1, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, sCsFlatID, 'CS.FL');
+      CellPutS(vcurrency, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, sCsFlatID, 'Currency');
+      
+      # maga a csatorna
+      CellPutS('CS.FL', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Payment Type');
+      CellPutN(1, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'CS.FL');
+      CellPutS(vcurrency, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Currency');
+      CellPutN(0, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'FLAT');
+      CellPutN(0, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'EFI');
+     
+      i = i+1;
+      
+    END;
+ 
+ENDIF;
+##### Csoportos flat end #####
+
+##### Díjmentes #####
+IF( vpayment_type @= 'Díjmentes');
+i = starDateIndex;
+    While(i <= endDateIndex);
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      
+      CellPutS('Díjmentes', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Payment Type');
+      CellPutS('', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Currency');
+      CellPutN(1, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Díjmentes');
+      CellPutN(0, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'FLAT');
+      CellPutN(0, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'CS.FL');
+      CellPutN(0, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'EFI');
+      
+      
+      i = i+1;
+      
+    END;
+
+ENDIF;
+##### Díjmentes END #####
+
+
+##### Szerződés nem szükséges, free program provider #####
+nFreeProgramProvider = StringToNumber(vagreement_free_program_provider_id);
+IF( nFreeProgramProvider = 1);
+i = starDateIndex;
+    While(i <= endDateIndex);
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      
+      CellPutS('Free Program Provider', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Payment Type');
+      CellPutS('', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Currency');
+      CellPutN(1, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Agreement is not needed');
+      CellPutN(0, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'FLAT');
+      CellPutN(0, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'CS.FL');
+      CellPutN(0, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'EFI');
+      
+      i = i+1;
+      
+    END;
+    
+    itemskip;
+
+ENDIF;
+##### Szerződés nem szükséges #####
+# AllPeriod
+ENDIF;
+
+######################### Szinte ugyan az
+
+
+IF(stringToNumber(pLastYear) = 1);
+  sPeriodSubsetName = 'Last_Actual_Year';
+  
+##### FLAT #####
+IF( vpayment_type @= 'Flate rate');
+i = starDateIndex;
+    While(i <= endDateIndex);
+      sCurrencyOppositeOne = CellGetS('}ElementAttributes_Currency', vcurrency, 'CurrencyOppositeOne');
+      sCurrencyOppositeTwo = CellGetS('}ElementAttributes_Currency', vcurrency, 'CurrencyOppositeTwo');
+      
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      IF ( SubsetElementExists('Period', sPeriodSubsetName, sInputPeriod) = 1);
+        nPrice = StringToNumber(vprice);
+        nPrice = nPrice /12;
+        
+        CellPutS('Flat', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Payment Type');
+        CellPutN(1, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'FLAT');
+      CellPutN(0, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'CS.FL');
+      CellPutN(0, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'EFI');
+        CellPutS(vcurrency, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Currency');
+        
+      ENDIF;
+      i = i+1;
+    END;
+ENDIF;
+##### FLAT #####
+
+##### Előfizetőszám alapú #####
+IF( vpayment_type @= 'Előfizetőszám alapú');
+  nPrice = StringToNumber(vprice);
+  i = starDateIndex;
+    While(i <= endDateIndex);
+      sCurrencyOppositeOne = CellGetS('}ElementAttributes_Currency', vcurrency, 'CurrencyOppositeOne');
+      sCurrencyOppositeTwo = CellGetS('}ElementAttributes_Currency', vcurrency, 'CurrencyOppositeTwo');
+      
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      IF ( SubsetElementExists('Period', sPeriodSubsetName, sInputPeriod) = 1);
+        
+        CellPutS('EFI Cost', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Payment Type');
+        CellPutN(1, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'EFI');
+        CellPutN(nPrice, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'EFI Cost');
+        CellPutS(vcurrency, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Currency');
+        CellPutN(0, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'FLAT');
+      CellPutN(0, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'CS.FL');
+      ENDIF;
+      i = i+1;
+    END;
+ 
+ENDIF;
+##### Előfizetőszám alapú vége #####
+
+
+
+##### Csoportos Flat-ek #####
+IF( vpayment_type @= 'Csoportos Flate rate');
+  sCsFlatID = 'CsFlatID' | vchannel_price_group_id;
+    IF ( DimensionElementExists(pChannelDimensionName , sCsFlatID) = 0);
+  itemskip;
+  ENDIF;
+  
+i = starDateIndex;
+    While(i <= endDateIndex);
+      sCurrencyOppositeOne = CellGetS('}ElementAttributes_Currency', vcurrency, 'CurrencyOppositeOne');
+      sCurrencyOppositeTwo = CellGetS('}ElementAttributes_Currency', vcurrency, 'CurrencyOppositeTwo');
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      IF ( SubsetElementExists('Period', sPeriodSubsetName, sInputPeriod) = 1);
+        nPrice = StringToNumber(vprice);
+        nPrice = nPrice /12;
+        
+        # a csoportos flat
+        CellPutS('CS.FL', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, sCsFlatID, 'Payment Type');
+        CellPutN(1, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, sCsFlatID, 'CS.FL');
+        CellPutS(vcurrency, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, sCsFlatID, 'Currency');
+        
+        # maga a csatorna
+        CellPutS('CS.FL', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Payment Type');
+        CellPutN(1, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'CS.FL');
+        CellPutS(vcurrency, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Currency');
+        CellPutN(0, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'FLAT');
+      CellPutN(0, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'EFI');
+      ENDIF;
+      i = i+1;
+      
+    END;
+ 
+ENDIF;
+##### Csoportos flat end #####
+
+
+
+
+
+# lastyear = 1
+ENDIF;
+
+
+
+
+
+
+
+
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+# csatrona ellenőrzése
+IF ( DimensionElementExists(pChannelDimensionName , vchannel_id) = 0);
+ itemskip;
+ENDIF;
+
+# Nicktoon adatok bugosak
+IF ( vchannel_id @= '249');
+ itemskip;
+ENDIF;
+
+IF ( vchannel_id @= '13' );
+ itemskip;
+ENDIF;
+# startData
+sStartDate = vstart_date;
+sStartDate = DELET(sStartDate, 8,3);
+sStartDate = DELET(sStartDate, 5,1);
+
+# idáig
+sEndDate = vend_date;
+sEndDate = DELET(sEndDate, 8,3);
+sEndDate = DELET(sEndDate, 5,1);
+nEllEgy = DimensionElementExists(sPeriodDim , sStartDate);
+IF( vend_date @='');
+  nMaxLong = SubsetGetSize(sPeriodDim, sAllNTimeSubset);
+  sEndDate = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, nMaxLong);
+ENDIF;
+nEllKetto = DimensionElementExists(sPeriodDim , sEndDate);
+nEll = nEllEgy + nEllKetto;
+IF ( nEll = 0 );
+  sBejon = '';
+  itemskip;
+ENDIF;
+
+
+IF ( DimensionElementExists(sPeriodDim , sStartDate) = 0);
+ sStartDate = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, 1);
+ENDIF;
+
+starDateIndex = SubsetElementGetIndex(sPeriodDim, sAllNTimeSubset, sStartDate);
+endDateIndex = SubsetElementGetIndex(sPeriodDim, sAllNTimeSubset, sEndDate);
+
+
+IF(stringToNumber(pAllPeriod) = 1);
+##### FLAT #####
+IF( vpayment_type @= 'Flate rate');
+i = starDateIndex;
+    While(i <= endDateIndex);
+      sCurrencyOppositeOne = CellGetS('}ElementAttributes_Currency', vcurrency, 'CurrencyOppositeOne');
+      sCurrencyOppositeTwo = CellGetS('}ElementAttributes_Currency', vcurrency, 'CurrencyOppositeTwo');
+      
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      nPrice = StringToNumber(vprice);
+      nPrice = nPrice /12;
+      
+      CellPutN(nPrice, 'Channel Cost', pVersion, sInputPeriod, vchannel_id, 'Nem tartozik termekhez', vcurrency, 'Flat', 'Value');
+      CellPutN(0, 'Channel Cost', pVersion, sInputPeriod, vchannel_id, 'Nem tartozik termekhez', sCurrencyOppositeOne, 'Flat', 'Value');
+      CellPutN(0, 'Channel Cost', pVersion, sInputPeriod, vchannel_id, 'Nem tartozik termekhez', sCurrencyOppositeTwo, 'Flat', 'Value');
+      
+      CellPutS('Flat', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Payment Type');
+      CellPutN(1, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'FLAT');
+      CellPutS(vcurrency, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Currency');
+      i = i+1;
+    END;
+ENDIF;
+##### FLAT #####
+
+##### Előfizetőszám alapú #####
+IF( vpayment_type @= 'Előfizetőszám alapú');
+  nPrice = StringToNumber(vprice);
+  i = starDateIndex;
+    While(i <= endDateIndex);
+      sCurrencyOppositeOne = CellGetS('}ElementAttributes_Currency', vcurrency, 'CurrencyOppositeOne');
+      sCurrencyOppositeTwo = CellGetS('}ElementAttributes_Currency', vcurrency, 'CurrencyOppositeTwo');
+      
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      CellPutS('EFI Cost', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Payment Type');
+      CellPutN(1, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'EFI');
+      CellPutN(nPrice, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'EFI Cost');
+      CellPutS(vcurrency, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Currency');
+      
+      CellPutN(nPrice, 'Channel Cost', pVersion, sInputPeriod, vchannel_id, 'Nem tartozik termekhez', vcurrency, 'CPS', 'Value');
+      CellPutN(0, 'Channel Cost', pVersion, sInputPeriod, vchannel_id, 'Nem tartozik termekhez', sCurrencyOppositeOne, 'CPS', 'Value');
+      CellPutN(0, 'Channel Cost', pVersion, sInputPeriod, vchannel_id, 'Nem tartozik termekhez', sCurrencyOppositeTwo, 'CPS', 'Value');
+      
+
+      
+      i = i+1;
+    END;
+ 
+ENDIF;
+##### Előfizetőszám alapú vége #####
+
+
+
+##### Csoportos Flat-ek #####
+IF( vpayment_type @= 'Csoportos Flate rate');
+  sCsFlatID = 'CsFlatID' | vchannel_price_group_id;
+  IF ( DimensionElementExists(pChannelDimensionName , sCsFlatID) = 0);
+  itemskip;
+  ENDIF;
+  
+i = starDateIndex;
+    While(i <= endDateIndex);
+      sCurrencyOppositeOne = CellGetS('}ElementAttributes_Currency', vcurrency, 'CurrencyOppositeOne');
+      sCurrencyOppositeTwo = CellGetS('}ElementAttributes_Currency', vcurrency, 'CurrencyOppositeTwo');
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      nPrice = StringToNumber(vprice);
+      nPrice = nPrice /12;
+      
+      # az értéke
+      CellPutN(nPrice, 'Channel Cost', pVersion, sInputPeriod, sCsFlatID, 'Nem tartozik termekhez', vcurrency, 'CS.FL', 'Value');
+      CellPutN(0, 'Channel Cost', pVersion, sInputPeriod, sCsFlatID, 'Nem tartozik termekhez', sCurrencyOppositeOne, 'CS.FL', 'Value');
+      CellPutN(0, 'Channel Cost', pVersion, sInputPeriod, sCsFlatID, 'Nem tartozik termekhez', sCurrencyOppositeTwo, 'CS.FL', 'Value');
+      
+      # a csoportos flat
+      CellPutS('CS.FL', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, sCsFlatID, 'Payment Type');
+      CellPutN(1, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, sCsFlatID, 'CS.FL');
+      CellPutS(vcurrency, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, sCsFlatID, 'Currency');
+      
+      # maga a csatorna
+      CellPutS('CS.FL', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Payment Type');
+      CellPutN(1, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'CS.FL');
+      CellPutS(vcurrency, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Currency');
+     
+      i = i+1;
+      
+    END;
+ 
+ENDIF;
+##### Csoportos flat end #####
+
+##### Díjmentes #####
+IF( vpayment_type @= 'Díjmentes');
+i = starDateIndex;
+    While(i <= endDateIndex);
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      
+      CellPutN(0, 'Channel Cost', pVersion, sInputPeriod, vchannel_id, 'Nem tartozik termekhez', 'HUF', 'Flat', 'Value');
+      CellPutN(0, 'Channel Cost', pVersion, sInputPeriod, vchannel_id, 'Nem tartozik termekhez', 'EUR', 'Flat', 'Value');
+      CellPutN(0, 'Channel Cost', pVersion, sInputPeriod, vchannel_id, 'Nem tartozik termekhez', 'USD', 'Flat', 'Value');
+      
+      CellPutS('Díjmentes', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Payment Type');
+      CellPutS('', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Currency');
+      CellPutN(1, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Díjmentes');
+      i = i+1;
+      
+    END;
+
+ENDIF;
+##### Díjmentes END #####
+
+
+##### Szerződés nem szükséges, free program provider #####
+nFreeProgramProvider = StringToNumber(vagreement_free_program_provider_id);
+IF( nFreeProgramProvider = 1);
+i = starDateIndex;
+    While(i <= endDateIndex);
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      
+      CellPutN(0, 'Channel Cost', pVersion, sInputPeriod, vchannel_id, 'Nem tartozik termekhez', 'HUF', 'Flat', 'Value');
+      CellPutN(0, 'Channel Cost', pVersion, sInputPeriod, vchannel_id, 'Nem tartozik termekhez', 'EUR', 'Flat', 'Value');
+      CellPutN(0, 'Channel Cost', pVersion, sInputPeriod, vchannel_id, 'Nem tartozik termekhez', 'USD', 'Flat', 'Value');
+      
+      CellPutS('Free Program Provider', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Payment Type');
+      CellPutS('', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Currency');
+      CellPutN(1, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Agreement is not needed');
+      i = i+1;
+      
+    END;
+    
+    itemskip;
+
+ENDIF;
+##### Szerződés nem szükséges #####
+# AllPeriod
+ENDIF;
+
+######################### Szinte ugyan az
+
+
+IF(stringToNumber(pLastYear) = 1);
+  sPeriodSubsetName = 'Last_Actual_Year';
+  
+##### FLAT #####
+IF( vpayment_type @= 'Flate rate');
+i = starDateIndex;
+    While(i <= endDateIndex);
+      sCurrencyOppositeOne = CellGetS('}ElementAttributes_Currency', vcurrency, 'CurrencyOppositeOne');
+      sCurrencyOppositeTwo = CellGetS('}ElementAttributes_Currency', vcurrency, 'CurrencyOppositeTwo');
+      
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      IF ( SubsetElementExists('Period', sPeriodSubsetName, sInputPeriod) = 1);
+        nPrice = StringToNumber(vprice);
+        nPrice = nPrice /12;
+        
+        CellPutN(nPrice, 'Channel Cost', pVersion, sInputPeriod, vchannel_id, 'Nem tartozik termekhez', vcurrency, 'Flat', 'Value');
+        CellPutN(0, 'Channel Cost', pVersion, sInputPeriod, vchannel_id, 'Nem tartozik termekhez', sCurrencyOppositeOne, 'Flat', 'Value');
+        CellPutN(0, 'Channel Cost', pVersion, sInputPeriod, vchannel_id, 'Nem tartozik termekhez', sCurrencyOppositeTwo, 'Flat', 'Value');
+        
+        CellPutS('Flat', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Payment Type');
+        CellPutN(1, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'FLAT');
+        CellPutS(vcurrency, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Currency');
+      ENDIF;
+      i = i+1;
+    END;
+ENDIF;
+##### FLAT #####
+
+##### Előfizetőszám alapú #####
+IF( vpayment_type @= 'Előfizetőszám alapú');
+  nPrice = StringToNumber(vprice);
+  i = starDateIndex;
+    While(i <= endDateIndex);
+      sCurrencyOppositeOne = CellGetS('}ElementAttributes_Currency', vcurrency, 'CurrencyOppositeOne');
+      sCurrencyOppositeTwo = CellGetS('}ElementAttributes_Currency', vcurrency, 'CurrencyOppositeTwo');
+      
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      IF ( SubsetElementExists('Period', sPeriodSubsetName, sInputPeriod) = 1);
+      
+        CellPutN(nPrice, 'Channel Cost', pVersion, sInputPeriod, vchannel_id, 'Nem tartozik termekhez', vcurrency, 'CPS', 'Value');
+        CellPutN(0, 'Channel Cost', pVersion, sInputPeriod, vchannel_id, 'Nem tartozik termekhez', sCurrencyOppositeOne, 'CPS', 'Value');
+        CellPutN(0, 'Channel Cost', pVersion, sInputPeriod, vchannel_id, 'Nem tartozik termekhez', sCurrencyOppositeTwo, 'CPS', 'Value');
+        
+        CellPutS('EFI Cost', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Payment Type');
+        CellPutN(1, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'EFI');
+        CellPutN(nPrice, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'EFI Cost');
+        CellPutS(vcurrency, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Currency');
+      ENDIF;
+      i = i+1;
+    END;
+ 
+ENDIF;
+##### Előfizetőszám alapú vége #####
+
+
+
+##### Csoportos Flat-ek #####
+IF( vpayment_type @= 'Csoportos Flate rate');
+  sCsFlatID = 'CsFlatID' | vchannel_price_group_id;
+    IF ( DimensionElementExists(pChannelDimensionName , sCsFlatID) = 0);
+  itemskip;
+  ENDIF;
+  
+i = starDateIndex;
+    While(i <= endDateIndex);
+      sCurrencyOppositeOne = CellGetS('}ElementAttributes_Currency', vcurrency, 'CurrencyOppositeOne');
+      sCurrencyOppositeTwo = CellGetS('}ElementAttributes_Currency', vcurrency, 'CurrencyOppositeTwo');
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      IF ( SubsetElementExists('Period', sPeriodSubsetName, sInputPeriod) = 1);
+        nPrice = StringToNumber(vprice);
+        nPrice = nPrice /12;
+        
+        # az értéke
+        CellPutN(nPrice, 'Channel Cost', pVersion, sInputPeriod, sCsFlatID, 'Nem tartozik termekhez', vcurrency, 'CS.FL', 'Value');
+        CellPutN(0, 'Channel Cost', pVersion, sInputPeriod, sCsFlatID, 'Nem tartozik termekhez', sCurrencyOppositeOne, 'CS.FL', 'Value');
+        CellPutN(0, 'Channel Cost', pVersion, sInputPeriod, sCsFlatID, 'Nem tartozik termekhez', sCurrencyOppositeTwo, 'CS.FL', 'Value');
+        
+        # a csoportos flat
+        CellPutS('CS.FL', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, sCsFlatID, 'Payment Type');
+        CellPutN(1, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, sCsFlatID, 'CS.FL');
+        CellPutS(vcurrency, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, sCsFlatID, 'Currency');
+        
+        # maga a csatorna
+        CellPutS('CS.FL', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Payment Type');
+        CellPutN(1, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'CS.FL');
+        CellPutS(vcurrency, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Currency');
+      ENDIF;
+      i = i+1;
+      
+    END;
+ 
+ENDIF;
+##### Csoportos flat end #####
+
+##### Díjmentes #####
+IF( vpayment_type @= 'Díjmentes');
+i = starDateIndex;
+    While(i <= endDateIndex);
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      IF ( SubsetElementExists('Period', sPeriodSubsetName, sInputPeriod) = 1);
+        CellPutN(0, 'Channel Cost', pVersion, sInputPeriod, vchannel_id, 'Nem tartozik termekhez', 'HUF', 'Flat', 'Value');
+        CellPutN(0, 'Channel Cost', pVersion, sInputPeriod, vchannel_id, 'Nem tartozik termekhez', 'EUR', 'Flat', 'Value');
+        CellPutN(0, 'Channel Cost', pVersion, sInputPeriod, vchannel_id, 'Nem tartozik termekhez', 'USD', 'Flat', 'Value');
+        
+        CellPutS('Díjmentes', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Payment Type');
+        CellPutS('', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Currency');
+        CellPutN(1, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Díjmentes');
+      ENDIF;
+      i = i+1;
+      
+    END;
+
+ENDIF;
+##### Díjmentes END #####
+
+
+##### Szerződés nem szükséges, free program provider #####
+nFreeProgramProvider = StringToNumber(vagreement_free_program_provider_id);
+IF( nFreeProgramProvider = 1);
+i = starDateIndex;
+    While(i <= endDateIndex);
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      IF ( SubsetElementExists('Period', sPeriodSubsetName, sInputPeriod) = 1);
+      CellPutN(0, 'Channel Cost', pVersion, sInputPeriod, vchannel_id, 'Nem tartozik termekhez', 'HUF', 'Flat', 'Value');
+      CellPutN(0, 'Channel Cost', pVersion, sInputPeriod, vchannel_id, 'Nem tartozik termekhez', 'EUR', 'Flat', 'Value');
+      CellPutN(0, 'Channel Cost', pVersion, sInputPeriod, vchannel_id, 'Nem tartozik termekhez', 'USD', 'Flat', 'Value');
+      
+      CellPutS('Free Program Provider', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Payment Type');
+      CellPutS('', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Currency');
+      CellPutN(1, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Agreement is not needed');
+      ENDIF;
+      i = i+1;
+      
+    END;
+    
+    itemskip;
+
+ENDIF;
+##### Szerződés nem szükséges #####
+
+
+# lastyear = 1
+ENDIF;
+
+
+
+
+
+
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+#endregion

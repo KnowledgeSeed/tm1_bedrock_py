@@ -1,0 +1,48 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI Direct Cost Input",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic UI Direct Cost Input.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pMode",
+			"Prompt": "1:one month,2: more month, 3:Growth rate, 4, CAGR 1 \u00e9v, 5:inflation, 6: CAGR 6 h\u00f3nap",
+			"Value": 0,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pLedger",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pValue",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pVersion",
+			"Prompt": "Base",
+			"Value": "Base",
+			"Type": "String"
+		},
+		{
+			"Name": "pPeriod",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pUser",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

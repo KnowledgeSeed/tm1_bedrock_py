@@ -1,0 +1,254 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# Mody 2024 01 12
+
+#pMode
+#1: one month
+#2: more month
+#3: Growth rate
+#4: CAGR
+#5: Inflation
+
+nInputValue = stringToNumber(pValue);
+sRevenueMeasre = 'Value';
+sProduct = 'Nem tartozik termekhez';
+sLineitem = 'Bevetel';
+
+sAllNTimeSubset = 'Actual Period N level';
+sPeriodDim = 'Period';
+
+
+#1: one value
+# sima hónap
+# éves
+IF(pMode = 1);
+  # sima hónap
+  IF( Long(pPeriod) = 6);
+    CellPutN(nInputValue, 'Revenue', pVersion, pPeriod, pLedger, sProduct, sLineitem, sRevenueMeasre);
+  ENDIF;
+  
+  # éves
+  IF( Long(pPeriod) = 4);
+    nInputValueHavi = nInputValue\12;
+    i=1;
+    WHILE( i<=12);
+      sActualPeriod = pPeriod | numberToString(i);
+      IF( i<10);
+        sActualPeriod = pPeriod | '0' | numberToString(i);
+      ENDIF;
+      CellPutN(nInputValueHavi, 'Revenue', pVersion, sActualPeriod, pLedger, sProduct, sLineitem, sRevenueMeasre);
+      i=i+1;
+    END;
+  ENDIF;
+  
+#1: one value end
+ENDIF;
+
+
+
+#2: more month
+# sima hónap
+# éves
+IF(pMode = 2);
+  # sima hónap
+  IF( Long(pPeriod) = 6);
+    sPeriodStartMonth = pPeriod;
+    nMaxPlanningPeriodSubsetLen = SubsetGetSize(sPeriodDim, sAllNTimeSubset);
+    i = SubsetElementGetIndex(sPeriodDim, sAllNTimeSubset, sPeriodStartMonth);
+    While(i <= nMaxPlanningPeriodSubsetLen);
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      CellPutN(nInputValue, 'Revenue', pVersion, sInputPeriod, pLedger, sProduct, sLineitem, sRevenueMeasre);
+      i = i+1;
+    END;
+  ENDIF;
+  
+  # éves
+  IF( Long(pPeriod) = 4);
+    nInputValueHavi = nInputValue\12;
+    sPeriodStartMonth = pPeriod | '01';
+    nMaxPlanningPeriodSubsetLen = SubsetGetSize(sPeriodDim, sAllNTimeSubset);
+    i = SubsetElementGetIndex(sPeriodDim, sAllNTimeSubset, sPeriodStartMonth);
+    While(i <= nMaxPlanningPeriodSubsetLen);
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      CellPutN(nInputValueHavi, 'Revenue', pVersion, sInputPeriod, pLedger, sProduct, sLineitem, sRevenueMeasre);
+      i = i+1;
+    END;
+  
+  ENDIF;
+
+##2: more month
+ENDIF;
+
+
+#3: Growth rate (megadott érték alapján)
+# vesszük az Y0_12-t és az adott növekedési rátával feltöltjük
+#Botond 07.10
+
+IF( pMode = 3);
+  
+  # 202401
+  sPeriodStartMonth = CellGetS('zSYS Maintenance Parameter', 'ActualMonth', 'S Type');
+  
+  nMaxPlanningPeriodSubsetLen = SubsetGetSize(sPeriodDim, sAllNTimeSubset);
+  
+  sLastMonth = attrs(sPeriodDim, sPeriodStartMonth, 'PREV_1M');
+  sLastMonthIndex = SubSt(sLastMonth , 5, 2);
+  nLastMonthIndex = stringtoNumber(sLastMonthIndex);
+  
+  
+  i = SubsetElementGetIndex(sPeriodDim, sAllNTimeSubset, sPeriodStartMonth);
+    While(i <= nMaxPlanningPeriodSubsetLen);
+      # adott hónap
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      
+      nLastMonthIndex = nLastMonthIndex+1;
+      
+      IF(nLastMonthIndex > 12);
+        nLastMonthIndex = 1;
+      ENDIF;
+
+      nLastMonthValue = CellGetN('Revenue', pVersion, sLastMonth , pLedger, sProduct, sLineitem, sRevenueMeasre);
+      nGrowthRate = (stringToNumber(pValue)\100) + 1;
+      nInputValue = nLastMonthValue * nGrowthRate * (nLastMonthIndex/12);
+      
+      CellPutN(nInputValue, 'Revenue', pVersion, sInputPeriod, pLedger, sProduct, sLineitem, sRevenueMeasre);
+      i = i+1;
+    END;
+ENDIF;
+
+
+#4: CAGR 1 év
+#Botond 07.10
+IF(pMode = 4);
+
+sPeriodStartMonth = CellGetS('zSYS Maintenance Parameter', 'ActualMonth', 'S Type');
+
+sCurrentYear = Subst(CellGetS('zSYS Maintenance Parameter', 'ActualMonth','S Type'), 1, 4);
+nCurrentYear = stringToNumber(sCurrentYear);
+nEndingYear = nCurrentYear-1;
+sEndingYear = numberToString(nEndingYear);
+
+nStartingYear = nCurrentYear-2;
+sStartingYear = numberToString(nStartingYear);
+
+nEndingValue = CellGetN('Revenue', pVersion, sEndingYear, pLedger, sProduct, sLineitem, sRevenueMeasre);
+nStartingValue = CellGetN('Revenue', pVersion, sStartingYear, pLedger, sProduct, sLineitem, sRevenueMeasre);
+
+nCAGR = (nEndingValue/nStartingValue)-1;
+
+i = SubsetElementGetIndex(sPeriodDim, sAllNTimeSubset, sPeriodStartMonth);
+ActualPeriod = SubsetGetSize('period','Actual Period N level');
+WHILE(i <= ActualPeriod);
+  sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+  sPrevMonth = attrs(sPeriodDim, sInputPeriod, 'PREV_1M');
+  nPrevMonthValue = CellGetN('Revenue', pVersion, sPrevMonth, pLedger, sProduct, sLineitem, sRevenueMeasre);
+  nInputValue = nPrevMonthValue*(1+nCAGR);
+  
+  CellPutN(nInputValue, 'Revenue', pVersion, sInputPeriod, pLedger, sProduct, sLineitem, sRevenueMeasre);
+  i = i+1;
+  
+END;
+
+ENDIF;
+
+#6 CAGR 6 hónap
+#Botond 07.10
+IF(pMode = 6);
+
+sPeriodStartMonth = CellGetS('zSYS Maintenance Parameter', 'ActualMonth', 'S Type');
+nPeriodStartMonthIndex = SubsetElementGetIndex(sPeriodDim, sAllNTimeSubset, sPeriodStartMonth); 
+
+sEndingMonth = ATTRS(sPeriodDim,sPeriodStartMonth,'PREV_1M'); 
+
+nStartingMonth = nPeriodStartMonthIndex - 7;
+sStartingMonth = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, nStartingMonth);
+
+nEndingValue = CellGetN('Revenue', pVersion, sEndingMonth, pLedger, sProduct, sLineitem, sRevenueMeasre);
+nStartingValue = CellGetN('Revenue', pVersion, sStartingMonth, pLedger, sProduct, sLineitem, sRevenueMeasre);
+
+nCAGR = ((nEndingValue/nStartingValue)^1/6) - 1;
+
+i = SubsetElementGetIndex(sPeriodDim, sAllNTimeSubset, sPeriodStartMonth);
+ActualPeriod = SubsetGetSize('period','Actual Period N level');
+WHILE(i <= ActualPeriod);
+  sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+  sPrevMonth = attrs(sPeriodDim, sInputPeriod, 'PREV_1M');
+  nPrevMonthValue = CellGetN('Revenue', pVersion, sPrevMonth, pLedger, sProduct, sLineitem, sRevenueMeasre);
+  nInputValue = nPrevMonthValue * (1 + nCAGR);
+  
+  CellPutN(nInputValue, 'Revenue', pVersion, sInputPeriod, pLedger, sProduct, sLineitem, sRevenueMeasre);
+  i = i + 1;
+  
+END;
+
+ENDIF;
+
+
+
+
+
+
+#5: inflation (megadott érték alapján)
+
+#Botond 07.10
+IF( pMode = 5);
+  
+  sPeriodStartMonth = CellGetS('zSYS Maintenance Parameter', 'ActualMonth', 'S Type');
+  
+  nMaxPlanningPeriodSubsetLen = SubsetGetSize(sPeriodDim, sAllNTimeSubset);
+  
+  
+  i = SubsetElementGetIndex(sPeriodDim, sAllNTimeSubset, sPeriodStartMonth);
+    While(i <= nMaxPlanningPeriodSubsetLen);
+      # adott hónap
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      
+      nCurrentYear = stringToNumber(DELET(sInputPeriod,5,2));
+      sCurrentYear = numberToString(nCurrentYear);
+      nLastYear = nCurrentYear - 1;
+      sLastYear = numberToString(nLastYear);
+      sLastYearLastMon = numberToString(nLastYear) | '12';
+
+      nLastMonthValue = CellGetN('Revenue', pVersion, sLastYearLastMon, pLedger, sProduct, sLineitem, sRevenueMeasre);
+      
+      nInflacio = CellGetN('Planning Driver', pVersion, sCurrentYear, 'Inflation', 'N Type');
+      
+      nGrowthRate = nInflacio + 1;
+      
+      nInputValue = nLastMonthValue * nGrowthRate;
+      
+      CellPutN(nInputValue, 'Revenue', pVersion, sInputPeriod, pLedger, sProduct, sLineitem, sRevenueMeasre);
+      i = i+1;
+    END;
+ENDIF;
+
+
+
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+
+# Módos Dávid 2024 02 13
+
+sToday = Today(1);
+CellPutS(sToday, '}ElementAttributes_Version', pVersion, 'Last Updated');
+CellPutS(pUser, '}ElementAttributes_Version', pVersion, 'Last Updated By');
+
+
+
+#endregion

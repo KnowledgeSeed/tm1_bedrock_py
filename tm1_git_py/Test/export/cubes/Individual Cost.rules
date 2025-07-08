@@ -1,0 +1,82 @@
+SKIPCHECK;
+#Botond 05.07
+
+#Tények
+['individual cost ledger':'individual cost ledger':{'52610','52609','81503','81502'},
+'Individual Cost Lineitem':'Individual Cost Lineitem':'Cost','Revenue Measure':
+'Revenue Measure':'Value'] = C:
+IF( DIMIX('Period',!Period) < DIMIX('Period',DB('zSYS Maintenance Parameter','ActualMonth','S Type')),
+DB('Individual Cost', !Version, !Period, !Individual Cost Ledger | ' Fact', 'Cost', 'Value'),Continue
+)
+;
+
+# verzió szabályok
+[]= N:
+IF(ELISPAR('Version','Report',!Version) = 1,
+STET,Continue)
+;
+
+#############
+
+#TÉNYEK
+#EFI SZÁMOK
+#VÁLTOZÓ KTG.
+
+#############
+
+
+
+#Efi számok
+['individual cost ledger':'individual cost ledger':{'VOIP support alapdij'},
+'Individual Cost Lineitem':'Individual Cost Lineitem':'Efi szam','Revenue Measure':
+'Revenue Measure':'Value'] = N:
+DB('Subscription Report', !Version, !Period, 'Total', 'Total', 'Telefon Total', 'Value')
+;
+
+['individual cost ledger':'individual cost ledger':{'ADSL support alapdij','xDSL szolgaltatas'},
+'Individual Cost Lineitem':'Individual Cost Lineitem':'Efi szam','Revenue Measure':
+'Revenue Measure':'Value'] = N:
+DB('Subscription Report', !Version, !Period, 'Total', 'Total', 'DSL Total', 'Value')
+;
+
+#Változó ktg.
+['Individual Cost Lineitem':'Individual Cost Lineitem':'Cost','Revenue Measure':'Revenue Measure':'Value'] = N:
+IF( DB('}ElementAttributes_Individual Cost Ledger', !Individual Cost ledger, 'Calculations And Logic') @= 'efi*cps',
+['Individual Cost Lineitem':'Individual Cost Lineitem':'Efi szam']
+*
+['Individual Cost Lineitem':'Individual Cost Lineitem':'CPS'],
+STET
+);
+
+FEEDERS;
+
+['individual cost ledger':'individual cost ledger':{'52609','52610','81503','81502'},
+'Individual Cost Lineitem':'Individual Cost Lineitem':'CPS','Revenue Measure':
+'Revenue Measure':'Value'] =>
+DB('Individual Cost', !Version, !Period, !Individual Cost Ledger, 'Cost', 'Value');
+
+
+# Direct Cost Kocka Feeder
+# 52609 VOIP költség	rule
+# 52610 Digitális szolgáltatással kapcsolatos költségek	rule
+# 81502 Vezetékes internetszolgáltatással kapcsolatos költségek	rule
+# 81503 ADSL költségek	rule
+['individual cost ledger':'individual cost ledger':'52609', 'Revenue Measure':'Revenue Measure':'Value',
+'Individual Cost Lineitem':'Individual Cost Lineitem':'Total'] =>
+DB('Direct Cost', !Version, !Period, '52609', 'Cost', 'Value');
+['individual cost ledger':'individual cost ledger':'52610', 'Revenue Measure':'Revenue Measure':'Value',
+'Individual Cost Lineitem':'Individual Cost Lineitem':'Total'] =>
+DB('Direct Cost', !Version, !Period, '52610', 'Cost', 'Value');
+['individual cost ledger':'individual cost ledger':'81502', 'Revenue Measure':'Revenue Measure':'Value',
+'Individual Cost Lineitem':'Individual Cost Lineitem':'Total'] =>
+DB('Direct Cost', !Version, !Period, '81502', 'Cost', 'Value');
+['individual cost ledger':'individual cost ledger':'81503', 'Revenue Measure':'Revenue Measure':'Value',
+'Individual Cost Lineitem':'Individual Cost Lineitem':'Total'] =>
+DB('Direct Cost', !Version, !Period, '81503', 'Cost', 'Value');
+
+
+
+
+
+
+

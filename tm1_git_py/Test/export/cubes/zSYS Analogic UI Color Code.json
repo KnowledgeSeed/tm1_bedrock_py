@@ -1,0 +1,14 @@
+{
+	"@type": "Cube",
+	"Name": "zSYS Analogic UI Color Code",
+	"Dimensions": [
+		{
+			"@id": "Dimensions('zSYS Analogic UI Counter')"
+		},
+		{
+			"@id": "Dimensions('zSYS Analogic UI Color Code Measure')"
+		}
+	],
+	"Rules@Code.link": "zSYS Analogic UI Color Code.rules",
+	"Views@Code.links": []
+}

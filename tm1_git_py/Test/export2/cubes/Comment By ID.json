@@ -1,0 +1,14 @@
+{
+	"@type": "Cube",
+	"Name": "Comment By ID",
+	"Dimensions": [
+		{
+			"@id": "Dimensions('Comment ID')"
+		},
+		{
+			"@id": "Dimensions('Measures Comments by ID')"
+		}
+	],
+	"Rules@Code.link": "Comment By ID.rules",
+	"Views@Code.links": []
+}

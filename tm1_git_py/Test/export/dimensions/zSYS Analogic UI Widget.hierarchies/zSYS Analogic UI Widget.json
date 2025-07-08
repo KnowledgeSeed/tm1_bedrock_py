@@ -1,0 +1,40 @@
+{
+	"@type": "Hierarchy",
+	"Name": "zSYS Analogic UI Widget",
+	"Elements": [
+		{
+			"name": "All zSYS Analogic UI Widget",
+			"type": "Consolidated"
+		},
+		{
+			"name": "riskFinancialsGridTableHeaderRow",
+			"type": "Numeric"
+		},
+		{
+			"name": "riskTornadoChartBaselineSelector",
+			"type": "Numeric"
+		},
+		{
+			"name": "riskFinancialsGridRow4",
+			"type": "Numeric"
+		}
+	],
+	"Edges": [
+		{
+			"parentName": "All zSYS Analogic UI Widget",
+			"componentName": "riskFinancialsGridTableHeaderRow",
+			"weight": 1
+		},
+		{
+			"parentName": "All zSYS Analogic UI Widget",
+			"componentName": "riskTornadoChartBaselineSelector",
+			"weight": 1
+		},
+		{
+			"parentName": "All zSYS Analogic UI Widget",
+			"componentName": "riskFinancialsGridRow4",
+			"weight": 1
+		}
+	],
+	"Subsets@Code.links": []
+}

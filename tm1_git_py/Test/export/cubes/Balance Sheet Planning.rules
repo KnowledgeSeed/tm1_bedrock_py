@@ -1,0 +1,42 @@
+#SKIPCHECK;
+
+# verzió szabályok
+[]= N:
+IF(ELISPAR('Version','Report',!Version) = 1,
+STET,Continue);
+
+['Period':'202012','Balance Sheet Planning Measure':'Opening'] =N: STET;
+
+['Balance Sheet Planning Measure':'Closing'] = C:
+IF( ELLEV('Period',!Period)>0,
+  DB('Balance Sheet Planning', !Version, DB('}ElementAttributes_Period', !Period, 'Last_M_Y'), !Balance Sheet Planning Ledger, !Balance Sheet Planning Measure),
+STET); 
+
+['Balance Sheet Planning Measure':'Opening'] = C:
+IF( ELLEV('Period',!Period)>0,
+  DB('Balance Sheet Planning', !Version, DB('}ElementAttributes_Period', !Period, 'First_M_Y'), !Balance Sheet Planning Ledger, !Balance Sheet Planning Measure),
+STET);
+
+['Balance Sheet Planning Measure':'Opening'] =N:
+DB('Balance Sheet Planning', !Version, DB('}ElementAttributes_Period', !Period, 'PREV_1M'), !Balance Sheet Planning Ledger, 'Closing');
+
+['Balance Sheet Planning Measure':'Closing'] =C:
+IF( DIMIX('Period',!Period) < DIMIX('Period',DB('zSYS Maintenance Parameter','ActualMonth','S Type')),
+  DB('Balance Sheet Planning', !Version, !Period, !Balance Sheet Planning Ledger, 'Value'),
+STET);
+
+['Balance Sheet Planning Measure':'Delta'] =N:
+IF( DIMIX('Period',!Period) < DIMIX('Period',DB('zSYS Maintenance Parameter','ActualMonth','S Type')),
+  DB('Balance Sheet Planning', !Version, !Period, !Balance Sheet Planning Ledger, 'Value')
+  ,
+Continue);
+
+# ha Capex tétel huzza át
+['Balance Sheet Planning Measure':'Delta'] =N:
+IF( DB('}ElementAttributes_Balance Sheet Planning Ledger', !Balance Sheet Planning Ledger, 'Capex tetel') @= '1',
+DB('Capex Balance Sheet Assignment', !Version, !Period, 'Total', !Balance Sheet Planning Ledger, 'Value')
+,
+STET);
+
+#FEEDERS;
+

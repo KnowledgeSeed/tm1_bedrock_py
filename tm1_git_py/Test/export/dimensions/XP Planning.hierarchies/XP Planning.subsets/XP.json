@@ -1,0 +1,5 @@
+{
+	"@type": "Subset",
+	"Name": "XP",
+	"Expression": "{[XP Planning].[XP Planning].[Total^TEL + NET + TV],[XP Planning].[XP Planning].[Total^NET + TV],[XP Planning].[XP Planning].[Total^TV + TEL],[XP Planning].[XP Planning].[Total^NET + TEL],[XP Planning].[XP Planning].[Total^TV],[XP Planning].[XP Planning].[Total^NET],[XP Planning].[XP Planning].[Total^TEL]}"
+}

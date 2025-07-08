@@ -1,0 +1,5 @@
+{
+	"@type": "Subset",
+	"Name": "All Version",
+	"Expression": "{[Version].[Version].[Forecast],[Version].[Version].[Base],[Version].[Version].[Fact],[Version].[Version].[ModosDavid],[Version].[Version].[TakacsAttila],[Version].[Version].[Report],[Version].[Version].[Vidanet_2024_yearly],[Version].[Version].[Vidanet_2024_4/8],[Version].[Version].[Vidanet_2024_8/4],[Version].[Version].[Mody],[Version].[Version].[test],[Version].[Version].[csakTenyAdatok]}"
+}

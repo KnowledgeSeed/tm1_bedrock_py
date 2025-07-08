@@ -1,0 +1,55 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+
+
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+IF( vProduct @= 'New' & vProduct @= 'Nem tartozik termekhez' & vProduct @= 'Terminated');
+  itemskip;
+ENDIF;
+
+
+sPeriodSubset = 'Planning Period';
+sPeriodDim = 'Period';
+nStartPeriod = 1;
+nMaxPeriodLen = SubsetGetSize(sPeriodDim, sPeriodSubset);
+i = nStartPeriod;
+
+
+While(i <= nMaxPeriodLen);
+  sInputPeriod = SubsetGetElementName(sPeriodDim, sPeriodSubset, i);
+  IF( long(sInputPeriod) <> 6);
+  ELSE;
+  # zaroertek
+  nZaro = CellGetN('Subscription Topdown', pVersion, sInputPeriod, vProduct, 'Closing', 'Value');
+  # arány /100
+  nRatio = CellGetN('Weight and Limit', pVersion, sInputPeriod, vProduct, 'Loyalty Extension Ratio', 'Value') \100;
+  # arany * zaróertek
+  nLoylatyValue = ROUND(nRatio * nZaro);
+  CellPutN(0, 'Subscription Topdown', pVersion, sInputPeriod, vProduct, 'Loyalty Extension', 'Base');
+  CellPutN(nLoylatyValue, 'Subscription Plan', pVersion, sInputPeriod, 'NA', 'NA', vProduct, vProduct, 'Loyalty extension increase', 'Matrix UI Input');
+  ENDIF;
+  
+  i = i+1;
+# while
+END;
+  
+
+
+
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

@@ -1,0 +1,16 @@
+{
+	"@type": "Hierarchy",
+	"Name": "zSYS Maintenance Parameter Measure",
+	"Elements": [
+		{
+			"name": "S Type",
+			"type": "String"
+		},
+		{
+			"name": "N type",
+			"type": "Numeric"
+		}
+	],
+	"Edges": [],
+	"Subsets@Code.links": []
+}

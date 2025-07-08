@@ -1,0 +1,30 @@
+{
+	"@type": "Process",
+	"Name": "zSYS File Zip",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS File Zip.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pDebug",
+			"Prompt": "",
+			"Value": 0,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pCallerID",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pParamList",
+			"Prompt": "",
+			"Value": "sDirectoryParam:Investment Export Archive Directory;sTargetFile:CO Investment Projection.csv;sFilePathParam:Outbound Data Directory Path",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

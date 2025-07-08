@@ -1,0 +1,8 @@
+{
+	"@type": "Dimension",
+	"Name": "Weight and limit measure",
+	"Hierarchies@Code.links": [
+		"Weight and limit measure.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE23703E0>.json"
+	],
+	"DefaultHierarchy": "Dimensions('Weight and limit measure')/Hierarchies('Weight and limit measure')"
+}

@@ -1,0 +1,26 @@
+{
+	"@type": "Cube",
+	"Name": "Subscription Topdown",
+	"Dimensions": [
+		{
+			"@id": "Dimensions('Version')"
+		},
+		{
+			"@id": "Dimensions('Period')"
+		},
+		{
+			"@id": "Dimensions('Product')"
+		},
+		{
+			"@id": "Dimensions('Subscription Topdown Movement')"
+		},
+		{
+			"@id": "Dimensions('Subscription Topdown Measure')"
+		}
+	],
+	"Rules@Code.link": "Subscription Topdown.rules",
+	"Views@Code.links": [
+		"Subscription Topdown.views/Input Test.json",
+		"Subscription Topdown.views/testMODY.json"
+	]
+}

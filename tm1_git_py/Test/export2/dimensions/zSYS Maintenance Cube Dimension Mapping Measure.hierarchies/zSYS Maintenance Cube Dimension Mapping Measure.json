@@ -1,0 +1,144 @@
+{
+	"@type": "Hierarchy",
+	"Name": "zSYS Maintenance Cube Dimension Mapping Measure",
+	"Elements": [
+		{
+			"name": "dimcount",
+			"type": "Numeric"
+		},
+		{
+			"name": "validation",
+			"type": "Numeric"
+		},
+		{
+			"name": "dim1",
+			"type": "String"
+		},
+		{
+			"name": "dim2",
+			"type": "String"
+		},
+		{
+			"name": "dim3",
+			"type": "String"
+		},
+		{
+			"name": "dim4",
+			"type": "String"
+		},
+		{
+			"name": "dim5",
+			"type": "String"
+		},
+		{
+			"name": "dim6",
+			"type": "String"
+		},
+		{
+			"name": "dim7",
+			"type": "String"
+		},
+		{
+			"name": "dim8",
+			"type": "String"
+		},
+		{
+			"name": "dim9",
+			"type": "String"
+		},
+		{
+			"name": "dim10",
+			"type": "String"
+		},
+		{
+			"name": "dim11",
+			"type": "String"
+		},
+		{
+			"name": "dim12",
+			"type": "String"
+		},
+		{
+			"name": "dim13",
+			"type": "String"
+		},
+		{
+			"name": "dim14",
+			"type": "String"
+		},
+		{
+			"name": "dim15",
+			"type": "String"
+		},
+		{
+			"name": "dim16",
+			"type": "String"
+		},
+		{
+			"name": "dim17",
+			"type": "String"
+		},
+		{
+			"name": "dim18",
+			"type": "String"
+		},
+		{
+			"name": "dim19",
+			"type": "String"
+		},
+		{
+			"name": "dim20",
+			"type": "String"
+		},
+		{
+			"name": "dim21",
+			"type": "String"
+		},
+		{
+			"name": "dim22",
+			"type": "String"
+		},
+		{
+			"name": "dim23",
+			"type": "String"
+		},
+		{
+			"name": "dim24",
+			"type": "String"
+		},
+		{
+			"name": "dim25",
+			"type": "String"
+		},
+		{
+			"name": "dim26",
+			"type": "String"
+		},
+		{
+			"name": "dim27",
+			"type": "String"
+		},
+		{
+			"name": "dim28",
+			"type": "String"
+		},
+		{
+			"name": "dim29",
+			"type": "String"
+		},
+		{
+			"name": "dim30",
+			"type": "String"
+		},
+		{
+			"name": "dim31",
+			"type": "String"
+		},
+		{
+			"name": "dim32",
+			"type": "String"
+		}
+	],
+	"Edges": [],
+	"Subsets@Code.links": []
+}

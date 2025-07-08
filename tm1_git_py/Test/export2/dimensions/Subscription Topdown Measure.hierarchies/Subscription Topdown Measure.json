@@ -1,0 +1,92 @@
+{
+	"@type": "Hierarchy",
+	"Name": "Subscription Topdown Measure",
+	"Elements": [
+		{
+			"name": "Value",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Base",
+			"type": "Numeric"
+		},
+		{
+			"name": "UI Input",
+			"type": "Numeric"
+		},
+		{
+			"name": "TD UI Input",
+			"type": "Numeric"
+		},
+		{
+			"name": "Matrix UI Input",
+			"type": "Numeric"
+		},
+		{
+			"name": "Transaction Limit Correction",
+			"type": "Numeric"
+		},
+		{
+			"name": "Override",
+			"type": "Numeric"
+		},
+		{
+			"name": "Limit Correction Closing Check",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Min Limit Input",
+			"type": "Numeric"
+		},
+		{
+			"name": "Max Limit Input",
+			"type": "Numeric"
+		},
+		{
+			"name": "Comment",
+			"type": "String"
+		},
+		{
+			"name": "Zero Flag",
+			"type": "Numeric"
+		}
+	],
+	"Edges": [
+		{
+			"parentName": "Value",
+			"componentName": "Base",
+			"weight": 1
+		},
+		{
+			"parentName": "Value",
+			"componentName": "TD UI Input",
+			"weight": 1
+		},
+		{
+			"parentName": "Value",
+			"componentName": "Matrix UI Input",
+			"weight": 1
+		},
+		{
+			"parentName": "Value",
+			"componentName": "Transaction Limit Correction",
+			"weight": 1
+		},
+		{
+			"parentName": "Limit Correction Closing Check",
+			"componentName": "Base",
+			"weight": 1
+		},
+		{
+			"parentName": "Limit Correction Closing Check",
+			"componentName": "TD UI Input",
+			"weight": 1
+		},
+		{
+			"parentName": "Limit Correction Closing Check",
+			"componentName": "Matrix UI Input",
+			"weight": 1
+		}
+	],
+	"Subsets@Code.links": []
+}

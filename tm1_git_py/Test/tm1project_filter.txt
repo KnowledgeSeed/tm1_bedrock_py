@@ -1,0 +1,22 @@
++/cubes/*
++/dimensions/*
++/processes/*
++/chores/*
++/data_csv/*.*
++/data_source/*.*
+-/Cubes/Views*
+-/dimensions/Product*
+-/dimensions/Source Product*
+-/dimensions/Target Product*
+-/dimensions/zSYS Analogic UserPool*
+-/dimensions/Channel*
+-/dimensions/Csoportos Flat*
+-/dimensions/Individual Cost Ledger*
+-/dimensions/ledger*
+-/dimensions/Provider*
+-/dimensions/Version*
+-/dimensions/Comment ID*
+-/dimensions/Capex Ledger*
+-/dimensions/Balance Sheet Planning Ledger*
+-/cubes/zSYS Maintenance Parameter*
+-/processes/zSYS Analogic Operation Version Copy*

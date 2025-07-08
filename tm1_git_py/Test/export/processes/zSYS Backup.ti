@@ -1,0 +1,47 @@
+#region Prolog
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# =========================================================
+# Original Date Created              2019-10-08
+# Originator                                 Jozsef Buzas
+# Purpose                                   This process executes a backup script that ZIPs the model directories and copies them to a backup location
+# Change Date                           XX
+# Change Request Reference    XX
+# Change Made by                     XX
+# =========================================================
+
+### Run SaveData before backup
+SaveDataAll();
+
+### Read parameters from parameter cube
+sExec = CellGetS('zSYS Maintenance Parameter','Winzip','S Type');
+sBackupDir = CellGetS('zSYS Maintenance Parameter','Backup Directory Path','S Type');
+sDataDir = CellGetS('zSYS Maintenance Parameter','Model UNC','S Type');
+sDimCSVDir = CellGetS('zSYS Maintenance Parameter','Dimension Export UNC','S Type');
+sServerName = CellGetS('zSYS Maintenance Parameter','TM1 Server Name','S Type');
+
+
+
+sFileName = sServerName | ' - ' | TIMST(NOW(), '\Y\m\d \h.\i', 1) | '.zip';
+sArgs = ' a -tzip ';
+sCommand = sExec | sArgs | '"' | sBackupDir | sFileName | '" "' | sDataDir |  '" "' | sDimCSVDir | '"';
+
+EXECUTECOMMAND(sCommand,0);
+#endregion
+#region Metadata
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

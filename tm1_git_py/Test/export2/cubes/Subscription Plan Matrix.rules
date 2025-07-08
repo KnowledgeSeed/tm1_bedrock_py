@@ -1,0 +1,88 @@
+SKIPCHECK;
+
+['Period':'202112'] = N: STET; 
+# verzo szabályok
+[]= N:
+IF(ELISPAR('Version','Report',!Version) = 1,
+STET,Continue);
+
+# Ezek nincsenek benne
+# new
+# terminated
+# hűséghosszabítás
+
+
+# csak ott számol ahol lehet
+['Subscription Plan Matrix Movement':{'Retainer increase', 'Upward migration increase', 'Downward migration increase'},
+'Subscription Plan Matrix Measure':'TD UI Input'] =N:
+IF(DB('Subscription Movement Assignment for Input', !Version, !Period, !Source Product, !Target Product, !Subscription Plan Matrix Movement, 'Switch Off Weight') = 0,
+  stet, continue);
+  
+# Migrált növekedések  
+['Subscription Plan Matrix Movement':{'Retainer increase', 'Upward migration increase', 'Downward migration increase'},
+'Subscription Plan Matrix Measure':'TD UI Input'] =N:
+round(
+  # switch off rate based on weights
+  (DB('Subscription Movement Assignment for Input', !Version, !Period, !Source Product, !Target Product, !Subscription Plan Matrix Movement, 'Switch Off Weight')
+  \ DB('Subscription Movement Assignment for Input', !Version, !Period, DB('}ElementAttributes_Product', !Source Product, 'Product Category')| ' Total', !Target Product, 'Migration increase', 'Switch Off Weight'))
+  * DB('Subscription Topdown', !Version, !Period, !Target Product, 'Migration increase', 'UI Input')
+);
+
+# Migrált csökkenések
+['Subscription Plan Matrix Movement':{'Retainer decrease', 'Upward migration decrease', 'Downward migration decrease'},
+'Subscription Plan Matrix Measure':'TD UI Input'] =N:
+round(
+  # switch off rate based on weights
+  (DB('Subscription Movement Assignment for Input', !Version, !Period, !Source Product, !Target Product, !Subscription Plan Matrix Movement, 'Switch On Weight')
+  \ DB('Subscription Movement Assignment for Input', !Version, !Period, DB('}ElementAttributes_Product', !Source Product, 'Product Category')| ' Total', !Target Product, 'Migration decrese', 'Switch On Weight'))
+  * DB('Subscription Topdown', !Version, !Period, !Target Product, 'Migration decrese', 'UI Input')
+);
+
+
+# A kerekítés szabálya
+
+['Subscription Plan Matrix Movement':{'Retainer increase', 'Upward migration increase', 'Downward migration increase'},
+'Subscription Plan Matrix Measure':'TD UI Input Rounding Correction'] =N:
+DB('Weight and Limit', !Version, !Period,!source Product, 'Switch off weight', 'RoundingCorrFlag')*
+(DB('Subscription Topdown', !Version, !Period, !Target Product, 'Migration increase', 'UI Input')
+-
+DB('Subscription Plan Matrix', !Version, !Period, DB('}ElementAttributes_Product', !Source Product, 'Product Category')| ' Total', !Target Product, 'Migration increase', 'TD UI Input')
+#DB('Subscription Plan', !Version, !Period, !Loyalty, !Sales Channel, DB('}ElementAttributes_Product', !Source Product, 'Product Category')| ' Total', !Target Product, 'Migration increase', 'TD UI Input')
+);
+['Subscription Plan Matrix Movement':{'Retainer decrease', 'Upward migration decrease', 'Downward migration decrease'},
+'Subscription Plan Matrix Measure':'TD UI Input Rounding Correction'] =N:
+DB('Weight and Limit', !Version, !Period, !source Product, 'Switch on weight', 'RoundingCorrFlag')*
+(DB('Subscription Topdown', !Version, !Period, !Target Product, 'Migration decrese', 'UI Input')
+-
+DB('Subscription Plan Matrix', !Version, !Period, DB('}ElementAttributes_Product', !Source Product, 'Product Category')| ' Total', !Target Product, 'Migration decrease', 'TD UI Input')
+#DB('Subscription Plan', !Version, !Period, !Loyalty, !Sales Channel, DB('}ElementAttributes_Product', !Source Product, 'Product Category')| ' Total', !Target Product, 'Migration increase', 'TD UI Input')
+);
+
+# a másik oldal könyvelése
+['Subscription Plan Matrix Measure':'TD UI Input Counter Booking'] = N:
+DB('Subscription Matrix Plan', 
+  !Version, 
+  !Period, 
+  !Target Product, 
+  !Source Product, 
+  DB('}ElementAttributes_Subscription Plan Matrix Movement', !Subscription Plan Matrix Movement, 'Opposite'), 
+  'TD UI Input') 
+  +
+DB('Subscription Plan Matrix', 
+  !Version, 
+  !Period, 
+  !Target Product, 
+  !Source Product, 
+  DB('}ElementAttributes_Subscription Plan Matrix Movement', !Subscription Plan Matrix Movement, 'Opposite'), 
+  'TD UI Input Rounding Correction'
+);
+
+#Matrix UI Input
+['Subscription Plan Matrix Measure':'Matrix UI Input'] = N:STET;
+
+#Transaction Min Limit Correction
+#Transaction Limit Balance Correction
+
+
+
+FEEDERS;

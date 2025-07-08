@@ -1,0 +1,35 @@
+SKIPCHECK;
+
+
+# csak az 1 év hűségidőnél kell számolni
+# csak a call centerre kell számolni a ÜSZ máshol van elszámolva
+['Loyalty':'Loyalty':'0'] = STET;
+
+
+['Commission Lineitem':'Commission Lineitem':'Commission Fee'] = C:
+IF( ELLEV('Period',!Period)>0,
+  DB('Commission', !Version, DB('}ElementAttributes_Period', !Period, 'Last_M_Y'), !Loyalty, !Sales Channel, !Product, !Commission, !Commission Lineitem, !Commission Measure),
+Continue);
+
+# verzo szabályok
+[]= N:
+IF(ELISPAR('Version','Report',!Version) = 1,
+STET,Continue);
+
+
+['Commission Lineitem':'Commission Lineitem':'Commission Total Cost', 'Commission Measure':'Value'] =N:
+  ['Commission Lineitem':'Commission Lineitem':'Commission Fee']
+  *
+  ['Commission Lineitem':'Commission Lineitem':'Transaction Number'];
+
+
+
+FEEDERS;
+['Commission Lineitem':'Commission Lineitem':'Commission Fee'] =>   ['Commission Lineitem':'Commission Lineitem':'Commission Total Cost'];
+['Commission Lineitem':'Commission Lineitem':'Transaction Number'] =>   ['Commission Lineitem':'Commission Lineitem':'Commission Total Cost'];
+
+['Commission Lineitem':'Commission Lineitem':'Commission Total Cost','Sales Channel':'Call Center'] 
+=> DB('Commisson IFRS', !Version, !Period, 'Call Center Transaction Cost', 'Value');
+
+['Commission Lineitem':'Commission Lineitem':'Commission Total Cost','Sales Channel':'Customer Service'] 
+=> DB('Commisson IFRS', !Version, !Period, 'Customer Service Transaction Cost', 'Value');

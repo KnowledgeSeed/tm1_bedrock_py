@@ -1,0 +1,20 @@
+{
+	"@type": "Chore",
+	"Name": "test3",
+	"StartTime": "2025-05-05T13:45:00+01:00",
+	"DSTSensitive": true,
+	"Active": false,
+	"ExecutionMode": "SingleCommit",
+	"Frequency": "P01DT01H01M00S",
+	"Tasks": [
+		{
+			"Process@odata.bind": "Processes('airflowTriggerTest')",
+			"Parameters": [
+				{
+					"Name": "pVersion",
+					"Value": ""
+				}
+			]
+		}
+	]
+}

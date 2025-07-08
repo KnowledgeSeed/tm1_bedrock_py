@@ -1,0 +1,24 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI Add Other Ledger",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic UI Add Other Ledger.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pLedger",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pLedgerName",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

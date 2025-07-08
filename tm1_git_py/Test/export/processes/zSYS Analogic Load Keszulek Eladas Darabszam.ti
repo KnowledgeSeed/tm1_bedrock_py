@@ -1,0 +1,60 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# =========================================================
+# Original Date Created              2023.12.11
+# Originator                         Módos David
+# Purpose                            Process to load a given product dimension's base elements with a total, fill attributes as well
+# Change Date                           
+# Change Request Reference    
+# Change Made by                     Módos Dávid
+# =========================================================
+
+
+
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+# Modos David 01 05
+
+# ha a kapott idő nincs benne skip
+sAllNPeriodSubsetName = 'All N';
+IF ( SubsetElementExists('Period', sAllNPeriodSubsetName, vPeriod) = 0); 
+    itemskip;
+ENDIF;
+
+
+
+
+
+IF( pAllPeriod = 1);
+  sPeriodSubsetName = 'Planning Period';
+  IF ( SubsetElementExists('Period', sPeriodSubsetName, vPeriod) = 0); 
+    CellPutN(vValue, 'Revenue', pVersion, vPeriod, '91401', 'Nem tartozik termekhez', 'Efi szam', 'Value');
+  ENDIF;
+
+ENDIF;
+
+
+IF( pLastYear = 1);
+  sPeriodSubsetName = 'Last_Actual_Year';
+  IF ( SubsetElementExists('Period', sPeriodSubsetName, vPeriod) = 1);
+    CellPutN(vValue, 'Revenue', pVersion, vPeriod, '91401', 'Nem tartozik termekhez', 'Efi szam', 'Value');
+  ENDIF;
+  
+ENDIF;
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+#endregion

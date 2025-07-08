@@ -1,0 +1,18 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic Delete User",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic Delete User.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pUserID",
+			"Prompt": "",
+			"Value": "SeleniumTestUser15",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

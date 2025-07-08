@@ -1,0 +1,60 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI New Csoportos Flat",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic UI New Csoportos Flat.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pVersion",
+			"Prompt": "Base",
+			"Value": "Base",
+			"Type": "String"
+		},
+		{
+			"Name": "pName",
+			"Prompt": "valami",
+			"Value": "valami",
+			"Type": "String"
+		},
+		{
+			"Name": "pProvider",
+			"Prompt": "",
+			"Value": "valamiProvider",
+			"Type": "String"
+		},
+		{
+			"Name": "pPeriodStart",
+			"Prompt": "csak \u00e9ves lehet",
+			"Value": "2024",
+			"Type": "String"
+		},
+		{
+			"Name": "pPeriodEnd",
+			"Prompt": "csak \u00e9ves lehet",
+			"Value": "2025",
+			"Type": "String"
+		},
+		{
+			"Name": "pCurrency",
+			"Prompt": "HUF",
+			"Value": "HUF",
+			"Type": "String"
+		},
+		{
+			"Name": "pOsszeg",
+			"Prompt": "1000",
+			"Value": "1000",
+			"Type": "String"
+		},
+		{
+			"Name": "pUser",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

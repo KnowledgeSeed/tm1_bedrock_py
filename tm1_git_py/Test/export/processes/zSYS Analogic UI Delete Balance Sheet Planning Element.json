@@ -1,0 +1,18 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI Delete Balance Sheet Planning Element",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic UI Delete Balance Sheet Planning Element.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pLedger",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

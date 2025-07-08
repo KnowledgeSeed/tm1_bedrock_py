@@ -1,0 +1,132 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#Miki 2023.06.09.
+
+If( 1 = 0 );
+    ExecuteProcess( ' zSYS Analogic UI XP CAGR and Grow Rate',
+    'pLoadName', pLoadName,
+    'pGrowValue', pGrowValue,
+    'pVersion', pVersion,
+    'pXP', pXP,
+    'pStartMonth', pStartMonth
+    );
+EndIf;
+
+
+sDimName = 'Period';
+sHierName = 'Period';
+sSubsetName = 'Input Period';
+sTVHier='TV Calculated from XP';
+sNETHier='NET Calculated from XP';
+sTELHier='TEL Calculated from XP';
+
+sLen = SubsetGetSize(sDimName, sSubsetName);
+
+IF (pStartMonth = 1);
+  pStartMonth = 12;
+Else;
+  pStartMonth = 24;
+Endif;
+
+#Aktuális hónap
+sCurrentMonth = CellGetS('zSYS Maintenance Parameter', 'ActualMonth','S Type');
+
+#Hónapok index értékei a megadott subsetben
+
+nCurrentMonthI = HierarchySubsetElementGetIndex(sDimName, sHierName, sSubsetName, sCurrentMonth, 1);
+
+
+#utolsó tényhónap indexe
+nLastFactMonth = nCurrentMonthI - 1;
+
+# Induló hónap 
+nN = nLastFactMonth - pStartMonth;
+
+if(nN < 1);
+  nN = 1;
+endif;
+
+sStartMonth = SubsetGetElementName(sDimName, sSubsetName, nN);
+
+#Hónapokon lévő XP elemek értékei
+#nCurrentValue = CellGetN('XP Planning', pVersion, sCurrentMonth, pXP, 'Value');
+nStartValue = CellGetN('XP Planning', pVersion, sStartMonth, pXP, 'Value');
+
+#Aktuális év utolsó hónapja
+#sDec = '12';
+#sLastMonth =INSRT(SUBST(sCurrentMonth, 1, 4), sDec, 1);
+
+#utolsó tény hónap értéke
+nLastValue = CellGetN('XP Planning', pVersion, SubsetGetElementName(sDimName,sSubsetName,nLastFactMonth), pXP, 'Value');
+
+# %-os értékek meghatározása
+nRate = pGrowValue / 100 + 1;
+nCAGRRate = (nLastValue / nStartValue) ^ (1/nLastFactMonth);
+
+
+
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+IF (pLoadName @= 'Grow Rate');
+i = 1;
+While(i <= sLen);
+  sPeriod = SubsetGetElementName(sDimName,sSubsetName, i);
+  sVersion = 'Base';
+  If(sCurrentMonth @<= sPeriod);
+    nLastValue = nLastValue * nRate;
+    CellPutN(nLastValue, 'XP Planning', 'Base', sPeriod, pXP, 'Value');
+    CellPutN(1, 'XP Planning', 'Base', sPeriod, pXP, 'Colors');
+  ExecuteProcess('zSYS Xp Difference Calculation',
+     'pPeriod', sPeriod,
+     'pXP', pXP,
+     'pValue', nLastValue
+    );
+  EndIf;
+  i = i+1;
+END;
+ENDIF;
+
+
+IF (pLoadName @= 'CAGR');
+i = 1;
+While(i <= sLen);
+  sPeriod = SubsetGetElementName(sDimName,sSubsetName, i);
+  sVersion = 'Base';
+  If(sCurrentMonth @<= sPeriod);
+    nLastValue = nLastValue * nCAGRRate;
+    CellPutN(nLastValue, 'XP Planning', pVersion, sPeriod, pXP, 'Value');
+    CellPutN(1, 'XP Planning', 'Base', sPeriod, pXP, 'Colors');
+  ExecuteProcess('zSYS Xp Difference Calculation',
+     'pPeriod', sPeriod,
+     'pXP', pXP,
+     'pValue', nLastValue
+    );
+  EndIf;
+  i = i+1;
+END;
+ENDIF;
+
+
+
+# Módos Dávid 2024 02 13
+
+sToday = Today(1);
+CellPutS(sToday, '}ElementAttributes_Version', pVersion, 'Last Updated');
+CellPutS(pUser, '}ElementAttributes_Version', pVersion, 'Last Updated By');
+
+
+#endregion

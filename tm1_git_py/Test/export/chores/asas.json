@@ -1,0 +1,10 @@
+{
+	"@type": "Chore",
+	"Name": "asas",
+	"StartTime": "2025-04-22T10:42:00+01:00",
+	"DSTSensitive": true,
+	"Active": false,
+	"ExecutionMode": "SingleCommit",
+	"Frequency": "P00DT01H01M00S",
+	"Tasks": []
+}

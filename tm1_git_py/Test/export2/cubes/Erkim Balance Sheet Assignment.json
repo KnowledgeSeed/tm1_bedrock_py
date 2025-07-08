@@ -1,0 +1,23 @@
+{
+	"@type": "Cube",
+	"Name": "Erkim Balance Sheet Assignment",
+	"Dimensions": [
+		{
+			"@id": "Dimensions('Version')"
+		},
+		{
+			"@id": "Dimensions('Period')"
+		},
+		{
+			"@id": "Dimensions('Balance Sheet Planning Ledger')"
+		},
+		{
+			"@id": "Dimensions('ledger')"
+		},
+		{
+			"@id": "Dimensions('Erkim Balance Sheet Assignment Measure')"
+		}
+	],
+	"Rules@Code.link": "Erkim Balance Sheet Assignment.rules",
+	"Views@Code.links": []
+}

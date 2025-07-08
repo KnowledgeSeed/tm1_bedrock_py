@@ -1,0 +1,40 @@
+{
+	"@type": "Hierarchy",
+	"Name": "Individual Cost Lineitem",
+	"Elements": [
+		{
+			"name": "Total",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Efi szam",
+			"type": "Numeric"
+		},
+		{
+			"name": "CPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "Cost",
+			"type": "Numeric"
+		}
+	],
+	"Edges": [
+		{
+			"parentName": "Total",
+			"componentName": "Efi szam",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "CPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "Cost",
+			"weight": 1
+		}
+	],
+	"Subsets@Code.links": []
+}

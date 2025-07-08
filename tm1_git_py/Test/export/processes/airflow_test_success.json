@@ -1,0 +1,11 @@
+{
+	"@type": "Process",
+	"Name": "airflow_test_success",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "airflow_test_success.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [],
+	"Variables": []
+}

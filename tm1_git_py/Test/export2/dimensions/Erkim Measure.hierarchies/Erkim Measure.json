@@ -1,0 +1,19 @@
+{
+	"@type": "Hierarchy",
+	"Name": "Erkim Measure",
+	"Elements": [
+		{
+			"name": "Value",
+			"type": "Numeric"
+		},
+		{
+			"name": "Comment",
+			"type": "String"
+		}
+	],
+	"Edges": [],
+	"Subsets@Code.links": [
+		"Erkim Measure.subsets/pivot.json",
+		"Erkim Measure.subsets/Value.json"
+	]
+}

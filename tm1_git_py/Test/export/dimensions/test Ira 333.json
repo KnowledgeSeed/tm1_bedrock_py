@@ -1,0 +1,8 @@
+{
+	"@type": "Dimension",
+	"Name": "test Ira 333",
+	"Hierarchies@Code.links": [
+		"test Ira 333.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE25EA4E0>.json"
+	],
+	"DefaultHierarchy": "Dimensions('test Ira 333')/Hierarchies('test Ira 333')"
+}

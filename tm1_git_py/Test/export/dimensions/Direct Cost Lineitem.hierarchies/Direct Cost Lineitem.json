@@ -1,0 +1,20 @@
+{
+	"@type": "Hierarchy",
+	"Name": "Direct Cost Lineitem",
+	"Elements": [
+		{
+			"name": "ACPU",
+			"type": "Numeric"
+		},
+		{
+			"name": "Cost Rate",
+			"type": "Numeric"
+		},
+		{
+			"name": "Cost",
+			"type": "Numeric"
+		}
+	],
+	"Edges": [],
+	"Subsets@Code.links": []
+}

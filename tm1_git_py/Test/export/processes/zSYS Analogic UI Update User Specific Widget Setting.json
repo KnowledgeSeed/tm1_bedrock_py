@@ -1,0 +1,24 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI Update User Specific Widget Setting",
+	"HasSecurityAccess": true,
+	"Code@Code.link": "zSYS Analogic UI Update User Specific Widget Setting.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pWidgetName",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pUserSpecific",
+			"Prompt": "true / false",
+			"Value": "",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

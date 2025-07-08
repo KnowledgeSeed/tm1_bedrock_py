@@ -1,0 +1,5 @@
+{
+	"@type": "Subset",
+	"Name": "New Source",
+	"Expression": "{[Source Product].[Source Product].[Cable Television New],[Source Product].[Source Product].[Telefon New],[Source Product].[Source Product].[Internet New]}"
+}

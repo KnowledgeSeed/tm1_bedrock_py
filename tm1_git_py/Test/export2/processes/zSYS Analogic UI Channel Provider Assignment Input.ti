@@ -1,0 +1,81 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+sMeasure = 'Assignment';
+sPeriodDim = 'Period';
+sAllNTimeSubset = 'Actual Period N level';
+sProviderDimensionName = 'Provider';
+sAllProviderSubset = 'allProviderSubset';
+
+nLastValue = CellGetN('Channel Provider Assignment', pVersion, pPeriod, pChannel, pProvider, sMeasure);
+IF( nLastValue = 1);
+  nInputValue = 0;
+ENDIF;
+IF( nLastValue = 0);
+  nInputValue = 1;
+ENDIF;
+
+nFirstPeriodIndex = SubsetElementGetIndex(sPeriodDim, sAllNTimeSubset, pPeriod);
+nLastPeriodIndex = SubsetGetSize(sPeriodDim, sAllNTimeSubset);
+
+IF( HierarchySubsetExists(sProviderDimensionName, sProviderDimensionName, sAllProviderSubset) = 0);
+  HierarchySubsetCreate(sProviderDimensionName, sProviderDimensionName, sAllProviderSubset, 0);
+ENDIF;
+
+sMDX =
+'
+{TM1FILTERBYLEVEL({
+		TM1DRILLDOWNMEMBER({
+			[Provider].[Provider].[Provider Total]
+		}, ALL, RECURSIVE)
+	}, 0)
+}
+';
+HierarchySubsetMDXSet(sProviderDimensionName, sProviderDimensionName, sAllProviderSubset, sMDX);
+nLastProviderIndex = SubsetGetSize(sProviderDimensionName, sAllProviderSubset);
+nProviderIndex = 1;
+While(nProviderIndex <= nLastProviderIndex);
+    sInputProvider = SubsetGetElementName(sProviderDimensionName, sAllProviderSubset, nProviderIndex);
+    i = nFirstPeriodIndex;
+    While(i <= nLastPeriodIndex);
+        sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+        CellPutN(0, 'Channel Provider Assignment', pVersion, sInputPeriod, pChannel, sInputProvider, sMeasure);
+        i = i+1;
+    END;
+nProviderIndex = nProviderIndex +1;
+END;
+
+
+
+i = nFirstPeriodIndex;
+While(i <= nLastPeriodIndex);
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      CellPutN(nInputValue, 'Channel Provider Assignment', pVersion, sInputPeriod, pChannel, pProvider, sMeasure);
+      i = i+1;
+END;
+
+
+
+
+
+
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+sToday = Today(1);
+CellPutS(sToday, '}ElementAttributes_Version', pVersion, 'Last Updated');
+CellPutS(pUser, '}ElementAttributes_Version', pVersion, 'Last Updated By');
+#endregion

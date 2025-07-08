@@ -1,0 +1,37 @@
+{
+	"@type": "Hierarchy",
+	"Name": "Sales Channel",
+	"Elements": [
+		{
+			"name": "Total",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Call center",
+			"type": "Numeric"
+		},
+		{
+			"name": "Customer Service",
+			"type": "Numeric"
+		},
+		{
+			"name": "NA",
+			"type": "Numeric"
+		}
+	],
+	"Edges": [
+		{
+			"parentName": "Total",
+			"componentName": "Call center",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "Customer Service",
+			"weight": 1
+		}
+	],
+	"Subsets@Code.links": [
+		"Sales Channel.subsets/All N Level Element.json"
+	]
+}

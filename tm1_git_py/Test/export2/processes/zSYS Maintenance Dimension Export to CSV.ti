@@ -1,0 +1,308 @@
+#region Prolog
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# =========================================================
+# Original Date Created              2015/02/03
+# Originator                                 Moravcsik Zsolt
+# Purpose                                   General process to export elements and attributes of a dimension to a csv file
+# Change Date                           
+# Change Request Reference    
+# Change Made by                     
+# =========================================================
+
+
+# Central logging - start
+nRandomNumber = Round ( RAND * 1000000);
+sRandomNumber = NumberToString(nRandomNumber);
+pStartTime=NumberToString(NOW());
+vsProcessName =  GetProcessName();
+pParams= 'pParamList|'|pDimName;
+#ExecuteProcess ('zSYS Process Log Create Entry', 'pProcessName', vsProcessName, 'pStartTime', pStartTime, 'pParams', pParams, 'pRandomNumber', sRandomNumber, 'pCallerID', pCallerID);
+#OwnCallerID
+sCallerID = pStartTime |' - '| vsProcessName | '- '| sRandomNumber;
+
+
+# Define variables
+DimName = pDimName;
+SubName = '}'  | GetProcessName() | NumberToString ( Round ( RAND * 1000000) );
+If(CubeExists('zSYS Maintenance Parameter')=1);
+sSourceFolder =  CellGetS ('zSYS Maintenance Parameter', 'Dimension Export UNC', 'S Type');
+else;
+  sSourceFolder='';
+  ENDIF;
+sFile = sSourceFolder | DimName | '.csv';
+
+# Define a data source subset
+IF(SubsetExists(DimName, SubName)=1);
+  SubsetDestroy(DimName, SubName);
+ENDIF;
+
+MDX_Expression = '{TM1DRILLDOWNMEMBER( {['| Dimname |'].[All '| DimName |']}, ALL, RECURSIVE )}';
+SubsetCreatebyMDX(SubName, MDX_Expression);
+
+# Set the data source subset
+DatasourceASCIIDelimiter=';';
+DatasourceASCIIDecimalSeparator=',';
+DatasourceASCIIQuoteCharacter='';
+SetOutputCharacterSet( sFile, 'TM1CS_UTF16ESC');
+
+# If the file already exists, delete it
+IF(FileExists(sFile) = 1); 
+   AsciiDelete (sFile); 
+ENDIF;
+
+# List attributes
+AttrDimName = '}ElementAttributes_' | DimName;
+AttrCube = AttrDimName;
+
+IF(DIMIX(AttrDimName, 'C Element Export Already Expanded') = 0);
+   AttrInsert(DimName, '', 'C Element Export Already Expanded', 'N' );
+ENDIF;
+
+sAttr1 = ''; sAttr2 = ''; sAttr3 = ''; sAttr4 = ''; sAttr5 = ''; sAttr6 = ''; sAttr7 = ''; sAttr8 = ''; sAttr9 = ''; sAttr10 = ''; 
+sAttr11 = ''; sAttr12 = ''; sAttr13 = ''; sAttr14 = ''; sAttr15 = ''; sAttr16 = ''; sAttr17 = ''; sAttr18 = ''; sAttr19 = ''; sAttr20 = ''; 
+
+sAttrName2 = DIMNM(AttrDimName, 2);
+sAttrType2 = DTYPE(AttrDimName, sAttrName2);
+sAttrVar2 = '[' | SUBST(sAttrType2,2,1) | ']' | sAttrName2;
+
+sAttrName3 = DIMNM (AttrDimName, 3);
+sAttrType3 = DTYPE(AttrDimName, sAttrName3);
+sAttrVar3 = '[' | SUBST(sAttrType3,2,1) | ']' | sAttrName3;
+
+sAttrName4 = DIMNM(AttrDimName, 4);
+sAttrType4 = DTYPE(AttrDimName, sAttrName4);
+sAttrVar4 = '[' | SUBST(sAttrType4,2,1) | ']' | sAttrName4;
+
+sAttrName5 = DIMNM(AttrDimName, 5);
+sAttrType5 = DTYPE(AttrDimName, sAttrName5);
+sAttrVar5 = '[' | SUBST(sAttrType5,2,1) | ']' | sAttrName5;
+
+sAttrName6 = DIMNM(AttrDimName, 6);
+sAttrType6 = DTYPE(AttrDimName, sAttrName6);
+sAttrVar6 = '[' | SUBST(sAttrType6,2,1) | ']' | sAttrName6;
+
+sAttrName7 = DIMNM(AttrDimName, 7);
+sAttrType7 = DTYPE(AttrDimName, sAttrName7);
+sAttrVar7 = '[' | SUBST(sAttrType7,2,1) | ']' | sAttrName7;
+
+sAttrName8 = DIMNM(AttrDimName, 8);
+sAttrType8 = DTYPE(AttrDimName, sAttrName8);
+sAttrVar8 = '[' | SUBST(sAttrType8,2,1) | ']' | sAttrName8;
+
+sAttrName9 = DIMNM(AttrDimName, 9);
+sAttrType9 = DTYPE(AttrDimName, sAttrName9);
+sAttrVar9 = '[' | SUBST(sAttrType9,2,1) | ']' | sAttrName9;
+
+sAttrName10 = DIMNM(AttrDimName, 10);
+sAttrType10 = DTYPE(AttrDimName, sAttrName10);
+sAttrVar10 = '[' | SUBST(sAttrType10,2,1) | ']' | sAttrName10;
+
+sAttrName11 = DIMNM(AttrDimName, 11);
+sAttrType11 = DTYPE(AttrDimName, sAttrName11);
+sAttrVar11 = '[' | SUBST(sAttrType11,2,1) | ']' | sAttrName11;
+
+sAttrName12 = DIMNM(AttrDimName, 12);
+sAttrType12 = DTYPE(AttrDimName, sAttrName12);
+sAttrVar12 = '[' | SUBST(sAttrType12,2,1) | ']' | sAttrName12;
+
+sAttrName13 = DIMNM(AttrDimName, 13);
+sAttrType13 = DTYPE(AttrDimName, sAttrName13);
+sAttrVar13 = '[' | SUBST (sAttrType13,2,1) | ']' | sAttrName13;
+
+sAttrName14 = DIMNM(AttrDimName, 14);
+sAttrType14 = DTYPE(AttrDimName, sAttrName14);
+sAttrVar14 = '[' | SUBST(sAttrType14,2,1) | ']' | sAttrName14;
+
+sAttrName15 = DIMNM(AttrDimName, 15);
+sAttrType15 = DTYPE(AttrDimName, sAttrName15);
+sAttrVar15 = '[' | SUBST(sAttrType15,2,1) | ']' | sAttrName15;
+
+sAttrName16 = DIMNM(AttrDimName, 16);
+sAttrType16 = DTYPE(AttrDimName, sAttrName16);
+sAttrVar16 = '[' | SUBST(sAttrType16,2,1) | ']' | sAttrName16;
+
+sAttrName17 = DIMNM(AttrDimName, 17);
+sAttrType17 = DTYPE(AttrDimName, sAttrName17);
+sAttrVar17 = '[' | SUBST(sAttrType17,2,1) | ']' | sAttrName17;
+
+sAttrName18 = DIMNM(AttrDimName, 18);
+sAttrType18 = DTYPE(AttrDimName, sAttrName18);
+sAttrVar18 = '[' | SUBST(sAttrType18,2,1) | ']' | sAttrName18;
+
+sAttrName19 = DIMNM(AttrDimName, 19);
+sAttrType19 = DTYPE(AttrDimName, sAttrName19);
+sAttrVar19 = '[' | SUBST(sAttrType19,2,1) | ']' | sAttrName19;
+
+sAttrName20 = DIMNM(AttrDimName, 20);
+sAttrType20 = DTYPE(AttrDimName, sAttrName20);
+sAttrVar20 = '[' | SUBST(sAttrType20,2,1) | ']' | sAttrName20;
+
+sAttrName21 = DIMNM(AttrDimName, 21);
+sAttrType21 = DTYPE(AttrDimName, sAttrName21);
+sAttrVar21 = '[' | SUBST(sAttrType21,2,1) | ']' | sAttrName21;
+
+# Create a header
+#AsciiOutput(sFile, 'vL1', 'vL2', 'vL3', 'vL4', 'vL5', 'vL6', 'vL7', 'vL8', 'vL9', 'vL10',  'vL11',  'vL12',  'vL13',  'vL14',  'vL15', 'vType', 'vWeight', 'vA1', 'vA2', 'vA3', 'vA4', 'vA5', 'vA6', 'vA7', 'vA8', 'vA9', 'vA10',  'vA11',  'vA12',  'vA13',  'vA14',  'vA15', 'vA16',  'vA17',  'vA18',  'vA19',  'vA20' );
+
+# Output the data
+AsciiOutput(sFile,'vL1', 'vL2', 'vL3', 'vL4', 'vL5', 'vL6', 'vL7', 'vL8', 'vL9', 'vL10',  'vL11',  'vL12',  'vL13',  'vL14',  'vL15', 'vType', 'vWeight', sAttrVar2, sAttrVar3, sAttrVar4, sAttrVar5, sAttrVar6, sAttrVar7, sAttrVar8, sAttrVar9, sAttrVar10, sAttrVar11, sAttrVar12, sAttrVar13, sAttrVar14, sAttrVar15, sAttrVar16, sAttrVar17, sAttrVar18, sAttrVar19, sAttrVar20, sAttrVar21 );
+
+vL1=''; vL2=''; vL3=''; vL4=''; vL5=''; vL6=''; vL7=''; vL8=''; vL9=''; vL10=''; vL11=''; vL12=''; vL13=''; vL14=''; vL15='';
+cL1=''; cL2=''; cL3=''; cL4=''; cL5=''; cL6=''; cL7=''; cL8=''; cL9=''; cL10=''; cL11=''; cL12=''; cL13=''; cL14=''; cL15='';
+
+# Loop through the dimension elements
+nSize = SubsetGetSize(DimName, SubName);
+i = 1;
+
+WHILE(i <= nSize);
+   # Read the element's name
+   ElName = SubsetGetElementName(DimName, SubName, i);
+
+   # Determine element type
+   sType= DTYPE(DimName, ElName);
+
+   # Read the attributes
+   IF( sAttrName2 @<> '' ); IF(sAttrType2@= 'AN'); sAttr1 = NumberToString (CellGetN ( AttrCube, ElName, sAttrName2 )); ELSE; sAttr1 = CellGetS ( AttrCube, ElName, sAttrName2 ); ENDIF; ENDIF;
+   IF( sAttrName3 @<> '' ); IF(sAttrType3@= 'AN'); sAttr2 = NumberToString (CellGetN ( AttrCube, ElName, sAttrName3 )); ELSE; sAttr2 = CellGetS ( AttrCube, ElName, sAttrName3 ); ENDIF; ENDIF;
+   IF( sAttrName4 @<> '' ); IF(sAttrType4@= 'AN'); sAttr3 = NumberToString (CellGetN ( AttrCube, ElName, sAttrName4 )); ELSE; sAttr3 = CellGetS ( AttrCube, ElName, sAttrName4 ); ENDIF; ENDIF;
+   IF( sAttrName5 @<> '' ); IF(sAttrType5@= 'AN'); sAttr4 = NumberToString (CellGetN ( AttrCube, ElName, sAttrName5 )); ELSE; sAttr4 = CellGetS ( AttrCube, ElName, sAttrName5 ); ENDIF; ENDIF;
+   IF( sAttrName6 @<> '' ); IF(sAttrType6@= 'AN'); sAttr5 = NumberToString (CellGetN ( AttrCube, ElName, sAttrName6 )); ELSE; sAttr5 = CellGetS ( AttrCube, ElName, sAttrName6 ); ENDIF; ENDIF;
+   IF( sAttrName7 @<> '' ); IF(sAttrType7@= 'AN'); sAttr6 = NumberToString (CellGetN ( AttrCube, ElName, sAttrName7 )); ELSE; sAttr6 = CellGetS ( AttrCube, ElName, sAttrName7 ); ENDIF; ENDIF;
+   IF( sAttrName8 @<> '' ); IF(sAttrType8@= 'AN'); sAttr7 = NumberToString (CellGetN ( AttrCube, ElName, sAttrName8 )); ELSE; sAttr7 = CellGetS ( AttrCube, ElName, sAttrName8 ); ENDIF; ENDIF;
+   IF( sAttrName9 @<> '' ); IF(sAttrType9@= 'AN'); sAttr8 = NumberToString (CellGetN ( AttrCube, ElName, sAttrName9 )); ELSE; sAttr8 = CellGetS ( AttrCube, ElName, sAttrName9 ); ENDIF; ENDIF;
+   IF( sAttrName10 @<> '' ); IF(sAttrType10@= 'AN'); sAttr9 = NumberToString (CellGetN ( AttrCube, ElName, sAttrName10 )); ELSE; sAttr9 = CellGetS ( AttrCube, ElName, sAttrName10 ); ENDIF; ENDIF;
+   IF( sAttrName11 @<> '' ); IF(sAttrType11@= 'AN'); sAttr10 = NumberToString (CellGetN ( AttrCube, ElName, sAttrName11 )); ELSE; sAttr10 = CellGetS ( AttrCube, ElName, sAttrName11 ); ENDIF; ENDIF;
+   IF( sAttrName12 @<> '' ); IF(sAttrType12@= 'AN'); sAttr11 = NumberToString (CellGetN ( AttrCube, ElName, sAttrName12 )); ELSE; sAttr11 = CellGetS ( AttrCube, ElName, sAttrName12 ); ENDIF; ENDIF;
+   IF( sAttrName13 @<> '' ); IF(sAttrType13@= 'AN'); sAttr12 = NumberToString (CellGetN ( AttrCube, ElName, sAttrName13 )); ELSE; sAttr12 = CellGetS ( AttrCube, ElName, sAttrName13 ); ENDIF; ENDIF;
+   IF( sAttrName14 @<> '' ); IF(sAttrType14@= 'AN'); sAttr13 = NumberToString (CellGetN ( AttrCube, ElName, sAttrName14 )); ELSE; sAttr13 = CellGetS ( AttrCube, ElName, sAttrName14 ); ENDIF; ENDIF;
+   IF( sAttrName15 @<> '' ); IF(sAttrType15@= 'AN'); sAttr14 = NumberToString (CellGetN ( AttrCube, ElName, sAttrName15 )); ELSE; sAttr14 = CellGetS ( AttrCube, ElName, sAttrName15 ); ENDIF; ENDIF;
+   IF( sAttrName16 @<> '' ); IF(sAttrType16@= 'AN'); sAttr15 = NumberToString (CellGetN ( AttrCube, ElName, sAttrName16 )); ELSE; sAttr15 = CellGetS ( AttrCube, ElName, sAttrName16 ); ENDIF; ENDIF;
+   IF( sAttrName17 @<> '' ); IF(sAttrType17@= 'AN'); sAttr16 = NumberToString (CellGetN ( AttrCube, ElName, sAttrName17 )); ELSE; sAttr16 = CellGetS ( AttrCube, ElName, sAttrName17 ); ENDIF; ENDIF;
+   IF( sAttrName18 @<> '' ); IF(sAttrType18@= 'AN'); sAttr17 = NumberToString (CellGetN ( AttrCube, ElName, sAttrName18 )); ELSE; sAttr17 = CellGetS ( AttrCube, ElName, sAttrName18 ); ENDIF; ENDIF;
+   IF( sAttrName19 @<> '' ); IF(sAttrType19@= 'AN'); sAttr18 = NumberToString (CellGetN ( AttrCube, ElName, sAttrName19 )); ELSE; sAttr18 = CellGetS ( AttrCube, ElName, sAttrName19 ); ENDIF; ENDIF;
+   IF( sAttrName20 @<> '' ); IF(sAttrType20@= 'AN'); sAttr19 = NumberToString (CellGetN ( AttrCube, ElName, sAttrName20 )); ELSE; sAttr19 = CellGetS ( AttrCube, ElName, sAttrName20 ); ENDIF; ENDIF;
+   IF( sAttrName21 @<> '' ); IF(sAttrType21@= 'AN'); sAttr20 = NumberToString (CellGetN ( AttrCube, ElName, sAttrName21 )); ELSE; sAttr20 = CellGetS ( AttrCube, ElName, sAttrName21 ); ENDIF; ENDIF;
+
+   # Export element name, type, weight and attributes
+   IF(ELLEV(DimName,elName) <> 0);
+      CellPutN(CellGetN(AttrCube, ElName, 'C Element Export Already Expanded') + 1, AttrCube, ElName, 'C Element Export Already Expanded' );
+   ENDIF;
+
+           AsciiOutPut('test.txt',Elname);
+
+   IF( ElIsAnc (DimName, vL1, ElName) = 0 );
+       vL1=''; vL2=''; vL3=''; vL4=''; vL5=''; vL6=''; vL7=''; vL8=''; vL9=''; vL10=''; vL11=''; vL12=''; vL13=''; vL14=''; vL15='';
+       vL1 = ElName; 
+       AsciiOutput ( sFile, vL1, cL2, cL3, cL4, cL5, cL6, cL7, cL8, cL9, cL10,  cL11,  cL12,  cL13,  cL14,  cL15,  sType, '0', sAttr1,  sAttr2,  sAttr3,  sAttr4,  sAttr5,  sAttr6,  sAttr7,  sAttr8,  sAttr9,  sAttr10, sAttr11,  sAttr12,  sAttr13,  sAttr14,  sAttr15,  sAttr16,  sAttr17,  sAttr18,  sAttr19,  sAttr20);
+   ELSEIF( ElIsPar (DimName, vL1, ElName) = 1 );
+   #   IF(CellGetN(AttrCube, vL1, 'C Element Export Already Expanded') < 2 );
+         sWeight = NumberToString ( ElWeight (DimName, vL1, ElName) );
+         vL2 = ElName; AsciiOutput ( sFile, cL1, vL2, cL3, cL4, cL5, cL6, cL7, cL8, cL9, cL10, cL11,  cL12,  cL13,  cL14,  cL15,  sType, sWeight,  sAttr1,  sAttr2,  sAttr3,  sAttr4,  sAttr5,  sAttr6,  sAttr7,  sAttr8,  sAttr9,  sAttr10, sAttr11,  sAttr12,  sAttr13,  sAttr14,  sAttr15,  sAttr16,  sAttr17,  sAttr18,  sAttr19,  sAttr20);
+   #   ENDIF;
+   ELSEIF (ElIsPar (DimName, vL2, ElName) = 1 );
+  #    IF( CellGetN(AttrCube, vL2, 'C Element Export Already Expanded') < 2 );
+         sWeight = NumberToString ( ElWeight (DimName, vL2, ElName) );
+         vL3 = ElName; AsciiOutput ( sFile, cL1, cL2, vL3, cL4, cL5, cL6, cL7, cL8, cL9, cL10, cL11,  cL12,  cL13,  cL14,  cL15, sType, sWeight, sAttr1,  sAttr2,  sAttr3,  sAttr4,  sAttr5,  sAttr6,  sAttr7,  sAttr8,  sAttr9,  sAttr10, sAttr11,  sAttr12,  sAttr13,  sAttr14,  sAttr15,  sAttr16,  sAttr17,  sAttr18,  sAttr19,  sAttr20);
+   #   ENDIF;
+   ELSEIF(ElIsPar (DimName, vL3, ElName) = 1 );
+    #  IF(CellGetN(AttrCube, vL3, 'C Element Export Already Expanded') < 2 );
+         sWeight = NumberToString ( ElWeight (DimName, vL3, ElName) );
+         vL4 = ElName; AsciiOutput ( sFile, cL1, cL2, cL3, vL4, cL5, cL6, cL7, cL8, cL9, cL10, cL11,  cL12,  cL13,  cL14,  cL15,  sType, sWeight,  sAttr1,  sAttr2,  sAttr3,  sAttr4,  sAttr5,  sAttr6,  sAttr7,  sAttr8,  sAttr9,  sAttr10, sAttr11,  sAttr12,  sAttr13,  sAttr14,  sAttr15,  sAttr16,  sAttr17,  sAttr18,  sAttr19,  sAttr20);
+    #  ENDIF;
+   ELSEIF( ElIsPar (DimName, vL4, ElName) = 1 );
+   #   IF(CellGetN(AttrCube, vL4, 'C Element Export Already Expanded') < 2);
+         sWeight = NumberToString ( ElWeight (DimName, vL4, ElName) );
+         vL5 = ElName; AsciiOutput ( sFile, cL1, cL2, cL3, cL4, vL5, cL6, cL7, cL8, cL9, cL10, cL11,  cL12,  cL13,  cL14,  cL15, sType, sWeight, sAttr1,  sAttr2,  sAttr3,  sAttr4,  sAttr5,  sAttr6,  sAttr7,  sAttr8,  sAttr9,  sAttr10, sAttr11,  sAttr12,  sAttr13,  sAttr14,  sAttr15,  sAttr16,  sAttr17,  sAttr18,  sAttr19,  sAttr20);
+    #  ENDIF;
+   ELSEIF(ElIsPar (DimName, vL5, ElName) = 1 );
+    #  IF(CellGetN(AttrCube, vL5, 'C Element Export Already Expanded') < 2 );
+         sWeight = NumberToString ( ElWeight (DimName, vL5, ElName) );
+         vL6 = ElName; AsciiOutput ( sFile, cL1, cL2, cL3, cL4, cL5, vL6, cL7, cL8, cL9, cL10, cL11,  cL12,  cL13,  cL14,  cL15,  sType, sWeight, sAttr1,  sAttr2,  sAttr3,  sAttr4,  sAttr5,  sAttr6,  sAttr7,  sAttr8,  sAttr9,  sAttr10, sAttr11,  sAttr12,  sAttr13,  sAttr14,  sAttr15,  sAttr16,  sAttr17,  sAttr18,  sAttr19,  sAttr20);
+    #  ENDIF;
+   ELSEIF (ElIsPar (DimName, vL6, ElName) = 1 );
+   #   IF(CellGetN(AttrCube, vL6, 'C Element Export Already Expanded') < 2 );
+         sWeight = NumberToString ( ElWeight (DimName, vL6, ElName) );
+         vL7 = ElName; AsciiOutput ( sFile, cL1, cL2, cL3, cL4, cL5, cL6, vL7, cL8, cL9, cL10, cL11,  cL12,  cL13,  cL14,  cL15,  sType, sWeight,  sAttr1,  sAttr2,  sAttr3,  sAttr4,  sAttr5,  sAttr6,  sAttr7,  sAttr8,  sAttr9,  sAttr10, sAttr11,  sAttr12,  sAttr13,  sAttr14,  sAttr15,  sAttr16,  sAttr17,  sAttr18,  sAttr19,  sAttr20);
+    #  ENDIF;
+   ELSEIF( ElIsPar (DimName, vL7, ElName) = 1 );
+   #   IF(CellGetN(AttrCube, vL7, 'C Element Export Already Expanded') < 2);
+         sWeight = NumberToString ( ElWeight (DimName, vL7, ElName) );
+         vL8 = ElName; AsciiOutput ( sFile, cL1, cL2, cL3, cL4, cL5, cL6, cL7, vL8, cL9, cL10, cL11,  cL12,  cL13,  cL14,  cL15, sType, sWeight,  sAttr1,  sAttr2,  sAttr3,  sAttr4,  sAttr5,  sAttr6,  sAttr7,  sAttr8,  sAttr9,  sAttr10, sAttr11,  sAttr12,  sAttr13,  sAttr14,  sAttr15,  sAttr16,  sAttr17,  sAttr18,  sAttr19,  sAttr20);
+  #    ENDIF;
+  ELSEIF(ElIsPar (DimName, vL8, ElName) = 1 );
+   #   IF(CellGetN(AttrCube, vL8, 'C Element Export Already Expanded') < 2 );
+         sWeight = NumberToString ( ElWeight (DimName, vL8, ElName) );
+         vL9 = ElName; AsciiOutput ( sFile, cL1, cL2, cL3, cL4, cL5, cL6, cL7, cL8, vL9, cL10, cL11,  cL12,  cL13,  cL14,  cL15,  sType, sWeight,  sAttr1,  sAttr2,  sAttr3,  sAttr4,  sAttr5,  sAttr6,  sAttr7,  sAttr8,  sAttr9,  sAttr10, sAttr11,  sAttr12,  sAttr13,  sAttr14,  sAttr15,  sAttr16,  sAttr17,  sAttr18,  sAttr19,  sAttr20);
+  #    ENDIF;
+   ELSEIF(ElIsPar (DimName, vL9, ElName) = 1 );
+      IF(CellGetN(AttrCube, vL9, 'C Element Export Already Expanded') < 2);
+         sWeight = NumberToString ( ElWeight (DimName, vL9, ElName) );
+         vL10 = ElName; AsciiOutput ( sFile, cL1, cL2, cL3, cL4, cL5, cL6, cL7, cL8, cL9, vL10, cL11,  cL12,  cL13,  cL14,  cL15, sType, sWeight,  sAttr1,  sAttr2,  sAttr3,  sAttr4,  sAttr5,  sAttr6,  sAttr7,  sAttr8,  sAttr9,  sAttr10, sAttr11,  sAttr12,  sAttr13,  sAttr14,  sAttr15,  sAttr16,  sAttr17,  sAttr18,  sAttr19,  sAttr20);
+      ENDIF;
+   ELSEIF( ElIsPar (DimName, vL10, ElName) = 1 );
+      IF(CellGetN(AttrCube, Vl10, 'C Element Export Already Expanded') < 2);
+         sWeight = NumberToString ( ElWeight (DimName, vL10, ElName) );
+         vL11 = ElName; AsciiOutput ( sFile, cL1, cL2, cL3, cL4, cL5, cL6, cL7, cL8, cL9, cL10, vL11,  cL12,  cL13,  cL14,  cL15, sType, sWeight,  sAttr1,  sAttr2,  sAttr3,  sAttr4,  sAttr5,  sAttr6,  sAttr7,  sAttr8,  sAttr9,  sAttr10, sAttr11,  sAttr12,  sAttr13,  sAttr14,  sAttr15,  sAttr16,  sAttr17,  sAttr18,  sAttr19,  sAttr20);
+      ENDIF;
+   ELSEIF( ElIsPar (DimName, vL11, ElName) = 1 );
+      IF(CellGetN(AttrCube, vL11, 'C Element Export Already Expanded') < 2);
+         sWeight = NumberToString ( ElWeight (DimName, vL11, ElName) );
+         vL12 = ElName; AsciiOutput ( sFile, cL1, cL2, cL3, cL4, cL5, cL6, cL7, cL8, cL9, cL10, cL11,  vL12,  cL13,  cL14,  cL15, sType, sWeight,  sAttr1,  sAttr2,  sAttr3,  sAttr4,  sAttr5,  sAttr6,  sAttr7,  sAttr8,  sAttr9,  sAttr10, sAttr11,  sAttr12,  sAttr13,  sAttr14,  sAttr15,  sAttr16,  sAttr17,  sAttr18,  sAttr19,  sAttr20);
+      ENDIF;
+   ELSEIF(ElIsPar (DimName, vL12, ElName) = 1 );
+      IF(CellGetN(AttrCube, vL12, 'C Element Export Already Expanded') < 2);
+         sWeight = NumberToString ( ElWeight (DimName, vL12, ElName) );
+         vL13 = ElName; AsciiOutput ( sFile, cL1, cL2, cL3, cL4, cL5, cL6, cL7, cL8, cL9, cL10, cL11,  cL12,  vL13,  cL14,  cL15, sType, sWeight,  sAttr1,  sAttr2,  sAttr3,  sAttr4,  sAttr5,  sAttr6,  sAttr7,  sAttr8,  sAttr9,  sAttr10, sAttr11,  sAttr12,  sAttr13,  sAttr14,  sAttr15,  sAttr16,  sAttr17,  sAttr18,  sAttr19,  sAttr20);
+      ENDIF;
+   ELSEIF( ElIsPar (DimName, vL13, ElName) = 1 );
+      IF(CellGetN(AttrCube, vL13, 'C Element Export Already Expanded') < 2 );
+         sWeight = NumberToString ( ElWeight (DimName, vL13, ElName) );
+         vL14 = ElName; 
+         AsciiOutput ( sFile, cL1, cL2, cL3, cL4, cL5, cL6, cL7, cL8, cL9, cL10, cL11,  cL12,  cL13,  vL14,  cL15,  sType, sWeight,  sAttr1,  sAttr2,  sAttr3,  sAttr4,  sAttr5,  sAttr6,  sAttr7,  sAttr8,  sAttr9,  sAttr10, sAttr11,  sAttr12,  sAttr13,  sAttr14,  sAttr15,  sAttr16,  sAttr17,  sAttr18,  sAttr19,  sAttr20);
+      ENDIF;
+   ELSEIF( ElIsPar (DimName, vL14, ElName) = 1 );
+      IF(CellGetN(AttrCube, vL14, 'C Element Export Already Expanded') < 2);
+         sWeight = NumberToString ( ElWeight (DimName, vL14, ElName) );
+         vL15 = ElName; AsciiOutput ( sFile, cL1, cL2, cL3, cL4, cL5, cL6, cL7, cL8, cL9, cL10, cL11,  cL12,  cL13,  cL14,  vL15,  sType, sWeight,  sAttr1,  sAttr2,  sAttr3,  sAttr4,  sAttr5,  sAttr6,  sAttr7,  sAttr8,  sAttr9,  sAttr10, sAttr11,  sAttr12,  sAttr13,  sAttr14,  sAttr15,  sAttr16,  sAttr17,  sAttr18,  sAttr19,  sAttr20);
+      ENDIF;
+   ENDIF;
+    i = i + 1;
+END;
+
+AttrDelete( DimName, 'C Element Export Already Expanded' );
+
+# Define datasource subset
+IF(SubsetExists(DimName, SubName)=1);
+   SubsetDestroy(DimName, SubName);
+ENDIF;
+#endregion
+#region Metadata
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+# Destroy data source subset
+SubsetDestroy(DimName, SubName);
+
+
+# ============= Process logging
+
+####General LOGGING frame###
+#ExecuteProcess('zSYS Process Log Close Entry','pProcessName',vsProcessName,'pStartTime',pStartTime,'pRandomNumber',sRandomNumber,'pProcessErrorLogFile',GetProcessErrorFilename);
+####General LOGGING frame###
+
+#endregion

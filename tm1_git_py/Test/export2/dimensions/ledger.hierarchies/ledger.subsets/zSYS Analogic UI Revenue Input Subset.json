@@ -1,0 +1,5 @@
+{
+	"@type": "Subset",
+	"Name": "zSYS Analogic UI Revenue Input Subset",
+	"Expression": "{EXCEPT({TM1DRILLDOWNMEMBER({[ledger].[ledger].[Revenue]}, ALL, RECURSIVE)},{[ledger].[ledger].[Revenue]})}"
+}

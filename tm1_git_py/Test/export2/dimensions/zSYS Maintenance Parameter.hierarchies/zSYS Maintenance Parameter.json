@@ -1,0 +1,100 @@
+{
+	"@type": "Hierarchy",
+	"Name": "zSYS Maintenance Parameter",
+	"Elements": [
+		{
+			"name": "Dimension Export UNC",
+			"type": "Numeric"
+		},
+		{
+			"name": "Process Debugging UNC",
+			"type": "Numeric"
+		},
+		{
+			"name": "TM1 Server Name",
+			"type": "Numeric"
+		},
+		{
+			"name": "Process Logging",
+			"type": "Numeric"
+		},
+		{
+			"name": "Inbound Data Directory Path",
+			"type": "Numeric"
+		},
+		{
+			"name": "Outbound Data Directory Path",
+			"type": "Numeric"
+		},
+		{
+			"name": "Log Directory Path",
+			"type": "Numeric"
+		},
+		{
+			"name": "Log Archive Directory Path",
+			"type": "Numeric"
+		},
+		{
+			"name": "Model UNC",
+			"type": "Numeric"
+		},
+		{
+			"name": "User Prefix",
+			"type": "Numeric"
+		},
+		{
+			"name": "DelimiterBetweenParameters",
+			"type": "Numeric"
+		},
+		{
+			"name": "DelimiterBetweenParamAndValue",
+			"type": "Numeric"
+		},
+		{
+			"name": "DelimiterSubsetCreate",
+			"type": "Numeric"
+		},
+		{
+			"name": "ProcessLogEntryDelete",
+			"type": "Numeric"
+		},
+		{
+			"name": "WinZip",
+			"type": "Numeric"
+		},
+		{
+			"name": "Own RunTI Name",
+			"type": "Numeric"
+		},
+		{
+			"name": "Backup Directory Path",
+			"type": "Numeric"
+		},
+		{
+			"name": "ActualMonth",
+			"type": "Numeric"
+		},
+		{
+			"name": "ActivePhaseEnd",
+			"type": "Numeric"
+		},
+		{
+			"name": "lastActualMonth",
+			"type": "Numeric"
+		},
+		{
+			"name": "NaturaliaSynchron",
+			"type": "Numeric"
+		},
+		{
+			"name": "Import Data Directory Path",
+			"type": "Numeric"
+		},
+		{
+			"name": "OpeningMonth",
+			"type": "Numeric"
+		}
+	],
+	"Edges": [],
+	"Subsets@Code.links": []
+}

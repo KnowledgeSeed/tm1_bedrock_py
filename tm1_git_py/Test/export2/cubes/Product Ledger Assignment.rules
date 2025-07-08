@@ -1,0 +1,113 @@
+#  _____                       _                  _       _                   _                                                  _                                              _   
+# |  __ \                     | |                | |     | |                 | |                             /\                 (_)                                            | |  
+# | |__) |  _ __    ___     __| |  _   _    ___  | |_    | |        ___    __| |   __ _    ___   _ __       /  \     ___   ___   _    __ _   _ __    _ __ ___     ___   _ __   | |_ 
+# |  ___/  | '__|  / _ \   / _` | | | | |  / __| | __|   | |       / _ \  / _` |  / _` |  / _ \ | '__|     / /\ \   / __| / __| | |  / _` | | '_ \  | '_ ` _ \   / _ \ | '_ \  | __|
+# | |      | |    | (_) | | (_| | | |_| | | (__  | |_    | |____  |  __/ | (_| | | (_| | |  __/ | |       / ____ \  \__ \ \__ \ | | | (_| | | | | | | | | | | | |  __/ | | | | | |_ 
+# |_|      |_|     \___/   \__,_|  \__,_|  \___|  \__|   |______|  \___|  \__,_|  \__, |  \___| |_|      /_/    \_\ |___/ |___/ |_|  \__, | |_| |_| |_| |_| |_|  \___| |_| |_|  \__|
+#                                                                                  __/ |                                              __/ |                                         
+#                                                                                 |___/                                              |___/                                                                                                               |___/                                                       |___/                                  
+
+SKIPCHECK;
+
+# verzo szabályok
+[]= N:
+IF(ELISPAR('Version','Report',!Version) = 1,
+STET,Continue);
+
+# Modos David 10 22
+# 91101 Telefonszolgáltatás havidíj bevétele
+['ledger':'ledger':'91101'] =N:
+ IF( DB('}ElementAttributes_Product', !Product, 'Telefon') = 1,
+ 1,
+ 0
+ );
+
+#TITLE: 
+#VIEWS:
+#LINKED:
+# 91201	Vezetékes internetszolgáltatás havidíj bevétele
+['ledger':'ledger':'91201'] =N:
+ IF( DB('}ElementAttributes_Product', !Product, 'Internet') = 1,
+ 1,
+ 0
+ );
+
+#TITLE: 
+#VIEWS:
+#LINKED:
+#91202	ADSL internetszolgáltatás havidíja
+['ledger':'ledger':'91202'] =N:
+ IF( DB('}ElementAttributes_Product', !Product, 'DSL') = 1,
+ 1,
+ 0
+ );
+
+#TITLE: 
+#VIEWS:
+#LINKED:
+# 91302	DTV bevétel
+['ledger':'ledger':'91302'] =N:
+ IF( DB('}ElementAttributes_Product', !Product, 'KTV Alaptermék') = 1,
+ 1,
+ 0
+ ); 
+
+#TITLE: 
+#VIEWS:
+#LINKED:
+### T.A. más főkönyvek
+#91303	Tematikus bevétel
+['ledger':'ledger':'91303'] =N:
+ IF( DB('}ElementAttributes_Product', !Product, 'KTV Kiegészítő') = 1,
+ 1,
+ 0
+ );
+
+#TITLE: 
+#VIEWS:
+#LINKED:
+#91304	Multiscreen bevétel
+['ledger':'ledger':'91304'] =N:
+ IF( DB('}ElementAttributes_Product', !Product, 'OTT') = 1,
+ 1,
+ 0
+ );
+
+
+#91501	Dekóder bérbeadásából származó árbevétel
+['ledger':'ledger':'91501'] =N:
+ IF( DB('}ElementAttributes_Product', !Product, 'Eszközbérlet') = 1  &  DB('}ElementAttributes_Product', !Product, 'Device') @= 'Settopbox',
+ 1,
+ 0
+ );
+
+#TITLE: 
+#VIEWS:
+#LINKED:
+#91502	Modem bérbeadásából származó árbevétel
+['ledger':'ledger':'91502'] =N:
+ IF( DB('}ElementAttributes_Product', !Product, 'Eszközbérlet') = 1  &  DB('}ElementAttributes_Product', !Product, 'Device') @= 'Modem',
+ 1,
+ 0
+ );
+
+#TITLE: 
+#VIEWS:
+#LINKED:
+ #91805	Csomagkedvezmény !!!!!!
+#['ledger':'ledger':'Csomagkedvezmény 91804'] =N:
+# IF( DB('}ElementAttributes_Product', !Product, 'Egyéb') = 1  &  DB('}ElementAttributes_Product', !Product, 'Caption') @= 'LIGHT SZÁMLACSOMAG',
+# 1,
+# 0
+# );
+
+FEEDERS;
+
+
+['ledger':'ledger':'91502'] =>
+DB('Revenue', !Version, !Period, !ledger, 'Nem tartozik termekhez', 'Efi szam', 'Value');
+
+
+['ledger':'ledger':{'91101','91201','91202','91301','91302','91303','91401'}] =>
+DB('Revenue', !Version, !Period, !ledger, !Product, 'Efi szam', 'Value');
+

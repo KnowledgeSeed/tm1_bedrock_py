@@ -1,0 +1,289 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+#pCategory = 'Internet';
+
+
+nFirstDataCol        =  1;
+nLastDataCol         = 43;
+nNumberOfCol = nLastDataCol - nFirstDataCol + 1;
+
+pFileLocation = CellGetS('zSYS Maintenance Parameter', 'Import Data Directory Path', 'S Type');
+#d:\FileTarget\
+#pFileName = '2024_07_29_Mody_test.csv';
+sFile = pFileLocation | pFileName;
+
+sActualPeriod        = CellGetS('zSYS Maintenance Parameter', 'ActualMonth','S Type');
+nCurrentPeriod = TimSt(Now(), '\Y\m');
+
+sColumnDelimiter = ',';
+sDecimalSeparator = '.';
+sThousandSeparator = '';
+sQuoteChar = '"';
+sCharacterSet = 'TM1CS_UTF8';
+nHeaderRow = 0;
+nHeaderRowIndex = 1;
+
+DataSourceType = 'CHARACTERDELIMITED';
+DataSourceNameForServer = sFile;
+DataSourceNameForClient = sFile;
+DatasourceASCIIHeaderRecords = nHeaderRow;
+DatasourceASCIIQuoteCharacter = sQuoteChar;
+DataSourceASCIIDelimiter = sColumnDelimiter;
+SetInputCharacterSet ( sCharacterSet );
+
+nRowIndex = 1;
+
+pCategory = pCategory;
+#input: adott szám
+#movement: "Új szerződések" adott
+#period: "202407" adott
+#sSource = pCategory | ' Total';
+
+pUser = pUser;
+pVersion = pVersion;
+
+# target beállítása
+sTarget = pProduct;
+
+IF ( pProduct @= 'total');
+  sTarget = pCategory | ' Total';
+ENDIF;
+
+
+
+# ha máskor kell
+#
+#While( SCAN( 'é', pFileName) <> 0);
+# nBetuPoz = SCAN( 'é', pFileName);
+# pFileName = DELET( pFileName, nBetuPoz, 1);
+# sEbetu = 'e';
+# pFileName = INSRT(sEbetu, pFileName, nBetuPoz);
+#END;
+#While( SCAN( 'á', pFileName) <> 0);
+# nBetuPoz = SCAN( 'á', pFileName);
+# pFileName = DELET( pFileName, nBetuPoz, 1);
+# sEbetu = 'a';
+# pFileName = INSRT(sEbetu, pFileName, nBetuPoz);
+#END;
+#While( SCAN( 'í', pFileName) <> 0);
+# nBetuPoz = SCAN( 'í', pFileName);
+# pFileName = DELET( pFileName, nBetuPoz, 1);
+# sEbetu = 'i';
+# pFileName = INSRT(sEbetu, pFileName, nBetuPoz);
+#END;
+
+
+
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+# ha csak egy bizonyos sort akarok futtatni
+#IF( nRowIndex <> 9);
+#  nRowIndex = nRowIndex + 1;
+#  itemskip;
+#ENDIF;
+
+
+
+# sorként megyünk végig nRowIndex
+# csak a 8, 9, 11, 12 sor-ban vannak adatok
+
+
+IF( nRowIndex = 1 % nRowIndex = 2 %  nRowIndex = 3 % nRowIndex = 4 % nRowIndex = 5 % nRowindex = 6 % nRowindex = 7
+   #8. új szerződések kell
+   #9. migrált növ kell
+  
+  # 10. kikapcsolás nem kell
+  % nRowindex = 10
+  
+  # 11. kell felmondottak
+  # 12. Migrált növekedés kell
+  % nRowindex = 12
+  
+  # hűséghosszabítás még nem kell (ideiglenesen)
+  % nRowindex = 13
+  );
+  nRowIndex = nRowIndex + 1;
+  itemskip;
+
+ENDIF;
+
+  # sCol1 nincs használva
+  sCol2  =  Expand('%v'| NumberToString(nFirstDataCol + 1) |'%');
+  sCol3  =  Expand('%v'| NumberToString(nFirstDataCol + 2) |'%');
+  sCol4  =  Expand('%v'| NumberToString(nFirstDataCol + 3) |'%');
+  sCol5  =  Expand('%v'| NumberToString(nFirstDataCol + 4) |'%');
+  sCol6  =  Expand('%v'| NumberToString(nFirstDataCol + 5) |'%');
+  sCol7  =  Expand('%v'| NumberToString(nFirstDataCol + 6) |'%');
+  sCol8  =  Expand('%v'| NumberToString(nFirstDataCol + 7) |'%');
+  sCol9  =  Expand('%v'| NumberToString(nFirstDataCol + 8) |'%');
+  sCol10 =  Expand('%v'| NumberToString(nFirstDataCol + 9) |'%');
+  sCol11 =  Expand('%v'| NumberToString(nFirstDataCol + 10) |'%');
+  sCol12 =  Expand('%v'| NumberToString(nFirstDataCol + 11) |'%');
+  sCol13 =  Expand('%v'| NumberToString(nFirstDataCol + 12) |'%');
+  sCol14 =  Expand('%v'| NumberToString(nFirstDataCol + 13) |'%');
+  sCol15 =  Expand('%v'| NumberToString(nFirstDataCol + 14) |'%');
+  sCol16 =  Expand('%v'| NumberToString(nFirstDataCol + 15) |'%');
+  sCol17 =  Expand('%v'| NumberToString(nFirstDataCol + 16) |'%');
+  sCol18 =  Expand('%v'| NumberToString(nFirstDataCol + 17) |'%');
+  sCol19 =  Expand('%v'| NumberToString(nFirstDataCol + 18) |'%');
+  sCol20 =  Expand('%v'| NumberToString(nFirstDataCol + 19) |'%');
+  sCol21 =  Expand('%v'| NumberToString(nFirstDataCol + 20) |'%');
+  sCol22 =  Expand('%v'| NumberToString(nFirstDataCol + 21) |'%');
+  sCol23 =  Expand('%v'| NumberToString(nFirstDataCol + 22) |'%');
+  sCol24 =  Expand('%v'| NumberToString(nFirstDataCol + 23) |'%');
+  sCol25 =  Expand('%v'| NumberToString(nFirstDataCol + 24) |'%');
+  sCol26 =  Expand('%v'| NumberToString(nFirstDataCol + 25) |'%');
+  sCol27 =  Expand('%v'| NumberToString(nFirstDataCol + 26) |'%');
+  sCol28 =  Expand('%v'| NumberToString(nFirstDataCol + 27) |'%');
+  sCol29 =  Expand('%v'| NumberToString(nFirstDataCol + 28) |'%');
+  sCol30 =  Expand('%v'| NumberToString(nFirstDataCol + 29) |'%');
+  sCol31 =  Expand('%v'| NumberToString(nFirstDataCol + 30) |'%');
+  sCol32 =  Expand('%v'| NumberToString(nFirstDataCol + 31) |'%');
+  sCol33 =  Expand('%v'| NumberToString(nFirstDataCol + 32) |'%');
+  sCol34 =  Expand('%v'| NumberToString(nFirstDataCol + 33) |'%');
+  sCol35 =  Expand('%v'| NumberToString(nFirstDataCol + 34) |'%');
+  sCol36 =  Expand('%v'| NumberToString(nFirstDataCol + 35) |'%');
+  sCol37 =  Expand('%v'| NumberToString(nFirstDataCol + 36) |'%');
+  sCol38 =  Expand('%v'| NumberToString(nFirstDataCol + 37) |'%');
+  sCol39 =  Expand('%v'| NumberToString(nFirstDataCol + 38) |'%');
+  sCol40 =  Expand('%v'| NumberToString(nFirstDataCol + 39) |'%');
+  sCol41 =  Expand('%v'| NumberToString(nFirstDataCol + 40) |'%');
+  sCol42 =  Expand('%v'| NumberToString(nFirstDataCol + 41) |'%');
+  sCol43 =  Expand('%v'| NumberToString(nFirstDataCol + 42) |'%');
+
+# új szerződések
+IF( nRowIndex = 8);
+  sMovement = 'New increase';
+ENDIF;
+# migrált növekedés
+IF( nRowIndex = 9);
+  sMovement = 'Migration increase';
+ENDIF;
+# felmondottak
+IF( nRowIndex = 11);
+  sMovement = 'Terminated decrease';
+ENDIF;
+
+IF( nRowIndex = 12);
+  sMovement = 'Migration decrese';
+ENDIF;
+
+# 1-15. oszlopig sose lehet inputolni
+# 16. - 27. aktuális év van
+# 28. oszlop 2025 nem inputolható
+# 29.- 40. 2025 havi input
+# 41 - 43 éves input
+
+nColIndex = 16;
+
+
+
+WHILE( nColIndex <= nLastDataCol);
+  
+#   1-15. oszlopig sose lehet inputolni és a 28 sem
+  IF( nColIndex < 15 %  nColIndex = 28 );
+    nColIndex = nColIndex + 1;
+  ENDIF;
+  
+#   16. - 27. aktuális év van
+  IF( nColIndex > 15 & nColIndex < 28 );
+    nPeriodIndex = nColIndex - 1;
+    sExcelPeriodSubset = 'ActualPeriod';
+    sInputPeriod = HierarchySubsetGetElementName('Period', 'Period', sExcelPeriodSubset, nPeriodIndex);
+    
+    sCurrentValue = Expand('%v'| NumberToString(nColIndex) |'%');
+    nCurrentValue = StringToNumberEx(sCurrentValue, sDecimalSeparator, sThousandSeparator);
+    
+    sPeriodSubsetName = 'Planning Period';
+    IF ( SubsetElementExists('Period', sPeriodSubsetName, sInputPeriod) = 1);
+      
+#    ExecuteProcess('zSYS Analogic UI Subscription Plan Input Spread Period',
+#       'pSourceProduct', sSource,
+#       'pTargetProduct', sTarget,
+#       'pMovement', sMovement,
+#       'pLoyalty', pLoyalty,
+#       'pChannel', pChannel,
+#       'pPeriod', sInputPeriod,
+#       'pMaincategory', pCategory,
+#       'pInput', nCurrentValue,
+#       'pRecursionIndex', 0,
+#       'pVersion', pVersion,
+#       'pUser', pUser
+#      );
+      ExecuteProcess('zSYS Analogic UI Topdown Input',
+         'pVersion', pVersion,
+         'pPeriod', sInputPeriod,
+         'pProduct', sTarget,
+         'pMovement', sMovement,
+         'pInput', nCurrentValue
+        );
+      ENDIF;
+    nColIndex = nColIndex + 1;
+  CubeSaveData('Subscription Plan');
+      
+  ENDIF;
+  
+#   többi hónap (202501) ->  26 27 28
+  IF( nColIndex > 28);
+    nPeriodIndex = nColIndex - 1;
+    sExcelPeriodSubset = 'ActualPeriod';
+    sInputPeriod = HierarchySubsetGetElementName('Period', 'Period', sExcelPeriodSubset, nPeriodIndex);
+    
+    sCurrentValue = Expand('%v'| NumberToString(nColIndex) |'%');
+    nCurrentValue = StringToNumberEx(sCurrentValue, sDecimalSeparator, sThousandSeparator);
+    
+#    ExecuteProcess('zSYS Analogic UI Subscription Plan Input Spread Period',
+#       'pSourceProduct', sSource,
+#       'pTargetProduct', sTarget,
+#       'pMovement', sMovement,
+#       'pLoyalty', pLoyalty,
+#       'pChannel', pChannel,
+#       'pPeriod', sInputPeriod,
+#       'pMaincategory', pCategory,
+#       'pInput', nCurrentValue,
+#       'pRecursionIndex', 0,
+#       'pVersion', pVersion,
+#       'pUser', pUser
+#      );
+            ExecuteProcess('zSYS Analogic UI Topdown Input',
+         'pVersion', pVersion,
+         'pPeriod', sInputPeriod,
+         'pProduct', sTarget,
+         'pMovement', sMovement,
+         'pInput', nCurrentValue
+        );
+      nColIndex = nColIndex + 1;
+  CubeSaveData('Subscription Plan');
+  ENDIF;
+  
+
+# while END nColIndex
+END;
+
+
+
+
+# utolsó léptetés
+nRowIndex = nRowIndex + 1;
+
+
+
+
+
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

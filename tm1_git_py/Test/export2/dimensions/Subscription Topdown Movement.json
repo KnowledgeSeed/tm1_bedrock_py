@@ -1,0 +1,8 @@
+{
+	"@type": "Dimension",
+	"Name": "Subscription Topdown Movement",
+	"Hierarchies@Code.links": [
+		"Subscription Topdown Movement.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE2365D00>.json"
+	],
+	"DefaultHierarchy": "Dimensions('Subscription Topdown Movement')/Hierarchies('Subscription Topdown Movement')"
+}

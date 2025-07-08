@@ -1,0 +1,11 @@
+{
+	"@type": "Process",
+	"Name": "zSYS SaveDataAll",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS SaveDataAll.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [],
+	"Variables": []
+}

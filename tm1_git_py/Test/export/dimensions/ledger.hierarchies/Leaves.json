@@ -1,0 +1,984 @@
+{
+	"@type": "Hierarchy",
+	"Name": "Leaves",
+	"Elements": [
+		{
+			"name": "91101",
+			"type": "Numeric"
+		},
+		{
+			"name": "91102",
+			"type": "Numeric"
+		},
+		{
+			"name": "091203",
+			"type": "Numeric"
+		},
+		{
+			"name": "91201",
+			"type": "Numeric"
+		},
+		{
+			"name": "91202",
+			"type": "Numeric"
+		},
+		{
+			"name": "91204",
+			"type": "Numeric"
+		},
+		{
+			"name": "091305",
+			"type": "Numeric"
+		},
+		{
+			"name": "91301",
+			"type": "Numeric"
+		},
+		{
+			"name": "91302",
+			"type": "Numeric"
+		},
+		{
+			"name": "91303",
+			"type": "Numeric"
+		},
+		{
+			"name": "91304",
+			"type": "Numeric"
+		},
+		{
+			"name": "091402",
+			"type": "Numeric"
+		},
+		{
+			"name": "91401",
+			"type": "Numeric"
+		},
+		{
+			"name": "91501",
+			"type": "Numeric"
+		},
+		{
+			"name": "91502",
+			"type": "Numeric"
+		},
+		{
+			"name": "91601",
+			"type": "Numeric"
+		},
+		{
+			"name": "91602",
+			"type": "Numeric"
+		},
+		{
+			"name": "81508",
+			"type": "Numeric"
+		},
+		{
+			"name": "91701",
+			"type": "Numeric"
+		},
+		{
+			"name": "096701",
+			"type": "Numeric"
+		},
+		{
+			"name": "096801",
+			"type": "Numeric"
+		},
+		{
+			"name": "91801",
+			"type": "Numeric"
+		},
+		{
+			"name": "91802",
+			"type": "Numeric"
+		},
+		{
+			"name": "91803",
+			"type": "Numeric"
+		},
+		{
+			"name": "91804",
+			"type": "Numeric"
+		},
+		{
+			"name": "91805",
+			"type": "Numeric"
+		},
+		{
+			"name": "96101",
+			"type": "Numeric"
+		},
+		{
+			"name": "96202",
+			"type": "Numeric"
+		},
+		{
+			"name": "96203",
+			"type": "Numeric"
+		},
+		{
+			"name": "96401",
+			"type": "Numeric"
+		},
+		{
+			"name": "96403",
+			"type": "Numeric"
+		},
+		{
+			"name": "96407",
+			"type": "Numeric"
+		},
+		{
+			"name": "96410",
+			"type": "Numeric"
+		},
+		{
+			"name": "96411",
+			"type": "Numeric"
+		},
+		{
+			"name": "96501",
+			"type": "Numeric"
+		},
+		{
+			"name": "96502",
+			"type": "Numeric"
+		},
+		{
+			"name": "96701",
+			"type": "Numeric"
+		},
+		{
+			"name": "96702",
+			"type": "Numeric"
+		},
+		{
+			"name": "33333",
+			"type": "Numeric"
+		},
+		{
+			"name": "52610",
+			"type": "Numeric"
+		},
+		{
+			"name": "81401",
+			"type": "Numeric"
+		},
+		{
+			"name": "086505",
+			"type": "Numeric"
+		},
+		{
+			"name": "86505",
+			"type": "Numeric"
+		},
+		{
+			"name": "081502",
+			"type": "Numeric"
+		},
+		{
+			"name": "81502",
+			"type": "Numeric"
+		},
+		{
+			"name": "81503",
+			"type": "Numeric"
+		},
+		{
+			"name": "81504",
+			"type": "Numeric"
+		},
+		{
+			"name": "86501",
+			"type": "Numeric"
+		},
+		{
+			"name": "86502",
+			"type": "Numeric"
+		},
+		{
+			"name": "81505",
+			"type": "Numeric"
+		},
+		{
+			"name": "052409",
+			"type": "Numeric"
+		},
+		{
+			"name": "052405",
+			"type": "Numeric"
+		},
+		{
+			"name": "52405",
+			"type": "Numeric"
+		},
+		{
+			"name": "52609",
+			"type": "Numeric"
+		},
+		{
+			"name": "81501",
+			"type": "Numeric"
+		},
+		{
+			"name": "096602",
+			"type": "Numeric"
+		},
+		{
+			"name": "86301",
+			"type": "Numeric"
+		},
+		{
+			"name": "86302",
+			"type": "Numeric"
+		},
+		{
+			"name": "96601",
+			"type": "Numeric"
+		},
+		{
+			"name": "96602",
+			"type": "Numeric"
+		},
+		{
+			"name": "51101",
+			"type": "Numeric"
+		},
+		{
+			"name": "096402",
+			"type": "Numeric"
+		},
+		{
+			"name": "086605",
+			"type": "Numeric"
+		},
+		{
+			"name": "096404",
+			"type": "Numeric"
+		},
+		{
+			"name": "096406",
+			"type": "Numeric"
+		},
+		{
+			"name": "86605",
+			"type": "Numeric"
+		},
+		{
+			"name": "86606",
+			"type": "Numeric"
+		},
+		{
+			"name": "96402",
+			"type": "Numeric"
+		},
+		{
+			"name": "96404",
+			"type": "Numeric"
+		},
+		{
+			"name": "96405",
+			"type": "Numeric"
+		},
+		{
+			"name": "96406",
+			"type": "Numeric"
+		},
+		{
+			"name": "96408",
+			"type": "Numeric"
+		},
+		{
+			"name": "51301",
+			"type": "Numeric"
+		},
+		{
+			"name": "51302",
+			"type": "Numeric"
+		},
+		{
+			"name": "51303",
+			"type": "Numeric"
+		},
+		{
+			"name": "51304",
+			"type": "Numeric"
+		},
+		{
+			"name": "51305",
+			"type": "Numeric"
+		},
+		{
+			"name": "51306",
+			"type": "Numeric"
+		},
+		{
+			"name": "51501",
+			"type": "Numeric"
+		},
+		{
+			"name": "51502",
+			"type": "Numeric"
+		},
+		{
+			"name": "52613",
+			"type": "Numeric"
+		},
+		{
+			"name": "51601",
+			"type": "Numeric"
+		},
+		{
+			"name": "051801",
+			"type": "Numeric"
+		},
+		{
+			"name": "51801",
+			"type": "Numeric"
+		},
+		{
+			"name": "52604",
+			"type": "Numeric"
+		},
+		{
+			"name": "052201",
+			"type": "Numeric"
+		},
+		{
+			"name": "052202",
+			"type": "Numeric"
+		},
+		{
+			"name": "052204",
+			"type": "Numeric"
+		},
+		{
+			"name": "052206",
+			"type": "Numeric"
+		},
+		{
+			"name": "052207",
+			"type": "Numeric"
+		},
+		{
+			"name": "052208",
+			"type": "Numeric"
+		},
+		{
+			"name": "052209",
+			"type": "Numeric"
+		},
+		{
+			"name": "52201",
+			"type": "Numeric"
+		},
+		{
+			"name": "52202",
+			"type": "Numeric"
+		},
+		{
+			"name": "52203",
+			"type": "Numeric"
+		},
+		{
+			"name": "52204",
+			"type": "Numeric"
+		},
+		{
+			"name": "52205",
+			"type": "Numeric"
+		},
+		{
+			"name": "52210",
+			"type": "Numeric"
+		},
+		{
+			"name": "052614",
+			"type": "Numeric"
+		},
+		{
+			"name": "52406",
+			"type": "Numeric"
+		},
+		{
+			"name": "52503",
+			"type": "Numeric"
+		},
+		{
+			"name": "52605",
+			"type": "Numeric"
+		},
+		{
+			"name": "52606",
+			"type": "Numeric"
+		},
+		{
+			"name": "52607",
+			"type": "Numeric"
+		},
+		{
+			"name": "52608",
+			"type": "Numeric"
+		},
+		{
+			"name": "52611",
+			"type": "Numeric"
+		},
+		{
+			"name": "52614",
+			"type": "Numeric"
+		},
+		{
+			"name": "55401",
+			"type": "Numeric"
+		},
+		{
+			"name": "81506",
+			"type": "Numeric"
+		},
+		{
+			"name": "81507",
+			"type": "Numeric"
+		},
+		{
+			"name": "81509",
+			"type": "Numeric"
+		},
+		{
+			"name": "51702",
+			"type": "Numeric"
+		},
+		{
+			"name": "52302",
+			"type": "Numeric"
+		},
+		{
+			"name": "52303",
+			"type": "Numeric"
+		},
+		{
+			"name": "52304",
+			"type": "Numeric"
+		},
+		{
+			"name": "51201",
+			"type": "Numeric"
+		},
+		{
+			"name": "52501",
+			"type": "Numeric"
+		},
+		{
+			"name": "52502",
+			"type": "Numeric"
+		},
+		{
+			"name": "52101",
+			"type": "Numeric"
+		},
+		{
+			"name": "52102",
+			"type": "Numeric"
+		},
+		{
+			"name": "52103",
+			"type": "Numeric"
+		},
+		{
+			"name": "52602",
+			"type": "Numeric"
+		},
+		{
+			"name": "52603",
+			"type": "Numeric"
+		},
+		{
+			"name": "53501",
+			"type": "Numeric"
+		},
+		{
+			"name": "52401",
+			"type": "Numeric"
+		},
+		{
+			"name": "52402",
+			"type": "Numeric"
+		},
+		{
+			"name": "52403",
+			"type": "Numeric"
+		},
+		{
+			"name": "52404",
+			"type": "Numeric"
+		},
+		{
+			"name": "52408",
+			"type": "Numeric"
+		},
+		{
+			"name": "52504",
+			"type": "Numeric"
+		},
+		{
+			"name": "55302",
+			"type": "Numeric"
+		},
+		{
+			"name": "55501",
+			"type": "Numeric"
+		},
+		{
+			"name": "052601",
+			"type": "Numeric"
+		},
+		{
+			"name": "52601",
+			"type": "Numeric"
+		},
+		{
+			"name": "51701",
+			"type": "Numeric"
+		},
+		{
+			"name": "52301",
+			"type": "Numeric"
+		},
+		{
+			"name": "058202",
+			"type": "Numeric"
+		},
+		{
+			"name": "58201",
+			"type": "Numeric"
+		},
+		{
+			"name": "58202",
+			"type": "Numeric"
+		},
+		{
+			"name": "53101",
+			"type": "Numeric"
+		},
+		{
+			"name": "53102",
+			"type": "Numeric"
+		},
+		{
+			"name": "53103",
+			"type": "Numeric"
+		},
+		{
+			"name": "53104",
+			"type": "Numeric"
+		},
+		{
+			"name": "53105",
+			"type": "Numeric"
+		},
+		{
+			"name": "086403",
+			"type": "Numeric"
+		},
+		{
+			"name": "86403",
+			"type": "Numeric"
+		},
+		{
+			"name": "86407",
+			"type": "Numeric"
+		},
+		{
+			"name": "86409",
+			"type": "Numeric"
+		},
+		{
+			"name": "55908",
+			"type": "Numeric"
+		},
+		{
+			"name": "086601",
+			"type": "Numeric"
+		},
+		{
+			"name": "53201",
+			"type": "Numeric"
+		},
+		{
+			"name": "86201",
+			"type": "Numeric"
+		},
+		{
+			"name": "86202",
+			"type": "Numeric"
+		},
+		{
+			"name": "86601",
+			"type": "Numeric"
+		},
+		{
+			"name": "86603",
+			"type": "Numeric"
+		},
+		{
+			"name": "86604",
+			"type": "Numeric"
+		},
+		{
+			"name": "53301",
+			"type": "Numeric"
+		},
+		{
+			"name": "53302",
+			"type": "Numeric"
+		},
+		{
+			"name": "53303",
+			"type": "Numeric"
+		},
+		{
+			"name": "53304",
+			"type": "Numeric"
+		},
+		{
+			"name": "53305",
+			"type": "Numeric"
+		},
+		{
+			"name": "52612",
+			"type": "Numeric"
+		},
+		{
+			"name": "96201",
+			"type": "Numeric"
+		},
+		{
+			"name": "086402",
+			"type": "Numeric"
+		},
+		{
+			"name": "86401",
+			"type": "Numeric"
+		},
+		{
+			"name": "86402",
+			"type": "Numeric"
+		},
+		{
+			"name": "86406",
+			"type": "Numeric"
+		},
+		{
+			"name": "086101",
+			"type": "Numeric"
+		},
+		{
+			"name": "086303",
+			"type": "Numeric"
+		},
+		{
+			"name": "86101",
+			"type": "Numeric"
+		},
+		{
+			"name": "86303",
+			"type": "Numeric"
+		},
+		{
+			"name": "54101",
+			"type": "Numeric"
+		},
+		{
+			"name": "54102",
+			"type": "Numeric"
+		},
+		{
+			"name": "54103",
+			"type": "Numeric"
+		},
+		{
+			"name": "54104",
+			"type": "Numeric"
+		},
+		{
+			"name": "54105",
+			"type": "Numeric"
+		},
+		{
+			"name": "86701",
+			"type": "Numeric"
+		},
+		{
+			"name": "55101",
+			"type": "Numeric"
+		},
+		{
+			"name": "55103",
+			"type": "Numeric"
+		},
+		{
+			"name": "55104",
+			"type": "Numeric"
+		},
+		{
+			"name": "55105",
+			"type": "Numeric"
+		},
+		{
+			"name": "55106",
+			"type": "Numeric"
+		},
+		{
+			"name": "55107",
+			"type": "Numeric"
+		},
+		{
+			"name": "56102",
+			"type": "Numeric"
+		},
+		{
+			"name": "56103",
+			"type": "Numeric"
+		},
+		{
+			"name": "55201",
+			"type": "Numeric"
+		},
+		{
+			"name": "55203",
+			"type": "Numeric"
+		},
+		{
+			"name": "55204",
+			"type": "Numeric"
+		},
+		{
+			"name": "55206",
+			"type": "Numeric"
+		},
+		{
+			"name": "55207",
+			"type": "Numeric"
+		},
+		{
+			"name": "55601",
+			"type": "Numeric"
+		},
+		{
+			"name": "056106",
+			"type": "Numeric"
+		},
+		{
+			"name": "56106",
+			"type": "Numeric"
+		},
+		{
+			"name": "56107",
+			"type": "Numeric"
+		},
+		{
+			"name": "057201",
+			"type": "Numeric"
+		},
+		{
+			"name": "57201",
+			"type": "Numeric"
+		},
+		{
+			"name": "057101",
+			"type": "Numeric"
+		},
+		{
+			"name": "057102",
+			"type": "Numeric"
+		},
+		{
+			"name": "057103",
+			"type": "Numeric"
+		},
+		{
+			"name": "057104",
+			"type": "Numeric"
+		},
+		{
+			"name": "057105",
+			"type": "Numeric"
+		},
+		{
+			"name": "057106",
+			"type": "Numeric"
+		},
+		{
+			"name": "057107",
+			"type": "Numeric"
+		},
+		{
+			"name": "57101",
+			"type": "Numeric"
+		},
+		{
+			"name": "57102",
+			"type": "Numeric"
+		},
+		{
+			"name": "57103",
+			"type": "Numeric"
+		},
+		{
+			"name": "57104",
+			"type": "Numeric"
+		},
+		{
+			"name": "57105",
+			"type": "Numeric"
+		},
+		{
+			"name": "086404",
+			"type": "Numeric"
+		},
+		{
+			"name": "086405",
+			"type": "Numeric"
+		},
+		{
+			"name": "089101",
+			"type": "Numeric"
+		},
+		{
+			"name": "089102",
+			"type": "Numeric"
+		},
+		{
+			"name": "86404",
+			"type": "Numeric"
+		},
+		{
+			"name": "86405",
+			"type": "Numeric"
+		},
+		{
+			"name": "89101",
+			"type": "Numeric"
+		},
+		{
+			"name": "087202",
+			"type": "Numeric"
+		},
+		{
+			"name": "87201",
+			"type": "Numeric"
+		},
+		{
+			"name": "087201",
+			"type": "Numeric"
+		},
+		{
+			"name": "87202",
+			"type": "Numeric"
+		},
+		{
+			"name": "87203",
+			"type": "Numeric"
+		},
+		{
+			"name": "97201",
+			"type": "Numeric"
+		},
+		{
+			"name": "097201",
+			"type": "Numeric"
+		},
+		{
+			"name": "97202",
+			"type": "Numeric"
+		},
+		{
+			"name": "97203",
+			"type": "Numeric"
+		},
+		{
+			"name": "97301",
+			"type": "Numeric"
+		},
+		{
+			"name": "087101",
+			"type": "Numeric"
+		},
+		{
+			"name": "087102",
+			"type": "Numeric"
+		},
+		{
+			"name": "087103",
+			"type": "Numeric"
+		},
+		{
+			"name": "097102",
+			"type": "Numeric"
+		},
+		{
+			"name": "53202",
+			"type": "Numeric"
+		},
+		{
+			"name": "53401",
+			"type": "Numeric"
+		},
+		{
+			"name": "86203",
+			"type": "Numeric"
+		},
+		{
+			"name": "86204",
+			"type": "Numeric"
+		},
+		{
+			"name": "87101",
+			"type": "Numeric"
+		},
+		{
+			"name": "87102",
+			"type": "Numeric"
+		},
+		{
+			"name": "87901",
+			"type": "Numeric"
+		},
+		{
+			"name": "97101",
+			"type": "Numeric"
+		},
+		{
+			"name": "97102",
+			"type": "Numeric"
+		},
+		{
+			"name": "Nem tartozik fokonyhoz",
+			"type": "Numeric"
+		},
+		{
+			"name": "00000",
+			"type": "Numeric"
+		},
+		{
+			"name": "undefined",
+			"type": "Numeric"
+		},
+		{
+			"name": "0909",
+			"type": "Numeric"
+		},
+		{
+			"name": "5486",
+			"type": "Numeric"
+		},
+		{
+			"name": "1001",
+			"type": "Numeric"
+		}
+	],
+	"Edges": [],
+	"Subsets@Code.links": []
+}

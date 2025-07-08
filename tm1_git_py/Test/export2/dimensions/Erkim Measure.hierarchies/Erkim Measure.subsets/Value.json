@@ -1,0 +1,5 @@
+{
+	"@type": "Subset",
+	"Name": "Value",
+	"Expression": "{[Erkim Measure].[Erkim Measure].[Value]}"
+}

@@ -1,0 +1,18 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Maintenance Manage Test Group",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Maintenance Manage Test Group.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pMode",
+			"Prompt": "\"create\" or \"destroy\"",
+			"Value": "create",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

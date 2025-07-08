@@ -1,0 +1,26 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic Load Sales Channel And Loyalty Cube",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic Load Sales Channel And Loyalty Cube.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pVersion",
+			"Prompt": "Base",
+			"Value": "Base",
+			"Type": "String"
+		}
+	],
+	"Variables": [
+		{
+			"Name": "vSubscriptionPlanMovement",
+			"Type": "String",
+			"Position": 1,
+			"StartByte": 0,
+			"EndByte": 0
+		}
+	]
+}

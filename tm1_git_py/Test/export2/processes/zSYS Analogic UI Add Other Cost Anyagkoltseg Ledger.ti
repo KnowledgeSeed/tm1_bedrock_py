@@ -1,0 +1,69 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+#Antal Botond 04.07
+
+# elem hozzáadása a ledger dimhez
+
+IF(pMode = 1);
+  DimName = 'ledger';
+  ConsolidatedElName = 'Egyéb áruk selejtezése, készlet értékvesztés';
+  ElType = 'N';
+ENDIF;
+
+IF(pMode = 2);
+  DimName = 'ledger';
+  ConsolidatedElName = 'Egyéb költségek';
+  ElType = 'N';
+ENDIF;
+
+IF(pMode = 3);
+  DimName = 'ledger';
+  ConsolidatedElName = 'Energia költségek';
+  ElType = 'N';
+ENDIF;
+
+IF(pMode = 4);
+  DimName = 'ledger';
+  ConsolidatedElName = 'Postaköltség, irodaszer';
+  ElType = 'N';
+ENDIF;
+
+IF(pMode = 5);
+  DimName = 'ledger';
+  ConsolidatedElName = 'Üzemanyag';
+  ElType = 'N';
+ENDIF;
+
+DimensionElementComponentAdd(DimName, ConsolidatedElName, pLedger, 1);
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+#Antal Botond 03.28
+
+# kapott caption beállítása
+DimName = 'ledger';
+HierName = 'ledger';
+
+ElementAttrPutS(pLedgerName, DimName, HierName, pLedger, 'Caption'  );
+
+ElementAttrPutS('none', DimName, HierName, pLedger, 'Efi szam kalkulacio'  );
+
+ElementAttrPutS('input', DimName, HierName, pLedger, 'Calculations And Logic');
+
+ElementAttrPutS('6', DimName, HierName, pLedger, 'UI Level');
+
+ElementAttrPutS('1', DimName, HierName, pLedger, 'editable');
+
+#endregion

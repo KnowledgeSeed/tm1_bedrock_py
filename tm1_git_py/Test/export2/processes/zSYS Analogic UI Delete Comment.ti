@@ -1,0 +1,222 @@
+#region Prolog
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+sCommentCube = 'Comment By ID';
+sDim='Comment ID';
+
+#endregion
+#region Metadata
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+sDimFilter = pDimFilter;
+
+#register comment
+nDimCount=CubeDimensionCountGet(pCube);
+
+sDim1='';
+nCommPos=Scan(',',pDimFilter);
+sDim1= Subst(pDimFilter,1,nCommPos-1);
+pDimFilter = Subst(pDimFilter,nCommPos+1,Long(pDimFilter) - nCommPos);
+
+sDim2='';
+nCommPos=Scan(',',pDimFilter);
+sDim2= Subst(pDimFilter,1,nCommPos-1);
+pDimFilter = Subst(pDimFilter,nCommPos+1,Long(pDimFilter) - nCommPos);
+
+sDim3='';
+nCommPos=Scan(',',pDimFilter);
+sDim3= Subst(pDimFilter,1,nCommPos-1);
+pDimFilter = Subst(pDimFilter,nCommPos+1,Long(pDimFilter) - nCommPos);
+
+sDim4='';
+nCommPos=Scan(',',pDimFilter);
+IF(nDimCount=4);
+sDim4 =pDimFilter;
+else;
+sDim4= Subst(pDimFilter,1,nCommPos-1);
+Endif;
+pDimFilter = Subst(pDimFilter,nCommPos+1,Long(pDimFilter) - nCommPos);
+
+sDim5='';
+nCommPos=Scan(',',pDimFilter);
+IF(nDimCount=5);
+sDim5 =pDimFilter;
+else;
+sDim5= Subst(pDimFilter,1,nCommPos-1);
+Endif;
+pDimFilter = Subst(pDimFilter,nCommPos+1,Long(pDimFilter) - nCommPos);
+
+sDim6='';
+nCommPos=Scan(',',pDimFilter);
+IF(nDimCount=6);
+sDim6 =pDimFilter;
+else;
+sDim6= Subst(pDimFilter,1,nCommPos-1);
+Endif;
+pDimFilter = Subst(pDimFilter,nCommPos+1,Long(pDimFilter) - nCommPos);
+
+sDim7='';
+nCommPos=Scan(',',pDimFilter);
+IF(nDimCount=7);
+sDim7 =pDimFilter;
+Else;
+sDim7= Subst(pDimFilter,1,nCommPos-1);
+Endif;
+pDimFilter = Subst(pDimFilter,nCommPos+1,Long(pDimFilter) - nCommPos);
+
+sDim8='';
+nCommPos=Scan(',',pDimFilter);
+IF(nDimCount=8);
+sDim8 =pDimFilter;
+Else;
+sDim8= Subst(pDimFilter,1,nCommPos-1);
+Endif;
+pDimFilter = Subst(pDimFilter,nCommPos+1,Long(pDimFilter) - nCommPos);
+
+sDim9='';
+nCommPos=Scan(',',pDimFilter);
+IF(nDimCount=9);
+sDim9 =pDimFilter;
+Else;
+sDim9= Subst(pDimFilter,1,nCommPos-1);
+Endif;
+pDimFilter = Subst(pDimFilter,nCommPos+1,Long(pDimFilter) - nCommPos);
+
+sDim10='';
+nCommPos=Scan(',',pDimFilter);
+sDim10= Subst(pDimFilter,1,nCommPos-1);
+pDimFilter = Subst(pDimFilter,nCommPos+1,Long(pDimFilter) - nCommPos);
+
+sNewID = CellGetS('Comment By ID', pCommentID, 'PreviousCommentID');
+
+#Botond 09.23
+#############################################################################################################
+nPreviousCommentElementIndex = (ElementIndex(sDim, sDim, pCommentID)) - 1;
+sPreviousCommentElementName = ElementName(sDim, sDim, nPreviousCommentElementIndex);
+
+nCommentIDindex = ElementIndex(sDim, sDim, pCommentID);
+nNextCommentIDindex = nCommentIDindex + 1;
+sNextCommentID = ElementName(sDim, sDim, nNextCommentIDindex);
+
+sFirstCommentID = pCommentID;
+
+nDimSize= ElementCount(sDim, sDim);
+
+WHILE(CellGetS('Comment By ID', sFirstCommentID, 'CommentedCubeFilter') @= sDimFilter & (nCommentIDindex > 0 ));
+    nCommentIDindex = ElementIndex(sDim, sDim, sFirstCommentID);
+    nCommentIDindex = nCommentIDindex - 1;
+    sFirstCommentID = ElementName(sDim, sDim, nCommentIDindex);
+END;
+
+nCommentIDindex = nCommentIDindex + 1;
+sLastCommentID = ElementName(sDim, sDim, nCommentIDindex);
+WHILE((CellGetS('Comment By ID', sLastCommentID, 'CommentedCubeFilter') @= sDimFilter) & (nCommentIDindex < nDimSize));
+  IF(nCommentIDindex < nDimSize);
+    nCommentIDindex = nCommentIDindex + 1;
+  ENDIF;
+    sLastCommentID = ElementName(sDim, sDim, nCommentIDindex);
+END;
+
+IF(sLastCommentID @= pCommentID);
+  nCommentIDindex = nCommentIDindex - 1;
+  sLastCommentID = ElementName(sDim, sDim, nCommentIDindex);
+  IF(CellGetS('Comment By ID', sLastCommentID, 'CommentedCubeFilter') @<> sDimFilter);
+    sLastCommentID = '';
+  ENDIF;
+ENDIF;
+
+IF(sNewID @= '');
+    sNewID = sLastCommentID;
+ENDIF;
+
+nElementExistsCheck = DimensionElementExists(sDim, sNewID);
+IF(nElementExistsCheck = 1);
+  sNewID = sLastCommentID;
+    IF(CellGetS('Comment By ID', sPreviousCommentElementName, 'CommentedCubeFilter') @= sDimFilter);
+      CellPutS(sPreviousCommentElementName, 'Comment By ID', sNextCommentID, 'PreviousCommentID');
+    ENDIF;
+  ELSE;
+      sNewID = sLastCommentID;
+          IF(CellGetS('Comment By ID', sPreviousCommentElementName, 'CommentedCubeFilter') @= sDimFilter);
+            CellPutS(sPreviousCommentElementName, 'Comment By ID', sNextCommentID, 'PreviousCommentID');
+          ENDIF;
+ENDIF;
+#############################################################################################################
+
+  
+IF( nDimCount = 3);
+  If ( CellIsUpdateable(pCube, sdim1, 'Fiscal Year':sdim2, sdim3)=1);
+    Cellputs(sNewID,pCube, sdim1, 'Fiscal Year':sdim2, sdim3);
+  Else;
+      LogOutput('ERROR', 'Incorrect target cube or filter to save comment id:'| pCube | ' filter:'|pDimFilter| ' CommentId lost:'|sNewID);
+  Endif;
+Elseif( nDimCount = 4);
+  If ( CellIsUpdateable(pCube, 'Fiscal Year':sdim1, sdim2, sdim3,sdim4)=1);
+    Cellputs(sNewID,pCube, 'Fiscal Year':sdim1, sdim2, sdim3,sdim4);
+  Else;
+      LogOutput('ERROR', 'Incorrect target cube or filter to save comment id:'| pCube | ' filter:'|pDimFilter| ' CommentId lost:'|sNewID);
+  Endif;
+  
+##########################################
+
+
+Elseif( nDimCount = 5);
+  If ( CellIsUpdateable(pCube, sdim1, sdim2, sdim3,sdim4,sdim5)=1);
+    Cellputs(sNewID,pCube, sdim1, sdim2, sdim3,sdim4,sdim5);
+  Else;
+      LogOutput('ERROR', 'Incorrect target cube or filter to save comment id:'| pCube | ' filter:'|pDimFilter| ' CommentId lost:'|sNewID);
+  Endif;
+  
+##########################################
+
+
+Elseif( nDimCount = 6);
+  If ( CellIsUpdateable(pCube, sdim1, 'Fiscal Year':sdim2, sdim3,sdim4,sdim5,sdim6)=1);
+    Cellputs(sNewID,pCube, sdim1, 'Fiscal Year':sdim2, sdim3,sdim4,sdim5,sdim6);
+  Else;
+      LogOutput('ERROR', 'Incorrect target cube or filter to save comment id:'| pCube | ' filter:'|pDimFilter| ' CommentId lost:'|sNewID);
+  Endif;
+Elseif( nDimCount = 7);
+  If ( CellIsUpdateable(pCube, sdim1, 'Fiscal Year':sdim2, sdim3,sdim4,sdim5,sdim6,sdim7)=1);
+    Cellputs(sNewID,pCube, sdim1, 'Fiscal Year':sdim2, sdim3,sdim4,sdim5,sdim6,sdim7);
+  Else;
+      LogOutput('ERROR', 'Incorrect target cube or filter to save comment id:'| pCube | ' filter:'|pDimFilter| ' CommentId lost:'|sNewID);
+  Endif;
+Elseif( nDimCount = 8);
+  If ( CellIsUpdateable(pCube, sdim1, 'Fiscal Year':sdim2, sdim3,sdim4,sdim5,sdim6,sdim7,sdim8)=1);
+    Cellputs(sNewID,pCube, sdim1, 'Fiscal Year':sdim2, sdim3,sdim4,sdim5,sdim6,sdim7,sdim8);
+  Else;
+      LogOutput('ERROR', 'Incorrect target cube or filter to save comment id:'| pCube | ' filter:'|pDimFilter| ' CommentId lost:'|sNewID);
+  Endif;
+Elseif( nDimCount = 9);
+  LogOutput('INFO', pCube|','|sdim1|','|sdim2|','|sdim3|','|sdim4|','|sdim5|','|sdim6|','|sdim7|','|sDim8|','|sdim9);
+  If ( CellIsUpdateable(pCube, sdim1, 'Fiscal Year':sdim2, sdim3,sdim4,sdim5,sdim6,sdim7,sDim8,sdim9)=1);
+    Cellputs(sNewID,pCube, sdim1, 'Fiscal Year':sdim2, sdim3,sdim4,sdim5,sdim6,sdim7,sDim8,sdim9);
+  Else;
+      LogOutput('ERROR', 'Incorrect target cube or filter to save comment id:'| pCube | ' filter:'|pDimFilter| ' CommentId lost:'|sNewID);
+  Endif;
+Elseif( nDimCount = 10);
+  If ( CellIsUpdateable(pCube, sdim1, 'Fiscal Year':sdim2, sdim3,sdim4,sdim5,sdim6,sdim7,sdim8,sdim9,sdim10)=1);
+    Cellputs(sNewID,pCube, sdim1, 'Fiscal Year':sdim2, sdim3,sdim4,sdim5,sdim6,sdim7,sdim8,sdim9,sdim10);
+  Else;
+      LogOutput('ERROR', 'Incorrect target cube or filter to save comment id:'| pCube | ' filter:'|pDimFilter| ' CommentId lost:'|sNewID);
+  Endif;
+Endif;  
+
+
+DimensionElementDeleteDirect('Comment ID', pCommentID);
+
+#endregion

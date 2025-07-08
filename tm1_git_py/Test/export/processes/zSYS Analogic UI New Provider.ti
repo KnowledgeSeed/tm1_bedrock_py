@@ -1,0 +1,35 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+DimName = 'Provider';
+ConsolidatedElName = 'Provider Total';
+
+ElType = 'N';
+
+DimensionElementComponentAdd(DimName, ConsolidatedElName, pName, 1);
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+# kapott caption beállítása
+DimName = 'Provider';
+HierName = 'Provider';
+
+ElementAttrPutS(pName, DimName, HierName, pName, 'Caption');
+ElementAttrPutS(pName, DimName, HierName, pName, 'Long_name');
+
+
+
+#endregion

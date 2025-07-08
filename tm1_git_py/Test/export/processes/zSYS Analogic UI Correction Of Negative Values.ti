@@ -1,0 +1,263 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# parameterek
+sInputProcessName = 'zSYS Analogic UI Subscription Plan Input Spread Period';
+
+sAllNTimeSubset = 'Planning Period';
+sPeriodDim = 'Period';
+nMaxPlanningPeriodSubsetLen = SubsetGetSize(sPeriodDim, sAllNTimeSubset);
+nAdottHonap = 1;
+While(nAdottHonap <= nMaxPlanningPeriodSubsetLen);
+  sPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, nAdottHonap);
+  IF (ElementType(sPeriodDim, sPeriodDim, sPeriod) @= 'N');
+    ####################################
+    #a legnébszerűbb termék létrehozása
+    ####################################
+    sAllProductSubset = pProductCategory;
+    sProductDim = 'Product';
+    nMaxProductSubsetLen = SubsetGetSize(sProductDim, sAllProductSubset);
+    nMaxProductClosing = 0;
+    sMaxProduct = '';
+    i = 1;
+    While(i <= nMaxProductSubsetLen);
+      sProduct  = SubsetGetElementName(sProductDim, sAllProductSubset, i);
+      nActualProductClosing = CellGetN('Subscription Plan', pVersion, sPeriod, 'Total', 'Total', sAllProductSubset, sProduct, 'Closing', 'Final Value');
+      IF ( nActualProductClosing > nMaxProductClosing);
+        nMaxProductClosing = nActualProductClosing;
+        sMaxProduct = sProduct;
+      ENDIF;
+      i = i+1;
+    END;
+    
+    sAllProductSubset = pProductCategory;
+    sProductDim = 'Product';
+    nProductSubsetLen = SubsetGetSize(sProductDim, sAllProductSubset);
+    i=1;
+    While(i <= nProductSubsetLen);
+      sProduct  = SubsetGetElementName(sProductDim, sAllProductSubset, i);
+      nClosingValue = CellGetN('Subscription Plan', pVersion, sPeriod, 'Total', 'Total', 'KTV Alaptermék Total', sProduct, 'Closing', 'Final Value');
+      IF( nClosingValue < 0 );
+      nEnnyivelKellMegCsokkenteniAll = abs(nClosingValue);
+      
+      ############################
+      # Ügyfélszolgálat, 0 hűség
+      ############################
+      nUSZNullaHusegFelmondottak = CellGetN('Subscription Plan', pVersion, sPeriod, '0', 'Customer Service', 'Terminated', sProduct, 'Terminated decrease', 'Final Value');
+      nEnnyivelKellMegCsokkenteni = nEnnyivelKellMegCsokkenteniAll;
+        # ha az egész értékkel lehet csökkenteni
+        IF( nEnnyivelKellMegCsokkenteni >= nUSZNullaHusegFelmondottak);
+            # felmondottak növelése a max termeken
+            sMaxProductValue = CellGetN('Subscription Plan', pVersion, sPeriod, '0', 'Customer Service', 'Felmondott', sMaxProduct, 'Terminated decrease', 'Final Value');
+            sMaxProductValue = sMaxProductValue + nUSZNullaHusegFelmondottak;
+            ExecuteProcess(sInputProcessName,
+             'pSourceProduct', sMaxProduct, 'pTargetProduct', 'Terminated', 'pMovement', 'Terminated increase', 'pLoyalty', '0',
+             'pChannel', 'Customer Service','pPeriod', sPeriod,'pMaincategory', pProductCategory,'pInput', sMaxProductValue
+             );
+           
+            # felmondottak csökkentése itt
+            ExecuteProcess(sInputProcessName,
+             'pSourceProduct', sProduct, 'pTargetProduct', 'Terminated', 'pMovement', 'Terminated increase', 'pLoyalty', '0',
+             'pChannel', 'Customer Service','pPeriod', sPeriod,'pMaincategory', pProductCategory,'pInput', 0
+             );
+            nEnnyivelKellMegCsokkenteniAll = nEnnyivelKellMegCsokkenteniAll - nUSZNullaHusegFelmondottak;
+        # adott értékkel csökkenteni és kész    
+        ELSEIf( nEnnyivelKellMegCsokkenteni <  nUSZNullaHusegFelmondottak);
+            # felmondottak növelése a max termeken
+            sMaxProductValue = CellGetN('Subscription Plan', pVersion, sPeriod, '0', 'Customer Service', 'Felmondott', sMaxProduct, 'Terminated decrease', 'Final Value');
+            sMaxProductValue = sMaxProductValue + nEnnyivelKellMegCsokkenteni;
+            ExecuteProcess(sInputProcessName,
+             'pSourceProduct', sMaxProduct, 'pTargetProduct', 'Terminated', 'pMovement', 'Terminated increase', 'pLoyalty', '0',
+             'pChannel', 'Customer Service','pPeriod', sPeriod,'pMaincategory', pProductCategory,'pInput', sMaxProductValue
+             );
+             
+            # felmondottak csökkentése itt
+            nUjErtek = nUSZNullaHusegFelmondottak - nEnnyivelKellMegCsokkenteni;
+            ExecuteProcess(sInputProcessName,
+             'pSourceProduct', sProduct, 'pTargetProduct', 'Terminated', 'pMovement', 'Terminated increase', 'pLoyalty', '0',
+             'pChannel', 'Customer Service','pPeriod', sPeriod,'pMaincategory', pProductCategory,'pInput', nUjErtek
+             );
+            nEnnyivelKellMegCsokkenteniAll = 0;
+        EndIf;
+      
+      ############################
+      # Ügyfélszolgálat, 1 hűség
+      ############################
+      nUSZEgyHusegFelmondottak = CellGetN('Subscription Plan', pVersion, sPeriod, '1', 'Customer Service', 'Terminated', sProduct, 'Terminated decrease', 'Final Value');
+      nEnnyivelKellMegCsokkenteni = nEnnyivelKellMegCsokkenteniAll; 
+        # semmit nem kell
+        IF( nEnnyivelKellMegCsokkenteni = 0);
+        # mindel lehet csökkenteni
+        ELSEIF( nEnnyivelKellMegCsokkenteni >= nUSZEgyHusegFelmondottak);
+          # felmondottak növelése a max termeken
+          sMaxProductValue = CellGetN('Subscription Plan', pVersion, sPeriod, '0', 'Customer Service', 'Felmondott', sMaxProduct, 'Terminated decrease', 'Final Value');
+          sMaxProductValue = sMaxProductValue + nUSZEgyHusegFelmondottak;
+            ExecuteProcess(sInputProcessName,
+             'pSourceProduct', sMaxProduct, 'pTargetProduct', 'Terminated', 'pMovement', 'Terminated increase', 'pLoyalty', '0',
+             'pChannel', 'Customer Service','pPeriod', sPeriod,'pMaincategory', pProductCategory,'pInput', sMaxProductValue
+             );
+             
+          # felmondottak csökkentése itt
+          ExecuteProcess(sInputProcessName,
+            'pSourceProduct', sProduct, 'pTargetProduct', 'Terminated', 'pMovement', 'Terminated increase', 'pLoyalty', '1',
+            'pChannel', 'Customer Service','pPeriod', sPeriod,'pMaincategory', pProductCategory,'pInput', 0
+             );
+          nEnnyivelKellMegCsokkenteniAll = nEnnyivelKellMegCsokkenteniAll - nUSZEgyHusegFelmondottak;
+        # az adott értékkel csökkenteni és kész
+        ELSEIf( nEnnyivelKellMegCsokkenteni <  nUSZEgyHusegFelmondottak);
+            # felmondottak növelése a max termeken
+            sMaxProductValue = CellGetN('Subscription Plan', pVersion, sPeriod, '0', 'Customer Service', 'Felmondott', sMaxProduct, 'Terminated decrease', 'Final Value');
+            sMaxProductValue = sMaxProductValue + nEnnyivelKellMegCsokkenteni;
+            ExecuteProcess(sInputProcessName,
+             'pSourceProduct', sMaxProduct, 'pTargetProduct', 'Terminated', 'pMovement', 'Terminated increase', 'pLoyalty', '0',
+             'pChannel', 'Customer Service','pPeriod', sPeriod,'pMaincategory', pProductCategory,'pInput', sMaxProductValue
+             );
+             
+            # felmondottak csökkentése itt
+            nUjErtek = nUSZEgyHusegFelmondottak- nEnnyivelKellMegCsokkenteni;
+            ExecuteProcess(sInputProcessName,
+             'pSourceProduct', sProduct, 'pTargetProduct', 'Terminated', 'pMovement', 'Terminated increase', 'pLoyalty', '1',
+             'pChannel', 'Customer Service','pPeriod', sPeriod,'pMaincategory', pProductCategory,'pInput', nUjErtek
+             );  
+            nEnnyivelKellMegCsokkenteniAll = 0;  
+        EndIf;
+      
+      ############################
+      # call center, 0 hűség
+      ############################
+      nCCnullaHusegFelmondottak = CellGetN('Subscription Plan', pVersion, sPeriod, '0', 'Call center', 'Terminated', sProduct, 'Terminated decrease', 'Final Value');
+      nEnnyivelKellMegCsokkenteni = nEnnyivelKellMegCsokkenteniAll; 
+        # semmit nem kell
+        IF( nEnnyivelKellMegCsokkenteni = 0);
+        # mindel lehet csökkenteni
+        ELSEIF( nEnnyivelKellMegCsokkenteni >= nCCnullaHusegFelmondottak);
+          # felmondottak növelése a max termeken
+          sMaxProductValue = CellGetN('Subscription Plan', pVersion, sPeriod, '0', 'Customer Service', 'Felmondott', sMaxProduct, 'Terminated decrease', 'Final Value');
+          sMaxProductValue = sMaxProductValue + nCCnullaHusegFelmondottak;
+            ExecuteProcess(sInputProcessName,
+             'pSourceProduct', sMaxProduct, 'pTargetProduct', 'Terminated', 'pMovement', 'Terminated increase', 'pLoyalty', '0',
+             'pChannel', 'Customer Service','pPeriod', sPeriod,'pMaincategory', pProductCategory,'pInput', sMaxProductValue
+             );
+             
+          # felmondottak csökkentése itt
+            ExecuteProcess(sInputProcessName,
+             'pSourceProduct', sProduct, 'pTargetProduct', 'Terminated', 'pMovement', 'Terminated increase', 'pLoyalty', '0',
+             'pChannel', 'Call center','pPeriod', sPeriod,'pMaincategory', pProductCategory,'pInput', 0
+             );
+          nEnnyivelKellMegCsokkenteniAll = nEnnyivelKellMegCsokkenteniAll - nCCnullaHusegFelmondottak;
+        # az adott értékkel csökkenteni és kész
+        ELSEIf( nEnnyivelKellMegCsokkenteni <  nCCnullaHusegFelmondottak);
+            # felmondottak növelése a max termeken
+            sMaxProductValue = CellGetN('Subscription Plan', pVersion, sPeriod, '0', 'Customer Service', 'Felmondott', sMaxProduct, 'Terminated decrease', 'Final Value');
+            sMaxProductValue = sMaxProductValue + nEnnyivelKellMegCsokkenteni;
+            ExecuteProcess(sInputProcessName,
+             'pSourceProduct', sMaxProduct, 'pTargetProduct', 'Terminated', 'pMovement', 'Terminated increase', 'pLoyalty', '0',
+             'pChannel', 'Customer Service','pPeriod', sPeriod,'pMaincategory', pProductCategory,'pInput', sMaxProductValue
+             );
+             
+            # felmondottak csökkentése itt
+            nUjErtek = nCCnullaHusegFelmondottak- nEnnyivelKellMegCsokkenteni;
+             ExecuteProcess(sInputProcessName,
+             'pSourceProduct', sProduct, 'pTargetProduct', 'Terminated', 'pMovement', 'Terminated increase', 'pLoyalty', '0',
+             'pChannel', 'Call center','pPeriod', sPeriod,'pMaincategory', pProductCategory,'pInput', nUjErtek
+             );
+            nEnnyivelKellMegCsokkenteniAll = 0;  
+        EndIf;
+      
+      ############################
+      # call center, 1 hűség
+      ############################
+      nCallCenterEgyFelmondottak = CellGetN('Subscription Plan', pVersion, sPeriod, '1', 'Call center', 'Terminated', sProduct, 'Terminated decrease', 'Final Value');
+      nValami = CellGetN('Subscription Plan', pVersion, sPeriod, '1', 'Call center', 'Terminated', sProduct, 'Terminated decrease', 'Final Value');
+      nEnnyivelKellMegCsokkenteni = nEnnyivelKellMegCsokkenteniAll; 
+        # semmit nem kell
+        IF( nEnnyivelKellMegCsokkenteni = 0);
+        # mindel lehet csökkenteni
+        ELSEIF( nEnnyivelKellMegCsokkenteni >= nCallCenterEgyFelmondottak);
+          # felmondottak növelése a max termeken
+          sMaxProductValue = CellGetN('Subscription Plan', pVersion, sPeriod, '0', 'Customer Service', 'Felmondott', sMaxProduct, 'Terminated decrease', 'Final Value');
+          sMaxProductValue = sMaxProductValue + nCallCenterEgyFelmondottak;
+            ExecuteProcess(sInputProcessName,
+             'pSourceProduct', sMaxProduct, 'pTargetProduct', 'Terminated', 'pMovement', 'Terminated increase', 'pLoyalty', '0',
+             'pChannel', 'Customer Service','pPeriod', sPeriod,'pMaincategory', pProductCategory,'pInput', sMaxProductValue
+             );
+             
+          # felmondottak csökkentése itt
+            ExecuteProcess(sInputProcessName,
+             'pSourceProduct', sProduct, 'pTargetProduct', 'Terminated', 'pMovement', 'Terminated increase', 'pLoyalty', '1',
+             'pChannel', 'Call center','pPeriod', sPeriod,'pMaincategory', pProductCategory,'pInput', 0
+             );
+          nEnnyivelKellMegCsokkenteniAll = nEnnyivelKellMegCsokkenteniAll - nCallCenterEgyFelmondottak;
+        # az adott értékkel csökkenteni és kész
+        ELSEIf( nEnnyivelKellMegCsokkenteni <  nCallCenterEgyFelmondottak);
+            # felmondottak növelése a max termeken
+            sMaxProductValue = CellGetN('Subscription Plan', pVersion, sPeriod, '0', 'Customer Service', 'Felmondott', sMaxProduct, 'Terminated decrease', 'Final Value');
+            sMaxProductValue = sMaxProductValue + nEnnyivelKellMegCsokkenteni;
+            ExecuteProcess(sInputProcessName,
+             'pSourceProduct', sMaxProduct, 'pTargetProduct', 'Terminated', 'pMovement', 'Terminated increase', 'pLoyalty', '0',
+             'pChannel', 'Customer Service','pPeriod', sPeriod,'pMaincategory', pProductCategory,'pInput', sMaxProductValue
+             );
+             
+            # felmondottak csökkentése itt
+            nUjErtek = nCallCenterEgyFelmondottak - nEnnyivelKellMegCsokkenteni;
+           ExecuteProcess(sInputProcessName,
+             'pSourceProduct', sProduct, 'pTargetProduct', 'Terminated', 'pMovement', 'Terminated increase', 'pLoyalty', '1',
+             'pChannel', 'Call center','pPeriod', sPeriod,'pMaincategory', pProductCategory,'pInput', nUjErtek
+             );
+            nEnnyivelKellMegCsokkenteniAll = 0;
+        EndIf;
+      
+      # closing < 0 endif
+      ENDIF;
+    
+    # Prodcut while END
+      i = i+1;
+    END;
+  
+  # endif ha nem C-s a period
+  ENDIF;
+  
+  # EndIf period
+  nAdottHonap = nAdottHonap +1;
+END;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+# Módos Dávid 2024 02 13
+
+sToday = Today(1);
+CellPutS(sToday, '}ElementAttributes_Version', pVersion, 'Last Updated');
+CellPutS(pUser, '}ElementAttributes_Version', pVersion, 'Last Updated By');
+
+
+
+#endregion

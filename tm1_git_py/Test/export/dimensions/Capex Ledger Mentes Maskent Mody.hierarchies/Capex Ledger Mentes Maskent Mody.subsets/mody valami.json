@@ -1,0 +1,5 @@
+{
+	"@type": "Subset",
+	"Name": "mody valami",
+	"Expression": "{TM1DRILLDOWNMEMBER({[Capex Ledger Mentes Maskent Mody].[Capex Ledger Mentes Maskent Mody].[14]}, ALL)}"
+}

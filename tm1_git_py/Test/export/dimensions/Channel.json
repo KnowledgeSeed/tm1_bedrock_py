@@ -1,0 +1,14 @@
+{
+	"@type": "Dimension",
+	"Name": "Channel",
+	"Hierarchies@Code.links": [
+		"Channel.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1C9EC00>.json",
+		"Channel.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1B0D850>.json",
+		"Channel.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1B0EFF0>.json",
+		"Channel.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1BDF110>.json",
+		"Channel.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1C4CD70>.json",
+		"Channel.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1C4CE60>.json",
+		"Channel.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1C4CE30>.json"
+	],
+	"DefaultHierarchy": "Dimensions('Channel')/Hierarchies('Channel')"
+}

@@ -1,0 +1,19 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+nMinOfMaxes = ConsolidatedMin(2, 'Weight and Limit', 'Base', '202303', 'Total', '214', 'Maximum', 'Value');
+LogOutput('INFO', numbertostring(nMinOfMaxes));
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

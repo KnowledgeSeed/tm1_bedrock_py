@@ -1,0 +1,16 @@
+{
+	"@type": "Hierarchy",
+	"Name": "Channel Product Assignment Measure",
+	"Elements": [
+		{
+			"name": "Assignment",
+			"type": "Numeric"
+		},
+		{
+			"name": "Comment",
+			"type": "Numeric"
+		}
+	],
+	"Edges": [],
+	"Subsets@Code.links": []
+}

@@ -1,0 +1,312 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# =========================================================
+# Original Date Created              2023.05.25
+# Originator                         Ullmann Dávid
+# Purpose                            Process to load a given product dimension's base elements with a total, fill attributes as well
+# Change Date                           
+# Change Request Reference    
+# Change Made by                     
+# =========================================================
+
+# declare base total variables
+
+sElementName_Total = 'Total Products';
+sElementCaption_Total = 'Összes Termék';
+sElementName_Archive = 'Total Products Archive';
+sElementCaption_Archive = 'Összes Archív Termék';
+sElementName_New = 'New';
+sElementName_Terminated = 'Terminated';
+
+sElementName_Source  = 'New';
+sElementAlias_Source = 'Új';
+sElementName_Target  = 'Terminated';
+sElementAlias_Target = 'Felmondott';
+
+sAttributeName_UIFlag = 'UI Flag';
+sAttributeName_Order = 'Order';
+
+pVersion = 'Base';
+
+# xp related variables, location in file
+
+sElementName_XpTotal = 'XP Total';
+sElementAlias_XpTotal = 'XP Összesen';
+sXpName1 = 'NET';
+sXpName2 = 'TEL';
+sXpName3 = 'TV';
+
+sXp_Col = '3';
+
+# technical variables to be created
+
+sAttributeName_OrphanFlag = 'IsOrphan';
+sAttributeName_ProductFlag = 'IsProduct';
+sAttributeName_SubsetName = 'SubsetName';
+sAttributeName_Active = 'Active';
+sAttributeName_ActualActive = 'Actual Period Active';
+sAttributeName_ActualNonzero = 'Actual Period BiggerThanZero';
+
+# declaring attributes, conversion from source file
+# warning: be sure to follow the naming convention (sAttributeXXX_Name, sAttributeXXX_Col) and then set nAttributeCount to the total number of attributes ! 
+
+sID_Col          = '2';
+nAttributeCount  = 9;
+
+sAttribute1_Name = 'Caption';
+sAttribute1_Col  = '1';
+sAttribute2_Name = 'XP';
+sAttribute2_Col  = '3';
+sAttribute3_Name = 'Device';
+sAttribute3_Col  = '4';
+sAttribute4_Name = 'Active';
+sAttribute4_Col  = '5';
+sAttribute5_Name = 'Migration Point';
+sAttribute5_Col  = '7';
+sAttribute6_Name = 'New Contract Point';
+sAttribute6_Col  = '8';
+sAttribute7_Name = 'Business Unit';
+sAttribute7_Col  = '19';
+sAttribute8_Name = 'Product Category';
+sAttribute8_Col  = '20';
+sAttribute9_Name = 'Technology';
+sAttribute9_Col  = '21';
+
+# initialize csv format and other variables
+
+sDimensionName_Attributes = '}ElementAttributes_'|pDimensionName;
+sDimensionName_SubsetAttributes = '}ElementAttributes_}Subsets_'|pDimensionName;
+sDimensionName_Subsets = '}Subsets_'|pDimensionName;
+
+pFileLocation = CellGetS('zSYS Maintenance Parameter', 'Inbound Data Directory Path', 'S Type');
+sFile = pFileLocation | pFileName;
+
+nCurrentPeriod = TimSt(Now(), '\Y\m');
+
+sColumnDelimiter = If ( pColumnDelimiter @= '' , ';' , pColumnDelimiter );
+sDecimalSeparator = If ( pDecimalSeparator @= '' , '.' , pDecimalSeparator );
+sThousandSeparator = pThousandSeparator;
+sQuoteChar = If ( pQuoteChar @= '' , '"' , pQuoteChar );
+sCharacterSet = If ( pCharacterSet @= '' , 'TM1CS_UTF8' , pCharacterSet );
+nHeaderRow = If ( pHeaderRow @= '' , 1 , Numbr ( pHeaderRow ) );
+
+# define and set CSV as data source
+
+DataSourceType = 'CHARACTERDELIMITED';
+DataSourceNameForServer = sFile;
+DataSourceNameForClient = sFile;
+DatasourceASCIIHeaderRecords = nHeaderRow;
+DatasourceASCIIQuoteCharacter = sQuoteChar;
+DataSourceASCIIDelimiter = sColumnDelimiter;
+SetInputCharacterSet ( sCharacterSet );
+
+# create base total elements if not present 
+
+if(DimensionElementExists(pDimensionName, sElementName_Total) = 0);
+  DimensionElementInsertDirect(pDimensionName, '', sElementName_Total, 'C');
+  AttrPutS(sElementCaption_Total, pDimensionName, sElementName_Total, 'Caption');
+endif;
+
+if(DimensionElementExists(pDimensionName, sElementName_Archive) = 0);
+  DimensionElementInsertDirect(pDimensionName, '', sElementName_Archive, 'C');
+  AttrPutS(sElementCaption_Archive, pDimensionName, sElementName_Archive, 'Caption');
+endif;
+
+# generating empty XP total sets
+
+if(DimensionElementExists(pDimensionName, sElementName_XpTotal) = 1);
+  DimensionElementDeleteDirect(pDimensionName, sElementName_XpTotal);
+endif;
+DimensionElementInsertDirect(pDimensionName, '', sElementName_XpTotal, 'C');
+AttrPutS(sElementAlias_XpTotal, pDimensionName,sElementName_XpTotal, 'Caption');
+
+if(DimensionElementExists(pDimensionName, sXpName1) = 1);
+  DimensionElementDeleteDirect(pDimensionName, sXpName1);
+endif;
+DimensionElementInsertDirect(pDimensionName, '', sXpName1, 'C');
+AttrPutS(sXpName1, pDimensionName,sXpName1, 'Caption');
+DimensionElementComponentAddDirect(pDimensionName, sElementName_XpTotal, sXpName1, 1);
+
+if(DimensionElementExists(pDimensionName, sXpName2) = 0);
+  DimensionElementDeleteDirect(pDimensionName, sXpName2);
+endif;
+DimensionElementInsertDirect(pDimensionName, '', sXpName2, 'C');
+AttrPutS(sXpName2, pDimensionName,sXpName2, 'Caption');
+DimensionElementComponentAddDirect(pDimensionName, sElementName_XpTotal, sXpName2, 1);
+
+if(DimensionElementExists(pDimensionName, sXpName3) = 0);
+  DimensionElementDeleteDirect(pDimensionName, sXpName3);
+endif;
+DimensionElementInsertDirect(pDimensionName, '', sXpName3, 'C');
+AttrPutS(sXpName3, pDimensionName,sXpName3, 'Caption');
+DimensionElementComponentAddDirect(pDimensionName, sElementName_XpTotal, sXpName3, 1);
+
+# making sure all attributes exist, technical section
+
+if(DimensionElementExists(sDimensionName_Attributes, sAttributeName_OrphanFlag) = 0);
+  AttrInsert(pDimensionName, '', sAttributeName_OrphanFlag, 'N');
+endif;
+if(DimensionElementExists(sDimensionName_Attributes, sAttributeName_ProductFlag) = 0);
+  AttrInsert(pDimensionName, '', sAttributeName_ProductFlag, 'N');
+endif;
+if(DimensionElementExists(sDimensionName_Attributes, sAttributeName_SubsetName) = 0);
+  AttrInsert(pDimensionName, '', sAttributeName_SubsetName, 'S');
+endif;
+if(DimensionElementExists(sDimensionName_Attributes, sAttributeName_Active) = 0);
+  AttrInsert(pDimensionName, '', sAttributeName_Active, 'N');
+endif;
+if(DimensionElementExists(sDimensionName_Attributes, sAttributeName_ActualActive) = 0);
+  AttrInsert(pDimensionName, '', sAttributeName_ActualActive, 'N');
+endif;
+if(DimensionElementExists(sDimensionName_Attributes, sAttributeName_ActualNonzero) = 0);
+  AttrInsert(pDimensionName, '', sAttributeName_ActualNonzero, 'N');
+endif;
+
+
+if(DimensionElementExists(sDimensionName_SubsetAttributes, sAttributeName_UIFlag) = 0);
+  AttrInsert(sDimensionName_Subsets, '', sAttributeName_UIFlag, 'N');
+endif;
+
+if(DimensionElementExists(sDimensionName_SubsetAttributes, sAttributeName_Order) = 0);
+  AttrInsert(sDimensionName_Subsets, '', sAttributeName_Order, 'N');
+endif;
+
+# making sure all attributes exist, from source file
+
+nIndex = 1;
+while(nIndex <= nAttributeCount);
+  sCurrentAttribute = Expand('%sAttribute'|NumberToString(nIndex)|'_Name%');
+  if(DimensionElementExists(sDimensionName_Attributes, sCurrentAttribute) = 0);
+    AttrInsert(pDimensionName, '', sCurrentAttribute, 'S');
+  endif;
+  nIndex = nIndex + 1;
+end;
+
+# making every product in the total an orphan
+
+sSubsetName_TotalTemp = 'Total Temp';
+nOrphanCounterStart  = 0;
+nBaseAdoption        = 0;
+nOrphanCounterMiddle = 0;
+nArchiveAdoption     = 0;
+sMDX = '{TM1FilterByLevel({TM1DrillDownMember({['|pDimensionName|'].['|pDimensionName|'].['|sElementName_Total|']},ALL,RECURSIVE)},0)}';
+HierarchySubsetCreate(pDimensionName, pDimensionName, sSubsetName_TotalTemp, 1);
+HierarchySubsetMDXSet(pDimensionName, pDimensionName, sSubsetName_TotalTemp, sMDX);
+HierarchySubsetMDXSet(pDimensionName, pDimensionName, sSubsetName_TotalTemp, '');
+nElementIndex = 1;
+nElementIndexMax = HierarchySubsetGetSize(pDimensionName, pDimensionName, sSubsetName_TotalTemp);
+while(nElementIndex <= nElementIndexMax);
+  nCurrentElement = HierarchySubsetGetElementName(pDimensionName, pDimensionName, sSubsetName_TotalTemp, nElementIndex);
+  DimensionElementComponentDeleteDirect(pDimensionName, sElementName_Total, nCurrentElement);
+  AttrPutN(1,pDimensionName, nCurrentElement, sAttributeName_OrphanFlag);
+  AttrPutN(0, pDimensionName, nCurrentElement, sAttributeName_Active);
+  
+  nElementIndex = nElementIndex + 1;
+  nOrphanCounterStart = nOrphanCounterStart + 1;
+end;
+AttrPutN(0, pDimensionName, sElementName_Total, sAttributeName_OrphanFlag);
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# insert new product if does not exist in dimension
+
+sProductId = Expand('%v'| sID_Col |'%');
+
+if(DimensionElementExists(pDimensionName, sProductId) = 0);
+  DimensionElementInsertDirect(pDimensionName, sElementName_Total, sProductId, 'N');
+endif;
+
+DimensionElementComponentAddDirect(pDimensionName, sElementName_Total, sProductId, 1);
+AttrPutN(0, pDimensionName, sProductId, sAttributeName_OrphanFlag);
+nBaseAdoption = nBaseAdoption + 1;
+
+# inserting into XP
+
+sCurrentXp = Expand('%v'| sXp_Col |'%');
+if(sCurrentXp @<> '');
+  DimensionElementComponentAddDirect(pDimensionName, sCurrentXp, sProductId, 1);
+endif;
+
+# update element attributes
+
+AttrPutN(1, pDimensionName, sProductId, sAttributeName_ProductFlag);
+AttrPutN(1, pDimensionName, sProductId, sAttributeName_Active);
+
+nAttributeIndex = 1;
+while(nAttributeIndex <= nAttributeCount);
+  sCurrentAttributeName = Expand('%sAttribute'|NumberToString(nAttributeIndex)|'_Name%');
+  sCurrentAttributeCol  = Expand('%sAttribute'|NumberToString(nAttributeIndex)|'_Col%');
+  sCurrentAttributeVal  = Expand('%v'| sCurrentAttributeCol |'%');
+  
+  sAttributeType = DType(sDimensionName_Attributes, sCurrentAttributeName);
+  if(sAttributeType @= 'AN');
+    
+    nValue = StringToNumberEx(sCurrentAttributeVal, sDecimalSeparator , sThousandSeparator);
+    
+    AttrPutN(nValue, pDimensionName, sProductId, sCurrentAttributeName);
+  else;
+    AttrPutS(sCurrentAttributeVal, pDimensionName, sProductId, sCurrentAttributeName);
+  endif;
+  
+  nAttributeIndex = nAttributeIndex + 1;
+end;
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# archive total parent element adopts all remaining orphan products. very heartwarming
+
+sSubsetName_OrphanTemp = 'Orphan Temp';
+sMDX = '{Filter({['|pDimensionName|'].['|pDimensionName|'].Members}, ['|pDimensionName|'].['|pDimensionName|'].['|sAttributeName_OrphanFlag|'] = 1)}';
+HierarchySubsetCreate(pDimensionName, pDimensionName, sSubsetName_OrphanTemp, 1);
+HierarchySubsetMDXSet(pDimensionName, pDimensionName, sSubsetName_OrphanTemp, sMDX);
+HierarchySubsetMDXSet(pDimensionName, pDimensionName, sSubsetName_OrphanTemp, '');
+nOrphanCounterMiddle = HierarchySubsetGetSize(pDimensionName, pDimensionName, sSubsetName_OrphanTemp);
+nElementIndex = 1;
+nElementIndexMax = HierarchySubsetGetSize(pDimensionName, pDimensionName, sSubsetName_OrphanTemp);
+while(nElementIndex <= nElementIndexMax);
+  nCurrentElement = HierarchySubsetGetElementName(pDimensionName, pDimensionName, sSubsetName_OrphanTemp, nElementIndex);
+  DimensionElementComponentAddDirect(pDimensionName, sElementName_Archive, nCurrentElement, 1);
+  AttrPutN(0,pDimensionName, nCurrentElement, sAttributeName_OrphanFlag);
+  nElementIndex = nElementIndex + 1;
+  nArchiveAdoption = nArchiveAdoption + 1;
+end;
+
+# for some reason, "Total Products" comes out as an orphan itself.
+# i don't even wanna know what causes this. this really should not be possible in any way
+
+AttrPutN(0, pDimensionName, sElementName_Total, sAttributeName_OrphanFlag);
+
+# adding extra elements if not present for some reason
+
+if(DimensionElementExists(pDimensionName, sElementName_Source) = 0);
+  DimensionElementInsertDirect(pDimensionName, '', sElementName_Source, 'N');
+endif;
+DimensionElementComponentAddDirect(pDimensionName, 'Total Products', sElementName_Source, 1);
+AttrPutS(sElementAlias_Source, pDimensionName, sElementName_Source, 'Caption');
+
+if(DimensionElementExists(pDimensionName, sElementName_Target) = 0);
+  DimensionElementInsertDirect(pDimensionName, '', sElementName_Target, 'N');
+endif;
+DimensionElementComponentAddDirect(pDimensionName, 'Total Products', sElementName_Target, 1);
+AttrPutS(sElementAlias_Target, pDimensionName, sElementName_Target, 'Caption');
+
+# debug logs
+
+#LogOutput('INFO', 'Start: ' | numbertostring(nOrphanCounterStart));
+#LogOutput('INFO', 'Active Delta: ' | numbertostring(nBaseAdoption));
+#LogOutput('INFO', 'Mid: ' | numbertostring(nOrphanCounterMiddle));
+#LogOutput('INFO', 'Archived Delta: ' | numbertostring(nArchiveAdoption));
+
+
+
+#endregion

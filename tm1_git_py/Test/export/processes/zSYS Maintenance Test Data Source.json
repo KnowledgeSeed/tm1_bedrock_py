@@ -1,0 +1,235 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Maintenance Test Data Source",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Maintenance Test Data Source.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pPeriodStart",
+			"Prompt": "2022-01-01",
+			"Value": "2022-01-01",
+			"Type": "String"
+		},
+		{
+			"Name": "pPeriodEnd",
+			"Prompt": "2023-08-31",
+			"Value": "2023-08-31",
+			"Type": "String"
+		}
+	],
+	"Variables": [
+		{
+			"Name": "v1",
+			"Type": "String",
+			"Position": 1,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v2",
+			"Type": "String",
+			"Position": 2,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v3",
+			"Type": "String",
+			"Position": 3,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v4",
+			"Type": "String",
+			"Position": 4,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v5",
+			"Type": "String",
+			"Position": 5,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v6",
+			"Type": "String",
+			"Position": 6,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v7",
+			"Type": "String",
+			"Position": 7,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v8",
+			"Type": "String",
+			"Position": 8,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v9",
+			"Type": "String",
+			"Position": 9,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v10",
+			"Type": "String",
+			"Position": 10,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v11",
+			"Type": "String",
+			"Position": 11,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v12",
+			"Type": "String",
+			"Position": 12,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v13",
+			"Type": "String",
+			"Position": 13,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v14",
+			"Type": "String",
+			"Position": 14,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v15",
+			"Type": "String",
+			"Position": 15,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v16",
+			"Type": "String",
+			"Position": 16,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v17",
+			"Type": "String",
+			"Position": 17,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v18",
+			"Type": "String",
+			"Position": 18,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v19",
+			"Type": "String",
+			"Position": 19,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v20",
+			"Type": "String",
+			"Position": 20,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v21",
+			"Type": "String",
+			"Position": 21,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v22",
+			"Type": "String",
+			"Position": 22,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v23",
+			"Type": "String",
+			"Position": 23,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v24",
+			"Type": "String",
+			"Position": 24,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v25",
+			"Type": "String",
+			"Position": 25,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v26",
+			"Type": "String",
+			"Position": 26,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v27",
+			"Type": "String",
+			"Position": 27,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v28",
+			"Type": "String",
+			"Position": 28,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v29",
+			"Type": "String",
+			"Position": 29,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "v30",
+			"Type": "String",
+			"Position": 30,
+			"StartByte": 0,
+			"EndByte": 0
+		}
+	]
+}

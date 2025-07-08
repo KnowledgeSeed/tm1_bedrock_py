@@ -1,0 +1,5 @@
+{
+	"@type": "Subset",
+	"Name": "Adatok tesztelese",
+	"Expression": "{[Target Product].[Target Product].[KTV Alapterm\u00e9k Total^210],[Target Product].[Target Product].[KTV Alapterm\u00e9k Total^214],[Target Product].[Target Product].[Internet Total^761]}"
+}

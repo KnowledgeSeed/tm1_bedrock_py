@@ -1,0 +1,18 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic Store Subscription Movement Assignment for Input Rule Driven",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic Store Subscription Movement Assignment for Input Rule Driven.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pVersion",
+			"Prompt": "",
+			"Value": "0",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

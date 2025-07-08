@@ -1,0 +1,40 @@
+{
+	"@type": "Hierarchy",
+	"Name": "Subscription Report Measure",
+	"Elements": [
+		{
+			"name": "Value",
+			"type": "Numeric"
+		},
+		{
+			"name": "Last Changed At",
+			"type": "String"
+		},
+		{
+			"name": "Last Changed By",
+			"type": "String"
+		},
+		{
+			"name": "Comment",
+			"type": "String"
+		},
+		{
+			"name": "Corrected Closing Value",
+			"type": "Numeric"
+		},
+		{
+			"name": "Maximum",
+			"type": "Numeric"
+		},
+		{
+			"name": "Minimum",
+			"type": "Numeric"
+		},
+		{
+			"name": "Out of Bounds",
+			"type": "Numeric"
+		}
+	],
+	"Edges": [],
+	"Subsets@Code.links": []
+}

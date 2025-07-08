@@ -1,0 +1,87 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# =========================================================
+# Original Date Created              2024.03.02
+# Originator                         Modos David
+# Purpose                            
+# Change Date                           
+# Change Request Reference    
+# Change Made by                     Módos Dávid
+# =========================================================
+
+# 1, provider berakása total alá
+# 2, channel aktív kitöltése kitöltése
+
+# DATA
+# 3, provider channel hozzárendelés kitöltése
+
+pChannelDimensionName = 'Channel';
+pProviderDimensionName = 'Provider';
+sElementName_ChanelTotal = 'Channel List Total';
+sElementName_ProviderTotal= 'Provider Total';
+sPeriodDim = 'Period';
+sAllNTimeSubset = 'All N';
+
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+## provider felvétele
+IF ( DimensionElementExists(pProviderDimensionName , vprogram_provider_name) = 0);
+  DimensionElementComponentAddDirect(pProviderDimensionName, sElementName_ProviderTotal,vprogram_provider_name, 1);
+
+ENDIF;
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+IF( vprogram_provider_name @= '');
+  itemskip;
+ENDIF;
+
+IF ( DimensionElementExists(pChannelDimensionName , vchannel_name) = 0);
+ itemskip;
+ENDIF;
+
+sStartDate = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, 1);
+nMaxLong = SubsetGetSize(sPeriodDim, sAllNTimeSubset);
+sEndDate = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, nMaxLong);
+endDateIndex = SubsetElementGetIndex(sPeriodDim, sAllNTimeSubset, sEndDate);
+
+IF( stringToNumber(pLastYear) = 1);
+i = 1;
+sPeriodSubsetName = 'Last_Actual_Year';
+    While(i <= endDateIndex);
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      IF ( SubsetElementExists('Period', sPeriodSubsetName, sInputPeriod) = 1);
+        CellPutN(1, 'Channel Provider Assignment', pVersion, sInputPeriod, vchannel_name, vprogram_provider_name, 'Assignment');
+      ENDIF;
+      i = i+1;
+      
+    END;
+
+# end lastYear
+ENDIF;
+IF( stringToNumber(pAllPeriod) = 1);
+i = 1;
+    While(i <= endDateIndex);
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+        CellPutN(1, 'Channel Provider Assignment', pVersion, sInputPeriod, vchannel_name, vprogram_provider_name, 'Assignment');
+      i = i+1;
+      
+    END;
+
+# end lastYear
+ENDIF;
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+#endregion

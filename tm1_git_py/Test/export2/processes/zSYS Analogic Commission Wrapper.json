@@ -1,0 +1,11 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic Commission Wrapper",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic Commission Wrapper.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [],
+	"Variables": []
+}

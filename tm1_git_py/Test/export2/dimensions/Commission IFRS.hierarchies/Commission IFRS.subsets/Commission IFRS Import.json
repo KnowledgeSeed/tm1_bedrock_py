@@ -1,0 +1,5 @@
+{
+	"@type": "Subset",
+	"Name": "Commission IFRS Import",
+	"Expression": "{[Commission IFRS].[Commission IFRS].Members}"
+}

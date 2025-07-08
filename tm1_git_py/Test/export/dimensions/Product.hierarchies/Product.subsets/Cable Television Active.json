@@ -1,0 +1,5 @@
+{
+	"@type": "Subset",
+	"Name": "Cable Television Active",
+	"Expression": "{\tORDER({\tFILTER({\tTM1FILTERBYLEVEL({\t\tTM1DRILLDOWNMEMBER({\t\t\t[Product].[Product].[Cable Television]\t}, ALL, RECURSIVE)\t\t\t}, 0)\t\t}, [Product].[Product].[Active] = 1)\t},[Product].[ Migration Point], DESC )}"
+}

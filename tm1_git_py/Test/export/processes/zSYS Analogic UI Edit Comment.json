@@ -1,0 +1,30 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI Edit Comment",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic UI Edit Comment.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pUser",
+			"Prompt": "REQUIRED:commenter",
+			"Value": "User",
+			"Type": "String"
+		},
+		{
+			"Name": "pCommentID",
+			"Prompt": "REQUIRED:",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pText",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

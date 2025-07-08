@@ -1,0 +1,48 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI Eszkoz Input",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic UI Eszkoz Input.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pMode",
+			"Prompt": "1:one month,2: more month,",
+			"Value": 1,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pLineitem",
+			"Prompt": "0:= Efi szam , 1:= ARPU , 3:= Koltseg Rata",
+			"Value": 96801,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pValue",
+			"Prompt": "69",
+			"Value": "69",
+			"Type": "String"
+		},
+		{
+			"Name": "pVersion",
+			"Prompt": "Base",
+			"Value": "Base",
+			"Type": "String"
+		},
+		{
+			"Name": "pPeriod",
+			"Prompt": "202402",
+			"Value": "202402",
+			"Type": "String"
+		},
+		{
+			"Name": "pUser",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

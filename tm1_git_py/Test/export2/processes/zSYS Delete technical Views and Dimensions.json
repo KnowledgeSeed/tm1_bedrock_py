@@ -1,0 +1,32 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Delete technical Views and Dimensions",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Delete technical Views and Dimensions.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pDebug",
+			"Prompt": "",
+			"Value": 0,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pCallerID",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		}
+	],
+	"Variables": [
+		{
+			"Name": "vProc",
+			"Type": "String",
+			"Position": 1,
+			"StartByte": 0,
+			"EndByte": 0
+		}
+	]
+}

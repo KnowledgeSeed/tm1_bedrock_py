@@ -1,0 +1,5 @@
+{
+	"@type": "Subset",
+	"Name": "Default",
+	"Expression": "{[Product].[Product].[Total Products^214],[Product].[Product].[Total Products^210],[Product].[Product].[Total Products^761],[Product].[Product].[Total Products^762],[Product].[Product].[Total Products^Nem tartozik termekhez]}"
+}

@@ -1,0 +1,48 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI Individual CPS Input",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic UI Individual CPS Input.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pMode",
+			"Prompt": "1:one month,2: more month",
+			"Value": 1,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pLedger",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pValue",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pVersion",
+			"Prompt": "",
+			"Value": "Base",
+			"Type": "String"
+		},
+		{
+			"Name": "pPeriod",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pUser",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

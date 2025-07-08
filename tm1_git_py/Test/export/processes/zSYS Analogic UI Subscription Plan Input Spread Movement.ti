@@ -1,0 +1,310 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# =========================================================
+# Original Date Created              2023.06.12
+# Originator                         Ullmann Dávid
+# Purpose                            Process to spread the input in second dimension (in case of group movement) in the cube Subscription Plan
+# Change Date                             Second layer, movement
+# Change Request Reference                
+# Change Made by                     
+# =========================================================
+
+# collection of variables with possible use
+
+sCubeName_Main          = 'Subscription Plan';
+sCubeName_Assignment    = 'Subscription Movement Assignment';
+sCubeName_WeightLimit   = 'Weight and Limit';
+sDimensionName_Period   = 'Period';
+sDimensionName_Loyalty  = 'Loyalty';
+sDimensionName_Channel  = 'Sales Channel';
+sDimensionName_SProduct = 'Source Product';
+sDimensionName_TProduct = 'Target Product';
+sDimensionName_Version  = 'Version';
+sDimensionName_Movement = 'Subscription Plan Movement';
+sDimensionName_Measure  = 'Subscription Plan Measure';
+sHierarchyName_Period   = 'Period';
+sHierarchyName_Loyalty  = 'Loyalty';
+sHierarchyName_Channel  = 'Sales Channel';
+sHierarchyName_SProduct = 'Source Product';
+sHierarchyName_TProduct = 'Target Product';
+sHierarchyName_Version  = 'Version';
+sHierarchyName_Movement = 'Subscription Plan Movement';
+sHierarchyName_Movement2= 'Naturalia Page Movement';
+
+sElementName_MovementMeasure = 'Stored';
+sElementName_MovementTotal   = 'Closing';
+sSubsetName_Period           = 'All N';
+sValue_Version               = 'Base';
+sValue_MeasureRead_Direct  = 'Value';  
+sValue_MeasureWrite_Direct = 'Direct Input Override';
+sValue_MeasureDelta_Direct = 'Direct Input Delta';
+sValue_MeasureZero_Direct  = 'Direct Input Zero Flag';
+sValue_MeasureRead_Spread  = 'Base';
+sValue_MeasureWrite_Spread = 'Final Value Override';
+sValue_MeasureDelta_Spread = 'Spread Input Delta';
+sValue_MeasureResidual     = 'Spread Res';
+sValue_MeasureZero_Spread  = 'Final Value Zero Flag';
+svalue_MeasureFinal        = 'Final Value Snapshot';
+
+
+# define next process name in chain
+sProcessName_Next = 'zSYS Analogic UI Subscription Plan Input Spread Target';
+
+if(pMovementBypass = 0);
+  
+  # get value total
+  nTotalValue = 0;
+  nTotalValue_Sign = 0;
+  nCount = 0;
+  
+  # generate subset of movements
+  sTempSubsetName_Movement = 'Movement Spread Temp';
+  
+  sMDX = 
+  '{Filter(
+    {TM1FilterByLevel( {TM1DrillDownMember( {['|sDimensionName_Movement|'].['|sHierarchyName_Movement|'].['|pMovement|']}, ALL, RECURSIVE )}, 0 )},
+    [Subscription Movement Assignment].(
+      [Source Product].[Source Product].['|pSourceProduct|'],
+      [Target Product].[Target Product].['|pTargetProduct|'],
+      [Subscription Movement Assignment Measure].[Subscription Movement Assignment Measure].[Stored]) > 0
+  )}';
+#  '{Filter(
+#    {TM1FilterByLevel( {TM1DrillDownMember( {['|sDimensionName_Movement|'].['|sHierarchyName_Movement|'].['|pMovement|']}, ALL, RECURSIVE )}, 0 )},
+#    [Subscription Movement Assignment for Input].(
+#      [Period].['|pPeriod|'],
+#      [Version].['|pVersion|'],
+#      [Source Product].[Source Product].['|pSourceProduct|'],
+#      [Target Product].[Target Product].['|pTargetProduct|'],
+#      [Subscription Movement Assignment Measure].[Subscription Movement Assignment Measure].[movement_flag_only]) > 0
+#  )}';
+  
+  if(pSourceBypass+pTargetBypass = 0);
+    sMDX = 
+#    '{
+#      GENERATE(
+#        {
+#          Tm1SubsetToSet([Target Product], "'|pMaincategory|'") 
+#        },
+#        {
+#          GENERATE(
+#            { 
+#              Tm1SubsetToSet([Source Product], "'|pMaincategory|'") 
+#            },
+#            { 
+#              Filter(
+#                {TM1FilterByLevel( {TM1DrillDownMember( {['|sDimensionName_Movement|'].['|sHierarchyName_Movement|'].['|pMovement|']}, ALL, RECURSIVE )}, 0 )},
+#                [Subscription Movement Assignment].(
+#                    [Source Product].CurrentMember,
+#                    [Target Product].CurrentMember,
+#                    [Subscription Movement Assignment Measure].[Subscription Movement Assignment Measure].[Stored]
+#                ) > 0 
+#              )
+#            }
+#          )
+#        }
+#      )
+#    }';
+    
+    '{
+      GENERATE(
+        {
+          Tm1SubsetToSet([Target Product], "'|pMaincategory|'") 
+        },
+        {
+          GENERATE(
+            { 
+              Tm1SubsetToSet([Source Product], "'|pMaincategory|'") 
+            },
+            { 
+              Filter(
+                {TM1FilterByLevel( {TM1DrillDownMember( {['|sDimensionName_Movement|'].['|sHierarchyName_Movement|'].['|pMovement|']}, ALL, RECURSIVE )}, 0 )},
+                [Subscription Movement Assignment for Input].(
+                    [Period].['|pPeriod|'],
+                    [Version].['|pVersion|'],
+                    [Source Product].CurrentMember,
+                    [Target Product].CurrentMember,
+                    [Subscription Movement Assignment Measure].[Subscription Movement Assignment Measure].[source_target_flag_mult]
+                ) > 0 
+              )
+            }
+          )
+        }
+      )
+    }';
+  elseif(pSourceBypass = 0);
+    sMDX = 
+#    '{
+#      GENERATE(
+#        { 
+#          Tm1SubsetToSet([Source Product], "'|pMaincategory|'") 
+#        },
+#        { 
+#          Filter(
+#            {TM1FilterByLevel( {TM1DrillDownMember( {['|sDimensionName_Movement|'].['|sHierarchyName_Movement|'].['|pMovement|']}, ALL, RECURSIVE )}, 0 )},
+#            [Subscription Movement Assignment].(
+#                [Source Product].CurrentMember,
+#                [Target Product].[Target Product].['|pTargetProduct|'],
+#                [Subscription Movement Assignment Measure].[Subscription Movement Assignment Measure].[Stored]
+#            ) > 0 
+#          )
+#        }
+#      )
+#    }';
+    
+    '{
+      GENERATE(
+        { 
+          Tm1SubsetToSet([Source Product], "'|pMaincategory|'") 
+        },
+        { 
+          Filter(
+            {TM1FilterByLevel( {TM1DrillDownMember( {['|sDimensionName_Movement|'].['|sHierarchyName_Movement|'].['|pMovement|']}, ALL, RECURSIVE )}, 0 )},
+            [Subscription Movement Assignment for Input].(
+                [Period].['|pPeriod|'],
+                [Version].['|pVersion|'],
+                [Source Product].CurrentMember,
+                [Target Product].[Target Product].['|pTargetProduct|'],
+                [Subscription Movement Assignment Measure].[Subscription Movement Assignment Measure].[source_flag_mult]
+            ) > 0 
+          )
+        }
+      )
+    }';
+  elseif(pTargetBypass = 0);
+    sMDX = 
+#    '{
+#      GENERATE(
+#        { 
+#          Tm1SubsetToSet([Target Product], "'|pMaincategory|'") 
+#        },
+#        { 
+#          Filter(
+#            {TM1FilterByLevel( {TM1DrillDownMember( {['|sDimensionName_Movement|'].['|sHierarchyName_Movement|'].['|pMovement|']}, ALL, RECURSIVE )}, 0 )},
+#            [Subscription Movement Assignment].(
+#                [Target Product].CurrentMember,
+#                [Source Product].[Source Product].['|pSourceProduct|'],
+#                [Subscription Movement Assignment Measure].[Subscription Movement Assignment Measure].[Stored]
+#            ) > 0 
+#          )
+#        }
+#      )
+#    }';
+    
+        '{
+      GENERATE(
+        { 
+          Tm1SubsetToSet([Target Product], "'|pMaincategory|'") 
+        },
+        { 
+          Filter(
+            {TM1FilterByLevel( {TM1DrillDownMember( {['|sDimensionName_Movement|'].['|sHierarchyName_Movement|'].['|pMovement|']}, ALL, RECURSIVE )}, 0 )},
+            [Subscription Movement Assignment for Input].(
+                [Period].['|pPeriod|'],
+                [Version].['|pVersion|'],
+                [Target Product].CurrentMember,
+                [Source Product].[Source Product].['|pSourceProduct|'],
+                [Subscription Movement Assignment Measure].[Subscription Movement Assignment Measure].[target_flag_mult]
+            ) > 0 
+          )
+        }
+      )
+    }';
+  endif;
+  
+
+#  if(SubsetExists(sDimensionName_Movement,sTempSubsetName_Movement) = 0);
+#    SubsetCreate(sDimensionName_Movement, sTempSubsetName_Movement, 1);
+#  endif;
+  SubsetMDXSet(sDimensionName_Movement, sTempSubsetName_Movement, sMDX);
+  SubsetMDXSet(sDimensionName_Movement, sTempSubsetName_Movement, '');
+  nCount = SubsetGetSize(sDimensionName_Movement, sTempSubsetName_Movement);  
+  
+
+  # set subset as data source 
+  DataSourceType            = 'SUBSET';
+  DatasourceNameForServer   = sDimensionName_Movement;
+  DatasourceNameForClient   = sDimensionName_Movement;
+  DatasourceDimensionsubset = sTempSubsetName_Movement;
+endif;
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# get value total
+nTotalValue = nTotalValue + CellGetN(sCubeName_Main, pVersion, pPeriod, pLoyalty, pChannel, pSourceProduct, pTargetProduct, vMovement, svalue_MeasureFinal);
+nTotalValue_Sign = Abs(Sign(nTotalValue));
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+if(pMovementBypass = 1);
+  itemskip;
+endif;
+
+sOppositeMovement = AttrS(sDimensionName_Movement, vMovement, 'Opposite');
+  
+# in case total is zero before writing
+nFallbackRatio = 1 / nCount;
+
+# in case there is data on total
+nCurrentValue  = CellGetN(sCubeName_Main, pVersion, pPeriod, pLoyalty, pChannel, pSourceProduct, pTargetProduct, vMovement, svalue_MeasureFinal);
+nBaseRatio     = nCurrentValue \ nTotalValue;
+
+# get final ratio and value part to pass
+nRatio         = nTotalValue_Sign * nBaseRatio + (1 - nTotalValue_Sign) * nFallbackRatio;
+nOverridepart  = pInput * nRatio;
+
+# if ratio is zero, stop branch
+if(nOverridepart = 0);
+  itemskip;
+endif;
+
+
+#LogOutput('INFO', 'Current movement: ' | vMovement | ' - Override part: ' | numberTostring(nOverridepart) | ' Input was: ' | numbertostring(pInput));
+
+# call subprocess to divide further
+ExecuteProcess(sProcessName_Next,
+ 'pSourceProduct', pSourceProduct,
+ 'pTargetProduct', pTargetProduct,
+ 'pMovement',      vMovement,
+ 'pOppositeMovement', sOppositeMovement,
+ 'pLoyalty',       pLoyalty,
+ 'pChannel',       pChannel,
+ 'pPeriod',        pPeriod,
+ 'pVersion',       pVersion,
+ 'pMaincategory',  pMaincategory,
+ 'pInput',         nOverridepart,
+ 'pMovementBypass', pMovementBypass,
+ 'pSourceBypass', pSourceBypass,
+ 'pTargetBypass', pTargetBypass);
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+if(pMovementBypass = 1);
+  
+  #LogOutput('INFO', 'Bypassing through Movement: ' | pSourceProduct|' '|pTargetProduct|' '|pMovement|' '|pLoyalty|' '|pChannel|' '|pPeriod|' '|pVersion|' '|numbertostring(pInput));
+  
+  sOppositeMovement = AttrS(sDimensionName_Movement, pMovement, 'Opposite');
+  
+  ExecuteProcess(sProcessName_Next, 
+  'pSourceProduct', pSourceProduct, 
+  'pTargetProduct', pTargetProduct, 
+  'pMovement',      pMovement, 
+  'pOppositeMovement', sOppositeMovement,
+  'pLoyalty',       pLoyalty, 
+  'pChannel',       pChannel, 
+  'pPeriod',        pPeriod,
+  'pVersion',       pVersion,
+  'pMaincategory',  pMaincategory,
+  'pInput',         pInput,
+ 'pMovementBypass', pMovementBypass,
+ 'pSourceBypass', pSourceBypass,
+ 'pTargetBypass', pTargetBypass);
+endif;
+#endregion

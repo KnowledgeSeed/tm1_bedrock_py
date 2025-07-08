@@ -1,0 +1,111 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# =========================================================
+# Original Date Created              2024.03.02
+# Originator                         Modos David
+# Purpose                            
+# Change Date                           
+# Change Request Reference    
+# Change Made by                     Módos Dávid
+# =========================================================
+
+# Az adott időszakra csatornánként díj beírása
+
+pChannelDimensionName = 'Channel';
+sElementName_Total = 'Channel List Total';
+
+
+sPeriodDim = 'Period';
+sAllNTimeSubset = 'All N';
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+IF ( DimensionElementExists(pChannelDimensionName , vchannel_id) = 0);
+ itemskip;
+ENDIF;
+
+# startData
+sStartDate = vstart_date;
+sStartDate = DELET(sStartDate, 8,3);
+sStartDate = DELET(sStartDate, 5,1);
+
+IF ( DimensionElementExists(sPeriodDim , sStartDate) = 0);
+ sStartDate = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, 1);
+ENDIF;
+
+# idáig
+sEndDate = vend_date;
+sEndDate = DELET(sEndDate, 8,3);
+sEndDate = DELET(sEndDate, 5,1);
+nEllEgy = DimensionElementExists(sPeriodDim , sStartDate);
+
+IF( nEllEgy = 0);
+  SubsetGetElementName(sPeriodDim, sAllNTimeSubset, 1);
+ENDIF;
+
+IF( vend_date @='');
+  nEllKetto = 0;
+ENDIF;
+nEll = nEllEgy + nEllKetto;
+
+IF ( nEll = 0 );
+  sBejon = '';
+  itemskip;
+ENDIF;
+
+
+# ha még tart akkor végig
+IF ( vend_date @= '');
+  nMaxLong = SubsetGetSize(sPeriodDim, sAllNTimeSubset);
+  sEndDate = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, nMaxLong);
+ENDIF;
+
+starDateIndex = SubsetElementGetIndex(sPeriodDim, sAllNTimeSubset, sStartDate);
+endDateIndex = SubsetElementGetIndex(sPeriodDim, sAllNTimeSubset, sEndDate);
+
+
+IF(stringToNumber(pAllPeriod) = 1);
+sPeriodSubsetName = 'Planning Period';
+i = starDateIndex;
+    While(i <= endDateIndex);
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+        nPrice = StringToNumber(vprice);
+        CellPutN(nPrice, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Jogdíj');
+      i = i+1;
+      
+    END;
+
+#Endif pAllPeriod
+ENDIF;
+
+IF( stringToNumber(pLastYear) = 1);
+  sPeriodSubsetName = 'Last_Actual_Year';
+  i = starDateIndex;
+  While(i <= endDateIndex);
+    sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+    IF ( SubsetElementExists('Period', sPeriodSubsetName, sInputPeriod) = 1);
+        nPrice = StringToNumber(vprice);
+        CellPutN(nPrice, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, vchannel_id, 'Jogdíj');
+    ENDIF;
+      i = i+1;
+   END;
+
+#Endif pLastYear
+ENDIF;
+
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+#endregion

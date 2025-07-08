@@ -1,0 +1,9328 @@
+{
+	"@type": "Hierarchy",
+	"Name": "Ecosoft ID",
+	"Elements": [
+		{
+			"name": "Total",
+			"type": "Consolidated"
+		},
+		{
+			"name": "***KABELNET***",
+			"type": "Numeric"
+		},
+		{
+			"name": "#NAME?",
+			"type": "Numeric"
+		},
+		{
+			"name": "1 KTV VSZAB",
+			"type": "Numeric"
+		},
+		{
+			"name": "1. DIGI B\u00c9RLETI D\u00cdJ.",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTEK C63CX HD STB B\u00c9RLETI D\u00cdJ",
+			"type": "Numeric"
+		},
+		{
+			"name": "1. KTV GYUJ",
+			"type": "Numeric"
+		},
+		{
+			"name": "1. KTV R\u00d3MAI KERTV\u00c1ROS",
+			"type": "Numeric"
+		},
+		{
+			"name": "1. STB B\u00c9RLETI D\u00cdJ",
+			"type": "Numeric"
+		},
+		{
+			"name": "D+ 18+ CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "1CSOMAG J\u00d3V\u00c1IR\u00c1S",
+			"type": "Numeric"
+		},
+		{
+			"name": "2 KTV VSZAB",
+			"type": "Numeric"
+		},
+		{
+			"name": "2. STB B\u00c9RLETI D\u00cdJ",
+			"type": "Numeric"
+		},
+		{
+			"name": "2. DIGI B\u00c9RLETI D\u00cdJ.",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTEK C63CX HD STB B\u00c9RLET 2.",
+			"type": "Numeric"
+		},
+		{
+			"name": "2. KTV GYUJ",
+			"type": "Numeric"
+		},
+		{
+			"name": "2.CSOMAG J\u00d3V\u00c1IR\u00c1S",
+			"type": "Numeric"
+		},
+		{
+			"name": "2003.01.HAVI K\u00dcL\u00d6NB\u00d6ZET",
+			"type": "Numeric"
+		},
+		{
+			"name": "2006-OS HBO AKCI\u00d3",
+			"type": "Numeric"
+		},
+		{
+			"name": "2007-ES KEDVEZM\u00c9NY",
+			"type": "Numeric"
+		},
+		{
+			"name": "2M (EGY\u00c9NI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "3. STB B\u00c9RLETI D\u00cdJ",
+			"type": "Numeric"
+		},
+		{
+			"name": "3. DIGI B\u00c9RLETI D\u00cdJ.",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTEK C63CX HD STB B\u00c9RLET 3.",
+			"type": "Numeric"
+		},
+		{
+			"name": "3.CSOMAG J\u00d3V\u00c1IR\u00c1S",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 500 (III./1)",
+			"type": "Numeric"
+		},
+		{
+			"name": "60/12 TESZT",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G K\u00d6ZSZOLG\u00c1LATI (GY?\u0090R)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 1. (I/20.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G I. (I./27)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G I. (I./26)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 1 (I/18)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 1 (I/16)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 1 (I/11)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 1 (I/14)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G I. (I./25)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 1 (I/20)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 1. (I/21.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G I. (I./25) R\u00c9GI",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 1. (I/35.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV (I/19)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 1. (I/12)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G K\u00d6ZSZOLG\u00c1LATI (TATA)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 1. (FR\u00c1KOS)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 1 (I/19)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 1. (I/29.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 1. (I/2)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 1 (I/17)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 1. (I/7-10)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G K\u00d6ZSZOLG\u00c1LATI (KV\u00c1R)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 1 (I/15)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 1. (I/24.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G K\u00d6ZSZOLG\u00c1LATI (P\u00c9CS)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 1. (I/22.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 1. (I/34.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV (I/6)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G START (KV\u00c1R)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 1. (PERESZTEG)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G START (SI\u00d3FOK)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G START (TATA)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G II. (I./26)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G II. (I./27)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 2. (I/2)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 1. (MSZTM-GYT)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G START (P\u00c9CS)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 2. (BAB\u00d3T)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 2 (I/18)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 2 (I/16)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G START (GY?\u0090R)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 2 (I/11)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 2 (I/14)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 2. (I/21.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 2. (I/22.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 2. (FR\u00c1KOS)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 2 (I/17)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 2 (I/19)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 2. (I/29.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 2. (I/12)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 2 (I/15)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 2. (I/13)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 2. (I/7-10)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 2. (I/24.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 3. (I/13)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 3. (I/12)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 3. (I/3)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G B?\u0090VITETT (SI\u00d3FOK)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 3. (I/7-10)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 3 (I/1) TER.KEDV.",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G III. (I./26)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 3 (I/16)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 3. (I/1)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 3 (I/14)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 3. (I/4)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 3 (I/7-10) TER.KEDV",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 3 (I/4) TER.KEDV.",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 3. (I/5)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 3 (I/19)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 3. (I/29.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 3. (I/2)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 3 (I/17)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 3 (I/15)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 2MBPS - K2012",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 1,2M (EGY\u00c9NI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 1",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 1MBPS - K2012",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 5MBPS - K2012",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 1MBPS - K2012",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 1MB",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 1,2M (EGY\u00c9NI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 1 MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 1,2M (\u00dcZLETI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 10",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 10M (EGY\u00c9NI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 10MB",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 10M (\u00dcZLETI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 10 MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 10M (EGY\u00c9NI) NETPORT\u00c1L",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 10MBPS - K2012",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 10MBPS - K2012",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 10 MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 10M (EGY\u00c9NI) NETPORTAL",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL V10 (EGY\u00c9NI) SYSCORP",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 10M (EGY\u00c9NI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 10M (EGY\u00c9NI) SYSCORP",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 10M (\u00dcZLETI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 10M (UZLETI) NETPORTAL",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 10M (\u00dcZLETI) SYSCORP",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 12MBPS - K2012",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 15 MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 15MBPS - K2012",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 15",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 15 MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 15M (EGY\u00c9NI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 15M (EGY\u00c9NI) NETPORTAL",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 15M (EGY\u00c9NI) SYSCORP",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 15M (\u00dcZLETI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 15M (\u00dcZLETI) SYSCORP",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 15MB",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 15MBPS - K2012",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 1M (EGY\u00c9NI) NETPORTAL",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 1M (EGY\u00c9NI) SYSCORP",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 1M (UZLETI) NETPORTAL",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 1M (\u00dcZLETI) SYSCORP",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 2 MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 2,5M (EGY\u00c9NI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 2M (EGY\u00c9NI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL MAG\u00c1N 2MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "CSUPASZ ADSL MAG\u00c1N 2MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 2 MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 2,5M (EGY\u00c9NI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 20",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 20MBPS - K2012",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 20M (EGY\u00c9NI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 20 MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 20M (EGY\u00c9NI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 20M (EGY\u00c9NI) NETPORTAL",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 20M (\u00dcZLETI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 20M (UZLETI) NETPORTAL",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 20MB",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 25 MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 25MB",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 25MBPS - K2012",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 2M (EGY\u00c9NI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 2M (EGY\u00c9NI) NETPORTAL",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 2M (EGY\u00c9NI) SYSCORP",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 2M (\u00dcZLETI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 2M (UZLETI) NETPORTAL",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 2M (\u00dcZLETI) SYSCORP",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 2MB",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 30",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 30M (\u00dcZLETI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 30MB",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 30MBPS - K2012",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL MAG\u00c1N 4MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "CSUPASZ ADSL MAG\u00c1N 4MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 4 MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 4,4M (EGY\u00c9NI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 4M (EGY\u00c9NI) NETPORTAL",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 4M (UZLETI) NETPORTAL",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 4M (\u00dcZLETI) SYSCORP",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 5M (EGY\u00c9NI) SYSCORP",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 5M (EGY\u00c9NI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL \u00dcZLETI 5MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL ENTERNET 5 MBPS CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 5M (EGY\u00c9NI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 5",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 5MBPS - K2012",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 5M (EGY\u00c9NI) NETPORTAL",
+			"type": "Numeric"
+		},
+		{
+			"name": "CSUPASZ ADSL MAG\u00c1N 5MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 5 MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 5 MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL TEMPO CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL MAG\u00c1N 5MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 50",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 5M (\u00dcZLETI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 5M (UZLETI) NETPORTAL",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 5M (\u00dcZLETI) SYSCORP",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 5MB",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 8 MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 8M (EGY\u00c9NI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 8M (\u00dcZLETI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 8MB",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL 8MBPS - K2012",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL XS - EGY\u00c9NI",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL ENTERNET 10 MBPS CS. T.N.",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL ENTERNET 10 MBPS CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL ENTERNET 15 MBPS CS. T.N.",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL ENTERNET 15 MBPS CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL ENTERNET 5 MBPS CS. T.N.",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL HAPPY - EGY\u00c9NI",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL HOBBI CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL KOMFORT CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL L - EGY\u00c9NI",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL L - \u00dcZLETI",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL M - EGY\u00c9NI",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL M - \u00dcZLETI",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL MAG\u00c1N 10MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL MAG\u00c1N 15MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL MAG\u00c1N 1M",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL MAG\u00c1N 1MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL MAG\u00c1N 8MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL PRIV\u00c1T CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL PRIV\u00c1T 0",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL PRIV\u00c1T CS. T.N.",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL PRIV\u00c1T SUMMER CS. T.N.",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL PRIV\u00c1T SUMMER CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL S - EGY\u00c9NI",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL S - \u00dcZLETI",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL TELEFON",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL TEMPO CS. T.N.",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL \u00dcZELTI 2MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL \u00dcZLETI 1",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL \u00dcZLETI 10 MBPS CS. T.N.",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL \u00dcZLETI 10 MBPS CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL \u00dcZLETI 10MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL \u00dcZLETI 15 MBPS CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL \u00dcZLETI 15MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL \u00dcZLETI 18MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL \u00dcZLETI 1MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL \u00dcZLETI 2 MBPS CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL \u00dcZLETI 2MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL \u00dcZLETI 4MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL \u00dcZLETI 5 MBPS CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL \u00dcZLETI 8MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL \u00dcZLETI DELUXE CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL \u00dcZLETI MEDIUM CS. T.N.",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL \u00dcZLETI MEDIUM CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL \u00dcZLETI MINIMUM CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL \u00dcZLETI OPTIMUM CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL V10M (EGY\u00c9NI) SYSCORP",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL V\u00c1LLALKOZ\u00d3I I CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL XL - EGY\u00c9NI",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL XL - \u00dcZLETI",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL XS - \u00dcZLETI",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL XXL - EGY\u00c9NI",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 2MBPS - K2012",
+			"type": "Numeric"
+		},
+		{
+			"name": "ADSL_TESZT",
+			"type": "Numeric"
+		},
+		{
+			"name": "ALAP",
+			"type": "Numeric"
+		},
+		{
+			"name": "ALAP I.",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G I. (I./26) R\u00c9GI",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G I. (I./27) R\u00c9GI",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G I/3.",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G II/3.",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 1. (I/30.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 1. (I/32.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 2. (I/1.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 2. (I/30.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 2. (I/32.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 2. (I/33.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 2. (I/35.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 2. (I/4)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 3 (I/12) TER.KEDV.",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 3. (I/30.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "ANAL\u00d3G KTV 3. (I/35.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "B\u00c9K\u00c1S 2007 NY\u00c1RI II. CS.  KEDV",
+			"type": "Numeric"
+		},
+		{
+			"name": "B\u00c9K\u00c1S I. 2007 NY\u00c1RI III KEDV",
+			"type": "Numeric"
+		},
+		{
+			"name": "B\u00c9K\u00c1S II. 2007 NY\u00c1RI III. KED",
+			"type": "Numeric"
+		},
+		{
+			"name": "B\u00c9RELT VONALI INTERNET 20/20",
+			"type": "Numeric"
+		},
+		{
+			"name": "B\u00c9RELT VONALI INTERNET 20/20,",
+			"type": "Numeric"
+		},
+		{
+			"name": "B\u00c9RELT VONALI INTERNET 300/300",
+			"type": "Numeric"
+		},
+		{
+			"name": "D+ BULI CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "PULSE",
+			"type": "Numeric"
+		},
+		{
+			"name": "BULI+",
+			"type": "Numeric"
+		},
+		{
+			"name": "CINEMAX PAK",
+			"type": "Numeric"
+		},
+		{
+			"name": "CSAK R\u00c9SZLET",
+			"type": "Numeric"
+		},
+		{
+			"name": "CSAL\u00c1DI BIZTOS\u00cdT\u00c1S",
+			"type": "Numeric"
+		},
+		{
+			"name": "CSBM-ESZ\u00c1MLA KEDVEZM\u00c9NY",
+			"type": "Numeric"
+		},
+		{
+			"name": "CSUPASZ ADSL MAG\u00c1N 10MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "CSUPASZ ADSL MAG\u00c1N 15MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "CSUPASZ ADSL MAG\u00c1N 1MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "CSUPASZ ADSL MAG\u00c1N 8MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "CSUPASZ ADSL \u00dcZLETI 10MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "CSUPASZ ADSL \u00dcZLETI 15MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "CSUPASZ ADSL \u00dcZLETI 18MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "CSUPASZ ADSL \u00dcZLETI 1MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "CSUPASZ ADSL \u00dcZLETI 2MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "CSUPASZ ADSL \u00dcZLETI 4MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "CSUPASZ ADSL \u00dcZLETI 5MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "CSUPASZ ADSL \u00dcZLETI 8MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "CS_CSOMAGD\u00cdJ ENGEDM\u00c9NY",
+			"type": "Numeric"
+		},
+		{
+			"name": "D+CSAL\u00c1DI",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS KTV 1. (II /1.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "D+1 M\u00d3V\u00c1R",
+			"type": "Numeric"
+		},
+		{
+			"name": "D+1 V\u00c1MOS",
+			"type": "Numeric"
+		},
+		{
+			"name": "D+1 TATA",
+			"type": "Numeric"
+		},
+		{
+			"name": "D+1 KV\u00c1R",
+			"type": "Numeric"
+		},
+		{
+			"name": "D+2 TATA",
+			"type": "Numeric"
+		},
+		{
+			"name": "D+2 KV\u00c1R",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS KTV (II /4.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS KTV 2. (II /4.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS KTV 2. (II /2.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "D+2 M\u00d3V\u00c1R",
+			"type": "Numeric"
+		},
+		{
+			"name": "KTV DKILITI",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS KTV 2. (II /3.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS KTV 3. (II /3.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "D+3 TATA",
+			"type": "Numeric"
+		},
+		{
+			"name": "D+3 KV\u00c1R",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS KTV 3. (II /2.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "D+3 M\u00d3V\u00c1R",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS K\u00d6ZSZOLG\u00c1LATI",
+			"type": "Numeric"
+		},
+		{
+			"name": "DEK\u00d3DER B\u00c9RLETI D\u00cdJ III.",
+			"type": "Numeric"
+		},
+		{
+			"name": "DEK\u00d3DER B\u00c9RLETI D\u00cdJ I.",
+			"type": "Numeric"
+		},
+		{
+			"name": "HD STB B\u00c9RLETI D\u00cdJ",
+			"type": "Numeric"
+		},
+		{
+			"name": "DEK\u00d3DER B\u00c9RLETI D\u00cdJ II.",
+			"type": "Numeric"
+		},
+		{
+			"name": "DEK\u00d3DER B\u00c9RLETI D\u00cdJ 1.",
+			"type": "Numeric"
+		},
+		{
+			"name": "DEK\u00d3DER B\u00c9RLETI D\u00cdJ 2.",
+			"type": "Numeric"
+		},
+		{
+			"name": "DEK\u00d3DER B\u00c9RLETI D\u00cdJ 3.",
+			"type": "Numeric"
+		},
+		{
+			"name": "DEK\u00d3DER B\u00c9RLETI D\u00cdJ 4.",
+			"type": "Numeric"
+		},
+		{
+			"name": "DEK\u00d3DER B\u00c9RLETI D\u00cdJ 5.",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGI FILM",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGI HBO MAXPAK/7",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS ALAP",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS ALAP_E",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS ALAP_K",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS ALAP_S",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS CSAL\u00c1DI",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS CSAL\u00c1DI_E",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS CSAL\u00c1DI_K",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS CSAL\u00c1DI_S",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS EXTRA",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS EXTRA 5 (SUPRA)",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS EXTRA 6 (SUPRA)",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS EXTRA 7 (SUPRA)",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS EXTRA 8 (SUPRA)",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS EXTRA_E",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS EXTRA_K",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS EXTRA_S",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS HBO (SUPRA)",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS HBO MAXPAK (SUPRA)",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS II.",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS III.",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS J\u00d3L\u00c9TI ALAPCSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS J\u00d3L\u00c9TI ALAPCSOMAG GP",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS K\u00d6ZSZOLG\u00c1LATI_S",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS START",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS START CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS START_E",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS START_K",
+			"type": "Numeric"
+		},
+		{
+			"name": "DIGIT\u00c1LIS START_S",
+			"type": "Numeric"
+		},
+		{
+			"name": "DINAMIKUS IP",
+			"type": "Numeric"
+		},
+		{
+			"name": "DOCSIS 3.0 TESZT",
+			"type": "Numeric"
+		},
+		{
+			"name": "DOMAIN",
+			"type": "Numeric"
+		},
+		{
+			"name": "DSL SZ\u00dcNETELTET\u00c9S",
+			"type": "Numeric"
+		},
+		{
+			"name": "DUO",
+			"type": "Numeric"
+		},
+		{
+			"name": "DUO BUSINESS LIGHT",
+			"type": "Numeric"
+		},
+		{
+			"name": "DUO HOME",
+			"type": "Numeric"
+		},
+		{
+			"name": "DUO LIGHT",
+			"type": "Numeric"
+		},
+		{
+			"name": "DUO PLUSZ",
+			"type": "Numeric"
+		},
+		{
+			"name": "EGY\u00c9B SZOLG\u00c1LTAT\u00c1S GY?\u0090R",
+			"type": "Numeric"
+		},
+		{
+			"name": "EGYEDILEG IG\u00c9NYELHET?\u0090 SZ\u00c1M",
+			"type": "Numeric"
+		},
+		{
+			"name": "EGY\u00c9NI ADSL U1 CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "EMAIL",
+			"type": "Numeric"
+		},
+		{
+			"name": "EMAIL DSL",
+			"type": "Numeric"
+		},
+		{
+			"name": "EMAIL T\u00c1RHELY",
+			"type": "Numeric"
+		},
+		{
+			"name": "EMAIL XNET",
+			"type": "Numeric"
+		},
+		{
+			"name": "ENTERNET 1 MBPS CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "ENTERNET 10 MBPS CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "ENTERNET 15 MBPS CS. T.N.",
+			"type": "Numeric"
+		},
+		{
+			"name": "ENTERNET 15 MBPS CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "ENTERNET 2 MBPS CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "ENTERNET 5 MBPS CS. T.N.",
+			"type": "Numeric"
+		},
+		{
+			"name": "ENTERNET 5 MBPS CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "ENTERNET TELEFON",
+			"type": "Numeric"
+		},
+		{
+			"name": "EROTIKA CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "EROTIKA+",
+			"type": "Numeric"
+		},
+		{
+			"name": "NIGHTLIFE",
+			"type": "Numeric"
+		},
+		{
+			"name": "ESZK\u00d6Z R\u00c9SZLET",
+			"type": "Numeric"
+		},
+		{
+			"name": "EXTRA K\u00d6NNY? SZ\u00c1M",
+			"type": "Numeric"
+		},
+		{
+			"name": "FDR_VPN_128K",
+			"type": "Numeric"
+		},
+		{
+			"name": "D+ FELFEDEZ?\u0090 CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "GLOBE",
+			"type": "Numeric"
+		},
+		{
+			"name": "FELFEDEZO+",
+			"type": "Numeric"
+		},
+		{
+			"name": "FILM CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "FILM NOW",
+			"type": "Numeric"
+		},
+		{
+			"name": "FILMBOX",
+			"type": "Numeric"
+		},
+		{
+			"name": "FILMBOX LIVE",
+			"type": "Numeric"
+		},
+		{
+			"name": "FISHING & HUNTING",
+			"type": "Numeric"
+		},
+		{
+			"name": "FIX IP",
+			"type": "Numeric"
+		},
+		{
+			"name": "FIX IP ADSL",
+			"type": "Numeric"
+		},
+		{
+			"name": "FIX IP GPON",
+			"type": "Numeric"
+		},
+		{
+			"name": "FIX IP.",
+			"type": "Numeric"
+		},
+		{
+			"name": "FIX-IP",
+			"type": "Numeric"
+		},
+		{
+			"name": "FN_BABY",
+			"type": "Numeric"
+		},
+		{
+			"name": "FN_MINI",
+			"type": "Numeric"
+		},
+		{
+			"name": "FUSO_TESZT",
+			"type": "Numeric"
+		},
+		{
+			"name": "GEO REDUNDANCIA D\u00cdJ",
+			"type": "Numeric"
+		},
+		{
+			"name": "GR_DIGIT\u00c1LIS EXTRA_TESZT",
+			"type": "Numeric"
+		},
+		{
+			"name": "GR_TELEFON I._TESZT",
+			"type": "Numeric"
+		},
+		{
+			"name": "GR_VIDANET TELEFON I._TESZT",
+			"type": "Numeric"
+		},
+		{
+			"name": "GR_VNET 100+_TESZT",
+			"type": "Numeric"
+		},
+		{
+			"name": "GR_VNET 500 GPON_TESZT",
+			"type": "Numeric"
+		},
+		{
+			"name": "GR_VNET 500_TESZT",
+			"type": "Numeric"
+		},
+		{
+			"name": "D+ GYERMEK",
+			"type": "Numeric"
+		},
+		{
+			"name": "GYERMEK+",
+			"type": "Numeric"
+		},
+		{
+			"name": "KIDS",
+			"type": "Numeric"
+		},
+		{
+			"name": "G_DIGIT\u00c1LIS EXTRA_TESZT",
+			"type": "Numeric"
+		},
+		{
+			"name": "H\u00c1L\u00d3ZATB\u00c9RLET EGY\u00c9B",
+			"type": "Numeric"
+		},
+		{
+			"name": "HBO",
+			"type": "Numeric"
+		},
+		{
+			"name": "HBO (I/29.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "HBOGO",
+			"type": "Numeric"
+		},
+		{
+			"name": "HBO HD",
+			"type": "Numeric"
+		},
+		{
+			"name": "HBO J\u00d3V\u00c1IR\u00c1S",
+			"type": "Numeric"
+		},
+		{
+			"name": "HBO KEDVEZM\u00c9NY",
+			"type": "Numeric"
+		},
+		{
+			"name": "HBO MAX",
+			"type": "Numeric"
+		},
+		{
+			"name": "HBO MAX PAK",
+			"type": "Numeric"
+		},
+		{
+			"name": "HBO MAX PAK AK",
+			"type": "Numeric"
+		},
+		{
+			"name": "HBO MAX PAK FERT?\u0090D",
+			"type": "Numeric"
+		},
+		{
+			"name": "HBO MOZICSATORNA",
+			"type": "Numeric"
+		},
+		{
+			"name": "HBO ?\u0090SZI AKCI\u00d3 - 2004",
+			"type": "Numeric"
+		},
+		{
+			"name": "HBO ?\u0090SZI AKCI\u00d3 - 2005",
+			"type": "Numeric"
+		},
+		{
+			"name": "HBO ?\u0090SZI AKCI\u00d3 - 2006",
+			"type": "Numeric"
+		},
+		{
+			"name": "HBO \u00d6SZI AKCI\u00d3 2005",
+			"type": "Numeric"
+		},
+		{
+			"name": "HBO PAK",
+			"type": "Numeric"
+		},
+		{
+			"name": "HBO PAK AK",
+			"type": "Numeric"
+		},
+		{
+			"name": "HBO PAK FERT?\u0090D",
+			"type": "Numeric"
+		},
+		{
+			"name": "HBO SUPER MAX PAK",
+			"type": "Numeric"
+		},
+		{
+			"name": "HD BOX B\u00c9RLETI D\u00cdJ",
+			"type": "Numeric"
+		},
+		{
+			"name": "HD CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "HD+",
+			"type": "Numeric"
+		},
+		{
+			"name": "HDSL L - EGY\u00c9NI",
+			"type": "Numeric"
+		},
+		{
+			"name": "HDSL S - EGY\u00c9NI",
+			"type": "Numeric"
+		},
+		{
+			"name": "HIV\u00d3SZ\u00c1MKIJELZ\u00c9S ENGED\u00c9LYEZ\u00c9S",
+			"type": "Numeric"
+		},
+		{
+			"name": "HM NDSL 10 MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "HM NDSL 2 MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "HM NDSL 20 MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "HM NDSL 25 MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "HM NDSL 5 MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "HOTEL V\u00c9RTES 5/5M INTERNET",
+			"type": "Numeric"
+		},
+		{
+			"name": "H_CSOMAGKEDVEZM\u00c9NY",
+			"type": "Numeric"
+		},
+		{
+			"name": "IG\u00c9NYL?\u0090",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERAKTIV",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET 10/10M VPRT",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET 100/50M",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET 100MBIT/S/100MBIT/S",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET 20M/1,5M",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET 50/50M",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET B\u00c9RELT VONALI SZOLG.",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET B\u00c9RELT VONALI SZOLG2",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET BIZTONS\u00c1G",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET CSAL\u00c1D",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET G1/1 GB",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET G100/100",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET G100/50",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET G400/100",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET G400/200",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET G50/25",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET G600/300",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET G800/400",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET HOBBI",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET KIJ\u00c1RAT SZOLG.100/100",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET KIJ\u00c1RAT SZOLG.20/20",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET LIGHT",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET MULTIM\u00c9DIA",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET OTTHON",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET PARTNER",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET PLAY",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET PROFI",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET SAJ\u00c1T",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET START",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET START PLUSZ",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET WLAN",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET10/10M",
+			"type": "Numeric"
+		},
+		{
+			"name": "INTERNET20/20M",
+			"type": "Numeric"
+		},
+		{
+			"name": "INT\u00c9ZM. KEDVEZM\u00c9NY",
+			"type": "Numeric"
+		},
+		{
+			"name": "ISDN",
+			"type": "Numeric"
+		},
+		{
+			"name": "JELSZOLG\u00c1LTAT\u00c1S",
+			"type": "Numeric"
+		},
+		{
+			"name": "J\u00d3V\u00c1IR\u00c1S",
+			"type": "Numeric"
+		},
+		{
+			"name": "J\u00d3V\u00c1IR\u00c1S (T\u00c1RSASH\u00c1ZI)",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 10+",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 10",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 100",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 100+",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 100M",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 100M+",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 10M (SUPRA)",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 10M+ (SUPRA)",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 12M (SUPRA)",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 15",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 15/1,5M TESZT",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 150",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 150+",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 150M+",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 150M",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 15M (SUPRA)",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 2",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 2.",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 2+",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 20",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 20+",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 20/4 TESZT",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 2M (SUPRA)",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 2M+ (SUPRA)",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 2_P\u00c9CS",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 30",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 30+",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 30.",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 30M",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 30M+",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 40",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 4M (SUPRA)",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 5",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 50+",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 50",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 50M",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 50M+",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 5M (SUPRA)",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 5M+ (SUPRA)",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 60",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 60 BP.",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 60/12",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 6M (SUPRA)",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 8",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 8M (SUPRA)",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET 9M (SUPRA)",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET ALAP SAT.",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET EXTRA 12M",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET EXTRA SAT.",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET HOBBY 2M",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET INSTALL",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET INT 5M",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET KOMFORT SAT.",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET KORONC\u00d3 BABY",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET KORONC\u00d3 MINI",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET MEGATRON",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET MIKRO PLUSZ",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET MIKRO SAT.",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET MINIMAL SAT.",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET MK HOBBI 1M",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET MNET1 2M",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET MNET2 5M",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET MNET3 15M",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET NET10",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET NET12",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET NET15",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET NET2",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET NET3",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET NET4",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET NET5",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET NET6",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET NET8",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET SPRINT TURBO",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET START 7M",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET SZ\u00dcNETELTET\u00c9S",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET \u00dcZLETI 20M",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET_HALAD\u00d3NET MINI",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET_HALAD\u00d3NET_PLUS",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET_KEZD?\u0090NET MAXI",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET_KEZD?\u0090NET MINI",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET_KEZD?\u0090NET_PLUS",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET_PROFINET",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET_PROFINET MINI",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELTV KEDVEZM\u00c9NY",
+			"type": "Numeric"
+		},
+		{
+			"name": "D+ KALAND CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "KALAND+",
+			"type": "Numeric"
+		},
+		{
+			"name": "DELTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "D+ FELFEDEZ?\u0090+KALAND CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "KEDVEZM\u00c9NY -500/4",
+			"type": "Numeric"
+		},
+		{
+			"name": "KEDVEZM\u00c9NY B\u00c9K\u00c1S II. AKCI\u00d3",
+			"type": "Numeric"
+		},
+		{
+			"name": "KEDVEZM\u00c9NY B\u00c9K\u00c1S2",
+			"type": "Numeric"
+		},
+		{
+			"name": "KEDVEZM\u00c9NY EMELT SOROS",
+			"type": "Numeric"
+		},
+		{
+			"name": "KEDVEZM\u00c9NY HIDEGK\u00daT",
+			"type": "Numeric"
+		},
+		{
+			"name": "KEDVEZM\u00c9NY HIDEGK\u00daT 2007",
+			"type": "Numeric"
+		},
+		{
+			"name": "KEDVEZM\u00c9NY KAPOSF?\u0090 2./4",
+			"type": "Numeric"
+		},
+		{
+			"name": "KEDVEZM\u00c9NY KAPOSF?\u0090 3./4",
+			"type": "Numeric"
+		},
+		{
+			"name": "KEDVEZM\u00c9NY M\u00c1TY\u00c1SHEGY",
+			"type": "Numeric"
+		},
+		{
+			"name": "KEDVEZM\u00c9NY R\u00d3MAI LTP",
+			"type": "Numeric"
+		},
+		{
+			"name": "KEDVEZM\u00c9NY \u00daJLAK",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN JOKER",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN JOKER + HBO",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN JOKER NET 30/3M",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN JOKER NET+ 30/3M",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN JOKER TELEFON",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNET 100",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNET 100+",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNET 150",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNET 150+",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNET 200+",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNET 200",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNET 50",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNET 50+",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNET TESZT UNLIMITED",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNS_D+ CLASSICA",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNS_D+ FILMVIL\u00c1G",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNS_D+ FISHING&HUNTING",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNS_D+ FISHING_HUNTING",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNS_D+ GLOBE",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNS_D+ HBO MAXPAK",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNS_D+ HBO PAK",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNS_D+ KIDS",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNS_D+ NAGYVIL\u00c1G",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNS_D+ NIGHT LIFE",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNS_D+ SPEAK!",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNS_DEK\u00d3DER B\u00c9RLETI D\u00cdJ",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNS_DTV II ALAP",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNS_DTV III CSAL\u00c1DI",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNS_DTV III CSAL\u00c1DI+HD",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNS_KIEG\u00c9SZIT?\u0090 TV-M?SORD\u00cdJ",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNS_SZ\u00dcNETELTET\u00c9SI D\u00cdJ",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_D+ CLASSICA (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_D+ FILMVIL\u00c1G (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_D+ FISHING&HUNTING (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_D+ FISHING_HUNTING (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_D+ GLOBE (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_D+ HBO MAXPAK (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_D+ HBO PAK (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_D+ KIDS (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_D+ NAGYVIL\u00c1G (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_D+ NIGHT LIFE (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_D+ SPEAK! (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_DEK\u00d3DER B\u00c9RLETI D\u00cdJ",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_DEK\u00d3DER B\u00c9RLETI D\u00cdJ 2.",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_DEK\u00d3DER B\u00c9RLETI D\u00cdJ 3.",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_DTV II ALAP (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_DTV III CSAL\u00c1DI (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_DTV III CSAL\u00c1DI+HD (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_DTV K\u00d6ZSZOLG\u00c1LATI (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_K\u00c1BELNET NET S 150/5M (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_K\u00c1BELNET NET S 150/5M+ (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_K\u00c1BELNET NETM\u00c1NIA L (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_K\u00c1BELNET NETM\u00c1NIA L+ (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_K\u00c1BELNET NETM\u00c1NIA L_DUPLA",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_K\u00c1BELNET NETM\u00c1NIA L_DUPLA+",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_K\u00c1BELNET NETM\u00c1NIA M (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_K\u00c1BELNET NETM\u00c1NIA M+ (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_K\u00c1BELNET NETM\u00c1NIA M_DUPLA",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_K\u00c1BELNET NETM\u00c1NIA S (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_K\u00c1BELNET NETM\u00c1NIA S+ (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_K\u00c1BELNET NETM\u00c1NIA S_DUPLA",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_K\u00c1BELNET NETM\u00c1NIA XL (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_K\u00c1BELNET NETM\u00c1NIA XL+ (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_K\u00c1BELNET NETM\u00c1NIA XL_DUPLA",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_K\u00c1BELNET NETM\u00c1NIA XXL (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_K\u00c1BELNET NETM\u00c1NIA XXL+ (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_K\u00c1BELNET NETM\u00c1NIA XXL_150",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_K\u00c1BELNET OTTHONI 50 (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_K\u00c1BELNET OTTHONI 50+ (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_KIEG\u00c9SZIT?\u0090 TV-M?SORD\u00cdJ (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_SZ\u00dcNETELTET\u00c9SI D\u00cdJ (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_TELEFON ALAP (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_TELEFON HOPP\u00c1 (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KN_TELEFON HOPP\u00c1 PLUSZ (KN)",
+			"type": "Numeric"
+		},
+		{
+			"name": "KORL\u00c1TOZ\u00c1S",
+			"type": "Numeric"
+		},
+		{
+			"name": "KS-PARTNER B\u00c9RLETI D\u00cdJ KAPUV\u00c1R",
+			"type": "Numeric"
+		},
+		{
+			"name": "KS-PARTNER ESZK\u00d6ZB\u00c9RLET",
+			"type": "Numeric"
+		},
+		{
+			"name": "KS-PARTNER INGATLAN \u00dcZEM. D\u00cdJ",
+			"type": "Numeric"
+		},
+		{
+			"name": "KS-PARTNER ING\u00d3S\u00c1GOK",
+			"type": "Numeric"
+		},
+		{
+			"name": "KS-PARTNER LICENCE B\u00c9RLET",
+			"type": "Numeric"
+		},
+		{
+			"name": "KTV 21 M\u00d3V\u00c1R",
+			"type": "Numeric"
+		},
+		{
+			"name": "KTV 32 M\u00d3V\u00c1R",
+			"type": "Numeric"
+		},
+		{
+			"name": "LADAM\u00c9R_B?\u0090VITETT GY?\u0090R",
+			"type": "Numeric"
+		},
+		{
+			"name": "LAYER2 100/100M INTERNET",
+			"type": "Numeric"
+		},
+		{
+			"name": "L\u00c9B\u00c9NY KAMERA 20",
+			"type": "Numeric"
+		},
+		{
+			"name": "L\u00c9B\u00c9NY KAMERA 40",
+			"type": "Numeric"
+		},
+		{
+			"name": "LIGHT SZ\u00c1MLACSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET MAMUT (III/6)",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET TESZT M\u00d3V\u00c1R POLGM.HIV",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET MIKRO G",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET MIKRO (III./2.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "MIKRO ALS\u00d3 2M",
+			"type": "Numeric"
+		},
+		{
+			"name": "MIKRO FELS?\u0090 3M",
+			"type": "Numeric"
+		},
+		{
+			"name": "MIKRO KIR\u00c1LY 4M",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET MINI",
+			"type": "Numeric"
+		},
+		{
+			"name": "MNET 1.",
+			"type": "Numeric"
+		},
+		{
+			"name": "MNET 2.",
+			"type": "Numeric"
+		},
+		{
+			"name": "MNET 3.",
+			"type": "Numeric"
+		},
+		{
+			"name": "MNET HOBBI",
+			"type": "Numeric"
+		},
+		{
+			"name": "MOBILNET L",
+			"type": "Numeric"
+		},
+		{
+			"name": "MOBILNET M",
+			"type": "Numeric"
+		},
+		{
+			"name": "MOBILNET S",
+			"type": "Numeric"
+		},
+		{
+			"name": "MOBILNET TOV\u00c1BBSZLA NET M",
+			"type": "Numeric"
+		},
+		{
+			"name": "MOBILNET TOV\u00c1BBSZLA NET S",
+			"type": "Numeric"
+		},
+		{
+			"name": "MOBILNET XL",
+			"type": "Numeric"
+		},
+		{
+			"name": "MODEM B\u00c9RLETI D\u00cdJ",
+			"type": "Numeric"
+		},
+		{
+			"name": "MODEM B\u00c9RLETI D\u00cdJ.",
+			"type": "Numeric"
+		},
+		{
+			"name": "M\u00dcHOLD JEL",
+			"type": "Numeric"
+		},
+		{
+			"name": "NAGYON K\u00d6NNY? SZ\u00c1M",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 1",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 1 MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 1,2M (\u00dcZLETI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 10M (EGY\u00c9NI) SYSCORP",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 10M (UZLETI) NETPORTAL",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 15M (EGY\u00c9NI)",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 15M (EGY\u00c9NI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 15M (\u00dcZLETI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 15M (\u00dcZLETI) SYSCORP",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 1M (EGY\u00c9NI) NETPORTAL",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 1M (EGY\u00c9NI) SYSCORP",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 1M (\u00dcZLETI) SYSCORP",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 20M (EGY\u00c9NI) NETPORTAL",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 20M (\u00dcZLETI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 20MBPS - K2012",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 25M (EGY\u00c9NI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 25 MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 25M (\u00dcZLETI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 25MBPS - K2012",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 2M (EGY\u00c9NI) NETPORTAL",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 2M (EGY\u00c9NI) SYSCORP",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 2M (\u00dcZLETI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 2M (\u00dcZLETI) SYSCORP",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 30M (EGY\u00c9NI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 30M (EGY\u00c9NI) SYSCORP",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 30M (\u00dcZLETI) SYSCORP",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 30MBPS - K2012",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 4 MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 4,4M (EGY\u00c9NI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 4M (EGY\u00c9NI) NETPORTAL",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 5M (EGY\u00c9NI) SYSCORP",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 5M (EGY\u00c9NI) NETPORTAL",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 5M (UZLETI)",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 5M (\u00dcZLETI) ALTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 5M (\u00dcZLETI) SYSCORP",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 8 MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL 8MBPS - K2012",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL L - EGY\u00c9NI",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL L - \u00dcZLETI",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL M - EGY\u00c9NI",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL M - \u00dcZLETI",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL S - EGY\u00c9NI",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL V10 (\u00dcZLETI) SYSCORP",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL XL - EGY\u00c9NI",
+			"type": "Numeric"
+		},
+		{
+			"name": "NDSL XS - EGY\u00c9NI",
+			"type": "Numeric"
+		},
+		{
+			"name": "NHDSL L - EGY\u00c9NI",
+			"type": "Numeric"
+		},
+		{
+			"name": "NHDSL L - EGY\u00c9NI*",
+			"type": "Numeric"
+		},
+		{
+			"name": "NHDSL M - EGY\u00c9NI *",
+			"type": "Numeric"
+		},
+		{
+			"name": "HIV\u00c1SV\u00c1RAKOZTAT\u00c1S",
+			"type": "Numeric"
+		},
+		{
+			"name": "KEDVEZM\u00c9NYES VIP INTERNET/4",
+			"type": "Numeric"
+		},
+		{
+			"name": "Nincs adat",
+			"type": "Numeric"
+		},
+		{
+			"name": "NINCS SZOLG\u00c1LTAT\u00c1SA",
+			"type": "Numeric"
+		},
+		{
+			"name": "NORM\u00c1L ADSL MAG\u00c1N 1 MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "NORM\u00c1L ADSL MAG\u00c1N 5MBPS ISP",
+			"type": "Numeric"
+		},
+		{
+			"name": "OKT. AKC. D+3",
+			"type": "Numeric"
+		},
+		{
+			"name": "OPTIKA MINIMUM CSOMAG 10/10 M",
+			"type": "Numeric"
+		},
+		{
+			"name": "OPTIKAI SZ\u00c1L B\u00c9RLET",
+			"type": "Numeric"
+		},
+		{
+			"name": "OPTIKAI SZ\u00c1LB\u00c9RLET 1.",
+			"type": "Numeric"
+		},
+		{
+			"name": "OPTIKAI SZ\u00c1LB\u00c9RLET 2.",
+			"type": "Numeric"
+		},
+		{
+			"name": "OPTIKAI SZ\u00c1LB\u00c9RLET 3.",
+			"type": "Numeric"
+		},
+		{
+			"name": "OPTIKAI SZ\u00c1LB\u00c9RLET 4.",
+			"type": "Numeric"
+		},
+		{
+			"name": "OPTIKAI SZ\u00c1LB\u00c9RLET 5.",
+			"type": "Numeric"
+		},
+		{
+			"name": "OPTIKAI SZ\u00c1LB\u00c9RLET 6.",
+			"type": "Numeric"
+		},
+		{
+			"name": "OPTINET 1000",
+			"type": "Numeric"
+		},
+		{
+			"name": "OPTINET 250",
+			"type": "Numeric"
+		},
+		{
+			"name": "OPTINET 30",
+			"type": "Numeric"
+		},
+		{
+			"name": "OPTINET 50",
+			"type": "Numeric"
+		},
+		{
+			"name": "OPTINET L",
+			"type": "Numeric"
+		},
+		{
+			"name": "OPTINET M",
+			"type": "Numeric"
+		},
+		{
+			"name": "OPTINET S",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00d6SSZEVONT KEDVEZM\u00c9NY",
+			"type": "Numeric"
+		},
+		{
+			"name": "OSZLOP B\u00c9RLET",
+			"type": "Numeric"
+		},
+		{
+			"name": "PASSZIV WEB",
+			"type": "Numeric"
+		},
+		{
+			"name": "D+ PAX TV",
+			"type": "Numeric"
+		},
+		{
+			"name": "PENDRIVE B\u00c9RLET",
+			"type": "Numeric"
+		},
+		{
+			"name": "PH_VPN_128K",
+			"type": "Numeric"
+		},
+		{
+			"name": "PH_VPN_1M",
+			"type": "Numeric"
+		},
+		{
+			"name": "PH_VPN_384K",
+			"type": "Numeric"
+		},
+		{
+			"name": "PLUSZ DINAMIKUS IP",
+			"type": "Numeric"
+		},
+		{
+			"name": "PR\u00c9MIUM",
+			"type": "Numeric"
+		},
+		{
+			"name": "REVOLUTION",
+			"type": "Numeric"
+		},
+		{
+			"name": "SAMSUNG TV B\u00c9RLET",
+			"type": "Numeric"
+		},
+		{
+			"name": "SOROS ANAL\u00d3G KTV (I/11)",
+			"type": "Numeric"
+		},
+		{
+			"name": "SOROS I.SZINT TATA",
+			"type": "Numeric"
+		},
+		{
+			"name": "SOROS SZOLG\u00c1LTAT\u00c1S TATA",
+			"type": "Numeric"
+		},
+		{
+			"name": "SOROS KTV GY?\u0090R",
+			"type": "Numeric"
+		},
+		{
+			"name": "SOROS EMELT PROGRAM/4",
+			"type": "Numeric"
+		},
+		{
+			"name": "SOROS K\u00d6Z\u00dcLETI PROGRAM/5",
+			"type": "Numeric"
+		},
+		{
+			"name": "SOROS PROGRAM/5",
+			"type": "Numeric"
+		},
+		{
+			"name": "D+ SPORT CSOMAG",
+			"type": "Numeric"
+		},
+		{
+			"name": "SPORT+",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET SPRINTMO",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET SPRINTPE",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET SPRINTTA",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET SPRINT (III/4.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET SPRINT",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET SPRINTBP",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET SPRINTKK",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET START",
+			"type": "Numeric"
+		},
+		{
+			"name": "SUPRA KEDVEZM\u00c9NY",
+			"type": "Numeric"
+		},
+		{
+			"name": "SUPRA KEDVEZM\u00c9NY1",
+			"type": "Numeric"
+		},
+		{
+			"name": "SZERVER HOSTING",
+			"type": "Numeric"
+		},
+		{
+			"name": "SZIP WIFI HOTSPOT 50M",
+			"type": "Numeric"
+		},
+		{
+			"name": "D+ SZ\u00d3RAKOZZ",
+			"type": "Numeric"
+		},
+		{
+			"name": "SZ\u00d3RAKOZZ+",
+			"type": "Numeric"
+		},
+		{
+			"name": "SZ\u00dcNETELTET\u00c9S",
+			"type": "Numeric"
+		},
+		{
+			"name": "SZ\u00dcNETELTET\u00c9S (D\u00cdJMENTES)",
+			"type": "Numeric"
+		},
+		{
+			"name": "SZ\u00dcNETELTET\u00c9S DIGIT\u00c1LIS",
+			"type": "Numeric"
+		},
+		{
+			"name": "SZ\u00dcNETELTET\u00c9S DIGIT\u00c1LIS.",
+			"type": "Numeric"
+		},
+		{
+			"name": "SZ\u00dcNETELTET\u00c9S.",
+			"type": "Numeric"
+		},
+		{
+			"name": "SZ\u00dcNETELTET\u00c9S..",
+			"type": "Numeric"
+		},
+		{
+			"name": "SZ\u00dcNETELTET\u00c9SI D\u00cdJ",
+			"type": "Numeric"
+		},
+		{
+			"name": "T-ONLINE INTERNET",
+			"type": "Numeric"
+		},
+		{
+			"name": "T\u00c1RSASH\u00c1ZI KEDVEZM\u00c9NY",
+			"type": "Numeric"
+		},
+		{
+			"name": "TELEFON + ADSL MAG\u00c1N 5MBPS",
+			"type": "Numeric"
+		},
+		{
+			"name": "TELEFON I.",
+			"type": "Numeric"
+		},
+		{
+			"name": "TELEFON SI\u00d3FOK",
+			"type": "Numeric"
+		},
+		{
+			"name": "TELEFON",
+			"type": "Numeric"
+		},
+		{
+			"name": "TELEFON II.",
+			"type": "Numeric"
+		},
+		{
+			"name": "TELEFON III.",
+			"type": "Numeric"
+		},
+		{
+			"name": "TELEFON IV.",
+			"type": "Numeric"
+		},
+		{
+			"name": "TELEFON V.",
+			"type": "Numeric"
+		},
+		{
+			"name": "TELEKOM_A3",
+			"type": "Numeric"
+		},
+		{
+			"name": "TELEKOM_A1",
+			"type": "Numeric"
+		},
+		{
+			"name": "TELEKOM_A2",
+			"type": "Numeric"
+		},
+		{
+			"name": "TELEKOM_DTV2",
+			"type": "Numeric"
+		},
+		{
+			"name": "TELEKOM_DTV3",
+			"type": "Numeric"
+		},
+		{
+			"name": "TELEKOM_INTERNET",
+			"type": "Numeric"
+		},
+		{
+			"name": "TELEKOM_INTERNET D3",
+			"type": "Numeric"
+		},
+		{
+			"name": "TELEKOM_IPTV 3",
+			"type": "Numeric"
+		},
+		{
+			"name": "TELEKOM_IPTV 1",
+			"type": "Numeric"
+		},
+		{
+			"name": "TELEKOM_IPTV 2",
+			"type": "Numeric"
+		},
+		{
+			"name": "TELEKOM_OPTINET 30",
+			"type": "Numeric"
+		},
+		{
+			"name": "TELEKOM_OPTINET L",
+			"type": "Numeric"
+		},
+		{
+			"name": "TELEKOM_OPTINET M",
+			"type": "Numeric"
+		},
+		{
+			"name": "TELEKOM_OPTINET S",
+			"type": "Numeric"
+		},
+		{
+			"name": "TELEKOM_TELEFON",
+			"type": "Numeric"
+		},
+		{
+			"name": "TELJES D. VIP CSOMAG/4",
+			"type": "Numeric"
+		},
+		{
+			"name": "TEMATIKUS 28 +",
+			"type": "Numeric"
+		},
+		{
+			"name": "T\u00c9RFIGYEL?\u0090 RENDSZER",
+			"type": "Numeric"
+		},
+		{
+			"name": "TESZT 6M",
+			"type": "Numeric"
+		},
+		{
+			"name": "TESZT NET 1000",
+			"type": "Numeric"
+		},
+		{
+			"name": "TESZT NET 400",
+			"type": "Numeric"
+		},
+		{
+			"name": "TESZT NET 500",
+			"type": "Numeric"
+		},
+		{
+			"name": "TESZT NET 600",
+			"type": "Numeric"
+		},
+		{
+			"name": "TESZT NET 800",
+			"type": "Numeric"
+		},
+		{
+			"name": "TESZT TCOM2",
+			"type": "Numeric"
+		},
+		{
+			"name": "TESZT TCOM3",
+			"type": "Numeric"
+		},
+		{
+			"name": "TESZT TCOM4",
+			"type": "Numeric"
+		},
+		{
+			"name": "TESZT TCOM5",
+			"type": "Numeric"
+		},
+		{
+			"name": "TH J\u00d3V +",
+			"type": "Numeric"
+		},
+		{
+			"name": "TRI\u00d3 ALAP H.D\u00cdJ KEDV.",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET TRI\u00d3 ALAP",
+			"type": "Numeric"
+		},
+		{
+			"name": "TRI\u00d3 ALAP (V/1.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET TRI\u00d3 MAX",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET TRI\u00d3 MAX FIX IP",
+			"type": "Numeric"
+		},
+		{
+			"name": "TRI\u00d3 MAX (V/4)",
+			"type": "Numeric"
+		},
+		{
+			"name": "TRI\u00d3 MAX \u00d6NK.",
+			"type": "Numeric"
+		},
+		{
+			"name": "TRI\u00d3 MAX (V/4) H.D\u00cdJ KEDV.",
+			"type": "Numeric"
+		},
+		{
+			"name": "TRI\u00d3 MINI H.D\u00cdJ KEDV.",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET TRI\u00d3 MINI",
+			"type": "Numeric"
+		},
+		{
+			"name": "TRI\u00d3 MINI (V/2)",
+			"type": "Numeric"
+		},
+		{
+			"name": "TRI\u00d3 VARIO H.D\u00cdJ KEV.",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET TRI\u00d3 VARI\u00d3",
+			"type": "Numeric"
+		},
+		{
+			"name": "TRI\u00d3 VARI\u00d3 (V/5.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET TRI\u00d3",
+			"type": "Numeric"
+		},
+		{
+			"name": "TRI\u00d3 (V/3)  H.D\u00cdJ KEDV.",
+			"type": "Numeric"
+		},
+		{
+			"name": "TRI\u00d3 (V/3)",
+			"type": "Numeric"
+		},
+		{
+			"name": "TRI\u00d3 \u00d6NK.",
+			"type": "Numeric"
+		},
+		{
+			"name": "TV+NET ANAL\u00d3G",
+			"type": "Numeric"
+		},
+		{
+			"name": "TV+NET D+3",
+			"type": "Numeric"
+		},
+		{
+			"name": "TV+NET (V/6)",
+			"type": "Numeric"
+		},
+		{
+			"name": "TV+NET MAX ANAL\u00d3G",
+			"type": "Numeric"
+		},
+		{
+			"name": "TV+NET MAX D+3",
+			"type": "Numeric"
+		},
+		{
+			"name": "TV+NET MAX (V./7)",
+			"type": "Numeric"
+		},
+		{
+			"name": "TV+NET MAX D+2",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZEMBENTART\u00c1SI D\u00cdJ",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZLETI ADSL 1",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZLETI ADSL 10",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZLETI ADSL 15",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZLETI ADSL 20",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZLETI ADSL 30",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZLETI ADSL 5",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZLETI K\u00c1BELNET 20",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZLETI K\u00c1BELNET 20 EXTRA",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZLETI K\u00c1BELNET 10",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZLETI K\u00c1BELNET 10 EXTRA",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZLETI K\u00c1BELNET 100",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZLETI K\u00c1BELNET 100 EXTRA",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZLETI K\u00c1BELNET 150",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZLETI K\u00c1BELNET 150 EXTRA",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZLETI K\u00c1BELNET 30",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZLETI K\u00c1BELNET 30 EXTRA",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZLETI K\u00c1BELNET 40",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZLETI K\u00c1BELNET 40 EXTRA",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZLETI K\u00c1BELNET 5",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZLETI K\u00c1BELNET 5 EXTRA",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZLETI K\u00c1BELNET 50",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZLETI K\u00c1BELNET 50 EXTRA",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZLETI K\u00c1BELNET 60",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZLETI K\u00c1BELNET 60 EXTRA",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZLETI MULTISIM",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZLETI TELEFON",
+			"type": "Numeric"
+		},
+		{
+			"name": "\u00dcZLETI TELEFON (100 \u00d3RA)",
+			"type": "Numeric"
+		},
+		{
+			"name": "VIASAT",
+			"type": "Numeric"
+		},
+		{
+			"name": "VIDANET MOVE",
+			"type": "Numeric"
+		},
+		{
+			"name": "VIDANET TELEFON IV.",
+			"type": "Numeric"
+		},
+		{
+			"name": "VIDANET_VPN",
+			"type": "Numeric"
+		},
+		{
+			"name": "VIL\u00c1G+",
+			"type": "Numeric"
+		},
+		{
+			"name": "VIL\u00c1G+_S",
+			"type": "Numeric"
+		},
+		{
+			"name": "K\u00c1BELNET VILL\u00c1M (III./7.)",
+			"type": "Numeric"
+		},
+		{
+			"name": "VIP PAK/1",
+			"type": "Numeric"
+		},
+		{
+			"name": "VIP PAK/2",
+			"type": "Numeric"
+		},
+		{
+			"name": "VIP PAK/3",
+			"type": "Numeric"
+		},
+		{
+			"name": "VISP EGY\u00c9NI ADSL N10",
+			"type": "Numeric"
+		},
+		{
+			"name": "VISP EGY\u00c9NI ADSL N15",
+			"type": "Numeric"
+		},
+		{
+			"name": "VISP EGY\u00c9NI ADSL N5",
+			"type": "Numeric"
+		},
+		{
+			"name": "VISP EGY\u00c9NI ADSL U1",
+			"type": "Numeric"
+		},
+		{
+			"name": "VISP EGY\u00c9NI ADSL U2",
+			"type": "Numeric"
+		},
+		{
+			"name": "VISP EGY\u00c9NI ADSL U25",
+			"type": "Numeric"
+		},
+		{
+			"name": "VISP EGY\u00c9NI ADSL U4",
+			"type": "Numeric"
+		},
+		{
+			"name": "VISP EGY\u00c9NI ADSL U8",
+			"type": "Numeric"
+		},
+		{
+			"name": "VISP EGY\u00c9NI ADSL V10",
+			"type": "Numeric"
+		},
+		{
+			"name": "VISP EGY\u00c9NI ADSL V20",
+			"type": "Numeric"
+		},
+		{
+			"name": "VISP EGY\u00c9NI ADSL V30",
+			"type": "Numeric"
+		},
+		{
+			"name": "VISP NAKED FEL\u00c1R",
+			"type": "Numeric"
+		},
+		{
+			"name": "VISP \u00dcZLETI ADSL N10",
+			"type": "Numeric"
+		},
+		{
+			"name": "VISP \u00dcZLETI ADSL N15",
+			"type": "Numeric"
+		},
+		{
+			"name": "VISP \u00dcZLETI ADSL N5",
+			"type": "Numeric"
+		},
+		{
+			"name": "VISP \u00dcZLETI ADSL U1",
+			"type": "Numeric"
+		},
+		{
+			"name": "VISP \u00dcZLETI ADSL U18",
+			"type": "Numeric"
+		},
+		{
+			"name": "VISP \u00dcZLETI ADSL U2",
+			"type": "Numeric"
+		},
+		{
+			"name": "VISP \u00dcZLETI ADSL U25",
+			"type": "Numeric"
+		},
+		{
+			"name": "VISP \u00dcZLETI ADSL U4",
+			"type": "Numeric"
+		},
+		{
+			"name": "VISP \u00dcZLETI ADSL U8",
+			"type": "Numeric"
+		},
+		{
+			"name": "VISP \u00dcZLETI ADSL V10",
+			"type": "Numeric"
+		},
+		{
+			"name": "VISP \u00dcZLETI ADSL V20",
+			"type": "Numeric"
+		},
+		{
+			"name": "VISP \u00dcZLETI ADSL V30",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 100+",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 100 GPON",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 100",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 100 GPON+",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 200+",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 200",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 200 GPON",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 200 GPON+",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 300 GPON",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 300",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 300+",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 300 GPON+",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 400 GPON",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 400+",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 400",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 400 GPON+",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 500 GPON",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 500",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 500+",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 500 GPON+",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 600 GPON",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 600+",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 600",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 600 GPON+",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 700",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 700+",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 700 GPON",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET 700 GPON+",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET BUSINESS 100",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET BUSINESS 100 GPON",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET BUSINESS 100+",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET BUSINESS 200",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET BUSINESS 200 GPON",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET BUSINESS 200+",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET BUSINESS 300",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET BUSINESS 300 GPON",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET BUSINESS 300+",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET BUSINESS 400",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET BUSINESS 400 GPON",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET BUSINESS 400+",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET BUSINESS 500",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET BUSINESS 500 GPON",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET BUSINESS 500+",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET BUSINESS 600",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET BUSINESS 600 GPON",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET BUSINESS 600+",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET BUSINESS 700",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET BUSINESS 700 GPON",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET BUSINESS 700+",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET BUSINESS L",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET BUSINESS M",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET BUSINESS S",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET BUSINESS XL",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET BUSINESS XS",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET L+",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET L",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET L GPON",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET M",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET M GPON",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET M+",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET S",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET S GPON",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET S+",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET XL GPON",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET XL",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET XL+",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET XS",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET XS GPON",
+			"type": "Numeric"
+		},
+		{
+			"name": "VNET XS+",
+			"type": "Numeric"
+		},
+		{
+			"name": "TRIO-A S 5M",
+			"type": "Numeric"
+		},
+		{
+			"name": "TRIO S 2M",
+			"type": "Numeric"
+		},
+		{
+			"name": "TRIO-B S 10M",
+			"type": "Numeric"
+		},
+		{
+			"name": "TRIO S 4M",
+			"type": "Numeric"
+		},
+		{
+			"name": "TRIO-B S 15M",
+			"type": "Numeric"
+		},
+		{
+			"name": "TRIO S 6M",
+			"type": "Numeric"
+		},
+		{
+			"name": "TRIO-B S 5M",
+			"type": "Numeric"
+		},
+		{
+			"name": "TRIO S 8M",
+			"type": "Numeric"
+		},
+		{
+			"name": "TRIO-A S 10M",
+			"type": "Numeric"
+		},
+		{
+			"name": "TRIO-A S 15M",
+			"type": "Numeric"
+		},
+		{
+			"name": "TRIO S 12M",
+			"type": "Numeric"
+		},
+		{
+			"name": "VONAL \u00dcZEMBENTART\u00c1SI D\u00cdJ",
+			"type": "Numeric"
+		},
+		{
+			"name": "WEBT\u00c1RHELY",
+			"type": "Numeric"
+		},
+		{
+			"name": "WIFI OPCI\u00d3",
+			"type": "Numeric"
+		},
+		{
+			"name": "XDSL SZ\u00dcNETELTET\u00c9S",
+			"type": "Numeric"
+		},
+		{
+			"name": "XNET 100",
+			"type": "Numeric"
+		},
+		{
+			"name": "XNET 200",
+			"type": "Numeric"
+		},
+		{
+			"name": "XNET 400",
+			"type": "Numeric"
+		},
+		{
+			"name": "XNET 50",
+			"type": "Numeric"
+		},
+		{
+			"name": "XNET 500",
+			"type": "Numeric"
+		},
+		{
+			"name": "XNET BUSINESS 100",
+			"type": "Numeric"
+		},
+		{
+			"name": "XNET BUSINESS 250",
+			"type": "Numeric"
+		},
+		{
+			"name": "XNET BUSINESS 500",
+			"type": "Numeric"
+		},
+		{
+			"name": "XNET BUSINESS 600",
+			"type": "Numeric"
+		},
+		{
+			"name": "XNET BUSINESS 700",
+			"type": "Numeric"
+		},
+		{
+			"name": "Vidanet Telefon I.",
+			"type": "Numeric"
+		},
+		{
+			"name": "Vidanet Telefon II.",
+			"type": "Numeric"
+		},
+		{
+			"name": "Vidanet Telefon III.",
+			"type": "Numeric"
+		},
+		{
+			"name": "VIDANET TELEFON V.",
+			"type": "Numeric"
+		},
+		{
+			"name": "ALAP+",
+			"type": "Numeric"
+		},
+		{
+			"name": "Max",
+			"type": "Numeric"
+		},
+		{
+			"name": "CSAL\u00c1DI+",
+			"type": "Numeric"
+		},
+		{
+			"name": "START+",
+			"type": "Numeric"
+		}
+	],
+	"Edges": [
+		{
+			"parentName": "Total",
+			"componentName": "***KABELNET***",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "#NAME?",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "1 KTV VSZAB",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "1. DIGI B\u00c9RLETI D\u00cdJ.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTEK C63CX HD STB B\u00c9RLETI D\u00cdJ",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "1. KTV GYUJ",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "1. KTV R\u00d3MAI KERTV\u00c1ROS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "1. STB B\u00c9RLETI D\u00cdJ",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "D+ 18+ CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "1CSOMAG J\u00d3V\u00c1IR\u00c1S",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "2 KTV VSZAB",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "2. STB B\u00c9RLETI D\u00cdJ",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "2. DIGI B\u00c9RLETI D\u00cdJ.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTEK C63CX HD STB B\u00c9RLET 2.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "2. KTV GYUJ",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "2.CSOMAG J\u00d3V\u00c1IR\u00c1S",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "2003.01.HAVI K\u00dcL\u00d6NB\u00d6ZET",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "2006-OS HBO AKCI\u00d3",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "2007-ES KEDVEZM\u00c9NY",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "2M (EGY\u00c9NI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "3. STB B\u00c9RLETI D\u00cdJ",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "3. DIGI B\u00c9RLETI D\u00cdJ.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTEK C63CX HD STB B\u00c9RLET 3.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "3.CSOMAG J\u00d3V\u00c1IR\u00c1S",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 500 (III./1)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "60/12 TESZT",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G K\u00d6ZSZOLG\u00c1LATI (GY?\u0090R)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 1. (I/20.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G I. (I./27)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G I. (I./26)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 1 (I/18)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 1 (I/16)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 1 (I/11)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 1 (I/14)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G I. (I./25)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 1 (I/20)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 1. (I/21.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G I. (I./25) R\u00c9GI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 1. (I/35.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV (I/19)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 1. (I/12)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G K\u00d6ZSZOLG\u00c1LATI (TATA)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 1. (FR\u00c1KOS)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 1 (I/19)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 1. (I/29.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 1. (I/2)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 1 (I/17)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 1. (I/7-10)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G K\u00d6ZSZOLG\u00c1LATI (KV\u00c1R)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 1 (I/15)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 1. (I/24.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G K\u00d6ZSZOLG\u00c1LATI (P\u00c9CS)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 1. (I/22.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 1. (I/34.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV (I/6)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G START (KV\u00c1R)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 1. (PERESZTEG)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G START (SI\u00d3FOK)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G START (TATA)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G II. (I./26)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G II. (I./27)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 2. (I/2)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 1. (MSZTM-GYT)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G START (P\u00c9CS)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 2. (BAB\u00d3T)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 2 (I/18)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 2 (I/16)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G START (GY?\u0090R)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 2 (I/11)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 2 (I/14)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 2. (I/21.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 2. (I/22.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 2. (FR\u00c1KOS)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 2 (I/17)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 2 (I/19)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 2. (I/29.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 2. (I/12)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 2 (I/15)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 2. (I/13)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 2. (I/7-10)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 2. (I/24.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 3. (I/13)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 3. (I/12)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 3. (I/3)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G B?\u0090VITETT (SI\u00d3FOK)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 3. (I/7-10)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 3 (I/1) TER.KEDV.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G III. (I./26)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 3 (I/16)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 3. (I/1)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 3 (I/14)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 3. (I/4)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 3 (I/7-10) TER.KEDV",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 3 (I/4) TER.KEDV.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 3. (I/5)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 3 (I/19)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 3. (I/29.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 3. (I/2)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 3 (I/17)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 3 (I/15)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 2MBPS - K2012",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 1,2M (EGY\u00c9NI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 1",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 1MBPS - K2012",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 5MBPS - K2012",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 1MBPS - K2012",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 1MB",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 1,2M (EGY\u00c9NI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 1 MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 1,2M (\u00dcZLETI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 10",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 10M (EGY\u00c9NI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 10MB",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 10M (\u00dcZLETI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 10 MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 10M (EGY\u00c9NI) NETPORT\u00c1L",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 10MBPS - K2012",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 10MBPS - K2012",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 10 MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 10M (EGY\u00c9NI) NETPORTAL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL V10 (EGY\u00c9NI) SYSCORP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 10M (EGY\u00c9NI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 10M (EGY\u00c9NI) SYSCORP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 10M (\u00dcZLETI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 10M (UZLETI) NETPORTAL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 10M (\u00dcZLETI) SYSCORP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 12MBPS - K2012",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 15 MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 15MBPS - K2012",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 15",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 15 MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 15M (EGY\u00c9NI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 15M (EGY\u00c9NI) NETPORTAL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 15M (EGY\u00c9NI) SYSCORP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 15M (\u00dcZLETI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 15M (\u00dcZLETI) SYSCORP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 15MB",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 15MBPS - K2012",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 1M (EGY\u00c9NI) NETPORTAL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 1M (EGY\u00c9NI) SYSCORP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 1M (UZLETI) NETPORTAL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 1M (\u00dcZLETI) SYSCORP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 2 MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 2,5M (EGY\u00c9NI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 2M (EGY\u00c9NI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL MAG\u00c1N 2MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "CSUPASZ ADSL MAG\u00c1N 2MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 2 MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 2,5M (EGY\u00c9NI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 20",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 20MBPS - K2012",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 20M (EGY\u00c9NI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 20 MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 20M (EGY\u00c9NI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 20M (EGY\u00c9NI) NETPORTAL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 20M (\u00dcZLETI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 20M (UZLETI) NETPORTAL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 20MB",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 25 MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 25MB",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 25MBPS - K2012",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 2M (EGY\u00c9NI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 2M (EGY\u00c9NI) NETPORTAL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 2M (EGY\u00c9NI) SYSCORP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 2M (\u00dcZLETI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 2M (UZLETI) NETPORTAL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 2M (\u00dcZLETI) SYSCORP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 2MB",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 30",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 30M (\u00dcZLETI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 30MB",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 30MBPS - K2012",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL MAG\u00c1N 4MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "CSUPASZ ADSL MAG\u00c1N 4MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 4 MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 4,4M (EGY\u00c9NI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 4M (EGY\u00c9NI) NETPORTAL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 4M (UZLETI) NETPORTAL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 4M (\u00dcZLETI) SYSCORP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 5M (EGY\u00c9NI) SYSCORP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 5M (EGY\u00c9NI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL \u00dcZLETI 5MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL ENTERNET 5 MBPS CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 5M (EGY\u00c9NI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 5",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 5MBPS - K2012",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 5M (EGY\u00c9NI) NETPORTAL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "CSUPASZ ADSL MAG\u00c1N 5MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 5 MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 5 MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL TEMPO CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL MAG\u00c1N 5MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 50",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 5M (\u00dcZLETI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 5M (UZLETI) NETPORTAL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 5M (\u00dcZLETI) SYSCORP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 5MB",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 8 MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 8M (EGY\u00c9NI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 8M (\u00dcZLETI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 8MB",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL 8MBPS - K2012",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL XS - EGY\u00c9NI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL ENTERNET 10 MBPS CS. T.N.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL ENTERNET 10 MBPS CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL ENTERNET 15 MBPS CS. T.N.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL ENTERNET 15 MBPS CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL ENTERNET 5 MBPS CS. T.N.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL HAPPY - EGY\u00c9NI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL HOBBI CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL KOMFORT CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL L - EGY\u00c9NI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL L - \u00dcZLETI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL M - EGY\u00c9NI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL M - \u00dcZLETI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL MAG\u00c1N 10MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL MAG\u00c1N 15MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL MAG\u00c1N 1M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL MAG\u00c1N 1MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL MAG\u00c1N 8MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL PRIV\u00c1T CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL PRIV\u00c1T 0",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL PRIV\u00c1T CS. T.N.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL PRIV\u00c1T SUMMER CS. T.N.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL PRIV\u00c1T SUMMER CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL S - EGY\u00c9NI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL S - \u00dcZLETI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL TELEFON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL TEMPO CS. T.N.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL \u00dcZELTI 2MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL \u00dcZLETI 1",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL \u00dcZLETI 10 MBPS CS. T.N.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL \u00dcZLETI 10 MBPS CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL \u00dcZLETI 10MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL \u00dcZLETI 15 MBPS CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL \u00dcZLETI 15MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL \u00dcZLETI 18MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL \u00dcZLETI 1MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL \u00dcZLETI 2 MBPS CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL \u00dcZLETI 2MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL \u00dcZLETI 4MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL \u00dcZLETI 5 MBPS CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL \u00dcZLETI 8MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL \u00dcZLETI DELUXE CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL \u00dcZLETI MEDIUM CS. T.N.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL \u00dcZLETI MEDIUM CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL \u00dcZLETI MINIMUM CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL \u00dcZLETI OPTIMUM CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL V10M (EGY\u00c9NI) SYSCORP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL V\u00c1LLALKOZ\u00d3I I CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL XL - EGY\u00c9NI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL XL - \u00dcZLETI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL XS - \u00dcZLETI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL XXL - EGY\u00c9NI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 2MBPS - K2012",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ADSL_TESZT",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ALAP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ALAP I.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G I. (I./26) R\u00c9GI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G I. (I./27) R\u00c9GI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G I/3.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G II/3.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 1. (I/30.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 1. (I/32.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 2. (I/1.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 2. (I/30.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 2. (I/32.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 2. (I/33.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 2. (I/35.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 2. (I/4)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 3 (I/12) TER.KEDV.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 3. (I/30.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ANAL\u00d3G KTV 3. (I/35.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "B\u00c9K\u00c1S 2007 NY\u00c1RI II. CS.  KEDV",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "B\u00c9K\u00c1S I. 2007 NY\u00c1RI III KEDV",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "B\u00c9K\u00c1S II. 2007 NY\u00c1RI III. KED",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "B\u00c9RELT VONALI INTERNET 20/20",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "B\u00c9RELT VONALI INTERNET 20/20,",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "B\u00c9RELT VONALI INTERNET 300/300",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "D+ BULI CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "PULSE",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "BULI+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "CINEMAX PAK",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "CSAK R\u00c9SZLET",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "CSAL\u00c1DI BIZTOS\u00cdT\u00c1S",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "CSBM-ESZ\u00c1MLA KEDVEZM\u00c9NY",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "CSUPASZ ADSL MAG\u00c1N 10MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "CSUPASZ ADSL MAG\u00c1N 15MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "CSUPASZ ADSL MAG\u00c1N 1MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "CSUPASZ ADSL MAG\u00c1N 8MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "CSUPASZ ADSL \u00dcZLETI 10MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "CSUPASZ ADSL \u00dcZLETI 15MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "CSUPASZ ADSL \u00dcZLETI 18MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "CSUPASZ ADSL \u00dcZLETI 1MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "CSUPASZ ADSL \u00dcZLETI 2MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "CSUPASZ ADSL \u00dcZLETI 4MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "CSUPASZ ADSL \u00dcZLETI 5MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "CSUPASZ ADSL \u00dcZLETI 8MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "CS_CSOMAGD\u00cdJ ENGEDM\u00c9NY",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "D+CSAL\u00c1DI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS KTV 1. (II /1.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "D+1 M\u00d3V\u00c1R",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "D+1 V\u00c1MOS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "D+1 TATA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "D+1 KV\u00c1R",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "D+2 TATA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "D+2 KV\u00c1R",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS KTV (II /4.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS KTV 2. (II /4.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS KTV 2. (II /2.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "D+2 M\u00d3V\u00c1R",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KTV DKILITI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS KTV 2. (II /3.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS KTV 3. (II /3.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "D+3 TATA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "D+3 KV\u00c1R",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS KTV 3. (II /2.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "D+3 M\u00d3V\u00c1R",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS K\u00d6ZSZOLG\u00c1LATI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DEK\u00d3DER B\u00c9RLETI D\u00cdJ III.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DEK\u00d3DER B\u00c9RLETI D\u00cdJ I.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HD STB B\u00c9RLETI D\u00cdJ",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DEK\u00d3DER B\u00c9RLETI D\u00cdJ II.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DEK\u00d3DER B\u00c9RLETI D\u00cdJ 1.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DEK\u00d3DER B\u00c9RLETI D\u00cdJ 2.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DEK\u00d3DER B\u00c9RLETI D\u00cdJ 3.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DEK\u00d3DER B\u00c9RLETI D\u00cdJ 4.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DEK\u00d3DER B\u00c9RLETI D\u00cdJ 5.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGI FILM",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGI HBO MAXPAK/7",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS ALAP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS ALAP_E",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS ALAP_K",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS ALAP_S",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS CSAL\u00c1DI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS CSAL\u00c1DI_E",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS CSAL\u00c1DI_K",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS CSAL\u00c1DI_S",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS EXTRA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS EXTRA 5 (SUPRA)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS EXTRA 6 (SUPRA)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS EXTRA 7 (SUPRA)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS EXTRA 8 (SUPRA)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS EXTRA_E",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS EXTRA_K",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS EXTRA_S",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS HBO (SUPRA)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS HBO MAXPAK (SUPRA)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS II.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS III.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS J\u00d3L\u00c9TI ALAPCSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS J\u00d3L\u00c9TI ALAPCSOMAG GP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS K\u00d6ZSZOLG\u00c1LATI_S",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS START",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS START CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS START_E",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS START_K",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DIGIT\u00c1LIS START_S",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DINAMIKUS IP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DOCSIS 3.0 TESZT",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DOMAIN",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DSL SZ\u00dcNETELTET\u00c9S",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DUO",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DUO BUSINESS LIGHT",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DUO HOME",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DUO LIGHT",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DUO PLUSZ",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "EGY\u00c9B SZOLG\u00c1LTAT\u00c1S GY?\u0090R",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "EGYEDILEG IG\u00c9NYELHET?\u0090 SZ\u00c1M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "EGY\u00c9NI ADSL U1 CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "EMAIL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "EMAIL DSL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "EMAIL T\u00c1RHELY",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "EMAIL XNET",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ENTERNET 1 MBPS CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ENTERNET 10 MBPS CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ENTERNET 15 MBPS CS. T.N.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ENTERNET 15 MBPS CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ENTERNET 2 MBPS CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ENTERNET 5 MBPS CS. T.N.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ENTERNET 5 MBPS CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ENTERNET TELEFON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "EROTIKA CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "EROTIKA+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NIGHTLIFE",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ESZK\u00d6Z R\u00c9SZLET",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "EXTRA K\u00d6NNY? SZ\u00c1M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "FDR_VPN_128K",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "D+ FELFEDEZ?\u0090 CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "GLOBE",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "FELFEDEZO+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "FILM CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "FILM NOW",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "FILMBOX",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "FILMBOX LIVE",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "FISHING & HUNTING",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "FIX IP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "FIX IP ADSL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "FIX IP GPON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "FIX IP.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "FIX-IP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "FN_BABY",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "FN_MINI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "FUSO_TESZT",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "GEO REDUNDANCIA D\u00cdJ",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "GR_DIGIT\u00c1LIS EXTRA_TESZT",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "GR_TELEFON I._TESZT",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "GR_VIDANET TELEFON I._TESZT",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "GR_VNET 100+_TESZT",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "GR_VNET 500 GPON_TESZT",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "GR_VNET 500_TESZT",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "D+ GYERMEK",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "GYERMEK+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KIDS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "G_DIGIT\u00c1LIS EXTRA_TESZT",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "H\u00c1L\u00d3ZATB\u00c9RLET EGY\u00c9B",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HBO",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HBO (I/29.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HBOGO",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HBO HD",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HBO J\u00d3V\u00c1IR\u00c1S",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HBO KEDVEZM\u00c9NY",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HBO MAX",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HBO MAX PAK",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HBO MAX PAK AK",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HBO MAX PAK FERT?\u0090D",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HBO MOZICSATORNA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HBO ?\u0090SZI AKCI\u00d3 - 2004",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HBO ?\u0090SZI AKCI\u00d3 - 2005",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HBO ?\u0090SZI AKCI\u00d3 - 2006",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HBO \u00d6SZI AKCI\u00d3 2005",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HBO PAK",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HBO PAK AK",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HBO PAK FERT?\u0090D",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HBO SUPER MAX PAK",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HD BOX B\u00c9RLETI D\u00cdJ",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HD CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HD+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HDSL L - EGY\u00c9NI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HDSL S - EGY\u00c9NI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HIV\u00d3SZ\u00c1MKIJELZ\u00c9S ENGED\u00c9LYEZ\u00c9S",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HM NDSL 10 MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HM NDSL 2 MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HM NDSL 20 MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HM NDSL 25 MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HM NDSL 5 MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HOTEL V\u00c9RTES 5/5M INTERNET",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "H_CSOMAGKEDVEZM\u00c9NY",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "IG\u00c9NYL?\u0090",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERAKTIV",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET 10/10M VPRT",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET 100/50M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET 100MBIT/S/100MBIT/S",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET 20M/1,5M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET 50/50M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET B\u00c9RELT VONALI SZOLG.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET B\u00c9RELT VONALI SZOLG2",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET BIZTONS\u00c1G",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET CSAL\u00c1D",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET G1/1 GB",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET G100/100",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET G100/50",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET G400/100",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET G400/200",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET G50/25",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET G600/300",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET G800/400",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET HOBBI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET KIJ\u00c1RAT SZOLG.100/100",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET KIJ\u00c1RAT SZOLG.20/20",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET LIGHT",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET MULTIM\u00c9DIA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET OTTHON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET PARTNER",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET PLAY",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET PROFI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET SAJ\u00c1T",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET START",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET START PLUSZ",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET WLAN",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET10/10M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INTERNET20/20M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "INT\u00c9ZM. KEDVEZM\u00c9NY",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ISDN",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "JELSZOLG\u00c1LTAT\u00c1S",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "J\u00d3V\u00c1IR\u00c1S",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "J\u00d3V\u00c1IR\u00c1S (T\u00c1RSASH\u00c1ZI)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 10+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 10",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 100",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 100+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 100M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 100M+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 10M (SUPRA)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 10M+ (SUPRA)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 12M (SUPRA)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 15",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 15/1,5M TESZT",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 150",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 150+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 150M+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 150M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 15M (SUPRA)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 2",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 2.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 2+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 20",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 20+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 20/4 TESZT",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 2M (SUPRA)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 2M+ (SUPRA)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 2_P\u00c9CS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 30",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 30+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 30.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 30M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 30M+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 40",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 4M (SUPRA)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 5",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 50+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 50",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 50M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 50M+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 5M (SUPRA)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 5M+ (SUPRA)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 60",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 60 BP.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 60/12",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 6M (SUPRA)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 8",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 8M (SUPRA)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET 9M (SUPRA)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET ALAP SAT.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET EXTRA 12M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET EXTRA SAT.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET HOBBY 2M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET INSTALL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET INT 5M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET KOMFORT SAT.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET KORONC\u00d3 BABY",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET KORONC\u00d3 MINI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET MEGATRON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET MIKRO PLUSZ",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET MIKRO SAT.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET MINIMAL SAT.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET MK HOBBI 1M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET MNET1 2M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET MNET2 5M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET MNET3 15M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET NET10",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET NET12",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET NET15",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET NET2",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET NET3",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET NET4",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET NET5",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET NET6",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET NET8",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET SPRINT TURBO",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET START 7M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET SZ\u00dcNETELTET\u00c9S",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET \u00dcZLETI 20M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET_HALAD\u00d3NET MINI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET_HALAD\u00d3NET_PLUS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET_KEZD?\u0090NET MAXI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET_KEZD?\u0090NET MINI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET_KEZD?\u0090NET_PLUS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET_PROFINET",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET_PROFINET MINI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELTV KEDVEZM\u00c9NY",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "D+ KALAND CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KALAND+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "DELTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "D+ FELFEDEZ?\u0090+KALAND CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KEDVEZM\u00c9NY -500/4",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KEDVEZM\u00c9NY B\u00c9K\u00c1S II. AKCI\u00d3",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KEDVEZM\u00c9NY B\u00c9K\u00c1S2",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KEDVEZM\u00c9NY EMELT SOROS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KEDVEZM\u00c9NY HIDEGK\u00daT",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KEDVEZM\u00c9NY HIDEGK\u00daT 2007",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KEDVEZM\u00c9NY KAPOSF?\u0090 2./4",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KEDVEZM\u00c9NY KAPOSF?\u0090 3./4",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KEDVEZM\u00c9NY M\u00c1TY\u00c1SHEGY",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KEDVEZM\u00c9NY R\u00d3MAI LTP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KEDVEZM\u00c9NY \u00daJLAK",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN JOKER",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN JOKER + HBO",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN JOKER NET 30/3M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN JOKER NET+ 30/3M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN JOKER TELEFON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KNET 100",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KNET 100+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KNET 150",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KNET 150+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KNET 200+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KNET 200",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KNET 50",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KNET 50+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KNET TESZT UNLIMITED",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KNS_D+ CLASSICA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KNS_D+ FILMVIL\u00c1G",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KNS_D+ FISHING&HUNTING",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KNS_D+ FISHING_HUNTING",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KNS_D+ GLOBE",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KNS_D+ HBO MAXPAK",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KNS_D+ HBO PAK",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KNS_D+ KIDS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KNS_D+ NAGYVIL\u00c1G",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KNS_D+ NIGHT LIFE",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KNS_D+ SPEAK!",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KNS_DEK\u00d3DER B\u00c9RLETI D\u00cdJ",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KNS_DTV II ALAP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KNS_DTV III CSAL\u00c1DI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KNS_DTV III CSAL\u00c1DI+HD",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KNS_KIEG\u00c9SZIT?\u0090 TV-M?SORD\u00cdJ",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KNS_SZ\u00dcNETELTET\u00c9SI D\u00cdJ",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_D+ CLASSICA (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_D+ FILMVIL\u00c1G (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_D+ FISHING&HUNTING (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_D+ FISHING_HUNTING (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_D+ GLOBE (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_D+ HBO MAXPAK (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_D+ HBO PAK (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_D+ KIDS (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_D+ NAGYVIL\u00c1G (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_D+ NIGHT LIFE (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_D+ SPEAK! (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_DEK\u00d3DER B\u00c9RLETI D\u00cdJ",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_DEK\u00d3DER B\u00c9RLETI D\u00cdJ 2.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_DEK\u00d3DER B\u00c9RLETI D\u00cdJ 3.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_DTV II ALAP (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_DTV III CSAL\u00c1DI (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_DTV III CSAL\u00c1DI+HD (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_DTV K\u00d6ZSZOLG\u00c1LATI (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_K\u00c1BELNET NET S 150/5M (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_K\u00c1BELNET NET S 150/5M+ (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_K\u00c1BELNET NETM\u00c1NIA L (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_K\u00c1BELNET NETM\u00c1NIA L+ (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_K\u00c1BELNET NETM\u00c1NIA L_DUPLA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_K\u00c1BELNET NETM\u00c1NIA L_DUPLA+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_K\u00c1BELNET NETM\u00c1NIA M (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_K\u00c1BELNET NETM\u00c1NIA M+ (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_K\u00c1BELNET NETM\u00c1NIA M_DUPLA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_K\u00c1BELNET NETM\u00c1NIA S (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_K\u00c1BELNET NETM\u00c1NIA S+ (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_K\u00c1BELNET NETM\u00c1NIA S_DUPLA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_K\u00c1BELNET NETM\u00c1NIA XL (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_K\u00c1BELNET NETM\u00c1NIA XL+ (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_K\u00c1BELNET NETM\u00c1NIA XL_DUPLA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_K\u00c1BELNET NETM\u00c1NIA XXL (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_K\u00c1BELNET NETM\u00c1NIA XXL+ (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_K\u00c1BELNET NETM\u00c1NIA XXL_150",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_K\u00c1BELNET OTTHONI 50 (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_K\u00c1BELNET OTTHONI 50+ (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_KIEG\u00c9SZIT?\u0090 TV-M?SORD\u00cdJ (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_SZ\u00dcNETELTET\u00c9SI D\u00cdJ (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_TELEFON ALAP (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_TELEFON HOPP\u00c1 (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KN_TELEFON HOPP\u00c1 PLUSZ (KN)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KORL\u00c1TOZ\u00c1S",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KS-PARTNER B\u00c9RLETI D\u00cdJ KAPUV\u00c1R",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KS-PARTNER ESZK\u00d6ZB\u00c9RLET",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KS-PARTNER INGATLAN \u00dcZEM. D\u00cdJ",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KS-PARTNER ING\u00d3S\u00c1GOK",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KS-PARTNER LICENCE B\u00c9RLET",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KTV 21 M\u00d3V\u00c1R",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KTV 32 M\u00d3V\u00c1R",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "LADAM\u00c9R_B?\u0090VITETT GY?\u0090R",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "LAYER2 100/100M INTERNET",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "L\u00c9B\u00c9NY KAMERA 20",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "L\u00c9B\u00c9NY KAMERA 40",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "LIGHT SZ\u00c1MLACSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET MAMUT (III/6)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET TESZT M\u00d3V\u00c1R POLGM.HIV",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET MIKRO G",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET MIKRO (III./2.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "MIKRO ALS\u00d3 2M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "MIKRO FELS?\u0090 3M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "MIKRO KIR\u00c1LY 4M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET MINI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "MNET 1.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "MNET 2.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "MNET 3.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "MNET HOBBI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "MOBILNET L",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "MOBILNET M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "MOBILNET S",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "MOBILNET TOV\u00c1BBSZLA NET M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "MOBILNET TOV\u00c1BBSZLA NET S",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "MOBILNET XL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "MODEM B\u00c9RLETI D\u00cdJ",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "MODEM B\u00c9RLETI D\u00cdJ.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "M\u00dcHOLD JEL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NAGYON K\u00d6NNY? SZ\u00c1M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 1",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 1 MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 1,2M (\u00dcZLETI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 10M (EGY\u00c9NI) SYSCORP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 10M (UZLETI) NETPORTAL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 15M (EGY\u00c9NI)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 15M (EGY\u00c9NI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 15M (\u00dcZLETI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 15M (\u00dcZLETI) SYSCORP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 1M (EGY\u00c9NI) NETPORTAL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 1M (EGY\u00c9NI) SYSCORP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 1M (\u00dcZLETI) SYSCORP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 20M (EGY\u00c9NI) NETPORTAL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 20M (\u00dcZLETI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 20MBPS - K2012",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 25M (EGY\u00c9NI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 25 MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 25M (\u00dcZLETI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 25MBPS - K2012",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 2M (EGY\u00c9NI) NETPORTAL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 2M (EGY\u00c9NI) SYSCORP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 2M (\u00dcZLETI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 2M (\u00dcZLETI) SYSCORP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 30M (EGY\u00c9NI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 30M (EGY\u00c9NI) SYSCORP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 30M (\u00dcZLETI) SYSCORP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 30MBPS - K2012",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 4 MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 4,4M (EGY\u00c9NI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 4M (EGY\u00c9NI) NETPORTAL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 5M (EGY\u00c9NI) SYSCORP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 5M (EGY\u00c9NI) NETPORTAL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 5M (UZLETI)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 5M (\u00dcZLETI) ALTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 5M (\u00dcZLETI) SYSCORP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 8 MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL 8MBPS - K2012",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL L - EGY\u00c9NI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL L - \u00dcZLETI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL M - EGY\u00c9NI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL M - \u00dcZLETI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL S - EGY\u00c9NI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL V10 (\u00dcZLETI) SYSCORP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL XL - EGY\u00c9NI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NDSL XS - EGY\u00c9NI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NHDSL L - EGY\u00c9NI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NHDSL L - EGY\u00c9NI*",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NHDSL M - EGY\u00c9NI *",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "HIV\u00c1SV\u00c1RAKOZTAT\u00c1S",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "KEDVEZM\u00c9NYES VIP INTERNET/4",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "Nincs adat",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NINCS SZOLG\u00c1LTAT\u00c1SA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NORM\u00c1L ADSL MAG\u00c1N 1 MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "NORM\u00c1L ADSL MAG\u00c1N 5MBPS ISP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "OKT. AKC. D+3",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "OPTIKA MINIMUM CSOMAG 10/10 M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "OPTIKAI SZ\u00c1L B\u00c9RLET",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "OPTIKAI SZ\u00c1LB\u00c9RLET 1.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "OPTIKAI SZ\u00c1LB\u00c9RLET 2.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "OPTIKAI SZ\u00c1LB\u00c9RLET 3.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "OPTIKAI SZ\u00c1LB\u00c9RLET 4.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "OPTIKAI SZ\u00c1LB\u00c9RLET 5.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "OPTIKAI SZ\u00c1LB\u00c9RLET 6.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "OPTINET 1000",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "OPTINET 250",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "OPTINET 30",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "OPTINET 50",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "OPTINET L",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "OPTINET M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "OPTINET S",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00d6SSZEVONT KEDVEZM\u00c9NY",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "OSZLOP B\u00c9RLET",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "PASSZIV WEB",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "D+ PAX TV",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "PENDRIVE B\u00c9RLET",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "PH_VPN_128K",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "PH_VPN_1M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "PH_VPN_384K",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "PLUSZ DINAMIKUS IP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "PR\u00c9MIUM",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "REVOLUTION",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "SAMSUNG TV B\u00c9RLET",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "SOROS ANAL\u00d3G KTV (I/11)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "SOROS I.SZINT TATA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "SOROS SZOLG\u00c1LTAT\u00c1S TATA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "SOROS KTV GY?\u0090R",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "SOROS EMELT PROGRAM/4",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "SOROS K\u00d6Z\u00dcLETI PROGRAM/5",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "SOROS PROGRAM/5",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "D+ SPORT CSOMAG",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "SPORT+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET SPRINTMO",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET SPRINTPE",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET SPRINTTA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET SPRINT (III/4.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET SPRINT",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET SPRINTBP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET SPRINTKK",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET START",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "SUPRA KEDVEZM\u00c9NY",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "SUPRA KEDVEZM\u00c9NY1",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "SZERVER HOSTING",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "SZIP WIFI HOTSPOT 50M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "D+ SZ\u00d3RAKOZZ",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "SZ\u00d3RAKOZZ+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "SZ\u00dcNETELTET\u00c9S",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "SZ\u00dcNETELTET\u00c9S (D\u00cdJMENTES)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "SZ\u00dcNETELTET\u00c9S DIGIT\u00c1LIS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "SZ\u00dcNETELTET\u00c9S DIGIT\u00c1LIS.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "SZ\u00dcNETELTET\u00c9S.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "SZ\u00dcNETELTET\u00c9S..",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "SZ\u00dcNETELTET\u00c9SI D\u00cdJ",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "T-ONLINE INTERNET",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "T\u00c1RSASH\u00c1ZI KEDVEZM\u00c9NY",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TELEFON + ADSL MAG\u00c1N 5MBPS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TELEFON I.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TELEFON SI\u00d3FOK",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TELEFON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TELEFON II.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TELEFON III.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TELEFON IV.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TELEFON V.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TELEKOM_A3",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TELEKOM_A1",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TELEKOM_A2",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TELEKOM_DTV2",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TELEKOM_DTV3",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TELEKOM_INTERNET",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TELEKOM_INTERNET D3",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TELEKOM_IPTV 3",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TELEKOM_IPTV 1",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TELEKOM_IPTV 2",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TELEKOM_OPTINET 30",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TELEKOM_OPTINET L",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TELEKOM_OPTINET M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TELEKOM_OPTINET S",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TELEKOM_TELEFON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TELJES D. VIP CSOMAG/4",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TEMATIKUS 28 +",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "T\u00c9RFIGYEL?\u0090 RENDSZER",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TESZT 6M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TESZT NET 1000",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TESZT NET 400",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TESZT NET 500",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TESZT NET 600",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TESZT NET 800",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TESZT TCOM2",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TESZT TCOM3",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TESZT TCOM4",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TESZT TCOM5",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TH J\u00d3V +",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TRI\u00d3 ALAP H.D\u00cdJ KEDV.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET TRI\u00d3 ALAP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TRI\u00d3 ALAP (V/1.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET TRI\u00d3 MAX",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET TRI\u00d3 MAX FIX IP",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TRI\u00d3 MAX (V/4)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TRI\u00d3 MAX \u00d6NK.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TRI\u00d3 MAX (V/4) H.D\u00cdJ KEDV.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TRI\u00d3 MINI H.D\u00cdJ KEDV.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET TRI\u00d3 MINI",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TRI\u00d3 MINI (V/2)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TRI\u00d3 VARIO H.D\u00cdJ KEV.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET TRI\u00d3 VARI\u00d3",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TRI\u00d3 VARI\u00d3 (V/5.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET TRI\u00d3",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TRI\u00d3 (V/3)  H.D\u00cdJ KEDV.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TRI\u00d3 (V/3)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TRI\u00d3 \u00d6NK.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TV+NET ANAL\u00d3G",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TV+NET D+3",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TV+NET (V/6)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TV+NET MAX ANAL\u00d3G",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TV+NET MAX D+3",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TV+NET MAX (V./7)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TV+NET MAX D+2",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZEMBENTART\u00c1SI D\u00cdJ",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZLETI ADSL 1",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZLETI ADSL 10",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZLETI ADSL 15",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZLETI ADSL 20",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZLETI ADSL 30",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZLETI ADSL 5",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZLETI K\u00c1BELNET 20",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZLETI K\u00c1BELNET 20 EXTRA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZLETI K\u00c1BELNET 10",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZLETI K\u00c1BELNET 10 EXTRA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZLETI K\u00c1BELNET 100",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZLETI K\u00c1BELNET 100 EXTRA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZLETI K\u00c1BELNET 150",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZLETI K\u00c1BELNET 150 EXTRA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZLETI K\u00c1BELNET 30",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZLETI K\u00c1BELNET 30 EXTRA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZLETI K\u00c1BELNET 40",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZLETI K\u00c1BELNET 40 EXTRA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZLETI K\u00c1BELNET 5",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZLETI K\u00c1BELNET 5 EXTRA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZLETI K\u00c1BELNET 50",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZLETI K\u00c1BELNET 50 EXTRA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZLETI K\u00c1BELNET 60",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZLETI K\u00c1BELNET 60 EXTRA",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZLETI MULTISIM",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZLETI TELEFON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "\u00dcZLETI TELEFON (100 \u00d3RA)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VIASAT",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VIDANET MOVE",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VIDANET TELEFON IV.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VIDANET_VPN",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VIL\u00c1G+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VIL\u00c1G+_S",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "K\u00c1BELNET VILL\u00c1M (III./7.)",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VIP PAK/1",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VIP PAK/2",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VIP PAK/3",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VISP EGY\u00c9NI ADSL N10",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VISP EGY\u00c9NI ADSL N15",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VISP EGY\u00c9NI ADSL N5",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VISP EGY\u00c9NI ADSL U1",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VISP EGY\u00c9NI ADSL U2",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VISP EGY\u00c9NI ADSL U25",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VISP EGY\u00c9NI ADSL U4",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VISP EGY\u00c9NI ADSL U8",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VISP EGY\u00c9NI ADSL V10",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VISP EGY\u00c9NI ADSL V20",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VISP EGY\u00c9NI ADSL V30",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VISP NAKED FEL\u00c1R",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VISP \u00dcZLETI ADSL N10",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VISP \u00dcZLETI ADSL N15",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VISP \u00dcZLETI ADSL N5",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VISP \u00dcZLETI ADSL U1",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VISP \u00dcZLETI ADSL U18",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VISP \u00dcZLETI ADSL U2",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VISP \u00dcZLETI ADSL U25",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VISP \u00dcZLETI ADSL U4",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VISP \u00dcZLETI ADSL U8",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VISP \u00dcZLETI ADSL V10",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VISP \u00dcZLETI ADSL V20",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VISP \u00dcZLETI ADSL V30",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 100+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 100 GPON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 100",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 100 GPON+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 200+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 200",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 200 GPON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 200 GPON+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 300 GPON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 300",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 300+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 300 GPON+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 400 GPON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 400+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 400",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 400 GPON+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 500 GPON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 500",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 500+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 500 GPON+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 600 GPON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 600+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 600",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 600 GPON+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 700",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 700+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 700 GPON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET 700 GPON+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET BUSINESS 100",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET BUSINESS 100 GPON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET BUSINESS 100+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET BUSINESS 200",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET BUSINESS 200 GPON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET BUSINESS 200+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET BUSINESS 300",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET BUSINESS 300 GPON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET BUSINESS 300+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET BUSINESS 400",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET BUSINESS 400 GPON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET BUSINESS 400+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET BUSINESS 500",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET BUSINESS 500 GPON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET BUSINESS 500+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET BUSINESS 600",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET BUSINESS 600 GPON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET BUSINESS 600+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET BUSINESS 700",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET BUSINESS 700 GPON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET BUSINESS 700+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET BUSINESS L",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET BUSINESS M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET BUSINESS S",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET BUSINESS XL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET BUSINESS XS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET L+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET L",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET L GPON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET M GPON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET M+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET S",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET S GPON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET S+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET XL GPON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET XL",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET XL+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET XS",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET XS GPON",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VNET XS+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TRIO-A S 5M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TRIO S 2M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TRIO-B S 10M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TRIO S 4M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TRIO-B S 15M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TRIO S 6M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TRIO-B S 5M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TRIO S 8M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TRIO-A S 10M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TRIO-A S 15M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "TRIO S 12M",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VONAL \u00dcZEMBENTART\u00c1SI D\u00cdJ",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "WEBT\u00c1RHELY",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "WIFI OPCI\u00d3",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "XDSL SZ\u00dcNETELTET\u00c9S",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "XNET 100",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "XNET 200",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "XNET 400",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "XNET 50",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "XNET 500",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "XNET BUSINESS 100",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "XNET BUSINESS 250",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "XNET BUSINESS 500",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "XNET BUSINESS 600",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "XNET BUSINESS 700",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "Vidanet Telefon I.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "Vidanet Telefon II.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "Vidanet Telefon III.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "VIDANET TELEFON V.",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "ALAP+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "Max",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "CSAL\u00c1DI+",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "START+",
+			"weight": 1
+		}
+	],
+	"Subsets@Code.links": []
+}

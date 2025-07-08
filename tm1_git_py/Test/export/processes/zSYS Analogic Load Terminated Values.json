@@ -1,0 +1,66 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic Load Terminated Values",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic Load Terminated Values.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pVersion",
+			"Prompt": "Base",
+			"Value": "Base",
+			"Type": "String"
+		},
+		{
+			"Name": "pAllPeriod",
+			"Prompt": "1 or 0",
+			"Value": 0,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pLastYear",
+			"Prompt": "1 or 0",
+			"Value": 0,
+			"Type": "Numeric"
+		}
+	],
+	"Variables": [
+		{
+			"Name": "vProduct",
+			"Type": "String",
+			"Position": 1,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vDate",
+			"Type": "String",
+			"Position": 2,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vLoyalty",
+			"Type": "String",
+			"Position": 3,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vSalesChannel",
+			"Type": "String",
+			"Position": 4,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vValue",
+			"Type": "Numeric",
+			"Position": 5,
+			"StartByte": 0,
+			"EndByte": 0
+		}
+	]
+}

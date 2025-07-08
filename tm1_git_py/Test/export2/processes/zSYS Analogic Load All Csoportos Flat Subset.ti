@@ -1,0 +1,105 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# all N element subset létrehozása
+# dataSource létrehozása
+# zSYS Analogic CS.Flat Subset Update futtatása mindre
+
+sAllNCsoportosFlatSubset ='AllNCsoportosFlatSubset';
+sCsoportosFlatDim = 'Csoportos Flat';
+
+IF( HierarchySubsetExists(sCsoportosFlatDim, sCsoportosFlatDim, sAllNCsoportosFlatSubset) = 0);
+  HierarchySubsetCreate(sCsoportosFlatDim, sCsoportosFlatDim, sAllNCsoportosFlatSubset, 0);
+ENDIF;
+
+HierarchySubsetDeleteAllElements(sCsoportosFlatDim, sCsoportosFlatDim, sAllNCsoportosFlatSubset);
+
+sMDX= '
+{
+	TM1FILTERBYLEVEL({
+		TM1DRILLDOWNMEMBER({
+			[Csoportos Flat].[Csoportos Flat].[Csoportos Flat Total]
+		}, ALL, RECURSIVE)
+	}, 0)
+}
+';
+
+HierarchySubsetMDXSet(sCsoportosFlatDim, sCsoportosFlatDim, sAllNCsoportosFlatSubset, sMDX);
+
+
+
+
+
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+# pVersion
+# vCsoportosFlat
+
+sToday = Today(1);
+sY1 = DELET(sToday, 5,6);
+nY1 = stringToNumber(sY1);
+nY0 = nY1 - 1;
+nY2 = nY1 + 1;
+nY3 = nY1 + 2;
+nY4 = nY1 + 3;
+nY5 = nY1 + 4;
+
+sY0 = numberToString(nY0);
+sY2 = numberToString(nY2);
+sY3 = numberToString(nY3);
+sY4 = numberToString(nY4);
+sY5 = numberToString(nY5);
+
+
+ExecuteProcess('zSYS Analogic CS.Flat Subset Update',
+   'pCsoportosFlat', vCsoportosFlat,
+   'pVersion', pVersion,
+   'pPeriod', sY0,
+   'pNewCsoportosFlat', 0
+  );
+ExecuteProcess('zSYS Analogic CS.Flat Subset Update',
+   'pCsoportosFlat', vCsoportosFlat,
+   'pVersion', pVersion,
+   'pPeriod', sY1,
+   'pNewCsoportosFlat', 0
+  );
+  ExecuteProcess('zSYS Analogic CS.Flat Subset Update',
+   'pCsoportosFlat', vCsoportosFlat,
+   'pVersion', pVersion,
+   'pPeriod', sY2,
+   'pNewCsoportosFlat', 0
+  );
+  ExecuteProcess('zSYS Analogic CS.Flat Subset Update',
+   'pCsoportosFlat', vCsoportosFlat,
+   'pVersion', pVersion,
+   'pPeriod', sY3,
+   'pNewCsoportosFlat', 0
+  );
+  ExecuteProcess('zSYS Analogic CS.Flat Subset Update',
+   'pCsoportosFlat', vCsoportosFlat,
+   'pVersion', pVersion,
+   'pPeriod', sY4,
+   'pNewCsoportosFlat', 0
+  );
+  ExecuteProcess('zSYS Analogic CS.Flat Subset Update',
+   'pCsoportosFlat', vCsoportosFlat,
+   'pVersion', pVersion,
+   'pPeriod', sY5,
+   'pNewCsoportosFlat', 0
+  );
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

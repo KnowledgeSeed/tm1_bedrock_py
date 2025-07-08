@@ -1,0 +1,8 @@
+{
+	"@type": "Dimension",
+	"Name": "Taxes Measure",
+	"Hierarchies@Code.links": [
+		"Taxes Measure.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE2482330>.json"
+	],
+	"DefaultHierarchy": "Dimensions('Taxes Measure')/Hierarchies('Taxes Measure')"
+}

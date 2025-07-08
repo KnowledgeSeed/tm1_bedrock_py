@@ -1,0 +1,42 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI Balance Sheet Planning Calculations",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic UI Balance Sheet Planning Calculations.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pVersion",
+			"Prompt": "",
+			"Value": "Base",
+			"Type": "String"
+		},
+		{
+			"Name": "pUser",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pMode",
+			"Prompt": "",
+			"Value": 0,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pPage",
+			"Prompt": "",
+			"Value": 0,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pValue",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

@@ -1,0 +1,8 @@
+{
+	"@type": "Dimension",
+	"Name": "Subscription Report Measure",
+	"Hierarchies@Code.links": [
+		"Subscription Report Measure.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE27D9E20>.json"
+	],
+	"DefaultHierarchy": "Dimensions('Subscription Report Measure')/Hierarchies('Subscription Report Measure')"
+}

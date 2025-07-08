@@ -1,0 +1,8 @@
+{
+	"@type": "Dimension",
+	"Name": "Channel Time Dependent Attributes Measure",
+	"Hierarchies@Code.links": [
+		"Channel Time Dependent Attributes Measure.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1BDF6B0>.json"
+	],
+	"DefaultHierarchy": "Dimensions('Channel Time Dependent Attributes Measure')/Hierarchies('Channel Time Dependent Attributes Measure')"
+}

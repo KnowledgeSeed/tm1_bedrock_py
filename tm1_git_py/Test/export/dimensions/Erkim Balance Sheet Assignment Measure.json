@@ -1,0 +1,8 @@
+{
+	"@type": "Dimension",
+	"Name": "Erkim Balance Sheet Assignment Measure",
+	"Hierarchies@Code.links": [
+		"Erkim Balance Sheet Assignment Measure.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1EBAF90>.json"
+	],
+	"DefaultHierarchy": "Dimensions('Erkim Balance Sheet Assignment Measure')/Hierarchies('Erkim Balance Sheet Assignment Measure')"
+}

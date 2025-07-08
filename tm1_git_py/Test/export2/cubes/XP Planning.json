@@ -1,0 +1,22 @@
+{
+	"@type": "Cube",
+	"Name": "XP Planning",
+	"Dimensions": [
+		{
+			"@id": "Dimensions('Version')"
+		},
+		{
+			"@id": "Dimensions('Period')"
+		},
+		{
+			"@id": "Dimensions('XP Planning')"
+		},
+		{
+			"@id": "Dimensions('XP Planning Measure')"
+		}
+	],
+	"Rules@Code.link": "XP Planning.rules",
+	"Views@Code.links": [
+		"XP Planning.views/XP_tervezes.json"
+	]
+}

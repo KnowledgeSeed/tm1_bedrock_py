@@ -1,0 +1,30 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI Add Other Cost Anyagkoltseg Ledger",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic UI Add Other Cost Anyagkoltseg Ledger.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pMode",
+			"Prompt": "",
+			"Value": 0,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pLedger",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pLedgerName",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

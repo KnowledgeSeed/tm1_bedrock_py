@@ -1,0 +1,55 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# =========================================================
+# Original Date Created              2023.04.29
+# Originator                         Ullmann Dávid
+# Purpose                            Process to quickly regenerate static Period subset containing all N type elements
+# Change Date                        
+# Change Request Reference    
+# Change Made by                     
+# =========================================================
+
+sDimName_AllN = 'Period';
+sHieName_AllN = 'Period';
+sSubName_AllN = 'All N';
+
+sMDX_AllN = 
+'{
+Filter(
+  {
+  TM1FilterByLevel(
+    {
+    TM1DrillDownMember(
+      {
+      [Period].[Period].[All N Element Period]
+      },
+      ALL,
+      RECURSIVE)
+    },
+    0)
+  },
+  InStr([Period].[Period].CurrentMember.Name, "_Input") = 0 )
+}';
+
+if(HierarchySubsetExists(sDimName_AllN, sHieName_AllN, sSubName_AllN) = 0);
+  HierarchySubsetCreate(sDimName_AllN, sHieName_AllN, sSubName_AllN);
+endif;
+HierarchySubsetMDXSet(sDimName_AllN, sHieName_AllN, sSubName_AllN, sMDX_AllN);
+HierarchySubsetMDXSet(sDimName_AllN, sHieName_AllN, sSubName_AllN, '');
+
+#LogOutput('INFO', 'Period All N static subset ready.');
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

@@ -1,0 +1,49 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# Modos David 2024 02 02
+# átírjuk a megfelelő attributumokat
+# átmásoljuk az adott verzióról az adatokat
+
+# kapott caption beállítása
+DimName = 'Version';
+HierName = 'Version';
+
+# last fact
+sLastFact = CellGetS('}ElementAttributes_Version', pSourceVersion, 'Last Fact Date');
+ElementAttrPutS(sLastFact, DimName, HierName, pTargetVersion, 'Last Fact Date');
+
+
+# Last Copy Date
+sToday = Today(1);
+ElementAttrPutS(sToday, DimName, HierName, pTargetVersion, 'Last Updated');
+
+
+# Last Copy By
+ElementAttrPutS(pUser, DimName, HierName, pTargetVersion, 'Last Updated By');
+
+
+
+sProcessName = 'zSYS Analogic Operation Version Copy';
+
+ExecuteProcess(sProcessName,
+ 'pSourceVersion', pSourceVersion,
+ 'pTargetVersion', pTargetVersion,
+ 'pClearTargetBeforeCopy', 1);
+ 
+ 
+ 
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

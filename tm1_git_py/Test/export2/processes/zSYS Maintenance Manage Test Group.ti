@@ -1,0 +1,105 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# kontrol teszt főkategória létrehozás / törlés input processz teszteléshez
+# 3 dimenzióban - fő totál, fő kategória subset
+# extra dimenzió - fő kategória mint dimenzióelem
+# elemek hozzáadása a totál és subset alá (beleértve az új és felmondott technikai elemeket)
+# új és felmondott elemek törlése a nemkívánatos subsetekből
+
+dimcnt = 3;
+dim1 = 'Product';
+dim2 = 'Target Product';
+dim3 = 'Source Product';
+
+catg = 'Product Category';
+
+# Telefon I. - V.
+
+count = 7;
+item1 = '653';
+item2 = '654';
+item3 = '655';
+item4 = '656';
+item5 = '657';
+item6 = 'New';
+item7 = 'Terminated';
+
+groupname = 'Input Test';
+unionname = 'Input Test Naturalia';
+totalname = 'Input Test Total';
+
+
+if(pMode @= 'create');
+  i = 1;
+  while(i <= dimcnt);
+    dim = Expand('%dim'|numbertostring(i)|'%');
+    if(DimensionElementExists(dim, totalname) = 0);
+      DimensionElementInsertDirect(dim, '', totalname, 'C');
+    endif;
+    AttrPutS(groupname, dim, totalname, 'Subset Name');
+    if(SubsetExists(dim, groupname) = 0);
+      SubsetCreate(dim, groupname); 
+    endif;
+    SubsetMDXSet(dim, groupname, '{}');
+    SubsetMDXSet(dim, groupname, '');
+#    LogOutput('INFO', 'Created ' | groupname | ' for the dimension ' | dim);
+    CellPutN(1, '}ElementAttributes_}Subsets_'|dim, groupname, 'UI Flag'); 
+    CellPutN(99,'}ElementAttributes_}Subsets_'|dim, groupname, 'Order');
+    if(SubsetExists(dim, unionname) = 0);
+      SubsetCreate(dim, unionname);
+      SubsetMDXSet(dim, unionname, '');
+    endif;
+    SubsetMDXSet(dim, unionname, '{}');
+    SubsetMDXSet(dim, unionname, '');
+    if(DimensionElementExists(catg, groupname) = 0);
+      DimensionElementInsertDirect(catg, '', groupname, 'N');
+    endif;
+    j = 1;
+    while(j <= count);
+      item = Expand('%item'|numbertostring(j)|'%');
+      DimensionElementComponentAddDirect(dim, totalname, item, 1);
+      SubsetElementInsert(dim, groupname, item, j);
+      if(j <= count-2); SubsetElementInsert(dim, unionname, item, j); endif;
+      j = j + 1;
+    end;
+    SubsetElementInsert(dim, unionname, totalname, 1);
+    if(dim @<> 'Target Product'); SubsetElementDelete(dim, groupname, SubsetElementGetIndex(dim, groupname, 'Terminated', 1)); endif;
+    if(dim @<> 'Source Product'); SubsetElementDelete(dim, groupname, SubsetElementGetIndex(dim, groupname, 'New', 1)); endif;  
+    i = i + 1;
+  end;
+elseif(pMode @= 'destroy');
+  i = 1;
+  while(i <= dimcnt);
+    dim = Expand('%dim'|numbertostring(i)|'%');
+    if(DimensionElementExists(dim, totalname) = 1);
+      DimensionElementDeleteDirect(dim, totalname);
+    endif;
+    if(SubsetExists(dim, groupname) = 1);
+      SubsetDestroy(dim, groupname);
+    endif;
+    if(SubsetExists(dim, unionname) = 1);
+      SubsetDestroy(dim, unionname);
+    endif;
+    if(DimensionElementExists(catg, groupname) = 1);
+      DimensionElementDeleteDirect(catg, groupname);
+    endif;
+    i = i + 1;
+  end;
+endif;
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

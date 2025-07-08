@@ -1,0 +1,167 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# =========================================================
+# Original Date Created              2023.08.09
+# Originator                         Ullmann Dávid
+# Purpose                            Process to create reader snapshot of the final values to a specific measure -> this value will be read by the processes that look for ratios
+# Change Date                        it also resets all values to zero after copy     
+# Change Request Reference                
+# Change Made by                     
+# =========================================================
+
+# collection of variables with possible use
+
+sCubeName_Main          = 'Subscription Plan';
+sCubeName_Assignment    = 'Subscription Movement Assignment';
+sCubeName_WeightLimit   = 'Weight and Limit';
+sDimensionName_Period   = 'Period';
+sDimensionName_Loyalty  = 'Loyalty';
+sDimensionName_Channel  = 'Sales Channel';
+sDimensionName_SProduct = 'Source Product';
+sDimensionName_TProduct = 'Target Product';
+sDimensionName_Version  = 'Version';
+sDimensionName_Movement = 'Subscription Plan Movement';
+sDimensionName_Measure  = 'Subscription Plan Measure';
+sHierarchyName_Period   = 'Period';
+sHierarchyName_Loyalty  = 'Loyalty';
+sHierarchyName_Channel  = 'Sales Channel';
+sHierarchyName_SProduct = 'Source Product';
+sHierarchyName_TProduct = 'Target Product';
+sHierarchyName_Version  = 'Version';
+sHierarchyName_Movement = 'Subscription Plan Movement';
+
+sElementName_MovementMeasure = 'Stored';
+sElementName_MovementTotal   = 'Closing';
+sSubsetName_Period           = 'All N';
+sValue_Version               = 'Base';
+sValue_MeasureRead_Spread  = 'Base';
+sValue_MeasureWrite_Spread = 'Final Value Override';
+sValue_MeasureDelta_Spread = 'Spread Input Delta';
+sValue_MeasureResidual     = 'Spread Res';
+sValue_MeasureZero_Spread  = 'Final Value Zero Flag';
+svalue_MeasureFinal        = 'Final Value';
+sValue_MeasureFinalShapshot= 'Final Value Snapshot';
+
+# create source view
+
+sViewName = 'Input Snapshot Temp';
+sFilter =          sDimensionName_SProduct | ' ¦ '| pSourceProduct |' & ';
+sFilter = sFilter |sDimensionName_TProduct | ' ¦ '| pTargetProduct |' & ';
+sFilter = sFilter |sDimensionName_Period   | ' ¦ '| pPeriod |' & ';
+sFilter = sFilter |sDimensionName_Loyalty  | ' ¦ '| pLoyalty |' & ';
+sFilter = sFilter |sDimensionName_Version  | ' ¦ '| pVersion |' & ';
+sFilter = sFilter |sDimensionName_Channel  | ' ¦ '| pChannel |' & ';
+sFilter = sFilter |sDimensionName_Measure  | ' ¦ '| svalue_MeasureFinal |' & ';
+sFilter = sFilter |sDimensionName_Movement | ' ¦ '| sElementName_MovementTotal;
+
+ExecuteProcess('}bedrock.cube.view.create',
+   'pLogOutput', 0,
+   'pStrictErrorHandling', 0,
+   'pCube', sCubeName_Main,
+   'pView', sViewName,
+   'pFilter', sFilter,
+   'pSuppressZero', 0,
+   'pSuppressConsol', 0,
+   'pSuppressRules', 0,
+   'pSuppressConsolStrings', -1,
+   'pDimDelim', '&',
+   'pEleStartDelim', '¦',
+   'pEleDelim', '+',
+   'pTemp',1,
+   'pSubN', 0
+);
+  
+# setting all N cells instead of C types  
+
+sMDX = '{TM1FilterByLevel({TM1DrillDownMember({['|sDimensionName_Loyalty|'].['|sDimensionName_Loyalty|'].['|pLoyalty|']},ALL,RECURSIVE)},0)}';
+SubsetMDXSet(sDimensionName_Loyalty, sViewName, sMDX);
+SubsetMDXSet(sDimensionName_Loyalty, sViewName, '');
+
+sMDX = '{TM1FilterByLevel({TM1DrillDownMember({['|sDimensionName_Channel|'].['|sDimensionName_Channel|'].['|pChannel|']},ALL,RECURSIVE)},0)}';
+SubsetMDXSet(sDimensionName_Channel, sViewName, sMDX);
+SubsetMDXSet(sDimensionName_Channel, sViewName, '');
+
+sMDX = '{TM1FilterByLevel({TM1DrillDownMember({['|sDimensionName_SProduct|'].['|sDimensionName_SProduct|'].['|pSourceProduct|']},ALL,RECURSIVE)},0)}';
+SubsetMDXSet(sDimensionName_SProduct, sViewName, sMDX);
+SubsetMDXSet(sDimensionName_SProduct, sViewName, '');
+
+sMDX = '{TM1FilterByLevel({TM1DrillDownMember({['|sDimensionName_TProduct|'].['|sDimensionName_TProduct|'].['|pTargetProduct|']},ALL,RECURSIVE)},0)}';
+SubsetMDXSet(sDimensionName_TProduct, sViewName, sMDX);
+SubsetMDXSet(sDimensionName_TProduct, sViewName, '');
+
+sMDX = '{TM1FilterByLevel({TM1DrillDownMember({['|sDimensionName_Movement|'].['|sDimensionName_Movement|'].['|pMovement|']},ALL,RECURSIVE)},0)}';
+SubsetMDXSet(sDimensionName_Movement, sViewName, sMDX);
+SubsetMDXSet(sDimensionName_Movement, sViewName, '');
+
+# filtering out the "input" periods
+
+sMDX = 
+'{Filter(
+  {TM1FilterByLevel({TM1DrillDownMember({['|sDimensionName_Period|'].['|sDimensionName_Period|'].['|pPeriod|']},ALL,RECURSIVE)}, 0)},
+  InStr(['|sDimensionName_Period|'].['|sDimensionName_Period|'].CurrentMember.Name, "_Input") = 0 
+ )}';
+SubsetMDXSet(sDimensionName_Period, sViewName, sMDX);
+SubsetMDXSet(sDimensionName_Period, sViewName, '');
+
+DataSourceType          = 'VIEW';
+DatasourceNameForServer = sCubeName_Main;
+DatasourceNameForClient = sCubeName_Main;
+DatasourceCubeView      = sViewName;
+
+pBaseSource = '';
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+
+#if(pRecursionIndex = 0);
+#  CellPutN(0, sCubeName_Main, vVersion, vPeriod, vLoyalty, vChannel, vSource, vTarget, vMovement, sValue_MeasureFinalShapshot);
+#  CellPutN(0, sCubeName_Main, vVersion, vPeriod, '1', 'Call Center', '1', vTarget, 'New increase', 'Final Value Closing Snapshot');
+#endif;
+
+if(pRecursionIndex = 0);
+  nSnapshotValue = CellGetN(sCubeName_Main, vVersion, vPeriod, vLoyalty, vChannel, vSource, vTarget, vMovement, sValue_MeasureFinal);
+  CellPutN(nSnapshotValue, sCubeName_Main, vVersion, vPeriod, vLoyalty, vChannel, vSource, vTarget, vMovement, sValue_MeasureFinalShapshot);
+  
+  if(pBaseSource @= '' % pBaseSource @= vSource);
+    pBaseSource = vSource;
+    nClosingSnapshotValue = CellGetN(sCubeName_Main, vVersion, vPeriod, 'Total', 'Total', 'Total Products', vTarget, 'Closing', sValue_MeasureFinal);
+    CellPutN(nClosingSnapshotValue, sCubeName_Main, vVersion, vPeriod, '1', 'Call Center', '1', vTarget, 'New increase', 'Final Value Closing Snapshot');
+  endif;
+endif;
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+sOppositeMovement = AttrS(sDimensionName_Movement, vMovement, 'Opposite');
+
+# reset to zeros
+CellPutN(0, sCubeName_Main, vVersion, vPeriod, vLoyalty, vChannel, vSource, vTarget, vMovement, 'Spread Input Delta');
+CellPutN(0, sCubeName_Main, vVersion, vPeriod, vLoyalty, vChannel, vSource, vTarget, vMovement, 'Spread Res');
+CellPutN(0, sCubeName_Main, vVersion, vPeriod, vLoyalty, vChannel, vSource, vTarget, vMovement, 'Final Value Override');
+#CellPutN(1, sCubeName_Main, vVersion, vPeriod, vLoyalty, vChannel, vSource, vTarget, vMovement, 'Final Value Zero Flag');
+CellPutN(0, sCubeName_Main, vVersion, vPeriod, vLoyalty, vChannel, vTarget, vSource, sOppositeMovement, 'Spread Input Delta');
+CellPutN(0, sCubeName_Main, vVersion, vPeriod, vLoyalty, vChannel, vTarget, vSource, sOppositeMovement, 'Spread Res');
+CellPutN(0, sCubeName_Main, vVersion, vPeriod, vLoyalty, vChannel, vTarget, vSource, sOppositeMovement, 'Final Value Override');
+#CellPutN(1, sCubeName_Main, vVersion, vPeriod, vLoyalty, vChannel, vTarget, vSource, sOppositeMovement, 'Final Value Zero Flag');
+
+# reset to neutral (base)
+#CellPutN(0, sCubeName_Main, vVersion, vPeriod, vLoyalty, vChannel, vSource, vTarget, vMovement, 'Spread Input Delta');
+#CellPutN(0, sCubeName_Main, vVersion, vPeriod, vLoyalty, vChannel, vSource, vTarget, vMovement, 'Spread Res');
+#CellPutN(0, sCubeName_Main, vVersion, vPeriod, vLoyalty, vChannel, vSource, vTarget, vMovement, 'Final Value Override');
+#CellPutN(0, sCubeName_Main, vVersion, vPeriod, vLoyalty, vChannel, vSource, vTarget, vMovement, 'Final Value Zero Flag');
+#CellPutN(0, sCubeName_Main, vVersion, vPeriod, vLoyalty, vChannel, vTarget, vSource, sOppositeMovement, 'Spread Input Delta');
+#CellPutN(0, sCubeName_Main, vVersion, vPeriod, vLoyalty, vChannel, vTarget, vSource, sOppositeMovement, 'Spread Res');
+#CellPutN(0, sCubeName_Main, vVersion, vPeriod, vLoyalty, vChannel, vTarget, vSource, sOppositeMovement, 'Final Value Override');
+#CellPutN(0, sCubeName_Main, vVersion, vPeriod, vLoyalty, vChannel, vTarget, vSource, sOppositeMovement, 'Final Value Zero Flag');
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

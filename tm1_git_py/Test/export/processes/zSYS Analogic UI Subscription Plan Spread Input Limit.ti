@@ -1,0 +1,182 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# =========================================================
+# Original Date Created              2023.09.26
+# Originator                         Ullmann Dávid
+# Purpose                            Process to recursively correct maximum limits without changing the total value of input (possibly)
+# Change Date                       
+# Change Request Reference                
+# Change Made by                     
+# =========================================================
+
+# collection of variables with possible use
+
+sCubeName_Main          = 'Subscription Plan';
+sCubeName_Assignment    = 'Subscription Movement Assignment';
+sCubeName_WeightLimit   = 'Weight and Limit';
+sDimensionName_Period   = 'Period';
+sDimensionName_Loyalty  = 'Loyalty';
+sDimensionName_Channel  = 'Sales Channel';
+sDimensionName_SProduct = 'Source Product';
+sDimensionName_TProduct = 'Target Product';
+sDimensionName_Version  = 'Version';
+sDimensionName_Movement = 'Subscription Plan Movement';
+sDimensionName_Measure  = 'Subscription Plan Measure';
+sHierarchyName_Period   = 'Period';
+sHierarchyName_Loyalty  = 'Loyalty';
+sHierarchyName_Channel  = 'Sales Channel';
+sHierarchyName_SProduct = 'Source Product';
+sHierarchyName_TProduct = 'Target Product';
+sHierarchyName_Version  = 'Version';
+sHierarchyName_Movement = 'Subscription Plan Movement';
+
+sElementName_MovementMeasure = 'Stored';
+sElementName_MovementTotal   = 'Closing';
+sSubsetName_Period           = 'All N';
+sValue_Version               = 'Base';
+sValue_MeasureRead_Spread  = 'Base';
+sValue_MeasureWrite_Spread = 'Final Value Override';
+sValue_MeasureDelta_Spread = 'Spread Input Delta';
+sValue_MeasureResidual     = 'Spread Res';
+sValue_MeasureZero_Spread  = 'Final Value Zero Flag';
+svalue_MeasureFinal        = 'Final Value';
+sValue_MeasureFinalShapshot= 'Final Value Snapshot';
+
+sViewName = 'Input Snapshot Temp';
+
+sMDX = '{['|sDimensionName_Loyalty|'].['|sDimensionName_Loyalty|'].[Total]}';
+SubsetMDXSet(sDimensionName_Loyalty, sViewName, sMDX);
+SubsetMDXSet(sDimensionName_Loyalty, sViewName, '');
+
+sMDX = '{['|sDimensionName_Channel|'].['|sDimensionName_Channel|'].[Total]}';
+SubsetMDXSet(sDimensionName_Channel, sViewName, sMDX);
+SubsetMDXSet(sDimensionName_Channel, sViewName, '');
+
+sMDX = '{['|sDimensionName_SProduct|'].['|sDimensionName_SProduct|'].[Total Products]}';
+SubsetMDXSet(sDimensionName_SProduct, sViewName, sMDX);
+SubsetMDXSet(sDimensionName_SProduct, sViewName, '');
+
+sMDX = 
+'{Except(
+  {TM1SubsetToSet(['|sDimensionName_TProduct|'].['|sDimensionName_TProduct|'], "'|pMaincategory|'")},
+  {['|sDimensionName_TProduct|'].['|sDimensionName_TProduct|'].[New], ['|sDimensionName_TProduct|'].['|sDimensionName_TProduct|'].[Terminated]}
+)}';
+
+if(pSourceBypass = 1 & pTargetBypass = 1);
+  sMDX = 
+  '{Except(
+    {['|sDimensionName_TProduct|'].['|sDimensionName_TProduct|'].['|pSourceProduct|'], ['|sDimensionName_TProduct|'].['|sDimensionName_TProduct|'].['|pTargetProduct|']}
+    {['|sDimensionName_TProduct|'].['|sDimensionName_TProduct|'].[New], ['|sDimensionName_TProduct|'].['|sDimensionName_TProduct|'].[Terminated]}
+  )}';
+endif;
+
+#LogOutput('INFO', sMDX);
+SubsetMDXSet(sDimensionName_TProduct, sViewName, sMDX);
+SubsetMDXSet(sDimensionName_TProduct, sViewName, '');
+
+sMDX = '{['|sDimensionName_Movement|'].['|sDimensionName_Movement|'].[Closing]}';
+SubsetMDXSet(sDimensionName_Movement, sViewName, sMDX);
+SubsetMDXSet(sDimensionName_Movement, sViewName, '');
+
+DataSourceType          = 'VIEW';
+DatasourceNameForServer = sCubeName_Main;
+DatasourceNameForClient = sCubeName_Main;
+DatasourceCubeView      = sViewName;
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+vPeriod_Previous = AttrS(sDimensionName_Period, vPeriod, 'PREV_1M');
+
+nClosingValue_Maximum = CellGetN(sCubeName_WeightLimit, vVersion, vPeriod, pMaincategory, vTarget, 'Maximum', 'Value');
+nClosingValue_Minimum = CellGetN(sCubeName_WeightLimit, vVersion, vPeriod, pMaincategory, vTarget, 'Minimum', 'Value');
+
+nClosingValue_Current = CellGetN(sCubeName_Main, vVersion, vPeriod, vLoyalty, vChannel, vSource, vTarget, vMovement, 'Final Value');
+nClosingValue_Previous = CellGetN(sCubeName_Main, vVersion, vPeriod, '1', 'Call Center', '1', vTarget, 'New increase', 'Final Value Closing Snapshot');
+
+nClosingValue_Delta = nClosingValue_Current - nClosingValue_Previous;
+
+nClosingValue_DeltaMax = nClosingValue_Maximum - nClosingValue_Previous;
+nClosingValue_DeltaMin = nClosingValue_Minimum - nClosingValue_Previous;
+
+nInputValue_Previous = CellGetN(sCubeName_Main, pVersion, pPeriod, pLoyalty, pChannel, pSourceProduct, pTargetProduct, pMovement, 'Final Value Snapshot');
+nInputValue_Current = pInput;
+nInputValue_Delta = nInputValue_Current - nInputValue_Previous;
+
+nRatio_Max = nClosingValue_DeltaMax \ nClosingValue_Delta;
+nRatio_Min = nClosingValue_DeltaMin \ nClosingValue_Delta;
+
+#if(vTarget @= '214');
+#LogOutput('INFO', '//////////////////////////////////////////////////////////////');
+#LogOutput('INFO', 'Product: ' |  vTarget | ' ' | AttrS('Product', vTarget, 'Caption') | ' - Period: ' | vPeriod);
+#LogOutput('INFO', 'current closing '|numbertostring(nClosingValue_Current));
+#LogOutput('INFO', 'previous closing '|numbertostring(nClosingValue_Previous));
+#LogOutput('INFO', 'max closing '|numbertostring(nClosingValue_Maximum));
+#LogOutput('INFO', 'min closing '|numbertostring(nClosingValue_Minimum));
+#LogOutput('INFO', 'prev current delta '|numbertostring(nClosingValue_Delta));
+#LogOutput('INFO', 'prev max delta '|numbertostring(nClosingValue_DeltaMax));
+#LogOutput('INFO', 'prev min delta '|numbertostring(nClosingValue_DeltaMin));
+#LogOutput('INFO', 'current input '|numbertostring(nInputValue_Current));
+#LogOutput('INFO', 'previous input '|numbertostring(nInputValue_Previous));
+#LogOutput('INFO', 'prev current input delta'|numbertostring(nInputValue_Delta));
+#LogOutput('INFO', 'nRatio_Max '|numbertostring(nRatio_Max));
+#LogOutput('INFO', 'nRatio_Min '|numbertostring(nRatio_Min));
+#
+#LogOutput('INFO', '//////////////////////////////////////////////////////////////');
+#endif;
+
+if(nClosingValue_Delta = 0); itemskip; endif;
+
+if(nClosingValue_Maximum < nClosingValue_Current);
+  
+  
+  pInput = nInputValue_Previous + round(nInputValue_Delta * nRatio_Max);
+  
+#  LogOutput('INFO', 'New input value: ' | numbertostring(pInput));
+  
+  ExecuteProcess('zSYS Analogic UI Subscription Plan Input Spread Period',
+     'pSourceProduct', pSourceProduct,
+     'pTargetProduct', pTargetProduct,
+     'pMovement', pMovement,
+     'pLoyalty', pLoyalty,
+     'pChannel', pChannel,
+     'pPeriod', pPeriod,
+     'pMaincategory', pMaincategory,
+     'pInput', pInput,
+     'pRecursionIndex', 1
+    );
+  
+elseif(nClosingValue_Minimum > nClosingValue_Current);
+  
+  
+  pInput = nInputValue_Previous + round(nInputValue_Delta * nRatio_Min);
+  
+#  LogOutput('INFO', 'New input value: ' | numbertostring(pInput));
+  
+  ExecuteProcess('zSYS Analogic UI Subscription Plan Input Spread Period',
+     'pSourceProduct', pSourceProduct,
+     'pTargetProduct', pTargetProduct,
+     'pMovement', pMovement,
+     'pLoyalty', pLoyalty,
+     'pChannel', pChannel,
+     'pPeriod', pPeriod,
+     'pMaincategory', pMaincategory,
+     'pInput', pInput,
+     'pRecursionIndex', 1
+    );
+  
+endif;
+
+
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

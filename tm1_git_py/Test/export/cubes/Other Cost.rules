@@ -1,0 +1,59 @@
+#Antal Botond 2024.04.04
+SKIPCHECK;
+#felesleges főkönyvek kihagyása
+
+['Ledger':'Ledger':'Revenue'] = STET;
+
+['Ledger':'Ledger':'EBITDA'] = STET;
+
+
+# verzió szabályok
+[]= N:
+IF(ELISPAR('Version','Report',!Version) = 1,
+STET,Continue);
+
+
+
+#NMHH kalkuláció
+
+['Ledger':'Ledger':'53301','Other Cost Lineitem':'Other Cost Lineitem':'Cost','Other Cost Measure':
+'Other Cost Measure':'Value'] = N:
+IF( DIMIX('Period',!Period) < DIMIX('Period',DB('zSYS Maintenance Parameter','ActualMonth','S Type')),
+STET,
+0.00212
+*
+(DB('Revenue', !Version, !Period, '91101', 'Total Products', 'Bevetel', 'Value')
++
+DB('Revenue', !Version, !Period, '91102', 'Total Products', 'Bevetel', 'Value')
++
+DB('Revenue', !Version, !Period, '91201', 'Total Products', 'Bevetel', 'Value')
++
+DB('Revenue', !Version, !Period, '91202', 'Total Products', 'Bevetel', 'Value')
++
+DB('Revenue', !Version, !Period, '91204', 'Total Products', 'Bevetel', 'Value')
++
+DB('Revenue', !Version, !Period, '91301', 'Total Products', 'Bevetel', 'Value')
++
+DB('Revenue', !Version, !Period, '91302', 'Total Products', 'Bevetel', 'Value')
++
+DB('Revenue', !Version, !Period, '91303', 'Total Products', 'Bevetel', 'Value')
++
+DB('Revenue', !Version, !Period, '91304', 'Total Products', 'Bevetel', 'Value')
+));
+
+#Marketing ajándék kalkuláció
+
+['Ledger':'Ledger':'55501','Other Cost Lineitem':'Other Cost Lineitem':'Cost','Other Cost Measure':
+'Other Cost Measure':'Value'] = N:
+IF( DIMIX('Period',!Period) < DIMIX('Period',DB('zSYS Maintenance Parameter','ActualMonth','S Type')),
+STET,
+DB('Marketing Cost', !Version, !Period, '55501',  'Value'));
+
+FEEDERS;
+
+# Erkim FEEDER
+['Version':'Forecast','Ledger':'Ledger':'Other Cost','Other Cost Lineitem':'Other Cost Lineitem':'Cost','Other Cost Measure':'Value'] => 
+DB('Erkim', !Version, !Period, !Ledger, 'Value');
+
+
+

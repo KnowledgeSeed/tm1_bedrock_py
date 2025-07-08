@@ -1,0 +1,118 @@
+#region Prolog
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# =========================================================
+# Original Date Created              2015-04-27
+# Originator                                 Ferenc Mohacsi
+# Purpose                                   Clear the specified area of the cube given in the paramater.
+# Change Date                           
+# Change Request Reference    
+# Change Made by                     
+# =========================================================
+
+
+####General LOGGING frame###
+nRandomNumber = Round ( RAND * 1000000);
+sRandomNumber = NumberToString(nRandomNumber);
+pStartTime=NumberToString(NOW());
+pProcessName =  GetProcessName();
+pParams= 'pCube|' | pCube |  '|pPlanCycle|' | pPlanCycle |  '|pPlanVersion|' | pPlanVersion |  '|pFinancialYear|' | pFinancialYear | '|pValueType|' | pValueType | '|pBusinessSegment|' | pBusinessSegment | '|pDebug|' | pDebug;
+#ExecuteProcess ('zSYS Process Log Create Entry','pProcessName',pProcessName,'pStartTime',pStartTime,'pParams',pParams,'pRandomNumber',sRandomNumber,'pCallerID',pCallerID);
+#OwnCallerID
+sCallerID = pStartTime |' - '| pProcessName|'-'|sRandomNumber;
+####General LOGGING frame###
+
+### General Variables
+
+sSysControl = 'zSYS Maintenance Parameter';
+sDimensionExportUNC = CellGetS(sSysControl, 'Dimension Export UNC','S type');
+sProcessDebuggingUNC = CellGetS(sSysControl,'Process Debugging UNC' ,'S type');
+sLogDirectoryPath = CellGetS(sSysControl,'Log Directory Path' ,'Stype');
+sTimeStamp = TIMST(NOW(),'\Y\m\d\h\i\s');
+sDebugFile = sProcessDebuggingUNC | pProcessName | ' ' | sTimeStamp | '.txt';
+sLogFile = sLogDirectoryPath | pProcessName | ' ' | sTimeStamp | '.txt';
+
+## Local variables
+
+# =============  Turn off logging
+nLogFlag = 0;
+sOldCubeLogChanges1 = CUBEGETLOGCHANGES(pCube);
+CUBESETLOGCHANGES(pCube, nLogFlag);
+
+# ============= ZeroOut
+
+pSubName='z_sys_viewzeroout'|sRandomNumber;
+
+IF (pPlanCycle @<> '');
+   sDimName='GR Plan Cycle';
+   sStringParam = pPlanCycle;
+   ExecuteProcess('zSYS Dimension Subset Create','pDimName',sDimName,'pSubName',pSubName,'pStringParam',sStringParam,'pExpandAndChangeCtoN',1,'pCallerID',sCallerID);
+ENDIF;
+
+IF (pPlanVersion @<> '');
+   sDimName = 'GR Plan Version';
+   sStringParam = pPlanVersion;
+   ExecuteProcess('zSYS Dimension Subset Create','pDimName',sDimName,'pSubName',pSubName,'pStringParam',sStringParam,'pExpandAndChangeCtoN',1,'pCallerID',sCallerID);
+ENDIF;
+
+IF (pFinancialYear @<> '');
+   sDimName = 'GR Financial Year';
+   sStringParam = pFinancialYear;
+   ExecuteProcess('zSYS Dimension Subset Create','pDimName',sDimName,'pSubName',pSubName,'pStringParam',sStringParam,'pExpandAndChangeCtoN',1,'pCallerID',sCallerID);
+ENDIF;
+
+IF (pValueType @<> '');
+   sDimName = 'GR Value Type';
+   sStringParam = pValueType;
+   ExecuteProcess('zSYS Dimension Subset Create','pDimName',sDimName,'pSubName',pSubName,'pStringParam',sStringParam,'pExpandAndChangeCtoN',1,'pCallerID',sCallerID);
+ENDIF;
+
+IF (pBusinessSegment @<> '');
+   
+   # define the business segment dimensnion name with a loop
+   sBusinessSegmentDim = '';
+   nCounter = 1;
+   sDimName = TABDIM(pCube, nCounter);
+   WHILE  (sDimName @<> '' &  sBusinessSegmentDim @= '');
+      sBusinessSegmentDim = If(SCAN('Business Segment', sDimName) > 0, sDimName, '');
+      nCounter = nCounter + 1;
+      sDimName = TABDIM(pCube, nCounter);
+   END;
+
+   IF (sBusinessSegmentDim @<> '');
+      sDimName = sBusinessSegmentDim;
+      sStringParam = pBusinessSegment;
+      ExecuteProcess('zSYS Dimension Subset Create','pDimName',sDimName,'pSubName',pSubName,'pStringParam',sStringParam,'pExpandAndChangeCtoN',1,'pCallerID',sCallerID);
+   ENDIF;
+
+ENDIF;
+
+ExecuteProcess('zSYS Cube ViewZeroOut','pCubeName',pCube,'pRandomIdentifier',nRandomNumber,'pCallerId',sCallerId);
+
+#endregion
+#region Metadata
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+#endregion
+#region Epilog
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+CUBESETLOGCHANGES(pCube, sOldCubeLogChanges1);
+
+
+####General LOGGING frame###
+#ExecuteProcess('zSYS Process Log Close Entry','pProcessName',pProcessName,'pStartTime',pStartTime,'pRandomNumber',sRandomNumber,'pProcessErrorLogFile',GetProcessErrorFilename);
+####General LOGGING frame###
+
+#endregion

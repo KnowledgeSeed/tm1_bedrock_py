@@ -1,0 +1,218 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# =========================================================
+# Original Date Created              2023.06.12
+# Originator                         Ullmann Dávid
+# Purpose                            Process to spread the input in third dimension (in case of group target) in the cube Subscription Plan
+# Change Date                             Third layer, target product
+# Change Request Reference                
+# Change Made by                     
+# =========================================================
+
+# collection of variables with possible use
+
+sCubeName_Main          = 'Subscription Plan';
+sCubeName_Assignment    = 'Subscription Movement Assignment';
+sCubeName_WeightLimit   = 'Weight and Limit';
+sDimensionName_Period   = 'Period';
+sDimensionName_Loyalty  = 'Loyalty';
+sDimensionName_Channel  = 'Sales Channel';
+sDimensionName_SProduct = 'Source Product';
+sDimensionName_TProduct = 'Target Product';
+sDimensionName_Version  = 'Version';
+sDimensionName_Movement = 'Subscription Plan Movement';
+sDimensionName_Measure  = 'Subscription Plan Measure';
+sHierarchyName_Period   = 'Period';
+sHierarchyName_Loyalty  = 'Loyalty';
+sHierarchyName_Channel  = 'Sales Channel';
+sHierarchyName_SProduct = 'Source Product';
+sHierarchyName_TProduct = 'Target Product';
+sHierarchyName_Version  = 'Version';
+sHierarchyName_Movement = 'Subscription Plan Movement';
+
+sElementName_MovementMeasure = 'Stored';
+sElementName_MovementTotal   = 'Closing';
+sSubsetName_Period           = 'All N';
+sValue_Version               = 'Base';
+sValue_MeasureRead_Direct  = 'Value';  
+sValue_MeasureWrite_Direct = 'Direct Input Override';
+sValue_MeasureDelta_Direct = 'Direct Input Delta';
+sValue_MeasureZero_Direct  = 'Direct Input Zero Flag';
+sValue_MeasureRead_Spread  = 'Base';
+sValue_MeasureWrite_Spread = 'Final Value Override';
+sValue_MeasureDelta_Spread = 'Spread Input Delta';
+sValue_MeasureResidual     = 'Spread Res';
+sValue_MeasureZero_Spread  = 'Final Value Zero Flag';
+svalue_MeasureFinal        = 'Final Value Snapshot';
+
+# define next process name in chain
+
+sProcessName_Next = 'zSYS Analogic UI Subscription Plan Input Spread Source';
+
+if(pTargetBypass = 0);
+  
+  # generate subset of month
+  sTempSubsetName_Target = 'Target Spread Temp';
+  
+  # in case source product is a single element and not a set
+  sMDX = 
+#  '{Filter(
+#    {Tm1SubsetToSet([Target Product], "'|pMaincategory|'")},
+#    [Subscription Movement Assignment].(
+#      [Source Product].[Source Product].['|pSourceProduct|'],
+#      [Subscription Plan Movement].[Subscription Plan Movement].['|pMovement|'],
+#      [Subscription Movement Assignment Measure].[Subscription Movement Assignment Measure].[Stored]) > 0
+#  )}';
+  
+  '{Filter(
+    {Tm1SubsetToSet([Target Product], "'|pMaincategory|'")},
+    [Subscription Movement Assignment for Input].(
+      [Period].['|pPeriod|'],
+      [Version].['|pVersion|'],
+      [Source Product].[Source Product].['|pSourceProduct|'],
+      [Subscription Plan Movement].[Subscription Plan Movement].['|pMovement|'],
+      [Subscription Movement Assignment Measure].[Subscription Movement Assignment Measure].[target_flag_mult]) > 0
+  )}';
+  
+  # in case source product is a set of elements 
+  if(pSourceBypass = 0);
+    sMDX = 
+#    'GENERATE(
+#      { 
+#        Tm1SubsetToSet([Source Product], "'|pMaincategory|'") 
+#      },
+#      { 
+#        Filter(
+#          {Tm1SubsetToSet([Target Product], "'|pMaincategory|'")},
+#          [Subscription Movement Assignment].(
+#              [Source Product].CurrentMember,
+#              [Subscription Plan Movement].[Subscription Plan Movement].['|pMovement|'],
+#              [Subscription Movement Assignment Measure].[Subscription Movement Assignment Measure].[Stored]
+#          ) > 0 
+#        )
+#      }
+#    )';
+    
+    'GENERATE(
+      { 
+        Tm1SubsetToSet([Source Product], "'|pMaincategory|'") 
+      },
+      { 
+        Filter(
+          {Tm1SubsetToSet([Target Product], "'|pMaincategory|'")},
+          [Subscription Movement Assignment for Input].(
+              [Period].['|pPeriod|'],
+              [Version].['|pVersion|'],
+              [Source Product].CurrentMember,
+              [Subscription Plan Movement].[Subscription Plan Movement].['|pMovement|'],
+              [Subscription Movement Assignment Measure].[Subscription Movement Assignment Measure].[source_target_flag_mult]
+          ) > 0 
+        )
+      }
+    )';
+  endif;
+  
+  
+  
+#  if(SubsetExists(sDimensionName_TProduct, sTempSubsetName_Target) = 0);
+#    SubsetCreate(sDimensionName_TProduct, sTempSubsetName_Target, 1);
+#  endif;
+  SubsetMDXSet(sDimensionName_TProduct, sTempSubsetName_Target, sMDX);
+  SubsetMDXSet(sDimensionName_TProduct, sTempSubsetName_Target, '');
+  
+  nCount = SubsetGetSize(sDimensionName_TProduct, sTempSubsetName_Target);
+  nTotalWeight = 0;
+  nTotalWeight_sign = 0;
+
+  # set subset as data source 
+  DataSourceType            = 'SUBSET';
+  DatasourceNameForServer   = sDimensionName_TProduct;
+  DatasourceNameForClient   = sDimensionName_TProduct;
+  DatasourceDimensionsubset = sTempSubsetName_Target;
+endif;
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+nTotalWeight = nTotalWeight + CellGetN(sCubeName_WeightLimit, pVersion, pPeriod, pMaincategory,  vTargetProduct,  'Switch on weight', 'Value');
+nTotalWeight_sign = abs(sign(nTotalWeight));
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+if(pTargetBypass = 1);
+  itemskip;
+endif;
+
+# in case total is zero before writing
+nFallbackRatio = 1 / nCount;
+
+# in case there is data on total
+nCurrentWeight = CellGetN(sCubeName_WeightLimit, pVersion, pPeriod, pMaincategory,  vTargetProduct,  'Switch on weight', 'Value');
+nBaseRatio     = nCurrentWeight \ nTotalWeight;
+nRatio         = nTotalWeight_sign * nBaseRatio + (1 - nTotalWeight_sign) * nFallbackRatio;
+
+nOverridepart  = pInput * nRatio;
+
+# 132.49 => 80, 120, -12.49
+
+# if ratio is zero, stop branch
+if(nOverridepart = 0);
+  itemskip;
+endif;
+
+#ASCIIOutput('D:\TM1 Models\Vidanet\LogFiles\inputprocessdebug.csv', numbertostring(nCurrentWeight), numbertostring(nTotalWeight), vTargetProduct, numberTostring(nOverridepart));
+#LogOutput('INFO', '----------------------------------------------');
+#LogOutput('INFO', '----------------------------------------------');
+#LogOutput('INFO', '');
+#LogOutput('INFO', 'nCurrentWeight: ' | numbertostring(nCurrentWeight) | ' nTotalWeight:' | numbertostring(nTotalWeight));
+#LogOutput('INFO', 'Current target: ' | vTargetProduct | ' - Override part: ' | numberTostring(nOverridepart));
+#LogOutput('INFO', '');
+#LogOutput('INFO', '----------------------------------------------');
+#LogOutput('INFO', '----------------------------------------------');
+
+# call subprocess to divide further
+ExecuteProcess(sProcessName_Next,
+ 'pSourceProduct', pSourceProduct,
+ 'pTargetProduct', vTargetProduct,
+ 'pMovement',      pMovement,
+ 'pOppositeMovement', pOppositeMovement,
+ 'pLoyalty',       pLoyalty,
+ 'pChannel',       pChannel,
+ 'pPeriod',        pPeriod,
+ 'pVersion',       pVersion,
+ 'pMaincategory',  pMaincategory,
+ 'pInput',         nOverridepart,
+ 'pMovementBypass', pMovementBypass,
+ 'pSourceBypass', pSourceBypass,
+ 'pTargetBypass', pTargetBypass);
+
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+if(pTargetBypass = 1);
+  
+  #LogOutput('INFO', 'Bypassing through Target: ' | pSourceProduct|' '|pTargetProduct|' '|pMovement|' '|pLoyalty|' '|pChannel|' '|pPeriod|' '|pVersion|' '|numbertostring(pInput));
+  
+  ExecuteProcess(sProcessName_Next, 
+  'pSourceProduct', pSourceProduct, 
+  'pTargetProduct', pTargetProduct, 
+  'pMovement',      pMovement, 
+  'pOppositeMovement', pOppositeMovement,
+  'pLoyalty',       pLoyalty, 
+  'pChannel',       pChannel, 
+  'pPeriod',        pPeriod,
+  'pVersion',       pVersion,
+  'pMaincategory',  pMaincategory,
+  'pInput',         pInput,
+ 'pMovementBypass', pMovementBypass,
+ 'pSourceBypass', pSourceBypass,
+ 'pTargetBypass', pTargetBypass);
+endif;
+#endregion

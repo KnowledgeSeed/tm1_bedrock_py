@@ -1,0 +1,24 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Maintenance Dimension Export to CSV",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Maintenance Dimension Export to CSV.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pDimName",
+			"Prompt": "Please enter the dimension name wich you want to export.",
+			"Value": "SC Treasury Line Item",
+			"Type": "String"
+		},
+		{
+			"Name": "pCallerID",
+			"Prompt": "Caller ID?",
+			"Value": "",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

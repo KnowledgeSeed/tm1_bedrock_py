@@ -1,0 +1,24 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI User Last Selected Version",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic UI User Last Selected Version.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pUser",
+			"Prompt": "Admin",
+			"Value": "Admin",
+			"Type": "String"
+		},
+		{
+			"Name": "pSelectedVersion",
+			"Prompt": "Base",
+			"Value": "Base",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

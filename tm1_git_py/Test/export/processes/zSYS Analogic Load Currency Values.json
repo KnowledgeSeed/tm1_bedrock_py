@@ -1,0 +1,52 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic Load Currency Values",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic Load Currency Values.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pVersion",
+			"Prompt": "Version",
+			"Value": "Base",
+			"Type": "String"
+		},
+		{
+			"Name": "pAllPeriod",
+			"Prompt": "",
+			"Value": 0,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pLastYear",
+			"Prompt": "",
+			"Value": 0,
+			"Type": "Numeric"
+		}
+	],
+	"Variables": [
+		{
+			"Name": "vDate",
+			"Type": "String",
+			"Position": 1,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vEUR",
+			"Type": "Numeric",
+			"Position": 2,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vUSD",
+			"Type": "Numeric",
+			"Position": 3,
+			"StartByte": 0,
+			"EndByte": 0
+		}
+	]
+}

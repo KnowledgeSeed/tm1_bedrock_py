@@ -1,0 +1,120 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+# Módos Dávid
+# 2024 03 18
+
+### Felépítése ###
+# ID generálása
+# Caption és év föggetlen attri kitöltés
+# Év függő attrik kitöltése (currency, cs.flat)
+# Provider kitöltése (összerendelés kockában is)
+# Éves összes osztása 12-vel és megfelelő helyre beírása
+
+sCsoportosFlatDim = 'Csoportos Flat';
+sChannelDim = 'Channel';
+sPeriodDim = 'Period';
+sAllNTimeSubset = 'Actual Period N level';
+
+
+# ID generálása
+nMaxLen = DIMSIZ(sCsoportosFlatDim);
+nMaxLen = nMaxLen + 10000;
+sNewCsFlatID = 'CsFlatID' | numberToString(nMaxLen);
+sNewCsFlatIDCsoportosFlatDim = numberToString(nMaxLen);
+
+sCsoportosFlatConsolidatedElName = 'Csoportos Flat Total';
+sChannelConsolidatedElName = 'CS.FL List Total';
+ElType = 'N';
+DimensionElementComponentAdd(sCsoportosFlatDim, sCsoportosFlatConsolidatedElName, sNewCsFlatIDCsoportosFlatDim, 1);
+DimensionElementComponentAdd(sChannelDim, sChannelConsolidatedElName, sNewCsFlatID, 1);
+
+
+
+
+
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+# Caption és év föggetlen attri kitöltés
+
+CellPutS(pName, '}ElementAttributes_Csoportos Flat', sNewCsFlatIDCsoportosFlatDim, 'Long Name');
+CellPutS(pProvider, '}ElementAttributes_Csoportos Flat', sNewCsFlatIDCsoportosFlatDim, 'Provider');
+
+CellPutS(pName, '}ElementAttributes_Channel', sNewCsFlatID, 'Caption');
+CellPutS(pProvider, '}ElementAttributes_Channel', sNewCsFlatID, 'Actual Provider');
+CellPutN(1, '}ElementAttributes_Channel', sNewCsFlatID, 'Real CS.FL');
+
+# Provider kitöltése (összerendelés kockában is)
+sPeriodStart = pPeriodStart | '01';
+nFirstPeriodIndex = SubsetElementGetIndex(sPeriodDim, sAllNTimeSubset, sPeriodStart);
+nLastPeriodIndex = SubsetGetSize(sPeriodDim, sAllNTimeSubset);
+i = nFirstPeriodIndex;
+While(i <= nLastPeriodIndex);
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      CellPutN(1, 'Channel Provider Assignment', pVersion, sInputPeriod, sNewCsFlatID, pProvider, 'Assignment');
+      i = i+1;
+END;
+
+# Év függő attrik kitöltése (currency, cs.flat)
+
+sPeriodStart = pPeriodStart | '01';
+nFirstPeriodIndex = SubsetElementGetIndex(sPeriodDim, sAllNTimeSubset, sPeriodStart);
+sLastPeriod = pPeriodEnd | '12';
+nLastPeriodIndex = SubsetElementGetIndex(sPeriodDim, sAllNTimeSubset, sLastPeriod);
+i = nFirstPeriodIndex;
+While(i < nLastPeriodIndex);
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      CellPutS(pProvider, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, sNewCsFlatID, 'Provider');
+      CellPutN(1, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, sNewCsFlatID, 'Active');
+      CellPutS('CS.FL', 'Channel Time Dependent Attributes', pVersion, sInputPeriod, sNewCsFlatID, 'Payment Type');
+      CellPutS(pCurrency, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, sNewCsFlatID, 'Currency');
+      CellPutN(1, 'Channel Time Dependent Attributes', pVersion, sInputPeriod, sNewCsFlatID, 'CS.FL');
+      i = i+1;
+END;
+
+
+# Éves összes osztása 12-vel és megfelelő helyre beírása
+
+nHaviValue = stringToNumber(pOsszeg) \12;
+
+sPeriodStart = pPeriodStart | '01';
+nFirstPeriodIndex = SubsetElementGetIndex(sPeriodDim, sAllNTimeSubset, sPeriodStart);
+sLastPeriod = pPeriodEnd | '12';
+nLastPeriodIndex = SubsetElementGetIndex(sPeriodDim, sAllNTimeSubset, sLastPeriod);
+i = nFirstPeriodIndex;
+While(i <= nLastPeriodIndex);
+      sInputPeriod = SubsetGetElementName(sPeriodDim, sAllNTimeSubset, i);
+      CellPutN(nHaviValue, 'Channel Cost', pVersion, sInputPeriod, sNewCsFlatID, 'Nem tartozik termekhez', pCurrency, 'CS.FL', 'Value');
+      i = i+1;
+END;
+
+  
+ExecuteProcess('zSYS Analogic Load All Csoportos Flat Subset',
+   'pVersion', pVersion
+  );
+
+
+
+
+
+
+
+
+
+
+
+#endregion

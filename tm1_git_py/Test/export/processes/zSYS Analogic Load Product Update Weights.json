@@ -1,0 +1,26 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic Load Product Update Weights",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic Load Product Update Weights.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pRun",
+			"Prompt": "",
+			"Value": 1,
+			"Type": "Numeric"
+		}
+	],
+	"Variables": [
+		{
+			"Name": "vSubsetName",
+			"Type": "String",
+			"Position": 1,
+			"StartByte": 0,
+			"EndByte": 0
+		}
+	]
+}

@@ -1,0 +1,24 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI Csoportos Flat Rename",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic UI Csoportos Flat Rename.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pCsoportosFlatID",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pNewCsoportosFlatName",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

@@ -1,0 +1,28 @@
+{
+	"@type": "Hierarchy",
+	"Name": "Erkim Balance Sheet Assignment Measure",
+	"Elements": [
+		{
+			"name": "Assignment",
+			"type": "Numeric"
+		},
+		{
+			"name": "Comment",
+			"type": "String"
+		},
+		{
+			"name": "ErkimName",
+			"type": "String"
+		},
+		{
+			"name": "MerlegNev",
+			"type": "String"
+		},
+		{
+			"name": "Value",
+			"type": "Numeric"
+		}
+	],
+	"Edges": [],
+	"Subsets@Code.links": []
+}

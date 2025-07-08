@@ -1,0 +1,24 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI Add Capex Ledger",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic UI Add Capex Ledger.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pNewLedgerName",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pLedgerGroup",
+			"Prompt": "Melyik f\u0151k\u00f6nyvalcsoporthoz szeretn\u00e9nk hozz\u00e1adni az egyedi f\u0151k\u00f6nyvet",
+			"Value": "",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

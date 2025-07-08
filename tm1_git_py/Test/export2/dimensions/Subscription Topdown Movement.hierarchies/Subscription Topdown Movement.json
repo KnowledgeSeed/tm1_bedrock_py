@@ -1,0 +1,94 @@
+{
+	"@type": "Hierarchy",
+	"Name": "Subscription Topdown Movement",
+	"Elements": [
+		{
+			"name": "Closing",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Opening",
+			"type": "Numeric"
+		},
+		{
+			"name": "Net change",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Gross increase",
+			"type": "Consolidated"
+		},
+		{
+			"name": "New increase",
+			"type": "Numeric"
+		},
+		{
+			"name": "Migration increase",
+			"type": "Numeric"
+		},
+		{
+			"name": "Gross decrease",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Terminated decrease",
+			"type": "Numeric"
+		},
+		{
+			"name": "Migration decrese",
+			"type": "Numeric"
+		},
+		{
+			"name": "Loyalty Extension",
+			"type": "Numeric"
+		}
+	],
+	"Edges": [
+		{
+			"parentName": "Closing",
+			"componentName": "Opening",
+			"weight": 1
+		},
+		{
+			"parentName": "Closing",
+			"componentName": "Net change",
+			"weight": 1
+		},
+		{
+			"parentName": "Closing",
+			"componentName": "Loyalty Extension",
+			"weight": 0
+		},
+		{
+			"parentName": "Net change",
+			"componentName": "Gross increase",
+			"weight": 1
+		},
+		{
+			"parentName": "Net change",
+			"componentName": "Gross decrease",
+			"weight": -1
+		},
+		{
+			"parentName": "Gross increase",
+			"componentName": "New increase",
+			"weight": 1
+		},
+		{
+			"parentName": "Gross increase",
+			"componentName": "Migration increase",
+			"weight": 1
+		},
+		{
+			"parentName": "Gross decrease",
+			"componentName": "Terminated decrease",
+			"weight": 1
+		},
+		{
+			"parentName": "Gross decrease",
+			"componentName": "Migration decrese",
+			"weight": 1
+		}
+	],
+	"Subsets@Code.links": []
+}

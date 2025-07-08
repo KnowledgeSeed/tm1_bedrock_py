@@ -1,0 +1,110 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# Mody 06.05.
+# Az opening adatok betöltése az első hónapra 2021 dec
+
+# u.d. - 2023.09.20 - measure kicserélve base-ről base input-ra
+# u.d. - 2024.11.05 - Opening Month maintenance paraméter érték
+# u.d. - 2024.11.19 - pRun paraméter bevezetése, hogy lehessen dag-ból vezérelni a futását
+
+### TESZT komment
+
+# a Verzió parameter
+# a Period parameter
+# a Loyalty:  0
+# a Sales Chaneel:  Call Center
+# a Measure:  Base
+# a Subscription Plan Movement: Opening
+# a Source Product: adott
+# a Target Product: adott
+
+if(pSkipRun @<> '1');
+
+  
+  sMeasure_Write = 'Base Input';
+  pPeriod = CellGetS('zSYS Maintenance Parameter', 'OpeningMonth', 'S Type');
+  
+  If( 1 = 0 );
+      ExecuteProcess('zSYS Analogic Load Opening Values',
+                    'pVersion', pVersion,
+                    'pPeriod' , pPeriod
+                    );
+  EndIf;
+  
+  pSourceFile = 'opening Values.csv';
+  
+  # Attach the source file
+  If(CubeExists('zSYS Maintenance Parameter')=1);
+  sSourceFolder = CellGetS ('zSYS Maintenance Parameter', 'Inbound Data Directory Path', 'S Type');
+  Else;
+    sSourceFolder='';
+  Endif;
+  
+  sSourceFolder = 'data_source/';
+  
+  sSourceFile = sSourceFolder | pSourceFile;
+  DatasourceNameForServer = sSourceFile;
+  DatasourceNameForClient = sSourceFile;
+  DatasourceASCIIDelimiter=';';
+  DatasourceASCIIDecimalSeparator='.';
+  DatasourceASCIIQuoteCharacter='"';
+  DataSourceType='CHARACTERDELIMITED';
+  DatasourceASCIIHeaderRecords = 1;
+  
+  # Fix Parameters
+  
+  sCubeName = 'Subscription Plan';
+  sFilter = 'Version¦'|pVersion|' & Period¦'|pPeriod|'';
+  
+  
+  ## kocka meglévő adatainak törlése
+  
+  #    ExecuteProcess( '}bedrock.cube.data.clear', 'pLogOutput', 0,
+  #      'pStrictErrorHandling', 0,
+  #    	'pCube', sCubeName, 'pView', '', 'pFilter', sFilter,
+  #    	'pFilterParallel', '', 'pParallelThreads', 0,
+  #    	'pDimDelim', '&', 'pEleStartDelim', '¦', 'pEleDelim', '+',
+  #    	'pCubeLogging', 0, 'pTemp', 1, 'pSandbox', '', 'pSubN', 0
+  #	);
+	
+endif;
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+if(pSkipRun @= '1');
+  itemskip;
+endif;
+
+nNumValue = StringToNumber(vValue);
+
+vProductNameEcosoft = vProductName;
+
+vProductNamenaturaliaId = CellGetS('}ElementAttributes_Ecosoft ID', vProductNameEcosoft, 'id');
+
+beforeValue = CellGetN('Subscription Plan', pVersion, pPeriod, '0', 'Customer Service', vProductNamenaturaliaId, vProductNamenaturaliaId, 'Opening', sMeasure_Write);
+
+FinaleValue = beforeValue + nNumValue;
+
+CellPutN(FinaleValue, 'Subscription Plan', pVersion, pPeriod, '0', 'Customer Service', vProductNamenaturaliaId, vProductNamenaturaliaId, 'Opening', sMeasure_Write);
+
+
+
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+if(pSkipRun @= '1');
+  LogOutput('INFO', 'Last Year Only Load Mode = On --> Loading of Opening Values is skipped.');
+endif;
+#endregion

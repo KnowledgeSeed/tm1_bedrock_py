@@ -1,0 +1,8 @@
+{
+	"@type": "Dimension",
+	"Name": "Balance Sheet Planning Measure",
+	"Hierarchies@Code.links": [
+		"Balance Sheet Planning Measure.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE17968A0>.json"
+	],
+	"DefaultHierarchy": "Dimensions('Balance Sheet Planning Measure')/Hierarchies('Balance Sheet Planning Measure')"
+}

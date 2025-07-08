@@ -1,0 +1,8 @@
+{
+	"@type": "Dimension",
+	"Name": "Balance Sheet Planning Ledger",
+	"Hierarchies@Code.links": [
+		"Balance Sheet Planning Ledger.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1B8BF50>.json"
+	],
+	"DefaultHierarchy": "Dimensions('Balance Sheet Planning Ledger')/Hierarchies('Balance Sheet Planning Ledger')"
+}

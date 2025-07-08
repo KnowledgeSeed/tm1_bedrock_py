@@ -1,0 +1,48 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI Loyalty Extension Ratio Input",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic UI Loyalty Extension Ratio Input.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pVersion",
+			"Prompt": "Base",
+			"Value": "Base",
+			"Type": "String"
+		},
+		{
+			"Name": "pMode",
+			"Prompt": "1:one month,2: more month,",
+			"Value": 2,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pProduct",
+			"Prompt": "214",
+			"Value": "214",
+			"Type": "String"
+		},
+		{
+			"Name": "pPeriod",
+			"Prompt": "202411",
+			"Value": "202411",
+			"Type": "String"
+		},
+		{
+			"Name": "pUser",
+			"Prompt": "Mody",
+			"Value": "Mody",
+			"Type": "String"
+		},
+		{
+			"Name": "pValue",
+			"Prompt": "66",
+			"Value": "66",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

@@ -1,0 +1,48 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# Botond 03.13
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# Planning Driver kockába
+
+sInputPeriod = DELET(Subst(vDate, 1, 7),5,1);
+
+sAllNPeriodSubsetName = 'All N';
+IF ( SubsetElementExists('Period',sAllNPeriodSubsetName, sInputPeriod ) = 0);
+  itemskip;
+ENDIF;
+
+
+IF( pAllPeriod = 1 );
+  sPeriodSubsetName = 'Planning Period';
+  IF ( SubsetElementExists('Period',sPeriodSubsetName, sInputPeriod ) = 0);
+    
+    CellPutN(vEUR, 'Planning Driver', pVersion, sInputPeriod, 'EUR/HUF', 'N Type');
+    CellPutN(vUSD, 'Planning Driver', pVersion, sInputPeriod, 'USD/HUF', 'N Type');
+  ENDIF;
+  
+ENDIF;
+
+IF( pLastYear = 1 );
+  sPeriodSubsetName = 'Last_Actual_Year';
+  IF ( SubsetElementExists('Period',sPeriodSubsetName, sInputPeriod ) = 1);
+    CellPutN(vEUR, 'Planning Driver', pVersion, sInputPeriod, 'EUR/HUF', 'N Type');
+    CellPutN(vUSD, 'Planning Driver', pVersion, sInputPeriod, 'USD/HUF', 'N Type');
+  ENDIF;
+  
+ENDIF;
+
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

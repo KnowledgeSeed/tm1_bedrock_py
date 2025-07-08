@@ -1,0 +1,59 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic Load Balance Sheet Planning Ledger Values",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic Load Balance Sheet Planning Ledger Values.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pVersion",
+			"Prompt": "Base",
+			"Value": "Base",
+			"Type": "String"
+		},
+		{
+			"Name": "pAllPeriod",
+			"Prompt": "",
+			"Value": 1,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pLastYear",
+			"Prompt": "",
+			"Value": 0,
+			"Type": "Numeric"
+		}
+	],
+	"Variables": [
+		{
+			"Name": "vDtum",
+			"Type": "String",
+			"Position": 1,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vSzmla",
+			"Type": "String",
+			"Position": 2,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vF\u0151knyvalcsoport",
+			"Type": "String",
+			"Position": 3,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vEgyenleg",
+			"Type": "String",
+			"Position": 4,
+			"StartByte": 0,
+			"EndByte": 0
+		}
+	]
+}

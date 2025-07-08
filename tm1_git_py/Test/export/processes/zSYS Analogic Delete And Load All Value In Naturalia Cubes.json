@@ -1,0 +1,18 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic Delete And Load All Value In Naturalia Cubes",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic Delete And Load All Value In Naturalia Cubes.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pVersion",
+			"Prompt": "Base",
+			"Value": "Base",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

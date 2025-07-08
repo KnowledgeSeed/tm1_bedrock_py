@@ -1,0 +1,42 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI Add Comment BotondTest",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic UI Add Comment BotondTest.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pUser",
+			"Prompt": "REQUIRED:commenter",
+			"Value": "User",
+			"Type": "String"
+		},
+		{
+			"Name": "pPrevCommentID",
+			"Prompt": "REQUIRED:previous Comment to link in a lsit",
+			"Value": "comment00000003",
+			"Type": "String"
+		},
+		{
+			"Name": "pComment",
+			"Prompt": "REQUIRED:comment text",
+			"Value": "Process text test",
+			"Type": "String"
+		},
+		{
+			"Name": "pCube",
+			"Prompt": "REQUIRED: cube to comment",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pDimFilter",
+			"Prompt": "REQUIRED: coma separated dim list Like Dim1, Dim2, ..Dimn",
+			"Value": "Product, Version, Period, Weight and limit",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

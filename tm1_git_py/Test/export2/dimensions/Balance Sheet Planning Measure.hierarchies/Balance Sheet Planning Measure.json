@@ -1,0 +1,39 @@
+{
+	"@type": "Hierarchy",
+	"Name": "Balance Sheet Planning Measure",
+	"Elements": [
+		{
+			"name": "Closing",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Delta",
+			"type": "Numeric"
+		},
+		{
+			"name": "Opening",
+			"type": "Numeric"
+		},
+		{
+			"name": "Value",
+			"type": "Numeric"
+		},
+		{
+			"name": "Comment",
+			"type": "String"
+		}
+	],
+	"Edges": [
+		{
+			"parentName": "Closing",
+			"componentName": "Delta",
+			"weight": 1
+		},
+		{
+			"parentName": "Closing",
+			"componentName": "Opening",
+			"weight": 1
+		}
+	],
+	"Subsets@Code.links": []
+}

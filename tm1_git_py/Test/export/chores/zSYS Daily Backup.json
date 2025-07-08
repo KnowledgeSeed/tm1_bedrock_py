@@ -1,0 +1,15 @@
+{
+	"@type": "Chore",
+	"Name": "zSYS Daily Backup",
+	"StartTime": "2020-06-27T22:05:00+01:00",
+	"DSTSensitive": false,
+	"Active": true,
+	"ExecutionMode": "SingleCommit",
+	"Frequency": "P01DT00H00M00S",
+	"Tasks": [
+		{
+			"Process@odata.bind": "Processes('zSYS Backup')",
+			"Parameters": []
+		}
+	]
+}

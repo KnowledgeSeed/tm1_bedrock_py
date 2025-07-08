@@ -1,0 +1,32 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic Load Transactions To Commission Cube",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic Load Transactions To Commission Cube.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pVersion",
+			"Prompt": "Base",
+			"Value": "Base",
+			"Type": "String"
+		},
+		{
+			"Name": "pUser",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		}
+	],
+	"Variables": [
+		{
+			"Name": "vProduct",
+			"Type": "String",
+			"Position": 1,
+			"StartByte": 0,
+			"EndByte": 0
+		}
+	]
+}

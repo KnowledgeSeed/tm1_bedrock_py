@@ -1,0 +1,45 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic Load Keszulek Eladas Darabszam",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic Load Keszulek Eladas Darabszam.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pVersion",
+			"Prompt": "Version",
+			"Value": "pVersion",
+			"Type": "String"
+		},
+		{
+			"Name": "pAllPeriod",
+			"Prompt": "",
+			"Value": 0,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pLastYear",
+			"Prompt": "",
+			"Value": 0,
+			"Type": "Numeric"
+		}
+	],
+	"Variables": [
+		{
+			"Name": "vPeriod",
+			"Type": "String",
+			"Position": 1,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vValue",
+			"Type": "Numeric",
+			"Position": 2,
+			"StartByte": 0,
+			"EndByte": 0
+		}
+	]
+}

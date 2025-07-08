@@ -1,0 +1,54 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI Csoportos Flat Input",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic UI Csoportos Flat Input.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pVersion",
+			"Prompt": "Base",
+			"Value": "Base",
+			"Type": "String"
+		},
+		{
+			"Name": "pPeriodStart",
+			"Prompt": "",
+			"Value": "2024",
+			"Type": "String"
+		},
+		{
+			"Name": "pPeriodEnd",
+			"Prompt": "",
+			"Value": "2024",
+			"Type": "String"
+		},
+		{
+			"Name": "pValue",
+			"Prompt": "the new value:",
+			"Value": "300000",
+			"Type": "String"
+		},
+		{
+			"Name": "pCsoportosFlat",
+			"Prompt": "",
+			"Value": "28",
+			"Type": "String"
+		},
+		{
+			"Name": "pCurrency",
+			"Prompt": "HUF, EUR, USD",
+			"Value": "EUR",
+			"Type": "String"
+		},
+		{
+			"Name": "pUser",
+			"Prompt": "",
+			"Value": "Admin",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

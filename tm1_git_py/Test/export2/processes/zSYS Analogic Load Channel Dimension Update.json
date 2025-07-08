@@ -1,0 +1,68 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic Load Channel Dimension Update",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic Load Channel Dimension Update.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pVersion",
+			"Prompt": "Base",
+			"Value": "Base",
+			"Type": "String"
+		}
+	],
+	"Variables": [
+		{
+			"Name": "vid",
+			"Type": "String",
+			"Position": 1,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vchannel_name",
+			"Type": "String",
+			"Position": 2,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vis_active",
+			"Type": "String",
+			"Position": 3,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vprogram_provider_name",
+			"Type": "String",
+			"Position": 4,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vagreement_is_not_needed",
+			"Type": "String",
+			"Position": 5,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vcurrency",
+			"Type": "String",
+			"Position": 6,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vpayment_type",
+			"Type": "String",
+			"Position": 7,
+			"StartByte": 0,
+			"EndByte": 0
+		}
+	]
+}

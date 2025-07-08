@@ -1,0 +1,24 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI Version Rename",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic UI Version Rename.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pNewVersionName",
+			"Prompt": "NewName",
+			"Value": "NewName",
+			"Type": "String"
+		},
+		{
+			"Name": "pVersion",
+			"Prompt": "Base",
+			"Value": "Base",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

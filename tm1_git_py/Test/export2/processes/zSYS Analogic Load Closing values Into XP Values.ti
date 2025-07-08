@@ -1,0 +1,48 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#Miki 2023.06.20.
+
+
+sDimName = 'Period';
+sSubName = 'Input Period';
+sCurrentMonth = CellGetS('zSYS Maintenance Parameter', 'ActualMonth','S Type');
+sLen = SubsetGetSize(sDimName, sSubName);
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+i=1;
+While(i <= sLen);
+  sPeriod = SubsetGetElementName(sDimName, sSubName, i);
+  If(sCurrentMonth @<= sPeriod);
+  nXPValuesNET = CellGetN('Subscription Report', 'Base', sPeriod, 'Total', 'Total', 'NET', 'Value');
+  nXPValuesTV = CellGetN('Subscription Report', 'Base', sPeriod, 'Total', 'Total', 'TV', 'Value');
+  nXPValuesTEL = CellGetN('Subscription Report', 'Base', sPeriod, 'Total', 'Total', 'TEL', 'Value');
+  
+  CellPutN(nXPValuesNET, 'XP Planning', 'Base', sPeriod, 'NET', 'Value');
+  CellPutN(nXPValuesTV, 'XP Planning', 'Base', sPeriod, 'TV', 'Value');
+  CellPutN(nXPValuesTEL, 'XP Planning', 'Base', sPeriod, 'TEL', 'Value');
+  CellPutN(nXPValuesNET, 'XP Planning', 'Base', sPeriod, 'NET', 'Reset');
+  CellPutN(nXPValuesTV, 'XP Planning', 'Base', sPeriod, 'TV', 'Reset');
+  CellPutN(nXPValuesTEL, 'XP Planning', 'Base', sPeriod, 'TEL', 'Reset');
+  EndIf;
+  i = i+1;
+END;
+
+
+#endregion

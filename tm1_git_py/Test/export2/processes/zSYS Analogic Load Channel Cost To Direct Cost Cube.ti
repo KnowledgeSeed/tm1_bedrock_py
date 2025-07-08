@@ -1,0 +1,42 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+#Botond 06.07
+
+#Műsordíjak áttöltő processe a Direct Cost kockába 81505 ledger
+
+sPlanningPeriodSubset = 'Planning Period';
+sPeriodDim = 'Period';
+nStartPeriod = 1;
+nMaxPeriodLen = SubsetGetSize(sPeriodDim, sPlanningPeriodSubset);
+
+
+i = nStartPeriod;
+While(i <= nMaxPeriodLen);
+  sInputPeriod = SubsetGetElementName(sPeriodDim, sPlanningPeriodSubset, i);
+  
+    If(LONG(sInputPeriod) = 6);
+
+      nChannelCostTotal = CellGetN('Channel Cost', pVersion, sInputPeriod,'Channel Cost Total','Total Products','Currency Total', 'Channel Cost And Royalty', 'Value');
+      CellPutN(nChannelCostTotal, 'Direct Cost', pVersion, sInputPeriod, '81505', 'Cost', 'Value');
+    
+  ENDIF;
+
+  i = i+1;
+
+END;
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

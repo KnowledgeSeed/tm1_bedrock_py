@@ -1,0 +1,15 @@
+{
+	"@type": "Chore",
+	"Name": "zSYS Data Save",
+	"StartTime": "2024-07-16T22:04:45+01:00",
+	"DSTSensitive": false,
+	"Active": true,
+	"ExecutionMode": "SingleCommit",
+	"Frequency": "P00DT01H00M00S",
+	"Tasks": [
+		{
+			"Process@odata.bind": "Processes('zSYS SaveDataAll')",
+			"Parameters": []
+		}
+	]
+}

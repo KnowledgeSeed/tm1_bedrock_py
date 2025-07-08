@@ -1,0 +1,61 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic Load XP Values",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic Load XP Values.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pSourceFile",
+			"Prompt": "CSV file name",
+			"Value": "XP 2020_2023.csv",
+			"Type": "String"
+		}
+	],
+	"Variables": [
+		{
+			"Name": "vLocalDateYear",
+			"Type": "String",
+			"Position": 1,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vLocalDateMonth",
+			"Type": "String",
+			"Position": 2,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vLocalDateMonthNo",
+			"Type": "String",
+			"Position": 3,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vLocalDateDay",
+			"Type": "String",
+			"Position": 4,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vXP",
+			"Type": "String",
+			"Position": 5,
+			"StartByte": 0,
+			"EndByte": 0
+		},
+		{
+			"Name": "vXPValue",
+			"Type": "Numeric",
+			"Position": 6,
+			"StartByte": 0,
+			"EndByte": 0
+		}
+	]
+}

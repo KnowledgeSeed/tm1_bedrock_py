@@ -1,0 +1,38 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic Load Closing Correction Delta to Subscription Plan",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic Load Closing Correction Delta to Subscription Plan.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pVersion",
+			"Prompt": "Base",
+			"Value": "Base",
+			"Type": "String"
+		},
+		{
+			"Name": "pAllPeriod",
+			"Prompt": "1 or 0",
+			"Value": 0,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pLastYear",
+			"Prompt": "1 or 0",
+			"Value": 0,
+			"Type": "Numeric"
+		}
+	],
+	"Variables": [
+		{
+			"Name": "vProduct",
+			"Type": "String",
+			"Position": 1,
+			"StartByte": 0,
+			"EndByte": 0
+		}
+	]
+}

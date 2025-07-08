@@ -1,0 +1,5 @@
+{
+	"@type": "Subset",
+	"Name": "Other_Revenue",
+	"Expression": "{EXCEPT(    {TM1DRILLDOWNMEMBER({\r    [ledger].[ledger].[VII. Egy\u00e9b bev\u00e9telek]\r    }, ALL)},{[ledger].[ledger].[VII. Egy\u00e9b bev\u00e9telek]})}"
+}

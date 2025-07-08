@@ -1,0 +1,83 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# Módos Dávid
+# 2024.03.19.
+
+# ha nem létezik view létrehozása
+# nézet beállítása, MDX
+# dataSource legyen ez a nézet
+# Data-ban subset létrehozása
+
+sChannelCsFlatAssignmentCube = 'Channel Csoportos Flat Assignment';
+sViewName = 'CsoportosFlatSubsetTechnical';
+
+# Mody 2024 03 27
+#sCsFlatInChannelDimSubsetName = CellGetS('}ElementAttributes_Csoportos Flat', pCsoportosFlat, 'Long Name');
+
+sCsFlatInChannelDimSubsetName = 'CsFlatID' | pCsoportosFlat | '_' | pVersion  | '_' | pPeriod | '_'  | 'Subset';
+
+sChannelDimensionName = 'Channel';
+
+
+IF( HierarchySubsetExists(sChannelDimensionName, sChannelDimensionName, sCsFlatInChannelDimSubsetName) = 0);
+  HierarchySubsetCreate(sChannelDimensionName, sChannelDimensionName, sCsFlatInChannelDimSubsetName, 0);
+ENDIF;
+
+HierarchySubsetDeleteAllElements(sChannelDimensionName, sChannelDimensionName, sCsFlatInChannelDimSubsetName);
+
+#View delete and create
+ViewDestroy(sChannelCsFlatAssignmentCube, sViewName);
+
+sMDX_Expression = 'SELECT 
+   {[Csoportos Flat].[Csoportos Flat].['|pCsoportosFlat|']} 
+  ON COLUMNS , 
+  NON EMPTY 
+   {TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[Channel].[Channel].[Channel List Total]}, ALL, RECURSIVE)}, 0)} 
+  ON ROWS 
+FROM [Channel Csoportos Flat Assignment] 
+WHERE 
+  (
+   [Version].[Version].['|pVersion|'],
+   [Period].[Period].['|pPeriod|'],
+   [Channel Csoportos Flat Assignment Measure].[Channel Csoportos Flat Assignment Measure].[Assignment]
+  )
+';
+
+ViewCreateByMDX(sChannelCsFlatAssignmentCube, sViewName, sMDX_Expression , 0);
+
+
+
+
+
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+
+sValami = 'a';
+HierarchySubsetElementInsert(sChannelDimensionName, sChannelDimensionName, sCsFlatInChannelDimSubsetName, vChannel, 1);
+
+
+
+
+
+
+
+
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+#endregion

@@ -1,0 +1,5 @@
+{
+	"@type": "Subset",
+	"Name": "Financial Result Import",
+	"Expression": "{EXCEPT({TM1DRILLDOWNMEMBER({[ledger].[ledger].[P\u00e9nz\u00fcgyi eredm\u00e9ny]}, ALL, RECURSIVE)},{[ledger].[ledger].[P\u00e9nz\u00fcgyi eredm\u00e9ny]})}"
+}

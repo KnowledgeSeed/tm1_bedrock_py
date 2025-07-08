@@ -1,0 +1,8 @@
+{
+	"@type": "Dimension",
+	"Name": "Channel Cost Measure",
+	"Hierarchies@Code.links": [
+		"Channel Cost Measure.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1BFBFB0>.json"
+	],
+	"DefaultHierarchy": "Dimensions('Channel Cost Measure')/Hierarchies('Channel Cost Measure')"
+}

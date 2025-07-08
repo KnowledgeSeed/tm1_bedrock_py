@@ -1,0 +1,29 @@
+#region Prolog
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+    ExecuteProcess( '}bedrock.security.client.create', 'pLogOutput', 0,
+	    'pClient', pUserID, 'pAlias', '', 'pPassword', pPassword, 'pDelim', '&' 
+	);
+#endregion
+#region Metadata
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+    ExecuteProcess( '}bedrock.security.client.group.assign', 'pLogOutput', 0,
+    	'pClient', pUserId, 'pGroup', 'ADMIN',
+    	'pDelim','&', 'pAddOrRemove', 'Add', 'pSecurityRefresh', 'Yes'
+	);
+#endregion

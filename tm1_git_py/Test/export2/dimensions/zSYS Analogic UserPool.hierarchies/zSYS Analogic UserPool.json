@@ -1,0 +1,68 @@
+{
+	"@type": "Hierarchy",
+	"Name": "zSYS Analogic UserPool",
+	"Elements": [
+		{
+			"name": "Admin",
+			"type": "Numeric"
+		},
+		{
+			"name": "Test1",
+			"type": "Numeric"
+		},
+		{
+			"name": "Contributor 01",
+			"type": "Numeric"
+		},
+		{
+			"name": "test32",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNOWLEDGESEED/oravecz.tamas",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNOWLEDGESEED/takacs.martin",
+			"type": "Numeric"
+		},
+		{
+			"name": "KNOWLEDGESEED/milevics.iren",
+			"type": "Numeric"
+		},
+		{
+			"name": "testuser1",
+			"type": "Numeric"
+		},
+		{
+			"name": "nagy.akos",
+			"type": "Numeric"
+		},
+		{
+			"name": "test",
+			"type": "Numeric"
+		},
+		{
+			"name": "oravecz.tamas",
+			"type": "Numeric"
+		},
+		{
+			"name": "takacs.martin",
+			"type": "Numeric"
+		},
+		{
+			"name": "test_martin",
+			"type": "Numeric"
+		},
+		{
+			"name": "ModosDavidTest",
+			"type": "Numeric"
+		},
+		{
+			"name": "test/martin",
+			"type": "Numeric"
+		}
+	],
+	"Edges": [],
+	"Subsets@Code.links": []
+}

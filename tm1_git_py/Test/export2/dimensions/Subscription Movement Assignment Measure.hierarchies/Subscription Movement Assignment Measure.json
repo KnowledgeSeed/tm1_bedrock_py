@@ -1,0 +1,59 @@
+{
+	"@type": "Hierarchy",
+	"Name": "Subscription Movement Assignment Measure",
+	"Elements": [
+		{
+			"name": "Total",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Rule driven",
+			"type": "Numeric"
+		},
+		{
+			"name": "Stored",
+			"type": "Numeric"
+		},
+		{
+			"name": "Movement Name",
+			"type": "String"
+		},
+		{
+			"name": "source_flag_mult",
+			"type": "Numeric"
+		},
+		{
+			"name": "target_flag_mult",
+			"type": "Numeric"
+		},
+		{
+			"name": "source_target_flag_mult",
+			"type": "Numeric"
+		},
+		{
+			"name": "movement_flag_only",
+			"type": "Numeric"
+		},
+		{
+			"name": "Switch Off Weight",
+			"type": "Numeric"
+		},
+		{
+			"name": "Switch On Weight",
+			"type": "Numeric"
+		}
+	],
+	"Edges": [
+		{
+			"parentName": "Total",
+			"componentName": "Rule driven",
+			"weight": 1
+		},
+		{
+			"parentName": "Total",
+			"componentName": "Stored",
+			"weight": 1
+		}
+	],
+	"Subsets@Code.links": []
+}

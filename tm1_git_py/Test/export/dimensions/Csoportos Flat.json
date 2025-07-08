@@ -1,0 +1,8 @@
+{
+	"@type": "Dimension",
+	"Name": "Csoportos Flat",
+	"Hierarchies@Code.links": [
+		"Csoportos Flat.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1C9EA20>.json"
+	],
+	"DefaultHierarchy": "Dimensions('Csoportos Flat')/Hierarchies('Csoportos Flat')"
+}

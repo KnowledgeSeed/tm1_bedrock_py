@@ -1,0 +1,82 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+
+sDimName = 'Period';
+sCurrentMonth = CellGetS('zSYS Maintenance Parameter', 'ActualMonth','S Type');
+sAllNSubset = 'All N';
+  
+  ###### Subsription Plan Cube clear
+  sCube = 'Subscription Plan';
+  #sFilter =  'State¦CA+FL';
+  
+  ExecuteProcess( '}bedrock.cube.data.clear', 'pLogOutput', 0,
+    'pStrictErrorHandling', 0,
+  	'pCube', sCube,
+  	'pView', '',
+  	'pFilter', '',
+  	'pFilterParallel', '',
+  	'pParallelThreads', 0,
+  	'pDimDelim', '&',
+  	'pEleStartDelim', '¦', 'pEleDelim', '+',
+  	'pCubeLogging', 0, 'pTemp', 1, 'pSandbox', '', 'pSubN', 0
+	);
+	
+	
+  
+  ###### Subsription Report Cube clear
+  sCube = 'Subscription Report';
+  #sFilter = "State¦CA+FL&Time¦2014"
+  
+  ExecuteProcess( '}bedrock.cube.data.clear', 'pLogOutput', 0,
+    'pStrictErrorHandling', 0,
+  	'pCube', sCube,
+  	'pView', '',
+  	'pFilter', '',
+  	'pFilterParallel', '',
+  	'pParallelThreads', 0,
+  	'pDimDelim', '&',
+  	'pEleStartDelim', '¦', 'pEleDelim', '+',
+  	'pCubeLogging', 0, 'pTemp', 1, 'pSandbox', '', 'pSubN', 0
+	);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

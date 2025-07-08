@@ -1,0 +1,137 @@
+{
+	"@type": "Hierarchy",
+	"Name": "Marketing Cost",
+	"Elements": [
+		{
+			"name": "55501",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Logistics Cost",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Gift point average logistics cost",
+			"type": "Numeric"
+		},
+		{
+			"name": "Szumma bevaltott ajandek pont",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Bevaltasi arany",
+			"type": "Numeric"
+		},
+		{
+			"name": "Total Gift Point",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Migracioert jaro pontok",
+			"type": "Numeric"
+		},
+		{
+			"name": "Arkategoriaert jaro pontok",
+			"type": "Numeric"
+		},
+		{
+			"name": "Veszelyeztett teruletertekert jaro pontok",
+			"type": "Numeric"
+		},
+		{
+			"name": "Uj szerzodesekert jaro pontok",
+			"type": "Numeric"
+		},
+		{
+			"name": "Gift Cost",
+			"type": "Consolidated"
+		},
+		{
+			"name": "Gift point average cost",
+			"type": "Numeric"
+		},
+		{
+			"name": "Osszes bevaltott pontok teny",
+			"type": "Numeric"
+		},
+		{
+			"name": "Gift Cost Fact",
+			"type": "Numeric"
+		},
+		{
+			"name": "Logistics Cost Fact",
+			"type": "Numeric"
+		},
+		{
+			"name": "Osszes kiosztott pont",
+			"type": "Numeric"
+		},
+		{
+			"name": "55501 Fact",
+			"type": "Numeric"
+		}
+	],
+	"Edges": [
+		{
+			"parentName": "55501",
+			"componentName": "Logistics Cost",
+			"weight": 1
+		},
+		{
+			"parentName": "55501",
+			"componentName": "Gift Cost",
+			"weight": 1
+		},
+		{
+			"parentName": "Logistics Cost",
+			"componentName": "Gift point average logistics cost",
+			"weight": 1
+		},
+		{
+			"parentName": "Logistics Cost",
+			"componentName": "Szumma bevaltott ajandek pont",
+			"weight": 1
+		},
+		{
+			"parentName": "Szumma bevaltott ajandek pont",
+			"componentName": "Bevaltasi arany",
+			"weight": 1
+		},
+		{
+			"parentName": "Szumma bevaltott ajandek pont",
+			"componentName": "Total Gift Point",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Gift Point",
+			"componentName": "Migracioert jaro pontok",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Gift Point",
+			"componentName": "Arkategoriaert jaro pontok",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Gift Point",
+			"componentName": "Veszelyeztett teruletertekert jaro pontok",
+			"weight": 1
+		},
+		{
+			"parentName": "Total Gift Point",
+			"componentName": "Uj szerzodesekert jaro pontok",
+			"weight": 1
+		},
+		{
+			"parentName": "Gift Cost",
+			"componentName": "Gift point average cost",
+			"weight": 1
+		},
+		{
+			"parentName": "Gift Cost",
+			"componentName": "Szumma bevaltott ajandek pont",
+			"weight": 1
+		}
+	],
+	"Subsets@Code.links": []
+}

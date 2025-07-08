@@ -1,0 +1,94 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+sDimName = 'Period';
+sSubName = 'Last_Actual_Year';
+sSubName = 'Actual Period N level';
+
+sLen = SubsetGetSize(sDimName, sSubName);
+
+# tényleg az aktuális hónap
+sActualPeriod = CellGetS('zSYS Maintenance Parameter', 'Actual Month', 'S Type');
+
+
+
+sProdCategoryDimName = 'Product Category';
+sProdCategorySubName = 'All N Product Category';
+nProdCategoryLen = SubsetGetSize(sProdCategoryDimName, sProdCategorySubName);
+
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+nProdCategoriIndex = 1;
+While(nProdCategoriIndex <= nProdCategoryLen);
+  sProductCategory = SubsetGetElementName(sProdCategoryDimName, sProdCategorySubName, nProdCategoriIndex);
+
+  i=1;
+  While(i <= sLen);
+    sPeriod = SubsetGetElementName(sDimName, sSubName, i);
+    nTotal = CellGetN('Subscription Plan', pVersion, sPeriod, 'Total', 'Total', sProductCategory, sProductCategory, vSubscriptionPlanMovement, 'Final Value');
+    # CC 0
+    nCCZero = CellGetN('Subscription Plan', pVersion, sPeriod, '0', 'Call center', sProductCategory, sProductCategory, vSubscriptionPlanMovement, 'Final Value');
+    nCCZeroPercent = nCCZero \ nTotal * 100;
+    IF(stringtonumber(sPeriod) < stringtonumber(sActualPeriod)  );
+      CellPutN(nCCZeroPercent, 'Sales Channel And Loyalty', pVersion, sPeriod, '0', 'Call center', sProductCategory, vSubscriptionPlanMovement, 'Value');
+    ELSE;
+      Period_Previous = CellGetS('}ElementAttributes_Period', sPeriod, 'PREV_Y');
+      nPreviousValue = CellGetN( 'Sales Channel And Loyalty', pVersion, Period_Previous,  '0', 'Call center', sProductCategory, vSubscriptionPlanMovement, 'Value');
+      CellPutN(nPreviousValue, 'Sales Channel And Loyalty', pVersion, sPeriod, '0', 'Call center', sProductCategory, vSubscriptionPlanMovement, 'Value');
+    ENDIF;
+    # CC 1
+    nCCZero = CellGetN('Subscription Plan', pVersion, sPeriod, '1', 'Call center', sProductCategory, sProductCategory, vSubscriptionPlanMovement, 'Final Value');
+    nCCZeroPercent = nCCZero \ nTotal * 100;
+    IF(stringtonumber(sPeriod) < stringtonumber(sActualPeriod)  );
+      CellPutN(nCCZeroPercent, 'Sales Channel And Loyalty', pVersion, sPeriod, '1', 'Call center', sProductCategory, vSubscriptionPlanMovement, 'Value');
+    ELSE;
+      Period_Previous = CellGetS('}ElementAttributes_Period', sPeriod, 'PREV_Y');
+      nPreviousValue = CellGetN( 'Sales Channel And Loyalty', pVersion, Period_Previous,'1', 'Call center', sProductCategory, vSubscriptionPlanMovement, 'Value');
+      CellPutN(nPreviousValue, 'Sales Channel And Loyalty', pVersion, sPeriod, '1', 'Call center', sProductCategory, vSubscriptionPlanMovement, 'Value');
+
+    ENDIF;    
+    # CS 0
+    nCCZero = CellGetN('Subscription Plan', pVersion, sPeriod, '0', 'Customer Service', sProductCategory, sProductCategory, vSubscriptionPlanMovement, 'Final Value');
+    nCCZeroPercent = nCCZero \ nTotal * 100;
+    IF(stringtonumber(sPeriod) < stringtonumber(sActualPeriod)  );
+      CellPutN(nCCZeroPercent, 'Sales Channel And Loyalty', pVersion, sPeriod, '0', 'Customer Service', sProductCategory, vSubscriptionPlanMovement, 'Value');
+    ELSE;
+      Period_Previous = CellGetS('}ElementAttributes_Period', sPeriod, 'PREV_Y');
+      nPreviousValue = CellGetN( 'Sales Channel And Loyalty', pVersion, Period_Previous, '0', 'Customer Service', sProductCategory, vSubscriptionPlanMovement, 'Value');
+      CellPutN(nPreviousValue, 'Sales Channel And Loyalty', pVersion, sPeriod, '0', 'Customer Service', sProductCategory, vSubscriptionPlanMovement, 'Value');
+    ENDIF;    
+    # CS 1
+    nCCZero = CellGetN('Subscription Plan', pVersion, sPeriod, '1', 'Customer Service', sProductCategory, sProductCategory, vSubscriptionPlanMovement, 'Final Value');
+    nCCZeroPercent = nCCZero \ nTotal * 100;
+    IF(stringtonumber(sPeriod) < stringtonumber(sActualPeriod)  );
+      CellPutN(nCCZeroPercent, 'Sales Channel And Loyalty', pVersion, sPeriod, '1', 'Customer Service', sProductCategory, vSubscriptionPlanMovement, 'Value');
+    ELSE;  
+      Period_Previous = CellGetS('}ElementAttributes_Period', sPeriod, 'PREV_Y');
+      nPreviousValue = CellGetN( 'Sales Channel And Loyalty', pVersion, Period_Previous,'1', 'Customer Service', sProductCategory, vSubscriptionPlanMovement, 'Value');
+      CellPutN(nPreviousValue, 'Sales Channel And Loyalty', pVersion, sPeriod, '1', 'Customer Service', sProductCategory, vSubscriptionPlanMovement, 'Value');
+    ENDIF;    
+    i = i+1;
+  END;
+
+nProdCategoriIndex = nProdCategoriIndex + 1;
+END;
+
+
+
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion

@@ -1,0 +1,86 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI Subscription Plan Input Spread Period",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic UI Subscription Plan Input Spread Period.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pSourceProduct",
+			"Prompt": "any type",
+			"Value": "762",
+			"Type": "String"
+		},
+		{
+			"Name": "pTargetProduct",
+			"Prompt": "any type",
+			"Value": "762",
+			"Type": "String"
+		},
+		{
+			"Name": "pMovement",
+			"Prompt": "any type",
+			"Value": "Loyalty extension increase",
+			"Type": "String"
+		},
+		{
+			"Name": "pLoyalty",
+			"Prompt": "any type",
+			"Value": "Total",
+			"Type": "String"
+		},
+		{
+			"Name": "pChannel",
+			"Prompt": "any type",
+			"Value": "Total",
+			"Type": "String"
+		},
+		{
+			"Name": "pPeriod",
+			"Prompt": "any type",
+			"Value": "202306",
+			"Type": "String"
+		},
+		{
+			"Name": "pMaincategory",
+			"Prompt": "e.g. Telefon, Internet, DSL",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pInput",
+			"Prompt": "",
+			"Value": 10,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pRecursionIndex",
+			"Prompt": "",
+			"Value": 0,
+			"Type": "Numeric"
+		},
+		{
+			"Name": "pVersion",
+			"Prompt": "Base",
+			"Value": "Base",
+			"Type": "String"
+		},
+		{
+			"Name": "pUser",
+			"Prompt": "",
+			"Value": "",
+			"Type": "String"
+		}
+	],
+	"Variables": [
+		{
+			"Name": "vPeriod",
+			"Type": "String",
+			"Position": 1,
+			"StartByte": 0,
+			"EndByte": 0
+		}
+	]
+}

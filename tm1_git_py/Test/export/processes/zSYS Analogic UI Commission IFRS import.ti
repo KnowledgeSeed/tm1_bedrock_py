@@ -1,0 +1,151 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+#Botond 05.21
+
+sDimensionName_Period = 'Period';
+sDimensionName_Version = 'Version';
+nProductCol = 1;
+
+#sFileName = '2024_09_18_16_43_40_CommisionBoards_2024_09_KTV_Alaptermek_Commission_Fee_Base_admin.csv';
+#pFileName = sFileName;
+
+
+sColumnDelimiter = ',';
+sDecimalSeparator = '.';
+sThousandSeparator = ' ';
+sQuoteChar = '"';
+sCharacterSet = 'TM1CS_UTF8';
+
+# megadja hol van az első adat
+nHeaderRow = 0;
+nFirstDataCol= 2;
+nLastDataCol= 9;
+pVersion = pVersion;
+nHeaderRowIndex = 1;
+i = 1;
+
+sActualPeriod = CellGetS('zSYS Maintenance Parameter', 'ActualMonth','S Type');
+
+# define and set CSV as data source
+pFileLocation = CellGetS('zSYS Maintenance Parameter', 'Import Data Directory Path', 'S Type');
+sFile = pFileLocation | pFileName;
+
+DataSourceType = 'CHARACTERDELIMITED';
+DataSourceNameForServer = sFile;
+DataSourceNameForClient = sFile;
+DatasourceASCIIHeaderRecords = nHeaderRow;
+DatasourceASCIIQuoteCharacter = sQuoteChar;
+DataSourceASCIIDelimiter = sColumnDelimiter;
+SetInputCharacterSet ( sCharacterSet );
+
+
+
+
+
+
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+IF(i = 1);
+  sYear  =  Expand('%v'| NumberToString(nFirstDataCol) |'%');
+  sMonth  =  Expand('%v'| NumberToString(nFirstDataCol + 2) |'%');
+ENDIF;
+
+sInputPeriod  = sYear | sMonth;
+sProduct = Expand('%v'| NumberToString(nProductCol) |'%');
+sLineitem = Expand('%v'| NumberToString(nFirstDatacol + 8) |'%');
+
+IF(i = 1 % i = 2 %  i = 3 % i = 4 );
+  i = i + 1;
+  itemskip;
+ENDIF;
+
+  sCol1  =  Expand('%v'| NumberToString(nFirstDataCol + 0) |'%');
+  sCol2  =  Expand('%v'| NumberToString(nFirstDataCol + 1) |'%');
+  sCol3  =  Expand('%v'| NumberToString(nFirstDataCol + 2) |'%');
+  sCol4  =  Expand('%v'| NumberToString(nFirstDataCol + 3) |'%');
+  sCol5  =  Expand('%v'| NumberToString(nFirstDataCol + 4) |'%');
+  sCol6  =  Expand('%v'| NumberToString(nFirstDataCol + 5) |'%');
+  sCol7  =  Expand('%v'| NumberToString(nFirstDataCol + 6) |'%');
+  sCol8  =  Expand('%v'| NumberToString(nFirstDataCol + 7) |'%');
+  sCol9  =  Expand('%v'| NumberToString(nFirstDataCol + 8) |'%');
+  
+nColIndex = 1;
+
+
+WHILE( nColIndex <= nlastdatacol);
+  
+    IF(nColindex = 2);
+      sSalesChannel = 'Call center';
+      sCommission = 'New';
+    ENDIF;
+    IF(nColindex = 3);
+      sSalesChannel = 'Call center';
+      sCommission = 'Upward Migration Small';
+    ENDIF;
+    IF(nColindex = 4);
+      sSalesChannel = 'Call center';
+      sCommission = 'Upward Migration Big';
+    ENDIF;
+    IF(nColindex = 5);
+      sSalesChannel = 'Call center';
+      sCommission = 'Retainer';
+    ENDIF;
+    IF(nColindex = 6);
+      sSalesChannel = 'Customer Service';
+      sCommission = 'New';
+    ENDIF;
+    IF(nColindex = 7);
+      sSalesChannel = 'Customer Service';
+      sCommission = 'Upward Migration Small';
+    ENDIF;
+    IF(nColindex = 8);
+      sSalesChannel = 'Customer Service';
+      sCommission = 'Upward Migration Big';
+    ENDIF;
+    IF(nColindex = 9);
+      sSalesChannel = 'Customer Service';
+      sCommission = 'Retainer';
+    ENDIF;
+    
+    IF(nColindex > 1);
+    sCurrentValue = Expand('%v'| NumberToString(nColIndex) |'%');
+    nCurrentValue = StringToNumberEx(sCurrentValue, sDecimalSeparator, sThousandSeparator);
+    nCurrentValue = RoundP(nCurrentValue,0);
+    sCurrentValue = NumberToString(nCurrentValue);
+    
+    ExecuteProcess('zSYS Analogic UI Commission Fee Input',
+     'pProduct', sProduct,
+     'pValue', sCurrentValue,
+     'pVersion', pVersion,
+     'pPeriod', sInputPeriod,
+     'pUser', pUser,
+     'pSalesChannel', sSalesChannel,
+     'pCommission', sCommission
+#     'pLineitem', sLineitem
+    );
+    
+    ENDIF;
+    
+    nColIndex = nColIndex + 1;
+  
+# while  
+END;
+
+
+i = i+1;
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+sToday = Today(1);
+CellPutS(sToday, '}ElementAttributes_Version', pVersion, 'Last Updated');
+CellPutS(pUser, '}ElementAttributes_Version', pVersion, 'Last Updated By');
+#endregion

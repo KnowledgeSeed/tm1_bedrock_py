@@ -1,0 +1,80 @@
+#region Prolog
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+
+# =========================================================
+# Original Date Created              2015-06-15
+# Originator                                 Jozsef Buzas
+# Purpose                                   A caller process for a cube, to maintain all N Element C level knot
+# =========================================================
+
+# Central logging - start
+nRandomNumber = Round ( RAND * 1000000);
+sRandomNumber = NumberToString(nRandomNumber);
+pStartTime=NumberToString(NOW());
+pProcessName =  GetProcessName();
+pParams= 'pCube|'|pCube|'|pDebug|'|Numbertostring(pDebug);
+#ExecuteProcess ('zSYS Process Log Create Entry','pProcessName',pProcessName,'pStartTime',pStartTime,'pParams',pParams,'pRandomNumber',sRandomNumber,'pCallerID',pCallerID);
+#OwnCallerID
+sCallerID = pStartTime |' - '| pProcessName|'-'|sRandomNumber;
+
+##### Define variables
+
+### Global variables
+sSysControl = 'zSYS Maintenance Parameter';
+sDimensionExportUNC = CellGetS(sSysCOntrol, 'Dimension Export UNC','Stype');
+sProcessDebuggingUNC = CellGetS(sSysCOntrol,'Process Debugging UNC' ,'Stype');
+sLogDirectoryPath = CellGetS(sSysCOntrol,'Log Directory Path' ,'Stype');
+sProcessName =  GetProcessName();
+sTimeStamp = TIMST(NOW(),'\Y\m\d\h\i\s');
+sDebugFile = sProcessDebuggingUNC | sProcessName | ' ' | sTimeStamp | '.txt';
+sLogFile = sLogDirectoryPath | sProcessName | ' ' | sTimeStamp | '.txt';
+
+### Local variables
+
+sUnknown = 'Unknown by Cube ' | pCube | ' load'; 
+
+# ============= Step 1 If pCube is not a Cube Name, than Quit
+IF ( CubeExists(pCube) = 0);
+      ProcessQuit;
+ENDIF;
+
+
+# ============= Step 2: Read all dimension and call the maintainer process  
+
+nDimCounter = 1;
+
+WHILE(Tabdim(pCube,nDimCounter) @<> '');
+
+   sDimName = Tabdim(pCube, nDimCounter);
+
+### Only runs if, if there are Unknown element in the IF cube
+   IF( ELCOMPN( sDimName, sUnknown) <> 0);
+      ExecuteProcess('zSYS Maintenance Dimension Refresh All N Elements', 'pDimName', sDimName, 'pCallerID', sCallerID, 'pDebug', 0 );
+   ENDIF;
+
+    nDimCounter = nDimCounter + 1;
+
+END;
+#endregion
+#region Metadata
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+# Central logging - finish
+#ExecuteProcess('zSYS Process Log Close Entry','pProcessName',pProcessName,'pStartTime',pStartTime,'pRandomNumber',sRandomNumber,'pProcessErrorLogFile',GetProcessErrorFilename);
+
+#endregion

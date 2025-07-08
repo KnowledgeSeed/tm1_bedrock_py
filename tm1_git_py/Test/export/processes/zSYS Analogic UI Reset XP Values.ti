@@ -1,0 +1,55 @@
+#region Prolog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+sCubeName= 'XP Planning';
+sDimXP= 'XP Planning';
+sSubsetXP='XP';
+sDimName = 'Period';
+sHierName = 'Period';
+sSubsetName = 'Actual Period N level';
+#Botond 06.16
+
+sXpLen = SubsetGetSize(sDimXP, sSubsetXP);
+sLen = SubsetGetSize(sDimName, sSubsetName);
+
+nVal = 0;
+
+sCurrentMonth = CellGetS('zSYS Maintenance Parameter', 'ActualMonth','S Type');
+sStartMonthI= HierarchySubsetElementGetIndex(sDimName, sHierName, sSubsetName, sCurrentMonth, 1);
+#endregion
+#region Metadata
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Data
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+#endregion
+#region Epilog
+#****Begin: Generated Statements***
+#****End: Generated Statements****
+
+i = sStartMonthI;
+While(i <= sLen);
+  sPeriod = SubsetGetElementName(sDimName,sSubsetName, i);
+  j=1;
+  while(j <= sXpLen);
+    sXP = SubsetGetElementName(sDimXP, sSubsetXP, j);
+    nResValues = CellGetN('XP Planning', pVersion, sPeriod, sXP, 'Reset');
+    CellPutN(nResValues, 'XP Planning', pVersion, sPeriod, sXP, 'Value');
+    CellPutN(nVal, 'XP Planning', pVersion, sPeriod, sXP, 'Colors');
+  j=j+1;
+  END;
+i = i + 1;
+END;
+
+
+
+# Módos Dávid 2024 02 13
+
+sToday = Today(1);
+CellPutS(sToday, '}ElementAttributes_Version', pVersion, 'Last Updated');
+CellPutS(pUser, '}ElementAttributes_Version', pVersion, 'Last Updated By');
+
+#endregion

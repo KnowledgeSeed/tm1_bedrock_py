@@ -1,0 +1,197 @@
+SKIPCHECK;
+
+['Commission IFRS':'Commission IFRS':'Customer Service Incentive Cost Percentage','Commission IFRS Measure':'Value'] = C:
+IF( ELLEV('Period',!Period)>0,
+  DB('Commisson IFRS', !Version, DB('}ElementAttributes_Period', !Period, 'Last_M_Y'), !Commission IFRS, !Commission IFRS Measure),
+Continue);
+
+['Commission IFRS':'Commission IFRS':'Call Center Incentive Cost Percentage','Commission IFRS Measure':'Value'] = C:
+IF( ELLEV('Period',!Period)>0,
+  DB('Commisson IFRS', !Version, DB('}ElementAttributes_Period', !Period, 'Last_M_Y'), !Commission IFRS, !Commission IFRS Measure),
+Continue);
+
+# verzo szabályok
+[]= N:
+IF(ELISPAR('Version','Report',!Version) = 1,
+STET,Continue);
+
+
+
+# tranzakciós költségek Customer Service
+['Commission IFRS':'Commission IFRS':'Customer Service Transaction Cost','Commission IFRS Measure':'Commission IFRS Measure':'Value'] =N:
+DB('Commission', !Version, !Period, '1', 'Customer Service', 'Total Products', 'Total', 'Commission Total Cost', 'Value');
+
+# tranzakciós költségek Call Center
+['Commission IFRS':'Commission IFRS':'Call Center Transaction Cost','Commission IFRS Measure':'Commission IFRS Measure':'Value'] =N:
+DB('Commission', !Version, !Period, '1', 'Call Center', 'Total Products', 'Total', 'Commission Total Cost', 'Value');
+
+# ösztönző számítások
+['Commission IFRS':'Commission IFRS':'Customer Service Incentive Cost','Commission IFRS Measure':'Commission IFRS Measure':'Value'] =N:
+['Commission IFRS':'Commission IFRS':'Customer Service Transaction Cost']
+*
+['Commission IFRS':'Commission IFRS':'Customer Service Incentive Cost Percentage']/100;
+
+['Commission IFRS':'Commission IFRS':'Call Center Incentive Cost','Commission IFRS Measure':'Commission IFRS Measure':'Value'] =N:
+['Commission IFRS':'Commission IFRS':'Call Center Transaction Cost']
+*
+['Commission IFRS':'Commission IFRS':'Call Center Incentive Cost Percentage']/100;
+
+### IFRS SZABÁLYOK
+
+### IFRS 1. hó
+['Commission IFRS':'Commission IFRS':'Commission Current Month','Commission IFRS Measure':'Commission IFRS Measure':'Value'] =N:
+DB('Commisson IFRS', !Version, !Period, '52405', 'Value')
+/
+12;
+
+### IFRS 2. hó
+['Commission IFRS':'Commission IFRS':'Commission from- 1 Month','Commission IFRS Measure':'Commission IFRS Measure':'Value'] =N:
+DB('Commisson IFRS', !Version, DB('}ElementAttributes_Period', !Period, 'PREV_1M'), '52405', 'Value')
+/
+12;
+
+### IFRS 3. hó
+['Commission IFRS':'Commission IFRS':'Commission from- 2 Month','Commission IFRS Measure':'Commission IFRS Measure':'Value'] =N:
+DB('Commisson IFRS', !Version, DB('}ElementAttributes_Period', !Period, 'PREV_2M'), '52405', 'Value')
+/
+12;
+
+### IFRS 4. hó
+['Commission IFRS':'Commission IFRS':'Commission from- 3 Month','Commission IFRS Measure':'Commission IFRS Measure':'Value'] =N:
+DB('Commisson IFRS', !Version, DB('}ElementAttributes_Period', !Period, 'PREV_3M'), '52405', 'Value')
+/
+12;
+
+### IFRS 5. hó
+['Commission IFRS':'Commission IFRS':'Commission from- 4 Month','Commission IFRS Measure':'Commission IFRS Measure':'Value'] =N:
+DB('Commisson IFRS', !Version, DB('}ElementAttributes_Period', !Period, 'PREV_4M'), '52405', 'Value')
+/
+12;
+
+### IFRS 6. hó
+['Commission IFRS':'Commission IFRS':'Commission from- 5 Month','Commission IFRS Measure':'Commission IFRS Measure':'Value'] =N:
+DB('Commisson IFRS', !Version, DB('}ElementAttributes_Period', !Period, 'PREV_5M'), '52405', 'Value')
+/
+12;
+
+### IFRS 7. hó
+['Commission IFRS':'Commission IFRS':'Commission from- 6 Month','Commission IFRS Measure':'Commission IFRS Measure':'Value'] =N:
+DB('Commisson IFRS', !Version, DB('}ElementAttributes_Period', !Period, 'PREV_6M'), '52405', 'Value')
+/
+12;
+
+### IFRS 8. hó
+['Commission IFRS':'Commission IFRS':'Commission from- 7 Month','Commission IFRS Measure':'Commission IFRS Measure':'Value'] =N:
+DB('Commisson IFRS', !Version, DB('}ElementAttributes_Period', !Period, 'PREV_7M'), '52405', 'Value')
+/
+12;
+
+### IFRS 9. hó
+['Commission IFRS':'Commission IFRS':'Commission from- 8 Month','Commission IFRS Measure':'Commission IFRS Measure':'Value'] =N:
+DB('Commisson IFRS', !Version, DB('}ElementAttributes_Period', !Period, 'PREV_8M'), '52405', 'Value')
+/
+12;
+
+### IFRS 10. hó
+['Commission IFRS':'Commission IFRS':'Commission from- 9 Month','Commission IFRS Measure':'Commission IFRS Measure':'Value'] =N:
+DB('Commisson IFRS', !Version, DB('}ElementAttributes_Period', !Period, 'PREV_9M'), '52405', 'Value')
+/
+12;
+
+### IFRS 11. hó
+['Commission IFRS':'Commission IFRS':'Commission from- 10 Month','Commission IFRS Measure':'Commission IFRS Measure':'Value'] =N:
+DB('Commisson IFRS', !Version, DB('}ElementAttributes_Period', !Period, 'PREV_10M'), '52405', 'Value')
+/
+12;
+
+### IFRS 12. hó
+['Commission IFRS':'Commission IFRS':'Commission from- 11 Month','Commission IFRS Measure':'Commission IFRS Measure':'Value'] =N:
+DB('Commisson IFRS', !Version, DB('}ElementAttributes_Period', !Period, 'PREV_11M'), '52405', 'Value')
+/
+12;
+
+# IFRS ledger Calculation
+['Commission IFRS':'Commission IFRS':'052405','Commission IFRS Measure':'Commission IFRS Measure':'Value'] =N:
+['Commission IFRS':'Commission IFRS':'IFRS Total']
+-
+['Commission IFRS':'Commission IFRS':'52405']
+;
+
+FEEDERS;
+# Ösztönző Költségek Customer Service és call center feeder
+['Commission IFRS':'Commission IFRS':'Customer Service Incentive Cost Percentage', 'Commission IFRS Measure':'Commission IFRS Measure':'Value'] =>
+['Commission IFRS':'Commission IFRS':'Customer Service Incentive Cost'];
+['Commission IFRS':'Commission IFRS':'Call Center Incentive Cost Percentage', 'Commission IFRS Measure':'Commission IFRS Measure':'Value'] =>
+['Commission IFRS':'Commission IFRS':'Call Center Incentive Cost'];
+
+['Commission IFRS':'Commission IFRS':'Customer Service Transaction Cost', 'Commission IFRS Measure':'Commission IFRS Measure':'Value'] =>
+['Commission IFRS':'Commission IFRS':'Customer Service Incentive Cost'];
+['Commission IFRS':'Commission IFRS':'Call Center Transaction Cost', 'Commission IFRS Measure':'Commission IFRS Measure':'Value'] =>
+['Commission IFRS':'Commission IFRS':'Call Center Incentive Cost'];
+
+# IFRS Feeders
+# IFRS Feeder 1. hónap
+['Commission IFRS':'Commission IFRS':'52405', 'Commission IFRS Measure':'Commission IFRS Measure':'Value'] => ['Commission IFRS':'Commission IFRS':'Commission Current Month'];
+
+# IFRS Feeder 2. hónap
+['Commission IFRS':'Commission IFRS':'52405', 'Commission IFRS Measure':'Commission IFRS Measure':'Value'] 
+=> 
+DB('Commisson IFRS', !Version, DB('}ElementAttributes_Period', !Period, 'NEXT_1M'), 'Commission from- 1 Month', 'Value');
+# IFRS Feeder 3. hónap
+['Commission IFRS':'Commission IFRS':'52405', 'Commission IFRS Measure':'Commission IFRS Measure':'Value'] 
+=> 
+DB('Commisson IFRS', !Version, DB('}ElementAttributes_Period', !Period, 'NEXT_2M'), 'Commission from- 2 Month', 'Value');
+# IFRS Feeder 4. hónap
+['Commission IFRS':'Commission IFRS':'52405', 'Commission IFRS Measure':'Commission IFRS Measure':'Value'] 
+=> 
+DB('Commisson IFRS', !Version, DB('}ElementAttributes_Period', !Period, 'NEXT_3M'), 'Commission from- 3 Month', 'Value');
+# IFRS Feeder 5. hónap
+['Commission IFRS':'Commission IFRS':'52405', 'Commission IFRS Measure':'Commission IFRS Measure':'Value'] 
+=> 
+DB('Commisson IFRS', !Version, DB('}ElementAttributes_Period', !Period, 'NEXT_4M'), 'Commission from- 4 Month', 'Value');
+# IFRS Feeder 6. hónap
+['Commission IFRS':'Commission IFRS':'52405', 'Commission IFRS Measure':'Commission IFRS Measure':'Value'] 
+=> 
+DB('Commisson IFRS', !Version, DB('}ElementAttributes_Period', !Period, 'NEXT_5M'), 'Commission from- 5 Month', 'Value');
+# IFRS Feeder 7. hónap
+['Commission IFRS':'Commission IFRS':'52405', 'Commission IFRS Measure':'Commission IFRS Measure':'Value'] 
+=> 
+DB('Commisson IFRS', !Version, DB('}ElementAttributes_Period', !Period, 'NEXT_6M'), 'Commission from- 6 Month', 'Value');
+# IFRS Feeder 8. hónap
+['Commission IFRS':'Commission IFRS':'52405', 'Commission IFRS Measure':'Commission IFRS Measure':'Value'] 
+=> 
+DB('Commisson IFRS', !Version, DB('}ElementAttributes_Period', !Period, 'NEXT_7M'), 'Commission from- 7 Month', 'Value');
+# IFRS Feeder 9. hónap
+['Commission IFRS':'Commission IFRS':'52405', 'Commission IFRS Measure':'Commission IFRS Measure':'Value'] 
+=> 
+DB('Commisson IFRS', !Version, DB('}ElementAttributes_Period', !Period, 'NEXT_8M'), 'Commission from- 8 Month', 'Value');
+# IFRS Feeder 10. hónap
+['Commission IFRS':'Commission IFRS':'52405', 'Commission IFRS Measure':'Commission IFRS Measure':'Value'] 
+=> 
+DB('Commisson IFRS', !Version, DB('}ElementAttributes_Period', !Period, 'NEXT_9M'), 'Commission from- 9 Month', 'Value');
+# IFRS Feeder 11. hónap
+['Commission IFRS':'Commission IFRS':'52405', 'Commission IFRS Measure':'Commission IFRS Measure':'Value'] 
+=> 
+DB('Commisson IFRS', !Version, DB('}ElementAttributes_Period', !Period, 'NEXT_10M'), 'Commission from- 10 Month', 'Value');
+# IFRS Feeder 12. hónap
+['Commission IFRS':'Commission IFRS':'52405', 'Commission IFRS Measure':'Commission IFRS Measure':'Value'] 
+=> 
+DB('Commisson IFRS', !Version, DB('}ElementAttributes_Period', !Period, 'NEXT_11M'), 'Commission from- 11 Month', 'Value');
+
+# IFRS ledger Calculation feeder
+['Commission IFRS':'Commission IFRS':'52405', 'Commission IFRS Measure':'Commission IFRS Measure':'Value'] => ['Commission IFRS':'052405'];
+['Commission IFRS':'Commission IFRS':'IFRS Total', 'Commission IFRS Measure':'Commission IFRS Measure':'Value'] => ['Commission IFRS':'052405'];
+
+
+
+# Direck Cost FEEDER
+['Commission IFRS':'52405','Version':'Forecast','Commission IFRS Measure':'Value'] =>
+DB('Direct Cost', !Version, !Period, '52405', 'Cost', 'Value');
+# Direck Cost FEEDER
+['Commission IFRS':'052405','Version':'Forecast','Commission IFRS Measure':'Value'] =>
+DB('Direct Cost', !Version, !Period, '052409', 'Cost', 'Value');
+
+
+
+
+

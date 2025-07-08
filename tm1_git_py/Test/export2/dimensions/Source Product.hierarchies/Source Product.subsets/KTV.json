@@ -1,0 +1,5 @@
+{
+	"@type": "Subset",
+	"Name": "KTV",
+	"Expression": "{EXCEPT({DRILLDOWNMEMBER({DRILLDOWNMEMBER({DRILLDOWNMEMBER({[Source Product].[Source Product].[K\u00e1bel TV]}, {[Source Product].[Source Product].[K\u00e1bel TV]})}, {[Source Product].[Source Product].[K\u00e1bel TV Lakoss\u00e1gi]})}, {[Source Product].[Source Product].[K\u00e1bel TV Nagyker]})},{[Source Product].[Source Product].[K\u00e1bel TV],[Source Product].[Source Product].[K\u00e1bel TV Lakoss\u00e1gi],[Source Product].[Source Product].[K\u00e1bel TV Nagyker]})}"
+}

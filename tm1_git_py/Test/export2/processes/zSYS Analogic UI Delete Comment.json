@@ -1,0 +1,30 @@
+{
+	"@type": "Process",
+	"Name": "zSYS Analogic UI Delete Comment",
+	"HasSecurityAccess": false,
+	"Code@Code.link": "zSYS Analogic UI Delete Comment.ti",
+	"DataSource": {
+		"Type": "None"
+	},
+	"Parameters": [
+		{
+			"Name": "pCommentID",
+			"Prompt": "REQUIRED:comment id",
+			"Value": "Process text test",
+			"Type": "String"
+		},
+		{
+			"Name": "pCube",
+			"Prompt": "REQUIRED: cube to comment",
+			"Value": "",
+			"Type": "String"
+		},
+		{
+			"Name": "pDimFilter",
+			"Prompt": "REQUIRED: coma separated dim list Like Dim1, Dim2, ..Dimn",
+			"Value": "Product, Version, Period, Weight and limit",
+			"Type": "String"
+		}
+	],
+	"Variables": []
+}

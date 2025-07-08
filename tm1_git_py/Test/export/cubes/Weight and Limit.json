@@ -1,0 +1,25 @@
+{
+	"@type": "Cube",
+	"Name": "Weight and Limit",
+	"Dimensions": [
+		{
+			"@id": "Dimensions('Version')"
+		},
+		{
+			"@id": "Dimensions('Period')"
+		},
+		{
+			"@id": "Dimensions('Product')"
+		},
+		{
+			"@id": "Dimensions('Weight and limit')"
+		},
+		{
+			"@id": "Dimensions('Weight and limit measure')"
+		}
+	],
+	"Rules@Code.link": "Weight and Limit.rules",
+	"Views@Code.links": [
+		"Weight and Limit.views/MOdyTeszt.json"
+	]
+}

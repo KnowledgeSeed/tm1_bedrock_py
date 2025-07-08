@@ -1,0 +1,8 @@
+{
+	"@type": "Dimension",
+	"Name": "zSYS Maintenance Cube Dimension Mapping Measure",
+	"Hierarchies@Code.links": [
+		"zSYS Maintenance Cube Dimension Mapping Measure.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE29AC560>.json"
+	],
+	"DefaultHierarchy": "Dimensions('zSYS Maintenance Cube Dimension Mapping Measure')/Hierarchies('zSYS Maintenance Cube Dimension Mapping Measure')"
+}

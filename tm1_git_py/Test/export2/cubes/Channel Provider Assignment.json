@@ -1,0 +1,23 @@
+{
+	"@type": "Cube",
+	"Name": "Channel Provider Assignment",
+	"Dimensions": [
+		{
+			"@id": "Dimensions('Version')"
+		},
+		{
+			"@id": "Dimensions('Period')"
+		},
+		{
+			"@id": "Dimensions('Channel')"
+		},
+		{
+			"@id": "Dimensions('Provider')"
+		},
+		{
+			"@id": "Dimensions('Channel Provider Assignment Measure')"
+		}
+	],
+	"Rules@Code.link": "Channel Provider Assignment.rules",
+	"Views@Code.links": []
+}
