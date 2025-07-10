@@ -19,6 +19,13 @@ from model.model import Model
     
 #     model.cubes = final_kept_cubes
 
+def import_filter(path: str) -> List[str]:
+    rules_path = path
+    filter_rules = []
+    with open(rules_path, 'r', encoding='utf-8') as f:
+        filter_rules = [line.strip() for line in f if line.strip() and not line.strip().startswith('#')]
+    return filter_rules
+
 
 def filter(model: Model, filter_rules: List[str]) -> Model:
     if not filter_rules:

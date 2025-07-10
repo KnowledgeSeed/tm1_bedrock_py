@@ -20,7 +20,7 @@ from comparator import Comparator, compare
 from changeset import Changeset, export_changeset
 
 from model.ti import TI
-from tm1_git_py.exporter import export
+from exporter import export
 from filter import filter, import_filter
 
 def tm1_connection() -> TM1Service:
@@ -37,7 +37,7 @@ def tm1_connection() -> TM1Service:
     return tm1
 
 
-filter_rules: List[str] = import_filter('tm1_git_py/Test/filter.txt')
+filter_rules: List[str] = import_filter('tm1_git_py/tests/filter.txt')
 _model, _errors = export(tm1_conn=tm1_connection())
 
 _model_filtered = filter(_model, filter_rules=filter_rules)
