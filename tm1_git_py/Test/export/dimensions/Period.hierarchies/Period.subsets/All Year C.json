@@ -1,5 +1,0 @@
-{
-	"@type": "Subset",
-	"Name": "All Year C",
-	"Expression": "{\rTM1FilterByLevel({\rTM1DrillDownMember({\r[Period].[Period].[All Period]\r},\rALL,\rRECURSIVE)\r},\r1)\r}"
-}

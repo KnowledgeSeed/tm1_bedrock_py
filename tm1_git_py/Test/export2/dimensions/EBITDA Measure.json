@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "EBITDA Measure",
-	"Hierarchies@Code.links": [
-		"EBITDA Measure.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1C9CAA0>.json"
-	],
-	"DefaultHierarchy": "Dimensions('EBITDA Measure')/Hierarchies('EBITDA Measure')"
-}

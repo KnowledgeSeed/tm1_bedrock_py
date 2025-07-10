@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "Taxes",
-	"Hierarchies@Code.links": [
-		"Taxes.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE2620290>.json"
-	],
-	"DefaultHierarchy": "Dimensions('Taxes')/Hierarchies('Taxes')"
-}

@@ -20,7 +20,7 @@ from comparator import Comparator, compare
 from changeset import Changeset, export_changeset
 
 from model.ti import TI
-from tm1_git_py.model_exporter import export
+from tm1_git_py.exporter import export
 from filter import filter, import_filter
 
 def tm1_connection() -> TM1Service:

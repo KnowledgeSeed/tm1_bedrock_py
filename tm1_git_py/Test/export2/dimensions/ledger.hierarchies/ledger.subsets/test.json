@@ -1,5 +1,0 @@
-{
-	"@type": "Subset",
-	"Name": "test",
-	"Expression": "{[ledger].[ledger].Members}"
-}

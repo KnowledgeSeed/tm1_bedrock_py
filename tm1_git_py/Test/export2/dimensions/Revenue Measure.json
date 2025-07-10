@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "Revenue Measure",
-	"Hierarchies@Code.links": [
-		"Revenue Measure.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1F3B890>.json"
-	],
-	"DefaultHierarchy": "Dimensions('Revenue Measure')/Hierarchies('Revenue Measure')"
-}

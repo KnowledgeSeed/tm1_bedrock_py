@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "Planning Parameters",
-	"Hierarchies@Code.links": [
-		"Planning Parameters.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1C14680>.json"
-	],
-	"DefaultHierarchy": "Dimensions('Planning Parameters')/Hierarchies('Planning Parameters')"
-}

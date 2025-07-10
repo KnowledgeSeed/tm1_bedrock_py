@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "Erkim Measure",
-	"Hierarchies@Code.links": [
-		"Erkim Measure.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1EBB770>.json"
-	],
-	"DefaultHierarchy": "Dimensions('Erkim Measure')/Hierarchies('Erkim Measure')"
-}

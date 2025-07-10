@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "Ecosoft ID",
-	"Hierarchies@Code.links": [
-		"Ecosoft ID.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE20BBAA0>.json"
-	],
-	"DefaultHierarchy": "Dimensions('Ecosoft ID')/Hierarchies('Ecosoft ID')"
-}

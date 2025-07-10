@@ -1,5 +1,0 @@
-{
-	"@type": "Subset",
-	"Name": "Depreciation Import",
-	"Expression": "{\rEXCEPT({\rTM1DRILLDOWNMEMBER({\r[ledger].[ledger].[\u00c9rt\u00e9kcs\u00f6kken\u00e9si le\u00edr\u00e1s]\r}, ALL, RECURSIVE)\r},{\r[ledger].[ledger].[\u00c9rt\u00e9kcs\u00f6kken\u00e9si le\u00edr\u00e1s]\r})\r}"
-}

@@ -1,5 +1,0 @@
-{
-	"@type": "Subset",
-	"Name": "pivot",
-	"Expression": "{[Erkim Measure].[Erkim Measure].[Value]}"
-}

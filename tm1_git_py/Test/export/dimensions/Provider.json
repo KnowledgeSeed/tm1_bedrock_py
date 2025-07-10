@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "Provider",
-	"Hierarchies@Code.links": [
-		"Provider.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1F3BD40>.json"
-	],
-	"DefaultHierarchy": "Dimensions('Provider')/Hierarchies('Provider')"
-}

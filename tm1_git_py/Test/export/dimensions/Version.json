@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "Version",
-	"Hierarchies@Code.links": [
-		"Version.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE2372210>.json"
-	],
-	"DefaultHierarchy": "Dimensions('Version')/Hierarchies('Version')"
-}

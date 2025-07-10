@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "Other Cost Measure",
-	"Hierarchies@Code.links": [
-		"Other Cost Measure.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1EF8890>.json"
-	],
-	"DefaultHierarchy": "Dimensions('Other Cost Measure')/Hierarchies('Other Cost Measure')"
-}

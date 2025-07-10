@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "Channel Csoportos Flat Assignment Measure",
-	"Hierarchies@Code.links": [
-		"Channel Csoportos Flat Assignment Measure.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1BF9E50>.json"
-	],
-	"DefaultHierarchy": "Dimensions('Channel Csoportos Flat Assignment Measure')/Hierarchies('Channel Csoportos Flat Assignment Measure')"
-}

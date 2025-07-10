@@ -1,5 +1,0 @@
-{
-	"@type": "Subset",
-	"Name": "AllNCsoportosFlatSubset",
-	"Expression": "{\tTM1FILTERBYLEVEL({\t\tTM1DRILLDOWNMEMBER({\t\t\t[Csoportos Flat].[Csoportos Flat].[Csoportos Flat Total]\t\t}, ALL, RECURSIVE)\t}, 0)}"
-}

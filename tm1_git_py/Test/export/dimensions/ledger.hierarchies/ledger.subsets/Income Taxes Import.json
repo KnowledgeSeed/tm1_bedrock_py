@@ -1,5 +1,0 @@
-{
-	"@type": "Subset",
-	"Name": "Income Taxes Import",
-	"Expression": "{EXCEPT({TM1DRILLDOWNMEMBER({[ledger].[ledger].[J\u00f6vedelem ad\u00f3k Alcsoport]}, ALL, RECURSIVE)},{[ledger].[ledger].[J\u00f6vedelem ad\u00f3k Alcsoport]})}"
-}

@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "zSYS Analogic UI Color Code Measure",
-	"Hierarchies@Code.links": [
-		"zSYS Analogic UI Color Code Measure.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE28947A0>.json"
-	],
-	"DefaultHierarchy": "Dimensions('zSYS Analogic UI Color Code Measure')/Hierarchies('zSYS Analogic UI Color Code Measure')"
-}

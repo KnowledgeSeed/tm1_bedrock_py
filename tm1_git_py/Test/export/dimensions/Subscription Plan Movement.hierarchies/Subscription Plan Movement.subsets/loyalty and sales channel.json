@@ -1,5 +1,0 @@
-{
-	"@type": "Subset",
-	"Name": "loyalty and sales channel",
-	"Expression": "{[Subscription Plan Movement].[Subscription Plan Movement].[Migration increase^Retainer increase],[Subscription Plan Movement].[Subscription Plan Movement].[Migration increase^Upward migration increase],[Subscription Plan Movement].[Subscription Plan Movement].[Migration increase^Downward migration increase],[Subscription Plan Movement].[Subscription Plan Movement].[Contracts total^Loyalty extension increase],[Subscription Plan Movement].[Subscription Plan Movement].[Contracts total^New increase],[Subscription Plan Movement].[Subscription Plan Movement].[Total decrease^Terminated decrease],[Subscription Plan Movement].[Subscription Plan Movement].[Total increase^New increase],[Subscription Plan Movement].[Subscription Plan Movement].[Terminated increase]}"
-}

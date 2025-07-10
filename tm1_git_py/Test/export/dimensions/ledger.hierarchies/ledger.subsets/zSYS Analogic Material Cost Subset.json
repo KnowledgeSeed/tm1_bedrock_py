@@ -1,5 +1,0 @@
-{
-	"@type": "Subset",
-	"Name": "zSYS Analogic Material Cost Subset",
-	"Expression": "{EXCEPT({TM1DRILLDOWNMEMBER({[ledger].[ledger].[Anyagk\u00f6lts\u00e9g]}, ALL, RECURSIVE)},{[ledger].[ledger].[Anyagk\u00f6lts\u00e9g]})}"
-}

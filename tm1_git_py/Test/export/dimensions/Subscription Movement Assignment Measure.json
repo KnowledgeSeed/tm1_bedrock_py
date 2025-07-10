@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "Subscription Movement Assignment Measure",
-	"Hierarchies@Code.links": [
-		"Subscription Movement Assignment Measure.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE2382390>.json"
-	],
-	"DefaultHierarchy": "Dimensions('Subscription Movement Assignment Measure')/Hierarchies('Subscription Movement Assignment Measure')"
-}

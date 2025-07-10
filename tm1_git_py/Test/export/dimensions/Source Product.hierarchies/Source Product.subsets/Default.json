@@ -1,5 +1,0 @@
-{
-	"@type": "Subset",
-	"Name": "Default",
-	"Expression": "{DRILLUPMEMBER({DRILLUPMEMBER({DRILLUPMEMBER({DRILLUPMEMBER({DRILLUPMEMBER({DRILLUPMEMBER({DRILLUPMEMBER({DRILLUPMEMBER({DRILLUPMEMBER({DRILLUPMEMBER({DRILLUPMEMBER({[Source Product].[Source Product].Members}, {[Source Product].[Source Product].[Total Products]})}, {[Source Product].[Source Product].[Internet Total]})}, {[Source Product].[Source Product].[KTV Alapterm\u00e9k Total]})}, {[Source Product].[Source Product].[Telefon Total]})}, {[Source Product].[Source Product].[KTV kieg\u00e9sz\u00edt\u0151 Total]})}, {[Source Product].[Source Product].[DSL Total]})}, {[Source Product].[Source Product].[Eszk\u00f6zb\u00e9rlet Total]})}, {[Source Product].[Source Product].[Nagyker Total]})}, {[Source Product].[Source Product].[\u00dczleti Total]})}, {[Source Product].[Source Product].[OTT Total]})}, {[Source Product].[Source Product].[Egy\u00e9b Total]})}"
-}

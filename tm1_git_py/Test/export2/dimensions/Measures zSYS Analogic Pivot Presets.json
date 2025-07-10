@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "Measures zSYS Analogic Pivot Presets",
-	"Hierarchies@Code.links": [
-		"Measures zSYS Analogic Pivot Presets.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1EF97C0>.json"
-	],
-	"DefaultHierarchy": "Dimensions('Measures zSYS Analogic Pivot Presets')/Hierarchies('Measures zSYS Analogic Pivot Presets')"
-}

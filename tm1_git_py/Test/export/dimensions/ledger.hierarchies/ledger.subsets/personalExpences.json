@@ -1,5 +1,0 @@
-{
-	"@type": "Subset",
-	"Name": "personalExpences",
-	"Expression": "{EXCEPT({TM1DRILLDOWNMEMBER({[ledger].[ledger].[Szem\u00e9lyi jellegu k\u00f6lts\u00e9gek AST n\u00e9lk\u00fcl]}, ALL, RECURSIVE)},{[ledger].[ledger].[Szem\u00e9lyi jellegu k\u00f6lts\u00e9gek AST n\u00e9lk\u00fcl]})}"
-}

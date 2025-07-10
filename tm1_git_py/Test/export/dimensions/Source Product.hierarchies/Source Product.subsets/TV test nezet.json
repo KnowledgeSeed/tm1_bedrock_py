@@ -1,5 +1,0 @@
-{
-	"@type": "Subset",
-	"Name": "TV test nezet",
-	"Expression": "{[Source Product].[Source Product].[1542],[Source Product].[Source Product].[1541],[Source Product].[Source Product].[1540],[Source Product].[Source Product].[1476],[Source Product].[Source Product].[1418],[Source Product].[Source Product].[Cable Television New]}"
-}

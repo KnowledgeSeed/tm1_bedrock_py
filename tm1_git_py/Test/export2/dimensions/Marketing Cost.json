@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "Marketing Cost",
-	"Hierarchies@Code.links": [
-		"Marketing Cost.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1EFAC00>.json"
-	],
-	"DefaultHierarchy": "Dimensions('Marketing Cost')/Hierarchies('Marketing Cost')"
-}

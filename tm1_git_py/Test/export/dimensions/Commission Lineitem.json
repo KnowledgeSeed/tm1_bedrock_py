@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "Commission Lineitem",
-	"Hierarchies@Code.links": [
-		"Commission Lineitem.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1C6E870>.json"
-	],
-	"DefaultHierarchy": "Dimensions('Commission Lineitem')/Hierarchies('Commission Lineitem')"
-}

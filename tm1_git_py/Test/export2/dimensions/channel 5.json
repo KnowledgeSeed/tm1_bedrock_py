@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "channel 5",
-	"Hierarchies@Code.links": [
-		"channel 5.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1C15BB0>.json"
-	],
-	"DefaultHierarchy": "Dimensions('channel 5')/Hierarchies('channel 5')"
-}

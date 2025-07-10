@@ -1,2 +1,0 @@
-['analogicAdminUserBoxAppList','sValue']=S:
-Attrs('zSYS Analogic Framework Application List',STR(DB('zSYS Analogic UI User Data','analogicAdminUserBoxAppList',!}Clients,'nValue'),1,0),'CaptionDefault');

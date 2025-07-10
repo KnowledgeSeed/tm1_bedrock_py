@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "zSYS Maintenance Parameter",
-	"Hierarchies@Code.links": [
-		"zSYS Maintenance Parameter.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE29A6DE0>.json"
-	],
-	"DefaultHierarchy": "Dimensions('zSYS Maintenance Parameter')/Hierarchies('zSYS Maintenance Parameter')"
-}

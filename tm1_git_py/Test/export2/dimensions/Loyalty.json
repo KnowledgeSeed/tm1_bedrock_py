@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "Loyalty",
-	"Hierarchies@Code.links": [
-		"Loyalty.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1F10B90>.json"
-	],
-	"DefaultHierarchy": "Dimensions('Loyalty')/Hierarchies('Loyalty')"
-}

@@ -1,5 +1,0 @@
-{
-	"@type": "Subset",
-	"Name": "Default",
-	"Expression": "{[Channel].[Channel].[Channel Cost Total],[Channel].[Channel].[Channel List Total],[Channel].[Channel].[CS.FL List Total]}"
-}

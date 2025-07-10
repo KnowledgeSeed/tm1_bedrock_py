@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "Planning Driver Measure",
-	"Hierarchies@Code.links": [
-		"Planning Driver Measure.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE213F500>.json"
-	],
-	"DefaultHierarchy": "Dimensions('Planning Driver Measure')/Hierarchies('Planning Driver Measure')"
-}

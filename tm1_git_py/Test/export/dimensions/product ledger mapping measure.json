@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "product ledger mapping measure",
-	"Hierarchies@Code.links": [
-		"product ledger mapping measure.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1EC9CD0>.json"
-	],
-	"DefaultHierarchy": "Dimensions('product ledger mapping measure')/Hierarchies('product ledger mapping measure')"
-}

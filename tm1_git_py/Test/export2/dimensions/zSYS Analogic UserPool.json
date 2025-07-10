@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "zSYS Analogic UserPool",
-	"Hierarchies@Code.links": [
-		"zSYS Analogic UserPool.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE29A5BB0>.json"
-	],
-	"DefaultHierarchy": "Dimensions('zSYS Analogic UserPool')/Hierarchies('zSYS Analogic UserPool')"
-}

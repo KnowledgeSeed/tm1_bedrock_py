@@ -1,5 +1,0 @@
-{
-	"@type": "Subset",
-	"Name": "All N Level Element",
-	"Expression": "{TM1FILTERBYLEVEL( {TM1SUBSETALL( [Period] )}, 0)}"
-}

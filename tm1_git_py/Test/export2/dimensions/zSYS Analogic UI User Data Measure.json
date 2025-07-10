@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "zSYS Analogic UI User Data Measure",
-	"Hierarchies@Code.links": [
-		"zSYS Analogic UI User Data Measure.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE2833920>.json"
-	],
-	"DefaultHierarchy": "Dimensions('zSYS Analogic UI User Data Measure')/Hierarchies('zSYS Analogic UI User Data Measure')"
-}

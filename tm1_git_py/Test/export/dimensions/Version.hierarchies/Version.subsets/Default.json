@@ -1,5 +1,0 @@
-{
-	"@type": "Subset",
-	"Name": "Default",
-	"Expression": "{[Version].[Version].[Base]}"
-}

@@ -1,5 +1,0 @@
-{
-	"@type": "Subset",
-	"Name": "Other Revenue Import",
-	"Expression": "{\rEXCEPT(    {\rTM1DRILLDOWNMEMBER({\r\r    [ledger].[ledger].[VII. Egy\u00e9b bev\u00e9telek]\r    \r}, ALL)\r},{\r[ledger].[ledger].[VII. Egy\u00e9b bev\u00e9telek]\r})\r}"
-}

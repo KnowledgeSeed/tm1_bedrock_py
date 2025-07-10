@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "Subscription Topdown Measure",
-	"Hierarchies@Code.links": [
-		"Subscription Topdown Measure.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE22104A0>.json"
-	],
-	"DefaultHierarchy": "Dimensions('Subscription Topdown Measure')/Hierarchies('Subscription Topdown Measure')"
-}

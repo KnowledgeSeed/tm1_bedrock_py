@@ -1,5 +1,0 @@
-{
-	"@type": "Subset",
-	"Name": "All N Level Product Subset",
-	"Expression": "{{[Product].[Product].[Total Products]},TM1FILTERBYLEVEL(TM1DRILLDOWNMEMBER({[Product].[Product].[Total Products]}, ALL, RECURSIVE),0)}"
-}

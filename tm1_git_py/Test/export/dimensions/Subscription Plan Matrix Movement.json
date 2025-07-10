@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "Subscription Plan Matrix Movement",
-	"Hierarchies@Code.links": [
-		"Subscription Plan Matrix Movement.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE21E2F90>.json"
-	],
-	"DefaultHierarchy": "Dimensions('Subscription Plan Matrix Movement')/Hierarchies('Subscription Plan Matrix Movement')"
-}

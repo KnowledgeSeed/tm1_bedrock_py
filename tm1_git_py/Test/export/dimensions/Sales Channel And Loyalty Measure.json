@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "Sales Channel And Loyalty Measure",
-	"Hierarchies@Code.links": [
-		"Sales Channel And Loyalty Measure.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1ED33B0>.json"
-	],
-	"DefaultHierarchy": "Dimensions('Sales Channel And Loyalty Measure')/Hierarchies('Sales Channel And Loyalty Measure')"
-}

@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "Capex Measure",
-	"Hierarchies@Code.links": [
-		"Capex Measure.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1774890>.json"
-	],
-	"DefaultHierarchy": "Dimensions('Capex Measure')/Hierarchies('Capex Measure')"
-}

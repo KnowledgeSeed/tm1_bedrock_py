@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "Currency",
-	"Hierarchies@Code.links": [
-		"Currency.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1C4E1E0>.json"
-	],
-	"DefaultHierarchy": "Dimensions('Currency')/Hierarchies('Currency')"
-}

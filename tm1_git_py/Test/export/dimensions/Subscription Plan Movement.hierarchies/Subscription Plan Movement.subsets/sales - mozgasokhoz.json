@@ -1,5 +1,0 @@
-{
-	"@type": "Subset",
-	"Name": "sales - mozgasokhoz",
-	"Expression": "{[Subscription Plan Movement].[Subscription Plan Movement].[Opening],[Subscription Plan Movement].[Subscription Plan Movement].[Contracts total],[Subscription Plan Movement].[Subscription Plan Movement].[Net change],[Subscription Plan Movement].[Subscription Plan Movement].[Retainer],[Subscription Plan Movement].[Subscription Plan Movement].[Upward migration],[Subscription Plan Movement].[Subscription Plan Movement].[Downward migration],[Subscription Plan Movement].[Subscription Plan Movement].[Loyalty extension],[Subscription Plan Movement].[Subscription Plan Movement].[New increase],[Subscription Plan Movement].[Subscription Plan Movement].[Terminated decrease]}"
-}

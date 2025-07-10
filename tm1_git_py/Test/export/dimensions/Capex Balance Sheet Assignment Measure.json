@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "Capex Balance Sheet Assignment Measure",
-	"Hierarchies@Code.links": [
-		"Capex Balance Sheet Assignment Measure.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1796EA0>.json"
-	],
-	"DefaultHierarchy": "Dimensions('Capex Balance Sheet Assignment Measure')/Hierarchies('Capex Balance Sheet Assignment Measure')"
-}

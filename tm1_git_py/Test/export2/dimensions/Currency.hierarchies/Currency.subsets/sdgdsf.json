@@ -1,5 +1,0 @@
-{
-	"@type": "Subset",
-	"Name": "sdgdsf",
-	"Expression": "{[Currency].[Currency].Members}"
-}

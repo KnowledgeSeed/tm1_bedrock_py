@@ -1,5 +1,0 @@
-{
-	"@type": "Subset",
-	"Name": "all N element",
-	"Expression": "{[Subscription Plan Movement].[Subscription Plan Movement].[megtart\u00f3 n\u00f6veked\u00e9s],[Subscription Plan Movement].[Subscription Plan Movement].[megtart\u00f3 cs\u00f6kken\u00e9s],[Subscription Plan Movement].[Subscription Plan Movement].[felfel\u00e9 n\u00f6veked\u00e9s],[Subscription Plan Movement].[Subscription Plan Movement].[felfel\u00e9 cs\u00f6kken\u00e9s],[Subscription Plan Movement].[Subscription Plan Movement].[lefel\u00e9 migr\u00e1ci\u00f3 n\u00f6veked\u00e9s],[Subscription Plan Movement].[Subscription Plan Movement].[lefel\u00e9 migr\u00e1ci\u00f3 cs\u00f6kken\u00e9s],[Subscription Plan Movement].[Subscription Plan Movement].[h\u0171s\u00e9ghosszab\u00edt\u00e1s n\u00f6veked\u00e9s],[Subscription Plan Movement].[Subscription Plan Movement].[h\u0171s\u00e9ghosszab\u00edt\u00e1s cs\u00f6kken\u00e9s],[Subscription Plan Movement].[Subscription Plan Movement].[\u00faj],[Subscription Plan Movement].[Subscription Plan Movement].[felmondott]}"
-}

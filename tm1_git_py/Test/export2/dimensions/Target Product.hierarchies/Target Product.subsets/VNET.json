@@ -1,5 +1,0 @@
-{
-	"@type": "Subset",
-	"Name": "VNET",
-	"Expression": "{[Target Product].[Target Product].[VNET 100],[Target Product].[Target Product].[VNET 200],[Target Product].[Target Product].[VNET 300],[Target Product].[Target Product].[VNET 400],[Target Product].[Target Product].[VNET 500],[Target Product].[Target Product].[VNET 600],[Target Product].[Target Product].[VNET 700]}"
-}

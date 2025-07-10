@@ -1,8 +1,0 @@
-{
-	"@type": "Dimension",
-	"Name": "Direct Cost Lineitem",
-	"Hierarchies@Code.links": [
-		"Direct Cost Lineitem.hierarchies/<model.hierarchy.Hierarchy object at 0x0000026AE1C4E960>.json"
-	],
-	"DefaultHierarchy": "Dimensions('Direct Cost Lineitem')/Hierarchies('Direct Cost Lineitem')"
-}
