@@ -33,7 +33,7 @@ def tm1_connection() -> TM1Service:
     return tm1
 
 
-def tm1_to_model(tm1_conn: TM1Service) -> tuple[Model, Dict[str, str]]:
+def export(tm1_conn: TM1Service) -> tuple[Model, Dict[str, str]]:
 
     _dimensions, _dim_errors = dimensions_to_model(tm1_conn)
 
@@ -46,7 +46,8 @@ def tm1_to_model(tm1_conn: TM1Service) -> tuple[Model, Dict[str, str]]:
     _model = Model(cubes=_cubes.values(),
                    dimensions=_dimensions.values(),
                    processes=_processes.values(),
-                   chores=_chores.values())
+                   chores=_chores.values(),
+                   server_configs=server_configs_to_model(tm1_conn))
 
     _errors = {}
     _errors['dim'] = _dim_errors
@@ -88,7 +89,7 @@ def procs_to_model(tm1_conn) -> tuple[Dict[str, Process], Dict[str, str]]:
     _processes: Dict[str, Process] = {}
     _errors: Dict[str, str] = {}
 
-    for process_name in regular_procs:
+    for process_name in all_procs:
         process = tm1_conn.processes.get(name_process=process_name)
 
         _ti = TI(prolog_procedure=process.prolog_procedure,
@@ -112,7 +113,7 @@ def cubes_to_model(tm1_conn, _dimensions: Dict[str, Dimension]) -> tuple[Dict[st
     _cubes: Dict[str, Cube] = {}
     _errors: Dict[str, str] = {}
 
-    for cube_name in regular_cubes:
+    for cube_name in all_cubes:
         cube = tm1_conn.cubes.get(cube_name=cube_name)
 
         _cube = Cube(name=cube_name, dimensions=[],
@@ -143,7 +144,7 @@ def dimensions_to_model(tm1_conn) -> tuple[Dict[str, Dimension], Dict[str, str]]
 
     _errors: Dict[str, str] = {}
     _dimensions: Dict[str, Dimension] = {}
-    for dim_name in regular_dims:
+    for dim_name in all_dims:
         dim = tm1_conn.dimensions.get(dimension_name=dim_name)
 
         _dimension = Dimension(name=dim.name, hierarchies=[],
@@ -174,3 +175,7 @@ def dimensions_to_model(tm1_conn) -> tuple[Dict[str, Dimension], Dict[str, str]]
                     except Exception as e:
                         _errors[dim_name] = str(e)
     return _dimensions, _errors
+
+def server_configs_to_model(tm1_conn: TM1Service) -> Dict:
+    configs = tm1_conn.configuration.get_active()
+    return configs
