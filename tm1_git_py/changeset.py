@@ -39,22 +39,28 @@ class Changeset:
 
     def __repr__(self):
         changes = []
-        if self.added_cubes: changes.append(f"Added Cubes: {[c.name for c in self.added_cubes]}")
-        if self.removed_cubes: changes.append(f"Removed Cubes: {self.removed_cubes}")
-        if self.modified_cubes: changes.append(f"Modified Cubes: {[c['new'].name for c in self.modified_cubes]}")
 
-        if self.added_dimensions: changes.append(f"Added Dimensions: {[d.name for d in self.added_dimensions]}")
-        if self.removed_dimensions: changes.append(f"Removed Dimensions: {self.removed_dimensions}")
-        if self.modified_dimensions: changes.append(f"Modified Dimensions: {[d['new'].name for d in self.modified_dimensions]}")
+        # if self.added_cubes: changes.append(f"Added Cubes: {[c.as_link for c in self.added_cubes]}")
+        if self.added_cubes: changes.extend([f"C " + c.as_link for c in self.added_cubes])
+        if self.removed_cubes: changes.extend([f"D " + Cube.as_link(c) for c in self.removed_cubes])
+        if self.modified_cubes: changes.extend([f"M " + c.as_link for c in self.modified_cube])
 
-        if self.added_processes: changes.append(f"Added Processes: {[p.name for p in self.added_processes]}")
-        if self.removed_processes: changes.append(f"Removed Processes: {self.removed_processes}")
-        if self.modified_processes: changes.append(f"Modified Processes: {[p['new'].name for p in self.modified_processes]}")
+        if self.added_dimensions: changes.extend([f"C " + c.as_link for c in self.added_dimensions])
+        if self.removed_dimensions: changes.extend([f"D " + Dimension.as_link(c) for c in self.removed_dimensions])
+        if self.modified_dimensions: changes.extend([f"M " + c.as_link for c in self.modified_dimensions])
 
-        if self.added_chores: changes.append(f"Added Chores: {[c.name for c in self.added_chores]}")
-        if self.removed_chores: changes.append(f"Removed Chores: {self.removed_chores}")
-        if self.modified_chores: changes.append(f"Modified Chores: {[c['new'].name for c in self.modified_chores]}")
+        if self.added_processes: changes.extend([f"C " + c.as_link for c in self.added_processes])
+        if self.removed_processes: changes.extend([f"D " + Process.as_link(c) for c in self.removed_processes])
+        if self.modified_processes: changes.extend([f"M " + c.as_link for c in self.modified_processes])
+
+        if self.added_chores: changes.extend([f"C " + c.as_link for c in self.added_chores])
+        if self.removed_chores: changes.extend([f"D " + Chore.as_link(c) for c in self.removed_chores])
+        if self.modified_chores: changes.extend([f"M " + c.as_link for c in self.modified_chores])
 
         if not changes:
             return "No changes"
         return "Changeset:\n" + "\n".join(changes)
+    
+def export_changeset(path:str, changeset: Changeset ):
+    with open(path, "w") as out:  
+            out.writelines(changeset.__repr__()) 

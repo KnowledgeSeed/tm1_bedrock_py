@@ -16,12 +16,12 @@ class Edge:
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Edge):
             return NotImplemented
-        return self.parent == other.parent and \
-               self.child == other.child and \
+        return self.parentName == other.parentName and \
+               self.componentName == other.componentName and \
                self.weight == other.weight
 
     def __hash__(self) -> int:
-        return hash((self.parent, self.child, self.weight))
+        return hash((self.parentName, self.componentName, self.weight))
     
     def to_dict(self):
         return {
