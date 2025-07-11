@@ -5,6 +5,7 @@ from model.chore import Chore
 from model.cube import Cube
 from model.dimension import Dimension
 from model.process import Process
+from itertools import chain
 
 
 class Model:
@@ -22,3 +23,11 @@ class Model:
             'processes': [p.to_dict() for p in self.processes],
             'chores': [c.to_dict() for c in self.chores]
         }
+
+    def get_all_objects_with_paths(self) -> dict:
+        all_objects = {}
+        for item in chain(self.cubes, self.dimensions, self.processes, self.chores):
+            if hasattr(item, 'source_path'):
+                normalized_path = item.source_path.replace('\\', '/')
+                all_objects[normalized_path] = item
+        return all_objects

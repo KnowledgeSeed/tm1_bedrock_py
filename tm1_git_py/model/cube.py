@@ -38,12 +38,13 @@ from TM1py.Utils import format_url
 # 	]
 # }
 class Cube:
-    def __init__(self, name, dimensions : List[Dimension], rule, views : List[MDXView]):
+    def __init__(self, name, dimensions : List[Dimension], rule, views : List[MDXView], source_path: str):
         self.type = 'Cube'
         self.name = name
         self.dimensions = dimensions
         self.rule = rule
         self.views = views
+        self.source_path = source_path
 
     def as_json(self):
         return json.dumps({

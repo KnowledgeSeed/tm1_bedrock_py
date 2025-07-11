@@ -13,10 +13,11 @@ from TM1_bedrock_py.utility import __get_dimensions_from_set_mdx_list
 
 
 class Subset:
-    def __init__(self, name, expression):
+    def __init__(self, name, expression, source_path: str):
         self.type = 'Subset'
         self.name = name
         self.expression = expression
+        self.source_path = source_path
 
     def as_json(self):
         return json.dumps({

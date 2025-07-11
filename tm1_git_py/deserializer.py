@@ -40,7 +40,7 @@ def deserialize_model(dir) -> Model:
 
 def deserialize_chores(chore_dir) -> tuple[Dict[str, Chore], Dict[str, str]]:
 
-    chores: Dict[str, Process] = {}
+    chores: Dict[str, Chore] = {}
     chores_errors: Dict[str, str] = {}
 
     files = directory_to_dict(chore_dir)
@@ -63,6 +63,7 @@ def deserialize_chores(chore_dir) -> tuple[Dict[str, Chore], Dict[str, str]]:
                 continue
         
         try:
+            relative_path = os.path.join('chores', file_name).replace('\\', '/')
             _chore = Chore(
                 name=chore_json['Name'],
                 start_time=chore_json['StartTime'],
@@ -70,7 +71,8 @@ def deserialize_chores(chore_dir) -> tuple[Dict[str, Chore], Dict[str, str]]:
                 active=chore_json['Active'],
                 execution_mode=chore_json['ExecutionMode'],
                 frequency=chore_json['Frequency'],
-                tasks=[task for task in chore_json['Tasks']])
+                tasks=[task for task in chore_json['Tasks']],
+                source_path=relative_path)
             chores[chore_json['Name']] = _chore
         except Exception as e:
             chores_errors[chore_link] = e.__repr__()
@@ -122,9 +124,19 @@ def deserialize_processes(process_dir) -> tuple[Dict[str, Process], Dict[str, st
                 files.pop(ti_file_name, None)
             
         try:
+            relative_path = os.path.join('processes', file_name).replace('\\', '/')
+            data_source_dict = process_json.get('DataSource', {})
+
             _process = Process(
-                name=process_json['Name'], hasSecurityAccess=process_json['HasSecurityAccess'], code_link=process_json['Code@Code.link'], datasource=None,
-                parameters=process_json['Parameters'], variables=process_json['Variables'], ti=process_ti)
+                name=process_json['Name'],
+                hasSecurityAccess=process_json['HasSecurityAccess'],
+                code_link=process_json['Code@Code.link'],
+                datasource=None, #datasource=process_json.get('DataSource'), ?
+                parameters=process_json['Parameters'],
+                variables=process_json['Variables'],
+                ti=process_ti,
+                source_path=relative_path
+            )
             processes[process_json['Name']] = _process
         except Exception as e:
             process_errors[process_link] = e.__repr__()
@@ -160,7 +172,8 @@ def deserialize_dimensions(dimension_dir) -> tuple[Dict[str, Dimension], Dict[st
                 continue
 
         try:
-            _dimension = Dimension(name=dim_json['Name'], hierarchies=[], defaultHierarchy=None)
+            relative_path = os.path.join('dimensions', file_name).replace('\\', '/')
+            _dimension = Dimension(name=dim_json['Name'], hierarchies=[], defaultHierarchy=None, source_path=relative_path)
         except Exception as e:
             dimension_errors[dim_link] = e.__repr__()
             continue
@@ -190,9 +203,15 @@ def deserialize_dimensions(dimension_dir) -> tuple[Dict[str, Dimension], Dict[st
                 try:
                     data = file.read()
                     hier_json = json.loads(data)
-                    _hierarchy = Hierarchy(name=hier_json['Name'], elements=[Element(v) for v in hier_json['Elements']],
-                            edges=[Element(v) for v in hier_json['Edges']],
-                            subsets=[]) 
+                    hier_relative_path = os.path.join('dimensions', hier_dir_name, hier_file_name).replace('\\', '/')
+                    _hierarchy = Hierarchy(
+                        name=hier_json.get('Name'),
+                        elements=[Element(v) for v in hier_json.get('Elements', [])],
+                        edges=[Element(v) for v in hier_json.get('Edges', [])],
+                        subsets=[],
+                        source_path=hier_relative_path
+                    )
+
                     _dimension.hierarchies.append(_hierarchy)
                     pattern = r"Dimensions\('([^']*)'\)/Hierarchies\('([^']*)'\)"
                     match = re.search(pattern, dim_json['DefaultHierarchy'])
@@ -213,8 +232,11 @@ def deserialize_dimensions(dimension_dir) -> tuple[Dict[str, Dimension], Dict[st
                             try:
                                 data = file.read()
                                 subset_json = json.loads(data)
-                                _subset = Subset(name=subset_json['Name'],
-                                                    expression=subset_json['Expression'])
+                                subset_relative_path = os.path.join('dimensions', hier_dir_name, subset_dir_name, subset_file_name).replace('\\', '/')
+                                _subset = Subset(
+                                    name=subset_json['Name'],
+                                    expression=subset_json['Expression'],
+                                    source_path=subset_relative_path)
                                 _hierarchy.subsets.append(_subset)
                             except Exception as e:
                                 dimension_errors[subset_link] = e.__repr__()
@@ -255,23 +277,16 @@ def deserialize_cubes(cubes_dir, _dimensions: Dict[str, Dimension]) -> tuple[Dic
                 continue
 
         rule_file_name = file_name_base + '.rules'
-        if rule_file_name not in files:
-            cube_errors[cube_link] = 'rule not found'
-            continue
-            
-        with open(os.path.join(cubes_dir, rule_file_name), 'r', encoding='utf-8') as file:
-                try:
-                    rule = file.read()
-                    files.pop(rule_file_name, None)
-                except Exception as e:
-                    cube_errors[Cube.as_link(file_name_base + '.rules')] = e.__repr__()
-                    continue
-                
-        if not rule:
-            cube_errors[Cube.as_link(file_name_base + '.rules')] = 'rule cannot be parsed'
-            continue
-
-        _cube = Cube(name=cube_json['Name'], dimensions=[], rule=rule, views=[])
+        if rule_file_name in files:
+            with open(os.path.join(cubes_dir, rule_file_name), 'r', encoding='utf-8') as file:
+                    try:
+                        rule = file.read()
+                        files.pop(rule_file_name, None)
+                    except Exception as e:
+                        cube_errors[Cube.as_link(file_name_base + '.rules')] = e.__repr__()
+        
+        relative_path = os.path.join('cubes', file_name).replace('\\', '/')
+        _cube = Cube(name=cube_json['Name'], dimensions=[], rule=rule, views=[], source_path=relative_path)
 
         for dim in cube_json['Dimensions']:
             pattern = r"Dimensions\('([^']*)'\)"
@@ -316,8 +331,9 @@ def deserialize_cubes(cubes_dir, _dimensions: Dict[str, Dimension]) -> tuple[Dic
                 
                 if not mdx:
                     cube_errors[mdx_file_name] = 'mdx cannot be parsed'
-
-                _mdxview = MDXView(name=view['Name'], mdx=mdx)
+                
+                view_relative_path = os.path.join('cubes', view_dir_name, view_file_name).replace('\\', '/')
+                _mdxview = MDXView(name=view['Name'], mdx=mdx, source_path=view_relative_path)
                 _cube.views.append(_mdxview)
         cubes[_cube.name] = _cube
     return cubes, cube_errors

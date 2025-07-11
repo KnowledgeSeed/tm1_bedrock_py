@@ -38,12 +38,13 @@ from requests import Response
 
 
 class Hierarchy:
-    def __init__(self, name, elements: List[Element], edges: List[Edge], subsets: List[Subset]):
+    def __init__(self, name, elements: List[Element], edges: List[Edge], subsets: List[Subset], source_path: str):
         self.type = 'Hierarchy'
         self.name = name
         self.elements = elements
         self.edges = edges
         self.subsets = subsets
+        self.source_path = source_path
 
     def as_json(self):
         return json.dumps({

@@ -22,11 +22,12 @@ from TM1py.Utils import format_url
 # }
 
 class Dimension:
-    def __init__(self, name, hierarchies: List[Hierarchy], defaultHierarchy: Hierarchy):
+    def __init__(self, name, hierarchies: List[Hierarchy], defaultHierarchy: Hierarchy, source_path: str):
         self.type = 'Dimension'
         self.name = name
         self.hierarchies = hierarchies
         self.defaultHierarchy = defaultHierarchy
+        self.source_path = source_path
 
     def as_json(self):
         return json.dumps({

@@ -1,0 +1,9 @@
++/dimensions/*
++/processes/*
++/cubes/*
++/chores/*
+-/chores/asas.json
+-/chores/ggg.json
+-/chores/test3.json
++/chores/test3.json
+-/chores/zSYS*
