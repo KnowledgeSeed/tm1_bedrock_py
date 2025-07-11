@@ -1,10 +1,12 @@
 import json
-from typing import List, Any
+from typing import List, Any, Dict
 
 from model.edge import Edge
 from model.element import Element
 from model.subset import Subset
 from TM1py.Utils import format_url
+from TM1py import TM1Service, Hierarchy
+from requests import Response
 
 # {
 # 	"@type": "Hierarchy",
@@ -94,3 +96,55 @@ class Hierarchy:
     def as_link(dimension_name_base, name):
         # /dimensions/Dimension_A.json
         return '/dimensions/' + dimension_name_base + '.hierarchies/' + name
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Utility: interface between TM1py and tm1_git_py for CRUD operations
+# ------------------------------------------------------------------------------------------------------------
+
+def create_hierarchy(tm1_service: TM1Service, hierarchy: Hierarchy) -> Response:
+    hierarchy_object = Hierarchy(
+        name=hierarchy.name,
+        dimension_name=hierarchy.name,
+        elements=hierarchy.elements,
+        subsets=hierarchy.subsets
+    )
+
+    edges = [{(parent, component), weight} for parent, component, weight in hierarchy.edges]
+    hierarchy_object = [hierarchy_object.add_edge(edge[0], edge[1], weight) for edge, weight in edges]
+    return tm1_service.hierarchies.create(hierarchy_object)
+
+
+def update_hierarchy(tm1_service: TM1Service, hierarchy: Dict[str, Any]) -> Response:
+    hierarchy_new = hierarchy.get('new')
+    hierarchy_object_new = Hierarchy(
+        name=hierarchy_new.name,
+        dimension_name=hierarchy_new.name,
+        elements=hierarchy_new.elements,
+        subsets=hierarchy_new.subsets
+    )
+    edges = [{(parent, component), weight} for parent, component, weight in hierarchy_new.edges]
+    hierarchy_object_new = [hierarchy_object_new.add_edge(edge[0], edge[1], weight) for edge, weight in edges]
+
+    if hierarchy.get('new').name == hierarchy.get('old').name:
+        return tm1_service.hierarchies.update(hierarchy_object_new)
+    else:
+        hierarchy_old = hierarchy.get('old')
+        hierarchy_object_temp = Hierarchy(
+        name=hierarchy_new.name,
+        dimension_name=hierarchy_old.name,
+        elements=hierarchy_old.elements,
+        subsets=hierarchy_old.subsets
+    )
+        edges = [{(parent, component), weight} for parent, component, weight in hierarchy_old.edges]
+        hierarchy_object_temp = [hierarchy_object_temp.add_edge(edge[0], edge[1], weight) for edge, weight in edges]
+        response = tm1_service.hierarchies.create(hierarchy_object_temp)
+
+        if response.status_code == 200:
+            tm1_service.cubes.delete(hierarchy_old.name)
+
+        return tm1_service.hierarchies.update(hierarchy_object_new)
+
+
+def delete_hierarchy(tm1_service: TM1Service, dimension: str, hierarchy: Hierarchy) -> Response:
+    return tm1_service.hierarchies.delete(dimension, hierarchy.name)

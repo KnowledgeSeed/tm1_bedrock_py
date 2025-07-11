@@ -1,5 +1,7 @@
 import json
-from typing import Any
+from typing import Any, Dict
+from TM1py import TM1Service, Chore
+from requests import Response
 
 # {
 # 	"@type":"Chore",
@@ -67,3 +69,56 @@ class Chore:
     def as_link(name :str):
         # /chores/chore.json
         return '/chore/' + name
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Utility: interface between TM1py and tm1_git_py for CRUD operations
+# ------------------------------------------------------------------------------------------------------------
+
+def create_chore(tm1_service: TM1Service, chore: Chore) -> Response:
+    chore_object = Chore(
+        name=chore.name,
+        start_time=chore.start_time,
+        dst_sensitivity=chore.dst_sensitive,
+        active=chore.active,
+        execution_mode=chore.execution_mode,
+        frequency=chore.frequency,
+        tasks=chore.tasks
+    )
+    return tm1_service.chores.create(chore_object)
+
+
+def update_chore(tm1_service: TM1Service, chore: Dict[str, Any]) -> Response:
+    chore_new = chore.get('new')
+    chore_object_new = Chore(
+        name=chore_new.name,
+        start_time=chore_new.start_time,
+        dst_sensitivity=chore_new.dst_sensitive,
+        active=chore_new.active,
+        execution_mode=chore_new.execution_mode,
+        frequency=chore_new.frequency,
+        tasks=chore_new.tasks
+    )
+
+    if chore.get('new').name == chore.get('old').name:
+        return tm1_service.chores.update(chore_object_new)
+    else:
+        chore_old = chore.get('old')
+        chore_object_temp = Chore(
+            name=chore_new.name,
+            start_time=chore_old.start_time,
+            dst_sensitivity=chore_old.dst_sensitive,
+            active=chore_old.active,
+            execution_mode=chore_old.execution_mode,
+            frequency=chore_old.frequency,
+            tasks=chore_old.tasks
+        )
+        response = tm1_service.chores.create(chore_object_temp)
+        if response.status_code == 200:
+            tm1_service.chores.delete(chore_old.name)
+
+        return tm1_service.chores.update(chore_object_new)
+
+
+def delete_chore(tm1_service: TM1Service, chore: Chore) -> Response:
+    return tm1_service.chores.delete(chore.name)

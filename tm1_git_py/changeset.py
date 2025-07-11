@@ -1,9 +1,10 @@
 from typing import List, Dict, Any, TypeVar
 
-from model.cube import Cube
-from model.dimension import Dimension
-from model.process import Process
-from model.chore import Chore
+from model.cube import Cube, create_cube, update_cube, delete_cube
+from model.dimension import Dimension, create_dimension, update_dimension, delete_dimension
+from model.process import Process, create_process, update_process, delete_process
+from model.chore import Chore, create_chore, update_chore, delete_chore
+from TM1py import TM1Service
 
 T = TypeVar('T', Cube, Dimension, Process, Chore)
 
@@ -54,3 +55,40 @@ class Changeset:
         if not changes:
             return "No changes"
         return "Changeset:\n" + "\n".join(changes)
+
+    def apply(self, tm1_service: TM1Service) -> List[Any]:
+        changes = []
+
+        if self.has_changes():
+            if self.added_dimensions: changes.append(
+                create_dimension(tm1_service=tm1_service, dimension=d).url for d in self.added_dimensions)
+            if self.removed_dimensions: changes.append(
+                delete_dimension(tm1_service=tm1_service, dimension=d).url for d in self.removed_dimensions)
+            if self.modified_dimensions: changes.append(
+                update_dimension(tm1_service=tm1_service, dimension=d).url for d in self.modified_dimensions)
+
+            if self.added_cubes: changes.append(
+                create_cube(tm1_service=tm1_service, cube=c).url for c in self.added_cubes)
+            if self.removed_cubes: changes.append(
+                delete_cube(tm1_service=tm1_service, cube=c).url for c in self.removed_cubes)
+            if self.modified_cubes: changes.append(
+                update_cube(tm1_service=tm1_service, cube=c).url for c in self.modified_cubes)
+
+            if self.added_processes: changes.append(
+                create_process(tm1_service=tm1_service, process=p).url for p in self.added_processes)
+            if self.removed_processes: changes.append(
+                delete_process(tm1_service=tm1_service, process=p).url for p in self.removed_processes)
+            if self.modified_processes: changes.append(
+                update_process(tm1_service=tm1_service, process=p).url for p in self.modified_processes)
+
+            if self.added_chores: changes.append(
+                create_chore(tm1_service=tm1_service, chore=c).url for c in self.added_chores)
+            if self.removed_chores: changes.append(
+                delete_chore(tm1_service=tm1_service, chore=c).url for c in self.removed_chores)
+            if self.modified_chores: changes.append(
+                update_chore(tm1_service=tm1_service, chore=c).url for c in self.modified_chores)
+
+        return changes
+
+    def sort(self):
+        """sort the dependency graph to apply changes in correct order"""

@@ -1,5 +1,7 @@
 import json
-from typing import List, Any
+from typing import List, Any, Dict
+from TM1py import TM1Service, Dimension
+from requests import Response
 
 from model.element import Element
 from model.hierarchy import Hierarchy
@@ -68,3 +70,32 @@ class Dimension:
     def as_link(name):
         # /dimensions/Dimension_A.json
         return '/dimensions/' + name
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Utility: interface between TM1py and tm1_git_py for CRUD operations
+# ------------------------------------------------------------------------------------------------------------
+
+def create_dimension(tm1_service: TM1Service, dimension: Dimension) -> Response:
+    dimension_object = Dimension(dimension.name, dimension.hierarchies)
+    return tm1_service.dimensions.create(dimension_object)
+
+
+def update_dimension(tm1_service: TM1Service, dimension: Dict[str, Any]) -> Response:
+    dimension_new = dimension.get('new')
+    dimension_object_new = Dimension(name=dimension_new.name, hierarchies=dimension_new.hierarchies)
+
+    if dimension.get('new').name == dimension.get('old').name:
+        return tm1_service.dimensions.update(dimension_object_new)
+    else:
+        dimension_old = dimension.get('old')
+        dimension_object_temp = Dimension(name=dimension_new.name, hierarchies=dimension_old.hierarchies)
+        response = tm1_service.dimensions.create(dimension_object_temp)
+        if response.status_code == 200:
+            tm1_service.dimensions.delete(dimension_old.name)
+
+        return tm1_service.dimensions.update(dimension_object_new)
+
+
+def delete_dimension(tm1_service: TM1Service, dimension: Dimension) -> Response:
+    return tm1_service.dimensions.delete(dimension.name)

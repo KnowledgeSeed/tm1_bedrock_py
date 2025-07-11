@@ -1,5 +1,7 @@
 import json
-from typing import List, Any
+from typing import List, Any, Dict
+from TM1py import TM1Service, Cube
+from requests import Response
 
 from model.dimension import Dimension
 from model.element import Element
@@ -93,3 +95,32 @@ class Cube:
         # /cubes/Cube_A.json
         # /cubes/Cube_A.rules
         return '/cubes/' + name
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Utility: interface between TM1py and tm1_git_py for CRUD operations
+# ------------------------------------------------------------------------------------------------------------
+
+def create_cube(tm1_service: TM1Service, cube: Cube) -> Response:
+    cube_object = Cube(cube.name, cube.dimensions, cube.rule)
+    return tm1_service.cubes.create(cube_object)
+
+
+def update_cube(tm1_service: TM1Service, cube: Dict[str, any]) -> Response:
+    cube_new = cube.get('new')
+    cube_object_new = Cube(name=cube_new.name, dimensions=cube_new.dimensions, rules=cube_new.rule)
+
+    if cube.get('new').name == cube.get('old').name:
+        return tm1_service.cubes.update(cube_object_new)
+    else:
+        cube_old = cube.get('old')
+        cube_object_temp = Cube(name=cube_new.name, dimensions=cube_old.dimensions, rules=cube_old.rule)
+        response = tm1_service.cubes.create(cube_object_temp)
+        if response.status_code == 200:
+            tm1_service.cubes.delete(cube_old.name)
+
+        return tm1_service.cubes.update(cube_object_new)
+
+
+def delete_cube(tm1_service: TM1Service, cube: Cube) -> Response:
+    return tm1_service.cubes.delete(cube.name)
