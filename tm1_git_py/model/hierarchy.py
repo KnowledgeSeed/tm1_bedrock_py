@@ -147,5 +147,5 @@ def update_hierarchy(tm1_service: TM1Service, hierarchy: Dict[str, Any]) -> Resp
         return tm1_service.hierarchies.update(hierarchy_object_new)
 
 
-def delete_hierarchy(tm1_service: TM1Service, dimension: str, hierarchy: Hierarchy) -> Response:
-    return tm1_service.hierarchies.delete(dimension, hierarchy.name)
+def delete_hierarchy(tm1_service: TM1Service, dimension: str, hierarchy: str) -> Response:
+    return tm1_service.hierarchies.delete(dimension, hierarchy)

@@ -121,5 +121,5 @@ def update_chore(tm1_service: TM1Service, chore: Dict[str, Any]) -> Response:
         return tm1_service.chores.update(chore_object_new)
 
 
-def delete_chore(tm1_service: TM1Service, chore: Chore) -> Response:
-    return tm1_service.chores.delete(chore.name)
+def delete_chore(tm1_service: TM1Service, chore: str) -> Response:
+    return tm1_service.chores.delete(chore)

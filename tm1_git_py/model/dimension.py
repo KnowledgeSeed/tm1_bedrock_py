@@ -98,5 +98,5 @@ def update_dimension(tm1_service: TM1Service, dimension: Dict[str, Any]) -> Resp
         return tm1_service.dimensions.update(dimension_object_new)
 
 
-def delete_dimension(tm1_service: TM1Service, dimension: Dimension) -> Response:
-    return tm1_service.dimensions.delete(dimension.name)
+def delete_dimension(tm1_service: TM1Service, dimension: str) -> Response:
+    return tm1_service.dimensions.delete(dimension)

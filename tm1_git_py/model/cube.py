@@ -107,7 +107,7 @@ def create_cube(tm1_service: TM1Service, cube: Cube) -> Response:
     return tm1_service.cubes.create(cube_object)
 
 
-def update_cube(tm1_service: TM1Service, cube: Dict[str, any]) -> Response:
+def update_cube(tm1_service: TM1Service, cube: Dict[str, Any]) -> Response:
     cube_new = cube.get('new')
     cube_object_new = Cube(name=cube_new.name, dimensions=cube_new.dimensions, rules=cube_new.rule)
 
@@ -123,5 +123,5 @@ def update_cube(tm1_service: TM1Service, cube: Dict[str, any]) -> Response:
         return tm1_service.cubes.update(cube_object_new)
 
 
-def delete_cube(tm1_service: TM1Service, cube: Cube) -> Response:
-    return tm1_service.cubes.delete(cube.name)
+def delete_cube(tm1_service: TM1Service, cube: str) -> Response:
+    return tm1_service.cubes.delete(cube)

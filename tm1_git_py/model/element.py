@@ -70,5 +70,5 @@ def update_element(tm1_service: TM1Service, element: Dict[str, Any]) -> Response
         return tm1_service.elements.update(element_object_new)
 
 
-def delete_element(tm1_service: TM1Service, hierarchy: str, dimension: str, element: Element) -> Response:
-    return tm1_service.elements.delete(hierarchy, dimension, element.name)
+def delete_element(tm1_service: TM1Service, hierarchy: str, dimension: str, element: str) -> Response:
+    return tm1_service.elements.delete(hierarchy, dimension, element)

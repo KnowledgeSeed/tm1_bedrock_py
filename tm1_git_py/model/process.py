@@ -132,5 +132,5 @@ def update_process(tm1_service: TM1Service, process: Dict[str, Any]) -> Response
         return tm1_service.processes.update(process_object_new)
 
 
-def delete_process(tm1_service: TM1Service, process: Process) -> Response:
-    return tm1_service.processes.delete(process.name)
+def delete_process(tm1_service: TM1Service, process: str) -> Response:
+    return tm1_service.processes.delete(process)
