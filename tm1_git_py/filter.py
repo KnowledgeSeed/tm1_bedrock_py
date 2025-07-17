@@ -1,72 +1,104 @@
-import json
 import fnmatch
-import re
-from typing import List, Any, Dict, Tuple
-
+from typing import List
 from model.model import Model
+from model.cube import Cube
+from model.dimension import Dimension
+from model.process import Process
+from model.chore import Chore
 
-# def _perform_dependency_check(model: Model):
-#     kept_dim_names = {d.name for d in model.dimensions}
-    
-#     final_kept_cubes = []
-#     for cube in model.cubes:
-#         cube_dim_names = {d.name for d in cube.dimensions}
-#         if cube_dim_names.issubset(kept_dim_names):
-#             final_kept_cubes.append(cube)
-#         else:
-#             broken_links = cube_dim_names - kept_dim_names
-#             print(f"'{cube.name}' removed, filtered dimenziokra hivatkozik: {list(broken_links)}")
-    
-#     model.cubes = final_kept_cubes
+def _expand_task_rules(model: Model, rules: List[str]) -> List[str]:
+    final_rules = []
+    for rule in rules:
+        is_name_based = "/tasks/" in rule and not rule.split('/tasks/')[-1].isdigit()
+        if not is_name_based:
+            final_rules.append(rule)
+            continue
+        op, pattern = rule[0], rule[1:].lstrip('/')
+        chore_pattern, task_name_pattern = pattern.split('/tasks/')
+        for chore in model.chores:
+            chore_path = chore.source_path.replace('\\', '/')
+            if fnmatch.fnmatch(chore_path, chore_pattern):
+                for i, task in enumerate(chore.tasks):
+                    if fnmatch.fnmatch(task.process_name, task_name_pattern):
+                        final_rules.append(f"{op}{chore_path}/tasks/{i}")
+    return final_rules
 
-def import_filter(path: str) -> List[str]:
-    rules_path = path
-    filter_rules = []
-    with open(rules_path, 'r', encoding='utf-8') as f:
-        filter_rules = [line.strip() for line in f if line.strip() and not line.strip().startswith('#')]
-    return filter_rules
-
+def _perform_dependency_check(model: Model):
+    kept_dim_names = {d.name for d in model.dimensions}
+    model.cubes = [c for c in model.cubes if {d.name for d in c.dimensions}.issubset(kept_dim_names)]
+    kept_process_names = {p.name for p in model.processes}
+    model.chores = [ch for ch in model.chores if all(t.process_name in kept_process_names for t in ch.tasks)]
 
 def filter(model: Model, filter_rules: List[str]) -> Model:
+    """
+    Szűri a modellt a megadott szabályok alapján egy tiszta, újraírt, eltávolítás-alapú logikával.
+    """
     if not filter_rules:
         return model
 
+    # 1. Szabályok előkészítése (task-nevek kibontása)
+    final_rules = _expand_task_rules(model, filter_rules)
+    
+    # 2. "Eltávolítandó" útvonalak halmazának létrehozása
     all_objects = model.get_all_objects_with_paths()
-    all_paths = set(all_objects.keys())
-    kept_paths = set()
+    paths_to_remove = set()
+    for path in all_objects.keys():
+        matching_rules = []
+        for rule in final_rules:
+            if len(rule) < 2 or rule[0] not in ['+', '-']: continue
+            op, pattern = rule[0], rule[1:].lstrip('/')
+            
+            is_match = False
+            if pattern.endswith('*') and not pattern.endswith('\\*'):
+                if path.startswith(pattern[:-1]): is_match = True
+            elif fnmatch.fnmatch(path, pattern): is_match = True
+            
+            if is_match: matching_rules.append({'op': op, 'pattern': pattern})
 
-    for rule in filter_rules:
-        if len(rule) < 2 or rule[0] not in ['+', '-']:
-            continue
-
-        op, pattern = rule[0], rule[1:]
+        if not matching_rules: continue
         
-        if pattern.startswith('/'):
-            pattern = pattern[1:]
+        # Ha van illeszkedő szabály, a legspecifikusabb nyer
+        winning_rule = max(
+            matching_rules, 
+            key=lambda r: (r['pattern'].count('/'), 0 if '*' in r['pattern'] else 1, len(r['pattern']))
+        )
+        # Ha a nyertes szabály egy kivétel (-), hozzáadjuk a tiltólistához
+        if winning_rule['op'] == '-':
+            paths_to_remove.add(path)
 
-        matching_paths = {path for path in all_paths if fnmatch.fnmatch(path, pattern)}
-        
-        if op == '+':
-            kept_paths.update(matching_paths)
-        elif op == '-':
-            kept_paths.difference_update(matching_paths)
-
-    filtered_model = Model(cubes=[], dimensions=[], processes=[], chores=[])
+    # 3. Új, tiszta listák létrehozása a megtartandó objektumokból
+    # Azok az objektumok maradnak, amik nincsenek a tiltólistán
     
-    kept_objects = [obj for path, obj in all_objects.items() if path in kept_paths]
+    final_dims = [dim for dim in model.dimensions if dim.source_path.replace('\\', '/') not in paths_to_remove]
+    final_procs = [proc for proc in model.processes if proc.source_path.replace('\\', '/') not in paths_to_remove]
     
-    for obj in kept_objects:
-        obj_type_name = type(obj).__name__.lower()
+    final_cubes = []
+    for cube in model.cubes:
+        if cube.source_path.replace('\\', '/') not in paths_to_remove:
+            cube.views = [v for v in cube.views if f'cubes/{cube.name}/views/{v.name}.json' not in paths_to_remove]
+            if f'cubes/{cube.name}.rules' in paths_to_remove: cube.rule = None
+            final_cubes.append(cube)
 
-        if obj_type_name == 'process':
-            obj_type_list_name = 'processes'
-        else:
-            obj_type_list_name = obj_type_name + 's'
+    final_chores = []
+    for chore in model.chores:
+        if chore.source_path.replace('\\', '/') not in paths_to_remove:
+            kept_tasks = []
+            chore_path = chore.source_path.replace('\\', '/')
+            for i, task in enumerate(chore.tasks):
+                if f"{chore_path}/tasks/{i}" not in paths_to_remove:
+                    kept_tasks.append(task)
+            chore.tasks = kept_tasks
+            final_chores.append(chore)
+            
+    # 4. Új modell létrehozása a végleges listákból
+    filtered_model = Model(
+        cubes=final_cubes,
+        dimensions=final_dims,
+        processes=final_procs,
+        chores=final_chores
+    )
 
-        if hasattr(filtered_model, obj_type_list_name):
-            getattr(filtered_model, obj_type_list_name).append(obj)
-
-
-    # _perform_dependency_check(filtered_model)
-
+    # 5. Legvégül a függőség-ellenőrzés
+    _perform_dependency_check(filtered_model)
+    
     return filtered_model

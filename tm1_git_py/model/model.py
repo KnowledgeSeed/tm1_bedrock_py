@@ -1,5 +1,5 @@
 import json
-from typing import List
+from typing import List, Any, Dict
 
 from model.chore import Chore
 from model.cube import Cube
@@ -24,10 +24,21 @@ class Model:
             'chores': [c.to_dict() for c in self.chores]
         }
 
-    def get_all_objects_with_paths(self) -> dict:
+    def get_all_objects_with_paths(self) -> Dict[str, Any]:
         all_objects = {}
-        for item in chain(self.cubes, self.dimensions, self.processes, self.chores):
+        normalize = lambda path: path.replace('\\', '/')
+
+        for item in chain(self.processes, self.chores, self.dimensions):
             if hasattr(item, 'source_path'):
-                normalized_path = item.source_path.replace('\\', '/')
-                all_objects[normalized_path] = item
+                all_objects[normalize(item.source_path)] = item
+        
+        for cube in self.cubes:
+            if hasattr(cube, 'source_path'):
+                all_objects[normalize(cube.source_path)] = cube
+                if cube.rule:
+                    rule_path = f'cubes/{cube.name}.rules'
+                for view in cube.views:
+                    view_path = f'cubes/{cube.name}/views/{view.name}.json'
+                    all_objects[view_path] = view
+                    
         return all_objects

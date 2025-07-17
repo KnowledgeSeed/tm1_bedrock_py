@@ -1,5 +1,6 @@
 import json
-from typing import Any
+from typing import Any, Dict, List
+from model.task import Task
 
 # {
 # 	"@type": "Chore",
@@ -203,11 +204,11 @@ from typing import Any
 # }
 
 class Chore:
-    def __init__(self, name, start_time, dst_sensitive, active, execution_mode, frequency, tasks, source_path: str):
+    def __init__(self, name: str, start_time: str, dst_sensitive: bool, active: bool,
+                 execution_mode: str, frequency: str, tasks: List[Task], source_path: str):
         self.type = 'Chore'
         self.name = name
         self.start_time = start_time
-        #self.dst_sensitivity = dst_sensitive
         self.dst_sensitive = dst_sensitive
         self.active = active
         self.execution_mode = execution_mode
@@ -215,7 +216,7 @@ class Chore:
         self.tasks = tasks
         self.source_path = source_path
 
-    def as_json(self):
+    def as_json(self) -> str:
         return json.dumps({
             "@type": self.type,
             "Name": self.name,
@@ -224,9 +225,9 @@ class Chore:
             "Active": self.active,
             "ExecutionMode": self.execution_mode,
             "Frequency": self.frequency,
-            "Tasks": self.tasks,
+            "Tasks": [task.as_json_dict() for task in self.tasks],
         }, indent='\t')
-    
+
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Chore):
             return NotImplemented
@@ -236,13 +237,13 @@ class Chore:
                self.active == other.active and \
                self.execution_mode == other.execution_mode and \
                self.frequency == other.frequency and \
-               self.tasks == other.tasks
+               set(self.tasks) == set(other.tasks)
 
     def __hash__(self) -> int:
         return hash((self.name, self.start_time, self.dst_sensitive, self.active,
-                     self.execution_mode, self.frequency, json.dumps(self.tasks, sort_keys=True)))
-    
-    def to_dict(self):
+                     self.execution_mode, self.frequency, frozenset(self.tasks)))
+
+    def to_dict(self) -> Dict[str, Any]:
         return {
             'name': self.name,
             'start_time': self.start_time,
@@ -250,9 +251,9 @@ class Chore:
             'active': self.active,
             'execution_mode': self.execution_mode,
             'frequency': self.frequency,
-            'tasks': self.tasks
+            'tasks': [task.as_json_dict() for task in self.tasks]
         }
-    
+
     @staticmethod
     def as_link(name :str):
         # /chores/chore.json
