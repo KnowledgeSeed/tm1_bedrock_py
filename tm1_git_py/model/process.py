@@ -1,5 +1,7 @@
 import json
 from typing import Any, List, Dict, TYPE_CHECKING
+
+import TM1py
 from TM1py import TM1Service, Process
 from requests import Response
 
@@ -94,10 +96,11 @@ class Process:
 # ------------------------------------------------------------------------------------------------------------
 
 def create_process(tm1_service: TM1Service, process: Process) -> Response:
-    process_object = Process(
+    data_source_type = process.datasource
+    process_object = TM1py.Process(
         name=process.name,
         has_security_access=process.hasSecurityAccess,
-        datasource_type=process.datasource.get('Type'),
+        datasource_type=process.datasource,
         parameters=process.parameters,
         variables=process.variables
     )
@@ -106,30 +109,14 @@ def create_process(tm1_service: TM1Service, process: Process) -> Response:
 
 def update_process(tm1_service: TM1Service, process: Dict[str, Any]) -> Response:
     process_new = process.get('new')
-    process_object_new = Process(
-        name=process_new.name,
-        has_security_access=process_new.hasSecurityAccess,
-        datasource_type=process_new.datasource.get('Type'),
-        parameters=process_new.parameters,
-        variables=process_new.variables
-    )
 
-    if process.get('new').name == process.get('old').name:
-        return tm1_service.processes.update(process_object_new)
-    else:
-        process_old = process.get('old')
-        process_object_temp = Process(
-            name=process_new.name,
-            has_security_access=process_old.hasSecurityAccess,
-            datasource_type=process_old.datasource.get('Type'),
-            parameters=process_old.parameters,
-            variables=process_old.variables
-        )
-        response = tm1_service.processes.create(process_object_temp)
-        if response.status_code == 200:
-            tm1_service.processes.delete(process_old.name)
+    process_object = tm1_service.processes.get(name_process=process_new.name)
+    process_object.variables = process_new.variables
+    process_object.parameters = process_new.parameters
+    process_object.datasource_type = process_new.datasource
+    process_object.has_security_access = process_new.hasSecurityAccess
 
-        return tm1_service.processes.update(process_object_new)
+    return tm1_service.processes.update(process_object)
 
 
 def delete_process(tm1_service: TM1Service, process: str) -> Response:

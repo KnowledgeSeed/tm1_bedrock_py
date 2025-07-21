@@ -1,7 +1,11 @@
 import json
+from collections import Counter
 from typing import List, Any, Dict
+
+import TM1py
 from TM1py import TM1Service, Cube
 from requests import Response
+from TM1_bedrock_py.bedrock import data_copy_intercube
 
 from model.dimension import Dimension
 from model.element import Element
@@ -103,25 +107,29 @@ class Cube:
 # ------------------------------------------------------------------------------------------------------------
 
 def create_cube(tm1_service: TM1Service, cube: Cube) -> Response:
-    cube_object = Cube(cube.name, cube.dimensions, cube.rule)
+    dimensions = [dim.name for dim in cube.dimensions]
+    cube_object = TM1py.Cube(cube.name, dimensions, cube.rule)
     return tm1_service.cubes.create(cube_object)
 
 
 def update_cube(tm1_service: TM1Service, cube: Dict[str, Any]) -> Response:
     cube_new = cube.get('new')
-    cube_object_new = Cube(name=cube_new.name, dimensions=cube_new.dimensions, rules=cube_new.rule)
+    cube_old = cube.get('old')
+    dimensions_new = [d.name for d in cube_new.dimensions]
+    dimensions_old = [d.name for d in cube_old.dimensions]
+    cube_object = tm1_service.cubes.get(cube_new.name)
 
-    if cube.get('new').name == cube.get('old').name:
-        return tm1_service.cubes.update(cube_object_new)
-    else:
-        cube_old = cube.get('old')
-        cube_object_temp = Cube(name=cube_new.name, dimensions=cube_old.dimensions, rules=cube_old.rule)
-        response = tm1_service.cubes.create(cube_object_temp)
-        if response.status_code == 200:
-            tm1_service.cubes.delete(cube_old.name)
+    if dimensions_new != dimensions_old:
+        if Counter(dimensions_new) == Counter(dimensions_old):
+            cube_object.update_storage_dimension_order(cube_names=cube_new.name, dimension_names=dimensions_new)
+        else:
+            # TODO: data_copy_intercube to temp
+            delete_cube(tm1_service=tm1_service, cube_name=cube_new.name)
+            return create_cube(tm1_service=tm1_service, cube=cube_new)
+    if cube_new.rule:
+        cube_object.rules = TM1py.Rules(cube_new.rule)
+    return tm1_service.cubes.update(cube=cube_object)
 
-        return tm1_service.cubes.update(cube_object_new)
 
-
-def delete_cube(tm1_service: TM1Service, cube: str) -> Response:
-    return tm1_service.cubes.delete(cube)
+def delete_cube(tm1_service: TM1Service, cube_name: str) -> Response:
+    return tm1_service.cubes.delete(cube_name)

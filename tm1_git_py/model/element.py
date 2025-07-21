@@ -1,5 +1,7 @@
 import json
 from typing import Any, Dict
+
+import TM1py
 from TM1py import TM1Service, Element
 from requests import Response
 
@@ -49,26 +51,19 @@ class Element:
 # Utility: interface between TM1py and tm1_git_py for CRUD operations
 # ------------------------------------------------------------------------------------------------------------
 
-def create_element(tm1_service: TM1Service, hierarchy: str, dimension: str, element: Element) -> Response:
-    element_object = Element(name=element.name, element_type=element.type)
-    return tm1_service.elements.create(hierarchy, dimension, element_object)
+def create_element(tm1_service: TM1Service, hierarchy_name: str, dimension_name: str, element: Element) -> Response:
+    element_object = TM1py.Element(name=element.name, element_type=element.type)
+    return tm1_service.elements.create(hierarchy_name, dimension_name, element_object)
 
 
-def update_element(tm1_service: TM1Service, element: Dict[str, Any]) -> Response:
-    element_new = element.get('new')
-    element_object_new = Element(name=element_new.name, element_type=element_new.type)
-
-    if element.get('new').name == element.get('old').name:
-        return tm1_service.elements.update(element_object_new)
+def update_element(tm1_service: TM1Service, hierarchy_name: str, dimension_name: str, element: Element) -> Response:
+    if tm1_service.elements.exists(dimension_name=dimension_name, hierarchy_name=hierarchy_name, element_name=element.name):
+        element_object = tm1_service.elements.get(dimension_name=dimension_name, hierarchy_name=hierarchy_name, element_name=element.name)
+        element_object.element_type = element.type
+        return tm1_service.elements.update(element_object)
     else:
-        element_old = element.get('old')
-        element_object_temp = Element(name=element_new.name, element_type=element_old.type)
-        response = tm1_service.elements.create(element_object_temp)
-        if response.status_code == 200:
-            tm1_service.elements.delete(element_old.name)
-
-        return tm1_service.elements.update(element_object_new)
+        return create_element(tm1_service=tm1_service, hierarchy_name=hierarchy_name, dimension_name=dimension_name, element=element)
 
 
-def delete_element(tm1_service: TM1Service, hierarchy: str, dimension: str, element: str) -> Response:
-    return tm1_service.elements.delete(hierarchy, dimension, element)
+def delete_element(tm1_service: TM1Service, hierarchy_name: str, dimension_name: str, element_name: str) -> Response:
+    return tm1_service.elements.delete(hierarchy_name, dimension_name, element_name)

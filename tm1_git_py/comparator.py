@@ -31,6 +31,20 @@ class Comparator:
                                    object_type_name="Dimension",
                                    mode=mode)
 
+        for dimension1, dimension2 in zip(model1.dimensions, model2.dimensions):
+            self._compare_object_lists(dimension1.hierarchies, dimension2.hierarchies,
+                                       changeset.added, changeset.removed,
+                                       changeset.modified,
+                                       object_type_name="Hierarchy",
+                                       mode=mode)
+
+            for hierarchy1, hierarchy2 in zip(dimension1.hierarchies, dimension2.hierarchies):
+                self._compare_object_lists(hierarchy1.subsets, hierarchy2.subsets,
+                                           changeset.added, changeset.removed,
+                                           changeset.modified,
+                                           object_type_name="Subset",
+                                           mode=mode)
+
         self._compare_object_lists(model1.processes, model2.processes,
                                    changeset.added, changeset.removed,
                                    changeset.modified,

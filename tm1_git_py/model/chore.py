@@ -1,5 +1,7 @@
 import json
 from typing import Any, Dict
+
+import TM1py
 from TM1py import TM1Service, Chore
 from requests import Response
 
@@ -77,7 +79,7 @@ class Chore:
 # ------------------------------------------------------------------------------------------------------------
 
 def create_chore(tm1_service: TM1Service, chore: Chore) -> Response:
-    chore_object = Chore(
+    chore_object = TM1py.Chore(
         name=chore.name,
         start_time=chore.start_time,
         dst_sensitivity=chore.dst_sensitive,
@@ -91,34 +93,15 @@ def create_chore(tm1_service: TM1Service, chore: Chore) -> Response:
 
 def update_chore(tm1_service: TM1Service, chore: Dict[str, Any]) -> Response:
     chore_new = chore.get('new')
-    chore_object_new = Chore(
-        name=chore_new.name,
-        start_time=chore_new.start_time,
-        dst_sensitivity=chore_new.dst_sensitive,
-        active=chore_new.active,
-        execution_mode=chore_new.execution_mode,
-        frequency=chore_new.frequency,
-        tasks=chore_new.tasks
-    )
+    chore_object = tm1_service.chores.get(chore_name=chore_new.name)
+    chore_object.start_time = chore_new.start_time
+    chore_object.dst_sensitivity = chore_new.dst_sensitive
+    chore_object.active = chore_new.active
+    chore_object.execution_mode = chore_new.execution_mode
+    chore_object.frequency = chore_new.frequency
+    chore_object.tasks = chore_new.tasks
 
-    if chore.get('new').name == chore.get('old').name:
-        return tm1_service.chores.update(chore_object_new)
-    else:
-        chore_old = chore.get('old')
-        chore_object_temp = Chore(
-            name=chore_new.name,
-            start_time=chore_old.start_time,
-            dst_sensitivity=chore_old.dst_sensitive,
-            active=chore_old.active,
-            execution_mode=chore_old.execution_mode,
-            frequency=chore_old.frequency,
-            tasks=chore_old.tasks
-        )
-        response = tm1_service.chores.create(chore_object_temp)
-        if response.status_code == 200:
-            tm1_service.chores.delete(chore_old.name)
-
-        return tm1_service.chores.update(chore_object_new)
+    return tm1_service.chores.update(chore_object)
 
 
 def delete_chore(tm1_service: TM1Service, chore: str) -> Response:

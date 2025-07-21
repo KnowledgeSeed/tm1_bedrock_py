@@ -1,8 +1,10 @@
 import json
+import re
 from typing import Any, Dict
+
+import TM1py
 from TM1py import TM1Service, Subset
 from requests import Response
-from TM1_bedrock_py.utility import __get_dimensions_from_set_mdx_list
 
 
 # {
@@ -52,27 +54,30 @@ class Subset:
 # ------------------------------------------------------------------------------------------------------------
 
 def create_subset(tm1_service: TM1Service, subset: Subset) -> Response:
-    dimension = __get_dimensions_from_set_mdx_list(subset.expression)[0]
-    subset_object = Subset(subset_name=subset.name, dimension_name=dimension)
+    dimension_name = re.search(r'/(\w*)(.hierarchies)', subset.source_path).group(1)
+    hierarchy_name = re.search(r'/(\w*)(.subsets)', subset.source_path).group(1)
+
+    subset_object = TM1py.Subset(
+        subset_name=subset.name, dimension_name=dimension_name,
+        hierarchy_name=hierarchy_name, expression=subset.expression
+    )
     return tm1_service.subsets.create(subset_object)
 
 
 def update_subset(tm1_service: TM1Service, subset: Dict[str, Any]) -> Response:
     subset_new = subset.get('new')
-    subset_object_new = Subset(subset_name=subset_new.name, dimension_name=subset_new.dimensions)
+    dimension_name = re.search(r'/(\w*)(.hierarchies)', subset_new.source_path).group(1)
+    hierarchy_name = re.search(r'/(\w*)(.subsets)', subset_new.source_path).group(1)
 
-    if subset.get('new').name == subset.get('old').name:
-        return tm1_service.subsets.update(subset_object_new)
+    if tm1_service.subsets.exists(subset_name=subset_new.name, dimension_name=dimension_name, hierarchy_name=hierarchy_name):
+        subset_object = tm1_service.subsets.get(subset_name=subset_new.name, dimension_name=dimension_name, hierarchy_name=hierarchy_name)
+        subset_object.expression = subset_new.expression
+        return tm1_service.subsets.update(subset_object)
     else:
-        subset_old = subset.get('old')
-        subset_object_temp = Subset(subset_name=subset_new.name, dimension_name=subset_old.dimensions)
-        response = tm1_service.subsets.create(subset_object_temp)
-        if response.status_code == 200:
-            tm1_service.subsets.delete(subset_old.name)
-
-        return tm1_service.subsets.update(subset_object_new)
+        return create_subset(tm1_service=tm1_service, subset=subset_new)
 
 
 def delete_subset(tm1_service: TM1Service, subset: Subset) -> Response:
-    dimension = __get_dimensions_from_set_mdx_list(subset.expression)[0]
-    return tm1_service.subsets.delete(subset_name=subset.name, dimension_name=dimension)
+    dimension_name = re.search(r'/(\w*)(.hierarchies)', subset.source_path).group(1)
+    hierarchy_name = re.search(r'/(\w*)(.subsets)', subset.source_path).group(1)
+    return tm1_service.subsets.delete(subset_name=subset.name, dimension_name=dimension_name, hierarchy_name=hierarchy_name)
