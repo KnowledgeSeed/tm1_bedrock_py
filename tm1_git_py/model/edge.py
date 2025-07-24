@@ -1,5 +1,7 @@
 import json
-from typing import Any
+from typing import Any, Dict
+from TM1py import TM1Service
+from requests import Response
 
 # {
 #     "ParentName":"Provider Total",
@@ -36,3 +38,16 @@ class Edge:
             "ComponentName": self.componentName,
             "Weight": self.weight
         }, indent=4)
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Utility: interface between TM1py and tm1_git_py for CRUD operations
+# ------------------------------------------------------------------------------------------------------------
+
+def create_edge(tm1_service: TM1Service, hierarchy: str, dimension: str, edge: Edge) -> Response:
+    edge_name = {(edge.parentName, edge.componentName), edge.weight}
+    return tm1_service.elements.add_edges(hierarchy, dimension, edge_name)
+
+
+def delete_edge(tm1_service: TM1Service, hierarchy: str, dimension: str, edge: Edge) -> Response:
+    return tm1_service.elements.remove_edge(hierarchy, dimension, edge.parentName, edge.componentName)

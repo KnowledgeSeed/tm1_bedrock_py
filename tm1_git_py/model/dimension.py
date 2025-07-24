@@ -1,10 +1,15 @@
 import json
-from typing import List, Any
+from typing import List, Any, Dict
+
+import TM1py
+from TM1py import TM1Service, Dimension
+from requests import Response
 
 from model.element import Element
-from model.hierarchy import Hierarchy
+from model.hierarchy import Hierarchy, create_hierarchy, update_hierarchy
 from model.subset import Subset
 from TM1py.Utils import format_url
+
 
 # {
 # 	"@type":"Dimension",
@@ -69,3 +74,45 @@ class Dimension:
     def as_link(name):
         # /dimensions/Dimension_A.json
         return '/dimensions/' + name
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Utility: interface between TM1py and tm1_git_py for CRUD operations
+# ------------------------------------------------------------------------------------------------------------
+
+def create_dimension(tm1_service: TM1Service, dimension: Dimension) -> Response:
+
+    dimension_object = TM1py.Dimension(dimension.name)
+    response = tm1_service.dimensions.create(dimension_object)
+
+    return response
+
+
+def update_dimension(tm1_service: TM1Service, dimension: Dict[str, Any]) -> Response:
+    dimension_new = dimension.get('new')
+    dimension_old = dimension.get('old')
+
+    hierarchies_new = dimension_new.hierarchies
+    hierarchies_old = dimension_old.hierarchies
+
+    if tm1_service.dimensions.exists(dimension_name=dimension_new.name):
+        dimension_object = tm1_service.dimensions.get(dimension_name=dimension_new.name)
+
+        if hierarchies_new != hierarchies_old:
+            hierarchies_to_remove = list(set(hierarchies_old) - set(hierarchies_new))
+            hierarchies_to_add = list(set(hierarchies_new) - set(hierarchies_old))
+
+            for hierarchy in hierarchies_to_remove:
+                dimension_object.remove_hierarchy(hierarchy_name=hierarchy.name)
+            for hierarchy in hierarchies_to_add:
+                hierarchy_object = tm1_service.hierarchies.get(dimension_name=dimension_new.name, hierarchy_name=hierarchy.name)
+                dimension_object.add_hierarchy(hierarchy_object)
+
+        return tm1_service.dimensions.update(dimension_object)
+    else:
+        return create_dimension(tm1_service=tm1_service, dimension=dimension_new)
+
+
+
+def delete_dimension(tm1_service: TM1Service, dimension_name: str) -> Response:
+    return tm1_service.dimensions.delete(dimension_name)

@@ -1,5 +1,9 @@
 import json
-from typing import Any
+from typing import Any, Dict
+
+import TM1py
+from TM1py import TM1Service, Chore
+from requests import Response
 
 # {
 # 	"@type":"Chore",
@@ -68,3 +72,37 @@ class Chore:
     def as_link(name :str):
         # /chores/chore.json
         return '/chore/' + name
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Utility: interface between TM1py and tm1_git_py for CRUD operations
+# ------------------------------------------------------------------------------------------------------------
+
+def create_chore(tm1_service: TM1Service, chore: Chore) -> Response:
+    chore_object = TM1py.Chore(
+        name=chore.name,
+        start_time=chore.start_time,
+        dst_sensitivity=chore.dst_sensitive,
+        active=chore.active,
+        execution_mode=chore.execution_mode,
+        frequency=chore.frequency,
+        tasks=chore.tasks
+    )
+    return tm1_service.chores.create(chore_object)
+
+
+def update_chore(tm1_service: TM1Service, chore: Dict[str, Any]) -> Response:
+    chore_new = chore.get('new')
+    chore_object = tm1_service.chores.get(chore_name=chore_new.name)
+    chore_object.start_time = chore_new.start_time
+    chore_object.dst_sensitivity = chore_new.dst_sensitive
+    chore_object.active = chore_new.active
+    chore_object.execution_mode = chore_new.execution_mode
+    chore_object.frequency = chore_new.frequency
+    chore_object.tasks = chore_new.tasks
+
+    return tm1_service.chores.update(chore_object)
+
+
+def delete_chore(tm1_service: TM1Service, chore: str) -> Response:
+    return tm1_service.chores.delete(chore)
