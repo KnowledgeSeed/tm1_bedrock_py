@@ -64,8 +64,8 @@ class Changeset:
         return changes
 
 
+    """
     def validate(self):
-        """validate changeset"""
         # TODO: execute on has_changes()
         if self.has_changes():
             pass
@@ -74,6 +74,7 @@ class Changeset:
                 flag = re.search(r'\A([UDC]\s{2}/)', changes).group(1)
                 source_path = changes.split(flag)[1]
                 print(source_path)
+    """
 
 
     def sort(self):

@@ -9,7 +9,6 @@ from model.element import Element
 from model.hierarchy import Hierarchy, create_hierarchy, update_hierarchy
 from model.subset import Subset
 from TM1py.Utils import format_url
-from tm1_bench_py.dimension_builder import hierarchy_to_dataframe
 
 
 # {
@@ -85,13 +84,7 @@ def create_dimension(tm1_service: TM1Service, dimension: Dimension) -> Response:
 
     dimension_object = TM1py.Dimension(dimension.name)
     response = tm1_service.dimensions.create(dimension_object)
-    """    
-    if response.status_code == 201:
-        hierarchies = []
-        for hierarchy in dimension.hierarchies:
-            if not tm1_service.hierarchies.exists(dimension.name, hierarchy.name):
-              hierarchies.append(create_hierarchy(tm1_service, hierarchy))
-    """
+
     return response
 
 

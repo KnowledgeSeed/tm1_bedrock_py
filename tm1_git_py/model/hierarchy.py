@@ -120,13 +120,7 @@ def create_hierarchy(tm1_service: TM1Service, hierarchy: Hierarchy) -> Response:
                 elements.append(
                     create_element(tm1_service, dimension=dimension_name, hierarchy=hierarchy.name, element=element)
                 )
-    """
-    if response.status_code == 201:
-        subsets = []
-        for subset in hierarchy.subsets:
-            if not tm1_service.subsets.exists(subset_name=subset.name, dimension_name=dimension_name, hierarchy_name=hierarchy.name):
-                subsets.append(create_subset(tm1_service=tm1_service, subset=subset, dimension_name=dimension_name, hierarchy_name=hierarchy.name))
-    """
+
     return response
 
 
