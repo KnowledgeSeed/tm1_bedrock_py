@@ -237,45 +237,78 @@ test_async_data_copy_intercube_multi_parameter:
 test_load_tm1_cube_to_csv_file:
   -
     base_data_mdx:
-      "SELECT 
-             {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],[Periods].[Periods].[202304],[Periods].[Periods].[202305],[Periods].[Periods].[202306],[Periods].[Periods].[202307],[Periods].[Periods].[202308],[Periods].[Periods].[202309],[Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]} 
-            ON COLUMNS , 
-             {[Groups].[Groups].[Group_1],[Groups].[Groups].[Group_2],[Groups].[Groups].[Group_3],[Groups].[Groups].[Group_4],[Groups].[Groups].[Group_5]} 
-             * {[Employees].[Employees].[Employees_1],[Employees].[Employees].[Employees_2],[Employees].[Employees].[Employees_3],[Employees].[Employees].[Employees_4],[Employees].[Employees].[Employees_5],[Employees].[Employees].[Employees_6],[Employees].[Employees].[Employees_7],[Employees].[Employees].[Employees_8],[Employees].[Employees].[Employees_9],[Employees].[Employees].[Employees_10],[Employees].[Employees].[Employees_11],[Employees].[Employees].[Employees_12],[Employees].[Employees].[Employees_13],[Employees].[Employees].[Employees_14],[Employees].[Employees].[Employees_15],[Employees].[Employees].[Employees_16],[Employees].[Employees].[Employees_17],[Employees].[Employees].[Employees_18],[Employees].[Employees].[Employees_19],[Employees].[Employees].[Employees_20],[Employees].[Employees].[Employees_21],[Employees].[Employees].[Employees_22],[Employees].[Employees].[Employees_23],[Employees].[Employees].[Employees_24],[Employees].[Employees].[Employees_25],[Employees].[Employees].[Employees_26],[Employees].[Employees].[Employees_27],[Employees].[Employees].[Employees_28],[Employees].[Employees].[Employees_29],[Employees].[Employees].[Employees_30],[Employees].[Employees].[Employees_31],[Employees].[Employees].[Employees_32],[Employees].[Employees].[Employees_33],[Employees].[Employees].[Employees_34],[Employees].[Employees].[Employees_35],[Employees].[Employees].[Employees_36],[Employees].[Employees].[Employees_37],[Employees].[Employees].[Employees_38],[Employees].[Employees].[Employees_39],[Employees].[Employees].[Employees_40],[Employees].[Employees].[Employees_41],[Employees].[Employees].[Employees_42],[Employees].[Employees].[Employees_43],[Employees].[Employees].[Employees_44],[Employees].[Employees].[Employees_45],[Employees].[Employees].[Employees_46],[Employees].[Employees].[Employees_47],[Employees].[Employees].[Employees_48],[Employees].[Employees].[Employees_49],[Employees].[Employees].[Employees_50]} 
-            ON ROWS 
-          FROM [Cost and FTE by Groups] 
-          WHERE 
-            (
-             [Versions].[Versions].[Base Plan],
-             [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[Caculated Salary],
-             [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
-          )"
+      "
+       SELECT 
+         NON EMPTY 
+          {[testbenchMeasureSales].[testbenchMeasureSales].[Quantity]}
+          * {[testbenchPeriod].[testbenchPeriod].[202402]} 
+         ON COLUMNS , 
+         NON EMPTY 
+          {TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchKeyAccountManager].[testbenchKeyAccountManager].[All Key Account Manager]}, ALL, RECURSIVE)}, 0)}
+          * {TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchProduct].[testbenchProduct].[All Product]}, ALL, RECURSIVE)}, 0)}
+          * {TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchCustomer].[testbenchCustomer].[All Customer]}, ALL, RECURSIVE)}, 0)} 
+         ON ROWS 
+       FROM [testbenchSales] 
+       WHERE 
+         (
+          [testbenchVersion].[testbenchVersion].[Actual]
+         )"
+    mapping_steps: []
 
-    shared_mapping: {
-      "mapping_mdx":"
-        SELECT
-        {[Groups].[Groups].[Group_1],[Groups].[Groups].[Group_2],[Groups].[Groups].[Group_3],[Groups].[Groups].[Group_4],[Groups].[Groups].[Group_5]}
-        ON COLUMNS ,
-        {[Employees].[Employees].[Employees_1],[Employees].[Employees].[Employees_2],[Employees].[Employees].[Employees_3],[Employees].[Employees].[Employees_4],[Employees].[Employees].[Employees_5],[Employees].[Employees].[Employees_6],[Employees].[Employees].[Employees_7],[Employees].[Employees].[Employees_8],[Employees].[Employees].[Employees_9],[Employees].[Employees].[Employees_10],[Employees].[Employees].[Employees_11],[Employees].[Employees].[Employees_12],[Employees].[Employees].[Employees_13],[Employees].[Employees].[Employees_14],[Employees].[Employees].[Employees_15],[Employees].[Employees].[Employees_16],[Employees].[Employees].[Employees_17],[Employees].[Employees].[Employees_18],[Employees].[Employees].[Employees_19],[Employees].[Employees].[Employees_20],[Employees].[Employees].[Employees_21],[Employees].[Employees].[Employees_22],[Employees].[Employees].[Employees_23],[Employees].[Employees].[Employees_24],[Employees].[Employees].[Employees_25],[Employees].[Employees].[Employees_26],[Employees].[Employees].[Employees_27],[Employees].[Employees].[Employees_28],[Employees].[Employees].[Employees_29],[Employees].[Employees].[Employees_30],[Employees].[Employees].[Employees_31],[Employees].[Employees].[Employees_32],[Employees].[Employees].[Employees_33],[Employees].[Employees].[Employees_34],[Employees].[Employees].[Employees_35],[Employees].[Employees].[Employees_36],[Employees].[Employees].[Employees_37],[Employees].[Employees].[Employees_38],[Employees].[Employees].[Employees_39],[Employees].[Employees].[Employees_40],[Employees].[Employees].[Employees_41],[Employees].[Employees].[Employees_42],[Employees].[Employees].[Employees_43],[Employees].[Employees].[Employees_44],[Employees].[Employees].[Employees_45],[Employees].[Employees].[Employees_46],[Employees].[Employees].[Employees_47],[Employees].[Employees].[Employees_48],[Employees].[Employees].[Employees_49],[Employees].[Employees].[Employees_50]}
-        ON ROWS
-        FROM [Group Employee DataCopy Test]
-        WHERE
-        (
-        [Measures Group Employee].[Measures Group Employee].[Assignment Flag]
-        )"
-    }
-
+test_load_csv_data_to_tm1_cube:
+  -
+    base_data_mdx:
+      "
+        SELECT 
+         NON EMPTY 
+          {[testbenchMeasureSales].[testbenchMeasureSales].[Quantity]}
+          * {[testbenchPeriod].[testbenchPeriod].[202402]} 
+         ON COLUMNS , 
+         NON EMPTY 
+          {TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchKeyAccountManager].[testbenchKeyAccountManager].[All Key Account Manager]}, ALL, RECURSIVE)}, 0)}
+          * {TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchProduct].[testbenchProduct].[All Product]}, ALL, RECURSIVE)}, 0)}
+          * {TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchCustomer].[testbenchCustomer].[All Customer]}, ALL, RECURSIVE)}, 0)} 
+         ON ROWS 
+        FROM [testbenchSales] 
+        WHERE 
+         (
+          [testbenchVersion].[testbenchVersion].[Actual]
+         )"
     mapping_steps: [
       {
-        "method":"replace",
-        "mapping":{
-          "Versions":{
-            "Base Plan":"DataCopy Integration Test"
-          }
-        }
-      },
-      {
-        "method":"map_and_replace",
-        "mapping_dimensions":{"Groups":"Groups"},
+        "method": "replace",
+        "mapping": { "testbenchVersion": { "Actual": "ForeCast" } }
       }
+    ]
+
+test_async_load_csv_data_to_tm1_cube:
+  -
+    data_mdx_template:
+      "
+        SELECT 
+          NON EMPTY 
+           {{TM1SUBSETALL([testbenchMeasureSales].[testbenchMeasureSales])}}
+           * {{TM1FILTERBYLEVEL({{TM1SUBSETALL([testbenchProduct].[testbenchProduct])}}, 0)}} 
+           * {{TM1FILTERBYLEVEL({{TM1SUBSETALL([testbenchCustomer].[testbenchCustomer])}}, 0)}} 
+           * {{TM1FILTERBYLEVEL({{TM1SUBSETALL([testbenchKeyAccountManager].[testbenchKeyAccountManager])}}, 0)}} 
+          ON 0
+        FROM [testbenchSales] 
+        WHERE 
+          (
+           [testbenchVersion].[testbenchVersion].[Actual],
+           [testbenchPeriod].[testbenchPeriod].[$testbenchPeriod]
+          )
+      "
+    mapping_steps: [
+      {
+        "method": "replace",
+        "mapping": { "testbenchVersion": { "Actual": "ForeCast" } }
+      }
+    ]
+    clear_param_templates: [
+      "{[testbenchVersion].[testbenchVersion].[ForeCast]}",
+      "{[testbenchPeriod].[testbenchPeriod].[$testbenchPeriod]}"
+    ]
+    param_set_mdx_list: [
+      "{[testbenchPeriod].[testbenchPeriod].[202402]}"
     ]

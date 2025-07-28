@@ -347,7 +347,7 @@ def __csv_to_dataframe_default(
         keep_default_na: Optional[bool] = True,
         low_memory: bool = True,
         memory_map: bool = True,
-        **kwargs: Any
+        **_kwargs: Any
 ) -> DataFrame:
     """
     Retrieves a DataFrame from a CSV file.
@@ -372,7 +372,7 @@ def __csv_to_dataframe_default(
                 Reads entire file into one DataFrame.
         memory_map: (bool):
             If csv_file_path is given it maps the file object directly to memory and eliminates I/O overhead.
-        **kwargs (Any): Additional keyword arguments.
+        **_kwargs (Any): Additional keyword arguments.
 
     Returns:
         DataFrame: The DataFrame resulting from the CSV file.
@@ -395,8 +395,7 @@ def __csv_to_dataframe_default(
             na_values=na_values,
             keep_default_na=keep_default_na,
             low_memory=low_memory,
-            memory_map=memory_map,
-            **kwargs
+            memory_map=memory_map
         ):
             chunks.append(chunk)
         return concat(chunks, ignore_index=True)
@@ -407,11 +406,9 @@ def __csv_to_dataframe_default(
             decimal=decimal,
             dtype=dtype,
             nrows=nrows,
-            chunksize=chunksize,
             parse_dates=parse_dates,
             na_values=na_values,
             keep_default_na=keep_default_na,
             low_memory=low_memory,
-            memory_map=memory_map,
-            **kwargs
+            memory_map=memory_map
         )

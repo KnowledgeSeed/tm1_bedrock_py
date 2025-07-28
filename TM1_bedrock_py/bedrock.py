@@ -2,6 +2,7 @@
 This file is a collection of upgraded TM1 bedrock functionality, ported to python / pandas with the help of TM1py.
 """
 import asyncio
+import glob
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 from string import Template
@@ -224,7 +225,7 @@ def data_copy_intercube(
 
     transformer.dataframe_add_column_assign_value(
         dataframe=dataframe, column_value=data_metadata_queryspecific.get_filter_dict(), **kwargs)
-    # transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe, **kwargs)
+
     utility.dataframe_verbose_logger(dataframe, "start_data_copy_intercube", df_verbose_logging=df_verbose_logging)
 
     if ignore_missing_elements:
@@ -319,6 +320,7 @@ def data_copy_intercube(
     basic_logger.info("Execution ended.")
 
 
+@utility.log_benchmark_metrics
 @utility.log_exec_metrics
 def data_copy(
         tm1_service: Optional[Any],
@@ -340,7 +342,7 @@ def data_copy(
         target_clear_set_mdx_list: Optional[List[str]] = None,
         clear_target: Optional[bool] = False,
         async_write: bool = False,
-        slice_size_of_dataframe: int = 250000,
+        slice_size_of_dataframe: int = 50000,
         use_ti: bool = False,
         use_blob: bool = False,
         increment: bool = False,
@@ -456,7 +458,7 @@ def data_copy(
             }
         ]
 
-    Map and join and the relabeling functonality of map and replace is not viable in case of in-cube transformations.
+    Map and join and the relabeling functionality of map and replace is not viable in case of in-cube transformations.
     Using them will raise an error at writing
     """
     utility.set_logging_level(logging_level=logging_level)
@@ -500,7 +502,7 @@ def data_copy(
         column_value=data_metadata_queryspecific.get_filter_dict(),
         **kwargs
     )
-    # transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe, **kwargs)
+
     utility.dataframe_verbose_logger(dataframe, "start_data_copy", df_verbose_logging=df_verbose_logging)
 
     if ignore_missing_elements:
@@ -719,6 +721,7 @@ async def async_executor_tm1(
 # TM1 <-> SQL data copy functions
 # ------------------------------------------------------------------------------------------------------------
 
+@utility.log_benchmark_metrics
 @utility.log_exec_metrics
 def load_sql_data_to_tm1_cube(
         target_cube_name: str,
@@ -803,8 +806,6 @@ def load_sql_data_to_tm1_cube(
 
     cube_dims = target_metadata.get_cube_dims()
 
-    # transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
-
     if ignore_missing_elements:
         transformer.dataframe_itemskip_elements(
             dataframe=dataframe, check_dfs=target_metadata.get_dimension_check_dfs())
@@ -877,6 +878,7 @@ def load_sql_data_to_tm1_cube(
     basic_logger.info("Execution ended.")
 
 
+@utility.log_benchmark_metrics
 @utility.log_exec_metrics
 def load_tm1_cube_to_sql_table(
         tm1_service: Optional[Any],
@@ -937,7 +939,6 @@ def load_tm1_cube_to_sql_table(
         **kwargs)
 
     transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
-    # transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
 
     shared_mapping_df = None
     if shared_mapping:
@@ -1123,6 +1124,7 @@ async def async_executor_tm1_to_sql(
 # TM1 <-> CSV data copy functions
 # ------------------------------------------------------------------------------------------------------------
 
+#@utility.log_benchmark_metrics
 @utility.log_exec_metrics
 def load_csv_data_to_tm1_cube(
         target_cube_name: str,
@@ -1137,6 +1139,7 @@ def load_csv_data_to_tm1_cube(
         delimiter: Optional[str] = None,
         decimal: Optional[str] = None,
         dtype: Optional[dict] = None,
+        validate_datatypes: Optional[bool] = True,
         nrows: Optional[int] = None,
         chunksize: Optional[int] = None,
         parse_dates: Optional[bool | Sequence[Hashable]] = None,
@@ -1156,15 +1159,17 @@ def load_csv_data_to_tm1_cube(
         drop_other_csv_columns: bool = False,
         ignore_missing_elements: bool = False,
         target_clear_set_mdx_list: Optional[List[str]] = None,
-        clear_target: Optional[bool] = False,
         async_write: bool = False,
-        slice_size_of_dataframe: int = 250000,
         use_ti: bool = False,
-        use_blob: bool = False,
         increment: bool = False,
+        use_blob: bool = False,
         sum_numeric_duplicates: bool = True,
+        slice_size_of_dataframe: int = 250000,
+        clear_target: Optional[bool] = False,
         logging_level: str = "ERROR",
         _execution_id: int = 0,
+        df_verbose_logging: bool = False,
+        data_mdx: Optional[str] = None,
         **kwargs
 ) -> None:
     """
@@ -1178,9 +1183,12 @@ def load_csv_data_to_tm1_cube(
         tm1_service=tm1_service,
         cube_name=target_cube_name,
         metadata_function=target_metadata_function,
+        mdx=data_mdx,
         collect_dim_element_identifiers=ignore_missing_elements,
+        collect_measure_types=validate_datatypes,
         **kwargs
     )
+    cube_name = target_metadata.get_cube_name()
 
     dataframe = extractor.csv_to_dataframe(
         csv_file_path=source_csv_file_path,
@@ -1205,7 +1213,11 @@ def load_csv_data_to_tm1_cube(
         drop_other_columns=drop_other_csv_columns,
     )
 
-    cube_name = target_metadata.get_cube_name()
+    transformer.dataframe_add_column_assign_value(
+        dataframe=dataframe,
+        column_value=target_metadata.get_filter_dict(),
+        **kwargs
+    )
 
     if dataframe.empty:
         if clear_target:
@@ -1217,7 +1229,10 @@ def load_csv_data_to_tm1_cube(
 
     cube_dims = target_metadata.get_cube_dims()
 
-    # transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
+    basic_logger.info("Converting dimension columns to string type for consistency.")
+    for dim_col in cube_dims:
+        if dim_col in dataframe.columns:
+            dataframe[dim_col] = dataframe[dim_col].astype(str)
 
     if ignore_missing_elements:
         transformer.dataframe_itemskip_elements(
@@ -1229,7 +1244,9 @@ def load_csv_data_to_tm1_cube(
             mapping_info=shared_mapping,
             tm1_service=tm1_service,
             mdx_function=mdx_function,
-            csv_function=csv_function
+            csv_function=csv_function,
+            df_verbose_logging=df_verbose_logging,
+            **kwargs
         )
         shared_mapping_df = shared_mapping["mapping_df"]
 
@@ -1237,7 +1254,8 @@ def load_csv_data_to_tm1_cube(
         mapping_steps=mapping_steps,
         tm1_service=tm1_service,
         mdx_function=mdx_function,
-        csv_function=csv_function
+        csv_function=csv_function,
+        **kwargs
     )
 
     initial_row_count = len(dataframe)
@@ -1260,6 +1278,16 @@ def load_csv_data_to_tm1_cube(
 
     transformer.dataframe_reorder_dimensions(dataframe=dataframe, cube_dimensions=cube_dims)
 
+    if validate_datatypes:
+        measure_dim_name = target_metadata.get_cube_dims()[-1]
+        measure_types = target_metadata.get_measure_element_types()
+        transformer.dataframe_cast_value_by_measure_type(
+            dataframe=dataframe,
+            measure_dimension_name=measure_dim_name,
+            measure_element_types=measure_types,
+            **kwargs
+        )
+
     if clear_target:
         loader.clear_cube(tm1_service=tm1_service,
                           cube_name=cube_name,
@@ -1275,13 +1303,16 @@ def load_csv_data_to_tm1_cube(
         use_ti=use_ti,
         increment=increment,
         use_blob=use_blob,
+        float_format='%.f',
         sum_numeric_duplicates=sum_numeric_duplicates,
-        slice_size_of_dataframe=slice_size_of_dataframe
+        slice_size_of_dataframe=slice_size_of_dataframe,
+        **kwargs
     )
 
     basic_logger.info("Execution ended.")
 
 
+@utility.log_benchmark_metrics
 @utility.log_exec_metrics
 def load_tm1_cube_to_csv_file(
         tm1_service: Optional[Any],
@@ -1341,7 +1372,6 @@ def load_tm1_cube_to_csv_file(
         **kwargs)
 
     transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
-    # transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
 
     shared_mapping_df = None
     if shared_mapping:
@@ -1408,3 +1438,116 @@ def load_tm1_cube_to_csv_file(
                           **kwargs)
 
     basic_logger.info("Execution ended.")
+
+
+#@utility.log_async_benchmark_metrics
+@utility.log_async_exec_metrics
+async def async_executor_csv_to_tm1(
+        tm1_service: Any,
+        target_cube_name: str,
+        source_directory: str,
+        param_set_mdx_list: List[str],
+        data_mdx_template: str,
+        shared_mapping: Optional[Dict] = None,
+        mapping_steps: Optional[List[Dict]] = None,
+        data_copy_function: Callable = data_copy,
+        clear_target: Optional[bool] = False,
+        max_workers: int = 8,
+        **kwargs):
+
+    param_names = utility.__get_dimensions_from_set_mdx_list(param_set_mdx_list)
+    param_values = utility.__generate_element_lists_from_set_mdx_list(tm1_service, param_set_mdx_list)
+    param_tuples = utility.__generate_cartesian_product(param_values)
+    basic_logger.info(f"Parameter tuples ready. Count: {len(param_tuples)}")
+
+    target_metadata_provider = None
+    data_metadata_provider = None
+
+    if data_copy_function in (load_csv_data_to_tm1_cube):
+        source_cube_name = utility._get_cube_name_from_mdx(data_mdx_template)
+        if source_cube_name:
+            data_metadata = utility.TM1CubeObjectMetadata.collect(
+                tm1_service=tm1_service,
+                cube_name=source_cube_name,
+                metadata_function=kwargs.get("data_metadata_function"),
+                collect_dim_element_identifiers=kwargs.get("ignore_missing_elements", False),
+                **kwargs
+            )
+            def get_data_metadata(**_kwargs): return data_metadata
+            data_metadata_provider = get_data_metadata
+        else:
+            basic_logger.warning(
+                f"Could not determine cube name from MDX, skipping metadata collection.")
+
+    if mapping_steps:
+        extractor.generate_step_specific_mapping_dataframes(
+            mapping_steps=mapping_steps,
+            tm1_service=tm1_service,
+            **kwargs
+        )
+
+    if shared_mapping:
+        extractor.generate_dataframe_for_mapping_info(
+            mapping_info=shared_mapping,
+            tm1_service=tm1_service,
+            **kwargs
+        )
+
+    def wrapper(
+        _tm1_service: Any,
+        _source_csv_file_path: Any,
+        _target_cube_name: str,
+        _data_mdx: str,
+        _mapping_steps: Optional[List[Dict]],
+        _shared_mapping: Optional[Dict],
+        _data_metadata_func: Optional[Callable],
+        _target_metadata_func: Optional[Callable],
+        _execution_id: int,
+        _executor_kwargs: Dict
+    ):
+        try:
+            copy_func_kwargs = {
+                **_executor_kwargs,
+                "tm1_service": _tm1_service,
+                "data_mdx": _data_mdx,
+                "shared_mapping": _shared_mapping,
+                "mapping_steps": _mapping_steps,
+                "clear_target": False,
+                "_execution_id": _execution_id,
+                "async_write": False
+            }
+
+            if _data_metadata_func:
+                copy_func_kwargs["data_metadata_function"] = _data_metadata_func
+            data_copy_function(**copy_func_kwargs)
+
+        except Exception as e:
+            basic_logger.error(
+                f"Error during execution {_execution_id} with MDX: {_data_mdx}. Error: {e}", exc_info=True)
+            return e
+
+    loop = asyncio.get_event_loop()
+    futures = []
+    source_csv_files = glob.glob(f"{source_directory}/*.csv")
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        for i, current_tuple, source_csv_file_path in zip(enumerate(param_tuples), source_csv_files):
+            template_kwargs = {
+                param_name: current_tuple[j]
+                for j, param_name in enumerate(param_names)
+            }
+            data_mdx = Template(data_mdx_template).substitute(**template_kwargs)
+
+            futures.append(loop.run_in_executor(
+                executor, wrapper,
+                tm1_service, source_csv_file_path,
+                target_cube_name, data_mdx,
+                mapping_steps, shared_mapping,
+                data_metadata_provider, target_metadata_provider,
+                i, kwargs
+            ))
+
+        results = await asyncio.gather(*futures, return_exceptions=True)
+
+        for i, result in enumerate(results):
+            if isinstance(result, Exception):
+                basic_logger.error(f"Task {i} failed with exception: {result}")

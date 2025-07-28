@@ -42,6 +42,22 @@ PARAM_SET_MDX_LIST = [
     "{TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchPeriod].[testbenchPeriod].[All Periods]}, {[testbenchPeriod].[testbenchPeriod].[All Periods]}, RECURSIVE )}, 0)}"
     #"{EXCEPT({TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchPeriod].[testbenchPeriod].[All Periods]}, {[testbenchPeriod].[testbenchPeriod].[All Periods]}, RECURSIVE )}, 0)},{[testbenchPeriod].[testbenchPeriod].[202401],[testbenchPeriod].[testbenchPeriod].[202402],[testbenchPeriod].[testbenchPeriod].[202403],[testbenchPeriod].[testbenchPeriod].[202404],[testbenchPeriod].[testbenchPeriod].[202405],[testbenchPeriod].[testbenchPeriod].[202406],[testbenchPeriod].[testbenchPeriod].[202407],[testbenchPeriod].[testbenchPeriod].[202408],[testbenchPeriod].[testbenchPeriod].[202409],[testbenchPeriod].[testbenchPeriod].[202410],[testbenchPeriod].[testbenchPeriod].[202411],[testbenchPeriod].[testbenchPeriod].[202412],[testbenchPeriod].[testbenchPeriod].[202501],[testbenchPeriod].[testbenchPeriod].[202502],[testbenchPeriod].[testbenchPeriod].[202503]})}"
 ]
+# not intercube tests, mapping 1
+_STEP1_INTRA = {
+    "method": "map_and_replace",
+    "mapping_mdx": f"""
+        SELECT 
+          NON EMPTY
+           {{[}}ElementAttributes_testbenchPeriod].[}}ElementAttributes_testbenchPeriod].[NEXT_Y_PERIOD]}}
+          ON 0, 
+            NON EMPTY
+            {{TM1FILTERBYLEVEL({{TM1DRILLDOWNMEMBER({{[testbenchPeriod].[testbenchPeriod].[All Periods]}}, {{[testbenchPeriod].[testbenchPeriod].[All Periods]}}, RECURSIVE )}}, 0)}}
+          ON 1 
+        FROM [}}ElementAttributes_testbenchPeriod] 
+        """,
+    "relabel_dimensions": True,
+    "mapping_dimensions": {"testbenchPeriod": "Value"}
+}
 
 _STEP1 = {
     "method": "map_and_join",
@@ -87,6 +103,7 @@ _STEP3 = {
 }
 
 MAPPING_STEPS = [_STEP1, _STEP2, _STEP3]
+MAPPING_STEPS_INTRACUBE = [_STEP3]
 
 TARGET_DIM_MAPPING = {"testbenchMeasurePnL": "Calculated from Sales"}
 
@@ -95,6 +112,7 @@ def benchmark_testcase_parameters():
     num_runs = 5
     identical_run_ids = [i for i in range(num_runs)]
     number_of_cores = [1, 2, 4, 8]
+    #number_of_records = [10000]
     number_of_records = [10000, 50000, 100000, 500000, 1000000, 5000000, 10000000]
     combinations = list(itertools.product(number_of_cores, number_of_records, identical_run_ids))
 

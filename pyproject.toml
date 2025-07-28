@@ -6,7 +6,16 @@ build-backend = "setuptools.build_meta"
 name = "tm1_bedrock_py"
 dynamic = ["version"]
 authors = [
-  { name="Example Author", email="author@example.com" },
+  { name = "Akos Andras Nagy", email = "akos.nagy@knowledgeseed.ch" },
+  { name = "Eszter Buris", email = "eszter.buris@knowledgeseed.ch" },
+  { name = "David Ullmann", email = "david.ullmann@knowledgeseed.ch" },
+  { name = "Zsolt Moravcsik", email = "zsolt.moravcsik@knowledgeseed.ch" }
+]
+maintainers = [
+  { name = "Akos Andras Nagy", email = "akos.nagy@knowledgeseed.ch" },
+  { name = "Eszter Buris", email = "eszter.buris@knowledgeseed.ch" },
+  { name = "David Ullmann", email = "david.ullmann@knowledgeseed.ch" },
+  { name = "Zsolt Moravcsik", email = "zsolt.moravcsik@knowledgeseed.ch" }
 ]
 description = "A python modul for TM1 Bedrock."
 readme = "README.md"

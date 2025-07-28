@@ -471,6 +471,7 @@ class TM1CubeObjectMetadata:
     _DEFAULT_NAME = "default member name"
     _DEFAULT_TYPE = "default member type"
     _DIM_CHECK_DFS = "dimension check dataframes"
+    _MEASURE_ELEMENT_TYPES = "measure element types"
 
     def __init__(self) -> None:
         self._data: Dict[str, Union['TM1CubeObjectMetadata', Any]] = {}
@@ -510,6 +511,9 @@ class TM1CubeObjectMetadata:
     def get_dimension_check_dfs(self):
         return self[self._DIM_CHECK_DFS]
 
+    def get_measure_element_types(self) -> Dict[str, str]:
+        return self[self._MEASURE_ELEMENT_TYPES]
+
     @classmethod
     def _expand_query_metadata(cls, mdx: str, metadata: "TM1CubeObjectMetadata") -> None:
         """
@@ -542,6 +546,7 @@ class TM1CubeObjectMetadata:
             collect_base_cube_metadata: Optional[bool] = True,
             collect_extended_cube_metadata: Optional[bool] = False,
             collect_dim_element_identifiers: Optional[bool] = False,
+            collect_measure_types: Optional[bool] = False,
             **kwargs
     ) -> "TM1CubeObjectMetadata":
         """
@@ -592,6 +597,14 @@ class TM1CubeObjectMetadata:
                 retrieve_dimension_data=retrieve_dimension_data,
                 **kwargs
             )
+
+        if collect_measure_types:
+            cube_dims = metadata.get_cube_dims()
+            if cube_dims:
+                measure_dimension = cube_dims[-1]
+                metadata[cls._MEASURE_ELEMENT_TYPES] = tm1_service.elements.get_element_types(
+                    dimension_name=measure_dimension, hierarchy_name=measure_dimension
+                )
 
         return metadata
 

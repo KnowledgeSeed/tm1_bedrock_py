@@ -243,6 +243,140 @@ def test_run_single_benchmark_case(tm1_connection_factory, nr_of_cores, nr_of_re
         basic_logger.info(f"Execution ended with {nr_of_cores} workers")
 
 
+@pytest.mark.parametrize("nr_of_cores, nr_of_records, n", cfg.benchmark_testcase_parameters())
+def test_run_single_benchmark_case_data_copy(tm1_connection_factory, nr_of_cores, nr_of_records, n):
+
+    with tm1_connection_factory("testbench") as conn:
+        update_benchmark_log_handler(f"{nr_of_cores}_{nr_of_records}_{n}")
+
+        server_name = conn.server.get_server_name()
+        print("Connection to TM1 established! Your server name is: {}".format(server_name))
+
+        fix_kwargs = {
+            "tm1_service": conn,
+            "data_mdx_template": cfg.DATA_MDX_TEMPLATE,
+            "skip_zeros": True,
+            "skip_consolidated_cells": True,
+            "target_cube_name": "testbenchSales",
+            "mapping_steps": cfg.MAPPING_STEPS_INTRACUBE,
+            "clear_target": True,
+            "logging_level": "DEBUG",
+            "use_blob": True,
+            "param_set_mdx_list": cfg.PARAM_SET_MDX_LIST,
+            "clear_param_templates": cfg.CLEAR_PARAM_TEMPLATES
+        }
+        basic_logger.info(f"Execution starting with {nr_of_cores} workers")
+
+        envname = 'bedrock_test_' + str(nr_of_records)
+        schemaloader = tm1_bench.SchemaLoader(cfg.SCHEMA_DIR, envname)
+        schema = schemaloader.load_schema()
+        default_df_to_cube_kwargs = schema['config']['df_to_cube_default_kwargs']
+        try:
+            tm1_bench.build_model(tm1=conn, schema=schema, env=envname, system_defaults=default_df_to_cube_kwargs)
+            asyncio.run(bedrock.async_executor_tm1(
+                data_copy_function=bedrock.data_copy,
+                max_workers=nr_of_cores,
+                df_verbose_logging=False,
+                **fix_kwargs
+            ))
+        finally:
+            print("exec ended")
+            tm1_bench.destroy_model(tm1=conn, schema=schema)
+
+        basic_logger.info(f"Execution ended with {nr_of_cores} workers")
+
+
+@pytest.mark.parametrize("nr_of_cores, nr_of_records, n", cfg.benchmark_testcase_parameters())
+def test_run_single_benchmark_case_tm1_to_csv(tm1_connection_factory, nr_of_cores, nr_of_records, n):
+
+    with tm1_connection_factory("testbench") as conn:
+        update_benchmark_log_handler(f"{nr_of_cores}_{nr_of_records}_{n}")
+
+        server_name = conn.server.get_server_name()
+        print("Connection to TM1 established! Your server name is: {}".format(server_name))
+
+        fix_kwargs = {
+            "tm1_service": conn,
+            "data_mdx_template": cfg.DATA_MDX_TEMPLATE,
+            "skip_zeros": True,
+            "skip_consolidated_cells": True,
+            "source_cube_name": "testbenchSales",
+            "mapping_steps": cfg.MAPPING_STEPS_INTRACUBE,
+            "clear_target": True,
+            "logging_level": "DEBUG",
+            "use_blob": True,
+            "param_set_mdx_list": cfg.PARAM_SET_MDX_LIST,
+            "clear_param_templates": cfg.CLEAR_PARAM_TEMPLATES,
+            "target_csv_output_dir": f"D:\\tm1-bedrock-benchmark\\tm1_to_csv\\{nr_of_cores}_{nr_of_records}_{n}",
+            "decimal": ".",
+            "delimiter": ","
+        }
+        basic_logger.info(f"Execution starting with {nr_of_cores} workers")
+
+        envname = 'bedrock_test_' + str(nr_of_records)
+        schemaloader = tm1_bench.SchemaLoader(cfg.SCHEMA_DIR, envname)
+        schema = schemaloader.load_schema()
+        default_df_to_cube_kwargs = schema['config']['df_to_cube_default_kwargs']
+        try:
+            tm1_bench.build_model(tm1=conn, schema=schema, env=envname, system_defaults=default_df_to_cube_kwargs)
+
+            asyncio.run(bedrock.async_executor_tm1(
+                data_copy_function=bedrock.load_tm1_cube_to_csv_file,
+                max_workers=nr_of_cores,
+                df_verbose_logging=False,
+                **fix_kwargs
+            ))
+
+        finally:
+            print("exec ended")
+            tm1_bench.destroy_model(tm1=conn, schema=schema)
+
+        basic_logger.info(f"Execution ended with {nr_of_cores} workers")
+
+
+@pytest.mark.parametrize("nr_of_cores, nr_of_records, n", cfg.benchmark_testcase_parameters())
+def test_run_single_benchmark_case_csv_to_tm1(tm1_connection_factory, nr_of_cores, nr_of_records, n):
+    update_benchmark_log_handler(f"{nr_of_cores}_{nr_of_records}_{n}")
+
+    with tm1_connection_factory("testbench") as conn:
+        server_name = conn.server.get_server_name()
+        print("Connection to TM1 established! Your server name is: {}".format(server_name))
+
+        fix_kwargs = {
+            "tm1_service": conn,
+            "data_mdx_template": cfg.DATA_MDX_TEMPLATE,
+            "skip_zeros": True,
+            "skip_consolidated_cells": True,
+            "target_cube_name": "testbenchSales",
+            "mapping_steps": cfg.MAPPING_STEPS_INTRACUBE,
+            "clear_target": True,
+            "logging_level": "DEBUG",
+            "use_blob": True,
+            "param_set_mdx_list": cfg.PARAM_SET_MDX_LIST,
+            "clear_param_templates": cfg.CLEAR_PARAM_TEMPLATES,
+            "source_directory": f"D:\\tm1-bedrock-benchmark\\tm1_to_csv\\logs\\dataframe_logs"
+        }
+        basic_logger.info(f"Execution starting with {nr_of_cores} workers")
+
+        envname = 'bedrock_test_' + str(nr_of_records)
+        schemaloader = tm1_bench.SchemaLoader(cfg.SCHEMA_DIR, envname)
+        schema = schemaloader.load_schema()
+        default_df_to_cube_kwargs = schema['config']['df_to_cube_default_kwargs']
+        try:
+            tm1_bench.build_model(tm1=conn, schema=schema, env=envname, system_defaults=default_df_to_cube_kwargs)
+
+            asyncio.run(bedrock.async_executor_tm1(
+                data_copy_function=bedrock.load_tm1_cube_to_csv_file,
+                max_workers=nr_of_cores,
+                df_verbose_logging=False,
+                **fix_kwargs
+            ))
+
+        finally:
+            print("exec ended")
+            tm1_bench.destroy_model(tm1=conn, schema=schema)
+
+        basic_logger.info(f"Execution ended with {nr_of_cores} workers")
 """
 #@parametrize_from_file
 def test_trace_malloc(tm1_connection, param_set_mdx_list, data_mdx_template,
