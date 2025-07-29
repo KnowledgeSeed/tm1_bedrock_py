@@ -8,44 +8,55 @@ from model.dimension import Dimension
 from model.process import Process
 from model.chore import Chore
 
-
-"""
-Összehasonlítás:
-    model1: A régi modell.
-    model2: Az új modell.
-    mode: Az összehasonlítás módja 'full' (mindent tárol)
-            vagy 'add_only' (csak a hozzáadott és módosított elemeket tárolja)
-"""
-def compare(model1: Model, model2: Model, mode: str = 'full') -> Changeset:
-    comparator = Comparator()
-    changeset = Changeset()
-
-    comparator._compare_object_lists(model1.cubes, model2.cubes,
-                                   changeset.added_cubes, changeset.removed_cubes,
-                                   changeset.modified_cubes,
+class Comparator:
+        def compare(self, model1: Model, model2: Model, mode: str = 'full') -> Changeset:
+        """
+        Összehasonlítás:
+            model1: A régi modell.
+            model2: Az új modell.
+            mode: Az összehasonlítás módja 'full' (mindent tárol)
+                  vagy 'add_only' (csak a hozzáadott és módosított elemeket tárolja)
+        """
+        self._compare_object_lists(model1.cubes, model2.cubes,
+                                   changeset.added, changeset.removed,
+                                   changeset.modified,
                                    object_type_name="Cube",
                                    mode=mode)
 
-    comparator._compare_object_lists(model1.dimensions, model2.dimensions,
-                                   changeset.added_dimensions, changeset.removed_dimensions,
-                                   changeset.modified_dimensions,
+        self._compare_object_lists(model1.dimensions, model2.dimensions,
+                                   changeset.added, changeset.removed,
+                                   changeset.modified,
                                    object_type_name="Dimension",
                                    mode=mode)
 
-    comparator._compare_object_lists(model1.processes, model2.processes,
-                                   changeset.added_processes, changeset.removed_processes,
-                                   changeset.modified_processes,
+        for dimension1, dimension2 in zip(model1.dimensions, model2.dimensions):
+            self._compare_object_lists(dimension1.hierarchies, dimension2.hierarchies,
+                                       changeset.added, changeset.removed,
+                                       changeset.modified,
+                                       object_type_name="Hierarchy",
+                                       mode=mode)
+
+            for hierarchy1, hierarchy2 in zip(dimension1.hierarchies, dimension2.hierarchies):
+                self._compare_object_lists(hierarchy1.subsets, hierarchy2.subsets,
+                                           changeset.added, changeset.removed,
+                                           changeset.modified,
+                                           object_type_name="Subset",
+                                           mode=mode)
+
+        self._compare_object_lists(model1.processes, model2.processes,
+                                   changeset.added, changeset.removed,
+                                   changeset.modified,
                                    object_type_name="Process",
                                    mode=mode)
 
-    comparator._compare_object_lists(model1.chores, model2.chores,
-                                   changeset.added_chores, changeset.removed_chores,
-                                   changeset.modified_chores,
+        self._compare_object_lists(model1.chores, model2.chores,
+                                   changeset.added, changeset.removed,
+                                   changeset.modified,
                                    object_type_name="Chore",
                                    mode=mode)
-    return changeset
+        
+        return changeset
 
-class Comparator:
     def _compare_object_lists(self,
                                old_list: List[Any],
                                new_list: List[Any],
@@ -65,7 +76,7 @@ class Comparator:
         if mode == 'full':
             for name, obj in old_map.items():
                 if name not in new_map:
-                    removed_list.append(obj.name)
+                    removed_list.append(obj)
 
         for name, new_obj in new_map.items():
             if name in old_map:

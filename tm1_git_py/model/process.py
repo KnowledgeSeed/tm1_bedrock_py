@@ -1,6 +1,10 @@
 import json
 from typing import Any, List, Dict, TYPE_CHECKING
 
+import TM1py
+from TM1py import TM1Service, Process
+from requests import Response
+
 # Importáljuk a TI osztályt a típus-ellenőrzéshez (type hinting)
 if TYPE_CHECKING:
     from model.ti import TI 
@@ -85,4 +89,35 @@ class Process:
     def as_link(name : str):
         # /processes/Process_A.json
         return '/processes/' + name
-    
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Utility: interface between TM1py and tm1_git_py for CRUD operations
+# ------------------------------------------------------------------------------------------------------------
+
+def create_process(tm1_service: TM1Service, process: Process) -> Response:
+    data_source_type = process.datasource
+    process_object = TM1py.Process(
+        name=process.name,
+        has_security_access=process.hasSecurityAccess,
+        datasource_type=process.datasource,
+        parameters=process.parameters,
+        variables=process.variables
+    )
+    return tm1_service.processes.create(process_object)
+
+
+def update_process(tm1_service: TM1Service, process: Dict[str, Any]) -> Response:
+    process_new = process.get('new')
+
+    process_object = tm1_service.processes.get(name_process=process_new.name)
+    process_object.variables = process_new.variables
+    process_object.parameters = process_new.parameters
+    process_object.datasource_type = process_new.datasource
+    process_object.has_security_access = process_new.hasSecurityAccess
+
+    return tm1_service.processes.update(process_object)
+
+
+def delete_process(tm1_service: TM1Service, process: str) -> Response:
+    return tm1_service.processes.delete(process)

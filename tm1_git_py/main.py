@@ -77,11 +77,10 @@ export_changeset('changeset.txt', changeset)
 #     print("\n--- full ---")
 #     changeset_full = comparator.compare(model_from_export, model_from_export2, mode='full')
 #     print(changeset_full)
+#     return changeset_full
 
-#     print("\n--- add_only ---")
-#     changeset_add_only = comparator.compare(model_from_export, model_from_export2, mode='add_only')
-#     print(changeset_add_only)
-# compare_tm1()
+#changeset = compare_tm1()
+#changeset.apply(tm1_service=tm1_connection())
 
 # def run_filter_and_export():
 #     source_directory = 'export'
