@@ -1,3 +1,7 @@
++/cubes/*
++/dimensions/*
++/processes/*
++/chores/*
 +/data_csv/*.*
 +/data_source/*.*
 -/Cubes/Views*

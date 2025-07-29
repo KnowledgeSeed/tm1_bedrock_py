@@ -1,0 +1,765 @@
+Changeset:
+D /cubes/Balance Sheet Planning
+D /cubes/Capex
+D /cubes/Capex Balance Sheet Assignment
+D /cubes/Channel Cost
+D /cubes/Channel Cost Report
+D /cubes/Channel Csoportos Flat Assignment
+D /cubes/Channel Product Assignment
+D /cubes/Channel Provider Assignment
+D /cubes/Channel Time Dependent Attributes
+D /cubes/Comment By ID
+D /cubes/Commission
+D /cubes/Commisson IFRS
+D /cubes/Direct Cost
+D /cubes/EBITDA
+D /cubes/Erkim
+D /cubes/Erkim Balance Sheet Assignment
+D /cubes/Individual Cost
+D /cubes/Marketing Cost
+D /cubes/ote_test_121_123
+D /cubes/Other Cost
+D /cubes/Planning Driver
+D /cubes/Product Ledger Assignment
+D /cubes/Revenue
+D /cubes/Sales Channel And Loyalty
+D /cubes/Subscription Movement Assignment
+D /cubes/Subscription Movement Assignment for Input
+D /cubes/Subscription Plan
+D /cubes/Subscription Plan Matrix
+D /cubes/Subscription Report
+D /cubes/Subscription Topdown
+D /cubes/Taxes
+D /cubes/Weight and Limit
+D /cubes/XP Planning
+D /cubes/zSYS Analogic Pivot Presets
+D /cubes/zSYS Analogic UI Color Code
+D /cubes/zSYS Analogic UI User Data
+D /cubes/zSYS Analogic User Parameter
+D /cubes/zSYS Maintenance Parameter
+D /cubes/}Capabilities
+D /cubes/}ClientCAMAssociatedGroups
+D /cubes/}ClientGroups
+D /cubes/}ClientProperties
+D /cubes/}ClientSettings
+D /cubes/}CubeProperties
+D /cubes/}CubeSecurity
+D /cubes/}CubeSecurityProperties
+D /cubes/}DimensionProperties
+D /cubes/}DimensionSecurity
+D /cubes/}ElementAttributes_Balance Sheet Planning Ledger
+D /cubes/}ElementAttributes_Balance Sheet Planning Measure
+D /cubes/}ElementAttributes_Capex Balance Sheet Assignment Measure
+D /cubes/}ElementAttributes_Capex Ledger
+D /cubes/}ElementAttributes_Capex Ledger Mentes Maskent Mody
+D /cubes/}ElementAttributes_Capex Measure
+D /cubes/}ElementAttributes_Channel
+D /cubes/}ElementAttributes_Channel Cost Lineitem
+D /cubes/}ElementAttributes_Channel Cost Measure
+D /cubes/}ElementAttributes_Channel Cost Report Measure
+D /cubes/}ElementAttributes_Channel Csoportos Flat Assignment Measure
+D /cubes/}ElementAttributes_Channel Product Assignment Measure
+D /cubes/}ElementAttributes_Channel Provider Assignment Measure
+D /cubes/}ElementAttributes_Channel Time Dependent Attributes Measure
+D /cubes/}ElementAttributes_Commission
+D /cubes/}ElementAttributes_Commission IFRS
+D /cubes/}ElementAttributes_Commission IFRS Measure
+D /cubes/}ElementAttributes_Commission Lineitem
+D /cubes/}ElementAttributes_Commission Measure
+D /cubes/}ElementAttributes_Csoportos Flat
+D /cubes/}ElementAttributes_Currency
+D /cubes/}ElementAttributes_Direct Cost Lineitem
+D /cubes/}ElementAttributes_Direct Cost Measure
+D /cubes/}ElementAttributes_EBITDA Measure
+D /cubes/}ElementAttributes_Ecosoft ID
+D /cubes/}ElementAttributes_Erkim Balance Sheet Assignment Measure
+D /cubes/}ElementAttributes_Erkim Measure
+D /cubes/}ElementAttributes_Individual Cost Ledger
+D /cubes/}ElementAttributes_Individual Cost Lineitem
+D /cubes/}ElementAttributes_ledger
+D /cubes/}ElementAttributes_Loyalty
+D /cubes/}ElementAttributes_Marketing Cost
+D /cubes/}ElementAttributes_Marketing Cost Measure
+D /cubes/}ElementAttributes_Other Cost Lineitem
+D /cubes/}ElementAttributes_Other Cost Measure
+D /cubes/}ElementAttributes_Period
+D /cubes/}ElementAttributes_Planning Driver Measure
+D /cubes/}ElementAttributes_Planning Parameters
+D /cubes/}ElementAttributes_Product
+D /cubes/}ElementAttributes_Product Category
+D /cubes/}ElementAttributes_product ledger mapping measure
+D /cubes/}ElementAttributes_Provider
+D /cubes/}ElementAttributes_Revenue Lineitem
+D /cubes/}ElementAttributes_Revenue Measure
+D /cubes/}ElementAttributes_Sales Channel
+D /cubes/}ElementAttributes_Source Product
+D /cubes/}ElementAttributes_Subscription Movement Assignment Measure
+D /cubes/}ElementAttributes_Subscription Plan Measure
+D /cubes/}ElementAttributes_Subscription Plan Movement
+D /cubes/}ElementAttributes_Subscription Report Measure
+D /cubes/}ElementAttributes_Subscription Topdown Movement
+D /cubes/}ElementAttributes_Target Product
+D /cubes/}ElementAttributes_Taxes
+D /cubes/}ElementAttributes_Taxes Measure
+D /cubes/}ElementAttributes_Version
+D /cubes/}ElementAttributes_Weight and limit
+D /cubes/}ElementAttributes_Weight and limit measure
+D /cubes/}ElementAttributes_XP Planning
+D /cubes/}ElementAttributes_XP Planning Measure
+D /cubes/}ElementAttributes_zSYS Analogic Pivot Presets
+D /cubes/}ElementAttributes_zSYS Analogic User Parameter Measure
+D /cubes/}ElementAttributes_zSYS Analogic UserPool
+D /cubes/}ElementAttributes_}Clients
+D /cubes/}ElementAttributes_}Cultures
+D /cubes/}ElementAttributes_}Groups
+D /cubes/}ElementAttributes_}Subsets_Product
+D /cubes/}ElementAttributes_}Subsets_Source Product
+D /cubes/}ElementAttributes_}Subsets_Target Product
+D /cubes/}HierarchyProperties
+D /cubes/}ProcessSecurity
+D /cubes/}StatsByChore
+D /cubes/}StatsByClient
+D /cubes/}StatsByCube
+D /cubes/}StatsByCubeByClient
+D /cubes/}StatsByProcess
+D /cubes/}StatsByRule
+D /cubes/}StatsForServer
+D /dimensions/Balance Sheet Planning Ledger
+D /dimensions/Balance Sheet Planning Measure
+D /dimensions/Capex Balance Sheet Assignment Measure
+D /dimensions/Capex Ledger
+D /dimensions/Capex Ledger Mentes Maskent Mody
+D /dimensions/Capex Measure
+D /dimensions/Channel
+D /dimensions/channel 4
+D /dimensions/channel 5
+D /dimensions/channel 6
+D /dimensions/channel 7
+D /dimensions/channel 8
+D /dimensions/channel 9
+D /dimensions/Channel Cost Lineitem
+D /dimensions/Channel Cost Measure
+D /dimensions/Channel Cost Report Measure
+D /dimensions/Channel Csoportos Flat Assignment Measure
+D /dimensions/Channel Product Assignment Measure
+D /dimensions/Channel Provider Assignment Measure
+D /dimensions/Channel Time Dependent Attributes Measure
+D /dimensions/Comment ID
+D /dimensions/Commission
+D /dimensions/Commission IFRS
+D /dimensions/Commission IFRS Measure
+D /dimensions/Commission Lineitem
+D /dimensions/Commission Measure
+D /dimensions/Csoportos Flat
+D /dimensions/Currency
+D /dimensions/Direct Cost Lineitem
+D /dimensions/Direct Cost Measure
+D /dimensions/EBITDA Measure
+D /dimensions/Ecosoft ID
+D /dimensions/Erkim Balance Sheet Assignment Measure
+D /dimensions/Erkim Measure
+D /dimensions/Individual Cost Ledger
+D /dimensions/Individual Cost Lineitem
+D /dimensions/ledger
+D /dimensions/Loyalty
+D /dimensions/Marketing Cost
+D /dimensions/Marketing Cost Measure
+D /dimensions/Measures Comments by ID
+D /dimensions/Measures zSYS Analogic Pivot Presets
+D /dimensions/Other Cost Lineitem
+D /dimensions/Other Cost Measure
+D /dimensions/Period
+D /dimensions/Planning Driver Measure
+D /dimensions/Planning Parameters
+D /dimensions/Product
+D /dimensions/Product Category
+D /dimensions/product ledger mapping measure
+D /dimensions/Provider
+D /dimensions/Revenue Lineitem
+D /dimensions/Revenue Measure
+D /dimensions/Sales Channel
+D /dimensions/Sales Channel And Loyalty Measure
+D /dimensions/Source Product
+D /dimensions/Subscription Movement Assignment Measure
+D /dimensions/Subscription Plan Matrix Measure
+D /dimensions/Subscription Plan Matrix Movement
+D /dimensions/Subscription Plan Measure
+D /dimensions/Subscription Plan Movement
+D /dimensions/Subscription Report Measure
+D /dimensions/Subscription Topdown Measure
+D /dimensions/Subscription Topdown Movement
+D /dimensions/Target Product
+D /dimensions/Taxes
+D /dimensions/Taxes Measure
+D /dimensions/test
+D /dimensions/test dim 2222
+D /dimensions/test dim Ira
+D /dimensions/test Ira 222
+D /dimensions/test Ira 333
+D /dimensions/Version
+D /dimensions/Weight and limit
+D /dimensions/Weight and limit measure
+D /dimensions/XP Planning
+D /dimensions/XP Planning Measure
+D /dimensions/zSYS Analogic Pivot Presets
+D /dimensions/zSYS Analogic UI Color Code Measure
+D /dimensions/zSYS Analogic UI Counter
+D /dimensions/zSYS Analogic UI User Data Measure
+D /dimensions/zSYS Analogic UI Widget
+D /dimensions/zSYS Analogic User Parameter Measure
+D /dimensions/zSYS Analogic UserPool
+D /dimensions/zSYS Maintenance Cube Dimension Mapping Measure
+D /dimensions/zSYS Maintenance Parameter
+D /dimensions/zSYS Maintenance Parameter Measure
+D /dimensions/}ApplicationEntries
+D /dimensions/}CAMAssociatedGroups
+D /dimensions/}Chores
+D /dimensions/}ClientProperties
+D /dimensions/}Clients
+D /dimensions/}ClientSettings
+D /dimensions/}ConnectionProperties
+D /dimensions/}Connections
+D /dimensions/}Cube Functions
+D /dimensions/}CubeProperties
+D /dimensions/}Cubes
+D /dimensions/}CubeSecurityProperties
+D /dimensions/}Cultures
+D /dimensions/}DimensionFormatAttributes
+D /dimensions/}DimensionFormatItems
+D /dimensions/}DimensionProperties
+D /dimensions/}Dimensions
+D /dimensions/}ElementAttributes_Balance Sheet Planning Ledger
+D /dimensions/}ElementAttributes_Balance Sheet Planning Measure
+D /dimensions/}ElementAttributes_Capex Balance Sheet Assignment Measure
+D /dimensions/}ElementAttributes_Capex Ledger
+D /dimensions/}ElementAttributes_Capex Ledger Mentes Maskent Mody
+D /dimensions/}ElementAttributes_Capex Measure
+D /dimensions/}ElementAttributes_Channel
+D /dimensions/}ElementAttributes_Channel Cost Lineitem
+D /dimensions/}ElementAttributes_Channel Cost Measure
+D /dimensions/}ElementAttributes_Channel Cost Report Measure
+D /dimensions/}ElementAttributes_Channel Csoportos Flat Assignment Measure
+D /dimensions/}ElementAttributes_Channel Product Assignment Measure
+D /dimensions/}ElementAttributes_Channel Provider Assignment Measure
+D /dimensions/}ElementAttributes_Channel Time Dependent Attributes Measure
+D /dimensions/}ElementAttributes_Commission
+D /dimensions/}ElementAttributes_Commission IFRS
+D /dimensions/}ElementAttributes_Commission IFRS Measure
+D /dimensions/}ElementAttributes_Commission Lineitem
+D /dimensions/}ElementAttributes_Commission Measure
+D /dimensions/}ElementAttributes_Csoportos Flat
+D /dimensions/}ElementAttributes_Currency
+D /dimensions/}ElementAttributes_Direct Cost Lineitem
+D /dimensions/}ElementAttributes_Direct Cost Measure
+D /dimensions/}ElementAttributes_EBITDA Measure
+D /dimensions/}ElementAttributes_Ecosoft ID
+D /dimensions/}ElementAttributes_Erkim Balance Sheet Assignment Measure
+D /dimensions/}ElementAttributes_Erkim Measure
+D /dimensions/}ElementAttributes_Individual Cost Ledger
+D /dimensions/}ElementAttributes_Individual Cost Lineitem
+D /dimensions/}ElementAttributes_ledger
+D /dimensions/}ElementAttributes_Loyalty
+D /dimensions/}ElementAttributes_Marketing Cost
+D /dimensions/}ElementAttributes_Marketing Cost Measure
+D /dimensions/}ElementAttributes_Other Cost Lineitem
+D /dimensions/}ElementAttributes_Other Cost Measure
+D /dimensions/}ElementAttributes_Period
+D /dimensions/}ElementAttributes_Planning Driver Measure
+D /dimensions/}ElementAttributes_Planning Parameters
+D /dimensions/}ElementAttributes_Product
+D /dimensions/}ElementAttributes_Product Category
+D /dimensions/}ElementAttributes_product ledger mapping measure
+D /dimensions/}ElementAttributes_Provider
+D /dimensions/}ElementAttributes_Revenue Lineitem
+D /dimensions/}ElementAttributes_Revenue Measure
+D /dimensions/}ElementAttributes_Sales Channel
+D /dimensions/}ElementAttributes_Source Product
+D /dimensions/}ElementAttributes_Subscription Movement Assignment Measure
+D /dimensions/}ElementAttributes_Subscription Plan Measure
+D /dimensions/}ElementAttributes_Subscription Plan Movement
+D /dimensions/}ElementAttributes_Subscription Report Measure
+D /dimensions/}ElementAttributes_Subscription Topdown Movement
+D /dimensions/}ElementAttributes_Target Product
+D /dimensions/}ElementAttributes_Taxes
+D /dimensions/}ElementAttributes_Taxes Measure
+D /dimensions/}ElementAttributes_Version
+D /dimensions/}ElementAttributes_Weight and limit
+D /dimensions/}ElementAttributes_Weight and limit measure
+D /dimensions/}ElementAttributes_XP Planning
+D /dimensions/}ElementAttributes_XP Planning Measure
+D /dimensions/}ElementAttributes_zSYS Analogic Pivot Presets
+D /dimensions/}ElementAttributes_zSYS Analogic User Parameter Measure
+D /dimensions/}ElementAttributes_zSYS Analogic UserPool
+D /dimensions/}ElementAttributes_}Clients
+D /dimensions/}ElementAttributes_}Cultures
+D /dimensions/}ElementAttributes_}Groups
+D /dimensions/}ElementAttributes_}Subsets_Product
+D /dimensions/}ElementAttributes_}Subsets_productTESTdimension
+D /dimensions/}ElementAttributes_}Subsets_Source Product
+D /dimensions/}ElementAttributes_}Subsets_Target Product
+D /dimensions/}ElementProperties
+D /dimensions/}Features
+D /dimensions/}Groups
+D /dimensions/}Hierarchies
+D /dimensions/}Hierarchies_Balance Sheet Planning Ledger
+D /dimensions/}Hierarchies_Balance Sheet Planning Measure
+D /dimensions/}Hierarchies_Capex Balance Sheet Assignment Measure
+D /dimensions/}Hierarchies_Capex Ledger
+D /dimensions/}Hierarchies_Capex Ledger Mentes Maskent Mody
+D /dimensions/}Hierarchies_Capex Measure
+D /dimensions/}Hierarchies_Channel
+D /dimensions/}Hierarchies_channel 4
+D /dimensions/}Hierarchies_channel 5
+D /dimensions/}Hierarchies_channel 6
+D /dimensions/}Hierarchies_channel 7
+D /dimensions/}Hierarchies_channel 8
+D /dimensions/}Hierarchies_channel 9
+D /dimensions/}Hierarchies_Channel Cost Lineitem
+D /dimensions/}Hierarchies_Channel Cost Measure
+D /dimensions/}Hierarchies_Channel Cost Report Measure
+D /dimensions/}Hierarchies_Channel Csoportos Flat Assignment Measure
+D /dimensions/}Hierarchies_Channel Product Assignment Measure
+D /dimensions/}Hierarchies_Channel Provider Assignment Measure
+D /dimensions/}Hierarchies_Channel Time Dependent Attributes Measure
+D /dimensions/}Hierarchies_Comment ID
+D /dimensions/}Hierarchies_Commission
+D /dimensions/}Hierarchies_Commission IFRS
+D /dimensions/}Hierarchies_Commission IFRS Measure
+D /dimensions/}Hierarchies_Commission Lineitem
+D /dimensions/}Hierarchies_Commission Measure
+D /dimensions/}Hierarchies_Csoportos Flat
+D /dimensions/}Hierarchies_Currency
+D /dimensions/}Hierarchies_Direct Cost Lineitem
+D /dimensions/}Hierarchies_Direct Cost Measure
+D /dimensions/}Hierarchies_EBITDA Measure
+D /dimensions/}Hierarchies_Ecosoft ID
+D /dimensions/}Hierarchies_Erkim Balance Sheet Assignment Measure
+D /dimensions/}Hierarchies_Erkim Measure
+D /dimensions/}Hierarchies_Individual Cost Ledger
+D /dimensions/}Hierarchies_Individual Cost Lineitem
+D /dimensions/}Hierarchies_ledger
+D /dimensions/}Hierarchies_Loyalty
+D /dimensions/}Hierarchies_Marketing Cost
+D /dimensions/}Hierarchies_Marketing Cost Measure
+D /dimensions/}Hierarchies_Measures Comments by ID
+D /dimensions/}Hierarchies_Measures zSYS Analogic Pivot Presets
+D /dimensions/}Hierarchies_Other Cost Lineitem
+D /dimensions/}Hierarchies_Other Cost Measure
+D /dimensions/}Hierarchies_Period
+D /dimensions/}Hierarchies_Planning Driver Measure
+D /dimensions/}Hierarchies_Planning Parameters
+D /dimensions/}Hierarchies_Product
+D /dimensions/}Hierarchies_Product Category
+D /dimensions/}Hierarchies_product ledger mapping measure
+D /dimensions/}Hierarchies_Provider
+D /dimensions/}Hierarchies_Revenue Lineitem
+D /dimensions/}Hierarchies_Revenue Measure
+D /dimensions/}Hierarchies_Sales Channel
+D /dimensions/}Hierarchies_Sales Channel And Loyalty Measure
+D /dimensions/}Hierarchies_Source Product
+D /dimensions/}Hierarchies_Subscription Movement Assignment Measure
+D /dimensions/}Hierarchies_Subscription Plan Matrix Measure
+D /dimensions/}Hierarchies_Subscription Plan Matrix Movement
+D /dimensions/}Hierarchies_Subscription Plan Measure
+D /dimensions/}Hierarchies_Subscription Plan Movement
+D /dimensions/}Hierarchies_Subscription Report Measure
+D /dimensions/}Hierarchies_Subscription Topdown Measure
+D /dimensions/}Hierarchies_Subscription Topdown Movement
+D /dimensions/}Hierarchies_Target Product
+D /dimensions/}Hierarchies_Taxes
+D /dimensions/}Hierarchies_Taxes Measure
+D /dimensions/}Hierarchies_test
+D /dimensions/}Hierarchies_test dim 2222
+D /dimensions/}Hierarchies_test dim Ira
+D /dimensions/}Hierarchies_test Ira 222
+D /dimensions/}Hierarchies_test Ira 333
+D /dimensions/}Hierarchies_Version
+D /dimensions/}Hierarchies_Weight and limit
+D /dimensions/}Hierarchies_Weight and limit measure
+D /dimensions/}Hierarchies_XP Planning
+D /dimensions/}Hierarchies_XP Planning Measure
+D /dimensions/}Hierarchies_zSYS Analogic Pivot Presets
+D /dimensions/}Hierarchies_zSYS Analogic UI Color Code Measure
+D /dimensions/}Hierarchies_zSYS Analogic UI Counter
+D /dimensions/}Hierarchies_zSYS Analogic UI User Data Measure
+D /dimensions/}Hierarchies_zSYS Analogic UI Widget
+D /dimensions/}Hierarchies_zSYS Analogic User Parameter Measure
+D /dimensions/}Hierarchies_zSYS Analogic UserPool
+D /dimensions/}Hierarchies_zSYS Maintenance Cube Dimension Mapping Measure
+D /dimensions/}Hierarchies_zSYS Maintenance Parameter
+D /dimensions/}Hierarchies_zSYS Maintenance Parameter Measure
+D /dimensions/}HierarchyProperties
+D /dimensions/}Hold
+D /dimensions/}LineNumber
+D /dimensions/}PerfClients
+D /dimensions/}PerfCubes
+D /dimensions/}Permissions
+D /dimensions/}PickList
+D /dimensions/}Processes
+D /dimensions/}RuleStats
+D /dimensions/}SecurityOverlay
+D /dimensions/}StatsByProcess
+D /dimensions/}StatsStatsByClient
+D /dimensions/}StatsStatsByCube
+D /dimensions/}StatsStatsByCubeByClient
+D /dimensions/}StatsStatsForServer
+D /dimensions/}Subsets_Balance Sheet Planning Ledger
+D /dimensions/}Subsets_Capex Ledger Mentes Maskent Mody
+D /dimensions/}Subsets_Channel
+D /dimensions/}Subsets_Channel Cost Measure
+D /dimensions/}Subsets_Commission IFRS
+D /dimensions/}Subsets_Csoportos Flat
+D /dimensions/}Subsets_Currency
+D /dimensions/}Subsets_Erkim Measure
+D /dimensions/}Subsets_ledger
+D /dimensions/}Subsets_Loyalty
+D /dimensions/}Subsets_Period
+D /dimensions/}Subsets_Planning Parameters
+D /dimensions/}Subsets_Product
+D /dimensions/}Subsets_Product Category
+D /dimensions/}Subsets_productTESTdimension
+D /dimensions/}Subsets_Provider
+D /dimensions/}Subsets_Sales Channel
+D /dimensions/}Subsets_Source Product
+D /dimensions/}Subsets_Subscription Plan Movement
+D /dimensions/}Subsets_Target Product
+D /dimensions/}Subsets_Version
+D /dimensions/}Subsets_XP Planning
+D /dimensions/}TimeIntervals
+D /dimensions/}Views_Capex
+D /dimensions/}Views_Channel Cost
+D /dimensions/}Views_Channel Cost Report
+D /dimensions/}Views_Channel Csoportos Flat Assignment
+D /dimensions/}Views_Channel Product Assignment
+D /dimensions/}Views_Commission
+D /dimensions/}Views_Direct Cost
+D /dimensions/}Views_Erkim
+D /dimensions/}Views_Marketing Cost
+D /dimensions/}Views_Revenue
+D /dimensions/}Views_Sales Channel And Loyalty
+D /dimensions/}Views_Subscription Movement Assignment for Input
+D /dimensions/}Views_Subscription Plan
+D /dimensions/}Views_Subscription Report
+D /dimensions/}Views_Subscription Topdown
+D /dimensions/}Views_Weight and Limit
+D /dimensions/}Views_XP Planning
+D /dimensions/}Views_}ElementAttributes_ledger
+D /dimensions/}Views_}ElementAttributes_Product
+D /dimensions/}Views_}ElementAttributes_Target Product
+D /dimensions/}Views_}ElementAttributes_Version
+D /processes/airflow_test_success
+D /processes/airflowTriggerTest
+D /processes/test_delete_this
+D /processes/test_ote
+D /processes/test_ote1010
+D /processes/test_ote11
+D /processes/test_ote1212
+D /processes/test_ote2000
+D /processes/test_ote22
+D /processes/zSYS Analogic Channel Cost Data Clear
+D /processes/zSYS Analogic Commission Wrapper
+D /processes/zSYS Analogic Create HAS
+D /processes/zSYS Analogic Create Pool User
+D /processes/zSYS Analogic CS.Flat Subset Update
+D /processes/zSYS Analogic Cube Process Feeders
+D /processes/zSYS Analogic Delete All Data Plan And Report
+D /processes/zSYS Analogic Delete All Value In Naturalia Cubes
+D /processes/zSYS Analogic Delete And Load All Value In Naturalia Cubes
+D /processes/zSYS Analogic Delete Last Year Data Clear Plan And Report
+D /processes/zSYS Analogic Delete User
+D /processes/zSYS Analogic Fact Update
+D /processes/zSYS Analogic Load
+D /processes/zSYS Analogic Load All Csoportos Flat Subset
+D /processes/zSYS Analogic Load Balance Sheet Planning Ledger Values
+D /processes/zSYS Analogic Load Call Center Commission
+D /processes/zSYS Analogic Load Capex Ledger Values
+D /processes/zSYS Analogic Load Channel Cost
+D /processes/zSYS Analogic Load Channel Cost Cube Feeders
+D /processes/zSYS Analogic Load Channel Cost Load Processes
+D /processes/zSYS Analogic Load Channel Cost To Direct Cost Cube
+D /processes/zSYS Analogic Load Channel Csoportos Flat Assignment
+D /processes/zSYS Analogic Load Channel Dimension Update
+D /processes/zSYS Analogic Load Channel Jogdij
+D /processes/zSYS Analogic Load Channel Product Assignment
+D /processes/zSYS Analogic Load Channel Provider Assignment
+D /processes/zSYS Analogic Load Closing Actual Values to Subscription Report
+D /processes/zSYS Analogic Load Closing Correction Delta to Subscription Plan
+D /processes/zSYS Analogic Load Closing values Into XP Values
+D /processes/zSYS Analogic Load Currency Values
+D /processes/zSYS Analogic Load Customer Service Commission
+D /processes/zSYS Analogic Load Direct Cost Ledger Values
+D /processes/zSYS Analogic Load EBITDA Ledger Values
+D /processes/zSYS Analogic Load Erkim Ledger Values
+D /processes/zSYS Analogic Load Individual Cost Ledger Values
+D /processes/zSYS Analogic Load Keszulek Eladas Darabszam
+D /processes/zSYS Analogic Load Ledger Values
+D /processes/zSYS Analogic Load Loyalty Extension Ratio
+D /processes/zSYS Analogic Load Marketing Data Mig Price New Fact Points
+D /processes/zSYS Analogic Load Marketing Veszelyeztetett Points
+D /processes/zSYS Analogic Load Mig Point To Marketing Cube
+D /processes/zSYS Analogic Load Opening Values
+D /processes/zSYS Analogic Load Other Cost Ledger Values
+D /processes/zSYS Analogic Load Product Update Base
+D /processes/zSYS Analogic Load Product Update Base with ODBC
+D /processes/zSYS Analogic Load Product Update Subsets
+D /processes/zSYS Analogic Load Product Update Subsets with ODBC
+D /processes/zSYS Analogic Load Product Update Subsets with ODBC _old
+D /processes/zSYS Analogic Load Product Update Time Dependent Attributes
+D /processes/zSYS Analogic Load Product Update Time Dependent Attributes Sum
+D /processes/zSYS Analogic Load Product Update Weights
+D /processes/zSYS Analogic Load Sales Channel And Loyalty Cube
+D /processes/zSYS Analogic Load Subscription Report Cube
+D /processes/zSYS Analogic Load Subscription Topdown
+D /processes/zSYS Analogic Load Terminated Values
+D /processes/zSYS Analogic Load Transactions
+D /processes/zSYS Analogic Load Transactions To Commission Cube
+D /processes/zSYS Analogic Load Visszakapcsolt Values
+D /processes/zSYS Analogic Load XP Values
+D /processes/zSYS Analogic Load XP Values ODBC
+D /processes/zSYS Analogic Operation Version Copy
+D /processes/zSYS Analogic Save Pivot Preset
+D /processes/zSYS Analogic Store Subscription Movement Assignment for Input Rule Driven
+D /processes/zSYS Analogic Subscription Movement Assignment Calculate
+D /processes/zSYS Analogic Subscription Movement Assignment Calculate for Input OLD
+D /processes/zSYS Analogic Subscription Movement Assignment CopyDataInner
+D /processes/zSYS Analogic Subscription Movement Assignment CopyDataOuter
+D /processes/zSYS Analogic Subscription Movement Assignment SwitchOff
+D /processes/zSYS Analogic Subscription Movement Assignment SwitchOn
+D /processes/zSYS Analogic UI Add Balance Sheet Planning Ledger
+D /processes/zSYS Analogic UI Add Capex Ledger
+D /processes/zSYS Analogic UI Add Channel To Csoportos Flat
+D /processes/zSYS Analogic UI Add Comment
+D /processes/zSYS Analogic UI Add Comment BotondTest
+D /processes/zSYS Analogic UI Add Comment MENTES
+D /processes/zSYS Analogic UI Add Direct Cost Ledger
+D /processes/zSYS Analogic UI Add EBITDA Ledger
+D /processes/zSYS Analogic UI Add Individual Cost Ledger
+D /processes/zSYS Analogic UI Add Other Cost Anyagkoltseg Ledger
+D /processes/zSYS Analogic UI Add Other Cost Ledger
+D /processes/zSYS Analogic UI Add Other Ledger
+D /processes/zSYS Analogic UI ARPU Import
+D /processes/zSYS Analogic UI ARPU Input
+D /processes/zSYS Analogic UI Balance Sheet Planning Calculations
+D /processes/zSYS Analogic UI Balance Sheet Planning Import
+D /processes/zSYS Analogic UI Balance Sheet Planning Input
+D /processes/zSYS Analogic UI Balance Sheet Planning Ledger Rename
+D /processes/zSYS Analogic UI Capex Balance Sheet Assignment Input
+D /processes/zSYS Analogic UI Capex Calculations
+D /processes/zSYS Analogic UI Capex import
+D /processes/zSYS Analogic UI Capex Input
+D /processes/zSYS Analogic UI Capex Ledger Rename
+D /processes/zSYS Analogic UI Channel Cost Import
+D /processes/zSYS Analogic UI Channel Cost Royalty Import
+D /processes/zSYS Analogic UI Channel Input
+D /processes/zSYS Analogic UI Channel Jogdij Input
+D /processes/zSYS Analogic UI Channel Product Assignment Input
+D /processes/zSYS Analogic UI Channel Provider Assignment Input
+D /processes/zSYS Analogic UI Commission Cost Import
+D /processes/zSYS Analogic UI Commission Fee Input
+D /processes/zSYS Analogic UI Commission IFRS import
+D /processes/zSYS Analogic UI Commission IFRS import Mentes
+D /processes/zSYS Analogic UI Correction Of Negative Values
+D /processes/zSYS Analogic UI Csoportos Flat Input
+D /processes/zSYS Analogic UI Csoportos Flat Rename
+D /processes/zSYS Analogic UI Delete Balance Sheet Planning Element
+D /processes/zSYS Analogic UI Delete Capex Ledger Element
+D /processes/zSYS Analogic UI Delete Channel From Csoportos Flat
+D /processes/zSYS Analogic UI Delete Comment
+D /processes/zSYS Analogic UI Delete Individual Element
+D /processes/zSYS Analogic UI Delete Report Version
+D /processes/zSYS Analogic UI Direct Cost Input
+D /processes/zSYS Analogic UI Direct Cost Overview Calculations
+D /processes/zSYS Analogic UI Direct Cost Overview Import
+D /processes/zSYS Analogic UI EBITDA Depreciation Calculations
+D /processes/zSYS Analogic UI EBITDA Depreciation Import
+D /processes/zSYS Analogic UI EBITDA Financial Calculations
+D /processes/zSYS Analogic UI EBITDA Financial Result Import
+D /processes/zSYS Analogic UI EBITDA Income Taxes Import
+D /processes/zSYS Analogic UI EBITDA Input
+D /processes/zSYS Analogic UI EBITDA Taxes Calculations
+D /processes/zSYS Analogic UI Edit Comment
+D /processes/zSYS Analogic UI Erkim Balance Sheet Assignment Input
+D /processes/zSYS Analogic UI Eszkoz Input
+D /processes/zSYS Analogic UI Goods And Services Import
+D /processes/zSYS Analogic UI Growth Rate Percentage
+D /processes/zSYS Analogic UI Incentive Cost Input
+D /processes/zSYS Analogic UI Individual Cost import
+D /processes/zSYS Analogic UI Individual Cost Inflation
+D /processes/zSYS Analogic UI Individual Cost Input
+D /processes/zSYS Analogic UI Individual CPS Input
+D /processes/zSYS Analogic UI Individual Rename
+D /processes/zSYS Analogic UI Ledger Rename
+D /processes/zSYS Analogic UI Loyalty Automitic Fill
+D /processes/zSYS Analogic UI Loyalty Extension Ratio Input
+D /processes/zSYS Analogic UI Marketing Cost import
+D /processes/zSYS Analogic UI Marketing Cost Input
+D /processes/zSYS Analogic UI Matrix Input
+D /processes/zSYS Analogic UI Naturalia Import
+D /processes/zSYS Analogic UI Naturalia Import 2024
+D /processes/zSYS Analogic UI Naturalia Import 2025
+D /processes/zSYS Analogic UI Naturalia Import mentes
+D /processes/zSYS Analogic UI New Csoportos Flat
+D /processes/zSYS Analogic UI New Provider
+D /processes/zSYS Analogic UI New Report Version
+D /processes/zSYS Analogic UI Other Cost Import
+D /processes/zSYS Analogic UI Other Cost Input
+D /processes/zSYS Analogic UI Other Cost Material Calculations
+D /processes/zSYS Analogic UI Other Cost Personal Calculations
+D /processes/zSYS Analogic UI Other Cost Planning Calculations
+D /processes/zSYS Analogic UI Other Cost Services Calculations
+D /processes/zSYS Analogic UI Other Planning Cost Import
+D /processes/zSYS Analogic UI Other Revenue Calculations
+D /processes/zSYS Analogic UI Other Revenue Import
+D /processes/zSYS Analogic UI Personal Expences Import
+D /processes/zSYS Analogic UI Planning Driver Input
+D /processes/zSYS Analogic UI Planning Parameters Import
+D /processes/zSYS Analogic UI Reset XP Values
+D /processes/zSYS Analogic UI Revenue Import
+D /processes/zSYS Analogic UI Revenue Input
+D /processes/zSYS Analogic UI Revenue Input OLD
+D /processes/zSYS Analogic UI Revenue Overview Calculations
+D /processes/zSYS Analogic UI Sales Channel And Loyalty Cube Input
+D /processes/zSYS Analogic UI Sales Import
+D /processes/zSYS Analogic UI Sales Import v1
+D /processes/zSYS Analogic UI Subscription Plan Input Spread Final
+D /processes/zSYS Analogic UI Subscription Plan Input Spread Movement
+D /processes/zSYS Analogic UI Subscription Plan Input Spread Period
+D /processes/zSYS Analogic UI Subscription Plan Input Spread Source
+D /processes/zSYS Analogic UI Subscription Plan Input Spread Target
+D /processes/zSYS Analogic UI Subscription Plan Spread Input Limit
+D /processes/zSYS Analogic UI Subscription Plan Spread Input Residual
+D /processes/zSYS Analogic UI Subscription Plan Spread Input Snapshot
+D /processes/zSYS Analogic UI Topdown Input
+D /processes/zSYS Analogic UI Update User Specific Widget Setting
+D /processes/zSYS Analogic UI User Authentication
+D /processes/zSYS Analogic UI User Last Selected Version
+D /processes/zSYS Analogic UI User Settings
+D /processes/zSYS Analogic UI Version Comment
+D /processes/zSYS Analogic UI Version Copy
+D /processes/zSYS Analogic UI Version Rename
+D /processes/zSYS Analogic UI Weight and Limits MinMax Input
+D /processes/zSYS Analogic UI Weight and Limits Switch Input
+D /processes/zSYS Analogic UI Weights and Limits Import
+D /processes/zSYS Analogic UI Weights and Limits Set Assignment Cube
+D /processes/zSYS Analogic UI XP CAGR and Grow Rate
+D /processes/zSYS Analogic UI XP Planning Flow Input
+D /processes/zSYS Analogic UI XP Planning Import
+D /processes/zSYS Analogic UI XP Planning Import RÉGI
+D /processes/zSYS Analogic UI XP Planning Input
+D /processes/zSYS Backup
+D /processes/zSYS Build Prod Dimensions
+D /processes/zSYS Create Cube View
+D /processes/zSYS Cube Clear
+D /processes/zSYS Cube Destroy View
+D /processes/zSYS Cube ViewZeroOut
+D /processes/zSYS Current Period Subset Update
+D /processes/zSYS Delete technical Views and Dimensions
+D /processes/zSYS Dimension Subset Create
+D /processes/zSYS File Zip
+D /processes/zSYS Maintenance Build Actual Period Subset
+D /processes/zSYS Maintenance Build Period All N Subset
+D /processes/zSYS Maintenance Build Planning Period
+D /processes/zSYS Maintenance Create All Cube
+D /processes/zSYS Maintenance Dimension Export to CSV
+D /processes/zSYS Maintenance Dimension Import from CSV
+D /processes/zSYS Maintenance Dimension Import from CSV in VIDANET PROD
+D /processes/zSYS Maintenance Dimension Refresh All N Elements
+D /processes/zSYS Maintenance Dimension Refresh All N Elements for a Cube
+D /processes/zSYS Maintenance Manage Test Group
+D /processes/zSYS Maintenance Test Data Source
+D /processes/zSYS Operation Update All Products and Movements
+D /processes/zSYS SaveDataAll
+D /processes/zSYS Security Refresh
+D /processes/zSYS Xp Difference Calculation
+D /processes/}bedrock.chore.execution.check
+D /processes/}bedrock.cube.clone
+D /processes/}bedrock.cube.create
+D /processes/}bedrock.cube.data.clear
+D /processes/}bedrock.cube.data.copy
+D /processes/}bedrock.cube.data.copy.intercube
+D /processes/}bedrock.cube.data.copy.intercube.threadsafe
+D /processes/}bedrock.cube.data.copy.threadsafe
+D /processes/}bedrock.cube.data.export
+D /processes/}bedrock.cube.data.export.ks
+D /processes/}bedrock.cube.data.import
+D /processes/}bedrock.cube.data.save
+D /processes/}bedrock.cube.delete
+D /processes/}bedrock.cube.dimension.add
+D /processes/}bedrock.cube.dimension.delete
+D /processes/}bedrock.cube.dimension.replace
+D /processes/}bedrock.cube.rule.manage
+D /processes/}bedrock.cube.rule.processfeeders
+D /processes/}bedrock.cube.view.create
+D /processes/}bedrock.cube.view.create.bymdx
+D /processes/}bedrock.cube.view.delete
+D /processes/}bedrock.cube.view.publish
+D /processes/}bedrock.cube.viewandsubsets.create
+D /processes/}bedrock.cube.viewandsubsets.delete
+D /processes/}bedrock.dim.attr.create
+D /processes/}bedrock.dim.attr.delete
+D /processes/}bedrock.dim.attr.importfromfile
+D /processes/}bedrock.dim.attr.swapalias
+D /processes/}bedrock.dim.clone
+D /processes/}bedrock.dim.delete
+D /processes/}bedrock.hier.clone
+D /processes/}bedrock.hier.consol.delete
+D /processes/}bedrock.hier.consol.flat.create
+D /processes/}bedrock.hier.create
+D /processes/}bedrock.hier.create.fromattribute
+D /processes/}bedrock.hier.create.fromrollup
+D /processes/}bedrock.hier.create.fromrollup.aliasswap
+D /processes/}bedrock.hier.create.fromsubset
+D /processes/}bedrock.hier.delete
+D /processes/}bedrock.hier.element.create
+D /processes/}bedrock.hier.element.delete
+D /processes/}bedrock.hier.element.move
+D /processes/}bedrock.hier.elements.validate
+D /processes/}bedrock.hier.emptyconsols.delete
+D /processes/}bedrock.hier.export
+D /processes/}bedrock.hier.export.script
+D /processes/}bedrock.hier.import
+D /processes/}bedrock.hier.leaves.orphan.check
+D /processes/}bedrock.hier.leaves.sync
+D /processes/}bedrock.hier.sub.clone
+D /processes/}bedrock.hier.sub.create
+D /processes/}bedrock.hier.sub.create.all
+D /processes/}bedrock.hier.sub.create.attribute.all
+D /processes/}bedrock.hier.sub.create.attribute.leaf
+D /processes/}bedrock.hier.sub.create.byelement
+D /processes/}bedrock.hier.sub.create.bylevel
+D /processes/}bedrock.hier.sub.create.bymdx
+D /processes/}bedrock.hier.sub.create.consolidation.all
+D /processes/}bedrock.hier.sub.create.consolidation.leaf
+D /processes/}bedrock.hier.sub.create.leaf
+D /processes/}bedrock.hier.sub.create.orphans
+D /processes/}bedrock.hier.sub.create.toplevelhierarchy
+D /processes/}bedrock.hier.sub.delete
+D /processes/}bedrock.hier.sub.exclude
+D /processes/}bedrock.hier.sub.exporttofile
+D /processes/}bedrock.hier.unwind
+D /processes/}bedrock.process.template
+D /processes/}bedrock.security.client.clone
+D /processes/}bedrock.security.client.create
+D /processes/}bedrock.security.client.delete
+D /processes/}bedrock.security.client.group.assign
+D /processes/}bedrock.security.client.password.reset
+D /processes/}bedrock.security.cube.cellsecurity.create
+D /processes/}bedrock.security.cube.cellsecurity.destroy
+D /processes/}bedrock.security.group.create
+D /processes/}bedrock.security.group.delete
+D /processes/}bedrock.security.object.assign
+D /processes/}bedrock.security.refresh
+D /processes/}bedrock.server.deleteallpersistentfeeders
+D /processes/}bedrock.server.dir.backup
+D /processes/}bedrock.server.dir.listcontents
+D /processes/}bedrock.server.executecommand
+D /processes/}bedrock.server.localize
+D /processes/}bedrock.server.logfile.delete
+D /processes/}bedrock.server.savedataall
+D /processes/}bedrock.server.util.string.validate
+D /processes/}bedrock.server.wait
+D /processes/}bedrock.server.writetomessagelog
+D /chore/asas
+D /chore/ggg
+D /chore/zSYS Daily Backup
+D /chore/zSYS Data Save

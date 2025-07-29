@@ -31,3 +31,7 @@ logs
 tests/*.png
 tests/config.ini
 .env
+
+export
+export2
+export_filtered

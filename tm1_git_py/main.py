@@ -16,12 +16,12 @@ from model.model import Model
 from model.subset import Subset
 from model.process import Process
 import TM1py
-from comparator import Comparator
-from changeset import Changeset
+from comparator import Comparator, compare
+from changeset import Changeset, export_changeset
 
 from model.ti import TI
-from tm1_to_model import tm1_to_model
-from filter import filter
+from exporter import export
+from filter import filter, import_filter
 
 def tm1_connection() -> TM1Service:
     """Creates a TM1 connection before tests and closes it after all tests."""
@@ -37,8 +37,27 @@ def tm1_connection() -> TM1Service:
     return tm1
 
 
-#_model, _errors = tm1_to_model(tm1_conn=tm1_connection())
-#serialize_model(_model, dir='export')
+filter_rules: List[str] = import_filter('tm1_git_py/tests/filter.txt')
+_model, _errors = export(tm1_conn=tm1_connection())
+
+_model_filtered = filter(_model, filter_rules=filter_rules)
+
+serialize_model(_model, dir='export')
+serialize_model(_model_filtered, dir='export_filtered')
+changeset = compare(_model, _model_filtered)
+
+export_changeset('changeset.txt', changeset)
+
+
+#     rules_path = 'filter.txt'
+#     filter_rules = []
+#     try:
+#         with open(rules_path, 'r', encoding='utf-8') as f:
+#             filter_rules = [line.strip() for line in f if line.strip() and not line.strip().startswith('#')]
+#         print(f"\n2. '{rules_path}' létezik:")
+#     except FileNotFoundError:
+#         print(f"\n2. nincs: '{rules_path}'")
+
 
 # export_dir(_model=_model, export_dir=os.environ.get("EXPORT_DIR"))
 
