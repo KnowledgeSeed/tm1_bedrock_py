@@ -12,6 +12,7 @@ from model.chore import Chore, create_chore, update_chore, delete_chore
 from TM1py import TM1Service
 
 from tm1_git_py.model.model import Model
+from model.task import Task
 
 T = TypeVar('T', Cube, Dimension, Process, Chore)
 
@@ -36,10 +37,37 @@ class Changeset:
 
 
     def __repr__(self):
+        self.changes = []
 
-        if self.added: self.changes += [f"C  /{c.source_path}" for c in self.added]
-        if self.removed: self.changes += [f"D  /{c.source_path}" for c in self.removed]
-        if self.modified: self.changes += [f"U  /{c['new'].source_path}" for c in self.modified]
+        if self.added:
+            self.changes += [f"C  /{c.source_path}" for c in self.added]
+        if self.removed:
+            self.changes += [f"D  /{c.source_path}" for c in self.removed]
+
+        if self.modified:
+            for m in self.modified:
+                new_obj, old_obj = m['new'], m['old']
+
+                if isinstance(new_obj, Chore):
+                    old_tasks_set = set(old_obj.tasks)
+                    new_tasks_set = set(new_obj.tasks)
+                    
+                    if old_tasks_set != new_tasks_set:
+                        added_tasks = new_tasks_set - old_tasks_set
+                        removed_tasks = old_tasks_set - new_tasks_set
+
+                        for task in added_tasks:
+                            idx = new_obj.tasks.index(task)
+                            self.changes.append(f"C  /{new_obj.source_path}|{task.process_name}|{idx}")
+                        for task in removed_tasks:
+                            idx = old_obj.tasks.index(task)
+                            self.changes.append(f"D  /{old_obj.source_path}|{task.process_name}|{idx}")
+
+                    if new_obj.name != old_obj.name or new_obj.start_time != old_obj.start_time or \
+                       new_obj.active != old_obj.active or new_obj.execution_mode != old_obj.execution_mode:
+                        self.changes.append(f"U  /{new_obj.source_path}")
+                else:
+                    self.changes.append(f"U  /{new_obj.source_path}")
 
         if not self.changes:
             return "No changes"
@@ -203,3 +231,7 @@ def update_object(tm1_service: TM1Service, object_instance: Dict[T, Any]) -> Res
 
     else:
         raise ValueError
+
+def export_changeset(path:str, changeset: Changeset ):
+    with open(path, "w") as out:  
+            out.writelines(changeset.__repr__()) 

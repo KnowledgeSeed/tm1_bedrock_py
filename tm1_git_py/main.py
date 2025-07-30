@@ -1,8 +1,10 @@
 import json
 import os
+import sys
 from typing import Dict, List
 from TM1py import TM1Service
 from TM1py.Utils import format_url
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from deserializer import deserialize_model
 from model.chore import Chore
@@ -16,7 +18,7 @@ from model.model import Model
 from model.subset import Subset
 from model.process import Process
 import TM1py
-from comparator import Comparator, compare
+from comparator import Comparator
 from changeset import Changeset, export_changeset
 
 from model.ti import TI
@@ -37,74 +39,54 @@ def tm1_connection() -> TM1Service:
     return tm1
 
 
-filter_rules: List[str] = import_filter('tm1_git_py/tests/filter.txt')
-_model, _errors = export(tm1_conn=tm1_connection())
+#filter_rules: List[str] = import_filter('tm1_git_py/tests/filter.txt')
+#_model, _errors = export(tm1_conn=tm1_connection())
 
-_model_filtered = filter(_model, filter_rules=filter_rules)
+#_model_filtered = filter(_model, filter_rules=filter_rules)
 
-serialize_model(_model, dir='export')
-serialize_model(_model_filtered, dir='export_filtered')
-changeset = compare(_model, _model_filtered)
+#serialize_model(_model, dir='export')
+#serialize_model(_model_filtered, dir='export_filtered')
+#changeset = compare(_model, _model_filtered)
 
-export_changeset('changeset.txt', changeset)
+#export_changeset('changeset.txt', changeset)
+
+# def run_test_workflow():
+#     ORIGINAL_MODEL_DIR = 'tm1_git_py/tests/export'
+#     FILTERED_MODEL_DIR = 'tm1_git_py/tests/export_filtered'
+#     FILTER_RULES_PATH = 'tm1_git_py/tests/filter.txt'
+
+#     print(" export\n")
+#     tm1_conn = tm1_connection()
+#     if not tm1_conn:
+#         return
+    
+#     original_model, export_errors = export(tm1_conn=tm1_conn)
+#     tm1_conn.logout()
+#     if export_errors:
+#         print(f"hiba: {export_errors}")
+
+#     serialize_model(original_model, dir=ORIGINAL_MODEL_DIR)
+
+#     print(f" filter fájl: {filter_rules}")
+#     filter_rules = import_filter(FILTER_RULES_PATH)
+#     if not filter_rules:
+#         print("nincs filter fájl")
+#         return
 
 
-#     rules_path = 'filter.txt'
-#     filter_rules = []
-#     try:
-#         with open(rules_path, 'r', encoding='utf-8') as f:
-#             filter_rules = [line.strip() for line in f if line.strip() and not line.strip().startswith('#')]
-#         print(f"\n2. '{rules_path}' létezik:")
-#     except FileNotFoundError:
-#         print(f"\n2. nincs: '{rules_path}'")
+#     print(" filter \n")
+#     filtered_model = filter(original_model, filter_rules=filter_rules)
 
+#     print(" filtered model \n")
+#     serialize_model(filtered_model, dir=FILTERED_MODEL_DIR)
 
-# export_dir(_model=_model, export_dir=os.environ.get("EXPORT_DIR"))
-
-#_model, _errors = deserialize_model(dir='export')
-#serialize_model(_model, dir='export2')
-
-# def compare_tm1():
-#     model_from_export, export_errors = deserialize_model(dir='export')
-#     if any(export_errors.values()):
-#         print(export_errors)
-
-#     model_from_export2, export_errors = deserialize_model(dir='export2')
-#     if any(export_errors.values()):
-#         print(export_errors)
+#     print(" összehasonlítás \n")
 #     comparator = Comparator()
+#     changeset = comparator.compare(original_model, filtered_model)
+#     export_changeset('changeset.txt', changeset)
 
-#     print("\n--- full ---")
-#     changeset_full = comparator.compare(model_from_export, model_from_export2, mode='full')
-#     print(changeset_full)
-#     return changeset_full
 
-#changeset = compare_tm1()
-#changeset.apply(tm1_service=tm1_connection())
-
-# def run_filter_and_export():
-#     source_directory = 'export'
-#     print(f"1. Modell betöltése innen'{source_directory}'")
-#     original_model, errors = deserialize_model(dir=source_directory)
-#     if errors:
-#         print("modell betöltés hiba", errors)
-
-#     rules_path = 'filter.txt'
-#     filter_rules = []
-#     try:
-#         with open(rules_path, 'r', encoding='utf-8') as f:
-#             filter_rules = [line.strip() for line in f if line.strip() and not line.strip().startswith('#')]
-#         print(f"\n2. '{rules_path}' létezik:")
-#     except FileNotFoundError:
-#         print(f"\n2. nincs: '{rules_path}'")
-
-#     print("\n3. Filtering")
-#     filtered_model = filter(original_model, filter_rules)
-
-#     export_directory = 'export3'
-#     print(f"\n4. A filtered modell mentése '{export_directory}'")
-#     serialize_model(filtered_model, dir=export_directory)
-# run_filter_and_export()
+# run_test_workflow()
 
 print("")
 

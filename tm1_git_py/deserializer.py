@@ -17,7 +17,7 @@ import TM1py
 import re
 
 from model.ti import TI
-
+from model.task import Task
 
 def deserialize_model(dir) -> Model:
 
@@ -38,45 +38,31 @@ def deserialize_model(dir) -> Model:
     _errors = _dim_errors | _cube_errors | _process_errors | _chore_errors
     return _model, _errors
 
-def deserialize_chores(chore_dir) -> tuple[Dict[str, Chore], Dict[str, str]]:
 
+def deserialize_chores(chore_dir) -> tuple[Dict[str, Chore], Dict[str, str]]:
     chores: Dict[str, Chore] = {}
     chores_errors: Dict[str, str] = {}
+    if not os.path.exists(chore_dir): return chores, chores_errors
 
-    files = directory_to_dict(chore_dir)
-    for file_name in list(files.keys()):
-        files.pop(file_name, None)
-        file_name_base, dot, file_name_ext = file_name.rpartition('.')
-        chore_link = Chore.as_link(file_name)
-
-        if file_name_ext != 'json':
-            chores_errors[chore_link] = 'not a chore json'
-            continue
-
-        chore_json = None        
-        with open(os.path.join(chore_dir, file_name), 'r', encoding='utf-8') as file:
-            try:
-                data = file.read()
-                chore_json = json.loads(data)
-            except Exception as e:
-                chores_errors[chore_link] = e.__repr__()
-                continue
-        
+    for file_name in os.listdir(chore_dir):
+        if not file_name.endswith('.json'): continue
+        file_name_base, _, _ = file_name.rpartition('.')
         try:
+            with open(os.path.join(chore_dir, file_name), 'r', encoding='utf-8') as file:
+                chore_json = json.load(file)
+            
             relative_path = os.path.join('chores', file_name).replace('\\', '/')
-            _chore = Chore(
-                name=chore_json['Name'],
-                start_time=chore_json['StartTime'],
-                dst_sensitive=chore_json['DSTSensitive'],
-                active=chore_json['Active'],
-                execution_mode=chore_json['ExecutionMode'],
-                frequency=chore_json['Frequency'],
-                tasks=[task for task in chore_json['Tasks']],
-                source_path=relative_path)
-            chores[chore_json['Name']] = _chore
+            
+            tasks = []
+            for task_data in chore_json.get('Tasks', []):
+                process_bind = task_data.get("Process@odata.bind", "")
+                match = re.search(r"Processes\('([^']*)'\)", process_bind)
+                if match:
+                    tasks.append(Task(process_name=match.group(1), parameters=task_data.get('Parameters', [])))
+            
+            chores[chore_json['Name']] = Chore(name=chore_json['Name'], start_time=chore_json['StartTime'], dst_sensitive=chore_json['DSTSensitive'], active=chore_json['Active'], execution_mode=chore_json['ExecutionMode'], frequency=chore_json['Frequency'], tasks=tasks, source_path=relative_path)
         except Exception as e:
-            chores_errors[chore_link] = e.__repr__()
-
+            chores_errors[file_name] = str(e)
     return chores, chores_errors
 
 

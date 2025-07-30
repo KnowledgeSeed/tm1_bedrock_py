@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from typing import Dict, List
 from TM1py import TM1Service
 from TM1py.Utils import format_url
@@ -17,6 +18,7 @@ from model.process import Process
 import TM1py
 
 from model.ti import TI
+from model.task import Task
 
 
 def tm1_connection() -> TM1Service:
@@ -60,12 +62,26 @@ def export(tm1_conn: TM1Service) -> tuple[Model, Dict[str, str]]:
 
 def chores_to_model(tm1_conn) -> tuple[Dict[str, Chore], Dict[str, str]]:
     all_chores = tm1_conn.chores.get_all_names()
-
     _chores: Dict[str, Chore] = {}
     _errors: Dict[str, str] = {}
 
     for chore_name in all_chores:
         chore = tm1_conn.chores.get(chore_name=chore_name)
+
+        tasks_for_model = []
+        for tm1py_task in chore.tasks:
+            task_dict = tm1py_task.body_as_dict
+            process_name = ""
+            process_bind = task_dict.get("Process@odata.bind", "")
+            match = re.search(r"Processes\('([^']*)'\)", process_bind)
+            if match:
+                process_name = match.group(1)
+            
+            task_obj = Task(
+                process_name=process_name,
+                parameters=task_dict.get('Parameters', [])
+            )
+            tasks_for_model.append(task_obj)
 
         _chore = Chore(
             name=chore.name,
@@ -74,9 +90,11 @@ def chores_to_model(tm1_conn) -> tuple[Dict[str, Chore], Dict[str, str]]:
             active=chore.active,
             execution_mode=chore.execution_mode,
             frequency=chore.frequency.frequency_string,
-            tasks=[task.body_as_dict for task in chore.tasks],
-            source_path=os.path.join('chores', f"{chore_name}.json").replace('\\', '/'))
+            tasks=tasks_for_model,
+            source_path=os.path.join('chores', f"{chore_name}.json").replace('\\', '/')
+        )
         _chores[chore.name] = _chore
+        
     return _chores, _errors
 
 

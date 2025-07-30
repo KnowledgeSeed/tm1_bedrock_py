@@ -7,9 +7,10 @@ from model.cube import Cube
 from model.dimension import Dimension
 from model.process import Process
 from model.chore import Chore
+from model.task import Task
 
 class Comparator:
-        def compare(self, model1: Model, model2: Model, mode: str = 'full') -> Changeset:
+    def compare(self, model1: Model, model2: Model, mode: str = 'full') -> Changeset:
         """
         Összehasonlítás:
             model1: A régi modell.
@@ -17,6 +18,7 @@ class Comparator:
             mode: Az összehasonlítás módja 'full' (mindent tárol)
                   vagy 'add_only' (csak a hozzáadott és módosított elemeket tárolja)
         """
+        changeset = Changeset()
         self._compare_object_lists(model1.cubes, model2.cubes,
                                    changeset.added, changeset.removed,
                                    changeset.modified,

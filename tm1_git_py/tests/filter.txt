@@ -6,10 +6,11 @@
 -/chores/zSYS*
 +/chores/*
 -/chores/asas.json
--/chores/ggg.json
 -/chores/test3.json
 +/chores/test3.json
 -/cubes/}*
 -/processes/*
 +/processes/zTesting Process.json
 -/server_configs/*
++/chores/ggg.json
+-/chores/ggg.json|test_ote11
