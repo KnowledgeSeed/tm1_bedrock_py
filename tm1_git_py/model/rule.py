@@ -5,11 +5,15 @@ class Rule:
         self.area = area
         self.full_statement = full_statement
         self.comment = comment
+        self._normalized_statement = "".join(full_statement.split())
+        self._normalized_comment = "".join(comment.split())
 
     def __eq__(self, other):
         if not isinstance(other, Rule):
             return NotImplemented
-        return self.area == other.area and self.full_statement == other.full_statement and self.comment == other.comment
+        return self.area == other.area and \
+               self._normalized_statement == other._normalized_statement and \
+               self._normalized_comment == other._normalized_comment
 
     def __hash__(self):
-        return hash((self.area, self.full_statement, self.comment))
+        return hash((self.area, self._normalized_statement, self._normalized_comment))

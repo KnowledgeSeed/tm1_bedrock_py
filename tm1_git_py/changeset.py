@@ -13,6 +13,7 @@ from TM1py import TM1Service
 
 from tm1_git_py.model.model import Model
 from model.task import Task
+from filter import normalize_for_path
 
 T = TypeVar('T', Cube, Dimension, Process, Chore)
 
@@ -47,43 +48,55 @@ class Changeset:
             for mod_item in self.modified:
                 new_obj = mod_item['new']
                 old_obj = mod_item['old']
-                
+
                 if isinstance(new_obj, Chore):
                     old_tasks = set(old_obj.tasks)
                     new_tasks = set(new_obj.tasks)
-                    
-                    if old_tasks != new_tasks or new_obj.active != old_obj.active:
-                        self.changes.append(f"U  /{new_obj.source_path}")
 
+                    if old_tasks != new_tasks:
+                        self.changes.append(f"U  /{new_obj.source_path}")
                         for task in (new_tasks - old_tasks):
                             idx = new_obj.tasks.index(task)
                             self.changes.append(f"C  /{new_obj.source_path}|{task.process_name}|{idx}")
-
                         for task in (old_tasks - new_tasks):
                             idx = old_obj.tasks.index(task)
                             self.changes.append(f"D  /{old_obj.source_path}|{task.process_name}|{idx}")
 
-                    
                 elif isinstance(new_obj, Cube):
                     old_rules = set(old_obj.rules)
                     new_rules = set(new_obj.rules)
 
-                    if old_rules != new_rules or sorted([d.name for d in new_obj.dimensions]) != sorted([d.name for d in old_obj.dimensions]):
+                    added_rules = new_rules - old_rules
+                    removed_rules = old_rules - new_rules
+
+                    visible_added = [
+                        r for r in added_rules
+                        if f"{new_obj.source_path}|{normalize_for_path(r.area)}" not in {
+                            p.source_path if hasattr(p, 'source_path') else p
+                            for p in self.removed
+                        }
+                    ]
+                    visible_removed = [
+                        r for r in removed_rules
+                        if f"{old_obj.source_path}|{normalize_for_path(r.area)}" not in {
+                            p.source_path if hasattr(p, 'source_path') else p
+                            for p in self.removed
+                        }
+                    ]
+
+                    if visible_added or visible_removed:
                         self.changes.append(f"U  /{new_obj.source_path}")
-
-                        for rule in (new_rules - old_rules):
+                        for rule in visible_added:
                             self.changes.append(f"C  /{new_obj.source_path}|{rule.area}")
-
-                        for rule in (old_rules - new_rules):
+                        for rule in visible_removed:
                             self.changes.append(f"D  /{new_obj.source_path}|{rule.area}")
 
-                
                 else:
                     self.changes.append(f"U  /{new_obj.source_path}")
 
         if not self.has_changes():
             return "No changes"
-        
+
         self.sort()
         return "Changeset:\n" + "\n".join(self.changes)
 
