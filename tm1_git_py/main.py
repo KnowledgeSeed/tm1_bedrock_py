@@ -50,43 +50,57 @@ def tm1_connection() -> TM1Service:
 
 #export_changeset('changeset.txt', changeset)
 
-# def run_test_workflow():
-#     ORIGINAL_MODEL_DIR = 'tm1_git_py/tests/export'
-#     FILTERED_MODEL_DIR = 'tm1_git_py/tests/export_filtered'
-#     FILTER_RULES_PATH = 'tm1_git_py/tests/filter.txt'
+def run_test_workflow():
+    ORIGINAL_MODEL_DIR = 'tm1_git_py/tests/export'
+    FILTERED_MODEL_DIR = 'tm1_git_py/tests/export_filtered'
+    FILTER_RULES_PATH = 'tm1_git_py/tests/filter.txt'
 
-#     print(" export\n")
-#     tm1_conn = tm1_connection()
-#     if not tm1_conn:
-#         return
+    print(" export\n")
+    tm1_conn = tm1_connection()
+    if not tm1_conn:
+        return
     
-#     original_model, export_errors = export(tm1_conn=tm1_conn)
-#     tm1_conn.logout()
-#     if export_errors:
-#         print(f"hiba: {export_errors}")
+    original_model, export_errors = export(tm1_conn=tm1_conn)
+    tm1_conn.logout()
+    if export_errors:
+        print(f"hiba: {export_errors}")
 
-#     serialize_model(original_model, dir=ORIGINAL_MODEL_DIR)
+    serialize_model(original_model, dir=ORIGINAL_MODEL_DIR)
 
-#     print(f" filter fájl: {filter_rules}")
-#     filter_rules = import_filter(FILTER_RULES_PATH)
-#     if not filter_rules:
-#         print("nincs filter fájl")
-#         return
-
-
-#     print(" filter \n")
-#     filtered_model = filter(original_model, filter_rules=filter_rules)
-
-#     print(" filtered model \n")
-#     serialize_model(filtered_model, dir=FILTERED_MODEL_DIR)
-
-#     print(" összehasonlítás \n")
-#     comparator = Comparator()
-#     changeset = comparator.compare(original_model, filtered_model)
-#     export_changeset('changeset.txt', changeset)
+    filter_rules = import_filter(FILTER_RULES_PATH)
+    print(f" filter fájl: {filter_rules}")
+    if not filter_rules:
+        print("nincs filter fájl")
+        return
 
 
-# run_test_workflow()
+    print(" filter \n")
+    filtered_model = filter(original_model, filter_rules=filter_rules)
+
+    print(" filtered model \n")
+    serialize_model(filtered_model, dir=FILTERED_MODEL_DIR)
+
+    print(f"1. Eredeti modell beolvasása a(z) '{ORIGINAL_MODEL_DIR}' mappából...")
+    original_model2, errors1 = deserialize_model(dir=ORIGINAL_MODEL_DIR)
+    if errors1:
+        print(f"!! Hibák az eredeti modell beolvasása során: {errors1}")
+    print("   ✅ Eredeti modell beolvasva.\n")
+
+    # 2. Szűrt modell beolvasása
+    print(f"2. Szűrt modell beolvasása a(z) '{FILTERED_MODEL_DIR}' mappából...")
+    filtered_model2, errors2 = deserialize_model(dir=FILTERED_MODEL_DIR)
+    if errors2:
+        print(f"!! Hibák a szűrt modell beolvasása során: {errors2}")
+    print("   ✅ Szűrt modell beolvasva.\n")
+
+
+    print(" összehasonlítás \n")
+    comparator = Comparator()
+    changeset = comparator.compare(original_model2, filtered_model2)
+    export_changeset('changeset.txt', changeset)
+
+
+run_test_workflow()
 
 print("")
 

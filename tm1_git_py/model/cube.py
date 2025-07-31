@@ -13,6 +13,7 @@ from model.hierarchy import Hierarchy
 from model.mdxview import MDXView
 from model.subset import Subset
 from TM1py.Utils import format_url
+from model.rule import Rule
 
 
 # {
@@ -42,11 +43,11 @@ from TM1py.Utils import format_url
 # 	]
 # }
 class Cube:
-    def __init__(self, name, dimensions : List[Dimension], rule, views : List[MDXView], source_path: str):
+    def __init__(self, name, dimensions : List[Dimension], rules : list[Rule], views : List[MDXView], source_path: str):
         self.type = 'Cube'
         self.name = name
         self.dimensions = dimensions
-        self.rule = rule
+        self.rules = rules
         self.views = views
         self.source_path = source_path
 
@@ -54,36 +55,37 @@ class Cube:
         return json.dumps({
             "@type": self.type,
             "Name": self.name,
-            "Dimensions": [{"@id" : format_url("Dimensions('{}')", d.name)} for d in self.dimensions],
+            "Dimensions": [{"@id": format_url("Dimensions('{}')", d.name)} for d in self.dimensions],
             "Rules@Code.link": format_url("{}.rules", self.name),
-            "Views@Code.links" : [format_url("{}.views/{}.json", self.name, v.name) for v in self.views],
+            "Views@Code.links": [format_url("{}.views/{}.json", self.name, v.name) for v in self.views],
         }, indent='\t')
     
+    def get_rule_text(self) -> str:
+        if not self.rules: return ""
+        content_parts = []
+        for rule in self.rules:
+            if rule.comment:
+                content_parts.append(rule.comment)
+            content_parts.append(rule.full_statement)
+        return "\n\n".join(content_parts)
+
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Cube):
             return NotImplemented
         
-        if self.name != other.name:
+        if self.name != other.name or \
+           sorted([d.name for d in self.dimensions]) != sorted([d.name for d in other.dimensions]) or \
+           set(self.views) != set(other.views):
             return False
-        
-        self_dim_names = sorted([d.name for d in self.dimensions])
-        other_dim_names = sorted([d.name for d in other.dimensions])
-        if self_dim_names != other_dim_names:
+        if set(self.rules) != set(other.rules):
             return False
-
-        if self.rule != other.rule:
-            return False
-
-        if set(self.views) != set(other.views):
-            return False
-            
         return True
 
     def __hash__(self) -> int:
         return hash((
             self.name,
             tuple(sorted([d.name for d in self.dimensions])),
-            self.rule,
+            frozenset(self.rules),
             frozenset(self.views)
         ))
     
@@ -91,10 +93,10 @@ class Cube:
         return {
             'name': self.name,
             'dimensions': [d.to_dict() for d in self.dimensions],
-            'rule': self.rule,
+            'rules': [r.__dict__ for r in self.rules],
             'views': [v.to_dict() for v in self.views]
         }
-
+    
     @staticmethod
     def as_link(name):
         # /cubes/Cube_A.json
@@ -108,6 +110,7 @@ class Cube:
 
 def create_cube(tm1_service: TM1Service, cube: Cube) -> Response:
     dimensions = [dim.name for dim in cube.dimensions]
+    rule_text = cube.get_rule_text()
     cube_object = TM1py.Cube(cube.name, dimensions, cube.rule)
     return tm1_service.cubes.create(cube_object)
 
@@ -126,9 +129,9 @@ def update_cube(tm1_service: TM1Service, cube: Dict[str, Any]) -> Response:
             # TODO: data_copy_intercube to temp
             delete_cube(tm1_service=tm1_service, cube_name=cube_new.name)
             return create_cube(tm1_service=tm1_service, cube=cube_new)
-    if cube_new.rule:
-        cube_object.rules = TM1py.Rules(cube_new.rule)
-    return tm1_service.cubes.update(cube=cube_object)
+    new_rule_text = cube_new.get_rule_text()
+    if cube_object.rules.body != new_rule_text:
+        cube_object.rules = Rule(new_rule_text)
 
 
 def delete_cube(tm1_service: TM1Service, cube_name: str) -> Response:

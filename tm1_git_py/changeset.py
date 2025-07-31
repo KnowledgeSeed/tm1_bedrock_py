@@ -35,7 +35,6 @@ class Changeset:
     def has_changes(self) -> bool:
         return any([self.added, self.modified, self.removed])
 
-
     def __repr__(self):
         self.changes = []
 
@@ -45,34 +44,47 @@ class Changeset:
             self.changes += [f"D  /{c.source_path}" for c in self.removed]
 
         if self.modified:
-            for m in self.modified:
-                new_obj, old_obj = m['new'], m['old']
-
+            for mod_item in self.modified:
+                new_obj = mod_item['new']
+                old_obj = mod_item['old']
+                
                 if isinstance(new_obj, Chore):
-                    old_tasks_set = set(old_obj.tasks)
-                    new_tasks_set = set(new_obj.tasks)
+                    old_tasks = set(old_obj.tasks)
+                    new_tasks = set(new_obj.tasks)
                     
-                    if old_tasks_set != new_tasks_set:
-                        added_tasks = new_tasks_set - old_tasks_set
-                        removed_tasks = old_tasks_set - new_tasks_set
+                    if old_tasks != new_tasks or new_obj.active != old_obj.active:
+                        self.changes.append(f"U  /{new_obj.source_path}")
 
-                        for task in added_tasks:
+                        for task in (new_tasks - old_tasks):
                             idx = new_obj.tasks.index(task)
                             self.changes.append(f"C  /{new_obj.source_path}|{task.process_name}|{idx}")
-                        for task in removed_tasks:
+
+                        for task in (old_tasks - new_tasks):
                             idx = old_obj.tasks.index(task)
                             self.changes.append(f"D  /{old_obj.source_path}|{task.process_name}|{idx}")
 
-                    if new_obj.name != old_obj.name or new_obj.start_time != old_obj.start_time or \
-                       new_obj.active != old_obj.active or new_obj.execution_mode != old_obj.execution_mode:
+                    
+                elif isinstance(new_obj, Cube):
+                    old_rules = set(old_obj.rules)
+                    new_rules = set(new_obj.rules)
+
+                    if old_rules != new_rules or sorted([d.name for d in new_obj.dimensions]) != sorted([d.name for d in old_obj.dimensions]):
                         self.changes.append(f"U  /{new_obj.source_path}")
+
+                        for rule in (new_rules - old_rules):
+                            self.changes.append(f"C  /{new_obj.source_path}|{rule.area}")
+
+                        for rule in (old_rules - new_rules):
+                            self.changes.append(f"D  /{new_obj.source_path}|{rule.area}")
+
+                
                 else:
                     self.changes.append(f"U  /{new_obj.source_path}")
 
-        if not self.changes:
+        if not self.has_changes():
             return "No changes"
-        else:
-            self.sort()
+        
+        self.sort()
         return "Changeset:\n" + "\n".join(self.changes)
 
     def apply(self, tm1_service: TM1Service) -> List[Any]:

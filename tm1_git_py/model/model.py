@@ -26,6 +26,8 @@ class Model:
         }
 
     def get_all_objects_with_paths(self) -> Dict[str, Any]:
+        from filter import normalize_for_path
+        
         all_objects = {}
         normalize = lambda path: path.replace('\\', '/')
 
@@ -34,13 +36,15 @@ class Model:
                 all_objects[normalize(item.source_path)] = item
 
         for cube in self.cubes:
-             if hasattr(cube, 'source_path'):
-                if cube.rule:
-                    rule_path = f'cubes/{cube.name}.rules'
-                    all_objects[rule_path] = cube.rule
-                for view in cube.views:
-                    view_path = f'cubes/{cube.name}.views/{view.name}.json'
-                    all_objects[view_path] = view
+            cube_path = normalize(cube.source_path)
+            for rule in cube.rules:
+                normalized_area = normalize_for_path(rule.area)
+                rule_path = f"{cube_path}|{normalized_area}"
+                all_objects[rule_path] = rule
+                
+            for view in cube.views:
+                view_path = f'{cube_path}.views/{view.name}.json'
+                all_objects[view_path] = view
         
         for chore in self.chores:
             if hasattr(chore, 'source_path'):

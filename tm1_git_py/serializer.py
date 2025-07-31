@@ -57,22 +57,24 @@ def serialize_dimensions(dimensions: List[Dimension], dim_dir):
 
 def serialize_cubes(cubes: List[Cube], cubes_dir):
     for cube in cubes:
-        if cube.rule:
-            with open(cubes_dir + '/' + cube.name+'.rules', 'w', encoding='utf-8') as rule_file:
-                rule_file.write(cube.rule)
+        if cube.rules:
+            rule_text = cube.get_rule_text()
+            if rule_text:
+                with open(os.path.join(cubes_dir, cube.name + '.rules'), 'w', encoding='utf-8') as rule_file:
+                    rule_file.write(rule_text)
+        
+        with open(os.path.join(cubes_dir, cube.name + '.json'), 'w', encoding='utf-8') as cube_file:
+            cube_file.write(cube.as_json())
+        
+        
         if cube.views:
-            views_dir = cubes_dir + '/' + cube.name + '.views'
+            views_dir = os.path.join(cubes_dir, cube.name + '.views')
             os.makedirs(views_dir, exist_ok=True)
-
-            for _mdxview in cube.views:
-                with open(views_dir + '/' + _mdxview.name+'.json', 'w', encoding='utf-8') as mdxjson_file:
-                    mdxjson_file.write(_mdxview.as_json())
-
-                with open(views_dir + '/' + _mdxview.name+'.mdx', 'w', encoding='utf-8') as mdx_file:
-                    mdx_file.write(_mdxview.mdx)
-            if cube.rule:
-                with open(cubes_dir + '/' + cube.name+'.rules', 'w', encoding='utf-8') as rule_file:
-                    rule_file.write(cube.rule)
+            for view in cube.views:
+                with open(os.path.join(views_dir, view.name + '.json'), 'w', encoding='utf-8') as mdxjson_file:
+                    mdxjson_file.write(view.as_json())
+                with open(os.path.join(views_dir, view.name + '.mdx'), 'w', encoding='utf-8') as mdx_file:
+                    mdx_file.write(view.mdx)
 
         with open(cubes_dir + '/' + cube.name+'.json', 'w', encoding='utf-8') as cube_file:
             cube_file.write(cube.as_json())

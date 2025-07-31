@@ -18,6 +18,7 @@ import re
 
 from model.ti import TI
 from model.task import Task
+from model.rule import Rule
 
 def deserialize_model(dir) -> Model:
 
@@ -37,7 +38,6 @@ def deserialize_model(dir) -> Model:
     _model = Model(cubes=_cubes.values(), dimensions=_dimensions.values(), processes=_processes.values(), chores=_chores.values())
     _errors = _dim_errors | _cube_errors | _process_errors | _chore_errors
     return _model, _errors
-
 
 def deserialize_chores(chore_dir) -> tuple[Dict[str, Chore], Dict[str, str]]:
     chores: Dict[str, Chore] = {}
@@ -250,29 +250,18 @@ def deserialize_cubes(cubes_dir, _dimensions: Dict[str, Dimension]) -> tuple[Dic
             continue
 
         files.pop(file_name, None)
-        
         cube_json = None
-        rule = None
-        
-        with open(os.path.join(cubes_dir, file_name), 'r', encoding='utf-8') as file:
-            try:
-                data = file.read()
-                cube_json = json.loads(data)
-            except Exception as e:
-                cube_errors[cube_link] = e.__repr__()
-                continue
 
-        rule_file_name = file_name_base + '.rules'
-        if rule_file_name in files:
-            with open(os.path.join(cubes_dir, rule_file_name), 'r', encoding='utf-8') as file:
-                    try:
-                        rule = file.read()
-                        files.pop(rule_file_name, None)
-                    except Exception as e:
-                        cube_errors[Cube.as_link(file_name_base + '.rules')] = e.__repr__()
-        
-        relative_path = os.path.join('cubes', file_name).replace('\\', '/')
-        _cube = Cube(name=cube_json['Name'], dimensions=[], rule=rule, views=[], source_path=relative_path)
+        with open(os.path.join(cubes_dir, file_name), 'r', encoding='utf-8') as file:
+            cube_json = json.load(file)
+            rules_list = []
+            rule_file_path = os.path.join(cubes_dir, file_name_base + '.rules')
+            if os.path.exists(rule_file_path):
+                with open(rule_file_path, 'r', encoding='utf-8') as file:
+                    rule_text = file.read()
+                    rules_list = _parse_rules(rule_text)
+            relative_path = os.path.join('cubes', file_name_base).replace('\\', '/')
+            _cube = Cube(name=cube_json['Name'], dimensions=[], rules=rules_list, views=[], source_path=relative_path)
 
         for dim in cube_json['Dimensions']:
             pattern = r"Dimensions\('([^']*)'\)"
@@ -324,6 +313,24 @@ def deserialize_cubes(cubes_dir, _dimensions: Dict[str, Dimension]) -> tuple[Dic
         cubes[_cube.name] = _cube
     return cubes, cube_errors
 
+def _parse_rules(rule_text: str) -> List[Rule]:
+    if not rule_text: return []
+    rules = []
+    pattern = re.compile(r"(?P<comment>(?:#.*(?:\r\n|\n|$)\s*)*)?(?P<statement>\[.*?\][^;]*;)", re.DOTALL)
+    header_match = re.match(r'^(.*?)(?=\[|#|$)', rule_text, re.DOTALL)
+    last_pos = 0
+    if header_match:
+        header_text = header_match.group(1).strip()
+        if header_text:
+            rules.append(Rule(area="[HEADER]", full_statement=header_text, comment=""))
+        last_pos = header_match.end()
+    for match in pattern.finditer(rule_text, last_pos):
+        comment = (match.group('comment') or "").strip()
+        statement_text = match.group('statement').strip()
+        area_match = re.search(r'(\[.*?\])', statement_text)
+        area = area_match.group(1) if area_match else "[UNKNOWN]"
+        rules.append(Rule(area=area, full_statement=statement_text, comment=comment))
+    return rules
 
 def directory_to_dict(path):
     """Converts a directory structure to a nested dictionary."""

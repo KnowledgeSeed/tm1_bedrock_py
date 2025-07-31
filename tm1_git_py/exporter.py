@@ -19,6 +19,7 @@ import TM1py
 
 from model.ti import TI
 from model.task import Task
+from model.rule import Rule
 
 
 def tm1_connection() -> TM1Service:
@@ -125,33 +126,58 @@ def procs_to_model(tm1_conn) -> tuple[Dict[str, Process], Dict[str, str]]:
 
 def cubes_to_model(tm1_conn, _dimensions: Dict[str, Dimension]) -> tuple[Dict[str, Cube], Dict[str, str]]:
     all_cubes = tm1_conn.cubes.get_all_names(skip_control_cubes=False)
-    regular_cubes = tm1_conn.cubes.get_all_names(skip_control_cubes=True)
-    control_cubes = list(set(all_cubes) - set(regular_cubes))
 
     _cubes: Dict[str, Cube] = {}
     _errors: Dict[str, str] = {}
 
     for cube_name in all_cubes:
-        cube = tm1_conn.cubes.get(cube_name=cube_name)
+        try:
+            cube = tm1_conn.cubes.get(cube_name=cube_name)
 
-        _cube = Cube(name=cube_name, dimensions=[],
-                     rule=cube.rules.body_as_dict['Rules'] if cube.has_rules else None, views=[],
-                     source_path=os.path.join('cubes', f"{cube_name}.json").replace('\\', '/'))
-        _cubes[cube_name] = _cube
-        if cube.dimensions:
-            for dimension in cube.dimensions:
-                _dimension = _dimensions.get(dimension)
-                if not _dimension:
-                    _errors[cube_name] = 'Dimension not found ' + dimension
-                else:
-                    _cube.dimensions.append(_dimension)
+            rule_source_object = cube.rules if cube.has_rules else None
 
-        mdxviews = tm1_conn.views.get_all(cube_name=cube_name)[1]
-        if mdxviews:
-            for view in mdxviews:
-                _mdxview = MDXView(name=view.name, mdx=view.mdx,
-                                   source_path=os.path.join('cubes', f"{cube_name}.views", f"{view.name}.json").replace('\\', '/'))
-                _cube.views.append(_mdxview)
+            rule_text = ""
+            if cube.has_rules:
+                raw_body = cube.rules.body
+                try:
+                    rule_data = json.loads(raw_body)
+                    rule_text = rule_data.get("Rules", "")
+                except (json.JSONDecodeError, AttributeError):
+                    rule_text = raw_body if isinstance(raw_body, str) else ""
+            
+            rules_list = _parse_rules(rule_text)
+            _cube = Cube(
+                name=cube_name,
+                dimensions=[],
+                rules=rules_list,
+                views=[],
+                source_path=os.path.join('cubes', cube_name).replace('\\', '/')
+            )
+            _cubes[cube_name] = _cube
+            
+            if cube.dimensions:
+                for dimension in cube.dimensions:
+                    _dimension = _dimensions.get(dimension)
+                    if not _dimension:
+                        _errors[cube_name] = f"Dimension '{dimension}' not found"
+                    else:
+                        _cube.dimensions.append(_dimension)
+
+            mdxviews_tuple = tm1_conn.views.get_all(cube_name=cube_name)
+            if mdxviews_tuple:
+                mdxviews = mdxviews_tuple[1]
+                for view in mdxviews:
+                    _mdxview = MDXView(
+                        name=view.name, 
+                        mdx=view.mdx,
+                        source_path=os.path.join('cubes', f"{cube_name}.views", f"{view.name}.json").replace('\\', '/')
+                    )
+                    _cube.views.append(_mdxview)
+        
+
+        except Exception as e:
+            _errors[cube_name] = str(e)
+            
     return _cubes, _errors
 
 
@@ -193,6 +219,25 @@ def dimensions_to_model(tm1_conn) -> tuple[Dict[str, Dimension], Dict[str, str]]
                     except Exception as e:
                         _errors[dim_name] = str(e)
     return _dimensions, _errors
+
+def _parse_rules(rule_text: str) -> List[Rule]:
+    if not rule_text: return []
+    rules = []
+    pattern = re.compile(r"(?P<comment>(?:#.*(?:\r\n|\n|$)\s*)*)?(?P<statement>\[.*?\][^;]*;)", re.DOTALL)
+    header_match = re.match(r'^(.*?)(?=\[|#|$)', rule_text, re.DOTALL)
+    last_pos = 0
+    if header_match:
+        header_text = header_match.group(1).strip()
+        if header_text:
+            rules.append(Rule(area="[HEADER]", full_statement=header_text, comment=""))
+        last_pos = header_match.end()
+    for match in pattern.finditer(rule_text, last_pos):
+        comment = (match.group('comment') or "").strip()
+        statement_text = match.group('statement').strip()
+        area_match = re.search(r'(\[.*?\])', statement_text)
+        area = area_match.group(1) if area_match else "[UNKNOWN]"
+        rules.append(Rule(area=area, full_statement=statement_text, comment=comment))
+    return rules
 
 def server_configs_to_model(tm1_conn: TM1Service) -> Dict:
     configs = tm1_conn.configuration.get_active()

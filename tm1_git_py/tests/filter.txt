@@ -2,15 +2,16 @@
 +/dimensions/}Cultures.hierarchies*/**/Elements/ka-GE
 +/dimensions/Capex Ledger Mentes Maskent Mody.hierarchies/*.subsets/mody valami
 +/dimensions/Capex Ledger Mentes Maskent Mody.hierarchies/*.subsets/Default
--/cubes/*
++/cubes/*
 -/chores/zSYS*
 +/chores/*
 -/chores/asas.json
 -/chores/test3.json
 +/chores/test3.json
--/cubes/}*
++/cubes/}*
 -/processes/*
 +/processes/zTesting Process.json
 -/server_configs/*
 +/chores/ggg.json
 -/chores/ggg.json|test_ote11
+-/cubes/zSYS Maintenance Parameter|['ActivePhaseEnd','S Type']
