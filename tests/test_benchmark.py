@@ -64,7 +64,6 @@ def get_exec_data(test_cases):
     partial_keys = sorted(partial_keys, key=lambda x: int(x.replace('_', '')))
     identical_cases = {}
     for key in partial_keys:
-        #identical_cases[key] = [val for k, val in total_runtimes.get(key) if key in k]
         values = []
         for i in range(number_of_runs+1):
             values.append(total_runtimes.get(f"{key}_{i}"))
@@ -308,8 +307,8 @@ def test_run_single_benchmark_case_tm1_to_csv(tm1_connection_factory, nr_of_core
             "param_set_mdx_list": cfg.PARAM_SET_MDX_LIST,
             "clear_param_templates": cfg.CLEAR_PARAM_TEMPLATES,
             "target_csv_output_dir": f"D:\\tm1-bedrock-benchmark\\tm1_to_csv\\{nr_of_cores}_{nr_of_records}_{n}",
-            "decimal": ".",
-            "delimiter": ","
+            "decimal": ",",
+            "delimiter": ";"
         }
         basic_logger.info(f"Execution starting with {nr_of_cores} workers")
 
@@ -344,17 +343,19 @@ def test_run_single_benchmark_case_csv_to_tm1(tm1_connection_factory, nr_of_core
 
         fix_kwargs = {
             "tm1_service": conn,
+            "target_cube_name": "testbenchSales",
             "data_mdx_template": cfg.DATA_MDX_TEMPLATE,
             "skip_zeros": True,
             "skip_consolidated_cells": True,
-            "target_cube_name": "testbenchSales",
             "mapping_steps": cfg.MAPPING_STEPS_INTRACUBE,
             "clear_target": True,
             "logging_level": "DEBUG",
             "use_blob": True,
             "param_set_mdx_list": cfg.PARAM_SET_MDX_LIST,
             "clear_param_templates": cfg.CLEAR_PARAM_TEMPLATES,
-            "source_directory": f"D:\\tm1-bedrock-benchmark\\tm1_to_csv\\logs\\dataframe_logs"
+            "decimal": ",",
+            "delimiter": ";",
+            "async_write": False
         }
         basic_logger.info(f"Execution starting with {nr_of_cores} workers")
 
@@ -365,8 +366,9 @@ def test_run_single_benchmark_case_csv_to_tm1(tm1_connection_factory, nr_of_core
         try:
             tm1_bench.build_model(tm1=conn, schema=schema, env=envname, system_defaults=default_df_to_cube_kwargs)
 
-            asyncio.run(bedrock.async_executor_tm1(
-                data_copy_function=bedrock.load_tm1_cube_to_csv_file,
+            asyncio.run(bedrock.async_executor_csv_to_tm1(
+                data_copy_function=bedrock.load_csv_data_to_tm1_cube,
+                source_directory=f"D:\\tm1-bedrock-benchmark\\tm1_to_csv\\8_{nr_of_records}_0",
                 max_workers=nr_of_cores,
                 df_verbose_logging=False,
                 **fix_kwargs
@@ -377,6 +379,8 @@ def test_run_single_benchmark_case_csv_to_tm1(tm1_connection_factory, nr_of_core
             tm1_bench.destroy_model(tm1=conn, schema=schema)
 
         basic_logger.info(f"Execution ended with {nr_of_cores} workers")
+
+
 """
 #@parametrize_from_file
 def test_trace_malloc(tm1_connection, param_set_mdx_list, data_mdx_template,

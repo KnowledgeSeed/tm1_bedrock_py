@@ -80,7 +80,7 @@ def __dataframe_to_cube_default(
         use_ti: bool = False,
         increment: bool = False,
         sum_numeric_duplicates: bool = True,
-        **kwargs
+        **_kwargs
 ) -> None:
     """
     Writes a DataFrame to a cube using the TM1 service.
@@ -96,7 +96,7 @@ def __dataframe_to_cube_default(
         increment (bool, optional): Increments the values in the cube instead of replacing them. Defaults to False.
         sum_numeric_duplicates (bool, optional): Aggregate numerical values for duplicated intersections.
             Defaults to True.
-        **kwargs (Any): Additional keyword arguments.
+        **_kwargs (Any): Additional keyword arguments.
 
     Returns:
         None
@@ -112,7 +112,6 @@ def __dataframe_to_cube_default(
             increment=increment,
             sum_numeric_duplicates=sum_numeric_duplicates,
             slice_size_of_dataframe=slice_size_of_dataframe,
-            **kwargs
         )
     else:
         tm1_service.cells.write_dataframe(
@@ -125,8 +124,7 @@ def __dataframe_to_cube_default(
             use_ti=use_ti,
             use_blob=use_blob,
             increment=increment,
-            sum_numeric_duplicates=sum_numeric_duplicates,
-            **kwargs
+            sum_numeric_duplicates=sum_numeric_duplicates
         )
 
 

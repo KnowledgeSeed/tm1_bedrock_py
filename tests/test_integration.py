@@ -231,10 +231,10 @@ def test_async_load_csv_data_to_tm1_cube(
         default_df_to_cube_kwargs = schema['config']['df_to_cube_default_kwargs']
         try:
             tm1_bench.build_model(tm1=conn, schema=schema, env=envname, system_defaults=default_df_to_cube_kwargs)
-            asyncio.run(bedrock.async_executor_tm1(
+            asyncio.run(bedrock.async_executor_csv_to_tm1(
                 data_copy_function=bedrock.load_csv_data_to_tm1_cube,
                 tm1_service=conn,
-                source_csv_file_path="dataframe_to_csv/sample_data.csv",
+                source_directory="D:\\tm1-bedrock-benchmark\\tm1_to_csv\\8_10000_0",
                 data_mdx_template=data_mdx_template,
                 skip_zeros=True,
                 skip_consolidated_cells=True,
@@ -245,10 +245,11 @@ def test_async_load_csv_data_to_tm1_cube(
                 param_set_mdx_list=param_set_mdx_list,
                 clear_param_templates=clear_param_templates,
                 ignore_missing_elements=True,
-                decimal=".",
-                delimiter=",",
+                decimal=",",
+                delimiter=";",
                 df_verbose_logging=False,
-                max_workers=1
+                async_write=False,
+                max_workers=8
             ))
         finally:
             print("Execution ended.")

@@ -310,5 +310,5 @@ test_async_load_csv_data_to_tm1_cube:
       "{[testbenchPeriod].[testbenchPeriod].[$testbenchPeriod]}"
     ]
     param_set_mdx_list: [
-      "{[testbenchPeriod].[testbenchPeriod].[202402]}"
+      "{TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchPeriod].[testbenchPeriod].[All Periods]}, {[testbenchPeriod].[testbenchPeriod].[All Periods]}, RECURSIVE )}, 0)}"
     ]

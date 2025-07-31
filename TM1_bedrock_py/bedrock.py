@@ -7,7 +7,7 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 from string import Template
 from typing import Callable, List, Dict, Optional, Any, Sequence, Hashable, Mapping, Iterable
-from pandas import DataFrame
+from pandas import DataFrame, to_numeric, notna
 
 from TM1_bedrock_py import utility, transformer, loader, extractor, basic_logger
 
@@ -1124,7 +1124,7 @@ async def async_executor_tm1_to_sql(
 # TM1 <-> CSV data copy functions
 # ------------------------------------------------------------------------------------------------------------
 
-#@utility.log_benchmark_metrics
+@utility.log_benchmark_metrics
 @utility.log_exec_metrics
 def load_csv_data_to_tm1_cube(
         target_cube_name: str,
@@ -1164,7 +1164,7 @@ def load_csv_data_to_tm1_cube(
         increment: bool = False,
         use_blob: bool = False,
         sum_numeric_duplicates: bool = True,
-        slice_size_of_dataframe: int = 250000,
+        slice_size_of_dataframe: int = 50000,
         clear_target: Optional[bool] = False,
         logging_level: str = "ERROR",
         _execution_id: int = 0,
@@ -1303,7 +1303,6 @@ def load_csv_data_to_tm1_cube(
         use_ti=use_ti,
         increment=increment,
         use_blob=use_blob,
-        float_format='%.f',
         sum_numeric_duplicates=sum_numeric_duplicates,
         slice_size_of_dataframe=slice_size_of_dataframe,
         **kwargs
@@ -1440,7 +1439,7 @@ def load_tm1_cube_to_csv_file(
     basic_logger.info("Execution ended.")
 
 
-#@utility.log_async_benchmark_metrics
+@utility.log_async_benchmark_metrics
 @utility.log_async_exec_metrics
 async def async_executor_csv_to_tm1(
         tm1_service: Any,
@@ -1451,7 +1450,7 @@ async def async_executor_csv_to_tm1(
         shared_mapping: Optional[Dict] = None,
         mapping_steps: Optional[List[Dict]] = None,
         data_copy_function: Callable = data_copy,
-        clear_target: Optional[bool] = False,
+        clear_param_templates: Optional[bool] = False,
         max_workers: int = 8,
         **kwargs):
 
@@ -1463,7 +1462,7 @@ async def async_executor_csv_to_tm1(
     target_metadata_provider = None
     data_metadata_provider = None
 
-    if data_copy_function in (load_csv_data_to_tm1_cube):
+    if data_copy_function is load_csv_data_to_tm1_cube:
         source_cube_name = utility._get_cube_name_from_mdx(data_mdx_template)
         if source_cube_name:
             data_metadata = utility.TM1CubeObjectMetadata.collect(
@@ -1500,6 +1499,7 @@ async def async_executor_csv_to_tm1(
         _data_mdx: str,
         _mapping_steps: Optional[List[Dict]],
         _shared_mapping: Optional[Dict],
+        _target_clear_set_mdx_list: Optional[List[str]],
         _data_metadata_func: Optional[Callable],
         _target_metadata_func: Optional[Callable],
         _execution_id: int,
@@ -1509,11 +1509,14 @@ async def async_executor_csv_to_tm1(
             copy_func_kwargs = {
                 **_executor_kwargs,
                 "tm1_service": _tm1_service,
+                "source_csv_file_path": _source_csv_file_path,
+                "target_cube_name": _target_cube_name,
                 "data_mdx": _data_mdx,
-                "shared_mapping": _shared_mapping,
                 "mapping_steps": _mapping_steps,
-                "clear_target": False,
+                "shared_mapping": _shared_mapping,
+                "target_clear_set_mdx_list": _target_clear_set_mdx_list,
                 "_execution_id": _execution_id,
+                "clear_target": False,
                 "async_write": False
             }
 
@@ -1526,25 +1529,34 @@ async def async_executor_csv_to_tm1(
                 f"Error during execution {_execution_id} with MDX: {_data_mdx}. Error: {e}", exc_info=True)
             return e
 
+    if clear_param_templates is None:
+        clear_param_templates = []
+
     loop = asyncio.get_event_loop()
     futures = []
     source_csv_files = glob.glob(f"{source_directory}/*.csv")
+    i = 0
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        for i, current_tuple, source_csv_file_path in zip(enumerate(param_tuples), source_csv_files):
+        for current_tuple, source_csv_file_path in zip(param_tuples, source_csv_files):
             template_kwargs = {
                 param_name: current_tuple[j]
                 for j, param_name in enumerate(param_names)
             }
             data_mdx = Template(data_mdx_template).substitute(**template_kwargs)
 
+            target_clear_set_mdx_list = [
+                Template(clear_param_template).substitute(**template_kwargs)
+                for clear_param_template in clear_param_templates
+            ]
             futures.append(loop.run_in_executor(
                 executor, wrapper,
                 tm1_service, source_csv_file_path,
                 target_cube_name, data_mdx,
-                mapping_steps, shared_mapping,
+                mapping_steps, shared_mapping, target_clear_set_mdx_list,
                 data_metadata_provider, target_metadata_provider,
                 i, kwargs
             ))
+            i += 1
 
         results = await asyncio.gather(*futures, return_exceptions=True)
 
