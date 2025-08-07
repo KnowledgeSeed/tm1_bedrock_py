@@ -418,14 +418,15 @@ def test_run_single_benchmark_case_tm1_to_sql(tm1_connection_factory, sql_engine
                 "clear_target": True,
                 "logging_level": "DEBUG",
                 "use_blob": True,
-                "chunksize": 100000,
+                "chunksize": 10000,
                 "param_set_mdx_list": cfg.PARAM_SET_MDX_LIST,
                 "clear_param_templates": cfg.CLEAR_PARAM_TEMPLATES,
                 "dtype": dtype,
                 "decimal": ",",
                 "async_write": False,
                 "sql_delete_statement": cfg.SQL_DELETE_STATEMENT,
-                "index": False
+                "index": False,
+                "method": "multi"
             }
             basic_logger.info(f"Execution starting with {nr_of_cores} workers")
 
@@ -443,7 +444,6 @@ def test_run_single_benchmark_case_tm1_to_sql(tm1_connection_factory, sql_engine
                     df_verbose_logging=False,
                     **fix_kwargs
                 ))
-
             finally:
                 print("exec ended")
                 tm1_bench.destroy_model(tm1=conn, schema=schema)
