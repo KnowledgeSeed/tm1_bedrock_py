@@ -1,3 +1,7 @@
+# ------------------------------------------------------------------------------------------------------------
+# TM1 <-> TM1 data copy integration tests
+# ------------------------------------------------------------------------------------------------------------
+
 test_data_copy_for_single_literal_remap:
   -
     base_data_mdx:
@@ -233,6 +237,90 @@ test_async_data_copy_intercube_multi_parameter:
         )"
     }
 
+
+# ------------------------------------------------------------------------------------------------------------
+# TM1 <-> SQL data copy integration tests
+# ------------------------------------------------------------------------------------------------------------
+
+test_load_tm1_cube_to_sql_table:
+  -
+    base_data_mdx:
+      "
+       SELECT 
+         NON EMPTY 
+          {[testbenchMeasureSales].[testbenchMeasureSales].[Quantity]}
+          * {[testbenchPeriod].[testbenchPeriod].[202402]} 
+         ON COLUMNS , 
+         NON EMPTY 
+          {TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchKeyAccountManager].[testbenchKeyAccountManager].[All Key Account Manager]}, ALL, RECURSIVE)}, 0)}
+          * {TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchProduct].[testbenchProduct].[All Product]}, ALL, RECURSIVE)}, 0)}
+          * {TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchCustomer].[testbenchCustomer].[All Customer]}, ALL, RECURSIVE)}, 0)} 
+         ON ROWS 
+       FROM [testbenchSales] 
+       WHERE 
+         (
+          [testbenchVersion].[testbenchVersion].[Actual]
+         )"
+    mapping_steps: []
+
+test_load_sql_data_to_tm1_cube:
+  -
+    sql_query: "select * from BENCHMARK.dbo.testbenchSales;"
+    mapping_steps: [
+      {
+        "method": "replace",
+        "mapping": { "testbenchVersion": { "Actual": "ForeCast" } }
+      }
+    ]
+    clear_set_mdx_list: [
+      "{[testbenchVersion].[testbenchVersion].[ForeCast]}",
+      "{[testbenchPeriod].[testbenchPeriod].[202402]}"
+    ]
+
+
+test_async_load_tm1_cube_to_sql_table:
+  -
+    data_mdx_template:
+      "
+        SELECT 
+          NON EMPTY 
+           {{TM1SUBSETALL([testbenchMeasureSales].[testbenchMeasureSales])}}
+           * {{TM1FILTERBYLEVEL({{TM1SUBSETALL([testbenchProduct].[testbenchProduct])}}, 0)}} 
+           * {{TM1FILTERBYLEVEL({{TM1SUBSETALL([testbenchCustomer].[testbenchCustomer])}}, 0)}} 
+           * {{TM1FILTERBYLEVEL({{TM1SUBSETALL([testbenchKeyAccountManager].[testbenchKeyAccountManager])}}, 0)}} 
+          ON 0
+        FROM [testbenchSales] 
+        WHERE 
+          (
+           [testbenchVersion].[testbenchVersion].[Actual],
+           [testbenchPeriod].[testbenchPeriod].[$testbenchPeriod]
+          )
+      "
+    mapping_steps: []
+    sql_delete_statement: "delete from BENCHMARK.dbo.testbenchSales;"
+    param_set_mdx_list: [
+      "{TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchPeriod].[testbenchPeriod].[All Periods]}, {[testbenchPeriod].[testbenchPeriod].[All Periods]}, RECURSIVE )}, 0)}"
+    ]
+
+test_async_load_sql_data_to_tm1_cube:
+  -
+    sql_query_template: "
+      SELECT * FROM BENCHMARK.dbo.testbenchSales AS s
+      ORDER BY s.testbenchPeriod, s.testbenchKeyAccountManager, s.testbenchCustomer, s.testbenchProduct
+      OFFSET {offset} ROWS FETCH NEXT {fetch} ROWS ONLY
+    "
+    mapping_steps: [
+      {
+        "method": "replace",
+        "mapping": { "testbenchVersion": { "Actual": "ForeCast" } }
+      }
+    ]
+    param_set_mdx_list: [
+      "{TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchPeriod].[testbenchPeriod].[All Periods]}, {[testbenchPeriod].[testbenchPeriod].[All Periods]}, RECURSIVE )}, 0)}"
+    ]
+# ------------------------------------------------------------------------------------------------------------
+# TM1 <-> CSV data copy integration tests
+# ------------------------------------------------------------------------------------------------------------
 
 test_load_tm1_cube_to_csv_file:
   -

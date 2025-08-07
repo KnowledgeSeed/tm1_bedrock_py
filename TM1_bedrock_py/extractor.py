@@ -2,6 +2,7 @@ from typing import Callable, List, Dict, Optional, Any
 
 from TM1py import TM1Service
 from pandas import DataFrame, read_sql_table, read_sql_query, concat, read_csv
+from sqlalchemy import text
 from typing import Sequence, Hashable, Mapping, Iterable
 
 from TM1_bedrock_py import utility, transformer, basic_logger
@@ -41,6 +42,7 @@ def __tm1_mdx_to_dataframe_default(
         skip_zeros: bool = False,
         skip_consolidated_cells: bool = False,
         skip_rule_derived_cells: bool = False,
+        decimal: str = None,
         **_kwargs
 ) -> DataFrame:
     """
@@ -59,6 +61,9 @@ def __tm1_mdx_to_dataframe_default(
     Returns:
         DataFrame: A DataFrame containing the result of the MDX query.
     """
+    if decimal is None:
+        decimal = utility.get_local_decimal_separator()
+
     if data_mdx_list:
         if skip_zeros:
             data_mdx_list = [utility.add_non_empty_to_mdx(current)
@@ -70,7 +75,7 @@ def __tm1_mdx_to_dataframe_default(
             skip_consolidated_cells=skip_consolidated_cells,
             skip_rule_derived_cells=skip_rule_derived_cells,
             use_iterative_json=True,
-            decimal=utility.get_local_decimal_separator()
+            decimal=decimal
         )
     elif data_mdx:
         if skip_zeros:
@@ -83,7 +88,7 @@ def __tm1_mdx_to_dataframe_default(
             skip_rule_derived_cells=skip_rule_derived_cells,
             use_iterative_json=True,
             use_blob=True,
-            decimal=utility.get_local_decimal_separator()
+            decimal=decimal
         )
 
     msg = "Either data_mdx or data_mdx_list has to be specified."
@@ -250,6 +255,16 @@ def generate_step_specific_mapping_dataframes(
 # ------------------------------------------------------------------------------------------------------------
 # SQL query to pandas dataframe functions
 # ------------------------------------------------------------------------------------------------------------
+
+def _get_sql_table_count(engine: Any, table_name: str) -> int:
+    """Gets the total row count of a SQL table."""
+    try:
+        with engine.connect() as connection:
+            result = connection.execute(text(f"SELECT COUNT(*) FROM {table_name}"))
+            return result.scalar_one()
+    except Exception as e:
+        basic_logger.error(f"Failed to get row count for table '{table_name}': {e}")
+        return 0
 
 
 @utility.log_exec_metrics

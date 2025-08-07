@@ -2,12 +2,13 @@ import asyncio
 import time
 
 import pandas as pd
+from sqlalchemy import types
 import parametrize_from_file
 from TM1py.Exceptions import TM1pyRestException
 from tm1_bench_py import tm1_bench
 
 from TM1_bedrock_py import bedrock, extractor, transformer, utility
-from tests.config import tm1_connection_factory
+from tests.config import tm1_connection_factory, sql_engine_factory
 from tests import config as cfg
 
 
@@ -156,6 +157,154 @@ def test_async_data_copy_intercube_multi_parameter(
 
 
 # ------------------------------------------------------------------------------------------------------------
+# TM1 <-> SQL data copy integration tests
+# ------------------------------------------------------------------------------------------------------------
+
+@parametrize_from_file
+def test_load_tm1_cube_to_sql_table(
+        tm1_connection_factory, sql_engine_factory, base_data_mdx, mapping_steps
+):
+    with tm1_connection_factory("testbench") as conn:
+        with sql_engine_factory("testbench_mssql") as sql_engine:
+            envname = 'bedrock_test_10000'
+            schemaloader = tm1_bench.SchemaLoader(cfg.SCHEMA_DIR, envname)
+            schema = schemaloader.load_schema()
+            default_df_to_cube_kwargs = schema['config']['df_to_cube_default_kwargs']
+            dtype = {
+                'testbenchVersion': types.VARCHAR(50),
+                'testbenchPeriod': types.VARCHAR(50),
+                'testbenchMeasureSales': types.VARCHAR(50),
+                'testbenchProduct': types.VARCHAR(50),
+                'testbenchCustomer': types.VARCHAR(50),
+                'testbenchKeyAccountManager': types.VARCHAR(50),
+                'Value': types.FLOAT
+            }
+            try:
+                tm1_bench.build_model(tm1=conn, schema=schema, env=envname, system_defaults=default_df_to_cube_kwargs)
+                bedrock.load_tm1_cube_to_sql_table(
+                    tm1_service=conn,
+                    target_table_name="testbenchSales",
+                    sql_engine=sql_engine,
+                    data_mdx=base_data_mdx,
+                    mapping_steps=mapping_steps,
+                    clear_target=True,
+                    skip_zeros=True,
+                    logging_level="DEBUG",
+                    index=False,
+                    dtype=dtype
+                )
+            finally:
+                print("Execution ended.")
+                tm1_bench.destroy_model(tm1=conn, schema=schema)
+
+
+@parametrize_from_file
+def test_load_sql_data_to_tm1_cube(
+        tm1_connection_factory, sql_engine_factory, sql_query, mapping_steps, clear_set_mdx_list
+):
+    with tm1_connection_factory("testbench") as conn:
+        with sql_engine_factory("testbench_mssql") as sql_engine:
+            envname = 'bedrock_test_10000'
+            schemaloader = tm1_bench.SchemaLoader(cfg.SCHEMA_DIR, envname)
+            schema = schemaloader.load_schema()
+            default_df_to_cube_kwargs = schema['config']['df_to_cube_default_kwargs']
+            try:
+                tm1_bench.build_model(tm1=conn, schema=schema, env=envname, system_defaults=default_df_to_cube_kwargs)
+                bedrock.load_sql_data_to_tm1_cube(
+                    tm1_service=conn,
+                    target_cube_name="testbenchSales",
+                    sql_engine=sql_engine,
+                    sql_query=sql_query,
+                    mapping_steps=mapping_steps,
+                    target_clear_set_mdx_list=clear_set_mdx_list,
+                    clear_target=True,
+                    skip_zeros=True,
+                    logging_level="DEBUG",
+                    index=False
+                )
+            finally:
+                print("Execution ended.")
+                tm1_bench.destroy_model(tm1=conn, schema=schema)
+
+
+@parametrize_from_file
+def test_async_load_tm1_cube_to_sql_table(
+        tm1_connection_factory, sql_engine_factory, data_mdx_template, mapping_steps, param_set_mdx_list, sql_delete_statement
+):
+    with tm1_connection_factory("testbench") as conn:
+        with sql_engine_factory("testbench_mssql") as sql_engine:
+            envname = 'bedrock_test_10000'
+            schemaloader = tm1_bench.SchemaLoader(cfg.SCHEMA_DIR, envname)
+            schema = schemaloader.load_schema()
+            default_df_to_cube_kwargs = schema['config']['df_to_cube_default_kwargs']
+            dtype = {
+                'testbenchVersion': types.VARCHAR(50),
+                'testbenchPeriod': types.VARCHAR(50),
+                'testbenchMeasureSales': types.VARCHAR(50),
+                'testbenchProduct': types.VARCHAR(50),
+                'testbenchCustomer': types.VARCHAR(50),
+                'testbenchKeyAccountManager': types.VARCHAR(50),
+                'Value': types.FLOAT
+            }
+            try:
+                tm1_bench.build_model(tm1=conn, schema=schema, env=envname, system_defaults=default_df_to_cube_kwargs)
+                asyncio.run(bedrock.async_executor_tm1_to_sql(
+                    data_copy_function=bedrock.load_tm1_cube_to_sql_table,
+                    tm1_service=conn,
+                    sql_engine=sql_engine,
+                    target_table_name="testbenchSales",
+                    data_mdx_template=data_mdx_template,
+                    mapping_steps=mapping_steps,
+                    param_set_mdx_list=param_set_mdx_list,
+                    sql_delete_statement=sql_delete_statement,
+                    clear_target=True,
+                    skip_zeros=True,
+                    logging_level="DEBUG",
+                    index=False,
+                    dtype=dtype,
+                    decimal=",",
+                    max_workers=8
+                ))
+            finally:
+                print("Execution ended.")
+                tm1_bench.destroy_model(tm1=conn, schema=schema)
+
+
+@parametrize_from_file
+def test_async_load_sql_data_to_tm1_cube(
+        tm1_connection_factory, sql_engine_factory, sql_query_template, mapping_steps, param_set_mdx_list
+):
+    with tm1_connection_factory("testbench") as conn:
+        with sql_engine_factory("testbench_mssql") as sql_engine:
+            envname = 'bedrock_test_10000'
+            schemaloader = tm1_bench.SchemaLoader(cfg.SCHEMA_DIR, envname)
+            schema = schemaloader.load_schema()
+            default_df_to_cube_kwargs = schema['config']['df_to_cube_default_kwargs']
+            try:
+                tm1_bench.build_model(tm1=conn, schema=schema, env=envname, system_defaults=default_df_to_cube_kwargs)
+                asyncio.run(bedrock.async_executor_sql_to_tm1(
+                    data_copy_function=bedrock.load_sql_data_to_tm1_cube,
+                    tm1_service=conn,
+                    target_cube_name="testbenchSales",
+                    sql_engine=sql_engine,
+                    sql_query_template=sql_query_template,
+                    sql_table_for_count="BENCHMARK.dbo.testbenchSales",
+                    slice_size=5000,
+                    mapping_steps=mapping_steps,
+                    target_clear_set_mdx_list=["{[testbenchVersion].[testbenchVersion].[ForeCast]}"],
+                    param_set_mdx_list=param_set_mdx_list,
+                    skip_zeros=True,
+                    logging_level="DEBUG",
+                    decimal=',',
+                    index=False,
+                    max_workers=8
+                ))
+            finally:
+                print("Execution ended.")
+                tm1_bench.destroy_model(tm1=conn, schema=schema)
+
+
+# ------------------------------------------------------------------------------------------------------------
 # TM1 <-> CSV data copy integration tests
 # ------------------------------------------------------------------------------------------------------------
 
@@ -186,7 +335,6 @@ def test_load_tm1_cube_to_csv_file(
         finally:
             print("Execution ended.")
             tm1_bench.destroy_model(tm1=conn, schema=schema)
-
 
 
 @parametrize_from_file

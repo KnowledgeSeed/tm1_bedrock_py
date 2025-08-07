@@ -107,6 +107,13 @@ MAPPING_STEPS_INTRACUBE = [_STEP3]
 
 TARGET_DIM_MAPPING = {"testbenchMeasurePnL": "Calculated from Sales"}
 
+SQL_QUERY_TEMPLATE = """
+    SELECT * FROM BENCHMARK.dbo.testbenchSales AS s
+    ORDER BY s.testbenchPeriod, s.testbenchKeyAccountManager, s.testbenchCustomer, s.testbenchProduct
+    OFFSET {offset} ROWS FETCH NEXT {fetch} ROWS ONLY
+"""
+SQL_DELETE_STATEMENT = "delete from BENCHMARK.dbo.testbenchSales"
+
 
 def benchmark_testcase_parameters():
     num_runs = 5
@@ -157,32 +164,36 @@ def tm1_connection_factory():
 
 
 @pytest.fixture(scope="session")
-def sql_engine():
+def sql_engine_factory():
     """Creates a SQL connector engine before tests and closes it after all tests."""
     #load_dotenv()
-    engine = None
-    try:
-        engine = utility.create_sql_engine(
-            username=os.environ.get("SQL_USER"),
-            password=os.environ.get("SQL_PASSWORD"),
-            host=os.environ.get("SQL_HOST"),
-            port=os.environ.get("SQL_PORT"),
-            connection_type=os.environ.get("SQL_CONN_TYPE"),
-            database=os.environ.get("SQL_DB")
-        )
-        basic_logger.debug("SQL engine successfully created")
-        yield engine
-
-    except (ArgumentError, AttributeError):
+    @contextmanager
+    def _connect(connection_name: str):
+        engine = None
         try:
-            config = configparser.ConfigParser()
-            config.read(Path(__file__).parent.joinpath('config.ini'))
-            engine = utility.create_sql_engine(**config['mssqlsrv'])
+            engine = utility.create_sql_engine(
+                username=os.environ.get("SQL_USER"),
+                password=os.environ.get("SQL_PASSWORD"),
+                host=os.environ.get("SQL_HOST"),
+                port=os.environ.get("SQL_PORT"),
+                connection_type=os.environ.get("SQL_CONN_TYPE"),
+                database=os.environ.get("SQL_DB")
+            )
             basic_logger.debug("SQL engine successfully created")
             yield engine
-        except OperationalError or InterfaceError:
-            basic_logger.error("Unable to connect to SQL: ", exc_info=True)
-    finally:
-        if engine is not None:
-            engine.dispose()
-            basic_logger.debug("SQL engine disposed.")
+
+        except (ArgumentError, AttributeError):
+            try:
+                config = configparser.ConfigParser()
+                config.read(Path(__file__).parent.joinpath('config.ini'))
+                engine = utility.create_sql_engine(**config[connection_name])
+                basic_logger.debug("SQL engine successfully created")
+                yield engine
+            except OperationalError or InterfaceError:
+                basic_logger.error("Unable to connect to SQL: ", exc_info=True)
+        finally:
+            if engine is not None:
+                engine.dispose()
+                basic_logger.debug("SQL engine disposed.")
+
+    return _connect

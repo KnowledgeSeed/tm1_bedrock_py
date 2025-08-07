@@ -3,10 +3,14 @@ This file is a collection of upgraded TM1 bedrock functionality, ported to pytho
 """
 import asyncio
 import glob
+import math
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 from string import Template
 from typing import Callable, List, Dict, Optional, Any, Sequence, Hashable, Mapping, Iterable
+
+from TM1py.Exceptions import TM1pyRestException
+from requests.cookies import CookieConflictError
 from pandas import DataFrame, to_numeric, notna
 
 from TM1_bedrock_py import utility, transformer, loader, extractor, basic_logger
@@ -796,6 +800,16 @@ def load_sql_data_to_tm1_cube(
 
     cube_name = target_metadata.get_cube_name()
 
+    try:
+        tm1_service.server.get_server_name()
+    except (CookieConflictError, TM1pyRestException):
+        try:
+            tm1_service.re_connect()
+            basic_logger.warning("TM1 service reconnected.")
+        except Exception as e:
+            basic_logger.error(f"Lost TM1 connection. Error {e}", exc_info=True)
+            raise e
+
     if dataframe.empty:
         if clear_target:
             loader.clear_cube(tm1_service=tm1_service,
@@ -905,6 +919,8 @@ def load_tm1_cube_to_sql_table(
         sql_delete_statement: Optional[List[str]] = None,
         clear_source: Optional[bool] = False,
         source_clear_set_mdx_list: Optional[List[str]] = None,
+        dtype: Optional[dict] = None,
+        decimal: Optional[str] = None,
         logging_level: str = "ERROR",
         _execution_id: int = 0,
         **kwargs
@@ -924,6 +940,7 @@ def load_tm1_cube_to_sql_table(
         skip_consolidated_cells=skip_consolidated_cells,
         skip_rule_derived_cells=skip_rule_derived_cells,
         mdx_function=mdx_function,
+        decimal=decimal
     )
 
     if dataframe.empty:
@@ -938,7 +955,10 @@ def load_tm1_cube_to_sql_table(
         metadata_function=data_metadata_function,
         **kwargs)
 
-    transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
+    data_metadata_queryspecific = utility.TM1CubeObjectMetadata.collect(
+        mdx=data_mdx, collect_base_cube_metadata=False)
+
+    transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata_queryspecific.get_filter_dict())
 
     shared_mapping_df = None
     if shared_mapping:
@@ -989,8 +1009,19 @@ def load_tm1_cube_to_sql_table(
         table_name=target_table_name,
         engine=sql_engine,
         schema=sql_schema,
-        chunsize=chunksize
+        chunksize=chunksize,
+        dtype=dtype
     )
+
+    try:
+        tm1_service.server.get_server_name()
+    except (CookieConflictError, TM1pyRestException):
+        try:
+            tm1_service.re_connect()
+            basic_logger.warning("TM1 service reconnected.")
+        except Exception as e:
+            basic_logger.error(f"Lost TM1 connection. Error {e}", exc_info=True)
+            raise e
 
     if clear_source:
         loader.clear_cube(tm1_service=tm1_service,
@@ -1011,7 +1042,7 @@ async def async_executor_tm1_to_sql(
         data_mdx_template: str,
         shared_mapping: Optional[Dict] = None,
         mapping_steps: Optional[List[Dict]] = None,
-        data_copy_function: Callable = data_copy,
+        data_copy_function: Callable = load_tm1_cube_to_sql_table,
         clear_target: Optional[bool] = False,
         sql_delete_statement: Optional[List[str]] = None,
         max_workers: int = 8,
@@ -1030,7 +1061,7 @@ async def async_executor_tm1_to_sql(
                            table_name=target_table_name,
                            delete_statement=sql_delete_statement)
 
-    if data_copy_function in (load_tm1_cube_to_sql_table):
+    if data_copy_function is load_tm1_cube_to_sql_table:
         source_cube_name = utility._get_cube_name_from_mdx(data_mdx_template)
         if source_cube_name:
             data_metadata = utility.TM1CubeObjectMetadata.collect(
@@ -1076,6 +1107,8 @@ async def async_executor_tm1_to_sql(
             copy_func_kwargs = {
                 **_executor_kwargs,
                 "tm1_service": _tm1_service,
+                "sql_engine": _sql_engine,
+                "target_table_name": _target_table_name,
                 "data_mdx": _data_mdx,
                 "shared_mapping": _shared_mapping,
                 "mapping_steps": _mapping_steps,
@@ -1110,6 +1143,132 @@ async def async_executor_tm1_to_sql(
                 target_table_name, data_mdx,
                 mapping_steps, shared_mapping,
                 data_metadata_provider, target_metadata_provider,
+                i, kwargs
+            ))
+
+        results = await asyncio.gather(*futures, return_exceptions=True)
+
+        for i, result in enumerate(results):
+            if isinstance(result, Exception):
+                basic_logger.error(f"Task {i} failed with exception: {result}")
+
+
+@utility.log_async_benchmark_metrics
+@utility.log_async_exec_metrics
+async def async_executor_sql_to_tm1(
+        tm1_service: Any,
+        sql_engine: Any,
+        sql_query_template: str,
+        sql_table_for_count: str,
+        target_cube_name: str,
+        slice_size: int = 100000,
+        shared_mapping: Optional[Dict] = None,
+        mapping_steps: Optional[List[Dict]] = None,
+        data_copy_function: Callable = load_sql_data_to_tm1_cube,
+        target_clear_set_mdx_list: List[str] = None,
+        max_workers: int = 8,
+        **kwargs):
+
+    total_records = extractor._get_sql_table_count(sql_engine, sql_table_for_count)
+    if total_records == 0:
+        basic_logger.warning("Source SQL table has 0 records. Nothing to load.")
+        return
+
+    iterations = math.ceil(total_records / slice_size)
+    basic_logger.info(
+        f"Total records: {total_records}. Slice size: {slice_size}. "
+        f"Executing in {iterations} parallel chunks."
+    )
+
+    target_tm1_service = kwargs.get("target_tm1_service", tm1_service)
+    target_metadata_provider = None
+
+    if data_copy_function is load_sql_data_to_tm1_cube:
+        if target_cube_name:
+            target_metadata = utility.TM1CubeObjectMetadata.collect(
+                tm1_service=target_tm1_service,
+                cube_name=target_cube_name,
+                metadata_function=kwargs.get("target_metadata_function"),
+                collect_dim_element_identifiers=kwargs.get("ignore_missing_elements", False),
+                **kwargs
+            )
+
+            def get_target_metadata(**_kwargs):
+                return target_metadata
+
+            target_metadata_provider = get_target_metadata
+        else:
+            basic_logger.warning(
+                f"target_cube_name not provided, skipping metadata collection.")
+
+    if mapping_steps:
+        extractor.generate_step_specific_mapping_dataframes(
+            mapping_steps=mapping_steps,
+            tm1_service=tm1_service,
+            **kwargs
+        )
+
+    if shared_mapping:
+        extractor.generate_dataframe_for_mapping_info(
+            mapping_info=shared_mapping,
+            tm1_service=tm1_service,
+            **kwargs
+        )
+
+    def wrapper(
+            _tm1_service: Any,
+            _sql_engine: Any,
+            _sql_query: str,
+            _target_cube_name: str,
+            _mapping_steps: Optional[List[Dict]],
+            _shared_mapping: Optional[Dict],
+            _target_metadata_func: Optional[Callable],
+            _execution_id: int,
+            _executor_kwargs: Dict
+    ):
+        try:
+            copy_func_kwargs = {
+                **_executor_kwargs,
+                "tm1_service": _tm1_service,
+                "sql_engine": _sql_engine,
+                "sql_query": _sql_query,
+                "target_cube_name": _target_cube_name,
+                "mapping_steps": _mapping_steps,
+                "shared_mapping": _shared_mapping,
+                "_execution_id": _execution_id,
+                "async_write": False
+            }
+
+            if _target_metadata_func:
+                copy_func_kwargs["target_metadata_function"] = _target_metadata_func
+            data_copy_function(**copy_func_kwargs)
+
+        except Exception as e:
+            basic_logger.error(
+                f"Error during execution {_execution_id} with SQL query: {_sql_query}. Error: {e}", exc_info=True)
+            return e
+
+    loop = asyncio.get_event_loop()
+    futures = []
+
+    if target_clear_set_mdx_list:
+        kwargs["clear_target"] = False
+        loader.clear_cube(tm1_service=tm1_service,
+                          cube_name=target_cube_name,
+                          clear_set_mdx_list=target_clear_set_mdx_list,
+                          **kwargs)
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        for i in range(iterations):
+            offset = i * slice_size
+            sql_query = sql_query_template.format(offset=offset, fetch=slice_size)
+
+            futures.append(loop.run_in_executor(
+                executor, wrapper,
+                tm1_service, sql_engine, sql_query,
+                target_cube_name,
+                mapping_steps, shared_mapping,
+                target_metadata_provider,
                 i, kwargs
             ))
 
@@ -1360,6 +1519,7 @@ def load_tm1_cube_to_csv_file(
         skip_consolidated_cells=skip_consolidated_cells,
         skip_rule_derived_cells=skip_rule_derived_cells,
         mdx_function=mdx_function,
+        decimal=decimal
     )
 
     if dataframe.empty:

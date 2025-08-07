@@ -165,7 +165,7 @@ def __dataframe_to_sql_default(
         schema: Optional[str] = None,
         chunksize: Optional[int] = None,
         dtype: Optional[dict] = None,
-        method: Optional[Any] = "multi",
+        method: Optional[str | Callable] = None,
         **kwargs
 ) -> None:
     if not engine:

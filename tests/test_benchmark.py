@@ -4,12 +4,13 @@ import logging
 import statistics
 
 import matplotlib.pyplot as plt
+from sqlalchemy import types
 import pytest
 from tm1_bench_py import tm1_bench
 
 from TM1_bedrock_py import bedrock, basic_logger, benchmark_metrics_logger
 from tests import config as cfg
-from tests.config import tm1_connection_factory
+from tests.config import tm1_connection_factory, sql_engine_factory
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -285,6 +286,10 @@ def test_run_single_benchmark_case_data_copy(tm1_connection_factory, nr_of_cores
         basic_logger.info(f"Execution ended with {nr_of_cores} workers")
 
 
+# ------------------------------------------------------------------------------------------------------------
+# TM1 <-> CSV data copy bench tests
+# ------------------------------------------------------------------------------------------------------------
+
 @pytest.mark.parametrize("nr_of_cores, nr_of_records, n", cfg.benchmark_testcase_parameters())
 def test_run_single_benchmark_case_tm1_to_csv(tm1_connection_factory, nr_of_cores, nr_of_records, n):
 
@@ -379,6 +384,121 @@ def test_run_single_benchmark_case_csv_to_tm1(tm1_connection_factory, nr_of_core
             tm1_bench.destroy_model(tm1=conn, schema=schema)
 
         basic_logger.info(f"Execution ended with {nr_of_cores} workers")
+
+
+# ------------------------------------------------------------------------------------------------------------
+# TM1 <-> SQL data copy bench tests
+# ------------------------------------------------------------------------------------------------------------
+
+@pytest.mark.parametrize("nr_of_cores, nr_of_records, n", cfg.benchmark_testcase_parameters())
+def test_run_single_benchmark_case_tm1_to_sql(tm1_connection_factory, sql_engine_factory, nr_of_cores, nr_of_records, n):
+    update_benchmark_log_handler(f"{nr_of_cores}_{nr_of_records}_{n}")
+
+    with tm1_connection_factory("testbench") as conn:
+        with sql_engine_factory("testbench_mssql") as sql_engine:
+            server_name = conn.server.get_server_name()
+            print("Connection to TM1 established! Your server name is: {}".format(server_name))
+            dtype = {
+                'testbenchVersion': types.VARCHAR(50),
+                'testbenchPeriod': types.VARCHAR(50),
+                'testbenchMeasureSales': types.VARCHAR(50),
+                'testbenchProduct': types.VARCHAR(50),
+                'testbenchCustomer': types.VARCHAR(50),
+                'testbenchKeyAccountManager': types.VARCHAR(50),
+                'Value': types.FLOAT
+            }
+
+            fix_kwargs = {
+                "tm1_service": conn,
+                "target_table_name": "testbenchSales",
+                "data_mdx_template": cfg.DATA_MDX_TEMPLATE,
+                "skip_zeros": True,
+                "skip_consolidated_cells": True,
+                "mapping_steps": [],
+                "clear_target": True,
+                "logging_level": "DEBUG",
+                "use_blob": True,
+                "chunksize": 100000,
+                "param_set_mdx_list": cfg.PARAM_SET_MDX_LIST,
+                "clear_param_templates": cfg.CLEAR_PARAM_TEMPLATES,
+                "dtype": dtype,
+                "decimal": ",",
+                "async_write": False,
+                "sql_delete_statement": cfg.SQL_DELETE_STATEMENT,
+                "index": False
+            }
+            basic_logger.info(f"Execution starting with {nr_of_cores} workers")
+
+            envname = 'bedrock_test_' + str(nr_of_records)
+            schemaloader = tm1_bench.SchemaLoader(cfg.SCHEMA_DIR, envname)
+            schema = schemaloader.load_schema()
+            default_df_to_cube_kwargs = schema['config']['df_to_cube_default_kwargs']
+            try:
+                tm1_bench.build_model(tm1=conn, schema=schema, env=envname, system_defaults=default_df_to_cube_kwargs)
+
+                asyncio.run(bedrock.async_executor_tm1_to_sql(
+                    data_copy_function=bedrock.load_tm1_cube_to_sql_table,
+                    sql_engine=sql_engine,
+                    max_workers=nr_of_cores,
+                    df_verbose_logging=False,
+                    **fix_kwargs
+                ))
+
+            finally:
+                print("exec ended")
+                tm1_bench.destroy_model(tm1=conn, schema=schema)
+
+            basic_logger.info(f"Execution ended with {nr_of_cores} workers")
+
+
+@pytest.mark.parametrize("nr_of_cores, nr_of_records, n", cfg.benchmark_testcase_parameters())
+def test_run_single_benchmark_case_sql_to_tm1(tm1_connection_factory, sql_engine_factory, nr_of_cores, nr_of_records, n):
+    update_benchmark_log_handler(f"{nr_of_cores}_{nr_of_records}_{n}")
+
+    with tm1_connection_factory("testbench") as conn:
+        with sql_engine_factory("testbench_mssql") as sql_engine:
+            server_name = conn.server.get_server_name()
+            print("Connection to TM1 established! Your server name is: {}".format(server_name))
+
+            fix_kwargs = {
+                "tm1_service": conn,
+                "target_cube_name": "testbenchSales",
+                "sql_query_template": cfg.SQL_QUERY_TEMPLATE,
+                "sql_table_for_count": "BENCHMARK.dbo.testbenchSales",
+                "slice_size": 200000,
+                "skip_zeros": True,
+                "skip_consolidated_cells": True,
+                "mapping_steps": cfg.MAPPING_STEPS_INTRACUBE,
+                "logging_level": "DEBUG",
+                "use_blob": True,
+                "clear_target": True,
+                "target_clear_set_mdx_list": ["{[testbenchVersion].[testbenchVersion].[ForeCast]}"],
+                "decimal": ",",
+                "async_write": False,
+                "index": False
+            }
+            basic_logger.info(f"Execution starting with {nr_of_cores} workers")
+
+            envname = 'bedrock_test_' + str(nr_of_records)
+            schemaloader = tm1_bench.SchemaLoader(cfg.SCHEMA_DIR, envname)
+            schema = schemaloader.load_schema()
+            default_df_to_cube_kwargs = schema['config']['df_to_cube_default_kwargs']
+            try:
+                tm1_bench.build_model(tm1=conn, schema=schema, env=envname, system_defaults=default_df_to_cube_kwargs)
+
+                asyncio.run(bedrock.async_executor_sql_to_tm1(
+                    data_copy_function=bedrock.load_sql_data_to_tm1_cube,
+                    sql_engine=sql_engine,
+                    max_workers=nr_of_cores,
+                    df_verbose_logging=False,
+                    **fix_kwargs
+                ))
+
+            finally:
+                print("exec ended")
+                tm1_bench.destroy_model(tm1=conn, schema=schema)
+
+            basic_logger.info(f"Execution ended with {nr_of_cores} workers")
 
 
 """
