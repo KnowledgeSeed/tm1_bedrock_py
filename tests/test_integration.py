@@ -166,6 +166,12 @@ def test_load_tm1_cube_to_sql_table(
 ):
     with tm1_connection_factory("testbench") as conn:
         with sql_engine_factory("testbench_mssql") as sql_engine:
+
+            # >>> ADD THESE TWO LINES FOR DIAGNOSIS <<<
+            print(f"DIALECT NAME: {sql_engine.dialect.name}")
+            print(f"FAST_EXECUTEMANY ENABLED: {sql_engine.dialect.fast_executemany}")
+            # >>> END DIAGNOSIS <<<
+
             envname = 'bedrock_test_10000'
             schemaloader = tm1_bench.SchemaLoader(cfg.SCHEMA_DIR, envname)
             schema = schemaloader.load_schema()
@@ -188,10 +194,13 @@ def test_load_tm1_cube_to_sql_table(
                     data_mdx=base_data_mdx,
                     mapping_steps=mapping_steps,
                     clear_target=True,
+                    sql_delete_statement="TRUNCATE TABLE testbenchSales",
                     skip_zeros=True,
                     logging_level="DEBUG",
                     index=False,
-                    dtype=dtype
+                    dtype=dtype,
+                    related_dimensions={"Value": "testbenchValue"},
+                    method=None,
                 )
             finally:
                 print("Execution ended.")

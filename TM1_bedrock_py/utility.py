@@ -960,7 +960,7 @@ def create_sql_engine(
         **kwargs
 ) -> Any:
     connection_strings = {
-        'mssql': f"mssql+pyodbc://{username}:{password}@{host}:{port}/{database}?driver={mssql_driver}&TrustServerCertificate=yes",
+        'mssql': f"mssql+pyodbc://{username}:{password}@{host}:{port}/{database}?driver={mssql_driver}&TrustServerCertificate=yes&fast_executemany=true",
         'sqlite': f"sqlite:///{sqlite_file_path}",
         'postgresql': f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}",
         'mysql': f"mysql+mysqlconnector://{username}:{password}@{host}:{port}/{database}",
@@ -972,7 +972,7 @@ def create_sql_engine(
     }
     if connection_type and not connection_string:
         connection_string = connection_strings.get(connection_type)
-    return create_engine(connection_string)
+    return create_engine(connection_string, fast_executemany=True)
 
 
 def inspect_table(engine: Any, table_name: str) -> dict:
