@@ -246,16 +246,14 @@ test_load_tm1_cube_to_sql_table:
   -
     base_data_mdx:
       "
-       SELECT 
+       SELECT  
          NON EMPTY 
-          {[testbenchMeasureSales].[testbenchMeasureSales].[Quantity]}
-          * {[testbenchPeriod].[testbenchPeriod].[202402]} 
-         ON COLUMNS , 
-         NON EMPTY 
-          {TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchKeyAccountManager].[testbenchKeyAccountManager].[All Key Account Manager]}, ALL, RECURSIVE)}, 0)}
+         {TM1FILTERBYLEVEL({[testbenchMeasureSales].[testbenchMeasureSales].Members}, 0)}
+          * {TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchPeriod].[testbenchPeriod].[All Periods]}, ALL, RECURSIVE)}, 0)}
+          * {TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchKeyAccountManager].[testbenchKeyAccountManager].[All Key Account Manager]}, ALL, RECURSIVE)}, 0)}
           * {TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchProduct].[testbenchProduct].[All Product]}, ALL, RECURSIVE)}, 0)}
           * {TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchCustomer].[testbenchCustomer].[All Customer]}, ALL, RECURSIVE)}, 0)} 
-         ON ROWS 
+         ON 0 
        FROM [testbenchSales] 
        WHERE 
          (

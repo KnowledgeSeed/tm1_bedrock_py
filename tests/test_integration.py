@@ -187,6 +187,7 @@ def test_load_tm1_cube_to_sql_table(
             }
             try:
                 tm1_bench.build_model(tm1=conn, schema=schema, env=envname, system_defaults=default_df_to_cube_kwargs)
+
                 bedrock.load_tm1_cube_to_sql_table(
                     tm1_service=conn,
                     target_table_name="testbenchSales",
@@ -202,6 +203,7 @@ def test_load_tm1_cube_to_sql_table(
                     related_dimensions={"Value": "testbenchValue"},
                     method=None,
                 )
+
             finally:
                 print("Execution ended.")
                 tm1_bench.destroy_model(tm1=conn, schema=schema)
