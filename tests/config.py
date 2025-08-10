@@ -7,7 +7,6 @@ from pathlib import Path
 import pytest
 from TM1py import TM1Service
 from TM1py.Exceptions import TM1pyRestException
-#from dotenv import load_dotenv
 from sqlalchemy.exc import OperationalError, InterfaceError, ArgumentError
 
 from TM1_bedrock_py import utility, basic_logger
@@ -119,7 +118,6 @@ def benchmark_testcase_parameters():
     num_runs = 5
     identical_run_ids = [i for i in range(num_runs)]
     number_of_cores = [1, 2, 4, 8]
-    #number_of_records = [10000]
     number_of_records = [10000, 50000, 100000, 500000, 1000000, 5000000, 10000000]
     combinations = list(itertools.product(number_of_cores, number_of_records, identical_run_ids))
 
@@ -134,7 +132,6 @@ def tm1_connection_factory():
     """Creates a TM1 connection before tests and closes it after all tests."""
     @contextmanager
     def _connect(connection_name: str):
-        #load_dotenv()
         tm1 = None
         try:
             tm1 = TM1Service(
@@ -166,7 +163,6 @@ def tm1_connection_factory():
 @pytest.fixture(scope="session")
 def sql_engine_factory():
     """Creates a SQL connector engine before tests and closes it after all tests."""
-    #load_dotenv()
     @contextmanager
     def _connect(connection_name: str):
         engine = None
