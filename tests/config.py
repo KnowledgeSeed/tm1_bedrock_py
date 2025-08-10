@@ -112,7 +112,7 @@ SQL_QUERY_TEMPLATE = """
     ORDER BY s.testbenchPeriod, s.testbenchKeyAccountManager, s.testbenchCustomer, s.testbenchProduct
     OFFSET {offset} ROWS FETCH NEXT {fetch} ROWS ONLY
 """
-SQL_DELETE_STATEMENT = "delete from BENCHMARK.dbo.testbenchSales"
+SQL_DELETE_STATEMENT = "truncate table BENCHMARK.dbo.testbenchSales"
 
 
 def benchmark_testcase_parameters():

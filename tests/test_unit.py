@@ -22,7 +22,7 @@ EXCEPTION_MAP = {
 
 
 def test_tm1_connection(tm1_connection_factory):
-    with tm1_connection_factory("tm1srv") as conn:
+    with tm1_connection_factory("testbench") as conn:
         server_name = conn.server.get_server_name()
         print("Connection to TM1 established! Your server name is: {}".format(server_name))
 

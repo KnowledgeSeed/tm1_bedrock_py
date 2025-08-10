@@ -916,7 +916,7 @@ def load_tm1_cube_to_sql_table(
         target_dim_mapping: Optional[dict] = None,
         value_function: Optional[Callable[..., Any]] = None,
         clear_target: Optional[bool] = False,
-        sql_delete_statement: Optional[List[str]] = None,
+        sql_delete_statement: Optional[str] = None,
         clear_source: Optional[bool] = False,
         source_clear_set_mdx_list: Optional[List[str]] = None,
         dtype: Optional[dict] = None,
@@ -1010,7 +1010,8 @@ def load_tm1_cube_to_sql_table(
         engine=sql_engine,
         schema=sql_schema,
         chunksize=chunksize,
-        dtype=dtype
+        dtype=dtype,
+        **kwargs
     )
 
     try:

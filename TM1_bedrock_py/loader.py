@@ -170,6 +170,10 @@ def __dataframe_to_sql_default(
 ) -> None:
     if not engine:
         engine = utility.create_sql_engine(**kwargs)
+
+    columns_ordered = utility.inspect_table(engine, table_name)
+    column_order = [col.get('name') for col in columns_ordered]
+    dataframe = dataframe[column_order]
     dataframe.to_sql(
         name=table_name,
         con=engine,

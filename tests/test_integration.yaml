@@ -306,7 +306,7 @@ test_async_load_tm1_cube_to_sql_table:
           )
       "
     mapping_steps: []
-    sql_delete_statement: "delete from BENCHMARK.dbo.testbenchSales;"
+    sql_delete_statement: "truncate table BENCHMARK.dbo.testbenchSales;"
     param_set_mdx_list: [
       "{TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchPeriod].[testbenchPeriod].[All Periods]}, {[testbenchPeriod].[testbenchPeriod].[All Periods]}, RECURSIVE )}, 0)}"
     ]

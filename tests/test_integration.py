@@ -1,7 +1,6 @@
 import asyncio
 import time
 
-import TM1py
 import pandas as pd
 from sqlalchemy import types
 import parametrize_from_file
@@ -11,7 +10,6 @@ from tm1_bench_py import tm1_bench
 from TM1_bedrock_py import bedrock, extractor, transformer, utility
 from tests.config import tm1_connection_factory, sql_engine_factory
 from tests import config as cfg
-from sqlalchemy import text
 
 
 EXCEPTION_MAP = {
@@ -164,34 +162,46 @@ def test_async_data_copy_intercube_multi_parameter(
 
 @parametrize_from_file
 def test_load_tm1_cube_to_sql_table(
-        tm1_connection_factory, sql_engine_factory, base_data_mdx, mapping_steps, related_dimensions
+        tm1_connection_factory, sql_engine_factory, base_data_mdx, mapping_steps
 ):
     with tm1_connection_factory("testbench") as conn:
-        with sql_engine_factory("testbench_postgres") as sql_engine:
+        with sql_engine_factory("testbench_mssql") as sql_engine:
+
+            # >>> ADD THESE TWO LINES FOR DIAGNOSIS <<<
+            print(f"DIALECT NAME: {sql_engine.dialect.name}")
+            print(f"FAST_EXECUTEMANY ENABLED: {sql_engine.dialect.fast_executemany}")
+            # >>> END DIAGNOSIS <<<
+
             envname = 'bedrock_test_10000'
             schemaloader = tm1_bench.SchemaLoader(cfg.SCHEMA_DIR, envname)
             schema = schemaloader.load_schema()
             default_df_to_cube_kwargs = schema['config']['df_to_cube_default_kwargs']
-
+            dtype = {
+                'testbenchVersion': types.VARCHAR(50),
+                'testbenchPeriod': types.VARCHAR(50),
+                'testbenchMeasureSales': types.VARCHAR(50),
+                'testbenchProduct': types.VARCHAR(50),
+                'testbenchCustomer': types.VARCHAR(50),
+                'testbenchKeyAccountManager': types.VARCHAR(50),
+                'Value': types.FLOAT
+            }
             try:
                 tm1_bench.build_model(tm1=conn, schema=schema, env=envname, system_defaults=default_df_to_cube_kwargs)
-
                 bedrock.load_tm1_cube_to_sql_table(
                     tm1_service=conn,
-                    target_table_name="tm1_bedrock.testbenchsales",
+                    target_table_name="testbenchSales",
                     sql_engine=sql_engine,
                     data_mdx=base_data_mdx,
                     mapping_steps=mapping_steps,
-                    related_dimensions=related_dimensions,
                     clear_target=True,
+                    sql_delete_statement="TRUNCATE TABLE testbenchSales",
                     skip_zeros=True,
                     logging_level="DEBUG",
                     index=False,
-                    async_write=False,
-                    sql_delete_statement="TRUNCATE TABLE tm1_bedrock.testbenchsales;"
+                    dtype=dtype,
+                    related_dimensions={"Value": "testbenchValue"},
+                    method=None,
                 )
-
-
             finally:
                 print("Execution ended.")
                 tm1_bench.destroy_model(tm1=conn, schema=schema)
@@ -333,12 +343,12 @@ def test_load_tm1_cube_to_csv_file(
             )
         finally:
             print("Execution ended.")
-            #tm1_bench.destroy_model(tm1=conn, schema=schema)
+            tm1_bench.destroy_model(tm1=conn, schema=schema)
 
 
 @parametrize_from_file
 def test_load_csv_data_to_tm1_cube(
-        tm1_connection_factory, base_data_mdx, mapping_steps, expected_df_mdx
+        tm1_connection_factory, base_data_mdx, mapping_steps
 ):
     with tm1_connection_factory("testbench") as conn:
         envname = 'bedrock_test_10000'
