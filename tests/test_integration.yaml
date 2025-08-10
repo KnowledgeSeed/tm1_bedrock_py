@@ -262,6 +262,15 @@ test_load_tm1_cube_to_sql_table:
           [testbenchVersion].[testbenchVersion].[Actual]
          )"
     mapping_steps: []
+    related_dimensions: {
+      "testbenchProduct": "testbenchproduct",
+      "testbenchKeyAccountManager": "testbenchkeyaccountmanager",
+      "testbenchCustomer": "testbenchcustomer",
+      "testbenchMeasureSales": "testbenchmeasuresales",
+      "testbenchPeriod": "testbenchperiod",
+      "testbenchVersion": "testbenchversion",
+      "Value": "testbenchvalue"
+    }
 
 test_load_sql_data_to_tm1_cube:
   -
@@ -368,6 +377,22 @@ test_load_csv_data_to_tm1_cube:
         "mapping": { "testbenchVersion": { "Actual": "ForeCast" } }
       }
     ]
+    expected_df_mdx: "
+       SELECT 
+         NON EMPTY 
+          {[testbenchMeasureSales].[testbenchMeasureSales].[Quantity]}
+          * {[testbenchPeriod].[testbenchPeriod].[202402]} 
+         ON COLUMNS , 
+         NON EMPTY 
+          {TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchKeyAccountManager].[testbenchKeyAccountManager].[All Key Account Manager]}, ALL, RECURSIVE)}, 0)}
+          * {TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchProduct].[testbenchProduct].[All Product]}, ALL, RECURSIVE)}, 0)}
+          * {TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchCustomer].[testbenchCustomer].[All Customer]}, ALL, RECURSIVE)}, 0)} 
+         ON ROWS 
+       FROM [testbenchSales] 
+       WHERE 
+         (
+          [testbenchVersion].[testbenchVersion].[ForeCast]
+         )"
 
 test_async_load_csv_data_to_tm1_cube:
   -
