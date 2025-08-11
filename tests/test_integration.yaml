@@ -263,18 +263,18 @@ test_load_tm1_cube_to_sql_table:
          )"
     mapping_steps: []
     related_dimensions: {
-      "testbenchProduct": "testbenchproduct",
-      "testbenchKeyAccountManager": "testbenchkeyaccountmanager",
-      "testbenchCustomer": "testbenchcustomer",
-      "testbenchMeasureSales": "testbenchmeasuresales",
-      "testbenchPeriod": "testbenchperiod",
-      "testbenchVersion": "testbenchversion",
-      "Value": "testbenchvalue"
+      "testbenchProduct": "testbench_product",
+      "testbenchKeyAccountManager": "testbench_key_account_manager",
+      "testbenchCustomer": "testbench_customer",
+      "testbenchMeasureSales": "testbench_measure_sales",
+      "testbenchPeriod": "testbench_period",
+      "testbenchVersion": "testbench_version",
+      "Value": "testbench_value"
     }
 
 test_load_sql_data_to_tm1_cube:
   -
-    sql_query: "select * from BENCHMARK.dbo.testbenchSales;"
+    sql_query: "select * from tm1_bedrock.testbench_sales;"
     mapping_steps: [
       {
         "method": "replace",
@@ -285,6 +285,36 @@ test_load_sql_data_to_tm1_cube:
       "{[testbenchVersion].[testbenchVersion].[ForeCast]}",
       "{[testbenchPeriod].[testbenchPeriod].[202402]}"
     ]
+    sql_column_mapping: {
+      "testbench_product": "testbenchProduct",
+      "testbench_key_account_manager": "testbenchKeyAccountManager",
+      "testbench_customer": "testbenchCustomer",
+      "testbench_measure_sales": "testbenchMeasureSales",
+      "testbench_period": "testbenchPeriod",
+      "testbench_version": "testbenchVersion",
+      "testbench_value": "Value"
+    }
+    sql_columns_to_keep: [
+      "testbench_product", "testbench_key_account_manager",
+      "testbench_customer", "testbench_measure_sales",
+      "testbench_period", "testbench_version", "testbench_value"
+    ]
+    expected_mdx: "
+       SELECT 
+         NON EMPTY 
+          {[testbenchMeasureSales].[testbenchMeasureSales].[Quantity]}
+          * {[testbenchPeriod].[testbenchPeriod].[202402]} 
+         ON COLUMNS , 
+         NON EMPTY 
+          {TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchKeyAccountManager].[testbenchKeyAccountManager].[All Key Account Manager]}, ALL, RECURSIVE)}, 0)}
+          * {TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchProduct].[testbenchProduct].[All Product]}, ALL, RECURSIVE)}, 0)}
+          * {TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchCustomer].[testbenchCustomer].[All Customer]}, ALL, RECURSIVE)}, 0)} 
+         ON ROWS 
+       FROM [testbenchSales] 
+       WHERE 
+         (
+          [testbenchVersion].[testbenchVersion].[ForeCast]
+         )"
 
 
 test_async_load_tm1_cube_to_sql_table:
@@ -306,16 +336,24 @@ test_async_load_tm1_cube_to_sql_table:
           )
       "
     mapping_steps: []
-    sql_delete_statement: "truncate table BENCHMARK.dbo.testbenchSales;"
     param_set_mdx_list: [
       "{TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchPeriod].[testbenchPeriod].[All Periods]}, {[testbenchPeriod].[testbenchPeriod].[All Periods]}, RECURSIVE )}, 0)}"
     ]
+    related_dimensions: {
+      "testbenchProduct": "testbench_product",
+      "testbenchKeyAccountManager": "testbench_key_account_manager",
+      "testbenchCustomer": "testbench_customer",
+      "testbenchMeasureSales": "testbench_measure_sales",
+      "testbenchPeriod": "testbench_period",
+      "testbenchVersion": "testbench_version",
+      "Value": "testbench_value"
+    }
 
 test_async_load_sql_data_to_tm1_cube:
   -
     sql_query_template: "
-      SELECT * FROM BENCHMARK.dbo.testbenchSales AS s
-      ORDER BY s.testbenchPeriod, s.testbenchKeyAccountManager, s.testbenchCustomer, s.testbenchProduct
+      SELECT * FROM tm1_bedrock.testbench_sales AS s
+      ORDER BY s.testbench_period, s.testbench_key_account_manager, s.testbench_customer, s.testbench_product
       OFFSET {offset} ROWS FETCH NEXT {fetch} ROWS ONLY
     "
     mapping_steps: [
@@ -326,6 +364,20 @@ test_async_load_sql_data_to_tm1_cube:
     ]
     param_set_mdx_list: [
       "{TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchPeriod].[testbenchPeriod].[All Periods]}, {[testbenchPeriod].[testbenchPeriod].[All Periods]}, RECURSIVE )}, 0)}"
+    ]
+    sql_column_mapping: {
+      "testbench_product": "testbenchProduct",
+      "testbench_key_account_manager": "testbenchKeyAccountManager",
+      "testbench_customer": "testbenchCustomer",
+      "testbench_measure_sales": "testbenchMeasureSales",
+      "testbench_period": "testbenchPeriod",
+      "testbench_version": "testbenchVersion",
+      "testbench_value": "Value"
+    }
+    sql_columns_to_keep: [
+      "testbench_product", "testbench_key_account_manager",
+      "testbench_customer", "testbench_measure_sales",
+      "testbench_period", "testbench_version", "testbench_value"
     ]
 # ------------------------------------------------------------------------------------------------------------
 # TM1 <-> CSV data copy integration tests
@@ -377,7 +429,7 @@ test_load_csv_data_to_tm1_cube:
         "mapping": { "testbenchVersion": { "Actual": "ForeCast" } }
       }
     ]
-    expected_df_mdx: "
+    expected_mdx: "
        SELECT 
          NON EMPTY 
           {[testbenchMeasureSales].[testbenchMeasureSales].[Quantity]}

@@ -171,8 +171,11 @@ def __dataframe_to_sql_default(
     if not engine:
         engine = utility.create_sql_engine(**kwargs)
 
-    columns_ordered = utility.inspect_table(engine, table_name)
-    column_order = [col.get('name') for col in columns_ordered]
+    table_columns = utility.inspect_table(engine, table_name=table_name, schema=schema)
+    column_order = [col.get('name') for col in table_columns]
+    df_cols = list(dataframe.columns)
+    column_order = [c for c in column_order if c in df_cols]
+
     dataframe = dataframe[column_order]
     dataframe.to_sql(
         name=table_name,
@@ -213,10 +216,12 @@ def __clear_table_default(
         delete_statement: Optional[str]
 ) -> None:
     with engine.connect() as connection:
+        transaction = connection.begin()
         if delete_statement:
             connection.execute(text(delete_statement))
         elif table_name:
             connection.execute(text("TRUNCATE TABLE [" + table_name + "]"))
+        transaction.commit()
 
 
 # ------------------------------------------------------------------------------------------------------------

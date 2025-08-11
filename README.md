@@ -192,3 +192,17 @@ source .env/bin/activate
 pip install -r requirements-dev.txt
 python -m build
 ```
+
+## Manual integration testing
+
+Use `tests_integration/docker-compose.yaml` as a baseline, which spins up a TM1 provider and a base TM1 database and a PostgreSQL database to test against. Please note that `tm1-docker` image is properietary IBM product wrapped in Docker by Knowledgeseed and therefore it is only available internally for Knowledgeseed developers.
+
+```
+docker compose up -d tm1 test_db_postgres
+```
+
+To obtain a licensed IBM TM1 database for testing or production purpose, please see https://www.ibm.com/topics/tm1 for further details.
+
+## License
+
+See [LICENSE](https://github.com/KnowledgeSeed/tm1_bedrock_py/blob/main/LICENSE)

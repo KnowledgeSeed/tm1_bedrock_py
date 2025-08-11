@@ -959,24 +959,27 @@ def create_sql_engine(
         database: Optional[str] = None,
         **kwargs
 ) -> Any:
+    """ So far tested for mssql and postgresql connections. Expected to be extended in the future. """
     connection_strings = {
         'mssql': f"mssql+pyodbc://{username}:{password}@{host}:{port}/{database}?driver={mssql_driver}&TrustServerCertificate=yes&fast_executemany=true",
-        'sqlite': f"sqlite:///{sqlite_file_path}",
         'postgresql': f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}",
-        'mysql': f"mysql+mysqlconnector://{username}:{password}@{host}:{port}/{database}",
-        'mariadb': f"mariadb+mariadbconnector://{username}:{password}@{host}:{port}/{database}",
-        'oracle': f"oracle+cx_oracle://{username}:{password}@{host}:{port}/{oracle_sid}",
-        'ibmdb2': f"ibm_db_sa://{username}:{password}@{host}:{port}/{database}",
-        'sqlite_inmemory': "sqlite:///:memory:",
-        'firebird': f"firebird+fdb://{username}:{password}@{host}:{port}/{database}",
+        #'sqlite': f"sqlite:///{sqlite_file_path}",
+        #'mysql': f"mysql+mysqlconnector://{username}:{password}@{host}:{port}/{database}",
+        #'mariadb': f"mariadb+mariadbconnector://{username}:{password}@{host}:{port}/{database}",
+        #'oracle': f"oracle+cx_oracle://{username}:{password}@{host}:{port}/{oracle_sid}",
+        #'ibmdb2': f"ibm_db_sa://{username}:{password}@{host}:{port}/{database}",
+        #'sqlite_inmemory': "sqlite:///:memory:",
+        #'firebird': f"firebird+fdb://{username}:{password}@{host}:{port}/{database}",
     }
     if connection_type and not connection_string:
         connection_string = connection_strings.get(connection_type)
-    return create_engine(connection_string, fast_executemany=True)
+        if 'mssql' in connection_string:
+            return create_engine(connection_string, fast_executemany=True)
+    return create_engine(connection_string)
 
 
-def inspect_table(engine: Any, table_name: str) -> dict:
-    return inspect(engine).get_columns(table_name)
+def inspect_table(engine: Any, table_name: str, schema: Optional[str]=None) -> dict:
+    return inspect(engine).get_columns(table_name=table_name, schema=schema)
 
 
 @log_exec_metrics

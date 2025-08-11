@@ -465,6 +465,7 @@ def data_copy(
     Map and join and the relabeling functionality of map and replace is not viable in case of in-cube transformations.
     Using them will raise an error at writing
     """
+
     utility.set_logging_level(logging_level=logging_level)
     basic_logger.info("Execution started.")
 
@@ -596,6 +597,67 @@ async def async_executor_tm1(
         clear_param_templates: List[str] = None,
         max_workers: int = 8,
         **kwargs):
+
+    """
+    Executes a target data copy function in parallel for multiple TM1 data slices.
+
+    This function is a powerful and versatile orchestrator for running parallel,
+    parameterized data operations that originate from TM1. It works by defining
+    a set of TM1 dimension elements (e.g., all months in a year) and then
+    creating a separate, parallel worker thread for each element.
+
+    Each worker is assigned a unique data slice and executes the specified
+    `data_copy_function` on that slice. This architecture is ideal for
+    parallelizing large data copy, transformation, or export tasks.
+
+    This executor is designed to work with several bedrock functions, including:
+    - `data_copy`: For parallel, in-cube transformations.
+    - `data_copy_intercube`: For parallel data movement between cubes.
+    - `load_tm1_cube_to_csv_file`: For exporting multiple TM1 data slices to
+      separate CSV files in parallel.
+
+    Args:
+        tm1_service: An active TM1Service object. This is used for initial setup
+            (like fetching parameter elements) and is passed to each worker.
+        param_set_mdx_list: A list of MDX set queries that define the parameters
+            for slicing the data. Each query should return a set of elements from
+            a single dimension. Example: `["{[Period].[All Months]}"]`.
+        data_mdx_template: A string template for the main MDX query. It must
+            contain placeholders that match the dimension names from
+            `param_set_mdx_list`, prefixed with a '$'.
+            Example: `"... WHERE ([Period].[$Period])"`.
+        shared_mapping: A dictionary for a shared mapping DataFrame, passed to
+            each worker.
+        mapping_steps: A list of transformation steps, passed to each worker.
+        data_copy_function: The bedrock function to be executed by each worker.
+            Built-in options are `data_copy`, `data_copy_intercube`, and
+            `load_tm1_cube_to_csv_file`.
+        clear_param_templates: A list of MDX set templates. For each worker, these
+            templates are populated with the worker's specific parameters to
+            generate the `target_clear_set_mdx_list`, ensuring each worker
+            can clear its own target slice before loading.
+        max_workers: The number of parallel worker threads to execute. This is the
+            primary performance tuning parameter.
+        **kwargs: Additional keyword arguments to be passed down to each call of
+            the `data_copy_function`. This is used for function-specific
+            parameters like `target_cube_name`, `target_csv_output_dir`,
+            `skip_zeros`, etc.
+
+    Raises:
+        Exception: Aggregates and logs exceptions from worker threads.
+
+    Notes:
+        - Slicing Mechanism: The function first executes the MDX queries in
+          `param_set_mdx_list` to get a list of element tuples (e.g.,
+          `('202401',), ('202402',)`). It then iterates through these tuples,
+          substituting the values into the `data_mdx_template` to create a
+          unique MDX query for each worker.
+        - Performance Tuning: The optimal `max_workers` (typically 4-12) depends
+          on the source TM1 server's CPU capacity for handling concurrent queries.
+        - Metadata Caching: The executor intelligently pre-caches metadata for the
+          source and target cubes once, before starting the parallel workers.
+          This avoids redundant metadata calls and improves performance.
+    """
 
     target_tm1_service = kwargs.get("target_tm1_service", tm1_service)
 
@@ -766,7 +828,96 @@ def load_sql_data_to_tm1_cube(
         **kwargs
 ) -> None:
     """
+    Extracts data from a SQL database, transforms it, and loads it into a TM1 cube.
 
+    This function orchestrates a complete ETL (Extract, Transform, Load) process
+    for moving data from a relational database to TM1. It extracts data using
+    either a full SQL query or by reading a database table. It then normalizes
+    the source data into a structure suitable for TM1 (one value per row with
+    dimension columns).
+
+    After extraction, it can apply a powerful series of optional transformation
+    and mapping steps before finally writing the processed data into the target
+    TM1 cube with performance-tuning options.
+
+    Args:
+        target_cube_name: The name of the destination cube in TM1.
+        tm1_service: An active TM1Service object for the target TM1 connection.
+        target_metadata_function: A custom function to retrieve metadata about the
+            target TM1 cube.
+        mdx_function: A custom function to execute MDX queries, used by mapping steps.
+        csv_function: A function to read CSV files, used by mapping steps.
+        sql_query: A full SQL query string to execute for data extraction. Use this
+            or `sql_table_name`, but not both.
+        sql_table_name: The name of the SQL table to extract data from.
+        sql_table_columns: A list of specific columns to select from the table.
+        sql_schema: The schema of the source table in the SQL database (e.g., 'dbo').
+        sql_column_mapping: A dictionary to rename columns from the SQL source to
+            match the dimension names in the target TM1 cube.
+            Example: `{'PRODUCT_CODE': 'Product', 'SALES_AMT': 'Value'}`.
+        sql_value_column_name: The name of the column in the SQL source that
+            contains the data values to be loaded. This column will be renamed
+            to 'Value'.
+        sql_columns_to_keep: A list of columns to keep from the SQL source after
+            renaming. Used with `drop_other_sql_columns`.
+        drop_other_sql_columns: If True, any columns not in `sql_columns_to_keep`
+            or not renamed via `sql_column_mapping` will be dropped.
+        chunksize: The number of rows to read from the SQL database at a time.
+            This is a memory optimization for very large source tables.
+        sql_engine: A pre-configured SQLAlchemy Engine object for the source
+            database connection.
+        sql_function: A custom function to execute the SQL data extraction.
+        mapping_steps: A list of dictionaries defining transformation steps to be
+            applied to the data after extraction and normalization.
+        shared_mapping: A dictionary defining a shared mapping DataFrame that can
+            be used by multiple mapping steps.
+        source_dim_mapping: A dictionary to filter and then drop columns from the
+            DataFrame after SQL extraction.
+        related_dimensions: A dictionary to rename columns in the DataFrame.
+        target_dim_mapping: A dictionary to add new columns with constant values
+            to the DataFrame, representing target dimensions not present in the source.
+        value_function: A custom function to apply transformations to the 'Value'
+            column.
+        ignore_missing_elements: If True, rows with elements that do not exist
+            in the target TM1 dimensions will be silently dropped.
+        target_clear_set_mdx_list: A list of MDX set expressions defining the
+            slice to be cleared in the target TM1 cube before loading.
+        clear_target: If True, the target slice in the TM1 cube will be cleared.
+        clear_source: If True, the source SQL table will be cleared after a
+            successful load.
+        sql_delete_statement: A specific SQL statement to execute for clearing
+            the source table. If not provided, a `TRUNCATE` command is used.
+        async_write: If True, the final write to the TM1 cube will be performed
+            asynchronously in smaller chunks for higher performance.
+        slice_size_of_dataframe: The number of rows per chunk when `async_write`
+            is True.
+        use_ti: If True, use TurboIntegrator for the write-back to TM1.
+        use_blob: If True, use a high-performance binary transfer for writing
+            data to TM1. Recommended.
+        increment: If True, values will be added to existing values in the cube
+            instead of overwriting them.
+        sum_numeric_duplicates: If True, rows with duplicate dimension intersections
+            will have their numeric values summed before loading.
+        logging_level: The logging verbosity level (e.g., "DEBUG", "INFO").
+        _execution_id: An identifier used by async executors for logging.
+
+    Raises:
+        ValueError: If the configuration is invalid (e.g., both `sql_query` and
+            `sql_table_name` are provided).
+        sqlalchemy.exc.DBAPIError: If the source SQL query fails.
+        TM1py.Exceptions.TM1pyRestException: If the final write to TM1 fails.
+
+    Notes:
+        - Workflow: The function follows a strict sequence:
+            1. Extract data from the SQL source.
+            2. Normalize the DataFrame (rename columns, identify 'Value' column).
+            3. Apply all transformation and mapping steps.
+            4. Add or remove dimensions to match the target cube structure.
+            5. Clear the target TM1 cube slice (if requested).
+            6. Load the final, processed DataFrame into TM1.
+        - Performance: For the fastest load into TM1, it is recommended to set
+          `async_write=True` and `use_blob=True`.
+        - Tested databases: MS SQL, PostgeSQL.
     """
 
     utility.set_logging_level(logging_level=logging_level)
@@ -926,7 +1077,90 @@ def load_tm1_cube_to_sql_table(
         **kwargs
 ) -> None:
     """
+    Extracts data from a TM1 cube, transforms it, and loads it into a SQL table.
 
+    This function orchestrates a complete ETL (Extract, Transform, Load) process.
+    It begins by extracting a dataset from a TM1 cube based on an MDX query.
+    It then applies a series of optional, configurable transformation and mapping
+    steps to the resulting DataFrame. Finally, it loads the processed data into a
+    specified SQL database table with robust error handling and performance
+    optimizations.
+
+    Key features include advanced data mapping, redimensioning, robust data type
+    cleaning, and explicit control over the SQL insertion method for performance
+    tuning.
+
+    Args:
+        tm1_service: An active TM1Service object for the source TM1 connection.
+        target_table_name: The name of the destination table in the SQL database.
+        sql_engine: A pre-configured SQLAlchemy Engine object for the target
+            database connection.
+        sql_function: A function to execute SQL queries, used by mapping steps.
+        csv_function: A function to read CSV files, used by mapping steps.
+        sql_schema: The schema of the target table in the SQL database (e.g., 'dbo').
+        chunksize: The number of rows to write to the SQL table in a single batch.
+            This is a memory optimization for very large datasets. For moderate
+            datasets using a high-speed insert method like `fast_executemany`,
+            setting this to `None` is often fastest.
+        data_mdx: The MDX query string to extract the source data from TM1.
+        mdx_function: A custom function to execute the MDX query.
+        data_mdx_list: A list of MDX queries to be executed and concatenated.
+        skip_zeros: If True, cells with zero values will be excluded from the
+            TM1 extraction. Recommended for performance.
+        skip_consolidated_cells: If True, consolidated cells will be excluded.
+            Recommended for data integrity in data movement tasks.
+        skip_rule_derived_cells: If True, rule-derived cells will be excluded.
+        data_metadata_function: A custom function to retrieve metadata about the source.
+        mapping_steps: A list of dictionaries defining the transformation steps
+            to be applied to the data.
+        shared_mapping: A dictionary defining a shared mapping DataFrame that can
+            be used by multiple mapping steps.
+        source_dim_mapping: A dictionary to filter and then drop columns from the
+            source DataFrame.
+        related_dimensions: A dictionary to rename columns in the DataFrame.
+        target_dim_mapping: A dictionary to add new columns with constant values
+            to the DataFrame.
+        value_function: A custom function to apply transformations to the 'Value'
+            column.
+        clear_target: If True, the target SQL table will be cleared before loading.
+        sql_delete_statement: A specific SQL statement to execute for clearing the
+            target table (e.g., a `DELETE` with a `WHERE` clause). If not
+            provided, a `TRUNCATE` command is used.
+        clear_source: If True, the source data in the TM1 cube will be cleared
+            after a successful SQL load, effectively making this a "move" operation.
+        source_clear_set_mdx_list: A list of MDX set expressions defining the
+            slice to be cleared in the source TM1 cube.
+        dtype: A dictionary mapping column names to SQLAlchemy data types
+            (e.g., `{'Value': types.FLOAT, 'Version': types.VARCHAR(50)}`).
+            Providing this is a best practice for ensuring reliability.
+        decimal: Optional parameter to set the decimal separator.
+            If None, it detects the local decimal separator of the user.
+        logging_level: The logging verbosity level (e.g., "DEBUG", "INFO").
+        _execution_id: An identifier used by async executors for logging.
+
+    Raises:
+        ValueError: If the configuration is invalid (e.g., cannot find the SQL table).
+        KeyError: If the DataFrame columns do not match the SQL table columns after
+            all transformations.
+        sqlalchemy.exc.DBAPIError: If a database-level error occurs during the
+            data insertion.
+
+    Notes:
+        - Performance: For MS SQL Server, the fastest load is achieved by creating
+          the `sql_engine` with `use_fast_executemany=True` and setting
+          `sql_insert_method=None`.
+        - Data Integrity: The function includes a robust pre-processing step that
+          cleans the 'Value' column extracted from TM1. It handles mixed numeric
+          and string data and correctly interprets numbers that TM1 may format as
+          strings with comma decimal separators due to server locale settings.
+        - Session Management: If `clear_source` is True, the function will
+          proactively call `tm1_service.re_connect()` before clearing. This
+          prevents `CookieConflictError` issues that can arise if the TM1 session
+          times out during a long SQL write operation.
+        - Column Order: The function automatically inspects the target SQL table
+          and reorders the DataFrame columns to match the table's physical order,
+          preventing a common class of insertion errors.
+        - Tested databases: MS SQL, PostgeSQL.
     """
 
     utility.set_logging_level(logging_level=logging_level)
@@ -1045,9 +1279,74 @@ async def async_executor_tm1_to_sql(
         mapping_steps: Optional[List[Dict]] = None,
         data_copy_function: Callable = load_tm1_cube_to_sql_table,
         clear_target: Optional[bool] = False,
-        sql_delete_statement: Optional[List[str]] = None,
+        sql_delete_statement: Optional[str] = None,
         max_workers: int = 8,
         **kwargs):
+
+    """
+    Executes multiple `load_tm1_cube_to_sql_table` operations in parallel.
+
+    This function is a high-performance orchestrator designed to export large,
+    sliceable datasets from a TM1 cube to a SQL table. It works by defining a
+    set of parameters (e.g., all months in a year) and then creating a
+    separate, parallel worker thread for each parameter. Each worker executes a
+    unique MDX query to extract its assigned data slice, transforms it, and
+    loads it into the target SQL table.
+
+    This architecture is ideal for maximizing throughput by parallelizing the
+    data extraction from TM1 and the data insertion into SQL.
+
+    Args:
+        tm1_service: An active TM1Service object. This is used for initial setup
+            (like fetching parameter elements) and can be used by mapping steps.
+        sql_engine: A pre-configured SQLAlchemy Engine object for the target
+            database connection.
+        target_table_name: The name of the destination table in the SQL database.
+        param_set_mdx_list: A list of MDX set queries that define the parameters
+            for slicing the data. Each query should return a set of elements from
+            a single dimension. Example: `["{[Period].[All Months]}"]`.
+        data_mdx_template: A string template for the main MDX query. It must
+            contain placeholders that match the dimension names from
+            `param_set_mdx_list`, prefixed with a '$'.
+            Example: `"... WHERE ([Period].[$Period])"`.
+        shared_mapping: A dictionary for a shared mapping DataFrame, passed to
+            each `load_tm1_cube_to_sql_table` call.
+        mapping_steps: A list of transformation steps, passed to each
+            `load_tm1_cube_to_sql_table` call.
+        data_copy_function: The function to be executed by each worker. Defaults
+            to `load_tm1_cube_to_sql_table`.
+        clear_target: If True, the entire target SQL table is cleared once with a
+            single TRUNCATE or DELETE operation before any workers start.
+        sql_delete_statement: A specific SQL statement to use for clearing the
+            target table if `clear_target` is True.
+        max_workers: The number of parallel worker threads to execute. This is the
+            primary performance tuning parameter.
+        **kwargs: Additional keyword arguments to be passed down to each
+            `load_tm1_cube_to_sql_table` call. This is used for parameters like
+            `sql_dtypes`, `chunksize`, `skip_zeros`, `sql_insert_method`, etc.
+
+    Raises:
+        Exception: Aggregates and logs exceptions from worker threads. If a
+            worker fails, the overall process will complete, but an error will
+        be logged.
+
+    Notes:
+        - Slicing Mechanism: The function first executes the MDX queries in
+          `param_set_mdx_list` to get a list of element tuples (e.g.,
+          `('202401',), ('202402',)`). It then iterates through these tuples,
+          substituting the values into the `data_mdx_template` to create a
+          unique MDX query for each worker.
+        - Performance Tuning:
+            - `max_workers`: The most critical parameter. The optimal value
+              (typically 4-12) depends on the source TM1 server's CPU capacity.
+            - Slicing Strategy: The granularity of `param_set_mdx_list` is key.
+              Slicing by a time dimension (e.g., month) often creates well-balanced
+              workloads.
+            - SQL Insertion: For maximum performance, pass the necessary `kwargs`
+              to enable high-speed writing for your target database (e.g., use
+              an `sql_engine_factory` that enables `fast_executemany` for MSSQL).
+            - Tested databases: MS SQL, PostgeSQL.
+    """
 
     param_names = utility.__get_dimensions_from_set_mdx_list(param_set_mdx_list)
     param_values = utility.__generate_element_lists_from_set_mdx_list(tm1_service, param_set_mdx_list)
@@ -1169,6 +1468,69 @@ async def async_executor_sql_to_tm1(
         target_clear_set_mdx_list: List[str] = None,
         max_workers: int = 8,
         **kwargs):
+
+    """
+    Asynchronously loads data from a single SQL source to a TM1 cube in parallel slices.
+
+    This function is a high-performance orchestrator designed for loading a single,
+    large SQL table or query result into a TM1 cube. It works by "blindly
+    paginating" the source data: it first determines the total number of rows,
+    then divides the work into slices based on row position.
+
+    Each worker thread is assigned a unique slice (e.g., rows 0-99999,
+    100000-199999, etc.) and executes a SQL query using `OFFSET` and `FETCH`
+    to retrieve only its assigned data. It then runs the full
+    `load_sql_data_to_tm1_cube` process on its slice.
+
+    Args:
+        tm1_service: An active TM1Service object for the target TM1 connection.
+        sql_engine: A pre-configured SQLAlchemy Engine object for the source
+            database connection.
+        sql_query_template: A SQL query string that must contain an `ORDER BY`
+            clause for deterministic slicing. It must also contain two
+            placeholders for the pagination logic: `{offset}` and `{fetch}`.
+        target_cube_name: The name of the destination cube in TM1.
+        sql_table_for_count: The name of the SQL table to perform a `COUNT(*)` on.
+            This is used to calculate the total number of slices needed.
+        slice_size: The number of rows each parallel worker will fetch from the
+            database. This is a key performance tuning parameter.
+        shared_mapping: A dictionary for a shared mapping DataFrame, passed to
+            each worker.
+        mapping_steps: A list of transformation steps, passed to each worker.
+        data_copy_function: The function to be executed by each worker. Defaults
+            to `load_sql_data_to_tm1_cube`.
+        target_clear_set_mdx_list: A list of MDX set expressions defining the
+            slice to be cleared in the target TM1 cube if `clear_target` is True.
+        max_workers: The number of parallel worker threads to execute. This is the
+            primary performance tuning parameter.
+        **kwargs: Additional keyword arguments to be passed down to each
+            `load_sql_data_to_tm1_cube` call. This is used for parameters like
+            `sql_dtypes`, `async_write`, `sql_column_mapping`, etc.
+
+    Raises:
+        ValueError: If the source table has zero rows.
+        Exception: Aggregates and logs exceptions from worker threads.
+
+    Notes:
+        - Slicing Mechanism: This executor does not use TM1 elements for slicing.
+          It parallelizes based on the physical position of rows in the ordered
+          SQL result set. It is the correct tool for loading a single large table.
+        - `ORDER BY` Requirement: For the `OFFSET`/`FETCH` slicing to be reliable
+          and produce a consistent, non-overlapping result, the `sql_query_template`
+          **must** include a deterministic `ORDER BY` clause (e.g., `ORDER BY
+          PrimaryKey`).
+        - Performance Tuning:
+            - `max_workers`: The most critical parameter. The optimal value
+              (typically 4-16) depends on the source SQL server's capacity for
+              handling concurrent queries.
+            - `slice_size`: Controls the trade-off between network overhead and
+              client-side memory usage. A good starting point is 50,000-250,000.
+        - Database Compatibility: The `OFFSET {offset} ROWS FETCH NEXT {fetch} ROWS ONLY`
+          syntax is standard for MS SQL Server, Oracle, and DB2. Other databases
+          like PostgreSQL and MySQL use `LIMIT {fetch} OFFSET {offset}`. The
+          template must be adjusted accordingly for those databases.
+        - Tested databases: MS SQL, PostgeSQL.
+    """
 
     total_records = extractor._get_sql_table_count(sql_engine, sql_table_for_count)
     if total_records == 0:
@@ -1333,7 +1695,114 @@ def load_csv_data_to_tm1_cube(
         **kwargs
 ) -> None:
     """
+    Extracts data from a CSV file, transforms it, and loads it into a TM1 cube.
 
+    This function orchestrates a complete ETL (Extract, Transform, Load) process
+    for moving data from a flat file source to TM1. It offers extensive options
+    for parsing the CSV, normalizing the tabular data into a TM1-ready format,
+    and applying a powerful series of subsequent transformations before writing
+    the data to the target cube.
+
+    The function includes several built-in data integrity and robustness features,
+    such as automatic data type validation and consistent handling of dimension
+    element names.
+
+    Args:
+        target_cube_name: The name of the destination cube in TM1.
+        source_csv_file_path: The full path to the source CSV file.
+        tm1_service: An active TM1Service object for the target TM1 connection.
+        target_metadata_function: A custom function to retrieve metadata about the
+            target TM1 cube.
+        mdx_function: A custom function to execute MDX queries, used by mapping steps.
+        csv_function: A custom function to read CSV files, used by mapping steps.
+        csv_column_mapping: A dictionary to rename columns from the CSV source to
+            match the dimension names in the target TM1 cube.
+        csv_value_column_name: The name of the column in the CSV source that
+            contains the data values to be loaded. This column will be renamed
+            to 'Value'.
+        csv_columns_to_keep: A list of columns to keep from the CSV source after
+            renaming. Used with `drop_other_csv_columns`.
+        drop_other_csv_columns: If True, any columns not in `csv_columns_to_keep`
+            or not renamed will be dropped.
+        delimiter: The delimiter to use when parsing the CSV file (e.g., ',', ';').
+            Passed directly to `pandas.read_csv`.
+        decimal: The character to recognize as a decimal point (e.g., '.', ',').
+            Crucial for correctly parsing numbers in different locales. Passed
+            directly to `pandas.read_csv`.
+        dtype: A dictionary mapping column names to specific data types for
+            `pandas.read_csv` to use during parsing.
+        validate_datatypes: If True, the function will validate that the 'Value'
+            column's data type matches the type (Numeric or String) of the
+            corresponding measure element in the TM1 cube. It will also ensure
+            all numeric values are cast to `float` to meet TM1 API requirements.
+        nrows: The number of rows to read from the CSV file.
+        chunksize: The number of rows to read from the CSV file at a time.
+        parse_dates: A boolean, list of integers or names, list of lists, or
+            dictionary to control date parsing. Passed directly to `pandas.read_csv`.
+            Example: `['order_date', 'ship_date']`.
+        na_values: A scalar, string, list-like, or dictionary of values to
+            interpret as `NaN` (Not a Number) when reading the CSV. Passed
+            directly to `pandas.read_csv`. Example: `['', '#N/A', 'NULL']`.
+        keep_default_na: If True, default `NaN` values (e.g., '', '#N/A', 'NA')
+            are included in the list of strings recognized as `NaN`. If False,
+            only the values specified in `na_values` are treated as `NaN`.
+            Passed directly to `pandas.read_csv`.
+        low_memory: If True (default), the file is processed in chunks internally,
+            resulting in lower memory usage while parsing. Passed directly to
+            `pandas.read_csv`.
+        memory_map: If True and the file path is a local file, maps the file
+            object directly into memory, which can improve performance by
+            eliminating I/O overhead. Passed directly to `pandas.read_csv`.
+        mapping_steps: A list of dictionaries defining transformation steps to be
+            applied to the data after extraction and normalization.
+        shared_mapping: A dictionary defining a shared mapping DataFrame that can
+            be used by multiple mapping steps.
+        source_dim_mapping: A dictionary to filter and then drop columns from the
+            DataFrame after CSV extraction.
+        related_dimensions: A dictionary to rename columns in the DataFrame.
+        target_dim_mapping: A dictionary to add new columns with constant values
+            to the DataFrame, representing target dimensions not present in the source.
+        value_function: A custom function to apply transformations to the 'Value'
+            column.
+        ignore_missing_elements: If True, rows with elements that do not exist
+            in the target TM1 dimensions will be silently dropped.
+        target_clear_set_mdx_list: A list of MDX set expressions defining the
+            slice to be cleared in the target TM1 cube before loading.
+        clear_target: If True, the target slice in the TM1 cube will be cleared.
+        async_write: If True, the final write to the TM1 cube will be performed
+            asynchronously in smaller chunks for higher performance.
+        use_ti : bool, default=False
+            Whether to use TurboIntegrator (TI) for writing data.
+        increment : bool, default=False
+            Whether to increment existing values instead of replacing them in the cube.
+        sum_numeric_duplicates : bool, default=True
+            Whether to sum duplicate numeric values in the dataframe instead of overwriting them.
+        slice_size_of_dataframe: The number of rows per chunk when `async_write`
+            is True.
+        use_blob: If True, use a high-performance binary transfer for writing
+            data to TM1. Recommended.
+        logging_level: The logging verbosity level (e.g., "DEBUG", "INFO").
+        _execution_id: An identifier used by async executors for logging.
+        df_verbose_logging: If True, intermediate DataFrames will be logged to
+            CSV files for debugging.
+        data_mdx: An optional MDX query used solely for retrieving metadata if the
+            target cube structure needs to be inferred from a query context.
+
+    Raises:
+        ValueError: If the configuration is invalid or a mapping step fails.
+        TypeError: If `validate_datatypes` is True and a value for a numeric
+            measure cannot be converted to a number.
+        TM1py.Exceptions.TM1pyRestException: If the final write to TM1 fails.
+
+    Notes:
+        - Data Integrity: The function automatically enforces two best practices:
+            1. All columns in the DataFrame that correspond to a TM1 dimension
+               are converted to the `string` data type to ensure consistency.
+            2. If `validate_datatypes` is True, the 'Value' column is rigorously
+               cleaned to match the TM1 cube's measure types (Numeric vs. String),
+               ensuring that numbers are loaded as `float` and strings as `str`.
+        - Performance: For the fastest load into TM1, it is recommended to set
+          `async_write=True` and `use_blob=True`.
     """
 
     utility.set_logging_level(logging_level=logging_level)
@@ -1506,7 +1975,81 @@ def load_tm1_cube_to_csv_file(
         **kwargs
 ) -> None:
     """
+    Extracts data from a TM1 cube, transforms it, and writes it to a CSV file.
 
+    This function orchestrates a complete ETL (Extract, Transform, Load) process
+    for exporting data from TM1 to a flat file. It begins by extracting a
+    dataset from a TM1 cube based on an MDX query. It can then apply a powerful
+    series of optional transformation and mapping steps to the resulting
+    DataFrame before writing the final, clean data to a CSV file with
+    configurable formatting.
+
+    Args:
+        tm1_service: An active TM1Service object for the source TM1 connection.
+        target_csv_file_name: The name of the output CSV file. If not provided,
+            a name will be generated automatically based on the source cube
+            name and a timestamp.
+        target_csv_output_dir: The directory where the CSV file will be saved.
+            Defaults to a local `./dataframe_to_csv` directory.
+        csv_function: A custom function to handle the final DataFrame to CSV
+            writing logic.
+        mode: The file write mode ('w' for write/truncate, 'a' for append).
+            Passed to `pandas.DataFrame.to_csv`.
+        chunksize: The number of rows to write to the CSV file at a time. This
+            is a memory optimization for extremely large DataFrames.
+        float_format: A format string for floating-point numbers (e.g., '%.2f').
+        delimiter: The field delimiter for the output CSV file (e.g., ',', ';').
+        decimal: The character to use for the decimal point in numeric values
+            (e.g., '.', ','). The function includes robust pre-processing to
+            ensure this is respected.
+        na_rep: The string representation for missing (`NaN`) values (e.g., 'NULL', '').
+        compression: The compression type for the output file (e.g., 'gzip', 'zip').
+        index: If True, the DataFrame's index will be written to the CSV file.
+            Defaults to False.
+        data_mdx: The MDX query string to extract the source data from TM1.
+        mdx_function: A custom function to execute the MDX query.
+        data_mdx_list: A list of MDX queries to be executed and concatenated.
+        skip_zeros: If True, cells with zero values will be excluded from the
+            TM1 extraction. Highly recommended for performance.
+        skip_consolidated_cells: If True, consolidated cells will be excluded.
+            Recommended for data integrity.
+        skip_rule_derived_cells: If True, rule-derived cells will be excluded.
+        data_metadata_function: A custom function to retrieve metadata about the source.
+        mapping_steps: A list of dictionaries defining transformation steps to be
+            applied to the data before writing.
+        shared_mapping: A dictionary for a shared mapping DataFrame.
+        source_dim_mapping: A dictionary to filter and then drop columns.
+        related_dimensions: A dictionary to rename columns.
+        target_dim_mapping: A dictionary to add new columns with constant values.
+        value_function: A custom function to apply transformations to the 'Value'
+            column.
+        clear_source: If True, the source data in the TM1 cube will be cleared
+            after a successful CSV export, effectively making this a "move" or
+            "archive" operation.
+        source_clear_set_mdx_list: A list of MDX set expressions defining the
+            slice to be cleared in the source TM1 cube if `clear_source` is True.
+        logging_level: The logging verbosity level (e.g., "DEBUG", "INFO").
+        _execution_id: An identifier used by async executors for logging.
+
+    Raises:
+        TM1py.Exceptions.TM1pyRestException: If the MDX query to TM1 fails.
+        IOError: If the function cannot write to the specified output file path.
+        ValueError: If a mapping step is configured incorrectly.
+
+    Notes:
+        - Robust Decimal Handling: This function contains a crucial pre-processing
+          step that surgically cleans the data before writing. It correctly
+          handles numeric values that the TM1 server may send as strings with
+          comma decimal separators (e.g., "123,45") due to its locale settings.
+          It identifies only these number-like strings, converts them to true
+          numeric types, and leaves legitimate text data (like comments)
+          untouched. This ensures the `decimal` parameter is always respected.
+        - Workflow: The function follows a strict sequence:
+            1. Extract data from TM1 into a DataFrame.
+            2. Apply all transformation and mapping steps.
+            3. Perform the robust data type cleaning on the 'Value' column.
+            4. Write the final, clean DataFrame to the CSV file.
+            5. Clear the source data in TM1 (if requested).
     """
 
     utility.set_logging_level(logging_level=logging_level)
@@ -1614,6 +2157,65 @@ async def async_executor_csv_to_tm1(
         clear_param_templates: Optional[bool] = False,
         max_workers: int = 8,
         **kwargs):
+
+    """
+    Executes multiple `load_csv_data_to_tm1_cube` operations in parallel.
+
+    This function is a high-performance orchestrator designed to load multiple
+    CSV files from a directory into a TM1 cube concurrently. It uses a unique
+    parameterization model where each CSV file found in the `source_directory`
+    is paired with a set of TM1 element parameters.
+
+    Each worker thread is assigned one CSV file and its corresponding parameter
+    set. The worker then executes the full `load_csv_data_to_tm1_cube` process:
+    it reads its assigned file, applies transformations, and loads the data
+    into a specific slice of the target cube defined by the parameters.
+
+    Args:
+        tm1_service: An active TM1Service object. This is used for initial setup
+            (like fetching parameter elements) and can be used by mapping steps.
+        target_cube_name: The name of the destination cube in TM1.
+        source_directory: The full path to the directory containing the source
+            CSV files to be loaded.
+        param_set_mdx_list: A list of MDX set queries that define the parameters
+            for slicing the target cube. The number of parameter tuples generated
+            from this list should correspond to the number of CSV files.
+        data_mdx_template: An MDX query template used solely for metadata inference
+            by the underlying `load_csv_data_to_tm1_cube` function. It should
+            contain placeholders (e.g., `$Period`) that will be populated by the
+            parameters for each worker.
+        shared_mapping: A dictionary for a shared mapping DataFrame, passed to
+            each worker.
+        mapping_steps: A list of transformation steps, passed to each worker.
+        data_copy_function: The function to be executed by each worker. Defaults
+            to `load_csv_data_to_tm1_cube`.
+        clear_param_templates: A list of MDX set templates. For each worker, these
+            templates are populated with the worker's specific parameters to
+            generate the `target_clear_set_mdx_list`, ensuring each worker
+            clears its own target slice before loading.
+        max_workers: The number of parallel worker threads to execute. This should
+            be tuned based on the TM1 server's capacity for concurrent writes.
+        **kwargs: Additional keyword arguments to be passed down to each
+            `load_csv_data_to_tm1_cube` call. This is used for parameters like
+            `delimiter`, `decimal`, `async_write`, etc.
+
+    Raises:
+        Exception: Aggregates and logs exceptions from worker threads.
+
+    Notes:
+        - Slicing Mechanism: The function first discovers all `.csv` files in the
+          `source_directory`. It then generates a list of parameter tuples from
+          `param_set_mdx_list`. It then `zip`s these two lists together, pairing
+          the first CSV file with the first parameter set, the second with the
+          second, and so on. The execution stops at the length of the shorter list.
+        - Prerequisite: For this process to be logical, the number of CSV files
+          in the directory and their order should intentionally match the number
+          and order of the parameter tuples generated by `param_set_mdx_list`.
+        - Clearing: Unlike other executors, clearing is handled within each
+          worker. The `clear_param_templates` are used to generate a specific
+          clear operation for each worker's target slice, which is executed
+          just before that worker loads its data.
+    """
 
     param_names = utility.__get_dimensions_from_set_mdx_list(param_set_mdx_list)
     param_values = utility.__generate_element_lists_from_set_mdx_list(tm1_service, param_set_mdx_list)

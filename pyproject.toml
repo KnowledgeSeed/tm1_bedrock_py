@@ -19,6 +19,7 @@ maintainers = [
 ]
 description = "A python modul for TM1 Bedrock."
 readme = "README.md"
+license = {file = "LICENSE"}
 requires-python = ">=3.7"
 keywords=["TM1", "IBM Cognos TM1", "Planning Analytics", "PA", "Cognos"]
 classifiers = [
@@ -44,6 +45,12 @@ dev = [
     "build>=1.2.2.post1,<2.0.0",
     "matplotlib>=3.10.1,<4.0.0"
 ]
+
+[project.urls]
+Documentation = "https://github.com/KnowledgeSeed/tm1_bedrock_py/blob/main/README.md"
+Repository = "https://github.com/KnowledgeSeed/tm1_bedrock_py"
+Issues = "https://github.com/KnowledgeSeed/tm1_bedrock_py/issues"
+Changelog = "https://github.com/KnowledgeSeed/tm1_bedrock_py/CHANGELOG.md"
 
 [tool.setuptools]
 packages = ["TM1_bedrock_py"]
