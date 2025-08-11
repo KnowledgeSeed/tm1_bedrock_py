@@ -15,6 +15,22 @@ _SOURCE_VERSION = "Actual"
 _TARGET_VERSION = "ForeCast"
 TARGET_CUBE_NAME = "testbenchPnL"
 
+BASE_DATA_MDX = f"""
+    SELECT 
+      NON EMPTY 
+        {{[testbenchMeasureSales].[testbenchMeasureSales].[Quantity]}}
+        * {{TM1FILTERBYLEVEL({{TM1DRILLDOWNMEMBER({{[testbenchProduct].[testbenchProduct].[All Product]}}, ALL, RECURSIVE)}}, 0)}}
+        * {{TM1FILTERBYLEVEL({{TM1DRILLDOWNMEMBER({{[testbenchKeyAccountManager].[testbenchKeyAccountManager].[All Key Account Manager]}}, ALL, RECURSIVE)}}, 0)}}
+        * {{TM1FILTERBYLEVEL({{TM1DRILLDOWNMEMBER({{[testbenchCustomer].[testbenchCustomer].[All Customer]}}, ALL, RECURSIVE)}}, 0)}}
+        * {{TM1FILTERBYLEVEL({{TM1DRILLDOWNMEMBER({{[testbenchPeriod].[testbenchPeriod].[All Periods]}}, ALL, RECURSIVE)}}, 0)}}
+      ON 0
+    FROM [testbenchSales] 
+    WHERE 
+      (
+       [testbenchVersion].[testbenchVersion].[{_SOURCE_VERSION}]
+      )
+"""
+
 DATA_MDX_TEMPLATE = f"""
 SELECT 
   NON EMPTY 

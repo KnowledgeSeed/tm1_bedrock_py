@@ -1,0 +1,50 @@
+default: &defaults
+  targetCube: "}ElementAttributes_testbenchKeyAccountManager"
+  rows:
+    mdx: "{TM1FILTERBYLEVEL({TM1SUBSETALL([testbenchKeyAccountManager].[testbenchKeyAccountManager])}, 0)}"
+    number_of_rows: -1
+  data_colum_dimension: "}ElementAttributes_testbenchKeyAccountManager"
+  data:
+    Seniority:
+      method: "function"
+      callable: df_generator_for_dataset._random_from_variable_list
+      params:
+        variable_path: "variables.seniority"
+    Gender:
+      method: "function"
+      callable: df_generator_for_dataset._random_from_variable_list
+      params:
+        variable_path: "variables.gender"
+    CountryOfOrigin:
+      method: "function"
+      callable: df_generator_for_dataset._random_from_variable_list
+      params:
+        variable_path: "variables.countries"
+    FirstName:
+      method: "function"
+      callable: df_generator_for_dataset._look_up_based_on_column_value
+      params:
+        referred_column: "Gender"
+        variable_path: "variables.gender"
+        variable_key: "first_names"
+    LastName:
+      method: "function"
+      callable: df_generator_for_dataset._random_from_variable_list
+      params:
+        variable_path: "variables.last_names"
+bedrock_test_10000:
+  <<: *defaults
+bedrock_test_50000:
+  <<: *defaults
+bedrock_test_100000:
+  <<: *defaults
+bedrock_test_250000:
+  <<: *defaults
+bedrock_test_500000:
+  <<: *defaults
+bedrock_test_1000000:
+  <<: *defaults
+bedrock_test_5000000:
+  <<: *defaults
+bedrock_test_10000000:
+  <<: *defaults

@@ -4,7 +4,7 @@ import logging
 import statistics
 
 import matplotlib.pyplot as plt
-from sqlalchemy import types
+from sqlalchemy import types, text
 import pytest
 from tm1_bench_py import tm1_bench
 
@@ -311,7 +311,7 @@ def test_run_single_benchmark_case_tm1_to_csv(tm1_connection_factory, nr_of_core
             "use_blob": True,
             "param_set_mdx_list": cfg.PARAM_SET_MDX_LIST,
             "clear_param_templates": cfg.CLEAR_PARAM_TEMPLATES,
-            "target_csv_output_dir": f"D:\\tm1-bedrock-benchmark\\tm1_to_csv\\{nr_of_cores}_{nr_of_records}_{n}",
+            "target_csv_output_dir": f"../tests/tm1_to_csv/{nr_of_cores}_{nr_of_records}_{n}",
             "decimal": ",",
             "delimiter": ";"
         }
@@ -373,7 +373,7 @@ def test_run_single_benchmark_case_csv_to_tm1(tm1_connection_factory, nr_of_core
 
             asyncio.run(bedrock.async_executor_csv_to_tm1(
                 data_copy_function=bedrock.load_csv_data_to_tm1_cube,
-                source_directory=f"D:\\tm1-bedrock-benchmark\\tm1_to_csv\\8_{nr_of_records}_0",
+                source_directory=f"../tests/tm1_to_csv/tm1_to_csv/8_{nr_of_records}_0",
                 max_workers=nr_of_cores,
                 df_verbose_logging=False,
                 **fix_kwargs
@@ -389,6 +389,48 @@ def test_run_single_benchmark_case_csv_to_tm1(tm1_connection_factory, nr_of_core
 # ------------------------------------------------------------------------------------------------------------
 # TM1 <-> SQL data copy bench tests
 # ------------------------------------------------------------------------------------------------------------
+
+@pytest.mark.parametrize("nr_of_cores, nr_of_records, n", cfg.benchmark_testcase_parameters())
+def test_run_sync_benchmark_case_tm1_to_sql(tm1_connection_factory, sql_engine_factory, nr_of_cores, nr_of_records, n):
+    update_benchmark_log_handler(f"{nr_of_cores}_{nr_of_records}_{n}")
+
+    with tm1_connection_factory("testbench") as conn:
+        with sql_engine_factory("testbench_mssql") as sql_engine:
+
+            # >>> ADD THESE TWO LINES FOR DIAGNOSIS <<<
+            print(f"DIALECT NAME: {sql_engine.dialect.name}")
+            print(f"FAST_EXECUTEMANY ENABLED: {sql_engine.dialect.fast_executemany}")
+            # >>> END DIAGNOSIS <<<
+
+            basic_logger.info(f"Execution starting with {nr_of_cores} workers")
+
+            envname = 'bedrock_test_' + str(nr_of_records)
+            schemaloader = tm1_bench.SchemaLoader(cfg.SCHEMA_DIR, envname)
+            schema = schemaloader.load_schema()
+            default_df_to_cube_kwargs = schema['config']['df_to_cube_default_kwargs']
+            try:
+                tm1_bench.build_model(tm1=conn, schema=schema, env=envname, system_defaults=default_df_to_cube_kwargs)
+                bedrock.load_tm1_cube_to_sql_table(
+                    tm1_service=conn,
+                    target_table_name="testbenchSales",
+                    sql_engine=sql_engine,
+                    data_mdx=cfg.BASE_DATA_MDX,
+                    mapping_steps=cfg.MAPPING_STEPS_INTRACUBE,
+                    clear_target=True,
+                    sql_delete_statement="TRUNCATE TABLE testbenchSales",
+                    sql_schema="dbo",
+                    skip_zeros=True,
+                    logging_level="DEBUG",
+                    index=False,
+                    related_dimensions={"Value": "testbenchValue"},
+                    method=None,
+                )
+                cnt = sql_engine.execute(text("SELECT count(*) FROM testbenchSales")).scalar()
+                basic_logger.info(f"rows: {cnt}")
+            finally:
+                print("Execution ended.")
+                tm1_bench.destroy_model(tm1=conn, schema=schema)
+
 
 @pytest.mark.parametrize("nr_of_cores, nr_of_records, n", cfg.benchmark_testcase_parameters())
 def test_run_single_benchmark_case_tm1_to_sql(tm1_connection_factory, sql_engine_factory, nr_of_cores, nr_of_records, n):
@@ -499,58 +541,3 @@ def test_run_single_benchmark_case_sql_to_tm1(tm1_connection_factory, sql_engine
                 tm1_bench.destroy_model(tm1=conn, schema=schema)
 
             basic_logger.info(f"Execution ended with {nr_of_cores} workers")
-
-
-"""
-#@parametrize_from_file
-def test_trace_malloc(tm1_connection, param_set_mdx_list, data_mdx_template,
-        clear_param_templates, target_cube_name, shared_mapping, mapping_steps, max_workers):
-    fix_kwargs = {
-        "tm1_connection": tm1_connection,
-        "data_mdx_template": data_mdx_template,
-        "skip_zeros": True,
-        "skip_consolidated_cells": True,
-        "target_cube_name": target_cube_name,
-        "shared_mapping": shared_mapping,
-        "mapping_steps": mapping_steps,
-        "clear_target": True,
-        "async_write": True,
-        "logging_level": "WARNING",
-        "param_set_mdx_list": param_set_mdx_list,
-        "clear_param_templates": clear_param_templates,
-        "ignore_missing_elements": True
-    }
-
-    tracemalloc.start()
-
-    asyncio.run(bedrock.async_executor_tm1(
-        data_copy_function=bedrock.data_copy_intercube,
-        max_workers=max_workers,
-        **fix_kwargs
-    ))
-
-    snapshot = tracemalloc.take_snapshot()
-    site_pkgs_dirs = site.getsitepackages()
-    tests_dir = os.path.dirname(__file__)
-    project_root = os.path.abspath(os.path.join(tests_dir, '..', 'TM1_bedrock_py'))
-
-    include = tracemalloc.Filter(True, project_root + '/*')
-    excludes = [tracemalloc.Filter(False, d + '/*') for d in site_pkgs_dirs]
-
-    filtered = snapshot.filter_traces([include, *excludes])
-
-    for stat in filtered.statistics('lineno')[:10]:
-        print(stat)
-
-    top_stats = filtered.statistics('traceback')
-
-    print("\n[ tracemalloc top 10 – by function in my_package ]")
-    for stat in top_stats[:10]:
-        # stat.traceback is a Traceback object containing Frame records
-        # You can format it to get human-readable lines (with function names)
-        for line in stat.traceback.format():
-            print(line)
-        # And then show the size/count summary
-        size_kb = stat.size / 1024
-        print(f"↳ {size_kb:.1f} KiB in {stat.count} allocations\n")
-"""

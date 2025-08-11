@@ -1,0 +1,69 @@
+# Define reusable parts
+default_elements: &default_elements
+  NumberOfElements: 100000
+  ElementPrefix: "C"
+  ElementLength: 8
+  Method: "enumerate"
+
+default_levels: &default_levels
+  - name: "level000"
+    constant_content: "All Customer"
+
+default_attributes: &default_attributes
+  - "CountryOfOrigin:s"
+  - "Loyalty:s"
+
+# Define the main default using the parts
+default: &defaults
+  dimension_name: "testbenchCustomer"
+  df_template:
+    elements: *default_elements
+    levels: *default_levels
+    attributes: *default_attributes
+#Defind Tm1 bedrock test cases
+bedrock_test_10000:
+  <<: *defaults
+  df_template:
+    elements:
+      <<: *default_elements
+      NumberOfElements: 1000
+    levels: *default_levels
+    attributes: *default_attributes
+bedrock_test_50000:
+  <<: *defaults
+  df_template:
+    elements:
+      <<: *default_elements
+      NumberOfElements: 1000
+    levels: *default_levels
+    attributes: *default_attributes
+bedrock_test_100000:
+  <<: *defaults
+  df_template:
+    elements:
+      <<: *default_elements
+      NumberOfElements: 1000
+    levels: *default_levels
+    attributes: *default_attributes
+bedrock_test_250000:
+  <<: *defaults
+  df_template:
+    elements:
+      <<: *default_elements
+      NumberOfElements: 10000
+    levels: *default_levels
+    attributes: *default_attributes
+bedrock_test_500000:
+  <<: *defaults
+  df_template:
+    elements:
+      <<: *default_elements
+      NumberOfElements: 10000
+    levels: *default_levels
+    attributes: *default_attributes
+bedrock_test_1000000:
+  <<: *defaults
+bedrock_test_5000000:
+  <<: *defaults
+bedrock_test_10000000:
+  <<: *defaults

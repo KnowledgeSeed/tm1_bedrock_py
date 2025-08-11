@@ -1,0 +1,45 @@
+default: &defaults
+  targetCube: "}ElementAttributes_testbenchVersion"
+  rows:
+    mdx: "{TM1FILTERBYLEVEL({TM1SUBSETALL([testbenchVersion].[testbenchVersion])}, 0)}"
+    number_of_rows: -1
+  data_colum_dimension: "}ElementAttributes_testbenchVersion"
+  data:
+    ShortAlias:
+      method: "function"
+      callable: df_generator_for_dataset._getCapitalLetters
+      params:
+        apply_on_column: "testbenchVersion"
+unit_test:
+  targetCube: "}ElementAttributes_testbenchVersion"
+  rows:
+    mdx: "{TM1FILTERBYLEVEL({TM1SUBSETALL([testbenchVersion].[testbenchVersion])}, 0)}"
+    number_of_rows: -1
+  data_colum_dimension: "}ElementAttributes_testbenchVersion"
+  data:
+    ShortAlias:
+      method: "function"
+      callable: df_generator_for_dataset._getCapitalLetters
+      params:
+        apply_on_column: "testbenchVersion"
+    LongAlias:
+      method: "function"
+      callable: df_generator_for_dataset._getCapitalLetters
+      params:
+        apply_on_column: "testbenchVersion"
+bedrock_test_10000:
+  <<: *defaults
+bedrock_test_50000:
+  <<: *defaults
+bedrock_test_100000:
+  <<: *defaults
+bedrock_test_250000:
+  <<: *defaults
+bedrock_test_500000:
+  <<: *defaults
+bedrock_test_1000000:
+  <<: *defaults
+bedrock_test_5000000:
+  <<: *defaults
+bedrock_test_10000000:
+  <<: *defaults
