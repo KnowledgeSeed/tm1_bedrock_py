@@ -17,10 +17,10 @@ maintainers = [
   { name = "David Ullmann", email = "david.ullmann@knowledgeseed.ch" },
   { name = "Zsolt Moravcsik", email = "zsolt.moravcsik@knowledgeseed.ch" }
 ]
-description = "A python modul for TM1 Bedrock."
+description = "A python module for TM1 Bedrock."
 readme = "README.md"
-license = {file = "LICENSE"}
-requires-python = ">=3.7"
+license = "Apache-2.0"
+requires-python = ">=3.8"
 keywords=["TM1", "IBM Cognos TM1", "Planning Analytics", "PA", "Cognos"]
 classifiers = [
     "Programming Language :: Python :: 3",
