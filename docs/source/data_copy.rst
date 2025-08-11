@@ -1,8 +1,8 @@
 .. _data-copy-manual:
 
-================================
+======================================
 Data Copy / Data Copy Intercube Manual
-================================
+======================================
 
 .. contents:: Table of Contents
    :local:
@@ -470,7 +470,7 @@ The following parameters only apply to **Data Copy Intercube**, where source and
 
    **Example**
 
-   .. code-block:: yaml
+   .. code-block:: text
 
        # Source DataFrame
        Period   Employee   Orgunit   Measure   Value
@@ -498,7 +498,7 @@ The following parameters only apply to **Data Copy Intercube**, where source and
 
    **Example**
 
-   .. code-block:: yaml
+   .. code-block:: text
 
        # Source DataFrame
        Period   Employee   Orgunit   Measure   Value
@@ -528,7 +528,7 @@ The following parameters only apply to **Data Copy Intercube**, where source and
 
    **Example**
 
-   .. code-block:: yaml
+   .. code-block:: text
 
        # Source DataFrame
        Period   Employee   Orgunit   Value

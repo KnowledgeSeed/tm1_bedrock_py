@@ -55,7 +55,7 @@ Core Functions
 *   ``async_executor_csv_to_tm1``: Asynchronously executes multiple ``load_csv_data_to_tm1_cube`` operations.
 
 Create a connection in TM1 with at least the following parameters set:
----------------------------------------------------------------------
+----------------------------------------------------------------------
 
 *   address
 *   user
