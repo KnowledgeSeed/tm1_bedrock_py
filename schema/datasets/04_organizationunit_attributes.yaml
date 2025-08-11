@@ -1,0 +1,44 @@
+default: &defaults
+  targetCube: "}ElementAttributes_testbenchOrganizationUnit"
+  rows:
+    mdx: "{TM1FILTERBYLEVEL({TM1SUBSETALL([testbenchOrganizationUnit].[testbenchOrganizationUnit])}, 0)}"
+    number_of_rows: -1
+  data_colum_dimension: "}ElementAttributes_testbenchOrganizationUnit"
+  data:
+    Country:
+      method: "function"
+      callable: df_generator_for_dataset._index_from_variable_list
+      params:
+        variable_path: "variables.countries"
+    Currency:
+      method: "function"
+      callable: df_generator_for_dataset._look_up_based_on_column_value
+      params:
+        referred_column: "Country"
+        variable_path: "variables.countries"
+        variable_key: "currency"
+    NameLong:
+      method: "function"
+      callable: df_generator_for_dataset._look_up_based_on_column_value
+      params:
+        prefix: ""
+        postfix: " Ltd."
+        referred_column: "Country"
+        variable_path: "variables.countries"
+        variable_key: "name"
+bedrock_test_10000:
+  <<: *defaults
+bedrock_test_50000:
+  <<: *defaults
+bedrock_test_100000:
+  <<: *defaults
+bedrock_test_250000:
+  <<: *defaults
+bedrock_test_500000:
+  <<: *defaults
+bedrock_test_1000000:
+  <<: *defaults
+bedrock_test_5000000:
+  <<: *defaults
+bedrock_test_10000000:
+  <<: *defaults

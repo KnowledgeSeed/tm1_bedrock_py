@@ -1,3 +1,4 @@
+import os
 from typing import Callable, List, Optional, Any, Literal
 from TM1py import TM1Service
 from pandas import DataFrame
@@ -79,7 +80,7 @@ def __dataframe_to_cube_default(
         use_ti: bool = False,
         increment: bool = False,
         sum_numeric_duplicates: bool = True,
-        **kwargs
+        **_kwargs
 ) -> None:
     """
     Writes a DataFrame to a cube using the TM1 service.
@@ -95,7 +96,7 @@ def __dataframe_to_cube_default(
         increment (bool, optional): Increments the values in the cube instead of replacing them. Defaults to False.
         sum_numeric_duplicates (bool, optional): Aggregate numerical values for duplicated intersections.
             Defaults to True.
-        **kwargs (Any): Additional keyword arguments.
+        **_kwargs (Any): Additional keyword arguments.
 
     Returns:
         None
@@ -111,7 +112,6 @@ def __dataframe_to_cube_default(
             increment=increment,
             sum_numeric_duplicates=sum_numeric_duplicates,
             slice_size_of_dataframe=slice_size_of_dataframe,
-            **kwargs
         )
     else:
         tm1_service.cells.write_dataframe(
@@ -124,8 +124,7 @@ def __dataframe_to_cube_default(
             use_ti=use_ti,
             use_blob=use_blob,
             increment=increment,
-            sum_numeric_duplicates=sum_numeric_duplicates,
-            **kwargs
+            sum_numeric_duplicates=sum_numeric_duplicates
         )
 
 
@@ -166,11 +165,18 @@ def __dataframe_to_sql_default(
         schema: Optional[str] = None,
         chunksize: Optional[int] = None,
         dtype: Optional[dict] = None,
-        method: Optional[Any] = "multi",
+        method: Optional[str | Callable] = None,
         **kwargs
 ) -> None:
     if not engine:
         engine = utility.create_sql_engine(**kwargs)
+
+    table_columns = utility.inspect_table(engine, table_name=table_name, schema=schema)
+    column_order = [col.get('name') for col in table_columns]
+    df_cols = list(dataframe.columns)
+    column_order = [c for c in column_order if c in df_cols]
+
+    dataframe = dataframe[column_order]
     dataframe.to_sql(
         name=table_name,
         con=engine,
@@ -210,10 +216,12 @@ def __clear_table_default(
         delete_statement: Optional[str]
 ) -> None:
     with engine.connect() as connection:
+        transaction = connection.begin()
         if delete_statement:
             connection.execute(text(delete_statement))
         elif table_name:
             connection.execute(text("TRUNCATE TABLE [" + table_name + "]"))
+        transaction.commit()
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -225,7 +233,7 @@ def __clear_table_default(
 def dataframe_to_csv(
         dataframe: DataFrame,
         csv_file_name: str,
-        mode: str = "a",
+        csv_output_dir: Optional[str] = None,
         chunksize: Optional[int | None] = None,
         float_format: Optional[str | Callable] = None,
         sep: Optional[str] = None,
@@ -233,12 +241,14 @@ def dataframe_to_csv(
         na_rep: Optional[str] = "NULL",
         compression: Optional[str | dict] = None,
         index: Optional[bool] = False,
+        mode: str = "w",
         **_kwargs
 ) -> None:
     """
       Retrieves a DataFrame by executing the provided SQL function
 
       Args:
+          csv_output_dir:
           dataframe (DataFrame): A DataFrame that is to be written into a CSV file.
           csv_file_name (str): The name of the CSV file that is written into.
           mode : {{'w', 'x', 'a'}}, default 'w'
@@ -266,8 +276,13 @@ def dataframe_to_csv(
     if sep is None:
         sep = utility.get_local_regex_separator()
 
+    if csv_output_dir is None:
+        csv_output_dir = "./dataframe_to_csv"
+
+    filepath = utility.generate_valid_file_path(output_dir=csv_output_dir, filename=csv_file_name)
+
     dataframe.to_csv(
-        path_or_buf=csv_file_name,
+        path_or_buf=filepath,
         mode=mode,
         chunksize=chunksize,
         float_format=float_format,

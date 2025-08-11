@@ -1,0 +1,20 @@
+default: &defaults
+  name: "testbenchPrice"
+  dimensions: ["testbenchVersion","testbenchPeriod", "testbenchProduct","testbenchMeasurePrice"]
+  rules: [""]
+bedrock_test_10000:
+  <<: *defaults
+bedrock_test_50000:
+  <<: *defaults
+bedrock_test_100000:
+  <<: *defaults
+bedrock_test_250000:
+  <<: *defaults
+bedrock_test_500000:
+  <<: *defaults
+bedrock_test_1000000:
+  <<: *defaults
+bedrock_test_5000000:
+  <<: *defaults
+bedrock_test_10000000:
+  <<: *defaults

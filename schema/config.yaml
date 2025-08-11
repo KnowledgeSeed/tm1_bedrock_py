@@ -1,0 +1,15 @@
+default_yaml_env: "default"
+df_to_cube_default_kwargs:
+  clear_before_load: True
+  clear_set: []
+  async_write: True
+  slice_size_of_dataframe: 50000
+  use_blob: True
+  use_ti: False
+paths:
+  dimensions_elementlist: 'dimensions/elementlist'
+  dimensions_df_templates: 'dimensions/df_templates'
+  dimensions_custom: 'dimensions/custom'
+  cubes: 'cubes'
+  datasets: 'datasets'
+  variables: ''

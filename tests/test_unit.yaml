@@ -1231,7 +1231,7 @@ test_mssql_extract_query:
       "UnitTestIntColumn2": [ 123, 123 ]
     }
 
-test_mssq_extract_query_with_chunksize:
+test_mssql_extract_query_with_chunksize:
   -
     query: "SELECT [UnitTestStringColumn1], [UnitTestFloatColumn1] FROM dbo.[Unit Test Table]"
     expected: {

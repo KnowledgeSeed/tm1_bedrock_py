@@ -1,0 +1,28 @@
+.. tm1_bedrock_py documentation master file, created by
+   sphinx-quickstart on Mon Aug 11 15:05:37 2025.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+Welcome to tm1_bedrock_py documentation!
+============================
+This project is a Python-based toolkit by Knowledgeseed, designed to streamline data integration and automation tasks with IBM Planning Analytics (TM1).
+
+It leverages the ``TM1py`` library to provide a high-level, configurable, and extensible framework for moving data between TM1 cubes, SQL databases, and CSV files. The toolkit is built with a focus on performance, offering features like asynchronous operations and detailed logging for debugging and optimization.
+
+Check out the :doc:`usage` section for a guide on getting started, and the :doc:`data_copy` manual for a deep dive into the core data manipulation functions.
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+   usage
+   data_copy
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
+
+

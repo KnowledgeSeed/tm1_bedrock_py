@@ -1,0 +1,64 @@
+default_rows: &default_rows
+  mdx: "{[testbenchVersion].[testbenchVersion].[Actual]}* 
+        {[testbenchPeriod].[testbenchPeriod].[202401],[testbenchPeriod].[testbenchPeriod].[202402],[testbenchPeriod].[testbenchPeriod].[202403],[testbenchPeriod].[testbenchPeriod].[202404],[testbenchPeriod].[testbenchPeriod].[202405],[testbenchPeriod].[testbenchPeriod].[202406],[testbenchPeriod].[testbenchPeriod].[202407],[testbenchPeriod].[testbenchPeriod].[202408],[testbenchPeriod].[testbenchPeriod].[202409],[testbenchPeriod].[testbenchPeriod].[202410],[testbenchPeriod].[testbenchPeriod].[202411],[testbenchPeriod].[testbenchPeriod].[202412],[testbenchPeriod].[testbenchPeriod].[202501],[testbenchPeriod].[testbenchPeriod].[202502],[testbenchPeriod].[testbenchPeriod].[202503]}*
+        {[testbenchProduct].[testbenchProduct].Members}*
+        {[testbenchCustomer].[testbenchCustomer].Members}*
+        {[testbenchKeyAccountManager].[testbenchKeyAccountManager].Members}*
+        {[testbenchMeasureSales].[testbenchMeasureSales].[Quantity]}"
+  number_of_rows: 1500000
+default: &defaults
+  targetCube: "testbenchSales"
+  rows:
+    <<: *default_rows
+  data_colum_dimension: "testbenchMeasureSales"
+  data:
+    Quantity:
+      method: "function"
+      callable: df_generator_for_dataset._random_number_based_on_statistic
+      params:
+        min_val: 0
+        max_val: 100
+        num_type: "int"
+        distribution: "normal"
+        mean: 65
+        std_dev: 20
+bedrock_test_10000:
+  <<: *defaults
+  rows:
+    <<: *default_rows
+    number_of_rows: 10000
+bedrock_test_50000:
+  <<: *defaults
+  rows:
+    <<: *default_rows
+    number_of_rows: 50000
+bedrock_test_100000:
+  <<: *defaults
+  rows:
+    <<: *default_rows
+    number_of_rows: 100000
+bedrock_test_250000:
+  <<: *defaults
+  rows:
+    <<: *default_rows
+    number_of_rows: 250000
+bedrock_test_500000:
+  <<: *defaults
+  rows:
+    <<: *default_rows
+    number_of_rows: 500000
+bedrock_test_1000000:
+  <<: *defaults
+  rows:
+    <<: *default_rows
+    number_of_rows: 1000000
+bedrock_test_5000000:
+  <<: *defaults
+  rows:
+    <<: *default_rows
+    number_of_rows: 5000000
+bedrock_test_10000000:
+  <<: *defaults
+  rows:
+    <<: *default_rows
+    number_of_rows: 10000000

@@ -1,0 +1,42 @@
+# Define reusable parts
+default_elements: &default_elements
+  NumberOfElements: 100
+  ElementPrefix: "KAM"
+  ElementLength: 2
+  Method: "enumerate"
+
+default_levels: &default_levels
+  - name: "level000"
+    constant_content: "All Key Account Manager"
+
+default_attributes: &default_attributes
+  - "Seniority:s"
+  - "Gender:s"
+  - "CountryOfOrigin:s"
+  - "FirstName:s"
+  - "LastName:s"
+
+# Define the main default using the parts
+default: &defaults
+  dimension_name: "testbenchKeyAccountManager"
+  df_template:
+    elements: *default_elements
+    levels: *default_levels
+    attributes: *default_attributes
+#Defind Tm1 bedrock test cases
+bedrock_test_10000:
+  <<: *defaults
+bedrock_test_50000:
+  <<: *defaults
+bedrock_test_100000:
+  <<: *defaults
+bedrock_test_250000:
+  <<: *defaults
+bedrock_test_500000:
+  <<: *defaults
+bedrock_test_1000000:
+  <<: *defaults
+bedrock_test_5000000:
+  <<: *defaults
+bedrock_test_10000000:
+  <<: *defaults

@@ -102,6 +102,24 @@ services:
       start_period: 5s
     restart: always
 
+  test_db_postgres:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - '5436:5432'
+    volumes:
+      - .db:/var/lib/postgresql/data
+      - ./postgres/scripts:/docker-entrypoint-initdb.d/
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: always
+
   redis:
     # Redis is limited to 7.2-bookworm due to licencing change
     # https://redis.io/blog/redis-adopts-dual-source-available-licensing/

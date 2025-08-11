@@ -15,6 +15,22 @@ _SOURCE_VERSION = "Actual"
 _TARGET_VERSION = "ForeCast"
 TARGET_CUBE_NAME = "testbenchPnL"
 
+BASE_DATA_MDX = f"""
+    SELECT 
+      NON EMPTY 
+        {{[testbenchMeasureSales].[testbenchMeasureSales].[Quantity]}}
+        * {{TM1FILTERBYLEVEL({{TM1DRILLDOWNMEMBER({{[testbenchProduct].[testbenchProduct].[All Product]}}, ALL, RECURSIVE)}}, 0)}}
+        * {{TM1FILTERBYLEVEL({{TM1DRILLDOWNMEMBER({{[testbenchKeyAccountManager].[testbenchKeyAccountManager].[All Key Account Manager]}}, ALL, RECURSIVE)}}, 0)}}
+        * {{TM1FILTERBYLEVEL({{TM1DRILLDOWNMEMBER({{[testbenchCustomer].[testbenchCustomer].[All Customer]}}, ALL, RECURSIVE)}}, 0)}}
+        * {{TM1FILTERBYLEVEL({{TM1DRILLDOWNMEMBER({{[testbenchPeriod].[testbenchPeriod].[All Periods]}}, ALL, RECURSIVE)}}, 0)}}
+      ON 0
+    FROM [testbenchSales] 
+    WHERE 
+      (
+       [testbenchVersion].[testbenchVersion].[{_SOURCE_VERSION}]
+      )
+"""
+
 DATA_MDX_TEMPLATE = f"""
 SELECT 
   NON EMPTY 
@@ -41,6 +57,22 @@ PARAM_SET_MDX_LIST = [
     "{TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchPeriod].[testbenchPeriod].[All Periods]}, {[testbenchPeriod].[testbenchPeriod].[All Periods]}, RECURSIVE )}, 0)}"
     #"{EXCEPT({TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchPeriod].[testbenchPeriod].[All Periods]}, {[testbenchPeriod].[testbenchPeriod].[All Periods]}, RECURSIVE )}, 0)},{[testbenchPeriod].[testbenchPeriod].[202401],[testbenchPeriod].[testbenchPeriod].[202402],[testbenchPeriod].[testbenchPeriod].[202403],[testbenchPeriod].[testbenchPeriod].[202404],[testbenchPeriod].[testbenchPeriod].[202405],[testbenchPeriod].[testbenchPeriod].[202406],[testbenchPeriod].[testbenchPeriod].[202407],[testbenchPeriod].[testbenchPeriod].[202408],[testbenchPeriod].[testbenchPeriod].[202409],[testbenchPeriod].[testbenchPeriod].[202410],[testbenchPeriod].[testbenchPeriod].[202411],[testbenchPeriod].[testbenchPeriod].[202412],[testbenchPeriod].[testbenchPeriod].[202501],[testbenchPeriod].[testbenchPeriod].[202502],[testbenchPeriod].[testbenchPeriod].[202503]})}"
 ]
+# not intercube tests, mapping 1
+_STEP1_INTRA = {
+    "method": "map_and_replace",
+    "mapping_mdx": f"""
+        SELECT 
+          NON EMPTY
+           {{[}}ElementAttributes_testbenchPeriod].[}}ElementAttributes_testbenchPeriod].[NEXT_Y_PERIOD]}}
+          ON 0, 
+            NON EMPTY
+            {{TM1FILTERBYLEVEL({{TM1DRILLDOWNMEMBER({{[testbenchPeriod].[testbenchPeriod].[All Periods]}}, {{[testbenchPeriod].[testbenchPeriod].[All Periods]}}, RECURSIVE )}}, 0)}}
+          ON 1 
+        FROM [}}ElementAttributes_testbenchPeriod] 
+        """,
+    "relabel_dimensions": True,
+    "mapping_dimensions": {"testbenchPeriod": "Value"}
+}
 
 _STEP1 = {
     "method": "map_and_join",
@@ -86,8 +118,16 @@ _STEP3 = {
 }
 
 MAPPING_STEPS = [_STEP1, _STEP2, _STEP3]
+MAPPING_STEPS_INTRACUBE = [_STEP3]
 
 TARGET_DIM_MAPPING = {"testbenchMeasurePnL": "Calculated from Sales"}
+
+SQL_QUERY_TEMPLATE = """
+    SELECT * FROM BENCHMARK.dbo.testbenchSales AS s
+    ORDER BY s.testbenchPeriod, s.testbenchKeyAccountManager, s.testbenchCustomer, s.testbenchProduct
+    OFFSET {offset} ROWS FETCH NEXT {fetch} ROWS ONLY
+"""
+SQL_DELETE_STATEMENT = "truncate table BENCHMARK.dbo.testbenchSales"
 
 
 def benchmark_testcase_parameters():
@@ -137,31 +177,35 @@ def tm1_connection_factory():
 
 
 @pytest.fixture(scope="session")
-def sql_engine():
+def sql_engine_factory():
     """Creates a SQL connector engine before tests and closes it after all tests."""
-    engine = None
-    try:
-        engine = utility.create_sql_engine(
-            username=os.environ.get("SQL_USER"),
-            password=os.environ.get("SQL_PASSWORD"),
-            host=os.environ.get("SQL_HOST"),
-            port=os.environ.get("SQL_PORT"),
-            connection_type=os.environ.get("SQL_CONN_TYPE"),
-            database=os.environ.get("SQL_DB")
-        )
-        basic_logger.debug("SQL engine successfully created")
-        yield engine
-
-    except (ArgumentError, AttributeError):
+    @contextmanager
+    def _connect(connection_name: str):
+        engine = None
         try:
-            config = configparser.ConfigParser()
-            config.read(Path(__file__).parent.joinpath('config.ini'))
-            engine = utility.create_sql_engine(**config['mssqlsrv'])
+            engine = utility.create_sql_engine(
+                username=os.environ.get("SQL_USER"),
+                password=os.environ.get("SQL_PASSWORD"),
+                host=os.environ.get("SQL_HOST"),
+                port=os.environ.get("SQL_PORT"),
+                connection_type=os.environ.get("SQL_CONN_TYPE"),
+                database=os.environ.get("SQL_DB")
+            )
             basic_logger.debug("SQL engine successfully created")
             yield engine
-        except OperationalError or InterfaceError:
-            basic_logger.error("Unable to connect to SQL: ", exc_info=True)
-    finally:
-        if engine is not None:
-            engine.dispose()
-            basic_logger.debug("SQL engine disposed.")
+
+        except (ArgumentError, AttributeError):
+            try:
+                config = configparser.ConfigParser()
+                config.read(Path(__file__).parent.joinpath('config.ini'))
+                engine = utility.create_sql_engine(**config[connection_name])
+                basic_logger.debug("SQL engine successfully created")
+                yield engine
+            except OperationalError or InterfaceError:
+                basic_logger.error("Unable to connect to SQL: ", exc_info=True)
+        finally:
+            if engine is not None:
+                engine.dispose()
+                basic_logger.debug("SQL engine disposed.")
+
+    return _connect

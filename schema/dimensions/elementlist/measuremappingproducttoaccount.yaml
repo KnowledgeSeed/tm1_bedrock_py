@@ -1,0 +1,23 @@
+default: &defaults
+  dimension_name: "testbenchMeasureMappingProductToAccount"
+  elements: [
+    {"name": "Assign Flag", "element_type": "Numeric"}]
+  edges:
+  attributes: [
+    {"name": "Format", "attribute_type": "String"}]
+bedrock_test_10000:
+  <<: *defaults
+bedrock_test_50000:
+  <<: *defaults
+bedrock_test_100000:
+  <<: *defaults
+bedrock_test_250000:
+  <<: *defaults
+bedrock_test_500000:
+  <<: *defaults
+bedrock_test_1000000:
+  <<: *defaults
+bedrock_test_5000000:
+  <<: *defaults
+bedrock_test_10000000:
+  <<: *defaults

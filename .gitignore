@@ -25,9 +25,8 @@ build/
 *.mdmp
 logs
 
-/schema/
-
 # Tests
 tests/*.png
 tests/config.ini
 .env
+tests_integration_airflow/.db

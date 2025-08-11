@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 from pandas import DataFrame
 
-from TM1_bedrock_py import utility
+from TM1_bedrock_py import utility, basic_logger
 
 
 def normalize_dataframe(
@@ -31,6 +31,67 @@ def normalize_dataframe(
 
     dataframe_add_column_assign_value(dataframe=dataframe, column_value=metadata.get_filter_dict())
     dataframe_reorder_dimensions(dataframe=dataframe, cube_dimensions=metadata.get_cube_dims())
+
+
+def dataframe_cast_value_by_measure_type(
+        dataframe: DataFrame,
+        measure_dimension_name: str,
+        measure_element_types: Dict[str, str],
+        **_kwargs
+) -> None:
+    """
+    Validates and casts the 'Value' column of a DataFrame based on the data type
+    of the corresponding element in the measure dimension.
+
+    Args:
+        dataframe (DataFrame): The DataFrame to be modified.
+        measure_dimension_name (str): The name of the cube's measure dimension.
+        measure_element_types (Dict[str, str]): A dictionary mapping measure elements
+                                                to their type ('Numeric' or 'String').
+        **_kwargs (Any): Additional keyword arguments.
+
+    Raises:
+        ValueError: If measures exist in the data that are not defined in the cube.
+        TypeError: If a value for a 'Numeric' measure cannot be converted to a number.
+    """
+    if measure_dimension_name not in dataframe.columns:
+        basic_logger.warning(
+            f"Measure dimension '{measure_dimension_name}' not in DataFrame. Skipping datatype validation."
+        )
+        return
+
+    numeric_measures = {elem for elem, dtype in measure_element_types.items() if dtype == 'Numeric'}
+    string_measures = {elem for elem, dtype in measure_element_types.items() if dtype == 'String'}
+
+    all_measures_in_data = set(dataframe[measure_dimension_name].unique())
+    known_measures = numeric_measures.union(string_measures)
+    unknown_measures = all_measures_in_data - known_measures
+    if unknown_measures:
+        msg = f"Unknown measures found in data that are not in the cube's measure dimension: {unknown_measures}"
+        basic_logger.error(msg)
+        raise ValueError(msg)
+
+    numeric_mask = dataframe[measure_dimension_name].isin(numeric_measures)
+    string_mask = dataframe[measure_dimension_name].isin(string_measures)
+
+    if numeric_mask.any():
+        numeric_values = pd.to_numeric(
+            dataframe.loc[numeric_mask, 'Value'], errors='coerce'
+        )
+
+        if numeric_values.isnull().any():
+            failed_rows = dataframe[numeric_mask & numeric_values.isnull()]
+            msg = (f"Failed to convert values to a numeric type for the following rows:"
+                   f"\n{failed_rows.to_string()}")
+            basic_logger.error(msg)
+            raise TypeError(msg)
+
+        dataframe.loc[numeric_mask, 'Value'] = numeric_values.astype(np.float64)
+
+    if string_mask.any():
+        dataframe.loc[string_mask, 'Value'] = dataframe.loc[string_mask, 'Value'].astype(str)
+
+    dataframe['Value'] = dataframe['Value'].astype(object)
 
 
 @utility.log_exec_metrics
@@ -384,6 +445,11 @@ def dataframe_map_and_replace(
     """
 
     shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - set(mapped_dimensions.keys()) - {"Value"})
+    if len(shared_dimensions) == 0:
+        shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - {"Value"})
+        if len(shared_dimensions) == 0:
+            raise ValueError
+
     original_columns = data_df.columns
 
     data_df = data_df.merge(

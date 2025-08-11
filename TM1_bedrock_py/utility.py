@@ -1,4 +1,3 @@
-import asyncio
 import os
 import re
 import functools
@@ -21,17 +20,21 @@ from TM1_bedrock_py import exec_metrics_logger, basic_logger, benchmark_metrics_
 # Utility: Logging helper functions
 # ------------------------------------------------------------------------------------------------------------
 
+def generate_valid_file_path(output_dir: str, filename: str):
+    os.makedirs(output_dir, exist_ok=True)
+    filepath = os.path.join(output_dir, filename)
+
+    return filepath
+
 
 def dataframe_verbose_logger(df: DataFrame, step_number: str = None, output_dir="../logs/dataframe_logs",
                              df_verbose_logging: bool = False, **_kwargs):
     if df_verbose_logging and df is not None:
-        os.makedirs(output_dir, exist_ok=True)
-
         thread_id = threading.get_ident()
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
         filename = f"{step_number}_{thread_id}_{timestamp}.csv"
-        filepath = os.path.join(output_dir, filename)
+        filepath = generate_valid_file_path(output_dir, filename)
 
         df.to_csv(path_or_buf=filepath, index=False)
         basic_logger.debug(f"DataFrame logged to {filepath}")
@@ -468,6 +471,7 @@ class TM1CubeObjectMetadata:
     _DEFAULT_NAME = "default member name"
     _DEFAULT_TYPE = "default member type"
     _DIM_CHECK_DFS = "dimension check dataframes"
+    _MEASURE_ELEMENT_TYPES = "measure element types"
 
     def __init__(self) -> None:
         self._data: Dict[str, Union['TM1CubeObjectMetadata', Any]] = {}
@@ -507,6 +511,9 @@ class TM1CubeObjectMetadata:
     def get_dimension_check_dfs(self):
         return self[self._DIM_CHECK_DFS]
 
+    def get_measure_element_types(self) -> Dict[str, str]:
+        return self[self._MEASURE_ELEMENT_TYPES]
+
     @classmethod
     def _expand_query_metadata(cls, mdx: str, metadata: "TM1CubeObjectMetadata") -> None:
         """
@@ -539,6 +546,7 @@ class TM1CubeObjectMetadata:
             collect_base_cube_metadata: Optional[bool] = True,
             collect_extended_cube_metadata: Optional[bool] = False,
             collect_dim_element_identifiers: Optional[bool] = False,
+            collect_measure_types: Optional[bool] = False,
             **kwargs
     ) -> "TM1CubeObjectMetadata":
         """
@@ -589,6 +597,14 @@ class TM1CubeObjectMetadata:
                 retrieve_dimension_data=retrieve_dimension_data,
                 **kwargs
             )
+
+        if collect_measure_types:
+            cube_dims = metadata.get_cube_dims()
+            if cube_dims:
+                measure_dimension = cube_dims[-1]
+                metadata[cls._MEASURE_ELEMENT_TYPES] = tm1_service.elements.get_element_types(
+                    dimension_name=measure_dimension, hierarchy_name=measure_dimension
+                )
 
         return metadata
 
@@ -943,24 +959,27 @@ def create_sql_engine(
         database: Optional[str] = None,
         **kwargs
 ) -> Any:
+    """ So far tested for mssql and postgresql connections. Expected to be extended in the future. """
     connection_strings = {
-        'mssql': f"mssql+pyodbc://{username}:{password}@{host}:{port}/{database}?driver={mssql_driver}&TrustServerCertificate=yes",
-        'sqlite': f"sqlite:///{sqlite_file_path}",
+        'mssql': f"mssql+pyodbc://{username}:{password}@{host}:{port}/{database}?driver={mssql_driver}&TrustServerCertificate=yes&fast_executemany=true",
         'postgresql': f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}",
-        'mysql': f"mysql+mysqlconnector://{username}:{password}@{host}:{port}/{database}",
-        'mariadb': f"mariadb+mariadbconnector://{username}:{password}@{host}:{port}/{database}",
-        'oracle': f"oracle+cx_oracle://{username}:{password}@{host}:{port}/{oracle_sid}",
-        'ibmdb2': f"ibm_db_sa://{username}:{password}@{host}:{port}/{database}",
-        'sqlite_inmemory': "sqlite:///:memory:",
-        'firebird': f"firebird+fdb://{username}:{password}@{host}:{port}/{database}",
+        #'sqlite': f"sqlite:///{sqlite_file_path}",
+        #'mysql': f"mysql+mysqlconnector://{username}:{password}@{host}:{port}/{database}",
+        #'mariadb': f"mariadb+mariadbconnector://{username}:{password}@{host}:{port}/{database}",
+        #'oracle': f"oracle+cx_oracle://{username}:{password}@{host}:{port}/{oracle_sid}",
+        #'ibmdb2': f"ibm_db_sa://{username}:{password}@{host}:{port}/{database}",
+        #'sqlite_inmemory': "sqlite:///:memory:",
+        #'firebird': f"firebird+fdb://{username}:{password}@{host}:{port}/{database}",
     }
     if connection_type and not connection_string:
         connection_string = connection_strings.get(connection_type)
+        if 'mssql' in connection_string:
+            return create_engine(connection_string, fast_executemany=True)
     return create_engine(connection_string)
 
 
-def inspect_table(engine: Any, table_name: str) -> dict:
-    return inspect(engine).get_columns(table_name)
+def inspect_table(engine: Any, table_name: str, schema: Optional[str]=None) -> dict:
+    return inspect(engine).get_columns(table_name=table_name, schema=schema)
 
 
 @log_exec_metrics

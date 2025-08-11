@@ -1,0 +1,72 @@
+# Parameters:
+# -----------
+# year_start : int
+#     Start year of the time dimension
+# year_end : int
+#     End year of the time dimension
+# monthly : int
+#     Flag to generate monthly periods (1 for yes, 0 for no)
+# daily : int
+#     Flag to generate daily periods (1 for yes, 0 for no)
+# quarterly : int
+#     Flag to generate quarterly periods (1 for yes, 0 for no)
+# start_month_of_the_year : int
+#     Starting month of the fiscal/business year (1-12)
+# YTD : int
+#     Flag to add Year-to-Date calculations (1 for yes, 0 for no)
+# YTG : int
+#     Flag to add Year-to-Go calculations (1 for yes, 0 for no)
+# attributes : list
+#     List of dictionaries defining additional attributes to calculate
+#     it can generate formated time aliases, releative time references for time navigation
+
+default: &defaults
+  dimension_name: "testbenchPeriod"
+  callable: dimension_period_builder.generate_time_dimension
+  kwargs:
+    year_start: 2024
+    year_end: 2028
+    monthly: 1
+    daily: 0
+    quarterly: 0
+    ytd: 1
+    ytg: 0
+    start_month_of_the_year: 1
+    attributes: [
+      {"name": "PREV_PERIOD:s",
+       "type": "String",
+       "method": "time_reference",
+       "referenced_period_distance": -1},
+      { "name": "PREV_PERIOD:s",
+          "type": "String",
+          "method": "time_reference",
+          "referenced_period_distance": -1 },
+      { "name": "NEXT_PERIOD:s",
+          "type": "String",
+          "method": "time_reference",
+          "referenced_period_distance": 1 },
+      { "name": "PREV_Y_PERIOD:s",
+          "type": "String",
+          "method": "time_reference",
+          "referenced_period_distance": -12 },
+      { "name": "NEXT_Y_PERIOD:s",
+          "type": "String",
+          "method": "time_reference",
+          "referenced_period_distance": 12 }
+    ]
+bedrock_test_10000:
+  <<: *defaults
+bedrock_test_50000:
+  <<: *defaults
+bedrock_test_100000:
+  <<: *defaults
+bedrock_test_250000:
+  <<: *defaults
+bedrock_test_500000:
+  <<: *defaults
+bedrock_test_1000000:
+  <<: *defaults
+bedrock_test_5000000:
+  <<: *defaults
+bedrock_test_10000000:
+  <<: *defaults

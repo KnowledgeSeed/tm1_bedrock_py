@@ -1,0 +1,36 @@
+default: &defaults
+  targetCube: "}ElementAttributes_testbenchProduct"
+  rows:
+    mdx: "{TM1FILTERBYLEVEL({TM1SUBSETALL([testbenchProduct].[testbenchProduct])}, 0)}"
+    number_of_rows: -1
+  data_colum_dimension: "}ElementAttributes_testbenchProduct"
+  data:
+    Size:
+      method: "function"
+      callable: df_generator_for_dataset._random_from_variable_list
+      params:
+        variable_path: "variables.product_size"
+    AccountType:
+      method: "function"
+      callable: df_generator_for_dataset._generate_from_subset_mdx
+      params:
+        dimension_name: "testbenchAccount"
+        # Use a block scalar - no escaping needed for quotes inside
+        subsetMDX: >-
+          {TM1FILTERBYPATTERN({TM1FILTERBYPATTERN({TM1FILTERBYLEVEL({TM1SUBSETALL([testbenchAccount].[testbenchAccount])}, 0)}, "PnL","StatementType")}, "Revenue","Type")}
+bedrock_test_10000:
+  <<: *defaults
+bedrock_test_50000:
+  <<: *defaults
+bedrock_test_100000:
+  <<: *defaults
+bedrock_test_250000:
+  <<: *defaults
+bedrock_test_500000:
+  <<: *defaults
+bedrock_test_1000000:
+  <<: *defaults
+bedrock_test_5000000:
+  <<: *defaults
+bedrock_test_10000000:
+  <<: *defaults

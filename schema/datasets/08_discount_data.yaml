@@ -1,0 +1,34 @@
+default: &defaults
+  targetCube: "testbenchDiscount"
+  rows:
+    mdx: "{[testbenchVersion].[testbenchVersion].[Actual]}* 
+          {[testbenchPeriod].[testbenchPeriod].[202401],[testbenchPeriod].[testbenchPeriod].[202402],[testbenchPeriod].[testbenchPeriod].[202403],[testbenchPeriod].[testbenchPeriod].[202404],[testbenchPeriod].[testbenchPeriod].[202405],[testbenchPeriod].[testbenchPeriod].[202406],[testbenchPeriod].[testbenchPeriod].[202407],[testbenchPeriod].[testbenchPeriod].[202408],[testbenchPeriod].[testbenchPeriod].[202409],[testbenchPeriod].[testbenchPeriod].[202410],[testbenchPeriod].[testbenchPeriod].[202411],[testbenchPeriod].[testbenchPeriod].[202412],[testbenchPeriod].[testbenchPeriod].[202501],[testbenchPeriod].[testbenchPeriod].[202502],[testbenchPeriod].[testbenchPeriod].[202503]}*
+          {TM1FILTERBYLEVEL({TM1SUBSETALL([testbenchCustomer].[testbenchCustomer])}, 0)}*
+          {[testbenchMeasureDiscount].[testbenchMeasureDiscount].[Discount Perc.]}"
+    number_of_rows: 15000
+  data_colum_dimension: ""
+  data:
+    Size:
+      method: "function"
+      callable: df_generator_for_dataset._random_number_based_on_statistic
+      params:
+        min_val: 0
+        max_val: 0.25
+        num_type: "float"
+        distribution: "uniform"
+bedrock_test_10000:
+  <<: *defaults
+bedrock_test_50000:
+  <<: *defaults
+bedrock_test_100000:
+  <<: *defaults
+bedrock_test_250000:
+  <<: *defaults
+bedrock_test_500000:
+  <<: *defaults
+bedrock_test_1000000:
+  <<: *defaults
+bedrock_test_5000000:
+  <<: *defaults
+bedrock_test_10000000:
+  <<: *defaults
