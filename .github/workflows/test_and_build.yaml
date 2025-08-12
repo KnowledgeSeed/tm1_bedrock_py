@@ -1,7 +1,9 @@
 name: Build & Test
 on:
-  push:
-  workflow_dispatch:
+  push: {}
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch: {}
 
 env:
   TM1_ADDRESS: ${{ secrets.TM1_ADDRESS }}
