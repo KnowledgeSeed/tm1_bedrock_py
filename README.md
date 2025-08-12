@@ -4,6 +4,8 @@ This project is a Python-based toolkit by Knowledgeseed, designed to streamline 
 
 For further information about the project, please refer to [https://knowledgeseed.ch/blog/tmbedrockpy_python_library](https://knowledgeseed.ch/blog/tmbedrockpy_python_library).
 
+The detailed documentation of the project is available at [https://tm1-bedrock-py.readthedocs.io/en/latest/](https://tm1-bedrock-py.readthedocs.io/en/latest/).
+
 ## Features
 
 *   **Versatile Data Flows:**
