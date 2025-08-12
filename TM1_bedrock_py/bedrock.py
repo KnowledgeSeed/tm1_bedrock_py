@@ -567,6 +567,8 @@ def data_copy(
                           **kwargs)
     utility.dataframe_verbose_logger(dataframe, "end_data_copy", df_verbose_logging=df_verbose_logging)
 
+    print(dataframe)
+
     loader.dataframe_to_cube(
         tm1_service=target_tm1_service,
         dataframe=dataframe,

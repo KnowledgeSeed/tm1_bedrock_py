@@ -413,3 +413,98 @@ def test_async_load_csv_data_to_tm1_cube(
         finally:
             print("Execution ended.")
             tm1_bench.destroy_model(tm1=conn, schema=schema)
+
+
+def test_csrv_dev_users_groups_functions_copy_user(tm1_connection_factory):
+    with tm1_connection_factory("testbench") as tm1:
+        element_source = "Admin"
+        element_target = "testbench"
+
+        mdx = """SELECT 
+                   {[}Clients].[}Clients].["""+element_source+"""]} 
+                   * {TM1SUBSETALL([}Groups].[}Groups])} 
+                  ON 0 
+                FROM [}ClientGroups] """
+
+        target_clear_set_mdx_list = ["{[}Clients].[}Clients].["+element_target+"]} }"]
+
+        mapping_steps = [{
+            "method": "replace",
+            "mapping": {"}Clients": {element_source: element_target}}
+        }]
+
+        try:
+            print("Model ready, execution started.")
+            bedrock.data_copy(
+                tm1_service=tm1,
+                data_mdx=mdx,
+                mapping_steps=mapping_steps,
+                target_clear_set_mdx_list=target_clear_set_mdx_list
+            )
+        finally:
+            print("Execution ended, destroying model")
+
+
+def test_csrv_dev_users_groups_functions_copy_group(tm1_connection_factory):
+    with tm1_connection_factory("testbench") as tm1:
+        element_source = "ADMIN"
+        element_target = "SWA cobas 4000"
+
+        mdx = """SELECT 
+                   {TM1SUBSETALL([}Clients].[}Clients])} 
+                   * {[}Groups].[}Groups].["""+element_source+"""]} 
+                  ON 0 
+                FROM [}ClientGroups] 
+                """
+
+        target_clear_set_mdx_list = ["{[}Groups].[}Groups].["+element_target+"]} }"]
+
+        mapping_steps = [{
+            "method": "replace",
+            "mapping": {"}Groups": {element_source: element_target},
+                        "Value": {element_source: element_target}}
+        }]
+
+        try:
+            print("Model ready, execution started.")
+            bedrock.data_copy(
+                tm1_service=tm1,
+                data_mdx=mdx,
+                mapping_steps=mapping_steps,
+                target_clear_set_mdx_list=target_clear_set_mdx_list,
+                df_verbose_logging=True,
+                logging_level="DEBUG"
+            )
+        finally:
+            print("Execution ended, destroying model")
+
+
+def test_csrv_dev_users_groups_functions_rename_group(tm1_connection_factory):
+    with tm1_connection_factory("testbench") as tm1:
+        element_source = "DataAdmin"
+        element_target = "DataResponsible"
+
+        mdx = """SELECT 
+                   {[}ElementAttributes_}Groups].[}ElementAttributes_}Groups].[}TM1_DefaultDisplayValue]} 
+                  ON COLUMNS , 
+                   {[}Groups].[}Groups].["""+element_source+"""]} 
+                  ON ROWS 
+                FROM [}ElementAttributes_}Groups] 
+                """
+
+        mapping_steps = [{
+            "method": "replace",
+            "mapping": {"Value": {element_source: element_target}}
+        }]
+
+        try:
+            print("Model ready, execution started.")
+            bedrock.data_copy(
+                tm1_service=tm1,
+                data_mdx=mdx,
+                mapping_steps=mapping_steps,
+                df_verbose_logging=True,
+                logging_level="DEBUG"
+            )
+        finally:
+            print("Execution ended, destroying model")
