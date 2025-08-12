@@ -47,7 +47,7 @@ dev = [
 ]
 
 [project.urls]
-Documentation = "https://github.com/KnowledgeSeed/tm1_bedrock_py/blob/main/README.md"
+Documentation = "https://tm1-bedrock-py.readthedocs.io/en/latest/"
 Repository = "https://github.com/KnowledgeSeed/tm1_bedrock_py"
 Issues = "https://github.com/KnowledgeSeed/tm1_bedrock_py/issues"
 Changelog = "https://github.com/KnowledgeSeed/tm1_bedrock_py/CHANGELOG.md"
