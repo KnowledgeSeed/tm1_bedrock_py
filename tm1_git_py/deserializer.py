@@ -1,22 +1,27 @@
+#!/usr/bin/env python3
 import json
 import os
-from typing import Dict, List
-from TM1py import TM1Service
-from TM1py.Utils import format_url
-
-from model.chore import Chore
-from model.cube import Cube
-from model.dimension import Dimension
-from model.element import Element
-from model.hierarchy import Hierarchy
-from model.mdxview import MDXView
-from model.model import Model
-from model.subset import Subset
-from model.process import Process
-import TM1py
 import re
+from typing import Dict, List
 
-from model.ti import TI
+from .model.chore import Chore
+from .model.cube import Cube
+from .model.dimension import Dimension
+from .model.element import Element
+from .model.hierarchy import Hierarchy
+from .model.mdxview import MDXView
+from .model.model import Model
+from .model.subset import Subset
+from .model.process import Process
+from .model.ti import TI
+
+
+def _save_pickle(model: Model, errors: Dict[str, str], output_path: str) -> None:
+    """Helper to persist the model and errors to a pickle file."""
+    import pickle
+
+    with open(output_path, "wb") as fh:
+        pickle.dump({"model": model, "errors": errors}, fh)
 
 
 def deserialize_model(dir) -> Model:
@@ -351,3 +356,25 @@ def directory_to_dict(path):
             # If the item is a file, set it to None or any specific value if needed
             directory_dict[item] = None
     return directory_dict
+
+
+def main() -> None:
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Deserialize a TM1 model directory into a pickle file"
+        )
+    parser.add_argument("source", help="Directory containing the exported TM1 model")
+    parser.add_argument("output", help="Path where the pickled model will be stored")
+    args = parser.parse_args()
+
+    model, errors = deserialize_model(args.source)
+    _save_pickle(model, errors, args.output)
+    if errors:
+        print("Deserialization completed with errors. See pickle for details.")
+    else:
+        print("Deserialization completed successfully.")
+
+
+if __name__ == "__main__":
+    main()

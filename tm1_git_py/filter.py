@@ -1,9 +1,22 @@
-import json
+#!/usr/bin/env python3
 import fnmatch
 import re
-from typing import List, Any, Dict, Tuple
+from typing import List, Any
 
-from model.model import Model
+from .model.model import Model
+
+
+def _load_pickle(path: str) -> Model:
+    import pickle
+    with open(path, "rb") as fh:
+        data = pickle.load(fh)
+    return data.get("model") if isinstance(data, dict) else data
+
+
+def _save_pickle(model: Model, output: str) -> None:
+    import pickle
+    with open(output, "wb") as fh:
+        pickle.dump(model, fh)
 
 # def _perform_dependency_check(model: Model):
 #     kept_dim_names = {d.name for d in model.dimensions}
@@ -63,3 +76,31 @@ def filter(model: Model, filter_rules: List[str]) -> Model:
     # _perform_dependency_check(filtered_model)
 
     return filtered_model
+
+
+def main() -> None:
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Filter a model using rules and output a new model pickle"
+    )
+    parser.add_argument("model", help="Path to input model pickle")
+    parser.add_argument("rules", help="Path to filter rules text file")
+    parser.add_argument("output", help="Path to output model pickle")
+    args = parser.parse_args()
+
+    model = _load_pickle(args.model)
+    try:
+        with open(args.rules, "r", encoding="utf-8") as fh:
+            rules = [line.strip() for line in fh if line.strip() and not line.strip().startswith('#')]
+    except FileNotFoundError:
+        print(f"Missing rules file: {args.rules}")
+        raise SystemExit(1)
+
+    filtered_model = filter(model, rules)
+    _save_pickle(filtered_model, args.output)
+    print("Filtering completed successfully.")
+
+
+if __name__ == "__main__":
+    main()

@@ -14,7 +14,7 @@ setup(
     name="tm1_bedrock_py",
     version=read_version(),
     description="A python modul for TM1 Bedrock.",
-    packages=["TM1_bedrock_py"],
+    packages=["TM1_bedrock_py", "tm1_git_py", "tm1_git_py.model"],
     author="",
     author_email="",
     url="",
@@ -40,6 +40,16 @@ setup(
             "pytest>=8.3.4,<9.0.0",
             "build>=1.2.2.post1,<2.0.0",
             "matplotlib>=3.10.1,<4.0.0"
+        ]
+    },
+    entry_points={
+        "console_scripts": [
+            "tm1_to_model=tm1_git_py.tm1_to_model:main",
+            "deserializer=tm1_git_py.deserializer:main",
+            "serializer=tm1_git_py.serializer:main",
+            "tm1project_to_filter=tm1_git_py.tm1project_to_filter:main",
+            "filter=tm1_git_py.filter:main",
+            "comparator=tm1_git_py.comparator:main",
         ]
     },
     python_requires=">=3.7"

@@ -1,21 +1,27 @@
+#!/usr/bin/env python3
 import json
 import os
-from typing import Dict, List
-from TM1py import TM1Service
-from TM1py.Utils import format_url
+from typing import List
 
-from model.chore import Chore
-from model.cube import Cube
-from model.dimension import Dimension
-from model.element import Element
-from model.hierarchy import Hierarchy
-from model.mdxview import MDXView
-from model.model import Model
-from model.subset import Subset
-from model.process import Process
-import TM1py
+from .model.chore import Chore
+from .model.cube import Cube
+from .model.dimension import Dimension
+from .model.element import Element
+from .model.hierarchy import Hierarchy
+from .model.mdxview import MDXView
+from .model.model import Model
+from .model.subset import Subset
+from .model.process import Process
+from .model.ti import TI
 
-from model.ti import TI
+
+def _load_pickle(input_path: str) -> Model:
+    """Load a model from a pickle file created by deserializer or tm1_to_model."""
+    import pickle
+
+    with open(input_path, "rb") as fh:
+        data = pickle.load(fh)
+    return data.get("model") if isinstance(data, dict) else data
 
 
 def serialize_model(model: Model, dir):
@@ -91,3 +97,22 @@ def serialize_chores(chores: List[Chore], chores_dir):
     for chore in chores:
         with open(chores_dir + '/' + chore.name + '.json', 'w', encoding='utf-8') as chore_file:
             chore_file.write(chore.as_json())
+
+
+def main() -> None:
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Serialize a model pickle into a TM1 directory structure"
+    )
+    parser.add_argument("model", help="Path to the pickled model")
+    parser.add_argument("output", help="Directory where the model will be serialized")
+    args = parser.parse_args()
+
+    model = _load_pickle(args.model)
+    serialize_model(model, args.output)
+    print("Serialization completed successfully.")
+
+
+if __name__ == "__main__":
+    main()

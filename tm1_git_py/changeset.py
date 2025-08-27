@@ -3,15 +3,15 @@ from typing import List, Dict, Any, TypeVar, Optional
 
 from requests import Response
 
-from model.cube import Cube, create_cube, update_cube, delete_cube
-from model.dimension import Dimension, create_dimension, update_dimension, delete_dimension
-from model.hierarchy import Hierarchy, create_hierarchy, update_hierarchy, delete_hierarchy
-from model.subset import Subset, create_subset, update_subset, delete_subset
-from model.process import Process, create_process, update_process, delete_process
-from model.chore import Chore, create_chore, update_chore, delete_chore
+from .model.cube import Cube, create_cube, update_cube, delete_cube
+from .model.dimension import Dimension, create_dimension, update_dimension, delete_dimension
+from .model.hierarchy import Hierarchy, create_hierarchy, update_hierarchy, delete_hierarchy
+from .model.subset import Subset, create_subset, update_subset, delete_subset
+from .model.process import Process, create_process, update_process, delete_process
+from .model.chore import Chore, create_chore, update_chore, delete_chore
 from TM1py import TM1Service
 
-from tm1_git_py.model.model import Model
+from .model.model import Model
 
 T = TypeVar('T', Cube, Dimension, Process, Chore)
 
@@ -180,6 +180,7 @@ def delete_object(tm1_service: TM1Service, object_instance: T) -> Response:
 
     else:
         raise ValueError
+
 
 
 def update_object(tm1_service: TM1Service, object_instance: Dict[T, Any]) -> Response:
