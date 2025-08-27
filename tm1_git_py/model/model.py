@@ -1,10 +1,10 @@
 import json
 from typing import List
 
-from model.chore import Chore
-from model.cube import Cube
-from model.dimension import Dimension
-from model.process import Process
+from .chore import Chore
+from .cube import Cube
+from .dimension import Dimension
+from .process import Process
 from itertools import chain
 
 

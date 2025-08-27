@@ -5,9 +5,9 @@ import TM1py
 from TM1py import TM1Service, Dimension
 from requests import Response
 
-from model.element import Element
-from model.hierarchy import Hierarchy, create_hierarchy, update_hierarchy
-from model.subset import Subset
+from .element import Element
+from .hierarchy import Hierarchy, create_hierarchy, update_hierarchy
+from .subset import Subset
 from TM1py.Utils import format_url
 
 

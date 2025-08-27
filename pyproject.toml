@@ -24,6 +24,14 @@ dependencies = [
     "pyodbc>=5.2.0,<6.0.0"
 ]
 
+[project.scripts]
+tm1_to_model = "tm1_git_py.tm1_to_model:main"
+deserializer = "tm1_git_py.deserializer:main"
+serializer = "tm1_git_py.serializer:main"
+tm1project_to_filter = "tm1_git_py.tm1project_to_filter:main"
+filter = "tm1_git_py.filter:main"
+comparator = "tm1_git_py.comparator:main"
+
 [project.optional-dependencies]
 airflow= [
     "airflow_provider_tm1>=0.3.0,<1.0.0",
@@ -37,4 +45,4 @@ dev = [
 ]
 
 [tool.setuptools]
-packages = ["TM1_bedrock_py"]
+packages = ["TM1_bedrock_py", "tm1_git_py", "tm1_git_py.model"]

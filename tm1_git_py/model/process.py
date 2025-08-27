@@ -7,7 +7,7 @@ from requests import Response
 
 # Importáljuk a TI osztályt a típus-ellenőrzéshez (type hinting)
 if TYPE_CHECKING:
-    from model.ti import TI 
+    from .ti import TI
 # {
 #   "@type":"Process",
 # 	"Name":"airflow_test_success",

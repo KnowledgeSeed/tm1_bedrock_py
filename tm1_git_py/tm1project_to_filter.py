@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import json
 import re
 
@@ -45,8 +46,19 @@ def convert_json_to_filter_txt(json_path: str, output_path: str):
     except IOError:
         print(f"'{output_path}'")
 
-# if __name__ == "__main__":
-#     input_json_file = 'tm1project.json'
-#     output_filter_file = 'tm1project_filter.txt'
-    
-#     convert_json_to_filter_txt(input_json_file, output_filter_file)
+
+def main() -> None:
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Convert TM1 project JSON to filter text rules"
+    )
+    parser.add_argument("json", help="Input tm1project.json path")
+    parser.add_argument("output", help="Output filter.txt path")
+    args = parser.parse_args()
+
+    convert_json_to_filter_txt(args.json, args.output)
+
+
+if __name__ == "__main__":
+    main()

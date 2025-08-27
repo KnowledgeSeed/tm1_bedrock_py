@@ -1,22 +1,29 @@
+#!/usr/bin/env python3
 import json
 import os
 from typing import Dict, List
 from TM1py import TM1Service
 from TM1py.Utils import format_url
 
-from model.chore import Chore
-from model.cube import Cube
-from model.dimension import Dimension
-from model.edge import Edge
-from model.element import Element
-from model.hierarchy import Hierarchy
-from model.mdxview import MDXView
-from model.model import Model
-from model.subset import Subset
-from model.process import Process
+from .model.chore import Chore
+from .model.cube import Cube
+from .model.dimension import Dimension
+from .model.edge import Edge
+from .model.element import Element
+from .model.hierarchy import Hierarchy
+from .model.mdxview import MDXView
+from .model.model import Model
+from .model.subset import Subset
+from .model.process import Process
 import TM1py
 
-from model.ti import TI
+from .model.ti import TI
+
+
+def _save_pickle(model: Model, errors: Dict[str, str], output_path: str) -> None:
+    import pickle
+    with open(output_path, "wb") as fh:
+        pickle.dump({"model": model, "errors": errors}, fh)
 
 
 def tm1_connection() -> TM1Service:
@@ -174,3 +181,37 @@ def dimensions_to_model(tm1_conn) -> tuple[Dict[str, Dimension], Dict[str, str]]
                     except Exception as e:
                         _errors[dim_name] = str(e)
     return _dimensions, _errors
+
+
+def main() -> None:
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Extract a TM1 model and save it as a pickle file"
+    )
+    parser.add_argument("output", help="Path to the output pickle file")
+    parser.add_argument("--address", default=os.environ.get("TM1_ADDRESS"))
+    parser.add_argument("--port", default=os.environ.get("TM1_PORT"))
+    parser.add_argument("--user", default=os.environ.get("TM1_USER"))
+    parser.add_argument("--password", default=os.environ.get("TM1_PASSWORD", ""))
+    parser.add_argument("--ssl", default=os.environ.get("TM1_SSL"))
+    args = parser.parse_args()
+
+    with TM1Service(
+        address=args.address,
+        port=args.port,
+        user=args.user,
+        password=args.password,
+        ssl=args.ssl,
+    ) as tm1:
+        model, errors = tm1_to_model(tm1)
+
+    _save_pickle(model, errors, args.output)
+    if errors:
+        print("Model extracted with errors. See pickle for details.")
+    else:
+        print("Model extracted successfully.")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,12 +1,20 @@
+#!/usr/bin/env python3
 from typing import List, Dict, Any
 
-from model.model import Model
-from changeset import Changeset
+from .model.model import Model
+from .changeset import Changeset
 
-from model.cube import Cube
-from model.dimension import Dimension
-from model.process import Process
-from model.chore import Chore
+
+def _load_pickle(path: str) -> Model:
+    import pickle
+    with open(path, "rb") as fh:
+        data = pickle.load(fh)
+    return data.get("model") if isinstance(data, dict) else data
+
+from .model.cube import Cube
+from .model.dimension import Dimension
+from .model.process import Process
+from .model.chore import Chore
 
 class Comparator:
     def compare(self, model1: Model, model2: Model, mode: str = 'full') -> Changeset:
@@ -84,4 +92,34 @@ class Comparator:
             if name in old_map:
                 old_obj = old_map[name]
                 if old_obj != new_obj:
-                    modified_list.append({'old': old_obj, 'new': new_obj, 'changes': f"Content of {object_type_name} '{name}' changed."})
+                    modified_list.append({
+                        'old': old_obj,
+                        'new': new_obj,
+                        'changes': f"Content of {object_type_name} '{name}' changed."
+                    })
+
+
+def main() -> None:
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Compare two model pickles and output a changeset"
+    )
+    parser.add_argument("model1", help="Path to first model pickle")
+    parser.add_argument("model2", help="Path to second model pickle")
+    parser.add_argument("output", help="Path to write the textual changeset")
+    parser.add_argument("--mode", choices=["full", "add_only"], default="full")
+    args = parser.parse_args()
+
+    model_a = _load_pickle(args.model1)
+    model_b = _load_pickle(args.model2)
+    comp = Comparator()
+    changeset = comp.compare(model_a, model_b, mode=args.mode)
+
+    with open(args.output, "w", encoding="utf-8") as fh:
+        fh.write(str(changeset))
+    print("Comparison completed successfully.")
+
+
+if __name__ == "__main__":
+    main()

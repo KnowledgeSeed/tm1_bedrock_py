@@ -7,11 +7,11 @@ from TM1py import TM1Service, Cube
 from requests import Response
 from TM1_bedrock_py.bedrock import data_copy_intercube
 
-from model.dimension import Dimension
-from model.element import Element
-from model.hierarchy import Hierarchy
-from model.mdxview import MDXView
-from model.subset import Subset
+from .dimension import Dimension
+from .element import Element
+from .hierarchy import Hierarchy
+from .mdxview import MDXView
+from .subset import Subset
 from TM1py.Utils import format_url
 
 

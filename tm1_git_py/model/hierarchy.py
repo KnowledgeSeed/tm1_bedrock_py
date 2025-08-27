@@ -3,9 +3,9 @@ import re
 from typing import List, Any, Dict
 
 import TM1py
-from model.edge import Edge
-from model.element import Element, create_element, update_element, delete_element
-from model.subset import Subset, create_subset, update_subset, delete_subset
+from .edge import Edge
+from .element import Element, create_element, update_element, delete_element
+from .subset import Subset, create_subset, update_subset, delete_subset
 from TM1py.Utils import format_url
 from TM1py import TM1Service, Hierarchy
 from requests import Response
