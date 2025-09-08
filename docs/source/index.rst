@@ -10,7 +10,7 @@ This project is a Python-based toolkit by Knowledgeseed, designed to streamline 
 It leverages the ``TM1py`` library to provide a high-level, configurable, and extensible framework for moving data between TM1 cubes, SQL databases, and CSV files. The toolkit is built with a focus on performance, offering features like asynchronous operations and detailed logging for debugging and optimization.
 
 Check out the :doc:`usage` section for a guide on getting started, and the :doc:`data_copy` and :doc:`tm1_csv` and :doc:`tm1_sql` manuals for a deep dive into the core data manipulation functions.
-For high performance use-cases, refer to :doc:`async_executor` and :doc:`async_csv`.
+For high performance use-cases, refer to :doc:`async_executor`, :doc:`async_csv` and :doc:`async_sql`.
 
 .. toctree::
    :maxdepth: 2
@@ -32,8 +32,7 @@ For high performance use-cases, refer to :doc:`async_executor` and :doc:`async_c
 
    async_executor
    async_csv
-   async_tm1_to_sql
-   async_sql_to_tm1
+   async_sql
 
 Indices and tables
 ==================

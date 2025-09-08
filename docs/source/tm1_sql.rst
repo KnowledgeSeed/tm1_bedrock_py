@@ -21,7 +21,7 @@ TM1 / SQL Data Integration Manual
 Introduction
 ============
 
-The **mission** of `tm1_bedrock_py`’s **TM1/SQL Integration** module is to serve as a high-performance, robust bridge between TM1 cubes and relational databases. Its primary goal is to **read data from one system**, transform it using the toolkit's powerful **mapping engine**, and then **write the results to the other system**.
+The **TM1/SQL Integration** module serves as an interface between TM1 cubes and relational databases. Its primary goal is to **transform and copy (or move) data** between the two systems.
 
 This module is designed with key priorities in mind:
 
@@ -41,14 +41,13 @@ The module provides two core functions:
 Default Operations
 ==================
 
-The two functions follow a logical, sequential workflow to ensure data is processed correctly and efficiently.
-
 **load_sql_data_to_tm1_cube (SQL -> TM1)**
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
 1.  **Extract from SQL**: The source data is read from a SQL table or query into a pandas DataFrame.
 2.  **Normalize DataFrame**: The raw tabular data is normalized into a TM1-ready format (one value per row with dimension columns) by renaming columns and identifying the `Value` column.
-3.  **Apply Mapping Transformations**: The powerful mapping engine (`replace`, `map_and_replace`, `map_and_join`) is used to transform the data.
+3.  **Apply Mapping Transformations**: The powerful mapping engine\ :doc:`[1] <data_copy>` (`replace`, `map_and_replace`, `map_and_join`) is used to transform the data.
 4.  **Redimensionalize**: Columns are added, removed, or renamed to precisely match the structure of the target TM1 cube.
 5.  **Clear Target Cube**: If requested, the target slice in the TM1 cube is cleared.
 6.  **Write to TM1**: The final, clean DataFrame is written to the TM1 cube, with support for high-performance modes like `async_write` and `use_blob`.
@@ -67,23 +66,6 @@ The two functions follow a logical, sequential workflow to ensure data is proces
 
 ------
 
-.. _key_differences:
-
-Key Differences
-===============
-
-- **load_sql_data_to_tm1_cube**
-    - **Direction**: SQL -> TM1
-    - **Primary Inputs**: `sql_query` or `sql_table_name`, `target_cube_name`
-    - **Unique Parameters**: SQL source normalization helpers (`sql_column_mapping`, `sql_value_column_name`).
-
-- **load_tm1_cube_to_sql_table**
-    - **Direction**: TM1 -> SQL
-    - **Primary Inputs**: `data_mdx`, `target_table_name`
-    - **Unique Parameters**: SQL target writing options (`sql_dtypes`, `sql_insert_method`).
-
-------
-
 .. _parameter_reference:
 
 Parameter Reference
@@ -96,57 +78,81 @@ Below is a complete reference for all function parameters, grouped by category.
 TM1 Connection & Data
 ~~~~~~~~~~~~~~~~~~~~~
 
-tm1_service
-  *(required)* A valid `TM1Service` object for connecting to the TM1 instance.
+1. **tm1_service** *(required)*
 
-target_cube_name
-  *(string; only in `load_sql_data_to_tm1_cube`)* The name of the target TM1 cube where data will be written.
+   - A valid `TM1Service` object for connecting to the TM1 instance.
 
-data_mdx
-  *(string; only in `load_tm1_cube_to_sql_table`)* An MDX query to extract the source data from a TM1 cube.
+2. **target_cube_name** *(string; only in `load_sql_data_to_tm1_cube`)*
+
+   - The name of the target TM1 cube where data will be written.
+
+3. **data_mdx** *(string; only in `load_tm1_cube_to_sql_table`)*
+
+   - An MDX query to extract the source data from a TM1 cube.
 
 .. _sql_source_config:
 
 SQL Source Configuration (`load_sql_data_to_tm1_cube`)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-sql_engine
-  *(required)* A valid `SQLAlchemy Engine` object for the source database connection.
+1. **sql_engine** *(required)*
 
-sql_query
-  *(optional, string)* A full SQL query to execute for data extraction. Use this or `sql_table_name`.
+   - A valid `SQLAlchemy Engine` object for the source database connection.
 
-sql_table_name
-  *(optional, string)* The name of the SQL table to extract data from.
+2. **sql_query** *(optional, string)*
 
-sql_column_mapping
-  *(optional, dict)* A dictionary to rename columns from the SQL source to match TM1 dimension names. Example: :json:`{"PRODUCT_CODE": "Product"}`.
+   - A full SQL query to execute for data extraction. Use this or `sql_table_name`.
 
-sql_value_column_name
-  *(optional, string)* The name of the column in the SQL source that contains the data values. This column will be automatically renamed to `Value`.
+3. **sql_table_name** *(optional, string)*
 
-chunksize
-  *(optional, int)* The number of rows to read from the SQL database at a time. This is a **memory optimization** for very large source tables.
+   - The name of the SQL table to extract data from.
+
+4. **sql_column_mapping** *(optional, dict)*
+
+   - A dictionary to rename columns from the SQL source to match TM1 dimension names. Example: :json:`{"PRODUCT_CODE": "Product"}`.
+
+5. **sql_value_column_name** *(optional, string)*
+
+   - The name of the column in the SQL source that contains the data values. This column will be automatically renamed to `Value`.
+
+6. **chunksize** *(optional, int)*
+
+   - The number of rows to read from the SQL database at a time. This is a **memory optimization** for very large source tables.
 
 .. _sql_target_config:
 
 SQL Target Configuration (`load_tm1_cube_to_sql_table`)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-target_table_name
-  *(required, string)* The name of the target table in the SQL database.
+1. **target_table_name** *(required, string)*
 
-sql_engine
-  *(required)* A valid `SQLAlchemy Engine` object for the target database connection.
+   - The name of the target table in the SQL database.
 
-sql_dtypes
-  *(optional, dict)* A dictionary mapping column names to `SQLAlchemy` types (e.g., :python:`{"Value": types.FLOAT, "Version": types.VARCHAR(50)}`). **Providing this is a best practice** to prevent data type inference errors.
+2. **sql_engine** *(required)*
 
-sql_insert_method
-  *(optional)* The method for `pandas.to_sql` to use. For MS SQL, `None` is recommended to enable `fast_executemany`. For PostgreSQL, a specific callable for `COPY` is fastest.
+   - A valid `SQLAlchemy Engine` object for the target database connection.
 
-chunksize
-  *(optional, int)* The number of rows to write to the SQL table in a single batch. This is a **memory optimization**. For best performance with high-speed methods like `fast_executemany`, this should often be `None`.
+3. **sql_dtypes** *(optional, dict)*
+
+   - A dictionary mapping column names to `SQLAlchemy` types (e.g., :python:`{"Value": types.FLOAT, "Version": types.VARCHAR(50)}`). **Providing this is a best practice** to prevent data type inference errors.
+
+4. **sql_insert_method** *(optional)*
+
+   - The method for `pandas.to_sql` to use. For MS SQL, `None` is recommended to enable `fast_executemany`. For PostgreSQL, a specific callable for `COPY` is fastest.
+
+5. **chunksize** *(optional, int)*
+
+   - The number of rows to write to the SQL table in a single batch. This is a **memory optimization**. For best performance with high-speed methods like `fast_executemany`, this should often be `None`.
+
+6. **clear_target** *(optional, boolean; default=False)*
+
+   - If `True`, the **entire target SQL table is cleared once** before any workers start.
+
+7. **sql_delete_statement** *(optional, string)*
+
+   - A specific SQL statement to use for clearing the target table.
+   - If :python:`clear_target=True` and :python:`sql_delete_statement=None`, it defaults to a truncate statement with MS SQL syntax. To make sure seamless clearing use a custom statement.
+
 
 .. _shared_logic_params:
 
@@ -174,6 +180,11 @@ Example Workflow
 .. code-block:: python
 
     from TM1_bedrock_py import bedrock
+    from TM1py import TM1Service
+    from sqlalchemy import create_engine
+
+    # Create engine
+    engine = create_engine("mssql+pyodbc://...")
 
     # Define how to map SQL columns to TM1 dimension names
     column_map = {
@@ -183,24 +194,29 @@ Example Workflow
     }
 
     # Call the function to load data from a SQL table
-    bedrock.load_sql_data_to_tm1_cube(
-        tm1_service=tm1_connection,
-        sql_engine=sql_connection_engine,
-        target_cube_name="Sales",
-        sql_table_name="dbo.FactSales",
-        sql_column_mapping=column_map,
-        clear_target=True,
-        target_clear_set_mdx_list=["{[Version].[Actual]}"],
-        async_write=True
-    )
+    with TM1Service(address='localhost', user='admin', password='apple', ssl=True) as tm1:
+        bedrock.load_sql_data_to_tm1_cube(
+            tm1_service=tm1,
+            sql_engine=engine,
+            target_cube_name="Sales",
+            sql_table_name="dbo.FactSales",
+            sql_column_mapping=column_map,
+            target_clear_set_mdx_list=["{[Version].[Version].[Actual]}"],
+            clear_target=True,
+            async_write=True
+        )
 
-**Example 2: Exporting from TM1 to a SQL Table with High Performance**
+**Example 2: Exporting from TM1 to a SQL Table**
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
     from TM1_bedrock_py import bedrock
-    from sqlalchemy import types
+    from TM1py import TM1Service
+    from sqlalchemy import types, create_engine
+
+    # Create engine
+    engine = create_engine("mssql+pyodbc://...")
 
     # Define the explicit data types for the target SQL table
     sql_types = {
@@ -210,15 +226,18 @@ Example Workflow
     }
 
     # Export a slice of a TM1 cube to a SQL table
-    bedrock.load_tm1_cube_to_sql_table(
-        tm1_service=tm1_connection,
-        sql_engine=sql_engine_with_fast_executemany,
-        target_table_name="SalesArchive",
-        data_mdx="SELECT {[Version].[Actual]} ON 0 FROM [Sales]",
-        sql_dtypes=sql_types,
-        clear_target=True,
-        skip_zeros=True
-    )
+    with TM1Service(address='localhost', user='admin', password='apple', ssl=True) as tm1:
+        bedrock.load_tm1_cube_to_sql_table(
+            tm1_service=tm1,
+            sql_engine=engine,
+            target_table_name="SalesArchive",
+            data_mdx="SELECT {[Version].[Actual]} ON 0 FROM [Sales]",
+            related_dimensions={"Value": "SalesAmount"},
+            sql_dtypes=sql_types,
+            sql_delete_statement="TRUNCATE TABLE [SalesArchive]",
+            clear_target=True,
+            skip_zeros=True
+        )
 
 ------
 
