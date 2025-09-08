@@ -248,7 +248,7 @@ Developer Comments
 
 .. warning::
    **Tested Databases**:
-   For the |release| release, this functionality has been explicitly tested against **MS SQL Server** and **PostgreSQL**. While the toolkit is designed for portability using SQLAlchemy, behavior with other database backends (Oracle, MySQL, etc.) has not been verified in this version.
+   For the 1.0.0 release, this functionality has been explicitly tested against **MS SQL Server** and **PostgreSQL**. While the toolkit is designed for portability using SQLAlchemy, behavior with other database backends (Oracle, MySQL, etc.) has not been verified in this version.
 
 .. warning::
    **Column Order Matters**: The `load_tm1_cube_to_sql_table` function automatically inspects the target SQL table and reorders the DataFrame columns to match. This is a critical safety feature that prevents `COUNT field incorrect` errors and silent data corruption.
