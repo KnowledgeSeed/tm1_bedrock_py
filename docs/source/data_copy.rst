@@ -657,7 +657,7 @@ Example Workflow
 .. code-block:: python
 
     from TM1py import TM1Service
-    from tm1_bedrock_py import data_copy
+    from TM1_bedrock_py import data_copy
 
     with TM1Service(address='localhost', user='admin', password='apple', ssl=True) as tm1:
         data_copy(
