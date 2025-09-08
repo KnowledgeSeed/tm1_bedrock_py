@@ -40,6 +40,6 @@ epub_show_urls = 'footnote'
 try:
     release = importlib.metadata.version(project)
 except importlib.metadata.PackageNotFoundError:
-    release = '0.0.0-dev'
+    release = '1.0.0'
 
 version = '.'.join(release.split('.')[:2])
