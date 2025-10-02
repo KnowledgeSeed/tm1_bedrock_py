@@ -369,7 +369,11 @@ def normalize_table_source_dataframe(
 
 
 @utility.log_exec_metrics
-def dataframe_itemskip_elements(dataframe: DataFrame, check_dfs: list[DataFrame], **_kwargs) -> None:
+def dataframe_itemskip_elements(
+        dataframe: DataFrame,
+        check_dfs: list[DataFrame],
+        logging_enabled: Optional[bool] = False,
+        **_kwargs) -> None:
     """
     Filters the given dataframe in place based on valid values from check dataframes.
 
@@ -384,10 +388,18 @@ def dataframe_itemskip_elements(dataframe: DataFrame, check_dfs: list[DataFrame]
     Modifies df_source in place, removing rows that do not match the valid values.
     """
     mask = np.ones(len(dataframe), dtype=bool)
+
     for df_check in check_dfs:
         col = df_check.columns[0]
         valid_values = df_check[col].to_numpy()
-        mask &= np.isin(dataframe[col].to_numpy(), valid_values)
+        current_col_mask = np.isin(dataframe[col].to_numpy(), valid_values)
+        mask &= current_col_mask
+
+        if logging_enabled:
+            dropped_df = dataframe[[col]]
+            dropped_df.drop(index=dropped_df.index[current_col_mask], inplace=True)
+            basic_logger.debug(dropped_df)
+
     dataframe.drop(index=dataframe.index[~mask], inplace=True)
 
 
