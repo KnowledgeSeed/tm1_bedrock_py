@@ -77,6 +77,13 @@ def test_get_dimensions_from_set_mdx_list_success(mdx_sets, expected_dimensions)
 
 
 @parametrize_from_file
+def test__get_kwargs_dict_from_set_mdx_list_fail(mdx_expressions, expected_exception):
+    exception_type = eval(expected_exception)
+    with pytest.raises(exception_type):
+        utility.__get_kwargs_dict_from_set_mdx_list(mdx_expressions)
+
+
+@parametrize_from_file
 def test_get_dimensions_from_set_mdx_list_failure(mdx_sets, expected_exception, expected_message_part):
     """
     Tests type errors for invalid input.
@@ -522,8 +529,15 @@ def test_dataframe_map_and_join_success(dataframe, joined_cols, mapping_datafram
 
 
 @parametrize_from_file
-def test_dataframe_execute_mappings_replace_success(mapping_steps):
-    pass
+def test_dataframe_execute_mappings_replace_success(dataframe, mapping_steps, expected_dataframe):
+    df = pd.DataFrame(dataframe)
+    expected_df = pd.DataFrame(expected_dataframe)
+    df = transformer.dataframe_execute_mappings(
+        data_df=df,
+        mapping_steps=mapping_steps,
+    )
+
+    pd.testing.assert_frame_equal(df, expected_df)
 
 
 # ------------------------------------------------------------------------------------------------------------

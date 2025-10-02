@@ -248,6 +248,8 @@ def generate_step_specific_mapping_dataframes(
     """
     Mutates each step in mapping_steps by assigning 'mapping_df'.
     """
+    if not mapping_steps:
+        return
     for i, step in enumerate(mapping_steps):
         generate_dataframe_for_mapping_info(mapping_info=step, step_specific_string=str(i+1), **kwargs)
 

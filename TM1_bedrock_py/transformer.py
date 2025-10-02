@@ -361,8 +361,6 @@ def normalize_table_source_dataframe(
         dataframe_relabel(dataframe=dataframe, columns=column_mapping)
     if value_column_name:
         dataframe_relabel(dataframe=dataframe, columns={value_column_name: "Value"})
-    if "Value" not in dataframe.columns:
-        dataframe_add_column_assign_value(dataframe=dataframe, column_value={"Value": 1.0})
     if drop_other_columns:
         columns_to_drop = list(
             set(dataframe.columns) - set(columns_to_keep) - set(column_mapping.values()) - {'Value'}
@@ -701,6 +699,9 @@ def dataframe_execute_mappings(
         "map_and_replace": __apply_map_and_replace,
         "map_and_join": __apply_map_and_join,
     }
+    if not mapping_steps:
+        return data_df
+
     for i, step in enumerate(mapping_steps):
         method = step["method"]
         if method in method_handlers:

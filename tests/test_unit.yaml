@@ -87,6 +87,17 @@ test_get_kwargs_dict_from_set_mdx_list_success:
       "department": "{[ Department ].[Finance]}"
     }
 
+test__get_kwargs_dict_from_set_mdx_list_fail:
+  -
+    mdx_expressions: ["Invalid string without braces"]
+    expected_exception: "ValueError"
+  -
+    mdx_expressions: ["{[ValidDim].[Member]}", "completely invalid"]
+    expected_exception: "ValueError"
+  -
+    mdx_expressions: ["{[AnotherDim].[Member]}", null]
+    expected_exception: "TypeError"
+
 test_get_kwargs_dict_from_set_mdx_list_filtering:
   -
     set_mdx_list: []
@@ -1164,12 +1175,26 @@ test_dataframe_map_and_join_success:
 
 test_dataframe_execute_mappings_replace_success:
   -
+    dataframe: {
+    "Period": [ "202201", "202201", "202202", "202202" ],
+    "Employee": [ "00000001", "00000002", "00000001", "00000002" ],
+    "Orgunit": [ "abc123a", "abc123a", "def345a", "def345a" ],
+    "Measure": [ "cost001", "cost001", "cost001", "cost001" ],
+    "Value": [ 10, 10, 10, 10 ]
+    }
     mapping_steps: [
       {
         "method": "replace",
-        "mapping": {"replace_dim": {"replace_source": "replace_target"}}
+        "mapping": {"Orgunit": {"abc123a": "xyz987z"}}
       }
     ]
+    expected_dataframe: {
+      "Period": [ "202201", "202201", "202202", "202202" ],
+      "Employee": [ "00000001", "00000002", "00000001", "00000002" ],
+      "Orgunit": [ "xyz987z", "xyz987z", "def345a", "def345a" ],
+      "Measure": [ "cost001", "cost001", "cost001", "cost001" ],
+      "Value": [ 10, 10, 10, 10 ]
+    }
 
 test_dataframe_execute_mappings_map_and_replace_shared_df_with_filter_and_relabel_success:
   -

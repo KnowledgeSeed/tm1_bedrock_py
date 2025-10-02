@@ -28,8 +28,15 @@
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
-            "level": "INFO",
+            "level": "DEBUG",
             "formatter": "simple",
+            "stream": "ext://sys.stdout"
+        },
+
+        "console_exec_metrics": {
+            "class": "logging.StreamHandler",
+            "level": "DEBUG",
+            "formatter": "exec_metrics",
             "stream": "ext://sys.stdout"
         },
 
@@ -87,7 +94,7 @@
         },
         "exec_metrics": {
             "level": "WARNING",
-            "handlers": ["file_exec_metrics", "json_file_exec_metrics"],
+            "handlers": ["console_exec_metrics", "file_exec_metrics", "json_file_exec_metrics"],
             "propagate": false
         },
         "benchmark_metrics": {

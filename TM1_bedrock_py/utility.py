@@ -37,6 +37,8 @@ def dataframe_verbose_logger(df: DataFrame, step_number: str = None, output_dir=
         filepath = generate_valid_file_path(output_dir, filename)
 
         df.to_csv(path_or_buf=filepath, index=False)
+        num_rows_to_log = 5
+        basic_logger.debug(f"First {num_rows_to_log} rows of DataFrame: {df.head(num_rows_to_log)}")
         basic_logger.debug(f"DataFrame logged to {filepath}")
 
 
@@ -189,6 +191,8 @@ def __get_kwargs_dict_from_set_mdx_list(mdx_expressions: List[str]) -> Dict[str,
         if match:
             key = match.group(1).lower().replace(" ", "")
             kwargs_dict[key] = mdx
+        else:
+            raise ValueError
     return kwargs_dict
 
 

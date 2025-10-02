@@ -15,6 +15,8 @@ setup(
     version=read_version(),
     description="A python modul for TM1 Bedrock.",
     packages=["TM1_bedrock_py"],
+    include_package_data=True,
+    package_data={"TM1_bedrock_py": ["logging.json"]},
     author="",
     author_email="",
     url="",
@@ -42,5 +44,5 @@ setup(
             "matplotlib>=3.10.1,<4.0.0"
         ]
     },
-    python_requires=">=3.7"
+    python_requires=">=3.8"
 )
