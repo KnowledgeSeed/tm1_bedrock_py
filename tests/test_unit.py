@@ -56,16 +56,16 @@ def test_get_kwargs_dict_from_set_mdx_list_success(set_mdx_list, expected_kwargs
     kwargs = utility.__get_kwargs_dict_from_set_mdx_list(set_mdx_list)
     assert kwargs == expected_kwargs
 
-
+"""
 # Test focusing on filtering, edge cases, and empty results
 @parametrize_from_file
-def test_get_kwargs_dict_from_set_mdx_list_filtering(set_mdx_list, expected_kwargs):
-    """
+def test_get_kwargs_dict_from_set_mdx_list_filtering(set_mdx_list, expected_exception):
+    
     Tests filtering of invalid/non-matching strings and edge cases.
-    """
+    
     kwargs = utility.__get_kwargs_dict_from_set_mdx_list(set_mdx_list)
-    assert kwargs == expected_kwargs
-
+    assert kwargs == expected_exception
+"""
 
 @parametrize_from_file
 def test_get_dimensions_from_set_mdx_list_success(mdx_sets, expected_dimensions):
@@ -78,6 +78,9 @@ def test_get_dimensions_from_set_mdx_list_success(mdx_sets, expected_dimensions)
 
 @parametrize_from_file
 def test__get_kwargs_dict_from_set_mdx_list_fail(mdx_expressions, expected_exception):
+    """
+    Tests if the function raises a ValueError if at least one expression does not match.
+    """
     exception_type = eval(expected_exception)
     with pytest.raises(exception_type):
         utility.__get_kwargs_dict_from_set_mdx_list(mdx_expressions)

@@ -57,18 +57,6 @@ test_get_kwargs_dict_from_set_mdx_list_success:
       "scenario1": "{[Scenario 1].[Actual]}"
     }
   -
-    # Mix of valid and invalid/non-matching strings
-    set_mdx_list: [
-      "{[Geography].[City].[London]}",
-      "This is just a string",
-      "{[Account].[Net Income]}",
-      "{Malformed Structure]"
-    ]
-    expected_kwargs: {
-      "geography": "{[Geography].[City].[London]}",
-      "account": "{[Account].[Net Income]}"
-    }
-  -
     # Duplicate keys (after normalization) - last one should win
     set_mdx_list: [
       "{[ Measures ].[Sales Amount]}",
@@ -86,6 +74,9 @@ test_get_kwargs_dict_from_set_mdx_list_success:
     expected_kwargs: {
       "department": "{[ Department ].[Finance]}"
     }
+  -
+    set_mdx_list: [ ]
+    expected_kwargs: { }
 
 test__get_kwargs_dict_from_set_mdx_list_fail:
   -
@@ -97,49 +88,45 @@ test__get_kwargs_dict_from_set_mdx_list_fail:
   -
     mdx_expressions: ["{[AnotherDim].[Member]}", null]
     expected_exception: "TypeError"
-
-test_get_kwargs_dict_from_set_mdx_list_filtering:
   -
-    set_mdx_list: []
-    expected_kwargs: {}
+    # Mix of valid and invalid/non-matching strings
+    mdx_expressions: [
+      "{[Geography].[City].[London]}",
+      "This is just a string",
+      "{[Account].[Net Income]}",
+      "{Malformed Structure]"
+    ]
+    expected_exception: "ValueError"
   -
-    set_mdx_list: [
+    mdx_expressions: [
       "Just a plain string",
       "Another string without the pattern",
       "12345"
     ]
-    expected_kwargs: {}
+    expected_exception: "ValueError"
   -
-    set_mdx_list: [
+    mdx_expressions: [
       "{Dimension.Member}",
       "[Dimension].[Member]",
       "{[ Dimension Name ]",
       " { [ Dim ] } extra text"
     ]
-    expected_kwargs: {
-       "dimensionname": "{[ Dimension Name ]",
-       "dim": " { [ Dim ] } extra text"
-    }
+    expected_exception: "ValueError"
   -
-    set_mdx_list: [
+    mdx_expressions: [
       "{Dimension.Member}",
       "[Dimension].[Member]",
       "{[ Dimension Name ]",
       "{ [ ] }",
       "{ [ No Closing Bracket "
     ]
-    expected_kwargs: {
-        "dimensionname": "{[ Dimension Name ]",
-        "": "{ [ ] }"
-    }
+    expected_exception: "ValueError"
   -
-    set_mdx_list: ["", "   "]
-    expected_kwargs: {}
+    mdx_expressions: ["", "   "]
+    expected_exception: "ValueError"
   -
-    set_mdx_list: [None, "{[ValidDim].[Value]}"]
-    expected_kwargs: {
-       "validdim": "{[ValidDim].[Value]}"
-    }
+    mdx_expressions: [None, "{[ValidDim].[Value]}"]
+    expected_exception: "ValueError"
 
 test_get_dimensions_from_set_mdx_list_success:
   -
@@ -1285,7 +1272,6 @@ test_sql_normalize_relabel:
     expected: {
       "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
       "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
-      "Value": [1.0, 1.0]
     }
 
 test_sql_normalize_valuecol_assign:
@@ -1317,7 +1303,6 @@ test_sql_normalize_keep_and_drop:
     expected: {
       "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
       "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
-      "Value": [ 1.0, 1.0]
     }
 
 test_mssql_loader_replace:
