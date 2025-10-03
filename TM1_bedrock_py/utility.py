@@ -5,7 +5,7 @@ import threading
 import time
 import locale
 import itertools
-from typing import Iterable, Callable, List, Dict, Optional, Any, Union, Iterator, Tuple
+from typing import Iterable, Callable, List, Dict, Optional, Any, Union, Iterator, Tuple, Literal
 
 from mdxpy import MdxBuilder, MdxHierarchySet, Member
 from sqlalchemy import create_engine, inspect
@@ -27,19 +27,27 @@ def generate_valid_file_path(output_dir: str, filename: str):
     return filepath
 
 
-def dataframe_verbose_logger(df: DataFrame, step_number: str = None, output_dir="../logs/dataframe_logs",
-                             df_verbose_logging: bool = False, **_kwargs):
-    if df_verbose_logging and df is not None:
-        thread_id = threading.get_ident()
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+def dataframe_verbose_logger(
+        df: DataFrame,
+        step_number: str = None,
+        output_dir="../logs/dataframe_logs",
+        verbose_logging_mode: Optional[Literal["file", "print_consol"]] = None,
+        **_kwargs
+):
+    if verbose_logging_mode and df is not None:
+        if verbose_logging_mode is "file":
+            thread_id = threading.get_ident()
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
-        filename = f"{step_number}_{thread_id}_{timestamp}.csv"
-        filepath = generate_valid_file_path(output_dir, filename)
+            filename = f"{step_number}_{thread_id}_{timestamp}.csv"
+            filepath = generate_valid_file_path(output_dir, filename)
 
-        df.to_csv(path_or_buf=filepath, index=False)
-        num_rows_to_log = 5
-        basic_logger.debug(f"First {num_rows_to_log} rows of DataFrame: {df.head(num_rows_to_log)}")
-        basic_logger.debug(f"DataFrame logged to {filepath}")
+            df.to_csv(path_or_buf=filepath, index=False)
+            basic_logger.debug(f"DataFrame logged to {filepath}")
+
+        if verbose_logging_mode is "print_consol":
+            num_rows_to_log = 5
+            basic_logger.debug(f"First {num_rows_to_log} rows of DataFrame: {df.head(num_rows_to_log)}")
 
 
 def execution_metrics_logger(logger, func, *args, **kwargs):

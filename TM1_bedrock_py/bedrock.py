@@ -7,7 +7,7 @@ import math
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 from string import Template
-from typing import Callable, List, Dict, Optional, Any, Sequence, Hashable, Mapping, Iterable
+from typing import Callable, List, Dict, Optional, Any, Sequence, Hashable, Mapping, Iterable, Literal
 
 from TM1py.Exceptions import TM1pyRestException
 from requests.cookies import CookieConflictError
@@ -50,7 +50,7 @@ def data_copy_intercube(
         increment: Optional[bool] = False,
         sum_numeric_duplicates: Optional[bool] = True,
         logging_level: Optional[str] = "ERROR",
-        df_verbose_logging: Optional[bool] = False,
+        verbose_logging_mode: Optional[Literal["file", "print_consol"]] = None,
         **kwargs
 ) -> None:
     """
@@ -230,7 +230,7 @@ def data_copy_intercube(
     transformer.dataframe_add_column_assign_value(
         dataframe=dataframe, column_value=data_metadata_queryspecific.get_filter_dict(), **kwargs)
 
-    utility.dataframe_verbose_logger(dataframe, "start_data_copy_intercube", df_verbose_logging=df_verbose_logging)
+    utility.dataframe_verbose_logger(dataframe, "start_data_copy_intercube", verbose_logging_mode=verbose_logging_mode)
 
     if ignore_missing_elements:
         transformer.dataframe_itemskip_elements(
@@ -245,7 +245,7 @@ def data_copy_intercube(
             sql_engine=sql_engine,
             sql_function=sql_function,
             csv_function=csv_function,
-            df_verbose_logging=df_verbose_logging,
+            verbose_logging_mode=verbose_logging_mode,
             **kwargs
         )
         shared_mapping_df = shared_mapping["mapping_df"]
@@ -263,7 +263,7 @@ def data_copy_intercube(
     initial_row_count = len(dataframe)
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
-        df_verbose_logging=df_verbose_logging, **kwargs)
+        verbose_logging_mode=verbose_logging_mode, **kwargs)
     final_row_count = len(dataframe)
     basic_logger.debug(f"initial row count was: {initial_row_count}, Final row count was: {final_row_count}")
     if initial_row_count < final_row_count:
@@ -298,7 +298,7 @@ def data_copy_intercube(
                           cube_name=target_cube_name,
                           clear_set_mdx_list=target_clear_set_mdx_list,
                           **kwargs)
-    utility.dataframe_verbose_logger(dataframe, "end_data_copy_intercube", df_verbose_logging=df_verbose_logging)
+    utility.dataframe_verbose_logger(dataframe, "end_data_copy_intercube", verbose_logging_mode=verbose_logging_mode)
 
     target_cube_dims = target_metadata.get_cube_dims()
     loader.dataframe_to_cube(
@@ -352,7 +352,7 @@ def data_copy(
         increment: bool = False,
         sum_numeric_duplicates: bool = True,
         logging_level: str = "ERROR",
-        df_verbose_logging: Optional[bool] = False,
+        verbose_logging_mode: Optional[Literal["file", "print_consol"]] = None,
         **kwargs
 ) -> None:
     """
@@ -508,7 +508,7 @@ def data_copy(
         **kwargs
     )
 
-    utility.dataframe_verbose_logger(dataframe, "start_data_copy", df_verbose_logging=df_verbose_logging)
+    utility.dataframe_verbose_logger(dataframe, "start_data_copy", verbose_logging_mode=verbose_logging_mode)
 
     if ignore_missing_elements:
         transformer.dataframe_itemskip_elements(
@@ -523,7 +523,7 @@ def data_copy(
             sql_engine=sql_engine,
             sql_function=sql_function,
             csv_function=csv_function,
-            df_verbose_logging=df_verbose_logging,
+            verbose_logging_mode=verbose_logging_mode,
             **kwargs
         )
         shared_mapping_df = shared_mapping["mapping_df"]
@@ -540,7 +540,8 @@ def data_copy(
 
     initial_row_count = len(dataframe)
     dataframe = transformer.dataframe_execute_mappings(
-        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df, **kwargs)
+        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
+        verbose_logging_mode=verbose_logging_mode, **kwargs)
     final_row_count = len(dataframe)
     basic_logger.debug(f"initial row count was: {initial_row_count}, Final row count was: {final_row_count}")
     if initial_row_count < final_row_count:
@@ -566,7 +567,7 @@ def data_copy(
                           cube_name=cube_name,
                           clear_set_mdx_list=target_clear_set_mdx_list,
                           **kwargs)
-    utility.dataframe_verbose_logger(dataframe, "end_data_copy", df_verbose_logging=df_verbose_logging)
+    utility.dataframe_verbose_logger(dataframe, "end_data_copy", verbose_logging_mode=verbose_logging_mode)
 
     loader.dataframe_to_cube(
         tm1_service=target_tm1_service,
@@ -824,6 +825,7 @@ def load_sql_data_to_tm1_cube(
         increment: bool = False,
         sum_numeric_duplicates: bool = True,
         logging_level: str = "ERROR",
+        verbose_logging_mode: Optional[Literal["file", "print_consol"]] = None,
         _execution_id: int = 0,
         **kwargs
 ) -> None:
@@ -975,6 +977,8 @@ def load_sql_data_to_tm1_cube(
         transformer.dataframe_itemskip_elements(
             dataframe=dataframe, check_dfs=target_metadata.get_dimension_check_dfs())
 
+    utility.dataframe_verbose_logger(dataframe, "start_load_sql_data_to_tm1_cube", verbose_logging_mode=verbose_logging_mode)
+
     shared_mapping_df = None
     if shared_mapping:
         extractor.generate_dataframe_for_mapping_info(
@@ -983,7 +987,8 @@ def load_sql_data_to_tm1_cube(
             mdx_function=mdx_function,
             sql_engine=sql_engine,
             sql_function=sql_function,
-            csv_function=csv_function
+            csv_function=csv_function,
+            verbose_logging_mode=verbose_logging_mode,
         )
         shared_mapping_df = shared_mapping["mapping_df"]
 
@@ -998,7 +1003,8 @@ def load_sql_data_to_tm1_cube(
 
     initial_row_count = len(dataframe)
     dataframe = transformer.dataframe_execute_mappings(
-        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df, **kwargs)
+        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
+        verbose_logging_mode=verbose_logging_mode, **kwargs)
     final_row_count = len(dataframe)
     if initial_row_count != final_row_count:
         filtered_count = initial_row_count - final_row_count
@@ -1021,6 +1027,8 @@ def load_sql_data_to_tm1_cube(
                           cube_name=cube_name,
                           clear_set_mdx_list=target_clear_set_mdx_list,
                           **kwargs)
+
+    utility.dataframe_verbose_logger(dataframe, "end_load_sql_data_to_tm1_cube", verbose_logging_mode=verbose_logging_mode)
 
     loader.dataframe_to_cube(
         tm1_service=tm1_service,
@@ -1073,6 +1081,7 @@ def load_tm1_cube_to_sql_table(
         dtype: Optional[dict] = None,
         decimal: Optional[str] = None,
         logging_level: str = "ERROR",
+        verbose_logging_mode: Optional[Literal["file", "print_consol"]] = None,
         _execution_id: int = 0,
         **kwargs
 ) -> None:
@@ -1194,6 +1203,8 @@ def load_tm1_cube_to_sql_table(
 
     transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata_queryspecific.get_filter_dict())
 
+    utility.dataframe_verbose_logger(dataframe, "start_load_tm1_cube_to_sql_table", verbose_logging_mode=verbose_logging_mode)
+
     shared_mapping_df = None
     if shared_mapping:
         extractor.generate_dataframe_for_mapping_info(
@@ -1202,7 +1213,8 @@ def load_tm1_cube_to_sql_table(
             mdx_function=mdx_function,
             sql_engine=sql_engine,
             sql_function=sql_function,
-            csv_function=csv_function
+            csv_function=csv_function,
+            verbose_logging_mode=verbose_logging_mode,
         )
         shared_mapping_df = shared_mapping["mapping_df"]
 
@@ -1217,7 +1229,8 @@ def load_tm1_cube_to_sql_table(
 
     initial_row_count = len(dataframe)
     dataframe = transformer.dataframe_execute_mappings(
-        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df, **kwargs)
+        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
+        verbose_logging_mode=verbose_logging_mode, **kwargs)
     final_row_count = len(dataframe)
     if initial_row_count != final_row_count:
         filtered_count = initial_row_count - final_row_count
@@ -1237,6 +1250,8 @@ def load_tm1_cube_to_sql_table(
         loader.clear_table(engine=sql_engine,
                            table_name=target_table_name,
                            delete_statement=sql_delete_statement)
+
+    utility.dataframe_verbose_logger(dataframe, "end_load_tm1_cube_to_sql_table", verbose_logging_mode=verbose_logging_mode)
 
     loader.dataframe_to_sql(
         dataframe=dataframe,
@@ -1690,7 +1705,7 @@ def load_csv_data_to_tm1_cube(
         clear_target: Optional[bool] = False,
         logging_level: str = "ERROR",
         _execution_id: int = 0,
-        df_verbose_logging: bool = False,
+        verbose_logging_mode: Optional[Literal["file", "print_consol"]] = None,
         data_mdx: Optional[str] = None,
         **kwargs
 ) -> None:
@@ -1783,7 +1798,7 @@ def load_csv_data_to_tm1_cube(
             data to TM1. Recommended.
         logging_level: The logging verbosity level (e.g., "DEBUG", "INFO").
         _execution_id: An identifier used by async executors for logging.
-        df_verbose_logging: If True, intermediate DataFrames will be logged to
+        verbose_logging_mode: If True, intermediate DataFrames will be logged to
             CSV files for debugging.
         data_mdx: An optional MDX query used solely for retrieving metadata if the
             target cube structure needs to be inferred from a query context.
@@ -1874,7 +1889,7 @@ def load_csv_data_to_tm1_cube(
             tm1_service=tm1_service,
             mdx_function=mdx_function,
             csv_function=csv_function,
-            df_verbose_logging=df_verbose_logging,
+            verbose_logging_mode=verbose_logging_mode,
             **kwargs
         )
         shared_mapping_df = shared_mapping["mapping_df"]
@@ -1889,7 +1904,8 @@ def load_csv_data_to_tm1_cube(
 
     initial_row_count = len(dataframe)
     dataframe = transformer.dataframe_execute_mappings(
-        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df, **kwargs)
+        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
+        verbose_logging_mode=verbose_logging_mode, **kwargs)
     final_row_count = len(dataframe)
     if initial_row_count != final_row_count:
         filtered_count = initial_row_count - final_row_count
@@ -1922,6 +1938,8 @@ def load_csv_data_to_tm1_cube(
                           cube_name=cube_name,
                           clear_set_mdx_list=target_clear_set_mdx_list,
                           **kwargs)
+
+    utility.dataframe_verbose_logger(dataframe, "end_load_csv_data_to_tm1_cube", verbose_logging_mode=verbose_logging_mode)
 
     loader.dataframe_to_cube(
         tm1_service=tm1_service,
@@ -1971,6 +1989,7 @@ def load_tm1_cube_to_csv_file(
         clear_source: Optional[bool] = False,
         source_clear_set_mdx_list: Optional[List[str]] = None,
         logging_level: str = "ERROR",
+        verbose_logging_mode: Optional[Literal["file", "print_consol"]] = None,
         _execution_id: int = 0,
         **kwargs
 ) -> None:
@@ -2076,13 +2095,16 @@ def load_tm1_cube_to_csv_file(
 
     transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
 
+    utility.dataframe_verbose_logger(dataframe, "start_load_tm1_cube_to_csv_file", verbose_logging_mode=verbose_logging_mode)
+
     shared_mapping_df = None
     if shared_mapping:
         extractor.generate_dataframe_for_mapping_info(
             mapping_info=shared_mapping,
             tm1_service=tm1_service,
             mdx_function=mdx_function,
-            csv_function=csv_function
+            csv_function=csv_function,
+            verbose_logging_mode=verbose_logging_mode
         )
         shared_mapping_df = shared_mapping["mapping_df"]
 
@@ -2095,7 +2117,8 @@ def load_tm1_cube_to_csv_file(
 
     initial_row_count = len(dataframe)
     dataframe = transformer.dataframe_execute_mappings(
-        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df, **kwargs)
+        data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
+        verbose_logging_mode=verbose_logging_mode, **kwargs)
     final_row_count = len(dataframe)
     if initial_row_count != final_row_count:
         filtered_count = initial_row_count - final_row_count
