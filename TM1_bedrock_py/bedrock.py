@@ -19,6 +19,7 @@ from TM1_bedrock_py import utility, transformer, loader, extractor, basic_logger
 @utility.log_benchmark_metrics
 @utility.log_exec_metrics
 def data_copy_intercube(
+        target_cube_name: str,
         tm1_service: Optional[Any],
         target_tm1_service: Optional[Any] = None,
         data_mdx: Optional[str] = None,
@@ -30,7 +31,6 @@ def data_copy_intercube(
         skip_zeros: Optional[bool] = False,
         skip_consolidated_cells: Optional[bool] = False,
         skip_rule_derived_cells: Optional[bool] = False,
-        target_cube_name: Optional[str] = None,
         target_metadata_function: Optional[Callable[..., Any]] = None,
         mapping_steps: Optional[List[Dict]] = None,
         shared_mapping: Optional[Dict] = None,
@@ -206,6 +206,14 @@ def data_copy_intercube(
         **kwargs
     )
 
+    if dataframe.empty:
+        if clear_target:
+            loader.clear_cube(tm1_service=target_tm1_service,
+                              cube_name=target_cube_name,
+                              clear_set_mdx_list=target_clear_set_mdx_list,
+                              **kwargs)
+        return
+
     data_metadata_queryspecific = utility.TM1CubeObjectMetadata.collect(
         mdx=data_mdx, collect_base_cube_metadata=False)
     source_cube_name = data_metadata_queryspecific.get_cube_name()
@@ -217,24 +225,11 @@ def data_copy_intercube(
         collect_dim_element_identifiers=ignore_missing_elements,
         **kwargs
     )
-    target_cube_name = target_metadata.get_cube_name()
-
-    if dataframe.empty:
-        if clear_target:
-            loader.clear_cube(tm1_service=target_tm1_service,
-                              cube_name=target_cube_name,
-                              clear_set_mdx_list=target_clear_set_mdx_list,
-                              **kwargs)
-        return
 
     transformer.dataframe_add_column_assign_value(
         dataframe=dataframe, column_value=data_metadata_queryspecific.get_filter_dict(), **kwargs)
 
     utility.dataframe_verbose_logger(dataframe, "start_data_copy_intercube", verbose_logging_mode=verbose_logging_mode)
-
-    if ignore_missing_elements:
-        transformer.dataframe_itemskip_elements(
-            dataframe=dataframe, check_dfs=target_metadata.get_dimension_check_dfs(), **kwargs)
 
     shared_mapping_df = None
     if shared_mapping:
@@ -261,9 +256,11 @@ def data_copy_intercube(
     )
 
     initial_row_count = len(dataframe)
+
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
         verbose_logging_mode=verbose_logging_mode, **kwargs)
+
     final_row_count = len(dataframe)
     basic_logger.debug(f"initial row count was: {initial_row_count}, Final row count was: {final_row_count}")
     if initial_row_count < final_row_count:
@@ -286,6 +283,18 @@ def data_copy_intercube(
         target_dim_mapping=target_dim_mapping,
         **kwargs
     )
+
+    if ignore_missing_elements:
+        transformer.dataframe_itemskip_elements(
+            dataframe=dataframe, check_dfs=target_metadata.get_dimension_check_dfs(), **kwargs)
+
+    if dataframe.empty:
+        if clear_target:
+            loader.clear_cube(tm1_service=target_tm1_service,
+                              cube_name=target_cube_name,
+                              clear_set_mdx_list=target_clear_set_mdx_list,
+                              **kwargs)
+        return
 
     if value_function is not None:
         transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
@@ -342,7 +351,6 @@ def data_copy(
         mapping_steps: Optional[List[Dict]] = None,
         shared_mapping: Optional[Dict] = None,
         value_function: Optional[Callable[..., Any]] = None,
-        ignore_missing_elements: bool = False,
         target_clear_set_mdx_list: Optional[List[str]] = None,
         clear_target: Optional[bool] = False,
         async_write: bool = False,
@@ -498,7 +506,7 @@ def data_copy(
     data_metadata = utility.TM1CubeObjectMetadata.collect(
         tm1_service=target_tm1_service, cube_name=cube_name,
         metadata_function=data_metadata_function,
-        collect_dim_element_identifiers=ignore_missing_elements,
+        collect_dim_element_identifiers=False,
         **kwargs)
     cube_dims = data_metadata.get_cube_dims()
 
@@ -508,11 +516,8 @@ def data_copy(
         **kwargs
     )
 
-    utility.dataframe_verbose_logger(dataframe, "start_data_copy", verbose_logging_mode=verbose_logging_mode)
-
-    if ignore_missing_elements:
-        transformer.dataframe_itemskip_elements(
-            dataframe=dataframe, check_dfs=data_metadata.get_dimension_check_dfs(), **kwargs)
+    utility.dataframe_verbose_logger(
+        dataframe, "start_data_copy", verbose_logging_mode=verbose_logging_mode)
 
     shared_mapping_df = None
     if shared_mapping:
@@ -807,9 +812,6 @@ def load_sql_data_to_tm1_cube(
         sql_function: Optional[Callable[..., DataFrame]] = None,
         mapping_steps: Optional[List[Dict]] = None,
         shared_mapping: Optional[Dict] = None,
-        source_dim_mapping: Optional[dict] = None,
-        related_dimensions: Optional[dict] = None,
-        target_dim_mapping: Optional[dict] = None,
         value_function: Optional[Callable[..., Any]] = None,
         ignore_missing_elements: bool = False,
         target_clear_set_mdx_list: Optional[List[str]] = None,
@@ -923,14 +925,6 @@ def load_sql_data_to_tm1_cube(
     utility.set_logging_level(logging_level=logging_level)
     basic_logger.info("Execution started.")
 
-    target_metadata = utility.TM1CubeObjectMetadata.collect(
-        tm1_service=tm1_service,
-        cube_name=target_cube_name,
-        metadata_function=target_metadata_function,
-        collect_dim_element_identifiers=ignore_missing_elements,
-        **kwargs
-    )
-
     dataframe = extractor.sql_to_dataframe(
         sql_function=sql_function,
         engine=sql_engine,
@@ -941,13 +935,27 @@ def load_sql_data_to_tm1_cube(
         chunksize=chunksize
     )
 
+    if dataframe.empty:
+        if clear_target:
+            loader.clear_cube(tm1_service=tm1_service,
+                              cube_name=target_cube_name,
+                              clear_set_mdx_list=target_clear_set_mdx_list,
+                              **kwargs)
+        return
+
+    target_metadata = utility.TM1CubeObjectMetadata.collect(
+        tm1_service=tm1_service,
+        cube_name=target_cube_name,
+        metadata_function=target_metadata_function,
+        collect_dim_element_identifiers=ignore_missing_elements,
+        **kwargs
+    )
+
     transformer.normalize_table_source_dataframe(
         dataframe=dataframe,
         column_mapping=sql_column_mapping,
         columns_to_drop=sql_columns_to_drop
     )
-
-    cube_name = target_metadata.get_cube_name()
 
     try:
         tm1_service.server.get_server_name()
@@ -959,19 +967,19 @@ def load_sql_data_to_tm1_cube(
             basic_logger.error(f"Lost TM1 connection. Error {e}", exc_info=True)
             raise e
 
-    if dataframe.empty:
-        if clear_target:
-            loader.clear_cube(tm1_service=tm1_service,
-                              cube_name=cube_name,
-                              clear_set_mdx_list=target_clear_set_mdx_list,
-                              **kwargs)
-        return
-
     cube_dims = target_metadata.get_cube_dims()
 
     if ignore_missing_elements:
         transformer.dataframe_itemskip_elements(
             dataframe=dataframe, check_dfs=target_metadata.get_dimension_check_dfs())
+
+    if dataframe.empty:
+        if clear_target:
+            loader.clear_cube(tm1_service=tm1_service,
+                              cube_name=target_cube_name,
+                              clear_set_mdx_list=target_clear_set_mdx_list,
+                              **kwargs)
+        return
 
     utility.dataframe_verbose_logger(dataframe, "start_load_sql_data_to_tm1_cube", verbose_logging_mode=verbose_logging_mode)
 
@@ -1006,13 +1014,6 @@ def load_sql_data_to_tm1_cube(
         filtered_count = initial_row_count - final_row_count
         basic_logger.warning(f"Number of rows filtered out through inner joins: {filtered_count}/{initial_row_count}")
 
-    transformer.dataframe_redimension_and_transform(
-        dataframe=dataframe,
-        source_dim_mapping=source_dim_mapping,
-        related_dimensions=related_dimensions,
-        target_dim_mapping=target_dim_mapping
-    )
-
     if value_function is not None:
         transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
 
@@ -1020,7 +1021,7 @@ def load_sql_data_to_tm1_cube(
 
     if clear_target:
         loader.clear_cube(tm1_service=tm1_service,
-                          cube_name=cube_name,
+                          cube_name=target_cube_name,
                           clear_set_mdx_list=target_clear_set_mdx_list,
                           **kwargs)
 
@@ -1029,7 +1030,7 @@ def load_sql_data_to_tm1_cube(
     loader.dataframe_to_cube(
         tm1_service=tm1_service,
         dataframe=dataframe,
-        cube_name=cube_name,
+        cube_name=target_cube_name,
         cube_dims=cube_dims,
         async_write=async_write,
         use_ti=use_ti,
@@ -1197,9 +1198,13 @@ def load_tm1_cube_to_sql_table(
     data_metadata_queryspecific = utility.TM1CubeObjectMetadata.collect(
         mdx=data_mdx, collect_base_cube_metadata=False)
 
-    transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata_queryspecific.get_filter_dict())
+    transformer.dataframe_add_column_assign_value(
+        dataframe=dataframe, column_value=data_metadata_queryspecific.get_filter_dict()
+    )
 
-    utility.dataframe_verbose_logger(dataframe, "start_load_tm1_cube_to_sql_table", verbose_logging_mode=verbose_logging_mode)
+    utility.dataframe_verbose_logger(
+        dataframe, "start_load_tm1_cube_to_sql_table", verbose_logging_mode=verbose_logging_mode
+    )
 
     shared_mapping_df = None
     if shared_mapping:
@@ -1247,7 +1252,9 @@ def load_tm1_cube_to_sql_table(
                            table_name=target_table_name,
                            delete_statement=sql_delete_statement)
 
-    utility.dataframe_verbose_logger(dataframe, "end_load_tm1_cube_to_sql_table", verbose_logging_mode=verbose_logging_mode)
+    utility.dataframe_verbose_logger(
+        dataframe, "end_load_tm1_cube_to_sql_table", verbose_logging_mode=verbose_logging_mode
+    )
 
     loader.dataframe_to_sql(
         dataframe=dataframe,
@@ -1684,9 +1691,6 @@ def load_csv_data_to_tm1_cube(
         memory_map: bool = True,
         mapping_steps: Optional[List[Dict]] = None,
         shared_mapping: Optional[Dict] = None,
-        source_dim_mapping: Optional[dict] = None,
-        related_dimensions: Optional[dict] = None,
-        target_dim_mapping: Optional[dict] = None,
         value_function: Optional[Callable[..., Any]] = None,
         ignore_missing_elements: bool = False,
         target_clear_set_mdx_list: Optional[List[str]] = None,
@@ -1817,17 +1821,6 @@ def load_csv_data_to_tm1_cube(
     utility.set_logging_level(logging_level=logging_level)
     basic_logger.info("Execution started.")
 
-    target_metadata = utility.TM1CubeObjectMetadata.collect(
-        tm1_service=tm1_service,
-        cube_name=target_cube_name,
-        metadata_function=target_metadata_function,
-        mdx=data_mdx,
-        collect_dim_element_identifiers=ignore_missing_elements,
-        collect_measure_types=validate_datatypes,
-        **kwargs
-    )
-    cube_name = target_metadata.get_cube_name()
-
     dataframe = extractor.csv_to_dataframe(
         csv_file_path=source_csv_file_path,
         sep=delimiter,
@@ -1843,6 +1836,24 @@ def load_csv_data_to_tm1_cube(
         **kwargs
     )
 
+    if dataframe.empty:
+        if clear_target:
+            loader.clear_cube(tm1_service=tm1_service,
+                              cube_name=target_cube_name,
+                              clear_set_mdx_list=target_clear_set_mdx_list,
+                              **kwargs)
+        return
+
+    target_metadata = utility.TM1CubeObjectMetadata.collect(
+        tm1_service=tm1_service,
+        cube_name=target_cube_name,
+        metadata_function=target_metadata_function,
+        mdx=data_mdx,
+        collect_dim_element_identifiers=ignore_missing_elements,
+        collect_measure_types=validate_datatypes,
+        **kwargs
+    )
+
     transformer.normalize_table_source_dataframe(
         dataframe=dataframe,
         column_mapping=csv_column_mapping,
@@ -1855,14 +1866,6 @@ def load_csv_data_to_tm1_cube(
         **kwargs
     )
 
-    if dataframe.empty:
-        if clear_target:
-            loader.clear_cube(tm1_service=tm1_service,
-                              cube_name=cube_name,
-                              clear_set_mdx_list=target_clear_set_mdx_list,
-                              **kwargs)
-        return
-
     cube_dims = target_metadata.get_cube_dims()
 
     basic_logger.info("Converting dimension columns to string type for consistency.")
@@ -1873,6 +1876,14 @@ def load_csv_data_to_tm1_cube(
     if ignore_missing_elements:
         transformer.dataframe_itemskip_elements(
             dataframe=dataframe, check_dfs=target_metadata.get_dimension_check_dfs())
+
+    if dataframe.empty:
+        if clear_target:
+            loader.clear_cube(tm1_service=tm1_service,
+                              cube_name=target_cube_name,
+                              clear_set_mdx_list=target_clear_set_mdx_list,
+                              **kwargs)
+        return
 
     shared_mapping_df = None
     if shared_mapping:
@@ -1903,13 +1914,6 @@ def load_csv_data_to_tm1_cube(
         filtered_count = initial_row_count - final_row_count
         basic_logger.warning(f"Number of rows filtered out through inner joins: {filtered_count}/{initial_row_count}")
 
-    transformer.dataframe_redimension_and_transform(
-        dataframe=dataframe,
-        source_dim_mapping=source_dim_mapping,
-        related_dimensions=related_dimensions,
-        target_dim_mapping=target_dim_mapping
-    )
-
     if value_function is not None:
         transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
 
@@ -1927,16 +1931,18 @@ def load_csv_data_to_tm1_cube(
 
     if clear_target:
         loader.clear_cube(tm1_service=tm1_service,
-                          cube_name=cube_name,
+                          cube_name=target_cube_name,
                           clear_set_mdx_list=target_clear_set_mdx_list,
                           **kwargs)
 
-    utility.dataframe_verbose_logger(dataframe, "end_load_csv_data_to_tm1_cube", verbose_logging_mode=verbose_logging_mode)
+    utility.dataframe_verbose_logger(
+        dataframe, "end_load_csv_data_to_tm1_cube", verbose_logging_mode=verbose_logging_mode
+    )
 
     loader.dataframe_to_cube(
         tm1_service=tm1_service,
         dataframe=dataframe,
-        cube_name=cube_name,
+        cube_name=target_cube_name,
         cube_dims=cube_dims,
         async_write=async_write,
         use_ti=use_ti,
