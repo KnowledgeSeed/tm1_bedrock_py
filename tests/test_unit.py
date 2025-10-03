@@ -602,17 +602,9 @@ def test_sql_normalize_relabel(sql_engine_factory, dataframe, expected, column_m
 
 
 @parametrize_from_file
-def test_sql_normalize_valuecol_assign(sql_engine_factory, dataframe, expected, valuecol):
+def test_sql_normalize_drop(sql_engine_factory, dataframe, expected, drop):
     df = pd.DataFrame(dataframe)
-    transformer.normalize_table_source_dataframe(dataframe=df, value_column_name=valuecol)
-    expected_df = pd.DataFrame(expected)
-    pd.testing.assert_frame_equal(df, expected_df)
-
-
-@parametrize_from_file
-def test_sql_normalize_keep_and_drop(sql_engine_factory, dataframe, expected, keep, drop):
-    df = pd.DataFrame(dataframe)
-    transformer.normalize_table_source_dataframe(dataframe=df, columns_to_keep=keep, drop_other_columns=drop)
+    transformer.normalize_table_source_dataframe(dataframe=df, columns_to_drop=drop)
     expected_df = pd.DataFrame(expected)
     pd.testing.assert_frame_equal(df, expected_df)
 

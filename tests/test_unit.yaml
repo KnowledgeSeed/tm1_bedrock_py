@@ -1290,7 +1290,7 @@ test_sql_normalize_valuecol_assign:
       "UnitTestIntColumn2": [ 123, 123 ]
     }
 
-test_sql_normalize_keep_and_drop:
+test_sql_normalize_drop:
   -
     dataframe: {
       "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
@@ -1298,8 +1298,7 @@ test_sql_normalize_keep_and_drop:
       "UnitTestFloatColumn1": [ 12.34, 12.34 ],
       "UnitTestIntColumn2": [ 123, 123 ]
     }
-    keep: ["UnitTestStringColumn1", "UnitTestStringColumn2"]
-    drop: True
+    drop: ["UnitTestFloatColumn1", "UnitTestIntColumn2"]
     expected: {
       "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
       "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],

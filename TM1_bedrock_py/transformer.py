@@ -349,22 +349,13 @@ def dataframe_redimension_and_transform(
 def normalize_table_source_dataframe(
         dataframe: DataFrame,
         column_mapping: Optional[dict] = None,
-        value_column_name: Optional[str] = None,
-        columns_to_keep: Optional[list] = None,
-        drop_other_columns: bool = False
+        columns_to_drop: Optional[list] = None
 ) -> None:
     if column_mapping is None:
         column_mapping = {}
-    if columns_to_keep is None:
-        columns_to_keep = []
     if column_mapping:
         dataframe_relabel(dataframe=dataframe, columns=column_mapping)
-    if value_column_name:
-        dataframe_relabel(dataframe=dataframe, columns={value_column_name: "Value"})
-    if drop_other_columns:
-        columns_to_drop = list(
-            set(dataframe.columns) - set(columns_to_keep) - set(column_mapping.values()) - {'Value'}
-        )
+    if columns_to_drop:
         dataframe_drop_column(dataframe=dataframe, column_list=columns_to_drop)
 
 

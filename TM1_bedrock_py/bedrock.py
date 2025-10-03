@@ -801,9 +801,7 @@ def load_sql_data_to_tm1_cube(
         sql_table_columns: Optional[str] = None,
         sql_schema: Optional[str] = None,
         sql_column_mapping: Optional[dict] = None,
-        sql_value_column_name: Optional[str] = None,
-        sql_columns_to_keep: Optional[list] = None,
-        drop_other_sql_columns: bool = False,
+        sql_columns_to_drop: Optional[list] = None,
         chunksize: Optional[int] = None,
         sql_engine: Optional[Any] = None,
         sql_function: Optional[Callable[..., DataFrame]] = None,
@@ -946,9 +944,7 @@ def load_sql_data_to_tm1_cube(
     transformer.normalize_table_source_dataframe(
         dataframe=dataframe,
         column_mapping=sql_column_mapping,
-        value_column_name=sql_value_column_name,
-        columns_to_keep=sql_columns_to_keep,
-        drop_other_columns=drop_other_sql_columns,
+        columns_to_drop=sql_columns_to_drop
     )
 
     cube_name = target_metadata.get_cube_name()
@@ -1671,8 +1667,7 @@ def load_csv_data_to_tm1_cube(
         mdx_function: Optional[Callable[..., DataFrame]] = None,
         csv_function: Optional[Callable[..., DataFrame]] = None,
         csv_column_mapping: Optional[dict] = None,
-        csv_value_column_name: Optional[str] = None,
-        csv_columns_to_keep: Optional[list] = None,
+        csv_columns_to_drop: Optional[list] = None,
         delimiter: Optional[str] = None,
         decimal: Optional[str] = None,
         dtype: Optional[dict] = None,
@@ -1693,7 +1688,6 @@ def load_csv_data_to_tm1_cube(
         related_dimensions: Optional[dict] = None,
         target_dim_mapping: Optional[dict] = None,
         value_function: Optional[Callable[..., Any]] = None,
-        drop_other_csv_columns: bool = False,
         ignore_missing_elements: bool = False,
         target_clear_set_mdx_list: Optional[List[str]] = None,
         async_write: bool = False,
@@ -1852,9 +1846,7 @@ def load_csv_data_to_tm1_cube(
     transformer.normalize_table_source_dataframe(
         dataframe=dataframe,
         column_mapping=csv_column_mapping,
-        value_column_name=csv_value_column_name,
-        columns_to_keep=csv_columns_to_keep,
-        drop_other_columns=drop_other_csv_columns,
+        columns_to_drop=csv_columns_to_drop
     )
 
     transformer.dataframe_add_column_assign_value(
