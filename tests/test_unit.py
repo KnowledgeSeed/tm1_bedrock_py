@@ -4,6 +4,7 @@ import pandas as pd
 import parametrize_from_file
 import pytest
 from TM1py.Exceptions import TM1pyRestException
+from pandas.core.dtypes.common import is_numeric_dtype
 from pandas.core.frame import DataFrame
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
@@ -619,6 +620,14 @@ def test_mssql_loader_replace(sql_engine_factory, dataframe, if_exists, table_na
 # ------------------------------------------------------------------------------------------------------------
 # Main: tests for csv I/O processes
 # ------------------------------------------------------------------------------------------------------------
+
+@parametrize_from_file
+def test_dataframe_casting_for_csv_file(dataframe, cube_dims):
+    df = pd.DataFrame(dataframe)
+    for dim_col in cube_dims:
+        if dim_col in df.columns:
+            df[dim_col] = df[dim_col].astype(str)
+            assert df[dim_col].apply(lambda v: isinstance(v, str)).all()
 
 
 @parametrize_from_file
