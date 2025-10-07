@@ -54,3 +54,6 @@ Changelog = "https://github.com/KnowledgeSeed/tm1_bedrock_py/CHANGELOG.md"
 
 [tool.setuptools]
 packages = ["TM1_bedrock_py"]
+
+[tool.setuptools.package-data]
+"TM1_bedrock_py" = ["logging.json"]

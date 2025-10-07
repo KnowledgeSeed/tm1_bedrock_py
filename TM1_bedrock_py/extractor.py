@@ -160,15 +160,13 @@ def _handle_mapping_sql_query(
         sql_query=sql_query, schema=schema, table_name=table_name,
         **kwargs
     )
-    columns_to_keep = step.get("columns_to_keep")
     column_mapping = step.get("column_mapping")
-    value_column = step.get("value_column")
-    drop_other = step.get("drop_other_cols")
+    columns_to_drop = step.get("columns_to_drop")
 
     transformer.normalize_table_source_dataframe(
         dataframe=dataframe,
-        columns_to_keep=columns_to_keep, column_mapping=column_mapping, value_column_name=value_column,
-        drop_other_columns=drop_other
+        column_mapping=column_mapping,
+        columns_to_drop=columns_to_drop
     )
     return dataframe
 
@@ -198,15 +196,13 @@ def _handle_mapping_csv(
         chunksize=chunksize
     )
 
-    columns_to_keep = step.get("columns_to_keep")
     column_mapping = step.get("column_mapping")
-    value_column = step.get("value_column")
-    drop_other = step.get("drop_other_cols")
+    columns_to_drop = step.get("columns_to_drop")
 
     transformer.normalize_table_source_dataframe(
         dataframe=dataframe,
-        columns_to_keep=columns_to_keep, column_mapping=column_mapping, value_column_name=value_column,
-        drop_other_columns=drop_other
+        column_mapping=column_mapping,
+        columns_to_drop=columns_to_drop
     )
 
 
@@ -248,6 +244,8 @@ def generate_step_specific_mapping_dataframes(
     """
     Mutates each step in mapping_steps by assigning 'mapping_df'.
     """
+    if not mapping_steps:
+        return
     for i, step in enumerate(mapping_steps):
         generate_dataframe_for_mapping_info(mapping_info=step, step_specific_string=str(i+1), **kwargs)
 

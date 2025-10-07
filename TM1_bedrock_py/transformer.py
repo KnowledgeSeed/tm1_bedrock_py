@@ -349,29 +349,22 @@ def dataframe_redimension_and_transform(
 def normalize_table_source_dataframe(
         dataframe: DataFrame,
         column_mapping: Optional[dict] = None,
-        value_column_name: Optional[str] = None,
-        columns_to_keep: Optional[list] = None,
-        drop_other_columns: bool = False
+        columns_to_drop: Optional[list] = None
 ) -> None:
     if column_mapping is None:
         column_mapping = {}
-    if columns_to_keep is None:
-        columns_to_keep = []
     if column_mapping:
         dataframe_relabel(dataframe=dataframe, columns=column_mapping)
-    if value_column_name:
-        dataframe_relabel(dataframe=dataframe, columns={value_column_name: "Value"})
-    if "Value" not in dataframe.columns:
-        dataframe_add_column_assign_value(dataframe=dataframe, column_value={"Value": 1.0})
-    if drop_other_columns:
-        columns_to_drop = list(
-            set(dataframe.columns) - set(columns_to_keep) - set(column_mapping.values()) - {'Value'}
-        )
+    if columns_to_drop:
         dataframe_drop_column(dataframe=dataframe, column_list=columns_to_drop)
 
 
 @utility.log_exec_metrics
-def dataframe_itemskip_elements(dataframe: DataFrame, check_dfs: list[DataFrame], **_kwargs) -> None:
+def dataframe_itemskip_elements(
+        dataframe: DataFrame,
+        check_dfs: list[DataFrame],
+        logging_enabled: Optional[bool] = False,
+        **_kwargs) -> None:
     """
     Filters the given dataframe in place based on valid values from check dataframes.
 
@@ -386,10 +379,18 @@ def dataframe_itemskip_elements(dataframe: DataFrame, check_dfs: list[DataFrame]
     Modifies df_source in place, removing rows that do not match the valid values.
     """
     mask = np.ones(len(dataframe), dtype=bool)
+
     for df_check in check_dfs:
         col = df_check.columns[0]
         valid_values = df_check[col].to_numpy()
-        mask &= np.isin(dataframe[col].to_numpy(), valid_values)
+        current_col_mask = np.isin(dataframe[col].to_numpy(), valid_values)
+        mask &= current_col_mask
+
+        if logging_enabled:
+            dropped_df = dataframe[[col]]
+            dropped_df.drop(index=dropped_df.index[current_col_mask], inplace=True)
+            basic_logger.debug(dropped_df)
+
     dataframe.drop(index=dataframe.index[~mask], inplace=True)
 
 
@@ -701,6 +702,9 @@ def dataframe_execute_mappings(
         "map_and_replace": __apply_map_and_replace,
         "map_and_join": __apply_map_and_join,
     }
+    if not mapping_steps:
+        return data_df
+
     for i, step in enumerate(mapping_steps):
         method = step["method"]
         if method in method_handlers:

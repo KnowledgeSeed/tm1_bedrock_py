@@ -5,8 +5,9 @@ import threading
 import time
 import locale
 import itertools
-from typing import Iterable, Callable, List, Dict, Optional, Any, Union, Iterator, Tuple
+from typing import Iterable, Callable, List, Dict, Optional, Any, Union, Iterator, Tuple, Literal
 
+import pandas
 from mdxpy import MdxBuilder, MdxHierarchySet, Member
 from sqlalchemy import create_engine, inspect
 from pandas import DataFrame
@@ -27,17 +28,27 @@ def generate_valid_file_path(output_dir: str, filename: str):
     return filepath
 
 
-def dataframe_verbose_logger(df: DataFrame, step_number: str = None, output_dir="../logs/dataframe_logs",
-                             df_verbose_logging: bool = False, **_kwargs):
-    if df_verbose_logging and df is not None:
-        thread_id = threading.get_ident()
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+def dataframe_verbose_logger(
+        df: DataFrame,
+        step_number: str = None,
+        output_dir="../logs/dataframe_logs",
+        verbose_logging_mode: Optional[Literal["file", "print_consol"]] = None,
+        **_kwargs
+):
+    if verbose_logging_mode and df is not None:
+        if verbose_logging_mode is "file":
+            thread_id = threading.get_ident()
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
-        filename = f"{step_number}_{thread_id}_{timestamp}.csv"
-        filepath = generate_valid_file_path(output_dir, filename)
+            filename = f"{step_number}_{thread_id}_{timestamp}.csv"
+            filepath = generate_valid_file_path(output_dir, filename)
 
-        df.to_csv(path_or_buf=filepath, index=False)
-        basic_logger.debug(f"DataFrame logged to {filepath}")
+            df.to_csv(path_or_buf=filepath, index=False)
+            basic_logger.debug(f"DataFrame logged to {filepath}")
+
+        if verbose_logging_mode is "print_consol":
+            num_rows_to_log = 5
+            basic_logger.debug(f"First {num_rows_to_log} rows of DataFrame: {df.head(num_rows_to_log)}")
 
 
 def execution_metrics_logger(logger, func, *args, **kwargs):
@@ -189,6 +200,8 @@ def __get_kwargs_dict_from_set_mdx_list(mdx_expressions: List[str]) -> Dict[str,
         if match:
             key = match.group(1).lower().replace(" ", "")
             kwargs_dict[key] = mdx
+        else:
+            raise ValueError
     return kwargs_dict
 
 
@@ -902,6 +915,23 @@ def build_mdx_from_cube_filter(
 # ------------------------------------------------------------------------------------------------------------
 # Utility: Additional helpers
 # ------------------------------------------------------------------------------------------------------------
+
+def cast_coordinates_to_str(cube_dims: list, dataframe: pandas.DataFrame):
+    """
+        Convert all dimension (coordinate) columns in the given DataFrame to string type
+        for TM1py compatibility. The 'Value' column, if present, is left unchanged.
+
+        Args:
+            cube_dims: List of cube dimension (coordinate) column names.
+            dataframe: DataFrame whose dimension columns will be cast to string.
+
+        Returns:
+             The same DataFrame instance with dimension columns converted to string type.
+    """
+    basic_logger.info("Converting dimension columns to string type for consistency.")
+    for dim_col in cube_dims:
+        if dim_col in dataframe.columns:
+            dataframe[dim_col] = dataframe[dim_col].astype(str)
 
 
 def force_float64_on_numeric_values(input_value: Any) -> float64 | str:

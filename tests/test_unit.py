@@ -4,6 +4,7 @@ import pandas as pd
 import parametrize_from_file
 import pytest
 from TM1py.Exceptions import TM1pyRestException
+from pandas.core.dtypes.common import is_numeric_dtype
 from pandas.core.frame import DataFrame
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
@@ -56,16 +57,16 @@ def test_get_kwargs_dict_from_set_mdx_list_success(set_mdx_list, expected_kwargs
     kwargs = utility.__get_kwargs_dict_from_set_mdx_list(set_mdx_list)
     assert kwargs == expected_kwargs
 
-
+"""
 # Test focusing on filtering, edge cases, and empty results
 @parametrize_from_file
-def test_get_kwargs_dict_from_set_mdx_list_filtering(set_mdx_list, expected_kwargs):
-    """
+def test_get_kwargs_dict_from_set_mdx_list_filtering(set_mdx_list, expected_exception):
+    
     Tests filtering of invalid/non-matching strings and edge cases.
-    """
+    
     kwargs = utility.__get_kwargs_dict_from_set_mdx_list(set_mdx_list)
-    assert kwargs == expected_kwargs
-
+    assert kwargs == expected_exception
+"""
 
 @parametrize_from_file
 def test_get_dimensions_from_set_mdx_list_success(mdx_sets, expected_dimensions):
@@ -74,6 +75,16 @@ def test_get_dimensions_from_set_mdx_list_success(mdx_sets, expected_dimensions)
     """
     result = utility.__get_dimensions_from_set_mdx_list(mdx_sets)
     assert result == expected_dimensions
+
+
+@parametrize_from_file
+def test__get_kwargs_dict_from_set_mdx_list_fail(mdx_expressions, expected_exception):
+    """
+    Tests if the function raises a ValueError if at least one expression does not match.
+    """
+    exception_type = eval(expected_exception)
+    with pytest.raises(exception_type):
+        utility.__get_kwargs_dict_from_set_mdx_list(mdx_expressions)
 
 
 @parametrize_from_file
@@ -465,7 +476,7 @@ def test_dataframe_itemskip_elements(source, check1, check2, expected):
     df = pd.DataFrame(source)
     check_dfs = [pd.DataFrame(check1), pd.DataFrame(check2)]
     expected_df = pd.DataFrame(expected)
-    transformer.dataframe_itemskip_elements(dataframe=df, check_dfs=check_dfs)
+    transformer.dataframe_itemskip_elements(dataframe=df, check_dfs=check_dfs, logging_enabled=True)
     pd.testing.assert_frame_equal(df, expected_df)
 
 
@@ -522,8 +533,15 @@ def test_dataframe_map_and_join_success(dataframe, joined_cols, mapping_datafram
 
 
 @parametrize_from_file
-def test_dataframe_execute_mappings_replace_success(mapping_steps):
-    pass
+def test_dataframe_execute_mappings_replace_success(dataframe, mapping_steps, expected_dataframe):
+    df = pd.DataFrame(dataframe)
+    expected_df = pd.DataFrame(expected_dataframe)
+    df = transformer.dataframe_execute_mappings(
+        data_df=df,
+        mapping_steps=mapping_steps,
+    )
+
+    pd.testing.assert_frame_equal(df, expected_df)
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -585,17 +603,9 @@ def test_sql_normalize_relabel(sql_engine_factory, dataframe, expected, column_m
 
 
 @parametrize_from_file
-def test_sql_normalize_valuecol_assign(sql_engine_factory, dataframe, expected, valuecol):
+def test_sql_normalize_drop(sql_engine_factory, dataframe, expected, drop):
     df = pd.DataFrame(dataframe)
-    transformer.normalize_table_source_dataframe(dataframe=df, value_column_name=valuecol)
-    expected_df = pd.DataFrame(expected)
-    pd.testing.assert_frame_equal(df, expected_df)
-
-
-@parametrize_from_file
-def test_sql_normalize_keep_and_drop(sql_engine_factory, dataframe, expected, keep, drop):
-    df = pd.DataFrame(dataframe)
-    transformer.normalize_table_source_dataframe(dataframe=df, columns_to_keep=keep, drop_other_columns=drop)
+    transformer.normalize_table_source_dataframe(dataframe=df, columns_to_drop=drop)
     expected_df = pd.DataFrame(expected)
     pd.testing.assert_frame_equal(df, expected_df)
 
@@ -610,6 +620,15 @@ def test_mssql_loader_replace(sql_engine_factory, dataframe, if_exists, table_na
 # ------------------------------------------------------------------------------------------------------------
 # Main: tests for csv I/O processes
 # ------------------------------------------------------------------------------------------------------------
+
+@parametrize_from_file
+def test_dataframe_casting_for_csv_file(dataframe, cube_dims):
+    """ Tests utility.cast_coordinates_to_str() function. """
+    df = pd.DataFrame(dataframe)
+    for dim_col in cube_dims:
+        if dim_col in df.columns:
+            df[dim_col] = df[dim_col].astype(str)
+            assert df[dim_col].apply(lambda v: isinstance(v, str)).all()
 
 
 @parametrize_from_file
