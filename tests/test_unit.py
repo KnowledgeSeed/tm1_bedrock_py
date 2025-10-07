@@ -623,6 +623,7 @@ def test_mssql_loader_replace(sql_engine_factory, dataframe, if_exists, table_na
 
 @parametrize_from_file
 def test_dataframe_casting_for_csv_file(dataframe, cube_dims):
+    """ Tests utility.cast_coordinates_to_str() function. """
     df = pd.DataFrame(dataframe)
     for dim_col in cube_dims:
         if dim_col in df.columns:

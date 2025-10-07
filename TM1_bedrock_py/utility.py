@@ -7,6 +7,7 @@ import locale
 import itertools
 from typing import Iterable, Callable, List, Dict, Optional, Any, Union, Iterator, Tuple, Literal
 
+import pandas
 from mdxpy import MdxBuilder, MdxHierarchySet, Member
 from sqlalchemy import create_engine, inspect
 from pandas import DataFrame
@@ -914,6 +915,23 @@ def build_mdx_from_cube_filter(
 # ------------------------------------------------------------------------------------------------------------
 # Utility: Additional helpers
 # ------------------------------------------------------------------------------------------------------------
+
+def cast_coordinates_to_str(cube_dims: list, dataframe: pandas.DataFrame):
+    """
+        Convert all dimension (coordinate) columns in the given DataFrame to string type
+        for TM1py compatibility. The 'Value' column, if present, is left unchanged.
+
+        Args:
+            cube_dims: List of cube dimension (coordinate) column names.
+            dataframe: DataFrame whose dimension columns will be cast to string.
+
+        Returns:
+             The same DataFrame instance with dimension columns converted to string type.
+    """
+    basic_logger.info("Converting dimension columns to string type for consistency.")
+    for dim_col in cube_dims:
+        if dim_col in dataframe.columns:
+            dataframe[dim_col] = dataframe[dim_col].astype(str)
 
 
 def force_float64_on_numeric_values(input_value: Any) -> float64 | str:

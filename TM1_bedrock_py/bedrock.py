@@ -969,6 +969,8 @@ def load_sql_data_to_tm1_cube(
 
     cube_dims = target_metadata.get_cube_dims()
 
+    utility.cast_coordinates_to_str(cube_dims, dataframe)
+
     if ignore_missing_elements:
         transformer.dataframe_itemskip_elements(
             dataframe=dataframe, check_dfs=target_metadata.get_dimension_check_dfs())
@@ -1868,10 +1870,7 @@ def load_csv_data_to_tm1_cube(
 
     cube_dims = target_metadata.get_cube_dims()
 
-    basic_logger.info("Converting dimension columns to string type for consistency.")
-    for dim_col in cube_dims:
-        if dim_col in dataframe.columns:
-            dataframe[dim_col] = dataframe[dim_col].astype(str)
+    utility.cast_coordinates_to_str(cube_dims, dataframe)
 
     if ignore_missing_elements:
         transformer.dataframe_itemskip_elements(

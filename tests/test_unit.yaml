@@ -1326,6 +1326,13 @@ test_dataframe_casting_for_csv_file:
   -
     dataframe: {}
     cube_dims: ["Versions", "Orgunit"]
+  -
+    dataframe: {
+        "Versions": ["Base Plan", "Plan1", "Plan2"],
+        "Orgunit": [123, 987, 42],
+        "Value": [1, 0, 1],
+    }
+    cube_dims: ["Versions", "Orgunit"]
 
 test_dataframe_to_csv:
   -
