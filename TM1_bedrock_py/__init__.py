@@ -1,7 +1,8 @@
-import logging.config
 import json
+import logging.config
 import os
 import re
+from datetime import datetime
 
 __version__ = "0.4.1"
 
@@ -13,13 +14,38 @@ if os.path.exists(log_config_path):
     with open(log_config_path, "r") as f:
         log_config = json.load(f)
 
-    log_file = log_config["handlers"]["file"]["filename"]
+    log_directory = os.getenv("TM1_BEDROCK_LOG_DIR")
+    if log_directory is None:
+        log_directory = log_config["handlers"]["file"]["filename"]
 
-    # Ensure the log directory exists
-    log_dir = os.path.dirname(log_file)
-    os.makedirs(log_dir, exist_ok=True)
+    try:
+        log_directory = os.path.abspath(log_directory)
+        os.makedirs(log_directory, exist_ok=True)
 
-    logging.config.dictConfig(log_config)
+        handlers = log_config.get("handlers", {})
+        timestamp = datetime.now().strftime("%Y-%m-%d")
+        for handler_config in handlers.values():
+            filename = handler_config.get("filename")
+            if not filename:
+                continue
+            base_name = os.path.basename(filename)
+            name, ext = os.path.splitext(base_name)
+            handler_config["filename"] = os.path.join(
+                log_directory,
+                f"{name}_{timestamp}{ext}"
+            )
+        logging.config.dictConfig(log_config)
+
+    except Exception as e:
+        loggers = log_config.get("loggers", {})
+        for logger_config in loggers.values():
+            handlers = logger_config.get("handlers", [])
+            logger_config["handlers"] = [
+                name for name in handlers
+                if "console" in name
+            ]
+        logging.config.dictConfig(log_config)
+
 else:
     logging.basicConfig(level=logging.ERROR)  # Fallback if JSON config is missing
 
