@@ -361,38 +361,65 @@ def normalize_table_source_dataframe(
 
 @utility.log_exec_metrics
 def dataframe_itemskip_elements(
-        dataframe: DataFrame,
-        check_dfs: list[DataFrame],
-        logging_enabled: Optional[bool] = False,
-        **_kwargs) -> None:
+    dataframe: pd.DataFrame,
+    check_dfs: list[pd.DataFrame],
+    logging_enabled: bool = False,
+    **_kwargs
+) -> None:
     """
-    Filters the given dataframe in place based on valid values from check dataframes.
+    Filters the given dataframe *in place* to keep only rows whose coordinate
+    values exist in TM1 dimension check dataframes.
 
-    Optimized for when check_dfs are always single-column DataFrames.
+    Each dataframe in `check_dfs` corresponds to one coordinate column
+    in `dataframe`, and must be a single-column DataFrame containing all valid
+    element names and aliases for that dimension.
 
-    Parameters:
-    - dataframe: The main DataFrame containing multiple columns + a 'Value' column.
-    - check_dfs: A list of single-column check DataFrames,
-                 where each one corresponds to a column in df_source (in order).
-    **_kwargs (Any): Additional keyword arguments.
+    Performance optimized using pandas hash-based set membership instead of np.isin.
 
-    Modifies df_source in place, removing rows that do not match the valid values.
+    Parameters
+    ----------
+    dataframe : pd.DataFrame
+        The main DataFrame containing N coordinate columns and a 'Value' column.
+    check_dfs : list[pd.DataFrame]
+        List of N single-column DataFrames containing valid element names or aliases.
+        Order of these check_dfs must match the order of coordinate columns in `dataframe`.
+    logging_enabled : bool, optional
+        If True, logs the number and content of dropped invalid rows per dimension.
+
+    Notes
+    -----
+    - Operates in place (modifies `dataframe` directly).
+    - Uses fast hash lookups (O(n + m) complexity per dimension).
     """
+
+    # Start with all rows valid
     mask = np.ones(len(dataframe), dtype=bool)
 
+    # Iterate over each dimension dataframe
     for df_check in check_dfs:
         col = df_check.columns[0]
-        valid_values = df_check[col].to_numpy()
-        current_col_mask = np.isin(dataframe[col].to_numpy(), valid_values)
+
+        # Convert valid elements to a Python set for O(1) membership checks
+        valid_set = set(df_check[col])
+
+        # Boolean mask of valid coordinate rows
+        current_col_mask = dataframe[col].isin(valid_set).to_numpy()
+
+        # Combine masks
         mask &= current_col_mask
 
+        # Optional verbose logging
         if logging_enabled:
-            dropped_df = dataframe[[col]]
-            dropped_df.drop(index=dropped_df.index[current_col_mask], inplace=True)
-            basic_logger.debug(dropped_df)
+            invalid_rows = dataframe.loc[~current_col_mask, [col]].copy()
+            basic_logger.debug(invalid_rows )
+
+    # Drop invalid rows in place
+    invalid_total = np.count_nonzero(~mask)
+    if logging_enabled and invalid_total > 0:
+        basic_logger.debug(f"Total dropped rows: {invalid_total}")
 
     dataframe.drop(index=dataframe.index[~mask], inplace=True)
-
+    dataframe.reset_index(drop=True, inplace=True)
 
 # ------------------------------------------------------------------------------------------------------------
 # Main: dataframe remapping and copy functions

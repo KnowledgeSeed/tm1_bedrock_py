@@ -286,7 +286,11 @@ def data_copy_intercube(
 
     if ignore_missing_elements:
         transformer.dataframe_itemskip_elements(
-            dataframe=dataframe, check_dfs=target_metadata.get_dimension_check_dfs(), **kwargs)
+            dataframe=dataframe,
+            check_dfs=target_metadata.get_dimension_check_dfs(),
+            logging_enabled=(logging_level == "DEBUG"),
+            **kwargs
+        )
 
     if dataframe.empty:
         if clear_target:
@@ -973,7 +977,11 @@ def load_sql_data_to_tm1_cube(
 
     if ignore_missing_elements:
         transformer.dataframe_itemskip_elements(
-            dataframe=dataframe, check_dfs=target_metadata.get_dimension_check_dfs())
+            dataframe=dataframe,
+            check_dfs=target_metadata.get_dimension_check_dfs(),
+            logging_enabled=(logging_level == "DEBUG"),
+            **kwargs
+        )
 
     if dataframe.empty:
         if clear_target:
@@ -1874,7 +1882,11 @@ def load_csv_data_to_tm1_cube(
 
     if ignore_missing_elements:
         transformer.dataframe_itemskip_elements(
-            dataframe=dataframe, check_dfs=target_metadata.get_dimension_check_dfs())
+            dataframe=dataframe,
+            check_dfs=target_metadata.get_dimension_check_dfs(),
+            logging_enabled=(logging_level == "DEBUG"),
+            **kwargs
+        )
 
     if dataframe.empty:
         if clear_target:
