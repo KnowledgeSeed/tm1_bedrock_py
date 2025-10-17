@@ -363,7 +363,7 @@ def normalize_table_source_dataframe(
 def dataframe_itemskip_elements(
     dataframe: pd.DataFrame,
     check_dfs: list[pd.DataFrame],
-    logging_enabled: bool = False,
+    logging_level: str,
     **_kwargs
 ) -> None:
     """
@@ -383,15 +383,15 @@ def dataframe_itemskip_elements(
     check_dfs : list[pd.DataFrame]
         List of N single-column DataFrames containing valid element names or aliases.
         Order of these check_dfs must match the order of coordinate columns in `dataframe`.
-    logging_enabled : bool, optional
-        If True, logs the number and content of dropped invalid rows per dimension.
+    logging_level : str, optional
+        If DEBUG, logs the number and content of dropped invalid rows per dimension.
 
     Notes
     -----
     - Operates in place (modifies `dataframe` directly).
     - Uses fast hash lookups (O(n + m) complexity per dimension).
     """
-
+    logging_enabled = logging_level=="DEBUG"
     # Start with all rows valid
     mask = np.ones(len(dataframe), dtype=bool)
 

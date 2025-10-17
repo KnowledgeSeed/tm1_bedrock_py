@@ -42,7 +42,7 @@ def test_data_copy_for_single_literal_remap(
         )
 
         bedrock.data_copy(
-            data_metadata_function=metadata_func,
+            target_metadata_function=metadata_func,
             tm1_service=conn, data_mdx=base_data_mdx, mapping_steps=mapping_steps, skip_zeros=True
         )
 

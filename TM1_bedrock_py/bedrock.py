@@ -288,7 +288,7 @@ def data_copy_intercube(
         transformer.dataframe_itemskip_elements(
             dataframe=dataframe,
             check_dfs=target_metadata.get_dimension_check_dfs(),
-            logging_enabled=(logging_level == "DEBUG"),
+            logging_level=logging_level,
             **kwargs
         )
 
@@ -351,7 +351,7 @@ def data_copy(
         skip_zeros: Optional[bool] = False,
         skip_consolidated_cells: Optional[bool] = False,
         skip_rule_derived_cells: Optional[bool] = False,
-        data_metadata_function: Optional[Callable[..., Any]] = None,
+        target_metadata_function: Optional[Callable[..., Any]] = None,
         mapping_steps: Optional[List[Dict]] = None,
         shared_mapping: Optional[Dict] = None,
         value_function: Optional[Callable[..., Any]] = None,
@@ -509,7 +509,7 @@ def data_copy(
 
     data_metadata = utility.TM1CubeObjectMetadata.collect(
         tm1_service=target_tm1_service, cube_name=cube_name,
-        metadata_function=data_metadata_function,
+        metadata_function=target_metadata_function,
         collect_dim_element_identifiers=False,
         **kwargs)
     cube_dims = data_metadata.get_cube_dims()
@@ -604,7 +604,7 @@ async def async_executor_tm1(
         shared_mapping: Optional[Dict] = None,
         mapping_steps: Optional[List[Dict]] = None,
         data_copy_function: Callable = data_copy,
-        clear_param_templates: List[str] = None,
+        target_clear_set_mdx_list: List[str] = None,
         max_workers: int = 8,
         **kwargs):
 
@@ -642,10 +642,7 @@ async def async_executor_tm1(
         data_copy_function: The bedrock function to be executed by each worker.
             Built-in options are `data_copy`, `data_copy_intercube`, and
             `load_tm1_cube_to_csv_file`.
-        clear_param_templates: A list of MDX set templates. For each worker, these
-            templates are populated with the worker's specific parameters to
-            generate the `target_clear_set_mdx_list`, ensuring each worker
-            can clear its own target slice before loading.
+        target_clear_set_mdx_list: A list of set MDXs.
         max_workers: The number of parallel worker threads to execute. This is the
             primary performance tuning parameter.
         **kwargs: Additional keyword arguments to be passed down to each call of
@@ -676,40 +673,22 @@ async def async_executor_tm1(
     param_tuples = utility.__generate_cartesian_product(param_values)
     basic_logger.info(f"Parameter tuples ready. Count: {len(param_tuples)}")
 
-    target_metadata_provider = None
-    data_metadata_provider = None
+    target_cube_name = kwargs.get("target_cube_name")
+    dim_identifier = kwargs.get("ignore_missing_elements", False)
 
-    if data_copy_function in (data_copy_intercube, load_sql_data_to_tm1_cube):
-        target_cube_name = kwargs.get("target_cube_name")
-        if target_cube_name:
-            target_metadata = utility.TM1CubeObjectMetadata.collect(
-                tm1_service=target_tm1_service,
-                cube_name=target_cube_name,
-                metadata_function=kwargs.get("target_metadata_function"),
-                collect_dim_element_identifiers=kwargs.get("ignore_missing_elements", False),
-                **kwargs
-            )
-            def get_target_metadata(**_kwargs): return target_metadata
-            target_metadata_provider = get_target_metadata
-        else:
-            basic_logger.warning(
-                 f"target_cube_name not provided, skipping metadata collection.")
+    if data_copy_function is data_copy:
+        target_cube_name = utility._get_cube_name_from_mdx(data_mdx_template)
+        dim_identifier = False
 
-    if data_copy_function in (data_copy, load_tm1_cube_to_sql_table):
-        source_cube_name = utility._get_cube_name_from_mdx(data_mdx_template)
-        if source_cube_name:
-            data_metadata = utility.TM1CubeObjectMetadata.collect(
-                tm1_service=tm1_service,
-                cube_name=source_cube_name,
-                metadata_function=kwargs.get("data_metadata_function"),
-                collect_dim_element_identifiers=kwargs.get("ignore_missing_elements", False),
-                **kwargs
-            )
-            def get_data_metadata(**_kwargs): return data_metadata
-            data_metadata_provider = get_data_metadata
-        else:
-            basic_logger.warning(
-                f"Could not determine cube name from MDX, skipping metadata collection.")
+    target_metadata = utility.TM1CubeObjectMetadata.collect(
+        tm1_service=target_tm1_service,
+        cube_name=target_cube_name,
+        metadata_function=kwargs.get("target_metadata_function"),
+        collect_dim_element_identifiers=dim_identifier,
+        **kwargs
+    )
+    def get_target_metadata(**_kwargs): return target_metadata
+    target_metadata_provider = get_target_metadata
 
     if mapping_steps:
         extractor.generate_step_specific_mapping_dataframes(
@@ -728,10 +707,8 @@ async def async_executor_tm1(
     def wrapper(
         _tm1_service: Any,
         _data_mdx: str,
-        _target_clear_set_mdx_list: List[str],
         _mapping_steps: Optional[List[Dict]],
         _shared_mapping: Optional[Dict],
-        _data_metadata_func: Optional[Callable],
         _target_metadata_func: Optional[Callable],
         _execution_id: int,
         _executor_kwargs: Dict
@@ -743,15 +720,12 @@ async def async_executor_tm1(
                 "data_mdx": _data_mdx,
                 "shared_mapping": _shared_mapping,
                 "mapping_steps": _mapping_steps,
-                "target_clear_set_mdx_list": _target_clear_set_mdx_list,
                 "_execution_id": _execution_id,
-                "async_write": False
+                "target_metadata_function": _target_metadata_func,
+                "async_write": False,
+                "clear_target": False
             }
 
-            if _data_metadata_func:
-                copy_func_kwargs["data_metadata_function"] = _data_metadata_func
-            if _target_metadata_func:
-                copy_func_kwargs["target_metadata_function"] = _target_metadata_func
             data_copy_function(**copy_func_kwargs)
 
         except Exception as e:
@@ -762,8 +736,11 @@ async def async_executor_tm1(
     loop = asyncio.get_event_loop()
     futures = []
 
-    if clear_param_templates is None:
-        clear_param_templates = []
+    if target_clear_set_mdx_list:
+        loader.clear_cube(tm1_service=tm1_service,
+                          cube_name=target_cube_name,
+                          clear_set_mdx_list=target_clear_set_mdx_list,
+                          **kwargs)
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         for i, current_tuple in enumerate(param_tuples):
@@ -773,16 +750,12 @@ async def async_executor_tm1(
             }
             data_mdx = Template(data_mdx_template).substitute(**template_kwargs)
 
-            target_clear_set_mdx_list = [
-                Template(clear_param_template).substitute(**template_kwargs)
-                for clear_param_template in clear_param_templates
-            ]
             futures.append(loop.run_in_executor(
                 executor, wrapper,
                 tm1_service,
-                data_mdx, target_clear_set_mdx_list,
+                data_mdx,
                 mapping_steps, shared_mapping,
-                data_metadata_provider, target_metadata_provider,
+                target_metadata_provider,
                 i, kwargs
             ))
 
@@ -979,7 +952,7 @@ def load_sql_data_to_tm1_cube(
         transformer.dataframe_itemskip_elements(
             dataframe=dataframe,
             check_dfs=target_metadata.get_dimension_check_dfs(),
-            logging_enabled=(logging_level == "DEBUG"),
+            logging_level=logging_level,
             **kwargs
         )
 
@@ -1884,7 +1857,7 @@ def load_csv_data_to_tm1_cube(
         transformer.dataframe_itemskip_elements(
             dataframe=dataframe,
             check_dfs=target_metadata.get_dimension_check_dfs(),
-            logging_enabled=(logging_level == "DEBUG"),
+            logging_level=logging_level,
             **kwargs
         )
 
@@ -2324,8 +2297,12 @@ async def async_executor_csv_to_tm1(
                 f"Error during execution {_execution_id} with MDX: {_data_mdx}. Error: {e}", exc_info=True)
             return e
 
-    if clear_param_templates is None:
-        clear_param_templates = []
+    if target_clear_set_mdx_list:
+        kwargs["clear_target"] = False
+        loader.clear_cube(tm1_service=tm1_service,
+                          cube_name=target_cube_name,
+                          clear_set_mdx_list=target_clear_set_mdx_list,
+                          **kwargs)
 
     loop = asyncio.get_event_loop()
     futures = []
