@@ -145,14 +145,16 @@ test_async_data_copy_intercube:
             [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
            )
          "
-    clear_param_templates: ["{[Periods].[Periods].[$Periods]}"]
+    target_clear_set_mdx_list: [
+      "{{TM1FILTERBYLEVEL({DRILLDOWNMEMBER({[Periods].[Periods].[2022]}, {[Periods].[Periods].[2022]})}, 0)},
+      {TM1FILTERBYLEVEL({DRILLDOWNMEMBER({[Periods].[Periods].[2023]}, {[Periods].[Periods].[2023]})}, 0)},
+      {TM1FILTERBYLEVEL({DRILLDOWNMEMBER({[Periods].[Periods].[2024]}, {[Periods].[Periods].[2024]})}, 0)}}",
+      "{[Versions].[Versions].[DataCopy Integration Test 2]}"
+    ]
     param_set_mdx_list: [
       "{{TM1FILTERBYLEVEL({DRILLDOWNMEMBER({[Periods].[Periods].[2022]}, {[Periods].[Periods].[2022]})}, 0)},
       {TM1FILTERBYLEVEL({DRILLDOWNMEMBER({[Periods].[Periods].[2023]}, {[Periods].[Periods].[2023]})}, 0)},
       {TM1FILTERBYLEVEL({DRILLDOWNMEMBER({[Periods].[Periods].[2024]}, {[Periods].[Periods].[2024]})}, 0)}}"
-    ]
-    param_set_mdx_list_single: [
-      "{[Periods].[Periods].[202301]}"
     ]
     target_cube_name: "Cost and FTE by Groups"
     mapping_steps: [
@@ -201,7 +203,12 @@ test_async_data_copy_intercube_multi_parameter:
             [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
            )
          "
-    clear_param_templates: [ "{[Periods].[Periods].[$Periods]}", "{[Versions].[Versions].[$Versions]}" ]
+    target_clear_set_mdx_list: [
+      "{{TM1FILTERBYLEVEL({DRILLDOWNMEMBER({[Periods].[Periods].[2022]}, {[Periods].[Periods].[2022]})}, 0)},
+      {TM1FILTERBYLEVEL({DRILLDOWNMEMBER({[Periods].[Periods].[2023]}, {[Periods].[Periods].[2023]})}, 0)},
+      {TM1FILTERBYLEVEL({DRILLDOWNMEMBER({[Periods].[Periods].[2024]}, {[Periods].[Periods].[2024]})}, 0)}}",
+      "{[Versions].[Versions].[DataCopy Integration Test 2]}"
+    ]
     param_set_mdx_list: [
       "{{TM1FILTERBYLEVEL({DRILLDOWNMEMBER({[Periods].[Periods].[2022]}, {[Periods].[Periods].[2022]})}, 0)},
       {TM1FILTERBYLEVEL({DRILLDOWNMEMBER({[Periods].[Periods].[2023]}, {[Periods].[Periods].[2023]})}, 0)},
@@ -470,9 +477,9 @@ test_async_load_csv_data_to_tm1_cube:
         "mapping": { "testbenchVersion": { "Actual": "ForeCast" } }
       }
     ]
-    clear_param_templates: [
+    target_clear_set_mdx_list: [
       "{[testbenchVersion].[testbenchVersion].[ForeCast]}",
-      "{[testbenchPeriod].[testbenchPeriod].[$testbenchPeriod]}"
+      "{TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchPeriod].[testbenchPeriod].[All Periods]}, {[testbenchPeriod].[testbenchPeriod].[All Periods]}, RECURSIVE )}, 0)}"
     ]
     param_set_mdx_list: [
       "{TM1FILTERBYLEVEL({TM1DRILLDOWNMEMBER({[testbenchPeriod].[testbenchPeriod].[All Periods]}, {[testbenchPeriod].[testbenchPeriod].[All Periods]}, RECURSIVE )}, 0)}"

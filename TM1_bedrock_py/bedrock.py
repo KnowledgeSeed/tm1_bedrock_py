@@ -1713,13 +1713,8 @@ def load_csv_data_to_tm1_cube(
         csv_function: A custom function to read CSV files, used by mapping steps.
         csv_column_mapping: A dictionary to rename columns from the CSV source to
             match the dimension names in the target TM1 cube.
-        csv_value_column_name: The name of the column in the CSV source that
-            contains the data values to be loaded. This column will be renamed
-            to 'Value'.
-        csv_columns_to_keep: A list of columns to keep from the CSV source after
-            renaming. Used with `drop_other_csv_columns`.
-        drop_other_csv_columns: If True, any columns not in `csv_columns_to_keep`
-            or not renamed will be dropped.
+                csv_columns_to_drop:
+        csv_columns_to_drop: Columns present in the .csv file that should not be loaded to the TM1 cube.
         delimiter: The delimiter to use when parsing the CSV file (e.g., ',', ';').
             Passed directly to `pandas.read_csv`.
         decimal: The character to recognize as a decimal point (e.g., '.', ',').
@@ -1753,11 +1748,6 @@ def load_csv_data_to_tm1_cube(
             applied to the data after extraction and normalization.
         shared_mapping: A dictionary defining a shared mapping DataFrame that can
             be used by multiple mapping steps.
-        source_dim_mapping: A dictionary to filter and then drop columns from the
-            DataFrame after CSV extraction.
-        related_dimensions: A dictionary to rename columns in the DataFrame.
-        target_dim_mapping: A dictionary to add new columns with constant values
-            to the DataFrame, representing target dimensions not present in the source.
         value_function: A custom function to apply transformations to the 'Value'
             column.
         ignore_missing_elements: If True, rows with elements that do not exist
@@ -2159,7 +2149,7 @@ async def async_executor_csv_to_tm1(
         shared_mapping: Optional[Dict] = None,
         mapping_steps: Optional[List[Dict]] = None,
         data_copy_function: Callable = data_copy,
-        clear_param_templates: Optional[bool] = False,
+        target_clear_set_mdx_list: Optional[bool] = False,
         max_workers: int = 8,
         **kwargs):
 
@@ -2194,10 +2184,7 @@ async def async_executor_csv_to_tm1(
         mapping_steps: A list of transformation steps, passed to each worker.
         data_copy_function: The function to be executed by each worker. Defaults
             to `load_csv_data_to_tm1_cube`.
-        clear_param_templates: A list of MDX set templates. For each worker, these
-            templates are populated with the worker's specific parameters to
-            generate the `target_clear_set_mdx_list`, ensuring each worker
-            clears its own target slice before loading.
+        target_clear_set_mdx_list: A list of set MDXs.
         max_workers: The number of parallel worker threads to execute. This should
             be tuned based on the TM1 server's capacity for concurrent writes.
         **kwargs: Additional keyword arguments to be passed down to each

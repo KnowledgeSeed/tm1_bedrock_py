@@ -95,8 +95,8 @@ def test_data_copy_intercube_for_multiple_steps(
 
 @parametrize_from_file
 def test_async_data_copy_intercube(
-        tm1_connection_factory, param_set_mdx_list, data_mdx_template, clear_param_templates,
-        target_cube_name, shared_mapping, mapping_steps, param_set_mdx_list_single
+        tm1_connection_factory, param_set_mdx_list, data_mdx_template, target_clear_set_mdx_list,
+        target_cube_name, shared_mapping, mapping_steps
 ):
     with tm1_connection_factory("tm1srv") as conn:
         utility.set_logging_level("DEBUG")
@@ -117,7 +117,7 @@ def test_async_data_copy_intercube(
             async_write=True,
             logging_level="DEBUG",
             param_set_mdx_list=param_set_mdx_list,
-            clear_param_templates=clear_param_templates,
+            target_clear_set_mdx_list=target_clear_set_mdx_list,
             ignore_missing_elements=True,
             max_workers=8
         ))
@@ -127,7 +127,7 @@ def test_async_data_copy_intercube(
 
 @parametrize_from_file
 def test_async_data_copy_intercube_multi_parameter(
-        tm1_connection_factory, param_set_mdx_list, data_mdx_template, clear_param_templates,
+        tm1_connection_factory, param_set_mdx_list, data_mdx_template, target_clear_set_mdx_list,
         target_cube_name, shared_mapping, mapping_steps
 ):
     with tm1_connection_factory("tm1srv") as conn:
@@ -146,9 +146,9 @@ def test_async_data_copy_intercube_multi_parameter(
             shared_mapping=shared_mapping,
             mapping_steps=mapping_steps,
             clear_target=True,
-            logging_level="DEBUG",
+            logging_level="INFO",
             param_set_mdx_list=param_set_mdx_list,
-            clear_param_templates=clear_param_templates,
+            target_clear_set_mdx_list=target_clear_set_mdx_list,
             ignore_missing_elements=True,
             df_verbose_logging=False
         ))
@@ -381,7 +381,7 @@ def test_load_csv_data_to_tm1_cube(
 
 @parametrize_from_file
 def test_async_load_csv_data_to_tm1_cube(
-        tm1_connection_factory, data_mdx_template, mapping_steps, param_set_mdx_list, clear_param_templates
+        tm1_connection_factory, data_mdx_template, mapping_steps, param_set_mdx_list, target_clear_set_mdx_list
 ):
     with tm1_connection_factory("testbench") as conn:
         envname = 'bedrock_test_10000'
@@ -402,7 +402,7 @@ def test_async_load_csv_data_to_tm1_cube(
                 clear_target=True,
                 logging_level="DEBUG",
                 param_set_mdx_list=param_set_mdx_list,
-                clear_param_templates=clear_param_templates,
+                target_clear_set_mdx_list=target_clear_set_mdx_list,
                 ignore_missing_elements=True,
                 decimal=",",
                 delimiter=";",
