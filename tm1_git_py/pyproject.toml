@@ -14,8 +14,6 @@ dependencies = [
     "tm1_bedrock_py>=0.4.1",
 ]
 
-[tool.setuptools]
-packages = { find = {} }
+[tool.setuptools.packages.find]
+include = ["tm1_git_py.model", "tm1_git_py.model.*"]
 
-[tool.setuptools.package-data]
-"tm1_git_py" = ["*.txt", "*.json"]

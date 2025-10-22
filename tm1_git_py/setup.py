@@ -18,11 +18,8 @@ setup(
     long_description=long_description,
     long_description_content_type=long_description_content_type,
     author="",
-    packages=find_packages(),
-    include_package_data=True,
-    package_data={
-        "tm1_git_py": ["*.txt", "*.json"],
-    },
+    packages=find_packages(include=["tm1_git_py.model", "tm1_git_py.model.*"]),
+    include_package_data=False,
     install_requires=[
         "TM1py>=2.1,<3.0",
         "requests>=2.25",

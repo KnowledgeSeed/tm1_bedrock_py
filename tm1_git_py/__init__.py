@@ -1,17 +1,7 @@
-"""Utilities for serializing TM1 models to and from version control friendly formats."""
+"""Namespace package for TM1 Git utilities.
 
-from .changeset import Changeset
-from .comparator import Comparator
-from .deserializer import deserialize_model
-from .filter import filter
-from .serializer import serialize_model
-from .tm1_to_model import tm1_to_model
+The distributed wheel only contains the :mod:`tm1_git_py.model` subpackage
+with the data model entities used for TM1 exports.
+"""
 
-__all__ = [
-    "Changeset",
-    "Comparator",
-    "deserialize_model",
-    "filter",
-    "serialize_model",
-    "tm1_to_model",
-]
+__all__ = ["model"]
