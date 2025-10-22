@@ -2,8 +2,7 @@ from pathlib import Path
 from setuptools import find_packages, setup
 
 PACKAGE_ROOT = Path(__file__).resolve().parent
-PACKAGE_DIR = PACKAGE_ROOT / "tm1_git_py"
-README_PATH = PACKAGE_DIR / "README.md"
+README_PATH = PACKAGE_ROOT / "README.md"
 
 if README_PATH.exists():
     long_description = README_PATH.read_text(encoding="utf-8")
@@ -19,8 +18,7 @@ setup(
     long_description=long_description,
     long_description_content_type=long_description_content_type,
     author="",
-    packages=find_packages(where="tm1_git_py", include=["tm1_git_py", "tm1_git_py.*"]),
-    package_dir={"": "tm1_git_py"},
+    packages=find_packages(),
     include_package_data=True,
     package_data={
         "tm1_git_py": ["*.txt", "*.json"],
