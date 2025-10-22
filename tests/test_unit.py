@@ -476,7 +476,7 @@ def test_dataframe_itemskip_elements(source, check1, check2, expected):
     df = pd.DataFrame(source)
     check_dfs = [pd.DataFrame(check1), pd.DataFrame(check2)]
     expected_df = pd.DataFrame(expected)
-    transformer.dataframe_itemskip_elements(dataframe=df, check_dfs=check_dfs, logging_enabled=True)
+    transformer.dataframe_itemskip_elements(dataframe=df, check_dfs=check_dfs, logging_level="DEBUG")
     pd.testing.assert_frame_equal(df, expected_df)
 
 

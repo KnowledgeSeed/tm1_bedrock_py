@@ -16,7 +16,7 @@
 
       "json": {
         "format": "%(asctime)s :: %(levelname)s :: %(name)s :: %(filename)s :: %(funcName)s() :: %(message)s :: %(process)d - %(threadName)s",
-        "class": "json_logging.JSONLogFormatter"
+        "class": "TM1_bedrock_py.json_log_formatter.JSONLogFormatter"
       },
 
       "json_exec_metrics": {
@@ -44,45 +44,50 @@
             "class": "logging.FileHandler",
             "level": "DEBUG",
             "formatter": "detailed",
-            "filename": "../logs/TM1_bedrock_py.log",
+            "filename": "logs/TM1_bedrock_py.log",
             "mode": "a",
-            "encoding": "utf8"
+            "encoding": "utf8",
+            "delay": true
         },
 
         "file_exec_metrics": {
             "class": "logging.FileHandler",
             "level": "DEBUG",
             "formatter": "exec_metrics",
-            "filename": "../logs/TM1_bedrock_py.log",
+            "filename": "logs/TM1_bedrock_py.log",
             "mode": "a",
-            "encoding": "utf8"
+            "encoding": "utf8",
+            "delay": true
         },
 
         "json_file": {
             "class": "logging.FileHandler",
             "level": "DEBUG",
             "formatter": "json",
-            "filename": "../logs/TM1_bedrock_py.json.log",
+            "filename": "logs/TM1_bedrock_py.json.log",
             "mode": "a",
-            "encoding": "utf8"
+            "encoding": "utf8",
+            "delay": true
         },
 
         "json_file_exec_metrics": {
             "class": "logging.FileHandler",
             "level": "DEBUG",
             "formatter": "json_exec_metrics",
-            "filename": "../logs/TM1_bedrock_py.json.log",
+            "filename": "logs/TM1_bedrock_py.json.log",
             "mode": "a",
-            "encoding": "utf8"
+            "encoding": "utf8",
+            "delay": true
         },
 
         "json_file_benchmark_metrics": {
             "class": "logging.FileHandler",
             "level": "DEBUG",
             "formatter": "json_exec_metrics",
-            "filename": "../logs/TM1_bedrock_py_benchmark.json.log",
+            "filename": "logs/TM1_bedrock_py_benchmark.json.log",
             "mode": "w",
-            "encoding": "utf8"
+            "encoding": "utf8",
+            "delay": true
         }
     },
 

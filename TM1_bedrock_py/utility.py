@@ -46,7 +46,7 @@ def dataframe_verbose_logger(
             df.to_csv(path_or_buf=filepath, index=False)
             basic_logger.debug(f"DataFrame logged to {filepath}")
 
-        if verbose_logging_mode is "print_consol":
+        elif verbose_logging_mode is "print_consol":
             num_rows_to_log = 5
             basic_logger.debug(f"First {num_rows_to_log} rows of DataFrame: {df.head(num_rows_to_log)}")
 
