@@ -1,12 +1,12 @@
 from typing import List, Dict, Any
 
-from model.model import Model
-from changeset import Changeset
+from .model.model import Model
+from .changeset import Changeset
 
-from model.cube import Cube
-from model.dimension import Dimension
-from model.process import Process
-from model.chore import Chore
+from .model.cube import Cube
+from .model.dimension import Dimension
+from .model.process import Process
+from .model.chore import Chore
 
 class Comparator:
     def compare(self, model1: Model, model2: Model, mode: str = 'full') -> Changeset:

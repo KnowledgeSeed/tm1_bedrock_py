@@ -3,7 +3,7 @@ import fnmatch
 import re
 from typing import List, Any, Dict, Tuple
 
-from model.model import Model
+from .model.model import Model
 
 # def _perform_dependency_check(model: Model):
 #     kept_dim_names = {d.name for d in model.dimensions}
