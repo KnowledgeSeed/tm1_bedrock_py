@@ -2303,10 +2303,6 @@ async def async_executor_csv_to_tm1(
             }
             data_mdx = Template(data_mdx_template).substitute(**template_kwargs)
 
-            target_clear_set_mdx_list = [
-                Template(clear_param_template).substitute(**template_kwargs)
-                for clear_param_template in clear_param_templates
-            ]
             futures.append(loop.run_in_executor(
                 executor, wrapper,
                 tm1_service, source_csv_file_path,

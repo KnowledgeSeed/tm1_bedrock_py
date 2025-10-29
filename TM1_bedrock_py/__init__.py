@@ -54,6 +54,13 @@ basic_logger = logging.getLogger("TM1_bedrock_py")
 exec_metrics_logger = logging.getLogger("exec_metrics")
 benchmark_metrics_logger = logging.getLogger("benchmark_metrics")
 
+_MISSING_AIRFLOW_EXTRA_MSG = (
+    "TM1 Bedrock Airflow integration requires optional dependencies. "
+    "Install them with 'pip install tm1-bedrock-py[airflow]' or the more "
+    "specific backend extras (e.g. '[airflow-postgres]')."
+)
+_AIRFLOW_EXECUTOR_MODULE = None
+
 __all__ = ["basic_logger", "exec_metrics_logger", "benchmark_metrics_logger"]
 
 
@@ -77,3 +84,28 @@ def get_provider_info():
         "description": "A python modul for TM1 Bedrock.",
         "version": [get_version()],
     }
+
+
+def _load_airflow_executor():
+    global _AIRFLOW_EXECUTOR_MODULE
+
+    if _AIRFLOW_EXECUTOR_MODULE is not None:
+        return _AIRFLOW_EXECUTOR_MODULE
+
+    try:
+        from . import airflow_executor as _module  # noqa: F401
+    except ImportError as exc:
+        raise ImportError(_MISSING_AIRFLOW_EXTRA_MSG) from exc
+
+    _AIRFLOW_EXECUTOR_MODULE = _module
+    return _AIRFLOW_EXECUTOR_MODULE
+
+
+def __getattr__(name):
+    if name == "airflow_executor":
+        return _load_airflow_executor()
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
+
+def __dir__():
+    return sorted(list(globals().keys()) + ["airflow_executor"])
