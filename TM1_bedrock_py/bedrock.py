@@ -51,7 +51,7 @@ def data_copy_intercube(
         increment: Optional[bool] = False,
         sum_numeric_duplicates: Optional[bool] = True,
         logging_level: Optional[str] = "ERROR",
-        verbose_logging_mode: Optional[Literal["file", "print_consol"]] = None,
+        verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         **kwargs
 ) -> None:
     """
@@ -241,7 +241,12 @@ def data_copy_intercube(
             **kwargs
         )
 
-    utility.dataframe_verbose_logger(dataframe, "start_data_copy_intercube", verbose_logging_mode=verbose_logging_mode)
+    utility.dataframe_verbose_logger(
+        dataframe=dataframe,
+        step_number="start_data_copy_intercube",
+        verbose_logging_mode=verbose_logging_mode,
+        **kwargs
+    )
 
     shared_mapping_df = None
     if shared_mapping:
@@ -323,7 +328,12 @@ def data_copy_intercube(
                           cube_name=target_cube_name,
                           clear_set_mdx_list=target_clear_set_mdx_list,
                           **kwargs)
-    utility.dataframe_verbose_logger(dataframe, "end_data_copy_intercube", verbose_logging_mode=verbose_logging_mode)
+    utility.dataframe_verbose_logger(
+        dataframe=dataframe,
+        step_number="end_data_copy_intercube",
+        verbose_logging_mode=verbose_logging_mode,
+        **kwargs
+    )
 
     target_cube_dims = target_metadata.get_cube_dims()
     loader.dataframe_to_cube(
@@ -377,7 +387,7 @@ def data_copy(
         increment: bool = False,
         sum_numeric_duplicates: bool = True,
         logging_level: str = "ERROR",
-        verbose_logging_mode: Optional[Literal["file", "print_consol"]] = None,
+        verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         **kwargs
 ) -> None:
     """
@@ -545,7 +555,11 @@ def data_copy(
         )
 
     utility.dataframe_verbose_logger(
-        dataframe, "start_data_copy", verbose_logging_mode=verbose_logging_mode)
+        dataframe=dataframe,
+        step_number="start_data_copy",
+        verbose_logging_mode=verbose_logging_mode,
+        **kwargs
+    )
 
     shared_mapping_df = None
     if shared_mapping:
@@ -600,7 +614,12 @@ def data_copy(
                           cube_name=cube_name,
                           clear_set_mdx_list=target_clear_set_mdx_list,
                           **kwargs)
-    utility.dataframe_verbose_logger(dataframe, "end_data_copy", verbose_logging_mode=verbose_logging_mode)
+    utility.dataframe_verbose_logger(
+        dataframe=dataframe,
+        step_number="end_data_copy",
+        verbose_logging_mode=verbose_logging_mode,
+        **kwargs
+    )
 
     loader.dataframe_to_cube(
         tm1_service=target_tm1_service,
@@ -826,7 +845,7 @@ def load_sql_data_to_tm1_cube(
         increment: bool = False,
         sum_numeric_duplicates: bool = True,
         logging_level: str = "ERROR",
-        verbose_logging_mode: Optional[Literal["file", "print_consol"]] = None,
+        verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         _execution_id: int = 0,
         **kwargs
 ) -> None:
@@ -988,7 +1007,12 @@ def load_sql_data_to_tm1_cube(
                               **kwargs)
         return
 
-    utility.dataframe_verbose_logger(dataframe, "start_load_sql_data_to_tm1_cube", verbose_logging_mode=verbose_logging_mode)
+    utility.dataframe_verbose_logger(
+        dataframe=dataframe,
+        step_number="start_load_sql_data_to_tm1_cube",
+        verbose_logging_mode=verbose_logging_mode,
+        **kwargs
+    )
 
     shared_mapping_df = None
     if shared_mapping:
@@ -1032,7 +1056,12 @@ def load_sql_data_to_tm1_cube(
                           clear_set_mdx_list=target_clear_set_mdx_list,
                           **kwargs)
 
-    utility.dataframe_verbose_logger(dataframe, "end_load_sql_data_to_tm1_cube", verbose_logging_mode=verbose_logging_mode)
+    utility.dataframe_verbose_logger(
+        dataframe=dataframe,
+        step_number="end_load_sql_data_to_tm1_cube",
+        verbose_logging_mode=verbose_logging_mode,
+        **kwargs
+    )
 
     loader.dataframe_to_cube(
         tm1_service=tm1_service,
@@ -1085,7 +1114,7 @@ def load_tm1_cube_to_sql_table(
         dtype: Optional[dict] = None,
         decimal: Optional[str] = None,
         logging_level: str = "ERROR",
-        verbose_logging_mode: Optional[Literal["file", "print_consol"]] = None,
+        verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         _execution_id: int = 0,
         **kwargs
 ) -> None:
@@ -1187,7 +1216,8 @@ def load_tm1_cube_to_sql_table(
         skip_consolidated_cells=skip_consolidated_cells,
         skip_rule_derived_cells=skip_rule_derived_cells,
         mdx_function=mdx_function,
-        decimal=decimal
+        decimal=decimal,
+        **kwargs
     )
 
     if dataframe.empty:
@@ -1210,7 +1240,10 @@ def load_tm1_cube_to_sql_table(
     )
 
     utility.dataframe_verbose_logger(
-        dataframe, "start_load_tm1_cube_to_sql_table", verbose_logging_mode=verbose_logging_mode
+        dataframe=dataframe,
+        step_number="start_load_tm1_cube_to_sql_table",
+        verbose_logging_mode=verbose_logging_mode,
+        **kwargs
     )
 
     shared_mapping_df = None
@@ -1260,7 +1293,10 @@ def load_tm1_cube_to_sql_table(
                            delete_statement=sql_delete_statement)
 
     utility.dataframe_verbose_logger(
-        dataframe, "end_load_tm1_cube_to_sql_table", verbose_logging_mode=verbose_logging_mode
+        dataframe=dataframe,
+        step_number="end_load_tm1_cube_to_sql_table",
+        verbose_logging_mode=verbose_logging_mode,
+        **kwargs
     )
 
     loader.dataframe_to_sql(
@@ -1710,7 +1746,7 @@ def load_csv_data_to_tm1_cube(
         clear_target: Optional[bool] = False,
         logging_level: str = "ERROR",
         _execution_id: int = 0,
-        verbose_logging_mode: Optional[Literal["file", "print_consol"]] = None,
+        verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         data_mdx: Optional[str] = None,
         **kwargs
 ) -> None:
@@ -1934,7 +1970,10 @@ def load_csv_data_to_tm1_cube(
                           **kwargs)
 
     utility.dataframe_verbose_logger(
-        dataframe, "end_load_csv_data_to_tm1_cube", verbose_logging_mode=verbose_logging_mode
+        dataframe=dataframe,
+        step_number="end_load_csv_data_to_tm1_cube",
+        verbose_logging_mode=verbose_logging_mode,
+        **kwargs
     )
 
     loader.dataframe_to_cube(
@@ -1985,7 +2024,7 @@ def load_tm1_cube_to_csv_file(
         clear_source: Optional[bool] = False,
         source_clear_set_mdx_list: Optional[List[str]] = None,
         logging_level: str = "ERROR",
-        verbose_logging_mode: Optional[Literal["file", "print_consol"]] = None,
+        verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         _execution_id: int = 0,
         **kwargs
 ) -> None:
@@ -2078,7 +2117,8 @@ def load_tm1_cube_to_csv_file(
         skip_consolidated_cells=skip_consolidated_cells,
         skip_rule_derived_cells=skip_rule_derived_cells,
         mdx_function=mdx_function,
-        decimal=decimal
+        decimal=decimal,
+        **kwargs
     )
 
     if dataframe.empty:
@@ -2091,7 +2131,12 @@ def load_tm1_cube_to_csv_file(
 
     transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
 
-    utility.dataframe_verbose_logger(dataframe, "start_load_tm1_cube_to_csv_file", verbose_logging_mode=verbose_logging_mode)
+    utility.dataframe_verbose_logger(
+        dataframe=dataframe,
+        step_number="start_load_tm1_cube_to_csv_file",
+        verbose_logging_mode=verbose_logging_mode,
+        **kwargs
+    )
 
     shared_mapping_df = None
     if shared_mapping:

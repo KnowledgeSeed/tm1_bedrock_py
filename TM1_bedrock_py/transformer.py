@@ -737,7 +737,11 @@ def dataframe_execute_mappings(
         method = step["method"]
         if method in method_handlers:
             data_df = method_handlers[method](data_df, step, shared_mapping_df)
-            utility.dataframe_verbose_logger(data_df, f"mapping_step_{i+1}_result", **kwargs)
+            utility.dataframe_verbose_logger(
+                dataframe=data_df,
+                step_number="mapping_step_{i+1}_result",
+                **kwargs
+            )
         else:
             raise ValueError(f"Unsupported mapping method: {method}")
 

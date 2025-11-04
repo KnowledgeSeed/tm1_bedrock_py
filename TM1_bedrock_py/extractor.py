@@ -43,6 +43,8 @@ def __tm1_mdx_to_dataframe_default(
         skip_consolidated_cells: bool = False,
         skip_rule_derived_cells: bool = False,
         decimal: str = None,
+        use_blob: Optional[bool] = True,
+        remove_blob: Optional[bool] = True,
         **_kwargs
 ) -> DataFrame:
     """
@@ -87,7 +89,8 @@ def __tm1_mdx_to_dataframe_default(
             skip_consolidated_cells=skip_consolidated_cells,
             skip_rule_derived_cells=skip_rule_derived_cells,
             use_iterative_json=True,
-            use_blob=True,
+            use_blob=use_blob,
+            remove_blob=remove_blob,
             decimal=decimal
         )
 
@@ -233,7 +236,11 @@ def generate_dataframe_for_mapping_info(
         if found_key
         else None
     )
-    utility.dataframe_verbose_logger(mapping_info["mapping_df"], f"mapping_step_{step_specific_string}", **kwargs)
+    utility.dataframe_verbose_logger(
+        dataframe=mapping_info["mapping_df"],
+        step_number=f"mapping_step_{step_specific_string}",
+        **kwargs
+    )
 
 
 @utility.log_exec_metrics
