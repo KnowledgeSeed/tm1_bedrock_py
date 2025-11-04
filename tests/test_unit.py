@@ -480,6 +480,17 @@ def test_dataframe_itemskip_elements(source, check1, check2, expected):
     pd.testing.assert_frame_equal(df, expected_df)
 
 
+@parametrize_from_file
+def test_dataframe_validate_datatypes(measuredim, measuretypes, dataframe, expected):
+    input_dataframe = pd.DataFrame(dataframe)
+    expected_dataframe = pd.DataFrame(expected)
+    transformer.dataframe_cast_value_by_measure_type(
+        dataframe=input_dataframe,
+        measure_dimension_name=measuredim,
+        measure_element_types=measuretypes
+    )
+    pd.testing.assert_frame_equal(input_dataframe, expected_dataframe)
+
 # ------------------------------------------------------------------------------------------------------------
 # Main: tests for dataframe remapping and copy functions
 # ------------------------------------------------------------------------------------------------------------

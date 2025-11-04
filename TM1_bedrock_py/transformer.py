@@ -76,7 +76,8 @@ def dataframe_cast_value_by_measure_type(
 
     if numeric_mask.any():
         numeric_values = pd.to_numeric(
-            dataframe.loc[numeric_mask, 'Value'], errors='coerce'
+            dataframe.loc[numeric_mask, 'Value'].astype(str).str.replace(',', '.', regex=False),
+            errors='coerce'
         )
 
         if numeric_values.isnull().any():
