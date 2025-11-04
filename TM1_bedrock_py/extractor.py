@@ -44,7 +44,6 @@ def __tm1_mdx_to_dataframe_default(
         skip_rule_derived_cells: bool = False,
         decimal: str = None,
         use_blob: Optional[bool] = True,
-        remove_blob: Optional[bool] = True,
         **_kwargs
 ) -> DataFrame:
     """
@@ -90,7 +89,6 @@ def __tm1_mdx_to_dataframe_default(
             skip_rule_derived_cells=skip_rule_derived_cells,
             use_iterative_json=True,
             use_blob=use_blob,
-            remove_blob=remove_blob,
             decimal=decimal
         )
 

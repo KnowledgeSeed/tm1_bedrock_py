@@ -80,6 +80,7 @@ def __dataframe_to_cube_default(
         use_ti: bool = False,
         increment: bool = False,
         sum_numeric_duplicates: bool = True,
+        remove_blob: Optional[bool] = True,
         **_kwargs
 ) -> None:
     """
@@ -123,6 +124,7 @@ def __dataframe_to_cube_default(
             skip_non_updateable=True,
             use_ti=use_ti,
             use_blob=use_blob,
+            remove_blob=remove_blob,
             increment=increment,
             sum_numeric_duplicates=sum_numeric_duplicates
         )
