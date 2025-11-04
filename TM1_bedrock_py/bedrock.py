@@ -47,7 +47,7 @@ def data_copy_intercube(
         slice_size_of_dataframe: Optional[int] = 50000,
         use_ti: Optional[bool] = False,
         use_blob: Optional[bool] = False,
-        validate_datatypes: Optional[bool] = False,
+        use_mixed_datatypes: Optional[bool] = False,
         increment: Optional[bool] = False,
         sum_numeric_duplicates: Optional[bool] = True,
         logging_level: Optional[str] = "ERROR",
@@ -224,14 +224,14 @@ def data_copy_intercube(
         cube_name=target_cube_name,
         metadata_function=target_metadata_function,
         collect_dim_element_identifiers=ignore_missing_elements,
-        collect_measure_types=validate_datatypes,
+        collect_measure_types=use_mixed_datatypes,
         **kwargs
     )
 
     transformer.dataframe_add_column_assign_value(
         dataframe=dataframe, column_value=data_metadata_queryspecific.get_filter_dict(), **kwargs)
 
-    if validate_datatypes:
+    if use_mixed_datatypes:
         measure_dim_name = target_metadata.get_cube_dims()[-1]
         measure_types = target_metadata.get_measure_element_types()
         transformer.dataframe_cast_value_by_measure_type(
@@ -373,7 +373,7 @@ def data_copy(
         slice_size_of_dataframe: int = 50000,
         use_ti: bool = False,
         use_blob: bool = False,
-        validate_datatypes: Optional[bool] = False,
+        use_mixed_datatypes: Optional[bool] = False,
         increment: bool = False,
         sum_numeric_duplicates: bool = True,
         logging_level: str = "ERROR",
@@ -524,7 +524,7 @@ def data_copy(
         tm1_service=target_tm1_service, cube_name=cube_name,
         metadata_function=target_metadata_function,
         collect_dim_element_identifiers=False,
-        collect_measure_types=validate_datatypes,
+        collect_measure_types=use_mixed_datatypes,
         **kwargs)
     cube_dims = data_metadata.get_cube_dims()
 
@@ -534,7 +534,7 @@ def data_copy(
         **kwargs
     )
 
-    if validate_datatypes:
+    if use_mixed_datatypes:
         measure_dim_name = data_metadata.get_cube_dims()[-1]
         measure_types = data_metadata.get_measure_element_types()
         transformer.dataframe_cast_value_by_measure_type(
