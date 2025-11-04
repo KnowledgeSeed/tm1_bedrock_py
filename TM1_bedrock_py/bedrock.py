@@ -47,6 +47,7 @@ def data_copy_intercube(
         slice_size_of_dataframe: Optional[int] = 50000,
         use_ti: Optional[bool] = False,
         use_blob: Optional[bool] = False,
+        validate_datatypes: Optional[bool] = False,
         increment: Optional[bool] = False,
         sum_numeric_duplicates: Optional[bool] = True,
         logging_level: Optional[str] = "ERROR",
@@ -223,11 +224,22 @@ def data_copy_intercube(
         cube_name=target_cube_name,
         metadata_function=target_metadata_function,
         collect_dim_element_identifiers=ignore_missing_elements,
+        collect_measure_types=validate_datatypes,
         **kwargs
     )
 
     transformer.dataframe_add_column_assign_value(
         dataframe=dataframe, column_value=data_metadata_queryspecific.get_filter_dict(), **kwargs)
+
+    if validate_datatypes:
+        measure_dim_name = target_metadata.get_cube_dims()[-1]
+        measure_types = target_metadata.get_measure_element_types()
+        transformer.dataframe_cast_value_by_measure_type(
+            dataframe=dataframe,
+            measure_dimension_name=measure_dim_name,
+            measure_element_types=measure_types,
+            **kwargs
+        )
 
     utility.dataframe_verbose_logger(dataframe, "start_data_copy_intercube", verbose_logging_mode=verbose_logging_mode)
 
@@ -361,6 +373,7 @@ def data_copy(
         slice_size_of_dataframe: int = 50000,
         use_ti: bool = False,
         use_blob: bool = False,
+        validate_datatypes: Optional[bool] = False,
         increment: bool = False,
         sum_numeric_duplicates: bool = True,
         logging_level: str = "ERROR",
@@ -511,6 +524,7 @@ def data_copy(
         tm1_service=target_tm1_service, cube_name=cube_name,
         metadata_function=target_metadata_function,
         collect_dim_element_identifiers=False,
+        collect_measure_types=validate_datatypes,
         **kwargs)
     cube_dims = data_metadata.get_cube_dims()
 
@@ -519,6 +533,16 @@ def data_copy(
         column_value=data_metadata_queryspecific.get_filter_dict(),
         **kwargs
     )
+
+    if validate_datatypes:
+        measure_dim_name = data_metadata.get_cube_dims()[-1]
+        measure_types = data_metadata.get_measure_element_types()
+        transformer.dataframe_cast_value_by_measure_type(
+            dataframe=dataframe,
+            measure_dimension_name=measure_dim_name,
+            measure_element_types=measure_types,
+            **kwargs
+        )
 
     utility.dataframe_verbose_logger(
         dataframe, "start_data_copy", verbose_logging_mode=verbose_logging_mode)
@@ -2254,7 +2278,6 @@ async def async_executor_csv_to_tm1(
         _data_mdx: str,
         _mapping_steps: Optional[List[Dict]],
         _shared_mapping: Optional[Dict],
-        _target_clear_set_mdx_list: Optional[List[str]],
         _data_metadata_func: Optional[Callable],
         _target_metadata_func: Optional[Callable],
         _execution_id: int,
@@ -2269,7 +2292,6 @@ async def async_executor_csv_to_tm1(
                 "data_mdx": _data_mdx,
                 "mapping_steps": _mapping_steps,
                 "shared_mapping": _shared_mapping,
-                "target_clear_set_mdx_list": _target_clear_set_mdx_list,
                 "_execution_id": _execution_id,
                 "clear_target": False,
                 "async_write": False
@@ -2303,15 +2325,11 @@ async def async_executor_csv_to_tm1(
             }
             data_mdx = Template(data_mdx_template).substitute(**template_kwargs)
 
-            target_clear_set_mdx_list = [
-                Template(clear_param_template).substitute(**template_kwargs)
-                for clear_param_template in clear_param_templates
-            ]
             futures.append(loop.run_in_executor(
                 executor, wrapper,
                 tm1_service, source_csv_file_path,
                 target_cube_name, data_mdx,
-                mapping_steps, shared_mapping, target_clear_set_mdx_list,
+                mapping_steps, shared_mapping,
                 data_metadata_provider, target_metadata_provider,
                 i, kwargs
             ))

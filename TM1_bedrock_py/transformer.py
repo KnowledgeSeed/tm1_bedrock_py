@@ -91,8 +91,6 @@ def dataframe_cast_value_by_measure_type(
     if string_mask.any():
         dataframe.loc[string_mask, 'Value'] = dataframe.loc[string_mask, 'Value'].astype(str)
 
-    dataframe['Value'] = dataframe['Value'].astype(object)
-
 
 @utility.log_exec_metrics
 def dataframe_reorder_dimensions(
