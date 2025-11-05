@@ -47,10 +47,11 @@ def data_copy_intercube(
         slice_size_of_dataframe: Optional[int] = 50000,
         use_ti: Optional[bool] = False,
         use_blob: Optional[bool] = False,
+        use_mixed_datatypes: Optional[bool] = False,
         increment: Optional[bool] = False,
         sum_numeric_duplicates: Optional[bool] = True,
         logging_level: Optional[str] = "ERROR",
-        verbose_logging_mode: Optional[Literal["file", "print_consol"]] = None,
+        verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         **kwargs
 ) -> None:
     """
@@ -223,13 +224,29 @@ def data_copy_intercube(
         cube_name=target_cube_name,
         metadata_function=target_metadata_function,
         collect_dim_element_identifiers=ignore_missing_elements,
+        collect_measure_types=use_mixed_datatypes,
         **kwargs
     )
 
     transformer.dataframe_add_column_assign_value(
         dataframe=dataframe, column_value=data_metadata_queryspecific.get_filter_dict(), **kwargs)
 
-    utility.dataframe_verbose_logger(dataframe, "start_data_copy_intercube", verbose_logging_mode=verbose_logging_mode)
+    if use_mixed_datatypes:
+        measure_dim_name = target_metadata.get_cube_dims()[-1]
+        measure_types = target_metadata.get_measure_element_types()
+        transformer.dataframe_cast_value_by_measure_type(
+            dataframe=dataframe,
+            measure_dimension_name=measure_dim_name,
+            measure_element_types=measure_types,
+            **kwargs
+        )
+
+    utility.dataframe_verbose_logger(
+        dataframe=dataframe,
+        step_number="start_data_copy_intercube",
+        verbose_logging_mode=verbose_logging_mode,
+        **kwargs
+    )
 
     shared_mapping_df = None
     if shared_mapping:
@@ -311,7 +328,12 @@ def data_copy_intercube(
                           cube_name=target_cube_name,
                           clear_set_mdx_list=target_clear_set_mdx_list,
                           **kwargs)
-    utility.dataframe_verbose_logger(dataframe, "end_data_copy_intercube", verbose_logging_mode=verbose_logging_mode)
+    utility.dataframe_verbose_logger(
+        dataframe=dataframe,
+        step_number="end_data_copy_intercube",
+        verbose_logging_mode=verbose_logging_mode,
+        **kwargs
+    )
 
     target_cube_dims = target_metadata.get_cube_dims()
     loader.dataframe_to_cube(
@@ -361,10 +383,11 @@ def data_copy(
         slice_size_of_dataframe: int = 50000,
         use_ti: bool = False,
         use_blob: bool = False,
+        use_mixed_datatypes: Optional[bool] = False,
         increment: bool = False,
         sum_numeric_duplicates: bool = True,
         logging_level: str = "ERROR",
-        verbose_logging_mode: Optional[Literal["file", "print_consol"]] = None,
+        verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         **kwargs
 ) -> None:
     """
@@ -511,6 +534,7 @@ def data_copy(
         tm1_service=target_tm1_service, cube_name=cube_name,
         metadata_function=target_metadata_function,
         collect_dim_element_identifiers=False,
+        collect_measure_types=use_mixed_datatypes,
         **kwargs)
     cube_dims = data_metadata.get_cube_dims()
 
@@ -520,8 +544,22 @@ def data_copy(
         **kwargs
     )
 
+    if use_mixed_datatypes:
+        measure_dim_name = data_metadata.get_cube_dims()[-1]
+        measure_types = data_metadata.get_measure_element_types()
+        transformer.dataframe_cast_value_by_measure_type(
+            dataframe=dataframe,
+            measure_dimension_name=measure_dim_name,
+            measure_element_types=measure_types,
+            **kwargs
+        )
+
     utility.dataframe_verbose_logger(
-        dataframe, "start_data_copy", verbose_logging_mode=verbose_logging_mode)
+        dataframe=dataframe,
+        step_number="start_data_copy",
+        verbose_logging_mode=verbose_logging_mode,
+        **kwargs
+    )
 
     shared_mapping_df = None
     if shared_mapping:
@@ -576,7 +614,12 @@ def data_copy(
                           cube_name=cube_name,
                           clear_set_mdx_list=target_clear_set_mdx_list,
                           **kwargs)
-    utility.dataframe_verbose_logger(dataframe, "end_data_copy", verbose_logging_mode=verbose_logging_mode)
+    utility.dataframe_verbose_logger(
+        dataframe=dataframe,
+        step_number="end_data_copy",
+        verbose_logging_mode=verbose_logging_mode,
+        **kwargs
+    )
 
     loader.dataframe_to_cube(
         tm1_service=target_tm1_service,
@@ -802,7 +845,7 @@ def load_sql_data_to_tm1_cube(
         increment: bool = False,
         sum_numeric_duplicates: bool = True,
         logging_level: str = "ERROR",
-        verbose_logging_mode: Optional[Literal["file", "print_consol"]] = None,
+        verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         _execution_id: int = 0,
         **kwargs
 ) -> None:
@@ -964,7 +1007,12 @@ def load_sql_data_to_tm1_cube(
                               **kwargs)
         return
 
-    utility.dataframe_verbose_logger(dataframe, "start_load_sql_data_to_tm1_cube", verbose_logging_mode=verbose_logging_mode)
+    utility.dataframe_verbose_logger(
+        dataframe=dataframe,
+        step_number="start_load_sql_data_to_tm1_cube",
+        verbose_logging_mode=verbose_logging_mode,
+        **kwargs
+    )
 
     shared_mapping_df = None
     if shared_mapping:
@@ -1008,7 +1056,12 @@ def load_sql_data_to_tm1_cube(
                           clear_set_mdx_list=target_clear_set_mdx_list,
                           **kwargs)
 
-    utility.dataframe_verbose_logger(dataframe, "end_load_sql_data_to_tm1_cube", verbose_logging_mode=verbose_logging_mode)
+    utility.dataframe_verbose_logger(
+        dataframe=dataframe,
+        step_number="end_load_sql_data_to_tm1_cube",
+        verbose_logging_mode=verbose_logging_mode,
+        **kwargs
+    )
 
     loader.dataframe_to_cube(
         tm1_service=tm1_service,
@@ -1061,7 +1114,7 @@ def load_tm1_cube_to_sql_table(
         dtype: Optional[dict] = None,
         decimal: Optional[str] = None,
         logging_level: str = "ERROR",
-        verbose_logging_mode: Optional[Literal["file", "print_consol"]] = None,
+        verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         _execution_id: int = 0,
         **kwargs
 ) -> None:
@@ -1163,7 +1216,8 @@ def load_tm1_cube_to_sql_table(
         skip_consolidated_cells=skip_consolidated_cells,
         skip_rule_derived_cells=skip_rule_derived_cells,
         mdx_function=mdx_function,
-        decimal=decimal
+        decimal=decimal,
+        **kwargs
     )
 
     if dataframe.empty:
@@ -1186,7 +1240,10 @@ def load_tm1_cube_to_sql_table(
     )
 
     utility.dataframe_verbose_logger(
-        dataframe, "start_load_tm1_cube_to_sql_table", verbose_logging_mode=verbose_logging_mode
+        dataframe=dataframe,
+        step_number="start_load_tm1_cube_to_sql_table",
+        verbose_logging_mode=verbose_logging_mode,
+        **kwargs
     )
 
     shared_mapping_df = None
@@ -1236,7 +1293,10 @@ def load_tm1_cube_to_sql_table(
                            delete_statement=sql_delete_statement)
 
     utility.dataframe_verbose_logger(
-        dataframe, "end_load_tm1_cube_to_sql_table", verbose_logging_mode=verbose_logging_mode
+        dataframe=dataframe,
+        step_number="end_load_tm1_cube_to_sql_table",
+        verbose_logging_mode=verbose_logging_mode,
+        **kwargs
     )
 
     loader.dataframe_to_sql(
@@ -1686,7 +1746,7 @@ def load_csv_data_to_tm1_cube(
         clear_target: Optional[bool] = False,
         logging_level: str = "ERROR",
         _execution_id: int = 0,
-        verbose_logging_mode: Optional[Literal["file", "print_consol"]] = None,
+        verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         data_mdx: Optional[str] = None,
         **kwargs
 ) -> None:
@@ -1910,7 +1970,10 @@ def load_csv_data_to_tm1_cube(
                           **kwargs)
 
     utility.dataframe_verbose_logger(
-        dataframe, "end_load_csv_data_to_tm1_cube", verbose_logging_mode=verbose_logging_mode
+        dataframe=dataframe,
+        step_number="end_load_csv_data_to_tm1_cube",
+        verbose_logging_mode=verbose_logging_mode,
+        **kwargs
     )
 
     loader.dataframe_to_cube(
@@ -1961,7 +2024,7 @@ def load_tm1_cube_to_csv_file(
         clear_source: Optional[bool] = False,
         source_clear_set_mdx_list: Optional[List[str]] = None,
         logging_level: str = "ERROR",
-        verbose_logging_mode: Optional[Literal["file", "print_consol"]] = None,
+        verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         _execution_id: int = 0,
         **kwargs
 ) -> None:
@@ -2054,7 +2117,8 @@ def load_tm1_cube_to_csv_file(
         skip_consolidated_cells=skip_consolidated_cells,
         skip_rule_derived_cells=skip_rule_derived_cells,
         mdx_function=mdx_function,
-        decimal=decimal
+        decimal=decimal,
+        **kwargs
     )
 
     if dataframe.empty:
@@ -2067,7 +2131,12 @@ def load_tm1_cube_to_csv_file(
 
     transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
 
-    utility.dataframe_verbose_logger(dataframe, "start_load_tm1_cube_to_csv_file", verbose_logging_mode=verbose_logging_mode)
+    utility.dataframe_verbose_logger(
+        dataframe=dataframe,
+        step_number="start_load_tm1_cube_to_csv_file",
+        verbose_logging_mode=verbose_logging_mode,
+        **kwargs
+    )
 
     shared_mapping_df = None
     if shared_mapping:
@@ -2254,7 +2323,6 @@ async def async_executor_csv_to_tm1(
         _data_mdx: str,
         _mapping_steps: Optional[List[Dict]],
         _shared_mapping: Optional[Dict],
-        _target_clear_set_mdx_list: Optional[List[str]],
         _data_metadata_func: Optional[Callable],
         _target_metadata_func: Optional[Callable],
         _execution_id: int,
@@ -2269,7 +2337,6 @@ async def async_executor_csv_to_tm1(
                 "data_mdx": _data_mdx,
                 "mapping_steps": _mapping_steps,
                 "shared_mapping": _shared_mapping,
-                "target_clear_set_mdx_list": _target_clear_set_mdx_list,
                 "_execution_id": _execution_id,
                 "clear_target": False,
                 "async_write": False
@@ -2307,7 +2374,7 @@ async def async_executor_csv_to_tm1(
                 executor, wrapper,
                 tm1_service, source_csv_file_path,
                 target_cube_name, data_mdx,
-                mapping_steps, shared_mapping, target_clear_set_mdx_list,
+                mapping_steps, shared_mapping,
                 data_metadata_provider, target_metadata_provider,
                 i, kwargs
             ))

@@ -29,26 +29,26 @@ def generate_valid_file_path(output_dir: str, filename: str):
 
 
 def dataframe_verbose_logger(
-        df: DataFrame,
+        dataframe: DataFrame,
         step_number: str = None,
-        output_dir="../logs/dataframe_logs",
-        verbose_logging_mode: Optional[Literal["file", "print_consol"]] = None,
+        verbose_logging_output_dir="logs/dataframe_logs",
+        verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         **_kwargs
 ):
-    if verbose_logging_mode and df is not None:
+    if verbose_logging_mode and dataframe is not None:
         if verbose_logging_mode is "file":
             thread_id = threading.get_ident()
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
             filename = f"{step_number}_{thread_id}_{timestamp}.csv"
-            filepath = generate_valid_file_path(output_dir, filename)
+            filepath = generate_valid_file_path(verbose_logging_output_dir, filename)
 
-            df.to_csv(path_or_buf=filepath, index=False)
+            dataframe.to_csv(path_or_buf=filepath, index=False)
             basic_logger.debug(f"DataFrame logged to {filepath}")
 
         elif verbose_logging_mode is "print_consol":
             num_rows_to_log = 5
-            basic_logger.debug(f"First {num_rows_to_log} rows of DataFrame: {df.head(num_rows_to_log)}")
+            basic_logger.debug(f"First {num_rows_to_log} rows of DataFrame: {dataframe.head(num_rows_to_log)}")
 
 
 def execution_metrics_logger(logger, func, *args, **kwargs):

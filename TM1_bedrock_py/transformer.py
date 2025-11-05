@@ -76,7 +76,8 @@ def dataframe_cast_value_by_measure_type(
 
     if numeric_mask.any():
         numeric_values = pd.to_numeric(
-            dataframe.loc[numeric_mask, 'Value'], errors='coerce'
+            dataframe.loc[numeric_mask, 'Value'].astype(str).str.replace(',', '.', regex=False),
+            errors='coerce'
         )
 
         if numeric_values.isnull().any():
@@ -91,7 +92,7 @@ def dataframe_cast_value_by_measure_type(
     if string_mask.any():
         dataframe.loc[string_mask, 'Value'] = dataframe.loc[string_mask, 'Value'].astype(str)
 
-    dataframe['Value'] = dataframe['Value'].astype(object)
+    dataframe["Value"] = dataframe["Value"].astype(object)
 
 
 @utility.log_exec_metrics
@@ -736,7 +737,11 @@ def dataframe_execute_mappings(
         method = step["method"]
         if method in method_handlers:
             data_df = method_handlers[method](data_df, step, shared_mapping_df)
-            utility.dataframe_verbose_logger(data_df, f"mapping_step_{i+1}_result", **kwargs)
+            utility.dataframe_verbose_logger(
+                dataframe=data_df,
+                step_number="mapping_step_{i+1}_result",
+                **kwargs
+            )
         else:
             raise ValueError(f"Unsupported mapping method: {method}")
 

@@ -1029,6 +1029,72 @@ test_dataframe_itemskip_elements:
       "Value": [ 10 ]
     }
 
+test_dataframe_validate_datatypes:
+  -
+    measuredim: "Measures"
+    measuretypes: {
+        "Numeric": "Numeric",
+        "String": "String"
+    }
+    dataframe: {
+        "Lineitems": ["Test1", "Test2", "Test3", "Test4"],
+        "Measures": ["Numeric", "String", "Numeric", "String"],
+        "Value": ["1.23", "ABCD", "-5.555555", "EFGH"]
+    }
+    expected: {
+      "Lineitems": [ "Test1", "Test2", "Test3", "Test4" ],
+      "Measures": [ "Numeric", "String", "Numeric", "String" ],
+      "Value": [ 1.23, "ABCD", -5.555555, "EFGH" ]
+    }
+  -
+    measuredim: "Measures"
+    measuretypes: {
+      "Numeric": "Numeric",
+      "String": "String"
+    }
+    dataframe: {
+      "Lineitems": [ "Test1", "Test2", "Test3", "Test4" ],
+      "Measures": [ "Numeric", "String", "Numeric", "String" ],
+      "Value": [ "1,23", "ABCD", "-5,555555", "EFGH" ]
+    }
+    expected: {
+      "Lineitems": [ "Test1", "Test2", "Test3", "Test4" ],
+      "Measures": [ "Numeric", "String", "Numeric", "String" ],
+      "Value": [ 1.23, "ABCD", -5.555555, "EFGH" ]
+    }
+  -
+    measuredim: "Measures"
+    measuretypes: {
+      "Numeric": "Numeric",
+      "String": "String"
+    }
+    dataframe: {
+      "Lineitems": [ "Test1", "Test2", "Test3", "Test4" ],
+      "Measures": [ "Numeric", "String", "Numeric", "String" ],
+      "Value": [ "1.23", "ABCD", "-5,555555", "EFGH" ]
+    }
+    expected: {
+      "Lineitems": [ "Test1", "Test2", "Test3", "Test4" ],
+      "Measures": [ "Numeric", "String", "Numeric", "String" ],
+      "Value": [ 1.23, "ABCD", -5.555555, "EFGH" ]
+    }
+  -
+    measuredim: "Measures"
+    measuretypes: {
+      "Numeric": "Numeric",
+      "String": "String"
+    }
+    dataframe: {
+      "Lineitems": [ "Test1", "Test2", "Test3", "Test4" ],
+      "Measures": [ "Numeric", "String", "Numeric", "String" ],
+      "Value": [ "5.e-003", "ABCD", "-4,e-003", "EFGH" ]
+    }
+    expected: {
+      "Lineitems": [ "Test1", "Test2", "Test3", "Test4" ],
+      "Measures": [ "Numeric", "String", "Numeric", "String" ],
+      "Value": [ 0.005, "ABCD", -0.004, "EFGH" ]
+    }
+
 # Main: tests for dataframe remapping and copy functions
 test_dataframe_find_and_replace_success:
   -
