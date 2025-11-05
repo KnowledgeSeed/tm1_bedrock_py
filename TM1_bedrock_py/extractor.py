@@ -32,7 +32,9 @@ def tm1_mdx_to_dataframe(
     if mdx_function is None:
         mdx_function = __tm1_mdx_to_dataframe_default
 
-    return mdx_function(**kwargs)
+    dataframe = mdx_function(**kwargs)
+    basic_logger.info("Extracted " + str(len(dataframe)) + " rows from tm1 datasource")
+    return dataframe
 
 
 def __tm1_mdx_to_dataframe_default(
@@ -289,7 +291,9 @@ def sql_to_dataframe(
     if sql_function is None:
         sql_function = __sql_to_dataframe_default
 
-    return sql_function(**kwargs)
+    dataframe = sql_function(**kwargs)
+    basic_logger.info("Extracted " + str(len(dataframe)) + " rows from sql datasource.")
+    return dataframe
 
 
 def __sql_to_dataframe_default(
@@ -305,15 +309,16 @@ def __sql_to_dataframe_default(
         engine = utility.create_sql_engine(**kwargs)
 
     def fetch(func, **fetch_kwargs):
-        return (
-            concat(list(func(**fetch_kwargs)), ignore_index=True)
-            if chunksize else func(**fetch_kwargs)
-        )
+        return (concat(list(func(**fetch_kwargs)), ignore_index=True)
+                if chunksize else func(**fetch_kwargs))
 
     if table_name:
-        return fetch(
-            read_sql_table, con=engine, table_name=table_name, columns=table_columns, schema=schema, chunksize=chunksize
-        )
+        return fetch(read_sql_table,
+                     con=engine,
+                     table_name=table_name,
+                     columns=table_columns,
+                     schema=schema,
+                     chunksize=chunksize)
 
     if sql_query:
         return fetch(read_sql_query, sql=sql_query, con=engine, chunksize=chunksize)
@@ -347,7 +352,9 @@ def csv_to_dataframe(
     if csv_function is None:
         csv_function = __csv_to_dataframe_default
 
-    return csv_function(**kwargs)
+    dataframe = csv_function(**kwargs)
+    basic_logger.info("Extracted " + str(len(dataframe)) + " rows from csv datasource.")
+    return dataframe
 
 
 def __csv_to_dataframe_default(

@@ -36,7 +36,7 @@ def dataframe_verbose_logger(
         **_kwargs
 ):
     if verbose_logging_mode and dataframe is not None:
-        if verbose_logging_mode is "file":
+        if verbose_logging_mode == "file":
             thread_id = threading.get_ident()
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
@@ -46,7 +46,7 @@ def dataframe_verbose_logger(
             dataframe.to_csv(path_or_buf=filepath, index=False)
             basic_logger.debug(f"DataFrame logged to {filepath}")
 
-        elif verbose_logging_mode is "print_consol":
+        elif verbose_logging_mode == "print_console":
             num_rows_to_log = 5
             basic_logger.debug(f"First {num_rows_to_log} rows of DataFrame: {dataframe.head(num_rows_to_log)}")
 

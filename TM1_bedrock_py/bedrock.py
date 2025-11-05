@@ -52,6 +52,7 @@ def data_copy_intercube(
         sum_numeric_duplicates: Optional[bool] = True,
         logging_level: Optional[str] = "ERROR",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
+        verbose_logging_output_dir: Optional[str] = None,
         **kwargs
 ) -> None:
     """
@@ -245,6 +246,7 @@ def data_copy_intercube(
         dataframe=dataframe,
         step_number="start_data_copy_intercube",
         verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -305,7 +307,7 @@ def data_copy_intercube(
         transformer.dataframe_itemskip_elements(
             dataframe=dataframe,
             check_dfs=target_metadata.get_dimension_check_dfs(),
-            logging_level=logging_level,
+            logging_enabled=verbose_logging_mode is not None,
             **kwargs
         )
 
@@ -332,6 +334,7 @@ def data_copy_intercube(
         dataframe=dataframe,
         step_number="end_data_copy_intercube",
         verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -388,6 +391,7 @@ def data_copy(
         sum_numeric_duplicates: bool = True,
         logging_level: str = "ERROR",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
+        verbose_logging_output_dir: Optional[str] = None,
         **kwargs
 ) -> None:
     """
@@ -558,6 +562,7 @@ def data_copy(
         dataframe=dataframe,
         step_number="start_data_copy",
         verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -618,6 +623,7 @@ def data_copy(
         dataframe=dataframe,
         step_number="end_data_copy",
         verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -846,6 +852,7 @@ def load_sql_data_to_tm1_cube(
         sum_numeric_duplicates: bool = True,
         logging_level: str = "ERROR",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
+        verbose_logging_output_dir: Optional[str] = None,
         _execution_id: int = 0,
         **kwargs
 ) -> None:
@@ -995,7 +1002,7 @@ def load_sql_data_to_tm1_cube(
         transformer.dataframe_itemskip_elements(
             dataframe=dataframe,
             check_dfs=target_metadata.get_dimension_check_dfs(),
-            logging_level=logging_level,
+            logging_enabled=verbose_logging_mode is not None,
             **kwargs
         )
 
@@ -1011,6 +1018,7 @@ def load_sql_data_to_tm1_cube(
         dataframe=dataframe,
         step_number="start_load_sql_data_to_tm1_cube",
         verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -1060,6 +1068,7 @@ def load_sql_data_to_tm1_cube(
         dataframe=dataframe,
         step_number="end_load_sql_data_to_tm1_cube",
         verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -1115,6 +1124,7 @@ def load_tm1_cube_to_sql_table(
         decimal: Optional[str] = None,
         logging_level: str = "ERROR",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
+        verbose_logging_output_dir: Optional[str] = None,
         _execution_id: int = 0,
         **kwargs
 ) -> None:
@@ -1243,6 +1253,7 @@ def load_tm1_cube_to_sql_table(
         dataframe=dataframe,
         step_number="start_load_tm1_cube_to_sql_table",
         verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -1296,6 +1307,7 @@ def load_tm1_cube_to_sql_table(
         dataframe=dataframe,
         step_number="end_load_tm1_cube_to_sql_table",
         verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -1747,6 +1759,7 @@ def load_csv_data_to_tm1_cube(
         logging_level: str = "ERROR",
         _execution_id: int = 0,
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
+        verbose_logging_output_dir: Optional[str] = None,
         data_mdx: Optional[str] = None,
         **kwargs
 ) -> None:
@@ -1907,7 +1920,7 @@ def load_csv_data_to_tm1_cube(
         transformer.dataframe_itemskip_elements(
             dataframe=dataframe,
             check_dfs=target_metadata.get_dimension_check_dfs(),
-            logging_level=logging_level,
+            logging_enabled=verbose_logging_mode is not None,
             **kwargs
         )
 
@@ -1973,6 +1986,7 @@ def load_csv_data_to_tm1_cube(
         dataframe=dataframe,
         step_number="end_load_csv_data_to_tm1_cube",
         verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -2025,6 +2039,7 @@ def load_tm1_cube_to_csv_file(
         source_clear_set_mdx_list: Optional[List[str]] = None,
         logging_level: str = "ERROR",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
+        verbose_logging_output_dir: Optional[str] = None,
         _execution_id: int = 0,
         **kwargs
 ) -> None:
@@ -2135,6 +2150,7 @@ def load_tm1_cube_to_csv_file(
         dataframe=dataframe,
         step_number="start_load_tm1_cube_to_csv_file",
         verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 

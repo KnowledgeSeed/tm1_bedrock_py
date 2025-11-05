@@ -3,7 +3,7 @@ from typing import Callable, List, Optional, Any, Literal
 from TM1py import TM1Service
 from pandas import DataFrame
 from sqlalchemy import text
-from TM1_bedrock_py import utility
+from TM1_bedrock_py import utility, basic_logger
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -66,7 +66,10 @@ def dataframe_to_cube(
     """
     if write_function is None:
         write_function = __dataframe_to_cube_default
-    return write_function(**kwargs)
+
+    dataframe = kwargs.get("dataframe")
+    write_function(**kwargs)
+    basic_logger.info("Writing of "+str(len(dataframe))+" rows into tm1 is complete.")
 
 
 def __dataframe_to_cube_default(
@@ -155,7 +158,9 @@ def dataframe_to_sql(
     if sql_write_function is None:
         sql_write_function = __dataframe_to_sql_default
 
-    return sql_write_function(**kwargs)
+    dataframe = kwargs.get("dataframe")
+    sql_write_function(**kwargs)
+    basic_logger.info("Writing of " + str(len(dataframe)) + " rows into sql is complete.")
 
 
 def __dataframe_to_sql_default(
@@ -209,7 +214,7 @@ def clear_table(
     """
     if clear_function is None:
         clear_function = __clear_table_default
-    return clear_function(**kwargs)
+    clear_function(**kwargs)
 
 
 def __clear_table_default(

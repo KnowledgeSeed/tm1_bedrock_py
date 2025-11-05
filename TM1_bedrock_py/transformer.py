@@ -364,7 +364,7 @@ def normalize_table_source_dataframe(
 def dataframe_itemskip_elements(
     dataframe: pd.DataFrame,
     check_dfs: list[pd.DataFrame],
-    logging_level: str,
+    logging_enabled: Optional[bool] = False,
     **_kwargs
 ) -> None:
     """
@@ -384,40 +384,28 @@ def dataframe_itemskip_elements(
     check_dfs : list[pd.DataFrame]
         List of N single-column DataFrames containing valid element names or aliases.
         Order of these check_dfs must match the order of coordinate columns in `dataframe`.
-    logging_level : str, optional
-        If DEBUG, logs the number and content of dropped invalid rows per dimension.
+    logging_enabled : bool, optional
+        If on, logs the number and content of dropped invalid rows per dimension.
 
     Notes
     -----
     - Operates in place (modifies `dataframe` directly).
     - Uses fast hash lookups (O(n + m) complexity per dimension).
     """
-    logging_enabled = logging_level=="DEBUG"
-    # Start with all rows valid
     mask = np.ones(len(dataframe), dtype=bool)
 
-    # Iterate over each dimension dataframe
     for df_check in check_dfs:
         col = df_check.columns[0]
-
-        # Convert valid elements to a Python set for O(1) membership checks
         valid_set = set(df_check[col])
-
-        # Boolean mask of valid coordinate rows
         current_col_mask = dataframe[col].isin(valid_set).to_numpy()
-
-        # Combine masks
         mask &= current_col_mask
 
-        # Optional verbose logging
         if logging_enabled:
             invalid_rows = dataframe.loc[~current_col_mask, [col]].copy()
             basic_logger.debug(invalid_rows )
 
-    # Drop invalid rows in place
     invalid_total = np.count_nonzero(~mask)
-    if logging_enabled and invalid_total > 0:
-        basic_logger.debug(f"Total dropped rows: {invalid_total}")
+    basic_logger.debug(f"Total dropped rows: {invalid_total}")
 
     dataframe.drop(index=dataframe.index[~mask], inplace=True)
     dataframe.reset_index(drop=True, inplace=True)
