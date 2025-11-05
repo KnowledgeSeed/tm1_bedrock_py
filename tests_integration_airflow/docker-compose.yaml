@@ -62,6 +62,7 @@ x-airflow-common:
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     AIRFLOW__CORE__TEST_CONNECTION: 'Enabled'
     AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
+    TM1_BEDROCK_LOG_DIR: 'logs/tm1-bedrock'
     # yamllint disable rule:line-length
     # Use simple http server on scheduler for health checks
     # See https://airflow.apache.org/docs/apache-airflow/stable/administration-and-deployment/logging-monitoring/check-health.html#scheduler-health-check-server
@@ -138,7 +139,7 @@ services:
     <<: *airflow-common
     command: webserver
     ports:
-      - "8080:8080"
+      - "8081:8080"
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
       interval: 30s
@@ -320,14 +321,6 @@ services:
     ports:
       - 5898:5898
       - 5360:5360
-
-  arc:
-    container_name: arc
-    image: kseed-docker1.knowledgeseed.local:3000/arc-docker:4.4.0-linux64-v1
-    ports:
-      - 7070:7070
-    volumes:
-      - ./settings.yml:/settings.yml
 
 volumes:
   postgres-db-volume:
