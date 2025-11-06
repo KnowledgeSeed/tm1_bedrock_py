@@ -70,6 +70,7 @@ def execution_metrics_logger(logger, func, *args, **kwargs):
 
     return result
 
+
 async def async_execution_metrics_logger(logger, func, *args, **kwargs):
     """Measures and logs the runtime of any function."""
     start_time = time.perf_counter()
@@ -376,7 +377,7 @@ def __generate_element_lists_from_set_mdx_list(
     return final_result
 
 
-def add_non_empty_to_mdx(mdx_string: str) -> str:
+def _add_non_empty_to_mdx(mdx_string: str) -> str:
     """
     Adds 'NON EMPTY' before each axis definition ({...} ON ...) in an MDX
     SELECT statement, if it's not already present.
@@ -457,6 +458,67 @@ def add_non_empty_to_mdx(mdx_string: str) -> str:
     final_mdx = prefix + select_keyword_part + modified_axes_part + suffix
     return final_mdx
 
+
+def _extract_mdx_components(mdx: str) -> List[str]:
+    """
+    Extract all axis and filter items from MDX.
+    - Splits axes on ON (outside brackets) and ',' (outside brackets)
+    - Splits each axis item on '*'
+    - WHERE clause is optional
+    """
+    def extract_select_part(input_mdx: str):
+        mdx_clean = input_mdx
+
+        # -------------------
+        # 1. Extract everything between SELECT and FROM
+        # -------------------
+        select_match = re.search(r"SELECT\s+(.*?)\s+FROM", mdx_clean, re.IGNORECASE | re.DOTALL)
+        if not select_match:
+            raise ValueError("No SELECT ... FROM clause found")
+        select_part = select_match.group(1)
+
+        axis_item_pattern = re.compile(
+            r"(?:\s*(?:\[.*?\]|[^\[\],])+?\s*)(?=(?:ON\b|,|$))",  # lookahead for ON, comma, or end
+            re.IGNORECASE | re.DOTALL
+        )
+        axes_raw = axis_item_pattern.findall(select_part)
+
+        axes = []
+        for item in axes_raw:
+            # Remove trailing whitespace
+            item_clean = item.strip()
+            if item_clean.upper() not in ("ON COLUMNS", "ON ROWS") and item_clean.upper()[:3] != "ON ":
+                axes.extend([p.strip() for p in item_clean.split('*') if p.strip()])
+        return axes
+
+    def extract_where_part(input_mdx: str):
+        where_match = re.search(r"WHERE\s*\(\s*(.*?)\s*\)", input_mdx, re.IGNORECASE | re.DOTALL)
+        if not where_match:
+            return []
+
+        where_content = where_match.group(1)
+        item_pattern = re.compile(
+            r"""
+            \s*                             # optional leading whitespace
+            (                               # capture group
+                (?:                         # non-capturing group
+                    \[[^\]]*\]              # match [ ... ] bracketed part
+                    |                       # OR
+                    [^\[\],]                # any char except brackets or comma
+                )+                          # repeat one or more times
+            )
+            \s*                             # optional trailing whitespace
+            (?:,|$)                         # stop at comma or end (comma not consumed)
+            """,
+            re.VERBOSE | re.DOTALL
+        )
+
+        members = [m.group(1).strip() for m in item_pattern.finditer(where_content)]
+        return members
+
+    set_mdx_list = extract_select_part(mdx) + extract_where_part(mdx)
+    set_mdx_list = ["{" + item.replace(" ", "") + "}" for item in set_mdx_list]
+    return set_mdx_list
 
 # ------------------------------------------------------------------------------------------------------------
 # Utility: Cube metadata collection using input MDXs and/or other cubes

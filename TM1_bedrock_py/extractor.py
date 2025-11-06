@@ -69,7 +69,7 @@ def __tm1_mdx_to_dataframe_default(
 
     if data_mdx_list:
         if skip_zeros:
-            data_mdx_list = [utility.add_non_empty_to_mdx(current)
+            data_mdx_list = [utility._add_non_empty_to_mdx(current)
                              for current in data_mdx_list]
 
         return tm1_service.cells.execute_mdx_dataframe_async(
@@ -82,7 +82,7 @@ def __tm1_mdx_to_dataframe_default(
         )
     elif data_mdx:
         if skip_zeros:
-            data_mdx = utility.add_non_empty_to_mdx(data_mdx)
+            data_mdx = utility._add_non_empty_to_mdx(data_mdx)
 
         return tm1_service.cells.execute_mdx_dataframe(
             mdx=data_mdx,

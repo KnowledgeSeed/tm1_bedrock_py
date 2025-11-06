@@ -150,6 +150,12 @@ def test_generate_element_lists_from_set_mdx_list_failure(
 
 
 @parametrize_from_file
+def test_extract_mdx_components(input_mdx, expected_set_mdx_list):
+    output_set_mdx_list = utility._extract_mdx_components(mdx=input_mdx)
+    assert output_set_mdx_list == expected_set_mdx_list
+
+
+@parametrize_from_file
 def test_utility_float_casting_values(input_value, expected_value):
     output_value = utility.force_float64_on_numeric_values(input_value)
     print(f"input value: {input_value}, output_value: {output_value}")
@@ -166,7 +172,7 @@ def test_utility_float_casting_types(input_value, expected_type):
 
 @parametrize_from_file
 def test_add_nonempty_to_mdx_all_modes(input_mdx, expected_mdx):
-    output_mdx = utility.add_non_empty_to_mdx(input_mdx)
+    output_mdx = utility._add_non_empty_to_mdx(input_mdx)
 
     assert "".join(output_mdx.split()) == "".join(expected_mdx.split())
 
