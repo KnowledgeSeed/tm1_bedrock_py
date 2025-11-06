@@ -1,6 +1,6 @@
 from typing import Callable, List, Dict, Optional, Any
 
-from TM1py import TM1Service
+from TM1py import TM1Service, NativeView, Subset
 from pandas import DataFrame, read_sql_table, read_sql_query, concat, read_csv
 from sqlalchemy import text
 from typing import Sequence, Hashable, Mapping, Iterable
@@ -69,7 +69,7 @@ def __tm1_mdx_to_dataframe_default(
 
     if data_mdx_list:
         if skip_zeros:
-            data_mdx_list = [utility._add_non_empty_to_mdx(current)
+            data_mdx_list = [utility.add_non_empty_to_mdx(current)
                              for current in data_mdx_list]
 
         return tm1_service.cells.execute_mdx_dataframe_async(
@@ -82,7 +82,7 @@ def __tm1_mdx_to_dataframe_default(
         )
     elif data_mdx:
         if skip_zeros:
-            data_mdx = utility._add_non_empty_to_mdx(data_mdx)
+            data_mdx = utility.add_non_empty_to_mdx(data_mdx)
 
         return tm1_service.cells.execute_mdx_dataframe(
             mdx=data_mdx,
@@ -97,6 +97,55 @@ def __tm1_mdx_to_dataframe_default(
     msg = "Either data_mdx or data_mdx_list has to be specified."
     basic_logger.error(msg)
     raise ValueError(msg)
+
+
+def __tm1_mdx_to_native_view_to_dataframe(
+        tm1_service: TM1Service,
+        data_mdx: Optional[str] = None,
+        skip_zeros: bool = False,
+        skip_consolidated_cells: bool = False,
+        skip_rule_derived_cells: bool = False,
+        decimal: str = None,
+        use_blob: Optional[bool] = True,
+        **_kwargs
+) -> DataFrame:
+    if decimal is None:
+        decimal = utility.get_local_decimal_separator()
+
+    cube_name = utility.get_cube_name_from_mdx(mdx_query=data_mdx)
+    view_name = str(id(object())) + str(id([])) + str(id(''))
+    native_view = NativeView(cube_name=cube_name, view_name=view_name,
+                             suppress_empty_rows=skip_zeros, suppress_empty_columns=skip_zeros)
+    native_view.suppress_empty_cells = skip_zeros
+
+    set_mdx_list = utility.extract_mdx_components(mdx=data_mdx)
+    set_mdx_dimensions = utility.get_dimensions_from_set_mdx_list(mdx_sets=set_mdx_list)
+    set_mdx_elements = utility.generate_element_lists_from_set_mdx_list(tm1_service=tm1_service,
+                                                                        set_mdx_list=set_mdx_list)
+
+    for i, (dimension_name, set_mdx, elements) in enumerate(zip(set_mdx_dimensions, set_mdx_list, set_mdx_elements)):
+        subset = Subset(subset_name=view_name,
+                        dimension_name=dimension_name)
+        subset.add_elements(elements=elements)
+        if i == 0:
+            native_view.add_column(dimension_name=dimension_name, subset=subset)
+        else:
+            native_view.add_row(dimension_name=dimension_name, subset=subset)
+    tm1_service.views.create(view=native_view)
+
+    dataframe = tm1_service.cells.execute_view_dataframe(
+        cube_name=cube_name,
+        view_name=view_name,
+        skip_zeros=skip_zeros,
+        skip_consolidated_cells=skip_consolidated_cells,
+        skip_rule_derived_cells=skip_rule_derived_cells,
+        use_iterative_json=True,
+        use_blob=use_blob,
+        arranged_axes=([], set_mdx_dimensions[1:], set_mdx_dimensions[0])
+    )
+    yield dataframe
+
+    tm1_service.views.delete(cube_name=cube_name, view_name=view_name)
 
 
 # ------------------------------------------------------------------------------------------------------------

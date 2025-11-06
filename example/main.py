@@ -135,122 +135,13 @@ def manage():
             # Check if your expected file name (e.g., "your_unique_name.csv") is in the list
         except Exception as e:
             print(f"Error listing files via API: {e}")
-
-
-
-
     finally:
         tm1.logout()
 
 
-def csrd_demo():
-    tm1_params = {
-        "address": "localhost",
-        "port": 5382,
-        "user": "IM",
-        "password": "Washing2-Implosive-Nacho",
-        "ssl": False
-    }
-    tm1 = TM1Service(**tm1_params)
-    try:
-        version_source = "Actual"
-        version_target = "Actual"
-        year_source = "2032"
-        year_target = "2025"
-        entity_source = "Entity NA"
-        entity_target = "Entity NA"
-        measures_list = """
-            {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[ESRS Main Relevant]},
-            {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[Materiality Relevant]},
-            {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[SDG Relevant]},
-            {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[GRI Relevant]},
-            {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[Location Relevant]},
-            {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[Supplier Relvant]},
-            {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[CSRD Input  Relevant]},
-            {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[DMA Relevant]},
-            {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[Materiality Assessment]},
-            {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[SDG]},
-            {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[GRI]},
-            {[Analogic ESRS Mapping Measure].[Analogic ESRS Mapping Measure].[Driver]}
-            """
-
-        pattern = r'{(.*?)}'
-        measures_list_of_strings = re.findall(pattern, measures_list)
-        data_mdx_list = []
-        for element_string in measures_list_of_strings:
-
-            data_mdx = f"""
-                       SELECT
-                            NON EMPTY
-                            {{{element_string}}}
-                            *{{Tm1FilterByLevel(Tm1SubsetAll([ESRS Main]), 0)}}
-                            *{{Tm1FilterByLevel(Tm1SubsetAll([ESRS Details 1]), 0)}}
-                            *{{Tm1FilterByLevel(Tm1SubsetAll([ESRS Details 2]), 0)}}
-                            *{{Tm1FilterByLevel(Tm1SubsetAll([ESRS Geography]), 0)}}
-                            *{{Tm1FilterByLevel(Tm1SubsetAll([Custom 1]), 0)}}
-                            *{{Tm1FilterByLevel(Tm1SubsetAll([Custom 2]), 0)}}
-                       ON 0
-                       FROM [Analogic ESRS Mapping]
-                       WHERE (
-                           [Year].[Year].[{year_source}],
-                           [Entity].[Entity].[{entity_source}],
-                           [Version].[Version].[{version_source}]
-                       )
-                       """
-            data_mdx_list.append(data_mdx)
-
-        data_mdx = f"""
-        SELECT
-            NON EMPTY
-            {{TM1FilterByLevel(Tm1SubsetAll([Custom 1]), 0)}}
-            *{{Tm1SubsetAll([ESRS Main])}}
-            *{{TM1FilterByLevel(Tm1SubsetAll([ESRS Details 1]), 0)}}
-            *{{TM1FilterByLevel(Tm1SubsetAll([ESRS Details 2]), 0)}}
-            *{{TM1FilterByLevel(Tm1SubsetAll([ESRS Geography]), 0)}}
-            *{{TM1FilterByLevel(Tm1SubsetAll([Custom 2]), 0)}}
-            *{{{measures_list}}}
-        ON 0
-        FROM[Analogic ESRS Mapping]
-        WHERE(
-            [Year].[Year].[{year_source}],
-            [Entity].[Entity].[{entity_source}],
-            [Version].[Version].[{version_source}]
-        )
-        """
-
-        mapping_steps = [
-            {
-                "method": "replace",
-                "mapping": {
-                    "Version": {version_source: version_target},
-                    "Entity": {entity_source: entity_target},
-                    "Year": {year_source: year_target}
-                }
-            }
-        ]
-
-        skip_zeros = True
-        skip_consolidated_cells = False
-        async_write = True
-        clear_target = True
-        clear_set_mdx_list = [f'{{[Version].[{version_target}]}}', f'{{[Entity].[{entity_target}]}}',
-                              f'{{[Year].[{year_target}]}}']
-
-        bedrock.data_copy(
-            tm1_service=tm1,
-            data_mdx=data_mdx,
-            mapping_steps=mapping_steps,
-            skip_zeros=skip_zeros,
-            skip_consolidated_cells=skip_consolidated_cells,
-            clear_target=clear_target,
-            async_write=async_write,
-            logging_level="DEBUG",
-            target_clear_set_mdx_list=clear_set_mdx_list,
-            slice_size_of_dataframe=50000
-        )
-
-    finally:
-        tm1.logout()
+def test_nativeview_functions():
+    generated = str(id(object())) + str(id([])) + str(id(''))
+    print(generated)
 
 
 def benchpy_sample():
@@ -278,6 +169,4 @@ def benchpy_sample():
 
 
 if __name__ == '__main__':
-    # manage()
-    # csrd_demo()
-    benchpy_sample()
+    test_nativeview_functions()

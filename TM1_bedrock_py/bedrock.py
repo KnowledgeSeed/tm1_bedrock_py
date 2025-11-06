@@ -717,16 +717,16 @@ async def async_executor_tm1(
 
     target_tm1_service = kwargs.get("target_tm1_service", tm1_service)
 
-    param_names = utility.__get_dimensions_from_set_mdx_list(param_set_mdx_list)
-    param_values = utility.__generate_element_lists_from_set_mdx_list(tm1_service, param_set_mdx_list)
-    param_tuples = utility.__generate_cartesian_product(param_values)
+    param_names = utility.get_dimensions_from_set_mdx_list(param_set_mdx_list)
+    param_values = utility.generate_element_lists_from_set_mdx_list(tm1_service, param_set_mdx_list)
+    param_tuples = utility.generate_cartesian_product(param_values)
     basic_logger.info(f"Parameter tuples ready. Count: {len(param_tuples)}")
 
     target_cube_name = kwargs.get("target_cube_name")
     dim_identifier = kwargs.get("ignore_missing_elements", False)
 
     if data_copy_function is data_copy:
-        target_cube_name = utility._get_cube_name_from_mdx(data_mdx_template)
+        target_cube_name = utility.get_cube_name_from_mdx(data_mdx_template)
         dim_identifier = False
 
     target_metadata = utility.TM1CubeObjectMetadata.collect(
@@ -1421,9 +1421,9 @@ async def async_executor_tm1_to_sql(
             - Tested databases: MS SQL, PostgeSQL.
     """
 
-    param_names = utility.__get_dimensions_from_set_mdx_list(param_set_mdx_list)
-    param_values = utility.__generate_element_lists_from_set_mdx_list(tm1_service, param_set_mdx_list)
-    param_tuples = utility.__generate_cartesian_product(param_values)
+    param_names = utility.get_dimensions_from_set_mdx_list(param_set_mdx_list)
+    param_values = utility.generate_element_lists_from_set_mdx_list(tm1_service, param_set_mdx_list)
+    param_tuples = utility.generate_cartesian_product(param_values)
     basic_logger.info(f"Parameter tuples ready. Count: {len(param_tuples)}")
 
     target_metadata_provider = None
@@ -1435,7 +1435,7 @@ async def async_executor_tm1_to_sql(
                            delete_statement=sql_delete_statement)
 
     if data_copy_function is load_tm1_cube_to_sql_table:
-        source_cube_name = utility._get_cube_name_from_mdx(data_mdx_template)
+        source_cube_name = utility.get_cube_name_from_mdx(data_mdx_template)
         if source_cube_name:
             data_metadata = utility.TM1CubeObjectMetadata.collect(
                 tm1_service=tm1_service,
@@ -2294,16 +2294,16 @@ async def async_executor_csv_to_tm1(
           just before that worker loads its data.
     """
 
-    param_names = utility.__get_dimensions_from_set_mdx_list(param_set_mdx_list)
-    param_values = utility.__generate_element_lists_from_set_mdx_list(tm1_service, param_set_mdx_list)
-    param_tuples = utility.__generate_cartesian_product(param_values)
+    param_names = utility.get_dimensions_from_set_mdx_list(param_set_mdx_list)
+    param_values = utility.generate_element_lists_from_set_mdx_list(tm1_service, param_set_mdx_list)
+    param_tuples = utility.generate_cartesian_product(param_values)
     basic_logger.info(f"Parameter tuples ready. Count: {len(param_tuples)}")
 
     target_metadata_provider = None
     data_metadata_provider = None
 
     if data_copy_function is load_csv_data_to_tm1_cube:
-        source_cube_name = utility._get_cube_name_from_mdx(data_mdx_template)
+        source_cube_name = utility.get_cube_name_from_mdx(data_mdx_template)
         if source_cube_name:
             data_metadata = utility.TM1CubeObjectMetadata.collect(
                 tm1_service=tm1_service,

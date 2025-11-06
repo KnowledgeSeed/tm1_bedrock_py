@@ -134,7 +134,7 @@ def set_logging_level(logging_level: str):
 # ------------------------------------------------------------------------------------------------------------
 
 
-def _get_cube_name_from_mdx(mdx_query: str) -> str:
+def get_cube_name_from_mdx(mdx_query: str) -> str:
     """
     Extracts the cube name from the FROM clause of an MDX query.
 
@@ -153,7 +153,7 @@ def _get_cube_name_from_mdx(mdx_query: str) -> str:
     return from_part_match.group(1).strip()
 
 
-def _mdx_filter_to_dictionary(mdx_query: str) -> Dict[str, str]:
+def mdx_filter_to_dictionary(mdx_query: str) -> Dict[str, str]:
     """
     Parses the WHERE clause of an MDX query and extracts dimensions and their elements.
 
@@ -183,7 +183,7 @@ def _mdx_filter_to_dictionary(mdx_query: str) -> Dict[str, str]:
     return mdx_dict
 
 
-def __get_kwargs_dict_from_set_mdx_list(mdx_expressions: List[str]) -> Dict[str, str]:
+def get_kwargs_dict_from_set_mdx_list(mdx_expressions: List[str]) -> Dict[str, str]:
     """
     Generate a dictionary of kwargs from a list of MDX expressions.
 
@@ -215,7 +215,7 @@ def __get_kwargs_dict_from_set_mdx_list(mdx_expressions: List[str]) -> Dict[str,
         raise ValueError("Duplicate set mdx for a dimension")
 
 
-def __get_dimensions_from_set_mdx_list(mdx_sets: List[str]) -> List[str]:
+def get_dimensions_from_set_mdx_list(mdx_sets: List[str]) -> List[str]:
     """
     Extracts the first dimension name found in each string of a list of MDX set strings.
 
@@ -274,7 +274,7 @@ def __get_dimensions_from_set_mdx_list(mdx_sets: List[str]) -> List[str]:
         raise ValueError("Duplicate set mdxs for a dimension")
 
 
-def __generate_cartesian_product(list_of_lists: Optional[List[Optional[Iterable[Any]]]]) -> List[Tuple[Any, ...]]:
+def generate_cartesian_product(list_of_lists: Optional[List[Optional[Iterable[Any]]]]) -> List[Tuple[Any, ...]]:
     """
     Generates the Cartesian product of a list of lists (or other iterables).
 
@@ -308,7 +308,7 @@ def __generate_cartesian_product(list_of_lists: Optional[List[Optional[Iterable[
     return result
 
 
-def __generate_element_lists_from_set_mdx_list(
+def generate_element_lists_from_set_mdx_list(
         tm1_service: Optional[Any], set_mdx_list: Optional[List[Optional[str]]]) -> List[List[str]]:
     """
     Executes multiple MDX set queries and extracts element names.
@@ -377,7 +377,7 @@ def __generate_element_lists_from_set_mdx_list(
     return final_result
 
 
-def _add_non_empty_to_mdx(mdx_string: str) -> str:
+def add_non_empty_to_mdx(mdx_string: str) -> str:
     """
     Adds 'NON EMPTY' before each axis definition ({...} ON ...) in an MDX
     SELECT statement, if it's not already present.
@@ -459,7 +459,7 @@ def _add_non_empty_to_mdx(mdx_string: str) -> str:
     return final_mdx
 
 
-def _extract_mdx_components(mdx: str) -> List[str]:
+def extract_mdx_components(mdx: str) -> List[str]:
     """
     Extract all axis and filter items from MDX.
     - Splits axes on ON (outside brackets) and ',' (outside brackets)
@@ -615,9 +615,9 @@ class TM1CubeObjectMetadata:
         Returns:
             TM1CubeObjectMetadata: The updated metadata object.
         """
-        metadata[cls._CUBE_NAME] = _get_cube_name_from_mdx(mdx)
+        metadata[cls._CUBE_NAME] = get_cube_name_from_mdx(mdx)
         metadata[cls._QUERY_VAL] = mdx
-        metadata[cls._QUERY_FILTER_DICT] = _mdx_filter_to_dictionary(mdx)
+        metadata[cls._QUERY_FILTER_DICT] = mdx_filter_to_dictionary(mdx)
 
     @classmethod
     def _expand_base_cube_metadata(cls, tm1_service: Any, cube_name: str, metadata: "TM1CubeObjectMetadata") -> None:

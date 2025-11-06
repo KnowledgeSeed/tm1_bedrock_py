@@ -33,13 +33,13 @@ def test_tm1_connection(tm1_connection_factory):
 
 @parametrize_from_file
 def test_get_cube_name_from_mdx(mdx_query):
-    cube_name = utility._get_cube_name_from_mdx(mdx_query)
+    cube_name = utility.get_cube_name_from_mdx(mdx_query)
     assert isinstance(cube_name, str)
 
 
 @parametrize_from_file
 def test_mdx_filter_to_dictionary(mdx_query):
-    dimensions = utility._mdx_filter_to_dictionary(mdx_query)
+    dimensions = utility.mdx_filter_to_dictionary(mdx_query)
     if mdx_query:
         for dim in dimensions:
             for elem in dim:
@@ -53,7 +53,7 @@ def test_get_kwargs_dict_from_set_mdx_list_success(set_mdx_list, expected_kwargs
     """
     Tests successful extraction of kwargs from various valid MDX lists.
     """
-    kwargs = utility.__get_kwargs_dict_from_set_mdx_list(set_mdx_list)
+    kwargs = utility.get_kwargs_dict_from_set_mdx_list(set_mdx_list)
     assert kwargs == expected_kwargs
 
 
@@ -74,7 +74,7 @@ def test_get_dimensions_from_set_mdx_list_success(mdx_sets, expected_dimensions)
     """
     Tests successful extraction of first dimension names from MDX strings.
     """
-    result = utility.__get_dimensions_from_set_mdx_list(mdx_sets)
+    result = utility.get_dimensions_from_set_mdx_list(mdx_sets)
     assert result == expected_dimensions
 
 
@@ -85,7 +85,7 @@ def test__get_kwargs_dict_from_set_mdx_list_fail(mdx_expressions, expected_excep
     """
     exception_type = eval(expected_exception)
     with pytest.raises(exception_type):
-        utility.__get_kwargs_dict_from_set_mdx_list(mdx_expressions)
+        utility.get_kwargs_dict_from_set_mdx_list(mdx_expressions)
 
 
 @parametrize_from_file
@@ -95,7 +95,7 @@ def test_get_dimensions_from_set_mdx_list_failure(mdx_sets, expected_exception, 
     """
     exception_type = eval(expected_exception)
     with pytest.raises(exception_type) as excinfo:
-        utility.__get_dimensions_from_set_mdx_list(mdx_sets)
+        utility.get_dimensions_from_set_mdx_list(mdx_sets)
     assert expected_message_part in str(excinfo.value)
 
 
@@ -105,7 +105,7 @@ def test_generate_cartesian_product_success(list_of_lists, expected_product):
     Tests successful generation of Cartesian products.
     """
     expected_tuples = [tuple(item) for item in expected_product]
-    result = utility.__generate_cartesian_product(list_of_lists)
+    result = utility.generate_cartesian_product(list_of_lists)
     assert result == expected_tuples
 
 
@@ -116,7 +116,7 @@ def test_generate_cartesian_product_failure(list_of_lists, expected_exception, e
     """
     exception_type = eval(expected_exception)
     with pytest.raises(exception_type) as excinfo:
-        utility.__generate_cartesian_product(list_of_lists)
+        utility.generate_cartesian_product(list_of_lists)
     assert expected_message_part in str(excinfo.value)
 
 
@@ -126,7 +126,7 @@ def test_generate_element_lists_from_set_mdx_list_success(tm1_connection_factory
     Tests successful extraction of element lists using a fake TM1 service.
     """
     with tm1_connection_factory("tm1srv") as conn:
-        result = utility.__generate_element_lists_from_set_mdx_list(conn, set_mdx_list)
+        result = utility.generate_element_lists_from_set_mdx_list(conn, set_mdx_list)
         assert result == expected_result
 
 
@@ -144,14 +144,14 @@ def test_generate_element_lists_from_set_mdx_list_failure(
     
         exception_type = eval(expected_exception)
         with pytest.raises(exception_type) as excinfo:
-            utility.__generate_element_lists_from_set_mdx_list(test_service, set_mdx_list)
+            utility.generate_element_lists_from_set_mdx_list(test_service, set_mdx_list)
     
         assert expected_message_part in str(excinfo.value)
 
 
 @parametrize_from_file
 def test_extract_mdx_components(input_mdx, expected_set_mdx_list):
-    output_set_mdx_list = utility._extract_mdx_components(mdx=input_mdx)
+    output_set_mdx_list = utility.extract_mdx_components(mdx=input_mdx)
     assert output_set_mdx_list == expected_set_mdx_list
 
 
@@ -172,8 +172,7 @@ def test_utility_float_casting_types(input_value, expected_type):
 
 @parametrize_from_file
 def test_add_nonempty_to_mdx_all_modes(input_mdx, expected_mdx):
-    output_mdx = utility._add_non_empty_to_mdx(input_mdx)
-
+    output_mdx = utility.add_non_empty_to_mdx(input_mdx)
     assert "".join(output_mdx.split()) == "".join(expected_mdx.split())
 
 
