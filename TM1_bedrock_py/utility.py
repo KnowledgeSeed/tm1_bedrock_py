@@ -478,7 +478,7 @@ def extract_mdx_components(mdx: str) -> List[str]:
         select_part = select_match.group(1)
 
         axis_item_pattern = re.compile(
-            r"(?:\s*(?:\[.*?\]|[^\[\],])+?\s*)(?=(?:ON\b|,|$))",  # lookahead for ON, comma, or end
+            r"(?:\s*(?:\{.*?\}|\[.*?\]|[^\[\]{},])+?\s*)(?=(?:ON\b|,|$))",
             re.IGNORECASE | re.DOTALL
         )
         axes_raw = axis_item_pattern.findall(select_part)

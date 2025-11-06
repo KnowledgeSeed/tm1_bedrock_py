@@ -140,8 +140,7 @@ def manage():
 
 
 def test_nativeview_functions():
-    generated = str(id(object())) + str(id([])) + str(id(''))
-    print(generated)
+    pass
 
 
 def benchpy_sample():
