@@ -492,7 +492,52 @@ test_extract_mdx_components:
       "{[dim2].[element2,,withcommas]}",
       "{[dim3].[hierarchy,withcomma].[element3,withcomma]}"
     ]
+  -
+    input_mdx: |
+        SELECT NON   EMPTY
+        {[Periods].[element], [Periods].[element2]}
+        ON COLUMNS,
+          NON EMPTY
+        {[Version].[element], [Version].[element2], [Version].[element3], [Version].[element4]}
+        ON ROWS
+        FROM [cubename]
+    expected_set_mdx_list: [
+      "{{[Periods].[element],[Periods].[element2]}}",
+      "{{[Version].[element],[Version].[element2],[Version].[element3],[Version].[element4]}}"
+    ]
+  -
+    input_mdx: |
+      SELECT
+      NON EMPTY
+        {[Periods].[element],    [Periods   ].[element2]} * {[Version].[Version].[Actual],  
+            [Version].[Version ].[FC],
 
+      [Version].[Version ].[Budget]
+      }
+      ON 0,
+        NON  EMPTY
+            {  something } 
+                  * Tm1SubsetAll(  [  OrgUnit])
+      ON 1,
+      NON EMPTY
+          {[Employee].[Key Account Managers].[All KAMs]}
+      ON 2
+      FROM [cubename]
+      WHERE(
+          [dim].[element1,withcomma ],
+                [dim2].[element2, ,  withcommas  ]       ,
+          [dim3].[hierarchy,withcomma].[element3,withcomma]
+      )
+    expected_set_mdx_list: [
+      "{{[Periods].[element],[Periods].[element2]}}",
+      "{{[Version].[Version].[Actual],[Version].[Version].[FC],[Version].[Version].[Budget]}}",
+      "{{something}}",
+      "{Tm1SubsetAll([OrgUnit])}",
+      "{{[Employee].[KeyAccountManagers].[AllKAMs]}}",
+      "{[dim].[element1,withcomma]}",
+      "{[dim2].[element2,,withcommas]}",
+      "{[dim3].[hierarchy,withcomma].[element3,withcomma]}"
+    ]
 
 test_utility_float_casting_values:
   -

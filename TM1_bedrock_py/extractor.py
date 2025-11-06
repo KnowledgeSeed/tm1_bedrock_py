@@ -123,10 +123,15 @@ def __tm1_mdx_to_native_view_to_dataframe(
     set_mdx_elements = utility.generate_element_lists_from_set_mdx_list(tm1_service=tm1_service,
                                                                         set_mdx_list=set_mdx_list)
 
+    print(set_mdx_list)
+    print(set_mdx_dimensions)
+    print(set_mdx_elements)
+
     for i, (dimension_name, set_mdx, elements) in enumerate(zip(set_mdx_dimensions, set_mdx_list, set_mdx_elements)):
         subset = Subset(subset_name=view_name,
                         dimension_name=dimension_name)
         subset.add_elements(elements=elements)
+        tm1_service.subsets.create(subset=subset)
         if i == 0:
             native_view.add_column(dimension_name=dimension_name, subset=subset)
         else:
@@ -139,13 +144,14 @@ def __tm1_mdx_to_native_view_to_dataframe(
         skip_zeros=skip_zeros,
         skip_consolidated_cells=skip_consolidated_cells,
         skip_rule_derived_cells=skip_rule_derived_cells,
-        use_iterative_json=True,
         use_blob=use_blob,
-        arranged_axes=([], set_mdx_dimensions[1:], set_mdx_dimensions[0])
+        arranged_axes=([], set_mdx_dimensions[1:], [set_mdx_dimensions[0]])
     )
-    yield dataframe
-
-    tm1_service.views.delete(cube_name=cube_name, view_name=view_name)
+    try:
+        return dataframe
+    finally:
+        pass
+        #tm1_service.views.delete(cube_name=cube_name, view_name=view_name)
 
 
 # ------------------------------------------------------------------------------------------------------------

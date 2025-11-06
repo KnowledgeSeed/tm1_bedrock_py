@@ -466,6 +466,9 @@ def extract_mdx_components(mdx: str) -> List[str]:
     - Splits each axis item on '*'
     - WHERE clause is optional
     """
+
+    cleaned_mdx = re.sub(r"NON\s*EMPTY", "", mdx)
+
     def extract_select_part(input_mdx: str):
         mdx_clean = input_mdx
 
@@ -516,7 +519,7 @@ def extract_mdx_components(mdx: str) -> List[str]:
         members = [m.group(1).strip() for m in item_pattern.finditer(where_content)]
         return members
 
-    set_mdx_list = extract_select_part(mdx) + extract_where_part(mdx)
+    set_mdx_list = extract_select_part(cleaned_mdx) + extract_where_part(cleaned_mdx)
     set_mdx_list = ["{" + re.sub(r"\s+", "", item) + "}" for item in set_mdx_list]
     return set_mdx_list
 

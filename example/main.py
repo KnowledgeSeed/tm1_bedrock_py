@@ -140,6 +140,7 @@ def manage():
 
 
 def test_nativeview_functions():
+    set_mdx_list = ['{{[Period].[Period].[202406]}}', '{{[Product].[Product].[P0000001],[Product].[Product].[P0000004],[Product].[Product].[P0000005],[Product].[Product].[P0000007],[Product].[Product].[P0000008],[Product].[Product].[P0000009],[Product].[Product].[P0000012],[Product].[Product].[P0000014],[Product].[Product].[P0000015],[Product].[Product].[P0000017],[Product].[Product].[P0000019],[Product].[Product].[P0000023]}}', '{{[Employee].[Employee].[Employee1],[Employee].[Employee].[Employee8],[Employee].[Employee].[Employee35],[Employee].[Employee].[Employee56],[Employee].[Employee].[Employee81],[Employee].[Employee].[Employee87],[Employee].[Employee].[Employee99]}}', '{[Version].[Version].[Actual]}', '{[Currency].[Currency].[LC]}', '{[MeasuresSales].[MeasuresSales].[Input]}', '{[OrganizationUnit].[OrganizationUnit].[Company01]}', '{[LineitemSales].[LineitemSales].[Quantity]}']
     mdx = """
     SELECT 
       NON EMPTY 
@@ -167,7 +168,19 @@ def test_nativeview_functions():
        [Lineitem Sales].[Lineitem Sales].[Quantity]
       )
     """
+    tm1_params = {
+        "address": "dev.knowledgeseed.local",
+        "port": 5379,
+        "user": "testbench",
+        "password": "testbench",
+        "ssl": False
+    }
+    tm1_service = TM1Service(**tm1_params)
+    utility.generate_element_lists_from_set_mdx_list(tm1_service=tm1_service,
+                                                     set_mdx_list=set_mdx_list)
 
+    # df = extractor.__tm1_mdx_to_native_view_to_dataframe(tm1_service=tm1_service, data_mdx=mdx)
+    # print(df)
 
 def benchpy_sample():
     schema_dir = 'C:\\Users\\ullmann.david\\PycharmProjects\\tm1bedrockpy\\schema'
