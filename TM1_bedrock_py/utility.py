@@ -517,7 +517,7 @@ def extract_mdx_components(mdx: str) -> List[str]:
         return members
 
     set_mdx_list = extract_select_part(mdx) + extract_where_part(mdx)
-    set_mdx_list = ["{" + item.replace(" ", "") + "}" for item in set_mdx_list]
+    set_mdx_list = ["{" + re.sub(r"\s+", "", item) + "}" for item in set_mdx_list]
     return set_mdx_list
 
 # ------------------------------------------------------------------------------------------------------------

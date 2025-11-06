@@ -140,7 +140,33 @@ def manage():
 
 
 def test_nativeview_functions():
-    pass
+    mdx = """
+    SELECT 
+      NON EMPTY 
+       {[Period].[Period].[202406]} 
+      ON COLUMNS , 
+      NON EMPTY 
+       {[Product].[Product].[P0000001],[Product].[Product].[P0000004],
+       [Product].[Product].[P0000005],[Product].[Product].[P0000007],
+       [Product].[Product].[P0000008],[Product].[Product].[P0000009],
+       [Product].[Product].[P0000012],[Product].[Product].[P0000014],
+       [Product].[Product].[P0000015],[Product].[Product].[P0000017],
+       [Product].[Product].[P0000019],[Product].[Product].[P0000023]}
+       * {[Employee].[Employee].[Employee1],[Employee].[Employee].[Employee8],
+       [Employee].[Employee].[Employee35],[Employee].[Employee].[Employee56],
+       [Employee].[Employee].[Employee81],[Employee].[Employee].[Employee87],
+       [Employee].[Employee].[Employee99]} 
+      ON ROWS 
+    FROM [Sales] 
+    WHERE 
+      (
+       [Version].[Version].[Actual],
+       [Currency].[Currency].[LC],
+       [Measures Sales].[Measures Sales].[Input],
+       [Organization Unit].[Organization Unit].[Company01],
+       [Lineitem Sales].[Lineitem Sales].[Quantity]
+      )
+    """
 
 
 def benchpy_sample():

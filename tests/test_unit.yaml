@@ -288,7 +288,6 @@ test_extract_mdx_components:
       {something}
       ON ROWS
       FROM [cubename]
-
     expected_set_mdx_list: ["{{[Periods].[element]}}", "{{something}}"]
   -
     input_mdx: |
@@ -466,7 +465,11 @@ test_extract_mdx_components:
   -
     input_mdx: |
       SELECT
-        {[Periods].[element],    [Periods   ].[element2]} * {[Version].[Version].[Actual],  [Version].[Version ].[FC]}
+        {[Periods].[element],    [Periods   ].[element2]} * {[Version].[Version].[Actual],  
+            [Version].[Version ].[FC],
+      
+      [Version].[Version ].[Budget]
+      }
       ON 0,
             {  something } 
                   * Tm1SubsetAll(  [  OrgUnit])
@@ -481,7 +484,7 @@ test_extract_mdx_components:
       )
     expected_set_mdx_list: [
       "{{[Periods].[element],[Periods].[element2]}}",
-      "{{[Version].[Version].[Actual],[Version].[Version].[FC]}}",
+      "{{[Version].[Version].[Actual],[Version].[Version].[FC],[Version].[Version].[Budget]}}",
       "{{something}}",
       "{Tm1SubsetAll([OrgUnit])}",
       "{{[Employee].[KeyAccountManagers].[AllKAMs]}}",
