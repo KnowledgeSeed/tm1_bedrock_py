@@ -4,7 +4,6 @@ import pandas as pd
 import parametrize_from_file
 import pytest
 from TM1py.Exceptions import TM1pyRestException
-from pandas.core.dtypes.common import is_numeric_dtype
 from pandas.core.frame import DataFrame
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
@@ -57,6 +56,7 @@ def test_get_kwargs_dict_from_set_mdx_list_success(set_mdx_list, expected_kwargs
     kwargs = utility.__get_kwargs_dict_from_set_mdx_list(set_mdx_list)
     assert kwargs == expected_kwargs
 
+
 """
 # Test focusing on filtering, edge cases, and empty results
 @parametrize_from_file
@@ -67,6 +67,7 @@ def test_get_kwargs_dict_from_set_mdx_list_filtering(set_mdx_list, expected_exce
     kwargs = utility.__get_kwargs_dict_from_set_mdx_list(set_mdx_list)
     assert kwargs == expected_exception
 """
+
 
 @parametrize_from_file
 def test_get_dimensions_from_set_mdx_list_success(mdx_sets, expected_dimensions):
@@ -495,6 +496,7 @@ def test_dataframe_validate_datatypes(measuredim, measuretypes, dataframe, expec
 # Main: tests for dataframe remapping and copy functions
 # ------------------------------------------------------------------------------------------------------------
 
+
 @parametrize_from_file
 def test_dataframe_find_and_replace_success(dataframe, mapping, expected_dataframe):
     """Remaps elements based on literal mapping, without dimension manipulation and checks for successful execution"""
@@ -562,7 +564,7 @@ def test_dataframe_execute_mappings_replace_success(dataframe, mapping_steps, ex
 
 def test_mssql_database_connection(sql_engine_factory):
     with sql_engine_factory('mssqlsrv') as sql_engine:
-        #assert sql_engine.closed is False
+        # assert sql_engine.closed is False
         assert str(sql_engine.url.get_backend_name()) == "mssql", f"Wrong backend: {sql_engine.url.get_backend_name()}"
 
 
@@ -625,7 +627,9 @@ def test_sql_normalize_drop(sql_engine_factory, dataframe, expected, drop):
 def test_mssql_loader_replace(sql_engine_factory, dataframe, if_exists, table_name):
     with sql_engine_factory('mssqlsrv') as sql_engine:
         df = pd.DataFrame(dataframe)
-        loader.dataframe_to_sql(dataframe=df, engine=sql_engine, table_name=table_name, if_exists=if_exists, index=False)
+        loader.dataframe_to_sql(
+            dataframe=df, engine=sql_engine, table_name=table_name, if_exists=if_exists, index=False
+        )
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -645,7 +649,8 @@ def test_dataframe_casting_for_csv_file(dataframe, cube_dims):
 @parametrize_from_file
 def test_dataframe_to_csv(data_dataframe, expected_dataframe):
     """
-        Loads data from DataFrame file to a CSV file then does the reverse. Checks if the DataFrame stayed the same after the operations.
+        Loads data from DataFrame file to a CSV file then does the reverse.
+        Checks if the DataFrame stayed the same after the operations.
         Deletes CSV file after assertion.
     """
     csv_file_name = "sample_data.csv"
@@ -661,7 +666,7 @@ def test_dataframe_to_csv(data_dataframe, expected_dataframe):
         data_df = pd.DataFrame(data_dataframe)
         dtype_mapping = data_df.dtypes.apply(lambda x: x.name).to_dict()
 
-        loader.dataframe_to_csv(dataframe=data_df, csv_file_name=csv_file_name, decimal=".", mode="w")
+        loader.dataframe_to_csv(dataframe=data_df, csv_file_name=csv_file_name, decimal=".")
         df = extractor.csv_to_dataframe(
             csv_file_path=csv_file_path,
             decimal=".",
@@ -672,7 +677,7 @@ def test_dataframe_to_csv(data_dataframe, expected_dataframe):
 
         expected_df = pd.DataFrame(expected_dataframe)
 
-        pd.testing.assert_frame_equal(df, expected_df, check_dtype=True)
+        pd.testing.assert_frame_equal(df, expected_df)
 
     finally:
         if os.path.exists(csv_file_path):
@@ -683,7 +688,8 @@ def test_dataframe_to_csv(data_dataframe, expected_dataframe):
 @parametrize_from_file
 def test_dataframe_to_csv_build_dataframe_form_mdx(tm1_connection_factory, data_mdx):
     """
-        Loads data from DataFrame file to a CSV file then does the reverse. Checks if the DataFrame stayed the same after the operations.
+        Loads data from DataFrame file to a CSV file then does the reverse.
+        Checks if the DataFrame stayed the same after the operations.
         Deletes CSV file after assertion.
     """
     with tm1_connection_factory("tm1srv") as conn:
@@ -694,7 +700,9 @@ def test_dataframe_to_csv_build_dataframe_form_mdx(tm1_connection_factory, data_
 
             transformer.normalize_dataframe(tm1_service=conn, dataframe=expected_df, mdx=data_mdx)
 
-            loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, csv_output_dir="./", decimal=".", mode="a")
+            loader.dataframe_to_csv(
+                dataframe=expected_df, csv_file_name=csv_file_name, csv_output_dir="./", decimal=".", mode="a"
+            )
             df = extractor.csv_to_dataframe(csv_file_path=f"./{csv_file_name}", decimal=".", dtype=dtype_mapping)
             pd.testing.assert_frame_equal(df, expected_df)
 
@@ -706,7 +714,8 @@ def test_dataframe_to_csv_build_dataframe_form_mdx(tm1_connection_factory, data_
 @parametrize_from_file
 def test_dataframe_to_csv_build_dataframe_form_mdx_with_param_optimisation(tm1_connection_factory, data_mdx):
     """
-        Loads data from DataFrame file to a CSV file then does the reverse. Checks if the DataFrame stayed the same after the operations.
+        Loads data from DataFrame file to a CSV file then does the reverse.
+        Checks if the DataFrame stayed the same after the operations.
         Deletes CSV file after assertion.
     """
     with tm1_connection_factory("tm1srv") as conn:
@@ -715,12 +724,14 @@ def test_dataframe_to_csv_build_dataframe_form_mdx_with_param_optimisation(tm1_c
             expected_df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=data_mdx)
             dtype_mapping = expected_df.dtypes.apply(lambda x: x.name).to_dict()
 
-            loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, csv_output_dir="./", decimal=".", mode="w")
+            loader.dataframe_to_csv(
+                dataframe=expected_df, csv_file_name=csv_file_name, csv_output_dir="./", decimal="."
+            )
             df = extractor.csv_to_dataframe(
                     csv_file_path=f"./{csv_file_name}",
                     decimal=".",
                     dtype=dtype_mapping,
-                    chunksize= 204
+                    chunksize=204
             )
 
             pd.testing.assert_frame_equal(df, expected_df)
@@ -733,7 +744,8 @@ def test_dataframe_to_csv_build_dataframe_form_mdx_with_param_optimisation(tm1_c
 @parametrize_from_file
 def test_dataframe_to_csv_build_dataframe_form_mdx_fail(tm1_connection_factory, data_mdx):
     """
-        Loads data from DataFrame file to a CSV file then does the reverse. Checks if the DataFrame stayed the same after the operations.
+        Loads data from DataFrame file to a CSV file then does the reverse.
+        Checks if the DataFrame stayed the same after the operations.
         As the original data types are not passed to the function, the types differ.
         Expected to fail.
         Deletes CSV file after assertion.
@@ -744,7 +756,9 @@ def test_dataframe_to_csv_build_dataframe_form_mdx_fail(tm1_connection_factory, 
             try:
                 expected_df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=data_mdx)
 
-                loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, csv_output_dir="./", decimal=".", mode="w")
+                loader.dataframe_to_csv(
+                    dataframe=expected_df, csv_file_name=csv_file_name, csv_output_dir="./", decimal="."
+                )
                 df = extractor.csv_to_dataframe(csv_file_path=f"./{csv_file_name}", decimal=".")
 
                 pd.testing.assert_frame_equal(df, expected_df)
@@ -757,4 +771,3 @@ def test_dataframe_to_csv_build_dataframe_form_mdx_fail(tm1_connection_factory, 
 # ------------------------------------------------------------------------------------------------------------
 # Main: tests for input processes
 # ------------------------------------------------------------------------------------------------------------
-

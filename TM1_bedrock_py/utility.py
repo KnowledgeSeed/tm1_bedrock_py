@@ -193,7 +193,12 @@ def __get_kwargs_dict_from_set_mdx_list(mdx_expressions: List[str]) -> Dict[str,
         Dict[str, str]: A dictionary where keys are dimension names (in lowercase, spaces removed)
             and values are the MDX expressions.
     """
-    regex = r"\{\s*\[\s*([\w\s]+?)\s*\]\s*"
+    if not isinstance(mdx_expressions, list):
+        raise TypeError("Expected mdx_sets to be a list")
+    if len(mdx_expressions) == 0:
+        raise ValueError("Set mdx list cannot be empty")
+
+    regex = r".*?(?<!\.)\[\s*([\w\s]+?)\s*\].*?"
     kwargs_dict = {}
     for mdx in mdx_expressions:
         match = re.search(regex, mdx)
@@ -201,11 +206,15 @@ def __get_kwargs_dict_from_set_mdx_list(mdx_expressions: List[str]) -> Dict[str,
             key = match.group(1).lower().replace(" ", "")
             kwargs_dict[key] = mdx
         else:
-            raise ValueError
-    return kwargs_dict
+            raise ValueError("The set mdx " + mdx + " is invalid")
+
+    if len(mdx_expressions) == len(kwargs_dict):
+        return kwargs_dict
+    else:
+        raise ValueError("Duplicate set mdx for a dimension")
 
 
-def __get_dimensions_from_set_mdx_list(mdx_sets: Optional[List[Optional[str]]]) -> List[str]:
+def __get_dimensions_from_set_mdx_list(mdx_sets: List[str]) -> List[str]:
     """
     Extracts the first dimension name found in each string of a list of MDX set strings.
 
@@ -235,17 +244,17 @@ def __get_dimensions_from_set_mdx_list(mdx_sets: Optional[List[Optional[str]]]) 
         TypeError: If mdx_sets is not a list or if any element
                    (that is not None) is not a string.
     """
-    if mdx_sets is None:
-        return []
     if not isinstance(mdx_sets, list):
-        raise TypeError(f"Expected mdx_sets to be a list, but got {type(mdx_sets).__name__}")
+        raise TypeError("Expected mdx_sets to be a list")
+    if len(mdx_sets) == 0:
+        raise ValueError("Set mdx list cannot be empty")
 
-    pattern = r'\{\s*\[([^\]]+?)\]'
+    pattern = r".*?(?<!\.)\[\s*([\w\s]+?)\s*\].*?"
     ordered_dimension_names = []
 
     for mdx_set_string in mdx_sets:
         if mdx_set_string is None:
-            continue
+            raise ValueError("NoneType set mdx encountered")
         if not isinstance(mdx_set_string, str):
             raise TypeError(f"Expected elements of mdx_sets to be strings, but found {type(mdx_set_string).__name__}")
 
@@ -255,8 +264,13 @@ def __get_dimensions_from_set_mdx_list(mdx_sets: Optional[List[Optional[str]]]) 
             dimension_part = full_match.split('.', 1)[0].strip()
             if dimension_part:
                 ordered_dimension_names.append(dimension_part)
+        else:
+            raise ValueError("The mdx " + mdx_set_string + " is invalid")
 
-    return ordered_dimension_names
+    if len(ordered_dimension_names) == len(set(ordered_dimension_names)):
+        return ordered_dimension_names
+    else:
+        raise ValueError("Duplicate set mdxs for a dimension")
 
 
 def __generate_cartesian_product(list_of_lists: Optional[List[Optional[Iterable[Any]]]]) -> List[Tuple[Any, ...]]:
