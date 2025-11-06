@@ -398,9 +398,9 @@ test_extract_mdx_components:
       {[Versions].[element2,,with comma]} * {[Versions].[element3,,,with comma]}
       FROM [cubename]
     expected_set_mdx_list: [
-      "{{[Periods].[element,with comma]}}",
-      "{{[Versions].[element2,,with comma]}}",
-      "{{[Versions].[element3,,,with comma]}}"
+      "{{[Periods].[element,withcomma]}}",
+      "{{[Versions].[element2,,withcomma]}}",
+      "{{[Versions].[element3,,,withcomma]}}"
     ]
   -
     input_mdx: |
@@ -420,7 +420,7 @@ test_extract_mdx_components:
       "{{[Periods].[element]}}",
       "{{[Version].[Version].[Actual]}}",
       "{{something}}",
-      "{Tm1SubsetAll([OrgUnit])}"
+      "{Tm1SubsetAll([OrgUnit])}",
       "{[dim].[element1,withcomma]}",
       "{[dim2].[element2,,withcommas]}",
       "{[dim3].[hierarchy,withcomma].[element3,withcomma]}"
