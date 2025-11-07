@@ -1,4 +1,4 @@
-from typing import Callable, List, Dict, Optional, Any
+from typing import Callable, List, Dict, Optional, Any, Literal
 
 from TM1py import TM1Service, NativeView, Subset
 from pandas import DataFrame, read_sql_table, read_sql_query, concat, read_csv
@@ -15,7 +15,7 @@ from TM1_bedrock_py import utility, transformer, basic_logger
 
 @utility.log_exec_metrics
 def tm1_mdx_to_dataframe(
-        mdx_function: Optional[Callable[..., DataFrame]] = None,
+        mdx_function: Optional[Callable[..., DataFrame] | Literal["native_view_extractor"]] = None,
         **kwargs: Any
 ) -> DataFrame:
     """
@@ -136,7 +136,7 @@ def __tm1_mdx_to_native_view_to_dataframe(
         else:
             native_view.add_row(dimension_name=dimension_name, subset=subset)
     tm1_service.views.create(view=native_view)
-    basic_logger.info("View and dimension subsets named " + view_name + " were successfully created in tm1.")
+    basic_logger.info("View and dimension subsets named " + view_name + " were created.")
 
     column_dimension_list = [f"[{set_mdx_dimensions[0]}].[{set_mdx_dimensions[0]}]"]
     row_dimension_list = [f"[{d}].[{d}]" for d in set_mdx_dimensions[1:]]
