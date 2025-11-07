@@ -179,7 +179,7 @@ def test_nativeview_functions():
     #utility.generate_element_lists_from_set_mdx_list(tm1_service=tm1_service, set_mdx_list=set_mdx_list)
 
     df = extractor.__tm1_mdx_to_native_view_to_dataframe(
-        tm1_service=tm1_service, data_mdx=mdx, use_blob=True, view_and_subset_cleanup=False)
+        tm1_service=tm1_service, data_mdx=mdx, use_blob=True, view_and_subset_cleanup=False, skip_zeros=True)
     print(df)
 
 def benchpy_sample():

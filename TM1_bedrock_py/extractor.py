@@ -31,6 +31,9 @@ def tm1_mdx_to_dataframe(
     """
     if mdx_function is None:
         mdx_function = __tm1_mdx_to_dataframe_default
+    elif mdx_function == "native_view_extractor":
+        mdx_function = __tm1_mdx_to_native_view_to_dataframe
+        basic_logger.info("Native view extraction mode enabled.")
 
     dataframe = mdx_function(**kwargs)
     basic_logger.info("Extracted " + str(len(dataframe)) + " rows from tm1 datasource")
@@ -115,15 +118,14 @@ def __tm1_mdx_to_native_view_to_dataframe(
 
     cube_name = utility.get_cube_name_from_mdx(mdx_query=data_mdx)
     view_name = "tm1_bedrock_py_"+"".join(random.choices(string.ascii_lowercase + string.digits, k=16))
-    native_view = NativeView(cube_name=cube_name, view_name=view_name,
-                             suppress_empty_rows=skip_zeros, suppress_empty_columns=skip_zeros)
-    native_view.suppress_empty_cells = skip_zeros
-
     set_mdx_list = utility.extract_mdx_components(mdx=data_mdx)
     set_mdx_dimensions = utility.get_dimensions_from_set_mdx_list(mdx_sets=set_mdx_list)
     set_mdx_elements = utility.generate_element_lists_from_set_mdx_list(tm1_service=tm1_service,
                                                                         set_mdx_list=set_mdx_list)
 
+    native_view = NativeView(cube_name=cube_name, view_name=view_name,
+                             suppress_empty_rows=skip_zeros, suppress_empty_columns=skip_zeros)
+    native_view.suppress_empty_cells = skip_zeros
     for i, (dimension_name, set_mdx, elements) in enumerate(zip(set_mdx_dimensions, set_mdx_list, set_mdx_elements)):
         subset = Subset(subset_name=view_name,
                         dimension_name=dimension_name)
@@ -134,6 +136,7 @@ def __tm1_mdx_to_native_view_to_dataframe(
         else:
             native_view.add_row(dimension_name=dimension_name, subset=subset)
     tm1_service.views.create(view=native_view)
+    basic_logger.info("View and dimension subsets named " + view_name + " were successfully created in tm1.")
 
     column_dimension_list = [f"[{set_mdx_dimensions[0]}].[{set_mdx_dimensions[0]}]"]
     row_dimension_list = [f"[{d}].[{d}]" for d in set_mdx_dimensions[1:]]
@@ -155,6 +158,7 @@ def __tm1_mdx_to_native_view_to_dataframe(
             tm1_service.views.delete(cube_name=cube_name, view_name=view_name)
             for dimension_name in set_mdx_dimensions:
                 tm1_service.subsets.delete(subset_name=view_name, dimension_name=dimension_name)
+            basic_logger.info("View and dimension subsets named " + view_name + " were deleted.")
 
 
 # ------------------------------------------------------------------------------------------------------------
