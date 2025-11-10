@@ -145,6 +145,7 @@ def test_nativeview_functions():
     SELECT 
       NON EMPTY 
        {[Period].[Period].[202406]} 
+       * {[Lineitem Sales].[Lineitem Sales].[Quantity], [Lineitem Sales].[Lineitem Sales].[Revenue]}
       ON COLUMNS , 
       NON EMPTY 
        {[Product].[Product].[P0000001],[Product].[Product].[P0000004],
@@ -156,7 +157,7 @@ def test_nativeview_functions():
        * {[Employee].[Employee].[Employee1],[Employee].[Employee].[Employee8],
        [Employee].[Employee].[Employee35],[Employee].[Employee].[Employee56],
        [Employee].[Employee].[Employee81],[Employee].[Employee].[Employee87],
-       [Employee].[Employee].[Employee99]} 
+       [Employee].[Employee].[Employee99]}     
       ON ROWS 
     FROM [Sales] 
     WHERE 
@@ -164,8 +165,7 @@ def test_nativeview_functions():
        [Version].[Version].[Actual],
        [Currency].[Currency].[LC],
        [Measures Sales].[Measures Sales].[Input],
-       [Organization Unit].[Organization Unit].[Company01],
-       [Lineitem Sales].[Lineitem Sales].[Quantity]
+       [Organization Unit].[Organization Unit].[Company01]
       )
     """
     tm1_params = {
@@ -180,13 +180,17 @@ def test_nativeview_functions():
 
     #df = extractor.__tm1_mdx_to_native_view_to_dataframe(tm1_service=tm1_service, data_mdx=mdx, skip_zeros=True)
     #print(df)
-    bedrock.data_copy(
+    bedrock.data_copy_intercube(
         tm1_service=tm1_service,
+        target_cube_name="Sales",
         mdx_function="native_view_extractor",
         data_mdx=mdx,
         skip_zeros=True,
+        #skip_rule_derived_cells=True,
         use_blob=True,
-        logging_level="DEBUG"
+        logging_level="DEBUG",
+        view_and_subset_cleanup=False,
+        verbose_logging_mode="print_console"
     )
 
 def benchpy_sample():

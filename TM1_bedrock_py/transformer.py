@@ -309,6 +309,22 @@ def dataframe_relabel(
     dataframe.rename(columns=columns, inplace=True)
 
 
+def rename_columns_by_reference(dataframe: DataFrame, column_names: list[str]) -> DataFrame:
+    """
+    Rename columns in `df` to match the names in `column_names`,
+    matching case/whitespace-insensitively, without reordering.
+    """
+    ref_map = {utility.normalize_column_name(col): col for col in column_names}
+
+    rename_map = {}
+    for col in dataframe.columns:
+        norm_col = utility.normalize_column_name(col)
+        if norm_col in ref_map:
+            rename_map[col] = ref_map[norm_col]
+
+    return dataframe.rename(columns=rename_map)
+
+
 @utility.log_exec_metrics
 def dataframe_value_scale(
         dataframe: DataFrame,

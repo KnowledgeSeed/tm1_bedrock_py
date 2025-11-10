@@ -184,6 +184,14 @@ def test_all_leaves_identifiers_to_dataframe(tm1_connection_factory, dimname, ex
         pd.testing.assert_frame_equal(df, expected_df)
 
 
+@parametrize_from_file
+def test_rename_columns_with_reference(input_df, input_list, expected_df):
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+    output_df = transformer.rename_columns_by_reference(dataframe=input_df, column_names=input_list)
+    pd.testing.assert_frame_equal(output_df, expected_df)
+
+
 # ------------------------------------------------------------------------------------------------------------
 # Utility: Cube metadata collection using input MDXs and/or other cubes
 # ------------------------------------------------------------------------------------------------------------

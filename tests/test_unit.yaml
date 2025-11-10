@@ -795,6 +795,24 @@ test_all_leaves_identifiers_to_dataframe:
                  "Group_5", "Project C"]
     }
 
+test_rename_columns_with_reference:
+  -
+    input_df: {
+      "lineitemsales": ["Revenue", "Revenue"],
+      "organizationunits": ["abc123", "xzy456"],
+      "periods": ["202402", "202403"],
+      "versions": ["Actuals", "Actuals"],
+      "Value": [1000, 1100]
+    }
+    input_list: ["Periods", "Versions", "Organization Units", "Lineitem Sales"]
+    expected_df: {
+      "Lineitem Sales": [ "Revenue", "Revenue" ],
+      "Organization Units": [ "abc123", "xzy456" ],
+      "Periods": [ "202402", "202403" ],
+      "Versions": [ "Actuals", "Actuals" ],
+      "Value": [ 1000, 1100 ]
+    }
+
 # Utility: Cube metadata collection using input MDXs and/or other cubes
 test_tm1_cube_object_metadata_collect_based_on_cube_name_success:
   -

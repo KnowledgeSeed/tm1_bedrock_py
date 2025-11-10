@@ -175,11 +175,13 @@ def _handle_mapping_df(
 
 def _handle_mapping_mdx(
     step: Dict[str, Any],
-    mdx_function: Optional[Callable[..., DataFrame]] = None,
+    mdx_function: Optional[Callable[..., DataFrame] | Literal["native_view_extractor"]] = None,
     tm1_service: Optional[Any] = None,
     **kwargs
 ) -> DataFrame:
     """Execute MDX and augment the resulting DataFrame with metadata."""
+    native_view_extraction_enabled = mdx_function == "native_view_extractor"
+
     mdx = step["mapping_mdx"]
     step_specific_tm1_service = step.get("tm1_service")
 
@@ -201,12 +203,17 @@ def _handle_mapping_mdx(
         metadata_function=step.get("mapping_metadata_function"),
         tm1_service=step_specific_tm1_service,
         mdx=mdx,
+        collect_base_cube_metadata=False,
+        collect_source_cube_metadata=native_view_extraction_enabled,
         **kwargs_copy
     )
     filter_dict = metadata_object.get_filter_dict()
-
+    if native_view_extraction_enabled:
+        dataframe = transformer.rename_columns_by_reference(
+            dataframe=dataframe,
+            column_names=metadata_object.get_source_cube_dims()
+        )
     transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=filter_dict)
-    transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
 
     return dataframe
 
