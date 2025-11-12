@@ -37,6 +37,7 @@ def tm1_mdx_to_dataframe(
 
     dataframe = mdx_function(**kwargs)
     basic_logger.info("Extracted " + str(len(dataframe)) + " rows from tm1 datasource")
+    dataframe.normalized = False
     return dataframe
 
 
@@ -362,6 +363,7 @@ def sql_to_dataframe(
 
     dataframe = sql_function(**kwargs)
     basic_logger.info("Extracted " + str(len(dataframe)) + " rows from sql datasource.")
+    dataframe.normalized = False
     return dataframe
 
 
@@ -423,6 +425,7 @@ def csv_to_dataframe(
 
     dataframe = csv_function(**kwargs)
     basic_logger.info("Extracted " + str(len(dataframe)) + " rows from csv datasource.")
+    dataframe.normalized = False
     return dataframe
 
 

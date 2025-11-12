@@ -579,8 +579,8 @@ def data_copy(
 
     if case_and_whitespace_insensitive_inputs:
         cube_name = utility.normalize_string(cube_name)
-        utility.normalize_dict_strings(mapping_steps)
-        utility.normalize_dict_strings(shared_mapping)
+        utility.normalize_structure_strings(mapping_steps)
+        utility.normalize_structure_strings(shared_mapping)
         utility.normalize_dataframe_strings(dataframe)
 
     transformer.dataframe_add_column_assign_value(

@@ -529,13 +529,13 @@ def normalize_string(input_string: str) -> str:
     return re.sub(r'\s+', '', input_string.strip().lower())
 
 
-def normalize_dict_strings(d: Any) -> Any:
+def normalize_structure_strings(d: Any) -> Any:
     """Normalize a dictionary for comparison (case- and space-insensitive).
     Converts all strings, leaves everything else untouched"""
     if isinstance(d, dict):
-        return {normalize_string(k): normalize_dict_strings(v) for k, v in d.items()}
+        return {normalize_string(k): normalize_structure_strings(v) for k, v in d.items()}
     elif isinstance(d, list):
-        return [normalize_dict_strings(i) for i in d]
+        return [normalize_structure_strings(i) for i in d]
     elif isinstance(d, str):
         return normalize_string(d)
     elif isinstance(d, DataFrame):
@@ -546,9 +546,11 @@ def normalize_dict_strings(d: Any) -> Any:
 @log_exec_metrics
 def normalize_dataframe_strings(dataframe: DataFrame, **_kwargs) -> None:
     """Normalize a dataframe, including columns, string values, and object type columns with strings."""
-    dataframe.rename(columns=lambda c: normalize_string(str(c)), inplace=True)
-    for col in dataframe.select_dtypes(include=['object', 'string']):
-        dataframe[col] = dataframe[col].map(lambda x: normalize_string(x) if isinstance(x, str) else x)
+    if not getattr(dataframe, "normalized", False):
+        dataframe.rename(columns=lambda c: normalize_string(str(c)), inplace=True)
+        for col in dataframe.select_dtypes(include=['object', 'string']):
+            dataframe[col] = dataframe[col].map(lambda x: normalize_string(x) if isinstance(x, str) else x)
+        dataframe.normalized = True
 
 # ------------------------------------------------------------------------------------------------------------
 # Utility: Cube metadata collection using input MDXs and/or other cubes
