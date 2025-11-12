@@ -813,6 +813,36 @@ test_rename_columns_with_reference:
       "Value": [ 1000, 1100 ]
     }
 
+test_normalize_dict_strings:
+  -
+    input_dict: {
+      "Outer Key": {"Middle  Key": {"Inner Key": "Value"}},
+      "List Key": ["Value 1", " Value 2", "Value 3 "],
+      "String Key": "String Value Test"
+    }
+    expected_dict: {
+      "outerkey": { "middlekey": { "innerkey": "value" } },
+      "listkey": [ "value1", "value2", "value3" ],
+      "stringkey": "stringvaluetest"
+    }
+
+test_normalize_dataframe_strings:
+  -
+    input_df: {
+      "Lineitem Sales": [ "Revenue", "Quantity" ],
+      "Organization Units": [ "abc123", "xzy456" ],
+      "Periods": [ "202402", "202403" ],
+      "Versions": [ "Actuals", "Actuals" ],
+      "Value": [ 1000, 1100 ]
+    }
+    expected_df: {
+      "lineitemsales": ["revenue", "quantity"],
+      "organizationunits": ["abc123", "xzy456"],
+      "periods": ["202402", "202403"],
+      "versions": ["actuals", "actuals"],
+      "value": [1000, 1100]
+    }
+
 # Utility: Cube metadata collection using input MDXs and/or other cubes
 test_tm1_cube_object_metadata_collect_based_on_cube_name_success:
   -

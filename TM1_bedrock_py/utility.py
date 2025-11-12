@@ -524,9 +524,28 @@ def extract_mdx_components(mdx: str) -> List[str]:
     return set_mdx_list
 
 
-def normalize_column_name(name: str) -> str:
-    """Normalize a column name for comparison (case- and space-insensitive)."""
-    return re.sub(r'\s+', '', name.strip().lower())
+def normalize_string(input_string: str) -> str:
+    """Normalize a  string value for comparison (case- and space-insensitive)."""
+    return re.sub(r'\s+', '', input_string.strip().lower())
+
+
+def normalize_dict_strings(d: Any, **_kwargs) -> Any:
+    """Normalize a dictionary for comparison (case- and space-insensitive).
+    Converts all strings, leaves everything else untouched"""
+    if isinstance(d, dict):
+        return {normalize_string(k): normalize_dict_strings(v) for k, v in d.items()}
+    elif isinstance(d, list):
+        return [normalize_dict_strings(i) for i in d]
+    elif isinstance(d, str):
+        return normalize_string(d)
+    return d
+
+
+def normalize_dataframe_strings(dataframe: DataFrame) -> None:
+    """Normalize a dataframe, including columns, string values, and object type columns with strings."""
+    dataframe.rename(columns=lambda c: normalize_string(str(c)), inplace=True)
+    for col in dataframe.select_dtypes(include=['object', 'string']):
+        dataframe[col] = dataframe[col].map(lambda x: normalize_string(x) if isinstance(x, str) else x)
 
 # ------------------------------------------------------------------------------------------------------------
 # Utility: Cube metadata collection using input MDXs and/or other cubes

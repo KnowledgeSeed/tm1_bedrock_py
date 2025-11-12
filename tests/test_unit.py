@@ -192,6 +192,19 @@ def test_rename_columns_with_reference(input_df, input_list, expected_df):
     pd.testing.assert_frame_equal(output_df, expected_df)
 
 
+@parametrize_from_file
+def test_normalize_dict_strings(input_dict, expected_dict):
+    output_dict = utility.normalize_dict_strings(input_dict)
+    assert output_dict == expected_dict
+
+
+@parametrize_from_file
+def test_normalize_dataframe_strings(input_df, expected_df):
+    output_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+    utility.normalize_dataframe_strings(output_df)
+    pd.testing.assert_frame_equal(output_df, expected_df)
+
 # ------------------------------------------------------------------------------------------------------------
 # Utility: Cube metadata collection using input MDXs and/or other cubes
 # ------------------------------------------------------------------------------------------------------------
