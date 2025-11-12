@@ -131,23 +131,6 @@ def dataframe_reorder_dimensions(
         dataframe[col] = temp_reordered[col]
 
 
-@utility.log_exec_metrics
-def dataframe_force_float64_on_numeric_values(dataframe: DataFrame, **_kwargs) -> None:
-    """
-    Format and then enforce numpy float values in pandas dataframes, if the value is numeric, otherwise keep strings.
-
-    Parameter:
-    --------
-    dataframe: DataFrame - the input dataframe to mutate
-    **kwargs (Any): Additional keyword arguments.
-
-    Returns:
-    --------
-    None, mutates the dataframe in place
-    """
-    dataframe["Value"] = dataframe["Value"].apply(utility.force_float64_on_numeric_values)
-
-
 def dataframe_filter_inplace(
         dataframe: pd.DataFrame,
         filter_condition: Dict[str, Any]

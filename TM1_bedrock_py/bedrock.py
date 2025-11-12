@@ -28,15 +28,16 @@ def data_copy_intercube(
         sql_function: Optional[Callable[..., DataFrame]] = None,
         csv_function: Optional[Callable[..., DataFrame]] = None,
         data_mdx_list: Optional[list[str]] = None,
+        case_and_whitespace_insensitive_inputs: Optional[bool] = False,
         skip_zeros: Optional[bool] = False,
         skip_consolidated_cells: Optional[bool] = False,
         skip_rule_derived_cells: Optional[bool] = False,
         target_metadata_function: Optional[Callable[..., Any]] = None,
         mapping_steps: Optional[List[Dict]] = None,
         shared_mapping: Optional[Dict] = None,
-        source_dim_mapping: Optional[dict] = None,
-        related_dimensions: Optional[dict] = None,
-        target_dim_mapping: Optional[dict] = None,
+        source_dim_mapping: Optional[Dict] = None,
+        related_dimensions: Optional[Dict] = None,
+        target_dim_mapping: Optional[Dict] = None,
         value_function: Optional[Callable[..., Any]] = None,
         ignore_missing_elements: bool = False,
         clear_target: Optional[bool] = False,
@@ -191,10 +192,14 @@ def data_copy_intercube(
             }
         ]
     """
+
+    input_parameters = locals()
+
     if not target_tm1_service:
         target_tm1_service = tm1_service
 
-    native_view_extraction_enabled = mdx_function == "native_view_extractor"
+    native_view_correction_enabled = (
+            mdx_function == "native_view_extractor" and not case_and_whitespace_insensitive_inputs)
 
     utility.set_logging_level(logging_level=logging_level)
     basic_logger.info("Execution started.")
@@ -221,7 +226,7 @@ def data_copy_intercube(
     data_metadata_queryspecific = utility.TM1CubeObjectMetadata.collect(
         mdx=data_mdx,
         collect_base_cube_metadata=False,
-        collect_source_cube_metadata=native_view_extraction_enabled,
+        collect_source_cube_metadata=native_view_correction_enabled,
         tm1_service=tm1_service
     )
     source_cube_name = data_metadata_queryspecific.get_cube_name()
@@ -235,18 +240,21 @@ def data_copy_intercube(
         **kwargs
     )
 
-    if native_view_extraction_enabled:
+    if native_view_correction_enabled:
         dataframe = transformer.rename_columns_by_reference(
             dataframe=dataframe,
             column_names=data_metadata_queryspecific.get_source_cube_dims()
         )
 
+    target_cube_dims = target_metadata.get_cube_dims()
+
     transformer.dataframe_add_column_assign_value(
         dataframe=dataframe, column_value=data_metadata_queryspecific.get_filter_dict(), **kwargs)
 
     if use_mixed_datatypes:
-        measure_dim_name = target_metadata.get_cube_dims()[-1]
+        measure_dim_name = target_cube_dims[-1]
         measure_types = target_metadata.get_measure_element_types()
+
         transformer.dataframe_cast_value_by_measure_type(
             dataframe=dataframe,
             measure_dimension_name=measure_dim_name,
@@ -316,9 +324,11 @@ def data_copy_intercube(
     )
 
     if ignore_missing_elements:
+        dimension_check_dfs = target_metadata.get_dimension_check_dfs()
+
         transformer.dataframe_itemskip_elements(
             dataframe=dataframe,
-            check_dfs=target_metadata.get_dimension_check_dfs(),
+            check_dfs=dimension_check_dfs,
             logging_enabled=verbose_logging_mode is not None,
             **kwargs
         )
@@ -335,7 +345,7 @@ def data_copy_intercube(
         transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
 
     transformer.dataframe_reorder_dimensions(
-        dataframe=dataframe, cube_dimensions=target_metadata.get_cube_dims(), **kwargs)
+        dataframe=dataframe, cube_dimensions=target_cube_dims, **kwargs)
 
     if clear_target:
         loader.clear_cube(tm1_service=target_tm1_service,
@@ -350,7 +360,6 @@ def data_copy_intercube(
         **kwargs
     )
 
-    target_cube_dims = target_metadata.get_cube_dims()
     loader.dataframe_to_cube(
         tm1_service=target_tm1_service,
         dataframe=dataframe,
@@ -385,6 +394,7 @@ def data_copy(
         sql_function: Optional[Callable[..., DataFrame]] = None,
         csv_function: Optional[Callable[..., DataFrame]] = None,
         data_mdx_list: Optional[list[str]] = None,
+        case_and_whitespace_insensitive_inputs: Optional[bool] = False,
         skip_zeros: Optional[bool] = False,
         skip_consolidated_cells: Optional[bool] = False,
         skip_rule_derived_cells: Optional[bool] = False,
@@ -523,7 +533,8 @@ def data_copy(
     if not target_tm1_service:
         target_tm1_service = tm1_service
 
-    native_view_extraction_enabled = mdx_function == "native_view_extractor"
+    native_view_correction_enabled = (
+            mdx_function == "native_view_extractor" and not case_and_whitespace_insensitive_inputs)
 
     dataframe = extractor.tm1_mdx_to_dataframe(
         tm1_service=tm1_service,
@@ -539,7 +550,7 @@ def data_copy(
     data_metadata_queryspecific = utility.TM1CubeObjectMetadata.collect(
         mdx=data_mdx,
         collect_base_cube_metadata=False,
-        collect_source_cube_metadata=native_view_extraction_enabled,
+        collect_source_cube_metadata=native_view_correction_enabled,
         tm1_service=tm1_service
     )
     cube_name = data_metadata_queryspecific.get_cube_name()
@@ -560,11 +571,17 @@ def data_copy(
         **kwargs)
     cube_dims = data_metadata.get_cube_dims()
 
-    if native_view_extraction_enabled:
+    if native_view_correction_enabled:
         dataframe = transformer.rename_columns_by_reference(
             dataframe=dataframe,
             column_names=data_metadata_queryspecific.get_source_cube_dims()
         )
+
+    if case_and_whitespace_insensitive_inputs:
+        cube_name = utility.normalize_string(cube_name)
+        utility.normalize_dict_strings(mapping_steps)
+        utility.normalize_dict_strings(shared_mapping)
+        utility.normalize_dataframe_strings(dataframe)
 
     transformer.dataframe_add_column_assign_value(
         dataframe=dataframe,
@@ -860,6 +877,7 @@ def load_sql_data_to_tm1_cube(
         chunksize: Optional[int] = None,
         sql_engine: Optional[Any] = None,
         sql_function: Optional[Callable[..., DataFrame]] = None,
+        case_and_whitespace_insensitive_inputs: Optional[bool] = False,
         mapping_steps: Optional[List[Dict]] = None,
         shared_mapping: Optional[Dict] = None,
         value_function: Optional[Callable[..., Any]] = None,
@@ -1130,6 +1148,7 @@ def load_tm1_cube_to_sql_table(
         data_mdx: Optional[str] = None,
         mdx_function: Optional[Callable[..., DataFrame] | Literal["native_view_extractor"]] = None,
         data_mdx_list: Optional[list[str]] = None,
+        case_and_whitespace_insensitive_inputs: Optional[bool] = False,
         skip_zeros: Optional[bool] = False,
         skip_consolidated_cells: Optional[bool] = False,
         skip_rule_derived_cells: Optional[bool] = False,
@@ -1242,7 +1261,8 @@ def load_tm1_cube_to_sql_table(
     utility.set_logging_level(logging_level=logging_level)
     basic_logger.info("Execution started.")
 
-    native_view_extraction_enabled = mdx_function == "native_view_extractor"
+    native_view_correction_enabled = (
+            mdx_function == "native_view_extractor" and not case_and_whitespace_insensitive_inputs)
 
     dataframe = extractor.tm1_mdx_to_dataframe(
         tm1_service=tm1_service,
@@ -1271,11 +1291,11 @@ def load_tm1_cube_to_sql_table(
     data_metadata_queryspecific = utility.TM1CubeObjectMetadata.collect(
         mdx=data_mdx,
         collect_base_cube_metadata=False,
-        collect_source_cube_metadata=native_view_extraction_enabled,
+        collect_source_cube_metadata=native_view_correction_enabled,
         tm1_service=tm1_service
     )
 
-    if native_view_extraction_enabled:
+    if native_view_correction_enabled:
         dataframe = transformer.rename_columns_by_reference(
             dataframe=dataframe,
             column_names=data_metadata_queryspecific.get_source_cube_dims()
@@ -1764,6 +1784,7 @@ def load_csv_data_to_tm1_cube(
         target_metadata_function: Optional[Callable[..., Any]] = None,
         mdx_function: Optional[Callable[..., DataFrame] | Literal["native_view_extractor"]] = None,
         csv_function: Optional[Callable[..., DataFrame]] = None,
+        case_and_whitespace_insensitive_inputs: Optional[bool] = False,
         csv_column_mapping: Optional[dict] = None,
         csv_columns_to_drop: Optional[list] = None,
         delimiter: Optional[str] = None,
@@ -2061,6 +2082,7 @@ def load_tm1_cube_to_csv_file(
         data_mdx: Optional[str] = None,
         mdx_function: Optional[Callable[..., DataFrame] | Literal["native_view_extractor"]] = None,
         data_mdx_list: Optional[list[str]] = None,
+        case_and_whitespace_insensitive_inputs: Optional[bool] = False,
         skip_zeros: Optional[bool] = False,
         skip_consolidated_cells: Optional[bool] = False,
         skip_rule_derived_cells: Optional[bool] = False,
@@ -2160,7 +2182,8 @@ def load_tm1_cube_to_csv_file(
     utility.set_logging_level(logging_level=logging_level)
     basic_logger.info("Execution started.")
 
-    native_view_extraction_enabled = mdx_function == "native_view_extractor"
+    native_view_correction_enabled = (
+            mdx_function == "native_view_extractor" and not case_and_whitespace_insensitive_inputs)
 
     dataframe = extractor.tm1_mdx_to_dataframe(
         tm1_service=tm1_service,
@@ -2180,7 +2203,7 @@ def load_tm1_cube_to_csv_file(
     data_metadata_queryspecific = utility.TM1CubeObjectMetadata.collect(
         mdx=data_mdx,
         collect_base_cube_metadata=False,
-        collect_source_cube_metadata=native_view_extraction_enabled,
+        collect_source_cube_metadata=native_view_correction_enabled,
         tm1_service=tm1_service
     )
 
@@ -2242,7 +2265,7 @@ def load_tm1_cube_to_csv_file(
 
         target_csv_file_name = f"{source_cube_name}_{timestamp}.csv"
 
-    if native_view_extraction_enabled:
+    if native_view_correction_enabled:
         dataframe = transformer.rename_columns_by_reference(
             dataframe=dataframe,
             column_names=data_metadata_queryspecific.get_source_cube_dims()

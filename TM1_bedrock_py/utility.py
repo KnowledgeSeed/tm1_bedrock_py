@@ -529,7 +529,7 @@ def normalize_string(input_string: str) -> str:
     return re.sub(r'\s+', '', input_string.strip().lower())
 
 
-def normalize_dict_strings(d: Any, **_kwargs) -> Any:
+def normalize_dict_strings(d: Any) -> Any:
     """Normalize a dictionary for comparison (case- and space-insensitive).
     Converts all strings, leaves everything else untouched"""
     if isinstance(d, dict):
@@ -538,10 +538,13 @@ def normalize_dict_strings(d: Any, **_kwargs) -> Any:
         return [normalize_dict_strings(i) for i in d]
     elif isinstance(d, str):
         return normalize_string(d)
+    elif isinstance(d, DataFrame):
+        return normalize_dataframe_strings(d)
     return d
 
 
-def normalize_dataframe_strings(dataframe: DataFrame) -> None:
+@log_exec_metrics
+def normalize_dataframe_strings(dataframe: DataFrame, **_kwargs) -> None:
     """Normalize a dataframe, including columns, string values, and object type columns with strings."""
     dataframe.rename(columns=lambda c: normalize_string(str(c)), inplace=True)
     for col in dataframe.select_dtypes(include=['object', 'string']):
@@ -593,9 +596,9 @@ class TM1CubeObjectMetadata:
     def __init__(self) -> None:
         self._data: Dict[str, Union['TM1CubeObjectMetadata', Any]] = {}
 
-    def __getitem__(self, item: str) -> Union['TM1CubeObjectMetadata', Any]:
+    def __getitem__(self, item: str) -> Any:
         if item not in self._data:
-            self._data[item] = TM1CubeObjectMetadata()
+            self._data[item] = None
         return self._data[item]
 
     def __setitem__(self, key: str, value: Any) -> None:
@@ -665,14 +668,11 @@ class TM1CubeObjectMetadata:
             tm1_service: Optional[Any] = None,
             mdx: Optional[str] = None,
             cube_name: Optional[str] = None,
-            retrieve_all_dimension_data: Optional[Callable[..., Any]] = None,
-            retrieve_dimension_data: Optional[Callable[..., Any]] = None,
             collect_base_cube_metadata: Optional[bool] = True,
-            collect_extended_cube_metadata: Optional[bool] = False,
             collect_dim_element_identifiers: Optional[bool] = False,
             collect_measure_types: Optional[bool] = False,
             collect_source_cube_metadata: Optional[bool] = False,
-            **kwargs
+            **_kwargs
     ) -> "TM1CubeObjectMetadata":
         """
         Collects important data about the mdx query and/or it's cube based on either an MDX query or a cube name.
@@ -706,24 +706,9 @@ class TM1CubeObjectMetadata:
         if collect_base_cube_metadata:
             cls._expand_base_cube_metadata(tm1_service=tm1_service, cube_name=cube_name, metadata=metadata)
 
-        if retrieve_all_dimension_data is None:
-            retrieve_all_dimension_data = cls.__tm1_dimension_data_collector_for_cube
-
-        if retrieve_dimension_data is None:
-            retrieve_dimension_data = cls.__tm1_dimension_data_collector_default
-
         if collect_dim_element_identifiers:
             cls.__collect_element_check_dataframes(
                 tm1_service=tm1_service, cube_dimensions=metadata.get_cube_dims(), metadata=metadata
-            )
-
-        if collect_extended_cube_metadata:
-            retrieve_all_dimension_data(
-                tm1_service=tm1_service,
-                cube_dimensions=metadata.get_cube_dims(),
-                metadata=metadata,
-                retrieve_dimension_data=retrieve_dimension_data,
-                **kwargs
             )
 
         if collect_measure_types:
@@ -770,63 +755,6 @@ class TM1CubeObjectMetadata:
             metadata[cls._DIM_CHECK_DFS].append(
                 all_leaves_identifiers_to_dataframe(tm1_service=tm1_service, dimension_name=dimension)
             )
-
-    @classmethod
-    def __tm1_dimension_data_collector_for_cube(
-            cls,
-            tm1_service: Any,
-            cube_dimensions: List[str],
-            metadata: "TM1CubeObjectMetadata",
-            retrieve_dimension_data: Callable[..., Any],
-            **_kwargs
-    ) -> None:
-        """
-        Default implementation to retrieve and update metadata for all dimensions of a cube.
-
-        Args:
-            tm1_service (Any): The TM1 service object.
-            cube_dimensions (List[str]): A list of dimension names in the cube.
-            metadata (TM1CubeObjectMetadata): The metadata object to update.
-            retrieve_dimension_data (Callable): A function to retrieve and update metadata for each dimension.
-
-        Returns:
-            metadata (Metadata)
-        """
-        for dimension in cube_dimensions:
-            dimension_hierarchies = tm1_service.hierarchies.get_all_names(dimension_name=dimension)
-            retrieve_dimension_data(tm1_service, dimension, dimension_hierarchies, metadata)
-
-    @classmethod
-    def __tm1_dimension_data_collector_default(
-            cls,
-            tm1_service: Any,
-            dimension: str,
-            hierarchies: List[str],
-            metadata: "TM1CubeObjectMetadata",
-            **_kwargs
-    ) -> None:
-        """
-        Default implementation to retrieve and collect metadata for a dimension and its hierarchies.
-
-        Args:
-            tm1_service (Any): The TM1 service object.
-            dimension (str): The name of the dimension.
-            hierarchies (List[str]): A list of hierarchies in the dimension.
-            metadata (TM1CubeObjectMetadata): The metadata object to update.
-
-        Returns:
-            TM1CubeObjectMetadata: The updated metadata object.
-        """
-        for hierarchy in hierarchies:
-            default_member = tm1_service.hierarchies.get(
-                dimension_name=dimension, hierarchy_name=hierarchy
-            ).default_member
-            metadata[cls._CUBE_DIMS][dimension][cls._DIM_HIERS][hierarchy][cls._DEFAULT_NAME] = default_member
-
-            default_member_type = tm1_service.elements.get(
-                dimension_name=dimension, hierarchy_name=hierarchy, element_name=default_member
-            ).element_type
-            metadata[cls._CUBE_DIMS][dimension][cls._DIM_HIERS][hierarchy][cls._DEFAULT_TYPE] = default_member_type
 
 
 # ------------------------------------------------------------------------------------------------------------

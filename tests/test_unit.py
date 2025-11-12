@@ -476,15 +476,6 @@ def test_dataframe_reorder_dimensions(dataframe, cube_cols, expected_dataframe):
 
 
 @parametrize_from_file
-def test_dataframe_force_float64_on_numerical_values(dataframe, expected_dataframe):
-    df = pd.DataFrame(dataframe)
-    expected_df = pd.DataFrame(expected_dataframe)
-    transformer.dataframe_force_float64_on_numeric_values(df)
-
-    pd.testing.assert_frame_equal(df, expected_df)
-
-
-@parametrize_from_file
 def test_dataframe_value_scale(dataframe, expected_dataframe):
     def add_one(x): return x + 1
     def multiply_by_two(x): return x * 2
