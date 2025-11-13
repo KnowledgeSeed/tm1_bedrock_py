@@ -36,7 +36,7 @@ def dataframe_verbose_logger(
         **_kwargs
 ):
     if verbose_logging_mode and dataframe is not None:
-        if verbose_logging_mode is "file":
+        if verbose_logging_mode == "file":
             thread_id = threading.get_ident()
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
@@ -46,7 +46,7 @@ def dataframe_verbose_logger(
             dataframe.to_csv(path_or_buf=filepath, index=False)
             basic_logger.debug(f"DataFrame logged to {filepath}")
 
-        elif verbose_logging_mode is "print_consol":
+        elif verbose_logging_mode == "print_console":
             num_rows_to_log = 5
             basic_logger.debug(f"First {num_rows_to_log} rows of DataFrame: {dataframe.head(num_rows_to_log)}")
 
@@ -69,6 +69,7 @@ def execution_metrics_logger(logger, func, *args, **kwargs):
     })
 
     return result
+
 
 async def async_execution_metrics_logger(logger, func, *args, **kwargs):
     """Measures and logs the runtime of any function."""
@@ -133,7 +134,7 @@ def set_logging_level(logging_level: str):
 # ------------------------------------------------------------------------------------------------------------
 
 
-def _get_cube_name_from_mdx(mdx_query: str) -> str:
+def get_cube_name_from_mdx(mdx_query: str) -> str:
     """
     Extracts the cube name from the FROM clause of an MDX query.
 
@@ -152,7 +153,7 @@ def _get_cube_name_from_mdx(mdx_query: str) -> str:
     return from_part_match.group(1).strip()
 
 
-def _mdx_filter_to_dictionary(mdx_query: str) -> Dict[str, str]:
+def mdx_filter_to_dictionary(mdx_query: str) -> Dict[str, str]:
     """
     Parses the WHERE clause of an MDX query and extracts dimensions and their elements.
 
@@ -182,7 +183,7 @@ def _mdx_filter_to_dictionary(mdx_query: str) -> Dict[str, str]:
     return mdx_dict
 
 
-def __get_kwargs_dict_from_set_mdx_list(mdx_expressions: List[str]) -> Dict[str, str]:
+def get_kwargs_dict_from_set_mdx_list(mdx_expressions: List[str]) -> Dict[str, str]:
     """
     Generate a dictionary of kwargs from a list of MDX expressions.
 
@@ -193,7 +194,12 @@ def __get_kwargs_dict_from_set_mdx_list(mdx_expressions: List[str]) -> Dict[str,
         Dict[str, str]: A dictionary where keys are dimension names (in lowercase, spaces removed)
             and values are the MDX expressions.
     """
-    regex = r"\{\s*\[\s*([\w\s]+?)\s*\]\s*"
+    if not isinstance(mdx_expressions, list):
+        raise TypeError("Expected mdx_sets to be a list")
+    if len(mdx_expressions) == 0:
+        raise ValueError("Set mdx list cannot be empty")
+
+    regex = r".*?(?<!\.)\[\s*([\w\s]+?)\s*\].*?"
     kwargs_dict = {}
     for mdx in mdx_expressions:
         match = re.search(regex, mdx)
@@ -201,11 +207,15 @@ def __get_kwargs_dict_from_set_mdx_list(mdx_expressions: List[str]) -> Dict[str,
             key = match.group(1).lower().replace(" ", "")
             kwargs_dict[key] = mdx
         else:
-            raise ValueError
-    return kwargs_dict
+            raise ValueError("The set mdx " + mdx + " is invalid")
+
+    if len(mdx_expressions) == len(kwargs_dict):
+        return kwargs_dict
+    else:
+        raise ValueError("Duplicate set mdx for a dimension")
 
 
-def __get_dimensions_from_set_mdx_list(mdx_sets: Optional[List[Optional[str]]]) -> List[str]:
+def get_dimensions_from_set_mdx_list(mdx_sets: List[str]) -> List[str]:
     """
     Extracts the first dimension name found in each string of a list of MDX set strings.
 
@@ -235,17 +245,17 @@ def __get_dimensions_from_set_mdx_list(mdx_sets: Optional[List[Optional[str]]]) 
         TypeError: If mdx_sets is not a list or if any element
                    (that is not None) is not a string.
     """
-    if mdx_sets is None:
-        return []
     if not isinstance(mdx_sets, list):
-        raise TypeError(f"Expected mdx_sets to be a list, but got {type(mdx_sets).__name__}")
+        raise TypeError("Expected mdx_sets to be a list")
+    if len(mdx_sets) == 0:
+        raise ValueError("Set mdx list cannot be empty")
 
-    pattern = r'\{\s*\[([^\]]+?)\]'
+    pattern = r".*?(?<!\.)\[\s*([\w\s]+?)\s*\].*?"
     ordered_dimension_names = []
 
     for mdx_set_string in mdx_sets:
         if mdx_set_string is None:
-            continue
+            raise ValueError("NoneType set mdx encountered")
         if not isinstance(mdx_set_string, str):
             raise TypeError(f"Expected elements of mdx_sets to be strings, but found {type(mdx_set_string).__name__}")
 
@@ -255,11 +265,16 @@ def __get_dimensions_from_set_mdx_list(mdx_sets: Optional[List[Optional[str]]]) 
             dimension_part = full_match.split('.', 1)[0].strip()
             if dimension_part:
                 ordered_dimension_names.append(dimension_part)
+        else:
+            raise ValueError("The mdx " + mdx_set_string + " is invalid")
 
-    return ordered_dimension_names
+    if len(ordered_dimension_names) == len(set(ordered_dimension_names)):
+        return ordered_dimension_names
+    else:
+        raise ValueError("Duplicate set mdxs for a dimension")
 
 
-def __generate_cartesian_product(list_of_lists: Optional[List[Optional[Iterable[Any]]]]) -> List[Tuple[Any, ...]]:
+def generate_cartesian_product(list_of_lists: Optional[List[Optional[Iterable[Any]]]]) -> List[Tuple[Any, ...]]:
     """
     Generates the Cartesian product of a list of lists (or other iterables).
 
@@ -293,7 +308,7 @@ def __generate_cartesian_product(list_of_lists: Optional[List[Optional[Iterable[
     return result
 
 
-def __generate_element_lists_from_set_mdx_list(
+def generate_element_lists_from_set_mdx_list(
         tm1_service: Optional[Any], set_mdx_list: Optional[List[Optional[str]]]) -> List[List[str]]:
     """
     Executes multiple MDX set queries and extracts element names.
@@ -444,6 +459,75 @@ def add_non_empty_to_mdx(mdx_string: str) -> str:
     return final_mdx
 
 
+def extract_mdx_components(mdx: str) -> List[str]:
+    """
+    Extract all axis and filter items from MDX.
+    - Splits axes on ON (outside brackets) and ',' (outside brackets)
+    - Splits each axis item on '*'
+    - WHERE clause is optional
+    """
+
+    cleaned_mdx = re.sub(r"NON\s*EMPTY", "", mdx)
+
+    def extract_select_part(input_mdx: str):
+        mdx_clean = input_mdx
+
+        # -------------------
+        # 1. Extract everything between SELECT and FROM
+        # -------------------
+        select_match = re.search(r"SELECT\s+(.*?)\s+FROM", mdx_clean, re.IGNORECASE | re.DOTALL)
+        if not select_match:
+            raise ValueError("No SELECT ... FROM clause found")
+        select_part = select_match.group(1)
+
+        axis_item_pattern = re.compile(
+            r"(?:\s*(?:\{.*?\}|\[.*?\]|[^\[\]{},])+?\s*)(?=(?:ON\b|,|$))",
+            re.IGNORECASE | re.DOTALL
+        )
+        axes_raw = axis_item_pattern.findall(select_part)
+
+        axes = []
+        for item in axes_raw:
+            # Remove trailing whitespace
+            item_clean = item.strip()
+            if item_clean.upper() not in ("ON COLUMNS", "ON ROWS") and item_clean.upper()[:3] != "ON ":
+                axes.extend([p.strip() for p in item_clean.split('*') if p.strip()])
+        return axes
+
+    def extract_where_part(input_mdx: str):
+        where_match = re.search(r"WHERE\s*\(\s*(.*?)\s*\)", input_mdx, re.IGNORECASE | re.DOTALL)
+        if not where_match:
+            return []
+
+        where_content = where_match.group(1)
+        item_pattern = re.compile(
+            r"""
+            \s*                             # optional leading whitespace
+            (                               # capture group
+                (?:                         # non-capturing group
+                    \[[^\]]*\]              # match [ ... ] bracketed part
+                    |                       # OR
+                    [^\[\],]                # any char except brackets or comma
+                )+                          # repeat one or more times
+            )
+            \s*                             # optional trailing whitespace
+            (?:,|$)                         # stop at comma or end (comma not consumed)
+            """,
+            re.VERBOSE | re.DOTALL
+        )
+
+        members = [m.group(1).strip() for m in item_pattern.finditer(where_content)]
+        return members
+
+    set_mdx_list = extract_select_part(cleaned_mdx) + extract_where_part(cleaned_mdx)
+    set_mdx_list = ["{" + re.sub(r"\s+", "", item) + "}" for item in set_mdx_list]
+    return set_mdx_list
+
+
+def normalize_column_name(name: str) -> str:
+    """Normalize a column name for comparison (case- and space-insensitive)."""
+    return re.sub(r'\s+', '', name.strip().lower())
+
 # ------------------------------------------------------------------------------------------------------------
 # Utility: Cube metadata collection using input MDXs and/or other cubes
 # ------------------------------------------------------------------------------------------------------------
@@ -485,6 +569,7 @@ class TM1CubeObjectMetadata:
     _DEFAULT_TYPE = "default member type"
     _DIM_CHECK_DFS = "dimension check dataframes"
     _MEASURE_ELEMENT_TYPES = "measure element types"
+    _SOURCE_CUBE_DIMS_LIST = "source dimension list"
 
     def __init__(self) -> None:
         self._data: Dict[str, Union['TM1CubeObjectMetadata', Any]] = {}
@@ -527,6 +612,9 @@ class TM1CubeObjectMetadata:
     def get_measure_element_types(self) -> Dict[str, str]:
         return self[self._MEASURE_ELEMENT_TYPES]
 
+    def get_source_cube_dims(self) -> List[str]:
+        return self[self._SOURCE_CUBE_DIMS_LIST]
+
     @classmethod
     def _expand_query_metadata(cls, mdx: str, metadata: "TM1CubeObjectMetadata") -> None:
         """
@@ -539,14 +627,18 @@ class TM1CubeObjectMetadata:
         Returns:
             TM1CubeObjectMetadata: The updated metadata object.
         """
-        metadata[cls._CUBE_NAME] = _get_cube_name_from_mdx(mdx)
+        metadata[cls._CUBE_NAME] = get_cube_name_from_mdx(mdx)
         metadata[cls._QUERY_VAL] = mdx
-        metadata[cls._QUERY_FILTER_DICT] = _mdx_filter_to_dictionary(mdx)
+        metadata[cls._QUERY_FILTER_DICT] = mdx_filter_to_dictionary(mdx)
 
     @classmethod
     def _expand_base_cube_metadata(cls, tm1_service: Any, cube_name: str, metadata: "TM1CubeObjectMetadata") -> None:
         metadata[cls._CUBE_NAME] = cube_name
         metadata[cls._CUBE_DIMS_LIST] = tm1_service.cubes.get_dimension_names(cube_name)
+
+    @classmethod
+    def _expand_source_cube_metadata(cls, tm1_service: Any, cube_name: str, metadata: "TM1CubeObjectMetadata") -> None:
+        metadata[cls._SOURCE_CUBE_DIMS_LIST] = tm1_service.cubes.get_dimension_names(cube_name)
 
     @classmethod
     def __collect_default(
@@ -560,6 +652,7 @@ class TM1CubeObjectMetadata:
             collect_extended_cube_metadata: Optional[bool] = False,
             collect_dim_element_identifiers: Optional[bool] = False,
             collect_measure_types: Optional[bool] = False,
+            collect_source_cube_metadata: Optional[bool] = False,
             **kwargs
     ) -> "TM1CubeObjectMetadata":
         """
@@ -587,6 +680,9 @@ class TM1CubeObjectMetadata:
 
         if not cube_name:
             basic_logger.error("You need to have either an MDX or a cube name specified.")
+
+        if collect_source_cube_metadata:
+            cls._expand_source_cube_metadata(tm1_service=tm1_service, cube_name=cube_name, metadata=metadata)
 
         if collect_base_cube_metadata:
             cls._expand_base_cube_metadata(tm1_service=tm1_service, cube_name=cube_name, metadata=metadata)

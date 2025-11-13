@@ -1,10 +1,10 @@
-from typing import Callable, List, Dict, Optional, Any
+from typing import Callable, List, Dict, Optional, Any, Literal
 
-from TM1py import TM1Service
+from TM1py import TM1Service, NativeView, Subset
 from pandas import DataFrame, read_sql_table, read_sql_query, concat, read_csv
 from sqlalchemy import text
 from typing import Sequence, Hashable, Mapping, Iterable
-
+import random, string
 from TM1_bedrock_py import utility, transformer, basic_logger
 
 
@@ -15,7 +15,7 @@ from TM1_bedrock_py import utility, transformer, basic_logger
 
 @utility.log_exec_metrics
 def tm1_mdx_to_dataframe(
-        mdx_function: Optional[Callable[..., DataFrame]] = None,
+        mdx_function: Optional[Callable[..., DataFrame] | Literal["native_view_extractor"]] = None,
         **kwargs: Any
 ) -> DataFrame:
     """
@@ -31,8 +31,13 @@ def tm1_mdx_to_dataframe(
     """
     if mdx_function is None:
         mdx_function = __tm1_mdx_to_dataframe_default
+    elif mdx_function == "native_view_extractor":
+        mdx_function = __tm1_mdx_to_native_view_to_dataframe
+        basic_logger.info("Native view extraction mode enabled.")
 
-    return mdx_function(**kwargs)
+    dataframe = mdx_function(**kwargs)
+    basic_logger.info("Extracted " + str(len(dataframe)) + " rows from tm1 datasource")
+    return dataframe
 
 
 def __tm1_mdx_to_dataframe_default(
@@ -97,6 +102,65 @@ def __tm1_mdx_to_dataframe_default(
     raise ValueError(msg)
 
 
+def __tm1_mdx_to_native_view_to_dataframe(
+        tm1_service: TM1Service,
+        data_mdx: Optional[str] = None,
+        skip_zeros: bool = False,
+        skip_consolidated_cells: bool = False,
+        skip_rule_derived_cells: bool = False,
+        decimal: str = None,
+        use_blob: Optional[bool] = True,
+        view_and_subset_cleanup: Optional[bool] = True,
+        **_kwargs
+) -> DataFrame:
+    if decimal is None:
+        decimal = utility.get_local_decimal_separator()
+
+    cube_name = utility.get_cube_name_from_mdx(mdx_query=data_mdx)
+    view_name = "tm1_bedrock_py_"+"".join(random.choices(string.ascii_lowercase + string.digits, k=16))
+    set_mdx_list = utility.extract_mdx_components(mdx=data_mdx)
+    set_mdx_dimensions = utility.get_dimensions_from_set_mdx_list(mdx_sets=set_mdx_list)
+    set_mdx_elements = utility.generate_element_lists_from_set_mdx_list(tm1_service=tm1_service,
+                                                                        set_mdx_list=set_mdx_list)
+
+    native_view = NativeView(cube_name=cube_name, view_name=view_name,
+                             suppress_empty_rows=skip_zeros, suppress_empty_columns=skip_zeros)
+    native_view.suppress_empty_cells = skip_zeros
+    for i, (dimension_name, set_mdx, elements) in enumerate(zip(set_mdx_dimensions, set_mdx_list, set_mdx_elements)):
+        subset = Subset(subset_name=view_name,
+                        dimension_name=dimension_name)
+        subset.add_elements(elements=elements)
+        tm1_service.subsets.create(subset=subset)
+        if i == 0:
+            native_view.add_column(dimension_name=dimension_name, subset=subset)
+        else:
+            native_view.add_row(dimension_name=dimension_name, subset=subset)
+    tm1_service.views.create(view=native_view)
+    basic_logger.info("View and dimension subsets named " + view_name + " were created.")
+
+    column_dimension_list = [f"[{set_mdx_dimensions[0]}].[{set_mdx_dimensions[0]}]"]
+    row_dimension_list = [f"[{d}].[{d}]" for d in set_mdx_dimensions[1:]]
+
+    dataframe = tm1_service.cells.execute_view_dataframe(
+        cube_name=cube_name,
+        view_name=view_name,
+        skip_zeros=skip_zeros,
+        skip_consolidated_cells=skip_consolidated_cells,
+        skip_rule_derived_cells=skip_rule_derived_cells,
+        use_blob=use_blob,
+        arranged_axes=([], row_dimension_list, column_dimension_list),
+        decimal=decimal
+    )
+    try:
+        return dataframe
+    finally:
+        if view_and_subset_cleanup:
+            tm1_service.views.delete(cube_name=cube_name, view_name=view_name)
+            for dimension_name in set_mdx_dimensions:
+                tm1_service.subsets.delete(subset_name=view_name, dimension_name=dimension_name)
+            basic_logger.info("View and dimension subsets named " + view_name + " were deleted.")
+
+
 # ------------------------------------------------------------------------------------------------------------
 # mapping handler extractors
 # ------------------------------------------------------------------------------------------------------------
@@ -111,11 +175,13 @@ def _handle_mapping_df(
 
 def _handle_mapping_mdx(
     step: Dict[str, Any],
-    mdx_function: Optional[Callable[..., DataFrame]] = None,
+    mdx_function: Optional[Callable[..., DataFrame] | Literal["native_view_extractor"]] = None,
     tm1_service: Optional[Any] = None,
     **kwargs
 ) -> DataFrame:
     """Execute MDX and augment the resulting DataFrame with metadata."""
+    native_view_extraction_enabled = mdx_function == "native_view_extractor"
+
     mdx = step["mapping_mdx"]
     step_specific_tm1_service = step.get("tm1_service")
 
@@ -137,12 +203,17 @@ def _handle_mapping_mdx(
         metadata_function=step.get("mapping_metadata_function"),
         tm1_service=step_specific_tm1_service,
         mdx=mdx,
+        collect_base_cube_metadata=False,
+        collect_source_cube_metadata=native_view_extraction_enabled,
         **kwargs_copy
     )
     filter_dict = metadata_object.get_filter_dict()
-
+    if native_view_extraction_enabled:
+        dataframe = transformer.rename_columns_by_reference(
+            dataframe=dataframe,
+            column_names=metadata_object.get_source_cube_dims()
+        )
     transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=filter_dict)
-    transformer.dataframe_force_float64_on_numeric_values(dataframe=dataframe)
 
     return dataframe
 
@@ -289,7 +360,9 @@ def sql_to_dataframe(
     if sql_function is None:
         sql_function = __sql_to_dataframe_default
 
-    return sql_function(**kwargs)
+    dataframe = sql_function(**kwargs)
+    basic_logger.info("Extracted " + str(len(dataframe)) + " rows from sql datasource.")
+    return dataframe
 
 
 def __sql_to_dataframe_default(
@@ -305,15 +378,16 @@ def __sql_to_dataframe_default(
         engine = utility.create_sql_engine(**kwargs)
 
     def fetch(func, **fetch_kwargs):
-        return (
-            concat(list(func(**fetch_kwargs)), ignore_index=True)
-            if chunksize else func(**fetch_kwargs)
-        )
+        return (concat(list(func(**fetch_kwargs)), ignore_index=True)
+                if chunksize else func(**fetch_kwargs))
 
     if table_name:
-        return fetch(
-            read_sql_table, con=engine, table_name=table_name, columns=table_columns, schema=schema, chunksize=chunksize
-        )
+        return fetch(read_sql_table,
+                     con=engine,
+                     table_name=table_name,
+                     columns=table_columns,
+                     schema=schema,
+                     chunksize=chunksize)
 
     if sql_query:
         return fetch(read_sql_query, sql=sql_query, con=engine, chunksize=chunksize)
@@ -347,7 +421,9 @@ def csv_to_dataframe(
     if csv_function is None:
         csv_function = __csv_to_dataframe_default
 
-    return csv_function(**kwargs)
+    dataframe = csv_function(**kwargs)
+    basic_logger.info("Extracted " + str(len(dataframe)) + " rows from csv datasource.")
+    return dataframe
 
 
 def __csv_to_dataframe_default(

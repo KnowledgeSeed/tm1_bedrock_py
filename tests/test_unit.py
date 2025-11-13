@@ -4,7 +4,6 @@ import pandas as pd
 import parametrize_from_file
 import pytest
 from TM1py.Exceptions import TM1pyRestException
-from pandas.core.dtypes.common import is_numeric_dtype
 from pandas.core.frame import DataFrame
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
@@ -34,13 +33,13 @@ def test_tm1_connection(tm1_connection_factory):
 
 @parametrize_from_file
 def test_get_cube_name_from_mdx(mdx_query):
-    cube_name = utility._get_cube_name_from_mdx(mdx_query)
+    cube_name = utility.get_cube_name_from_mdx(mdx_query)
     assert isinstance(cube_name, str)
 
 
 @parametrize_from_file
 def test_mdx_filter_to_dictionary(mdx_query):
-    dimensions = utility._mdx_filter_to_dictionary(mdx_query)
+    dimensions = utility.mdx_filter_to_dictionary(mdx_query)
     if mdx_query:
         for dim in dimensions:
             for elem in dim:
@@ -54,8 +53,9 @@ def test_get_kwargs_dict_from_set_mdx_list_success(set_mdx_list, expected_kwargs
     """
     Tests successful extraction of kwargs from various valid MDX lists.
     """
-    kwargs = utility.__get_kwargs_dict_from_set_mdx_list(set_mdx_list)
+    kwargs = utility.get_kwargs_dict_from_set_mdx_list(set_mdx_list)
     assert kwargs == expected_kwargs
+
 
 """
 # Test focusing on filtering, edge cases, and empty results
@@ -68,12 +68,13 @@ def test_get_kwargs_dict_from_set_mdx_list_filtering(set_mdx_list, expected_exce
     assert kwargs == expected_exception
 """
 
+
 @parametrize_from_file
 def test_get_dimensions_from_set_mdx_list_success(mdx_sets, expected_dimensions):
     """
     Tests successful extraction of first dimension names from MDX strings.
     """
-    result = utility.__get_dimensions_from_set_mdx_list(mdx_sets)
+    result = utility.get_dimensions_from_set_mdx_list(mdx_sets)
     assert result == expected_dimensions
 
 
@@ -84,7 +85,7 @@ def test__get_kwargs_dict_from_set_mdx_list_fail(mdx_expressions, expected_excep
     """
     exception_type = eval(expected_exception)
     with pytest.raises(exception_type):
-        utility.__get_kwargs_dict_from_set_mdx_list(mdx_expressions)
+        utility.get_kwargs_dict_from_set_mdx_list(mdx_expressions)
 
 
 @parametrize_from_file
@@ -94,7 +95,7 @@ def test_get_dimensions_from_set_mdx_list_failure(mdx_sets, expected_exception, 
     """
     exception_type = eval(expected_exception)
     with pytest.raises(exception_type) as excinfo:
-        utility.__get_dimensions_from_set_mdx_list(mdx_sets)
+        utility.get_dimensions_from_set_mdx_list(mdx_sets)
     assert expected_message_part in str(excinfo.value)
 
 
@@ -104,7 +105,7 @@ def test_generate_cartesian_product_success(list_of_lists, expected_product):
     Tests successful generation of Cartesian products.
     """
     expected_tuples = [tuple(item) for item in expected_product]
-    result = utility.__generate_cartesian_product(list_of_lists)
+    result = utility.generate_cartesian_product(list_of_lists)
     assert result == expected_tuples
 
 
@@ -115,7 +116,7 @@ def test_generate_cartesian_product_failure(list_of_lists, expected_exception, e
     """
     exception_type = eval(expected_exception)
     with pytest.raises(exception_type) as excinfo:
-        utility.__generate_cartesian_product(list_of_lists)
+        utility.generate_cartesian_product(list_of_lists)
     assert expected_message_part in str(excinfo.value)
 
 
@@ -125,7 +126,7 @@ def test_generate_element_lists_from_set_mdx_list_success(tm1_connection_factory
     Tests successful extraction of element lists using a fake TM1 service.
     """
     with tm1_connection_factory("tm1srv") as conn:
-        result = utility.__generate_element_lists_from_set_mdx_list(conn, set_mdx_list)
+        result = utility.generate_element_lists_from_set_mdx_list(conn, set_mdx_list)
         assert result == expected_result
 
 
@@ -143,9 +144,15 @@ def test_generate_element_lists_from_set_mdx_list_failure(
     
         exception_type = eval(expected_exception)
         with pytest.raises(exception_type) as excinfo:
-            utility.__generate_element_lists_from_set_mdx_list(test_service, set_mdx_list)
+            utility.generate_element_lists_from_set_mdx_list(test_service, set_mdx_list)
     
         assert expected_message_part in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_extract_mdx_components(input_mdx, expected_set_mdx_list):
+    output_set_mdx_list = utility.extract_mdx_components(mdx=input_mdx)
+    assert output_set_mdx_list == expected_set_mdx_list
 
 
 @parametrize_from_file
@@ -166,7 +173,6 @@ def test_utility_float_casting_types(input_value, expected_type):
 @parametrize_from_file
 def test_add_nonempty_to_mdx_all_modes(input_mdx, expected_mdx):
     output_mdx = utility.add_non_empty_to_mdx(input_mdx)
-
     assert "".join(output_mdx.split()) == "".join(expected_mdx.split())
 
 
@@ -176,6 +182,14 @@ def test_all_leaves_identifiers_to_dataframe(tm1_connection_factory, dimname, ex
         expected_df = pd.DataFrame(expected)
         df = utility.all_leaves_identifiers_to_dataframe(conn, dimname)
         pd.testing.assert_frame_equal(df, expected_df)
+
+
+@parametrize_from_file
+def test_rename_columns_with_reference(input_df, input_list, expected_df):
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+    output_df = transformer.rename_columns_by_reference(dataframe=input_df, column_names=input_list)
+    pd.testing.assert_frame_equal(output_df, expected_df)
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -495,6 +509,7 @@ def test_dataframe_validate_datatypes(measuredim, measuretypes, dataframe, expec
 # Main: tests for dataframe remapping and copy functions
 # ------------------------------------------------------------------------------------------------------------
 
+
 @parametrize_from_file
 def test_dataframe_find_and_replace_success(dataframe, mapping, expected_dataframe):
     """Remaps elements based on literal mapping, without dimension manipulation and checks for successful execution"""
@@ -562,7 +577,7 @@ def test_dataframe_execute_mappings_replace_success(dataframe, mapping_steps, ex
 
 def test_mssql_database_connection(sql_engine_factory):
     with sql_engine_factory('mssqlsrv') as sql_engine:
-        #assert sql_engine.closed is False
+        # assert sql_engine.closed is False
         assert str(sql_engine.url.get_backend_name()) == "mssql", f"Wrong backend: {sql_engine.url.get_backend_name()}"
 
 
@@ -625,7 +640,9 @@ def test_sql_normalize_drop(sql_engine_factory, dataframe, expected, drop):
 def test_mssql_loader_replace(sql_engine_factory, dataframe, if_exists, table_name):
     with sql_engine_factory('mssqlsrv') as sql_engine:
         df = pd.DataFrame(dataframe)
-        loader.dataframe_to_sql(dataframe=df, engine=sql_engine, table_name=table_name, if_exists=if_exists, index=False)
+        loader.dataframe_to_sql(
+            dataframe=df, engine=sql_engine, table_name=table_name, if_exists=if_exists, index=False
+        )
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -645,7 +662,8 @@ def test_dataframe_casting_for_csv_file(dataframe, cube_dims):
 @parametrize_from_file
 def test_dataframe_to_csv(data_dataframe, expected_dataframe):
     """
-        Loads data from DataFrame file to a CSV file then does the reverse. Checks if the DataFrame stayed the same after the operations.
+        Loads data from DataFrame file to a CSV file then does the reverse.
+        Checks if the DataFrame stayed the same after the operations.
         Deletes CSV file after assertion.
     """
     csv_file_name = "sample_data.csv"
@@ -661,7 +679,7 @@ def test_dataframe_to_csv(data_dataframe, expected_dataframe):
         data_df = pd.DataFrame(data_dataframe)
         dtype_mapping = data_df.dtypes.apply(lambda x: x.name).to_dict()
 
-        loader.dataframe_to_csv(dataframe=data_df, csv_file_name=csv_file_name, decimal=".", mode="w")
+        loader.dataframe_to_csv(dataframe=data_df, csv_file_name=csv_file_name, decimal=".")
         df = extractor.csv_to_dataframe(
             csv_file_path=csv_file_path,
             decimal=".",
@@ -672,7 +690,7 @@ def test_dataframe_to_csv(data_dataframe, expected_dataframe):
 
         expected_df = pd.DataFrame(expected_dataframe)
 
-        pd.testing.assert_frame_equal(df, expected_df, check_dtype=True)
+        pd.testing.assert_frame_equal(df, expected_df)
 
     finally:
         if os.path.exists(csv_file_path):
@@ -683,7 +701,8 @@ def test_dataframe_to_csv(data_dataframe, expected_dataframe):
 @parametrize_from_file
 def test_dataframe_to_csv_build_dataframe_form_mdx(tm1_connection_factory, data_mdx):
     """
-        Loads data from DataFrame file to a CSV file then does the reverse. Checks if the DataFrame stayed the same after the operations.
+        Loads data from DataFrame file to a CSV file then does the reverse.
+        Checks if the DataFrame stayed the same after the operations.
         Deletes CSV file after assertion.
     """
     with tm1_connection_factory("tm1srv") as conn:
@@ -694,7 +713,9 @@ def test_dataframe_to_csv_build_dataframe_form_mdx(tm1_connection_factory, data_
 
             transformer.normalize_dataframe(tm1_service=conn, dataframe=expected_df, mdx=data_mdx)
 
-            loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, csv_output_dir="./", decimal=".", mode="a")
+            loader.dataframe_to_csv(
+                dataframe=expected_df, csv_file_name=csv_file_name, csv_output_dir="./", decimal=".", mode="a"
+            )
             df = extractor.csv_to_dataframe(csv_file_path=f"./{csv_file_name}", decimal=".", dtype=dtype_mapping)
             pd.testing.assert_frame_equal(df, expected_df)
 
@@ -706,7 +727,8 @@ def test_dataframe_to_csv_build_dataframe_form_mdx(tm1_connection_factory, data_
 @parametrize_from_file
 def test_dataframe_to_csv_build_dataframe_form_mdx_with_param_optimisation(tm1_connection_factory, data_mdx):
     """
-        Loads data from DataFrame file to a CSV file then does the reverse. Checks if the DataFrame stayed the same after the operations.
+        Loads data from DataFrame file to a CSV file then does the reverse.
+        Checks if the DataFrame stayed the same after the operations.
         Deletes CSV file after assertion.
     """
     with tm1_connection_factory("tm1srv") as conn:
@@ -715,12 +737,14 @@ def test_dataframe_to_csv_build_dataframe_form_mdx_with_param_optimisation(tm1_c
             expected_df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=data_mdx)
             dtype_mapping = expected_df.dtypes.apply(lambda x: x.name).to_dict()
 
-            loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, csv_output_dir="./", decimal=".", mode="w")
+            loader.dataframe_to_csv(
+                dataframe=expected_df, csv_file_name=csv_file_name, csv_output_dir="./", decimal="."
+            )
             df = extractor.csv_to_dataframe(
                     csv_file_path=f"./{csv_file_name}",
                     decimal=".",
                     dtype=dtype_mapping,
-                    chunksize= 204
+                    chunksize=204
             )
 
             pd.testing.assert_frame_equal(df, expected_df)
@@ -733,7 +757,8 @@ def test_dataframe_to_csv_build_dataframe_form_mdx_with_param_optimisation(tm1_c
 @parametrize_from_file
 def test_dataframe_to_csv_build_dataframe_form_mdx_fail(tm1_connection_factory, data_mdx):
     """
-        Loads data from DataFrame file to a CSV file then does the reverse. Checks if the DataFrame stayed the same after the operations.
+        Loads data from DataFrame file to a CSV file then does the reverse.
+        Checks if the DataFrame stayed the same after the operations.
         As the original data types are not passed to the function, the types differ.
         Expected to fail.
         Deletes CSV file after assertion.
@@ -744,7 +769,9 @@ def test_dataframe_to_csv_build_dataframe_form_mdx_fail(tm1_connection_factory, 
             try:
                 expected_df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=data_mdx)
 
-                loader.dataframe_to_csv(dataframe=expected_df, csv_file_name=csv_file_name, csv_output_dir="./", decimal=".", mode="w")
+                loader.dataframe_to_csv(
+                    dataframe=expected_df, csv_file_name=csv_file_name, csv_output_dir="./", decimal="."
+                )
                 df = extractor.csv_to_dataframe(csv_file_path=f"./{csv_file_name}", decimal=".")
 
                 pd.testing.assert_frame_equal(df, expected_df)
@@ -757,4 +784,3 @@ def test_dataframe_to_csv_build_dataframe_form_mdx_fail(tm1_connection_factory, 
 # ------------------------------------------------------------------------------------------------------------
 # Main: tests for input processes
 # ------------------------------------------------------------------------------------------------------------
-

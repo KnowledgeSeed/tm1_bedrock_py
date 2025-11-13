@@ -28,6 +28,7 @@ logs
 # Tests
 tests/*.png
 tests/config.ini
+tests/dataframe_to_csv
 .env
 tests_integration_airflow/.db
 

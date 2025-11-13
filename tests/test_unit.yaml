@@ -27,7 +27,6 @@ test_mdx_filter_to_dictionary:
 
 test_get_kwargs_dict_from_set_mdx_list_success:
   -
-    # Basic example from prompt
     set_mdx_list: [
       "{[Periods].[Periods].[2024]}",
       "{Tm1FilterbyLevel({Tm1DrillDownMember({[Versions].[All Versions]}, ALL, RECURSIVE)}, 0)}"
@@ -37,7 +36,6 @@ test_get_kwargs_dict_from_set_mdx_list_success:
       "versions": "{Tm1FilterbyLevel({Tm1DrillDownMember({[Versions].[All Versions]}, ALL, RECURSIVE)}, 0)}"
     }
   -
-    # Case variation and spaces in dimension name
     set_mdx_list: [
       "{[ Product Category ] . [ Members ] . [ All ] }",
       "{ [TIME DIM   ].[H1].[Q1]}"
@@ -57,26 +55,18 @@ test_get_kwargs_dict_from_set_mdx_list_success:
       "scenario1": "{[Scenario 1].[Actual]}"
     }
   -
-    # Duplicate keys (after normalization) - last one should win
-    set_mdx_list: [
-      "{[ Measures ].[Sales Amount]}",
-      "{[ Measures].[Units Sold]}" # This should overwrite the previous "measures"
-    ]
+    set_mdx_list: ["Tm1SubsetAll([Periods])", "Tm1SubsetAll([Versions].[Financial])"]
     expected_kwargs: {
-      "measures": "{[ Measures].[Units Sold]}"
+      "periods": "Tm1SubsetAll([Periods])",
+      "versions": "Tm1SubsetAll([Versions].[Financial])"
     }
   -
-    # Duplicate keys (after normalization, different original case/spacing) - last one should win
-    set_mdx_list: [
-      "{[department].[HR]}",
-      "{[ Department ].[Finance]}" # This should overwrite the previous "department"
-    ]
+    set_mdx_list: [ "Tm1FilterByLevel(Tm1SubsetAll([Periods]), 0)",
+                    "Tm1FilterByLevel(Tm1DrillDownmember([Versions].[Versions].[All Versions], ALL, RECURSIVE), 0)"]
     expected_kwargs: {
-      "department": "{[ Department ].[Finance]}"
+      "periods": "Tm1FilterByLevel(Tm1SubsetAll([Periods]), 0)",
+      "versions": "Tm1FilterByLevel(Tm1DrillDownmember([Versions].[Versions].[All Versions], ALL, RECURSIVE), 0)"
     }
-  -
-    set_mdx_list: [ ]
-    expected_kwargs: { }
 
 test__get_kwargs_dict_from_set_mdx_list_fail:
   -
@@ -89,7 +79,6 @@ test__get_kwargs_dict_from_set_mdx_list_fail:
     mdx_expressions: ["{[AnotherDim].[Member]}", null]
     expected_exception: "TypeError"
   -
-    # Mix of valid and invalid/non-matching strings
     mdx_expressions: [
       "{[Geography].[City].[London]}",
       "This is just a string",
@@ -127,6 +116,21 @@ test__get_kwargs_dict_from_set_mdx_list_fail:
   -
     mdx_expressions: [None, "{[ValidDim].[Value]}"]
     expected_exception: "ValueError"
+  -
+    mdx_expressions: ["{[ValidDim].[Value]}", "{[ValidDim].[Value]}"]
+    expected_exception: "ValueError"
+  -
+    mdx_expressions: []
+    expected_exception: "ValueError"
+  -
+    mdx_expressions: ["{[].[element]}"]
+    expected_exception: "ValueError"
+  -
+    mdx_expressions: [ "Tm1FilterBylevel(.[element]), 0)}" ]
+    expected_exception: "ValueError"
+  -
+    mdx_expressions: "invalidlist"
+    expected_exception: "TypeError"
 
 test_get_dimensions_from_set_mdx_list_success:
   -
@@ -136,37 +140,26 @@ test_get_dimensions_from_set_mdx_list_success:
       ]
     expected_dimensions: ["Periods", "Versions"]
   -
-    mdx_sets: [
-        "{[Time].[Year].[2023]}",
-        "invalid string",
-        "{[ Geography ].[ Continent ].[Asia]}",
-        "{[Product]}"
-      ]
-    expected_dimensions: ["Time", "Geography", "Product"]
+    mdx_sets: ["Tm1FilterByLevel(Tm1SubsetAll([Periods]), 0)",
+               "Tm1FilterByLevel(Tm1DrillDownmember([Versions].[Versions].[All Versions], ALL, RECURSIVE), 0)"]
+    expected_dimensions: ["Periods", "Versions"]
   -
-    mdx_sets: [
-        "{ [ Measures ] . [ Sales ] }",
-        "{ [ Measures ] . [ Units ] }"
-      ]
-    expected_dimensions: ["Measures", "Measures"]
-  -
-    mdx_sets: []
-    expected_dimensions: []
-  -
-    mdx_sets: null
-    expected_dimensions: []
-  -
-    mdx_sets: ["No Match", "Another Miss"]
-    expected_dimensions: []
-  -
-    mdx_sets: ["{[Dim1]}", null, "{[Dim2].[Hier]}", "{[ Dim 3 ]}"]
-    expected_dimensions: ["Dim1", "Dim2", "Dim 3"]
-  -
-    mdx_sets: ["{[].[Element]}", "{[ Dim4 ]}"]
-    expected_dimensions: ["Dim4"]
+    mdx_sets: [ "Tm1SubsetAll([  Periods    ])", "Tm1SubsetAll([Versions].[Financial])" ]
+    expected_dimensions: ["Periods", "Versions"]
 
 
 test_get_dimensions_from_set_mdx_list_failure:
+  -
+    mdx_sets: []
+    expected_exception: "ValueError"
+    expected_message_part: "Set mdx list cannot be empty"
+  -
+    mdx_sets: [
+      "{ [ Measures ] . [ Sales ] }",
+      "{ [ Measures ] . [ Units ] }"
+    ]
+    expected_exception: "ValueError"
+    expected_message_part: "Duplicate set mdxs for a dimension"
   -
     mdx_sets: "not a list"
     expected_exception: "TypeError"
@@ -183,6 +176,19 @@ test_get_dimensions_from_set_mdx_list_failure:
     mdx_sets: [!!binary "Ynl0ZXM=", "{[Dim2]}"]
     expected_exception: "TypeError"
     expected_message_part: "Expected elements of mdx_sets to be strings"
+  -
+    mdx_sets: [ "invalidmdx", "invalidmdx2" ]
+    expected_exception: "ValueError"
+    expected_message_part: "The mdx invalidmdx is invalid"
+  -
+    mdx_sets: ["{[ValidDim].[Value]}", "invalidmdx" ]
+    expected_exception: "ValueError"
+    expected_message_part: "The mdx invalidmdx is invalid"
+  -
+    mdx_sets: [ "{[].[Value]}", "{[ValidDim].[Value]}" ]
+    expected_exception: "ValueError"
+    expected_message_part: "The mdx {[].[Value]} is invalid"
+
 
 
 test_generate_cartesian_product_success:
@@ -272,6 +278,266 @@ test_generate_element_lists_from_set_mdx_list_failure:
     expected_exception: "TM1pyRestException"
     expected_message_part: "Text: '{\"error\":{\"code\":\"501\",\"message\":\"Could not create MDX Set.\"}}' - Status Code: 400 - Reason: 'Bad Request' - Headers: {'Content-Length': '79', 'Connection': 'keep-alive', 'Content-Encoding': 'gzip', 'Cache-Control': 'no-cache', 'Content-Type': 'application/json; charset=utf-8', 'OData-Version': '4.0'}"
 
+
+test_extract_mdx_components:
+  -
+    input_mdx: |
+      SELECT
+      {[Periods].[element]}
+      ON COLUMNS,
+      {something}
+      ON ROWS
+      FROM [cubename]
+    expected_set_mdx_list: ["{{[Periods].[element]}}", "{{something}}"]
+  -
+    input_mdx: |
+      SELECT
+      {[Periods].[element]}
+      ON 0,
+      {something}
+      ON 1,
+          Tm1SubsetAll([dim3])
+      ON 2
+      FROM [cubename]
+    expected_set_mdx_list: ["{{[Periods].[element]}}", "{{something}}", "{Tm1SubsetAll([dim3])}"]
+  -
+    input_mdx: |
+      SELECT
+      {[Periods].[Year].[element]} * {[Versions].[element]}
+      ON 0
+      FROM [cubename]
+    expected_set_mdx_list: ["{{[Periods].[Year].[element]}}", "{{[Versions].[element]}}"]
+  -
+    input_mdx: |
+      SELECT
+      {[Periods].[Year].[element]}
+      ON 0
+      FROM [cubename]
+    expected_set_mdx_list: [ "{{[Periods].[Year].[element]}}"]
+  -
+    input_mdx: |
+      SELECT
+        {[Periods].[element]}
+      ON COLUMNS,
+          {something}
+      ON ROWS
+      FROM [cubename]
+      WHERE(
+          [dim].[element],
+          [dim2].[element]
+      )
+    expected_set_mdx_list: ["{{[Periods].[element]}}", "{{something}}", "{[dim].[element]}", "{[dim2].[element]}"]
+  -
+    input_mdx: |
+      SELECT
+      {[Periods].[element]}
+      ON COLUMNS,
+      {something}
+      ON ROWS
+      FROM [cubename]
+    expected_set_mdx_list: ["{{[Periods].[element]}}", "{{something}}"]
+  -
+    input_mdx: |
+      SELECT
+      {[Periods].[element]} * {[Version].[element2]} * {[Lineitem].[element3]}
+      ON COLUMNS,
+      {something} 
+        * Tm1SubsetAll([dim3])
+      ON ROWS
+      FROM [cubename]
+    expected_set_mdx_list: ["{{[Periods].[element]}}",
+                            "{{[Version].[element2]}}",
+                            "{{[Lineitem].[element3]}}",
+                            "{{something}}",
+                            "{Tm1SubsetAll([dim3])}"]
+  -
+    input_mdx: |
+      SELECT
+        {[Periods].[element]} 
+                             * {[Version].[element2]}
+      ON 0,
+      {something(something)} * Tm1SubsetAll([dim3])
+      ON 1,
+      {another}
+      ON 2
+      FROM [cubename]
+      WHERE([dim].[element],
+             [dim2].[element],
+                     [dim3].[hier3].[element]
+      )
+    expected_set_mdx_list: ["{{[Periods].[element]}}",
+                            "{{[Version].[element2]}}",
+                            "{{something(something)}}",
+                            "{Tm1SubsetAll([dim3])}",
+                            "{{another}}",
+                            "{[dim].[element]}",
+                            "{[dim2].[element]}",
+                            "{[dim3].[hier3].[element]}"]
+  -
+    input_mdx: |
+      SELECT
+          {[Periods].[element]}     *  
+          {[Version].[element2]}    
+      ON 0,
+          {something}   
+      ON 1
+      FROM [cubename]
+      WHERE(
+          [dim].[element]   ,
+            [dim2].[element]  
+      )
+    expected_set_mdx_list: [
+      "{{[Periods].[element]}}", "{{[Version].[element2]}}", "{{something}}", "{[dim].[element]}", "{[dim2].[element]}"
+    ]
+  -
+    input_mdx: |
+      SELECT
+      {[Periods].[element,with comma]}
+      ON COLUMNS,
+      {[Versions].[element2,,with comma]} * {[Versions].[element3,,,with comma]}
+      FROM [cubename]
+    expected_set_mdx_list: [
+      "{{[Periods].[element,withcomma]}}",
+      "{{[Versions].[element2,,withcomma]}}",
+      "{{[Versions].[element3,,,withcomma]}}"
+    ]
+  -
+    input_mdx: |
+      SELECT
+        {[Periods].[element]} * {[Version].[Version].[Actual]}
+      ON COLUMNS,
+            {  something } 
+                  * Tm1SubsetAll([OrgUnit])
+      ON ROWS
+      FROM [cubename]
+      WHERE(
+          [dim].[element1,withcomma ],
+                [dim2].[element2,,withcommas],
+          [dim3].[hierarchy,withcomma].[element3,withcomma]
+      )
+    expected_set_mdx_list: [
+      "{{[Periods].[element]}}",
+      "{{[Version].[Version].[Actual]}}",
+      "{{something}}",
+      "{Tm1SubsetAll([OrgUnit])}",
+      "{[dim].[element1,withcomma]}",
+      "{[dim2].[element2,,withcommas]}",
+      "{[dim3].[hierarchy,withcomma].[element3,withcomma]}"
+    ]
+  -
+    input_mdx: |
+      SELECT
+        {[Periods].[element]} * {[Version].[Version].[Actual]}
+      ON 0,
+            {  something } 
+                  * Tm1SubsetAll(  [  OrgUnit])
+      ON 1,
+          {[Employee].[Key Account Managers].[All KAMs]}
+      ON 2
+      FROM [cubename]
+      WHERE(
+          [dim].[element1,withcomma ],
+                [dim2].[element2, ,  withcommas  ]       ,
+          [dim3].[hierarchy,withcomma].[element3,withcomma]
+      )
+    expected_set_mdx_list: [
+      "{{[Periods].[element]}}",
+      "{{[Version].[Version].[Actual]}}",
+      "{{something}}",
+      "{Tm1SubsetAll([OrgUnit])}",
+      "{{[Employee].[KeyAccountManagers].[AllKAMs]}}",
+      "{[dim].[element1,withcomma]}",
+      "{[dim2].[element2,,withcommas]}",
+      "{[dim3].[hierarchy,withcomma].[element3,withcomma]}"
+    ]
+  -
+    input_mdx: |
+      SELECT
+      {[Periods].[element], [Periods].[element2]}
+      ON COLUMNS,
+      {[Version].[element], [Version].[element2], [Version].[element3], [Version].[element4]}
+      ON ROWS
+      FROM [cubename]
+    expected_set_mdx_list: [
+      "{{[Periods].[element],[Periods].[element2]}}",
+      "{{[Version].[element],[Version].[element2],[Version].[element3],[Version].[element4]}}"
+    ]
+  -
+    input_mdx: |
+      SELECT
+        {[Periods].[element],    [Periods   ].[element2]} * {[Version].[Version].[Actual],  
+            [Version].[Version ].[FC],
+      
+      [Version].[Version ].[Budget]
+      }
+      ON 0,
+            {  something } 
+                  * Tm1SubsetAll(  [  OrgUnit])
+      ON 1,
+          {[Employee].[Key Account Managers].[All KAMs]}
+      ON 2
+      FROM [cubename]
+      WHERE(
+          [dim].[element1,withcomma ],
+                [dim2].[element2, ,  withcommas  ]       ,
+          [dim3].[hierarchy,withcomma].[element3,withcomma]
+      )
+    expected_set_mdx_list: [
+      "{{[Periods].[element],[Periods].[element2]}}",
+      "{{[Version].[Version].[Actual],[Version].[Version].[FC],[Version].[Version].[Budget]}}",
+      "{{something}}",
+      "{Tm1SubsetAll([OrgUnit])}",
+      "{{[Employee].[KeyAccountManagers].[AllKAMs]}}",
+      "{[dim].[element1,withcomma]}",
+      "{[dim2].[element2,,withcommas]}",
+      "{[dim3].[hierarchy,withcomma].[element3,withcomma]}"
+    ]
+  -
+    input_mdx: |
+        SELECT NON   EMPTY
+        {[Periods].[element], [Periods].[element2]}
+        ON COLUMNS,
+          NON EMPTY
+        {[Version].[element], [Version].[element2], [Version].[element3], [Version].[element4]}
+        ON ROWS
+        FROM [cubename]
+    expected_set_mdx_list: [
+      "{{[Periods].[element],[Periods].[element2]}}",
+      "{{[Version].[element],[Version].[element2],[Version].[element3],[Version].[element4]}}"
+    ]
+  -
+    input_mdx: |
+      SELECT
+      NON EMPTY
+        {[Periods].[element],    [Periods   ].[element2]} * {[Version].[Version].[Actual],  
+            [Version].[Version ].[FC],
+
+      [Version].[Version ].[Budget]
+      }
+      ON 0,
+        NON  EMPTY
+            {  something } 
+                  * Tm1SubsetAll(  [  OrgUnit])
+      ON 1,
+      NON EMPTY
+          {[Employee].[Key Account Managers].[All KAMs]}
+      ON 2
+      FROM [cubename]
+      WHERE(
+          [dim].[element1,withcomma ],
+                [dim2].[element2, ,  withcommas  ]       ,
+          [dim3].[hierarchy,withcomma].[element3,withcomma]
+      )
+    expected_set_mdx_list: [
+      "{{[Periods].[element],[Periods].[element2]}}",
+      "{{[Version].[Version].[Actual],[Version].[Version].[FC],[Version].[Version].[Budget]}}",
+      "{{something}}",
+      "{Tm1SubsetAll([OrgUnit])}",
+      "{{[Employee].[KeyAccountManagers].[AllKAMs]}}",
+      "{[dim].[element1,withcomma]}",
+      "{[dim2].[element2,,withcommas]}",
+      "{[dim3].[hierarchy,withcomma].[element3,withcomma]}"
+    ]
 
 test_utility_float_casting_values:
   -
@@ -527,6 +793,24 @@ test_all_leaves_identifiers_to_dataframe:
                  "Group_3", "Project A",
                  "Group_4", "Project B",
                  "Group_5", "Project C"]
+    }
+
+test_rename_columns_with_reference:
+  -
+    input_df: {
+      "lineitemsales": ["Revenue", "Revenue"],
+      "organizationunits": ["abc123", "xzy456"],
+      "periods": ["202402", "202403"],
+      "versions": ["Actuals", "Actuals"],
+      "Value": [1000, 1100]
+    }
+    input_list: ["Periods", "Versions", "Organization Units", "Lineitem Sales"]
+    expected_df: {
+      "Lineitem Sales": [ "Revenue", "Revenue" ],
+      "Organization Units": [ "abc123", "xzy456" ],
+      "Periods": [ "202402", "202403" ],
+      "Versions": [ "Actuals", "Actuals" ],
+      "Value": [ 1000, 1100 ]
     }
 
 # Utility: Cube metadata collection using input MDXs and/or other cubes

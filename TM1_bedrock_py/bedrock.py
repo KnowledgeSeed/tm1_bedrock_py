@@ -23,7 +23,7 @@ def data_copy_intercube(
         tm1_service: Optional[Any],
         target_tm1_service: Optional[Any] = None,
         data_mdx: Optional[str] = None,
-        mdx_function: Optional[Callable[..., DataFrame]] = None,
+        mdx_function: Optional[Callable[..., DataFrame] | Literal["native_view_extractor"]] = None,
         sql_engine: Optional[Any] = None,
         sql_function: Optional[Callable[..., DataFrame]] = None,
         csv_function: Optional[Callable[..., DataFrame]] = None,
@@ -52,6 +52,7 @@ def data_copy_intercube(
         sum_numeric_duplicates: Optional[bool] = True,
         logging_level: Optional[str] = "ERROR",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
+        verbose_logging_output_dir: Optional[str] = None,
         **kwargs
 ) -> None:
     """
@@ -193,6 +194,8 @@ def data_copy_intercube(
     if not target_tm1_service:
         target_tm1_service = tm1_service
 
+    native_view_extraction_enabled = mdx_function == "native_view_extractor"
+
     utility.set_logging_level(logging_level=logging_level)
     basic_logger.info("Execution started.")
 
@@ -216,7 +219,11 @@ def data_copy_intercube(
         return
 
     data_metadata_queryspecific = utility.TM1CubeObjectMetadata.collect(
-        mdx=data_mdx, collect_base_cube_metadata=False)
+        mdx=data_mdx,
+        collect_base_cube_metadata=False,
+        collect_source_cube_metadata=native_view_extraction_enabled,
+        tm1_service=tm1_service
+    )
     source_cube_name = data_metadata_queryspecific.get_cube_name()
 
     target_metadata = utility.TM1CubeObjectMetadata.collect(
@@ -227,6 +234,12 @@ def data_copy_intercube(
         collect_measure_types=use_mixed_datatypes,
         **kwargs
     )
+
+    if native_view_extraction_enabled:
+        dataframe = transformer.rename_columns_by_reference(
+            dataframe=dataframe,
+            column_names=data_metadata_queryspecific.get_source_cube_dims()
+        )
 
     transformer.dataframe_add_column_assign_value(
         dataframe=dataframe, column_value=data_metadata_queryspecific.get_filter_dict(), **kwargs)
@@ -245,6 +258,7 @@ def data_copy_intercube(
         dataframe=dataframe,
         step_number="start_data_copy_intercube",
         verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -305,7 +319,7 @@ def data_copy_intercube(
         transformer.dataframe_itemskip_elements(
             dataframe=dataframe,
             check_dfs=target_metadata.get_dimension_check_dfs(),
-            logging_level=logging_level,
+            logging_enabled=verbose_logging_mode is not None,
             **kwargs
         )
 
@@ -332,6 +346,7 @@ def data_copy_intercube(
         dataframe=dataframe,
         step_number="end_data_copy_intercube",
         verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -365,7 +380,7 @@ def data_copy(
         tm1_service: Optional[Any],
         target_tm1_service: Optional[Any] = None,
         data_mdx: Optional[str] = None,
-        mdx_function: Optional[Callable[..., DataFrame]] = None,
+        mdx_function: Optional[Callable[..., DataFrame] | Literal["native_view_extractor"]] = None,
         sql_engine: Optional[Any] = None,
         sql_function: Optional[Callable[..., DataFrame]] = None,
         csv_function: Optional[Callable[..., DataFrame]] = None,
@@ -388,6 +403,7 @@ def data_copy(
         sum_numeric_duplicates: bool = True,
         logging_level: str = "ERROR",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
+        verbose_logging_output_dir: Optional[str] = None,
         **kwargs
 ) -> None:
     """
@@ -507,6 +523,8 @@ def data_copy(
     if not target_tm1_service:
         target_tm1_service = tm1_service
 
+    native_view_extraction_enabled = mdx_function == "native_view_extractor"
+
     dataframe = extractor.tm1_mdx_to_dataframe(
         tm1_service=tm1_service,
         data_mdx=data_mdx,
@@ -519,7 +537,11 @@ def data_copy(
     )
 
     data_metadata_queryspecific = utility.TM1CubeObjectMetadata.collect(
-        mdx=data_mdx, collect_base_cube_metadata=False)
+        mdx=data_mdx,
+        collect_base_cube_metadata=False,
+        collect_source_cube_metadata=native_view_extraction_enabled,
+        tm1_service=tm1_service
+    )
     cube_name = data_metadata_queryspecific.get_cube_name()
 
     if dataframe.empty:
@@ -537,6 +559,12 @@ def data_copy(
         collect_measure_types=use_mixed_datatypes,
         **kwargs)
     cube_dims = data_metadata.get_cube_dims()
+
+    if native_view_extraction_enabled:
+        dataframe = transformer.rename_columns_by_reference(
+            dataframe=dataframe,
+            column_names=data_metadata_queryspecific.get_source_cube_dims()
+        )
 
     transformer.dataframe_add_column_assign_value(
         dataframe=dataframe,
@@ -558,6 +586,7 @@ def data_copy(
         dataframe=dataframe,
         step_number="start_data_copy",
         verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -618,6 +647,7 @@ def data_copy(
         dataframe=dataframe,
         step_number="end_data_copy",
         verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -711,16 +741,16 @@ async def async_executor_tm1(
 
     target_tm1_service = kwargs.get("target_tm1_service", tm1_service)
 
-    param_names = utility.__get_dimensions_from_set_mdx_list(param_set_mdx_list)
-    param_values = utility.__generate_element_lists_from_set_mdx_list(tm1_service, param_set_mdx_list)
-    param_tuples = utility.__generate_cartesian_product(param_values)
+    param_names = utility.get_dimensions_from_set_mdx_list(param_set_mdx_list)
+    param_values = utility.generate_element_lists_from_set_mdx_list(tm1_service, param_set_mdx_list)
+    param_tuples = utility.generate_cartesian_product(param_values)
     basic_logger.info(f"Parameter tuples ready. Count: {len(param_tuples)}")
 
     target_cube_name = kwargs.get("target_cube_name")
     dim_identifier = kwargs.get("ignore_missing_elements", False)
 
     if data_copy_function is data_copy:
-        target_cube_name = utility._get_cube_name_from_mdx(data_mdx_template)
+        target_cube_name = utility.get_cube_name_from_mdx(data_mdx_template)
         dim_identifier = False
 
     target_metadata = utility.TM1CubeObjectMetadata.collect(
@@ -819,7 +849,7 @@ def load_sql_data_to_tm1_cube(
         target_cube_name: str,
         tm1_service: Optional[Any],
         target_metadata_function: Optional[Callable[..., Any]] = None,
-        mdx_function: Optional[Callable[..., DataFrame]] = None,
+        mdx_function: Optional[Callable[..., DataFrame] | Literal["native_view_extractor"]] = None,
         csv_function: Optional[Callable[..., DataFrame]] = None,
         sql_query: Optional[str] = None,
         sql_table_name: Optional[str] = None,
@@ -846,6 +876,7 @@ def load_sql_data_to_tm1_cube(
         sum_numeric_duplicates: bool = True,
         logging_level: str = "ERROR",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
+        verbose_logging_output_dir: Optional[str] = None,
         _execution_id: int = 0,
         **kwargs
 ) -> None:
@@ -995,7 +1026,7 @@ def load_sql_data_to_tm1_cube(
         transformer.dataframe_itemskip_elements(
             dataframe=dataframe,
             check_dfs=target_metadata.get_dimension_check_dfs(),
-            logging_level=logging_level,
+            logging_enabled=verbose_logging_mode is not None,
             **kwargs
         )
 
@@ -1011,6 +1042,7 @@ def load_sql_data_to_tm1_cube(
         dataframe=dataframe,
         step_number="start_load_sql_data_to_tm1_cube",
         verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -1060,6 +1092,7 @@ def load_sql_data_to_tm1_cube(
         dataframe=dataframe,
         step_number="end_load_sql_data_to_tm1_cube",
         verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -1095,7 +1128,7 @@ def load_tm1_cube_to_sql_table(
         sql_schema: Optional[str] = None,
         chunksize: Optional[int] = None,
         data_mdx: Optional[str] = None,
-        mdx_function: Optional[Callable[..., DataFrame]] = None,
+        mdx_function: Optional[Callable[..., DataFrame] | Literal["native_view_extractor"]] = None,
         data_mdx_list: Optional[list[str]] = None,
         skip_zeros: Optional[bool] = False,
         skip_consolidated_cells: Optional[bool] = False,
@@ -1115,6 +1148,7 @@ def load_tm1_cube_to_sql_table(
         decimal: Optional[str] = None,
         logging_level: str = "ERROR",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
+        verbose_logging_output_dir: Optional[str] = None,
         _execution_id: int = 0,
         **kwargs
 ) -> None:
@@ -1208,6 +1242,8 @@ def load_tm1_cube_to_sql_table(
     utility.set_logging_level(logging_level=logging_level)
     basic_logger.info("Execution started.")
 
+    native_view_extraction_enabled = mdx_function == "native_view_extractor"
+
     dataframe = extractor.tm1_mdx_to_dataframe(
         tm1_service=tm1_service,
         data_mdx=data_mdx,
@@ -1233,7 +1269,17 @@ def load_tm1_cube_to_sql_table(
         **kwargs)
 
     data_metadata_queryspecific = utility.TM1CubeObjectMetadata.collect(
-        mdx=data_mdx, collect_base_cube_metadata=False)
+        mdx=data_mdx,
+        collect_base_cube_metadata=False,
+        collect_source_cube_metadata=native_view_extraction_enabled,
+        tm1_service=tm1_service
+    )
+
+    if native_view_extraction_enabled:
+        dataframe = transformer.rename_columns_by_reference(
+            dataframe=dataframe,
+            column_names=data_metadata_queryspecific.get_source_cube_dims()
+        )
 
     transformer.dataframe_add_column_assign_value(
         dataframe=dataframe, column_value=data_metadata_queryspecific.get_filter_dict()
@@ -1243,6 +1289,7 @@ def load_tm1_cube_to_sql_table(
         dataframe=dataframe,
         step_number="start_load_tm1_cube_to_sql_table",
         verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -1296,6 +1343,7 @@ def load_tm1_cube_to_sql_table(
         dataframe=dataframe,
         step_number="end_load_tm1_cube_to_sql_table",
         verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -1409,9 +1457,9 @@ async def async_executor_tm1_to_sql(
             - Tested databases: MS SQL, PostgeSQL.
     """
 
-    param_names = utility.__get_dimensions_from_set_mdx_list(param_set_mdx_list)
-    param_values = utility.__generate_element_lists_from_set_mdx_list(tm1_service, param_set_mdx_list)
-    param_tuples = utility.__generate_cartesian_product(param_values)
+    param_names = utility.get_dimensions_from_set_mdx_list(param_set_mdx_list)
+    param_values = utility.generate_element_lists_from_set_mdx_list(tm1_service, param_set_mdx_list)
+    param_tuples = utility.generate_cartesian_product(param_values)
     basic_logger.info(f"Parameter tuples ready. Count: {len(param_tuples)}")
 
     target_metadata_provider = None
@@ -1423,7 +1471,7 @@ async def async_executor_tm1_to_sql(
                            delete_statement=sql_delete_statement)
 
     if data_copy_function is load_tm1_cube_to_sql_table:
-        source_cube_name = utility._get_cube_name_from_mdx(data_mdx_template)
+        source_cube_name = utility.get_cube_name_from_mdx(data_mdx_template)
         if source_cube_name:
             data_metadata = utility.TM1CubeObjectMetadata.collect(
                 tm1_service=tm1_service,
@@ -1714,7 +1762,7 @@ def load_csv_data_to_tm1_cube(
         source_csv_file_path: str,
         tm1_service: Optional[Any],
         target_metadata_function: Optional[Callable[..., Any]] = None,
-        mdx_function: Optional[Callable[..., DataFrame]] = None,
+        mdx_function: Optional[Callable[..., DataFrame] | Literal["native_view_extractor"]] = None,
         csv_function: Optional[Callable[..., DataFrame]] = None,
         csv_column_mapping: Optional[dict] = None,
         csv_columns_to_drop: Optional[list] = None,
@@ -1747,6 +1795,7 @@ def load_csv_data_to_tm1_cube(
         logging_level: str = "ERROR",
         _execution_id: int = 0,
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
+        verbose_logging_output_dir: Optional[str] = None,
         data_mdx: Optional[str] = None,
         **kwargs
 ) -> None:
@@ -1907,7 +1956,7 @@ def load_csv_data_to_tm1_cube(
         transformer.dataframe_itemskip_elements(
             dataframe=dataframe,
             check_dfs=target_metadata.get_dimension_check_dfs(),
-            logging_level=logging_level,
+            logging_enabled=verbose_logging_mode is not None,
             **kwargs
         )
 
@@ -1973,6 +2022,7 @@ def load_csv_data_to_tm1_cube(
         dataframe=dataframe,
         step_number="end_load_csv_data_to_tm1_cube",
         verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -2009,7 +2059,7 @@ def load_tm1_cube_to_csv_file(
         compression: Optional[str | dict] = None,
         index: Optional[bool] = False,
         data_mdx: Optional[str] = None,
-        mdx_function: Optional[Callable[..., DataFrame]] = None,
+        mdx_function: Optional[Callable[..., DataFrame] | Literal["native_view_extractor"]] = None,
         data_mdx_list: Optional[list[str]] = None,
         skip_zeros: Optional[bool] = False,
         skip_consolidated_cells: Optional[bool] = False,
@@ -2025,6 +2075,7 @@ def load_tm1_cube_to_csv_file(
         source_clear_set_mdx_list: Optional[List[str]] = None,
         logging_level: str = "ERROR",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
+        verbose_logging_output_dir: Optional[str] = None,
         _execution_id: int = 0,
         **kwargs
 ) -> None:
@@ -2109,6 +2160,8 @@ def load_tm1_cube_to_csv_file(
     utility.set_logging_level(logging_level=logging_level)
     basic_logger.info("Execution started.")
 
+    native_view_extraction_enabled = mdx_function == "native_view_extractor"
+
     dataframe = extractor.tm1_mdx_to_dataframe(
         tm1_service=tm1_service,
         data_mdx=data_mdx,
@@ -2124,6 +2177,13 @@ def load_tm1_cube_to_csv_file(
     if dataframe.empty:
         return
 
+    data_metadata_queryspecific = utility.TM1CubeObjectMetadata.collect(
+        mdx=data_mdx,
+        collect_base_cube_metadata=False,
+        collect_source_cube_metadata=native_view_extraction_enabled,
+        tm1_service=tm1_service
+    )
+
     data_metadata = utility.TM1CubeObjectMetadata.collect(
         tm1_service=tm1_service, mdx=data_mdx,
         metadata_function=data_metadata_function,
@@ -2135,6 +2195,7 @@ def load_tm1_cube_to_csv_file(
         dataframe=dataframe,
         step_number="start_load_tm1_cube_to_csv_file",
         verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -2176,12 +2237,16 @@ def load_tm1_cube_to_csv_file(
         transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
 
     if target_csv_file_name is None:
-        data_metadata_query_specific = utility.TM1CubeObjectMetadata.collect(
-            mdx=data_mdx, collect_base_cube_metadata=False)
-        source_cube_name = data_metadata_query_specific.get_cube_name()
+        source_cube_name = data_metadata_queryspecific.get_cube_name()
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
         target_csv_file_name = f"{source_cube_name}_{timestamp}.csv"
+
+    if native_view_extraction_enabled:
+        dataframe = transformer.rename_columns_by_reference(
+            dataframe=dataframe,
+            column_names=data_metadata_queryspecific.get_source_cube_dims()
+        )
 
     loader.dataframe_to_csv(
         dataframe=dataframe,
@@ -2278,16 +2343,16 @@ async def async_executor_csv_to_tm1(
           just before that worker loads its data.
     """
 
-    param_names = utility.__get_dimensions_from_set_mdx_list(param_set_mdx_list)
-    param_values = utility.__generate_element_lists_from_set_mdx_list(tm1_service, param_set_mdx_list)
-    param_tuples = utility.__generate_cartesian_product(param_values)
+    param_names = utility.get_dimensions_from_set_mdx_list(param_set_mdx_list)
+    param_values = utility.generate_element_lists_from_set_mdx_list(tm1_service, param_set_mdx_list)
+    param_tuples = utility.generate_cartesian_product(param_values)
     basic_logger.info(f"Parameter tuples ready. Count: {len(param_tuples)}")
 
     target_metadata_provider = None
     data_metadata_provider = None
 
     if data_copy_function is load_csv_data_to_tm1_cube:
-        source_cube_name = utility._get_cube_name_from_mdx(data_mdx_template)
+        source_cube_name = utility.get_cube_name_from_mdx(data_mdx_template)
         if source_cube_name:
             data_metadata = utility.TM1CubeObjectMetadata.collect(
                 tm1_service=tm1_service,
