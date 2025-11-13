@@ -249,7 +249,8 @@ def data_copy_intercube(
     target_cube_dims = target_metadata.get_cube_dims()
 
     transformer.dataframe_add_column_assign_value(
-        dataframe=dataframe, column_value=data_metadata_queryspecific.get_filter_dict(), **kwargs)
+        dataframe=dataframe, column_value=data_metadata_queryspecific.get_filter_dict(),
+        case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs, **kwargs)
 
     if use_mixed_datatypes:
         measure_dim_name = target_cube_dims[-1]
@@ -259,6 +260,7 @@ def data_copy_intercube(
             dataframe=dataframe,
             measure_dimension_name=measure_dim_name,
             measure_element_types=measure_types,
+            case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs,
             **kwargs
         )
 
@@ -298,7 +300,8 @@ def data_copy_intercube(
 
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
-        verbose_logging_mode=verbose_logging_mode, **kwargs)
+        verbose_logging_mode=verbose_logging_mode,
+        case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs, **kwargs)
 
     final_row_count = len(dataframe)
     basic_logger.debug(f"initial row count was: {initial_row_count}, Final row count was: {final_row_count}")
@@ -320,6 +323,7 @@ def data_copy_intercube(
         source_dim_mapping=source_dim_mapping,
         related_dimensions=related_dimensions,
         target_dim_mapping=target_dim_mapping,
+        case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs,
         **kwargs
     )
 
@@ -330,6 +334,7 @@ def data_copy_intercube(
             dataframe=dataframe,
             check_dfs=dimension_check_dfs,
             logging_enabled=verbose_logging_mode is not None,
+            case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs,
             **kwargs
         )
 
@@ -342,10 +347,15 @@ def data_copy_intercube(
         return
 
     if value_function is not None:
-        transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
+        transformer.dataframe_value_scale(
+            dataframe=dataframe, value_function=value_function,
+            case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs
+        )
 
     transformer.dataframe_reorder_dimensions(
-        dataframe=dataframe, cube_dimensions=target_cube_dims, **kwargs)
+        dataframe=dataframe, cube_dimensions=target_cube_dims,
+        case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs, **kwargs
+    )
 
     if clear_target:
         loader.clear_cube(tm1_service=target_tm1_service,
@@ -577,15 +587,10 @@ def data_copy(
             column_names=data_metadata_queryspecific.get_source_cube_dims()
         )
 
-    if case_and_whitespace_insensitive_inputs:
-        cube_name = utility.normalize_string(cube_name)
-        utility.normalize_structure_strings(mapping_steps)
-        utility.normalize_structure_strings(shared_mapping)
-        utility.normalize_dataframe_strings(dataframe)
-
     transformer.dataframe_add_column_assign_value(
         dataframe=dataframe,
         column_value=data_metadata_queryspecific.get_filter_dict(),
+        case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs,
         **kwargs
     )
 
@@ -596,6 +601,7 @@ def data_copy(
             dataframe=dataframe,
             measure_dimension_name=measure_dim_name,
             measure_element_types=measure_types,
+            case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs,
             **kwargs
         )
 
@@ -632,9 +638,13 @@ def data_copy(
     )
 
     initial_row_count = len(dataframe)
+
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
-        verbose_logging_mode=verbose_logging_mode, **kwargs)
+        verbose_logging_mode=verbose_logging_mode,
+        case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs, **kwargs
+    )
+
     final_row_count = len(dataframe)
     basic_logger.debug(f"initial row count was: {initial_row_count}, Final row count was: {final_row_count}")
     if initial_row_count < final_row_count:
@@ -651,9 +661,13 @@ def data_copy(
         return
 
     if value_function is not None:
-        transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
+        transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function,
+                                          case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs)
 
-    transformer.dataframe_reorder_dimensions(dataframe=dataframe, cube_dimensions=cube_dims, **kwargs)
+    transformer.dataframe_reorder_dimensions(
+        dataframe=dataframe, cube_dimensions=cube_dims,
+        case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs, **kwargs
+    )
 
     if clear_target:
         loader.clear_cube(tm1_service=target_tm1_service,
@@ -1023,7 +1037,8 @@ def load_sql_data_to_tm1_cube(
     transformer.normalize_table_source_dataframe(
         dataframe=dataframe,
         column_mapping=sql_column_mapping,
-        columns_to_drop=sql_columns_to_drop
+        columns_to_drop=sql_columns_to_drop,
+        case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs
     )
 
     try:
@@ -1045,6 +1060,7 @@ def load_sql_data_to_tm1_cube(
             dataframe=dataframe,
             check_dfs=target_metadata.get_dimension_check_dfs(),
             logging_enabled=verbose_logging_mode is not None,
+            case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs,
             **kwargs
         )
 
@@ -1087,18 +1103,26 @@ def load_sql_data_to_tm1_cube(
     )
 
     initial_row_count = len(dataframe)
+
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
-        verbose_logging_mode=verbose_logging_mode, **kwargs)
+        verbose_logging_mode=verbose_logging_mode,
+        case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs, **kwargs
+    )
+
     final_row_count = len(dataframe)
     if initial_row_count != final_row_count:
         filtered_count = initial_row_count - final_row_count
         basic_logger.warning(f"Number of rows filtered out through inner joins: {filtered_count}/{initial_row_count}")
 
     if value_function is not None:
-        transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
+        transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function,
+                                          case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs)
 
-    transformer.dataframe_reorder_dimensions(dataframe=dataframe, cube_dimensions=cube_dims)
+    transformer.dataframe_reorder_dimensions(
+        dataframe=dataframe, cube_dimensions=cube_dims,
+        case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs
+    )
 
     if clear_target:
         loader.clear_cube(tm1_service=tm1_service,
@@ -1302,7 +1326,8 @@ def load_tm1_cube_to_sql_table(
         )
 
     transformer.dataframe_add_column_assign_value(
-        dataframe=dataframe, column_value=data_metadata_queryspecific.get_filter_dict()
+        dataframe=dataframe, column_value=data_metadata_queryspecific.get_filter_dict(),
+        case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs
     )
 
     utility.dataframe_verbose_logger(
@@ -1336,9 +1361,13 @@ def load_tm1_cube_to_sql_table(
     )
 
     initial_row_count = len(dataframe)
+
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
-        verbose_logging_mode=verbose_logging_mode, **kwargs)
+        verbose_logging_mode=verbose_logging_mode,
+        case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs, **kwargs
+    )
+
     final_row_count = len(dataframe)
     if initial_row_count != final_row_count:
         filtered_count = initial_row_count - final_row_count
@@ -1348,11 +1377,13 @@ def load_tm1_cube_to_sql_table(
         dataframe=dataframe,
         source_dim_mapping=source_dim_mapping,
         related_dimensions=related_dimensions,
-        target_dim_mapping=target_dim_mapping
+        target_dim_mapping=target_dim_mapping,
+        case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs
     )
 
     if value_function is not None:
-        transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
+        transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function,
+                                          case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs)
 
     if clear_target:
         loader.clear_table(engine=sql_engine,
@@ -1960,12 +1991,14 @@ def load_csv_data_to_tm1_cube(
     transformer.normalize_table_source_dataframe(
         dataframe=dataframe,
         column_mapping=csv_column_mapping,
-        columns_to_drop=csv_columns_to_drop
+        columns_to_drop=csv_columns_to_drop,
+        case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs
     )
 
     transformer.dataframe_add_column_assign_value(
         dataframe=dataframe,
         column_value=target_metadata.get_filter_dict(),
+        case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs,
         **kwargs
     )
 
@@ -1978,6 +2011,7 @@ def load_csv_data_to_tm1_cube(
             dataframe=dataframe,
             check_dfs=target_metadata.get_dimension_check_dfs(),
             logging_enabled=verbose_logging_mode is not None,
+            case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs,
             **kwargs
         )
 
@@ -2010,18 +2044,26 @@ def load_csv_data_to_tm1_cube(
     )
 
     initial_row_count = len(dataframe)
+
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
-        verbose_logging_mode=verbose_logging_mode, **kwargs)
+        verbose_logging_mode=verbose_logging_mode,
+        case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs, **kwargs
+    )
+
     final_row_count = len(dataframe)
     if initial_row_count != final_row_count:
         filtered_count = initial_row_count - final_row_count
         basic_logger.warning(f"Number of rows filtered out through inner joins: {filtered_count}/{initial_row_count}")
 
     if value_function is not None:
-        transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
+        transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function,
+                                          case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs)
 
-    transformer.dataframe_reorder_dimensions(dataframe=dataframe, cube_dimensions=cube_dims)
+    transformer.dataframe_reorder_dimensions(
+        dataframe=dataframe, cube_dimensions=cube_dims,
+        case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs
+    )
 
     if validate_datatypes:
         measure_dim_name = target_metadata.get_cube_dims()[-1]
@@ -2030,6 +2072,7 @@ def load_csv_data_to_tm1_cube(
             dataframe=dataframe,
             measure_dimension_name=measure_dim_name,
             measure_element_types=measure_types,
+            case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs,
             **kwargs
         )
 
@@ -2212,7 +2255,16 @@ def load_tm1_cube_to_csv_file(
         metadata_function=data_metadata_function,
         **kwargs)
 
-    transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=data_metadata.get_filter_dict())
+    if native_view_correction_enabled:
+        dataframe = transformer.rename_columns_by_reference(
+            dataframe=dataframe,
+            column_names=data_metadata_queryspecific.get_source_cube_dims()
+        )
+
+    transformer.dataframe_add_column_assign_value(
+        dataframe=dataframe, column_value=data_metadata.get_filter_dict(),
+        case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs
+    )
 
     utility.dataframe_verbose_logger(
         dataframe=dataframe,
@@ -2241,9 +2293,13 @@ def load_tm1_cube_to_csv_file(
     )
 
     initial_row_count = len(dataframe)
+
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
-        verbose_logging_mode=verbose_logging_mode, **kwargs)
+        verbose_logging_mode=verbose_logging_mode,
+        case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs, **kwargs
+    )
+
     final_row_count = len(dataframe)
     if initial_row_count != final_row_count:
         filtered_count = initial_row_count - final_row_count
@@ -2253,23 +2309,19 @@ def load_tm1_cube_to_csv_file(
         dataframe=dataframe,
         source_dim_mapping=source_dim_mapping,
         related_dimensions=related_dimensions,
-        target_dim_mapping=target_dim_mapping
+        target_dim_mapping=target_dim_mapping,
+        case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs
     )
 
     if value_function is not None:
-        transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function)
+        transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function,
+                                          case_and_whitespace_insensitive_inputs=case_and_whitespace_insensitive_inputs)
 
     if target_csv_file_name is None:
         source_cube_name = data_metadata_queryspecific.get_cube_name()
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
         target_csv_file_name = f"{source_cube_name}_{timestamp}.csv"
-
-    if native_view_correction_enabled:
-        dataframe = transformer.rename_columns_by_reference(
-            dataframe=dataframe,
-            column_names=data_metadata_queryspecific.get_source_cube_dims()
-        )
 
     loader.dataframe_to_csv(
         dataframe=dataframe,
