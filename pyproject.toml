@@ -35,18 +35,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-airflow= [
+airflow = [
     "airflow_provider_tm1>=0.5.1",
     "apache_airflow>=2.4.0,<=2.11.0"
 ]
-airflow-postgres= [
-    "airflow_provider_tm1>=0.5.1",
-    "apache_airflow>=2.4.0,<=2.11.0",
+postgres= [
     "apache-airflow-providers-postgres>=3.3.0,<7.0.0"
 ]
-airflow-microsoft-mssql= [
-    "airflow_provider_tm1>=0.5.1",
-    "apache_airflow>=2.4.0,<=2.11.0",
+microsoft-mssql= [
     "apache-airflow-providers-microsoft-mssql>=3.3.0,<7.0.0"
 ]
 dev = [

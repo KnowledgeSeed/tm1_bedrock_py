@@ -14,7 +14,7 @@ setup(
     name="tm1_bedrock_py",
     version=read_version(),
     description="A python modul for TM1 Bedrock.",
-    packages=["TM1_bedrock_py"],
+    packages=["TM1_bedrock_py", "TM1_bedrock_py.*"],
     include_package_data=True,
     package_data={"TM1_bedrock_py": ["logging.json"]},
     author="",
@@ -34,8 +34,14 @@ setup(
     ],
     extras_require={
         "airflow": [
-            "airflow_provider_tm1>=0.3.0,<1.0.0",
-            "apache_airflow>=2.4.0,<=2.10.5"
+            "airflow_provider_tm1>=0.5.1",
+            "apache_airflow>=2.4.0,<=2.11.0"
+        ],
+        "postgres": [
+            "apache-airflow-providers-postgres>=3.3.0,<7.0.0"
+        ],
+        "microsoft-mssql": [
+            "apache-airflow-providers-microsoft-mssql>=3.3.0,<7.0.0"
         ],
         "dev": [
             "parametrize_from_file>=0.20.0,<1.0.0",
