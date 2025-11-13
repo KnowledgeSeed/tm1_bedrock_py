@@ -4,9 +4,8 @@ from airflow_provider_tm1.hooks.tm1 import TM1Hook
 from airflow.hooks.base import BaseHook
 from airflow.decorators import task_group
 from TM1_bedrock_py import utility
-import common
+from TM1_bedrock_py.airflow_executor import common
 import inspect
-
 
 
 @task_group
@@ -127,7 +126,8 @@ def sql_to_tm1_dynamic_executor_task_group(
             mapping_steps=bedrock_params.get('mapping_steps'),
             shared_mapping=bedrock_params.get('shared_mapping'),
             target_cube_name=bedrock_params.get('target_cube_name'),
-            ignore_missing_elements=bedrock_params.get('ignore_missing_elements')
+            ignore_missing_elements=bedrock_params.get('ignore_missing_elements'),
+            use_mixed_datatypes=bedrock_params.get('use_mixed_datatypes')
         ).expand(
             expand_kwargs=common.generate_expand_kwargs_task(
                 tm1_service=tm1_service, param_set_mdx_list=param_set_mdx_list
@@ -247,15 +247,16 @@ def csv_to_tm1_dynamic_executor_task_group(
         execute_slice_csv_to_tm1 = common.execute_slice_task_csv_to_tm1.partial(
             tm1_service=tm1_service,
             logging_level=logging_level,
-            #data_mdx_template=bedrock_params.get('data_mdx_template'),
+            target_cube_name=bedrock_params.get('target_cube_name'),
             target_metadata_function=_target_metadata_function,
             mapping_steps=bedrock_params.get('mapping_steps'),
             shared_mapping=bedrock_params.get('shared_mapping'),
             decimal=bedrock_params.get('decimal'),
             delimiter= bedrock_params.get('delimiter'),
-            ignore_missing_elements=bedrock_params.get('ignore_missing_elements')
+            ignore_missing_elements=bedrock_params.get('ignore_missing_elements'),
+            use_mixed_datatypes=bedrock_params.get('use_mixed_datatypes')
         ).expand(
-            tm1_service=tm1_service, source_csv_file_path=source_csv_files
+            source_csv_file_path=source_csv_files
         )
         [generate_mapping_data, clear_target_cube] >> execute_slice_csv_to_tm1
 

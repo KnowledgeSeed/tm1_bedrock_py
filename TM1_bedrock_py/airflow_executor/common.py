@@ -333,21 +333,18 @@ def execute_slice_task_tm1_to_sql(
 @task
 def execute_slice_task_csv_to_tm1(
         tm1_service: Any,
-        #data_mdx_template: str,
+        target_cube_name: str,
         source_csv_file_path: str,
         target_metadata_function: Callable,
         logging_level: str,
-        #expand_kwargs: Dict,
         **kwargs
 ) -> int:
-    #data_mdx = Template(data_mdx_template).substitute(**expand_kwargs)
 
     basic_logger.info(f"Source csv file path: {source_csv_file_path}")
-    print(source_csv_file_path)
-    """
+
     load_csv_data_to_tm1_cube(
         tm1_service=tm1_service,
-        #data_mdx=data_mdx,
+        target_cube_name=target_cube_name,
         source_csv_file_path=source_csv_file_path,
         target_metadata_function=target_metadata_function,
         logging_level=logging_level,
@@ -355,7 +352,7 @@ def execute_slice_task_csv_to_tm1(
         clear_target=False,
         **kwargs
     )
-    """
+
     return 0
 
 
