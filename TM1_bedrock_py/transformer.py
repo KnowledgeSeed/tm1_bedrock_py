@@ -557,21 +557,23 @@ def dataframe_map_and_replace(
 
     original_columns = data_df.columns
 
-    data_df = data_df.merge(
-        mapping_df[shared_dimensions + list(mapped_dimensions.values())],
-        how='inner',
-        on=shared_dimensions,
-        suffixes=('', '_mapped')
-    )
+    merged_df = data_df.merge(mapping_df[shared_dimensions + list(mapped_dimensions.values())],
+                              how='inner',
+                              on=shared_dimensions,
+                              suffixes=('', '_mapped'))
 
     columns_to_drop = []
     for data_col, map_col in mapped_dimensions.items():
         map_col = f"{map_col}_mapped" if map_col == data_col or map_col in original_columns else map_col
-        data_df[data_col] = data_df[map_col]
+        merged_df[data_col] = merged_df[map_col]
         columns_to_drop.append(map_col)
 
-    data_df.drop(columns=columns_to_drop, inplace=True)
-    return data_df
+    merged_df.drop(columns=columns_to_drop, inplace=True)
+
+    if case_and_space_insensitive_inputs:
+        merged_df.normalized = True
+
+    return merged_df
 
 
 def dataframe_map_and_join(
@@ -610,11 +612,14 @@ def dataframe_map_and_join(
     shared_dimensions = (
         list(set(data_df.columns) & set(mapping_df.columns) - set(joined_columns) - {value_column_name}))
 
-    return data_df.merge(
-        mapping_df[shared_dimensions + joined_columns],
-        how='inner',
-        on=shared_dimensions
-    )
+    merged_df = data_df.merge(mapping_df[shared_dimensions + joined_columns],
+                              how='inner',
+                              on=shared_dimensions)
+
+    if case_and_space_insensitive_inputs:
+        merged_df.normalized = True
+
+    return merged_df
 
 
 # ------------------------------------------------------------------------------------------------------------
