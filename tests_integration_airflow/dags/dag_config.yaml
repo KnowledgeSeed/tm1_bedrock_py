@@ -1,0 +1,158 @@
+load_tm1_to_sql:
+  data_mdx_template: |
+    {% raw %}
+    SELECT 
+      NON EMPTY 
+       {{TM1SUBSETALL([testbenchMeasureSales].[testbenchMeasureSales])}}
+       * {{TM1FILTERBYLEVEL({{TM1SUBSETALL([testbenchProduct].[testbenchProduct])}}, 0)}} 
+       * {{TM1FILTERBYLEVEL({{TM1SUBSETALL([testbenchCustomer].[testbenchCustomer])}}, 0)}} 
+       * {{TM1FILTERBYLEVEL({{TM1SUBSETALL([testbenchKeyAccountManager].[testbenchKeyAccountManager])}}, 0)}} 
+      ON 0
+    FROM [testbenchSales] 
+    WHERE 
+      (
+       [testbenchVersion].[testbenchVersion].[$testbenchVersion],
+       [testbenchPeriod].[testbenchPeriod].[$testbenchPeriod]
+      )
+    {% endraw %}
+  sql_delete_statement: "TRUNCATE TABLE tm1_bedrock.testbench_sales"
+  related_dimensions: {
+    "testbenchProduct": "testbench_product",
+    "testbenchKeyAccountManager": "testbench_key_account_manager",
+    "testbenchCustomer": "testbench_customer",
+    "testbenchMeasureSales": "testbench_measure_sales",
+    "testbenchPeriod": "testbench_period",
+    "testbenchVersion": "testbench_version",
+    "Value": "testbench_value"
+  }
+  target_table_name: "testbench_sales"
+  sql_schema: "tm1_bedrock"
+  decimal: ","
+  param_set_mdx_list: [
+    "{[testbenchPeriod].[testbenchPeriod].[202401], [testbenchPeriod].[testbenchPeriod].[202402]}",
+    "{[testbenchVersion].[testbenchVersion].[Actual]}"
+  ]
+
+load_sql_to_tm1:
+  sql_query_template:  |
+    {% raw %}
+    select
+        t.testbench_version as "testbenchVersion",
+        t.testbench_period as "testbenchPeriod",
+        t.testbench_product as "testbenchProduct", 
+        t.testbench_customer as "testbenchCustomer", 
+        t.testbench_key_account_manager as "testbenchKeyAccountManager",
+        t.testbench_measure_sales as "testbenchMeasureSales",
+        t.testbench_value as "Value"
+    from tm1_bedrock.testbench_sales t
+    where 
+        t.testbench_version = '$testbenchVersion' 
+        and 
+        t.testbench_period = '$testbenchPeriod'
+    ;
+    {% endraw %}
+  ignore_missing_elements: True
+  mapping_steps: [
+      {
+          "method": "replace",
+          "mapping": {"testbenchVersion": {"Actual": "ForeCast"}}
+      }
+  ]
+  target_cube_name: "testbenchSales"
+  param_set_mdx_list:
+      - |
+        {[testbenchPeriod].[testbenchPeriod].[202401], 
+        [testbenchPeriod].[testbenchPeriod].[202402]}
+      - "{[testbenchVersion].[testbenchVersion].[Actual]}"
+  target_clear_set_mdx_list: [
+    "{[testbenchPeriod].[testbenchPeriod].[202401], [testbenchPeriod].[testbenchPeriod].[202402]}",
+    "{[testbenchVersion].[testbenchVersion].[ForeCast]}"
+  ]
+
+data_copy_intercube:
+  data_mdx_template: |
+    {% raw %}
+    SELECT 
+      NON EMPTY 
+       {{TM1SUBSETALL([testbenchMeasureSales].[testbenchMeasureSales])}}
+       * {{TM1FILTERBYLEVEL({{TM1SUBSETALL([testbenchProduct].[testbenchProduct])}}, 0)}} 
+       * {{TM1FILTERBYLEVEL({{TM1SUBSETALL([testbenchCustomer].[testbenchCustomer])}}, 0)}} 
+       * {{TM1FILTERBYLEVEL({{TM1SUBSETALL([testbenchKeyAccountManager].[testbenchKeyAccountManager])}}, 0)}} 
+      ON 0
+    FROM [testbenchSales] 
+    WHERE 
+      (
+       [testbenchVersion].[testbenchVersion].[$testbenchVersion],
+       [testbenchPeriod].[testbenchPeriod].[$testbenchPeriod]
+      )
+    {% endraw %}
+  ignore_missing_elements: True
+  mapping_steps: [
+      {
+          "method": "replace",
+          "mapping": {
+            "testbenchPeriod": {
+              "202401": "202502",
+              "202402": "202503"
+            }
+          }
+      }
+  ]
+  target_cube_name: "testbenchSales"
+  param_set_mdx_list: [
+      "{[testbenchPeriod].[testbenchPeriod].[202401], [testbenchPeriod].[testbenchPeriod].[202402]}",
+      "{[testbenchVersion].[testbenchVersion].[ForeCast]}"
+  ]
+  target_clear_set_mdx_list: [
+    "{[testbenchPeriod].[testbenchPeriod].[202502], [testbenchPeriod].[testbenchPeriod].[202503]}"
+  ]
+
+tm1_to_csv:
+  data_mdx_template: |
+    {% raw %}
+    SELECT 
+      NON EMPTY 
+       {{TM1SUBSETALL([testbenchMeasureSales].[testbenchMeasureSales])}}
+       * {{TM1FILTERBYLEVEL({{TM1SUBSETALL([testbenchProduct].[testbenchProduct])}}, 0)}} 
+       * {{TM1FILTERBYLEVEL({{TM1SUBSETALL([testbenchCustomer].[testbenchCustomer])}}, 0)}} 
+       * {{TM1FILTERBYLEVEL({{TM1SUBSETALL([testbenchKeyAccountManager].[testbenchKeyAccountManager])}}, 0)}} 
+      ON 0
+    FROM [testbenchSales] 
+    WHERE 
+      (
+       [testbenchVersion].[testbenchVersion].[$testbenchVersion],
+       [testbenchPeriod].[testbenchPeriod].[$testbenchPeriod]
+      )
+    {% endraw %}
+  ignore_missing_elements: True
+  target_csv_output_dir: "/opt/airflow/logs/csv"
+  decimal: "."
+  delimiter: ","
+  param_set_mdx_list: [
+    "{[testbenchPeriod].[testbenchPeriod].[202502], [testbenchPeriod].[testbenchPeriod].[202503]}",
+    "{[testbenchVersion].[testbenchVersion].[ForeCast]}"
+  ]
+
+csv_to_tm1:
+  ignore_missing_elements: True
+  use_mixed_datatypes: True
+  target_cube_name: "testbenchSales"
+  source_directory: "/opt/airflow/logs/csv"
+  decimal: "."
+  delimiter: ","
+  mapping_steps: [
+    {
+      "method": "replace",
+      "mapping": {
+        "testbenchPeriod": {
+          "202502": "202401",
+          "202503": "202402"
+        },
+        "testbenchVersion": {"ForeCast": "Actual"}
+      }
+    }
+  ]
+  target_clear_set_mdx_list: [
+    "{[testbenchPeriod].[testbenchPeriod].[202401], [testbenchPeriod].[testbenchPeriod].[202402]}",
+    "{[testbenchVersion].[testbenchVersion].[Actual]}"
+  ]

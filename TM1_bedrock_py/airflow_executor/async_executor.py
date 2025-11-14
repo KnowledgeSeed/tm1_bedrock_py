@@ -1,3 +1,16 @@
+"""
+Airflow task-group factories for orchestrating TM1 Bedrock workloads.
+
+Each task group follows the same workflow as the synchronous helpers in `bedrock.py`:
+mapping data frames are prepared up front, bulk clears run on the full target cube
+or table, and metadata for the slice execution is gathered once to avoid redundant
+TM1 calls. After those deterministic steps, the data load/export is fanned out into
+parallel slices using the same slicing logic as the synchronous implementation, but
+the parallelisation is delegated entirely to Airflow's scheduler rather than Python
+threads. This lets Airflow manage concurrency, retries, and backfills while the
+underlying TM1 operations stay unchanged.
+"""
+
 import glob
 
 from airflow_provider_tm1.hooks.tm1 import TM1Hook
@@ -7,6 +20,10 @@ from TM1_bedrock_py import utility
 from TM1_bedrock_py.airflow_executor import common
 import inspect
 
+
+# ------------------------------------------------------------------------------------------------------------
+# TM1 <-> TM1 data copy task group
+# ------------------------------------------------------------------------------------------------------------
 
 @task_group
 def tm1_dynamic_executor_task_group(
@@ -72,9 +89,8 @@ def tm1_dynamic_executor_task_group(
 
 
 # ------------------------------------------------------------------------------------------------------------
-# SQL
+# SQL <-> TM1 data copy task groups
 # ------------------------------------------------------------------------------------------------------------
-
 
 @task_group
 def sql_to_tm1_dynamic_executor_task_group(
@@ -91,11 +107,11 @@ def sql_to_tm1_dynamic_executor_task_group(
     sql_engine = hook.get_sqlalchemy_engine()
 
     if not dry_run:
-        """
-        bedrock_params["param_set_mdx_list"] = remove_whitespace_from_list(
+
+        bedrock_params["param_set_mdx_list"] = common.remove_whitespace_from_list(
             bedrock_params.get("param_set_mdx_list")
         )
-        """
+
         generate_mapping_data = common.generate_mapping_data_task(
             tm1_service=tm1_service,
             mapping_steps=bedrock_params.get('mapping_steps')
@@ -206,9 +222,8 @@ def tm1_to_sql_dynamic_executor_task_group(
 
 
 # ------------------------------------------------------------------------------------------------------------
-# CSV
+# CSV <-> TM1 data copy task groups
 # ------------------------------------------------------------------------------------------------------------
-
 
 @task_group
 def csv_to_tm1_dynamic_executor_task_group(

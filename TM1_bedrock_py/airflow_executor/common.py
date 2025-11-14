@@ -1,4 +1,3 @@
-import glob
 from typing import Any, Callable, Dict, List, Optional
 from itertools import product
 from string import  Template
@@ -21,12 +20,11 @@ from TM1_bedrock_py.bedrock import (
     load_tm1_cube_to_csv_file
 )
 
-print(f"Importing {__name__}")
 
 
-#---------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 # Utility functions
-#---------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 
 @task
 def dry_run_task(function_name: str, bedrock_params: dict) -> int:
@@ -66,9 +64,9 @@ def validate_param_set_mdx_list(
     return validated_list
 
 
-#---------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 # Mapping and MDX transform tasks and functions
-#---------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 
 def build_view_mdx_template(
         cube_name: str,
@@ -211,9 +209,9 @@ def copy_cube_data_on_elements(
         i += 1
 """      
 
-#---------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 # Clear target functions
-#---------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 
 @task
 def clear_tm1_cube_task(
@@ -235,9 +233,11 @@ def clear_sql_table_task(
     return 0
 
 
-#---------------------------------------------------------------
-# Slice executor functions
-#---------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
+# Slice executor tasks:
+#     Airflow tasks to execute single slices of data loading using TM1_bedrock_py.bedrock data copy functions.
+#     These tasks are used for parallelization based on the expand_kwargs parameter.
+# ------------------------------------------------------------------------------------------------------------
 
 @task
 def execute_slice_tm1_task(
@@ -248,13 +248,10 @@ def execute_slice_tm1_task(
         expand_kwargs: Dict,
         **kwargs
 ) -> int:
-    """
-    Airflow task to execute a single slice of data loading using trigger_tm1_bedrock.
-    """
 
     data_mdx = Template(data_mdx_template).substitute(**expand_kwargs)
 
-    basic_logger.info(expand_kwargs)
+    basic_logger.info(f"Executing slice for expand_kwargs: {expand_kwargs}")
 
     data_copy_intercube(
         tm1_service=tm1_service,
@@ -279,13 +276,10 @@ def execute_slice_task_sql_to_tm1(
         expand_kwargs: Dict,
         **kwargs
 ) -> int:
-    """
-    Airflow task to execute a single slice of data loading using trigger_tm1_bedrock.
-    """
 
     sql_query = Template(sql_query_template).substitute(**expand_kwargs)
 
-    basic_logger.info(expand_kwargs)
+    basic_logger.info(f"Executing slice for expand_kwargs: {expand_kwargs}")
 
     load_sql_data_to_tm1_cube(
         tm1_service=tm1_service,
@@ -314,7 +308,7 @@ def execute_slice_task_tm1_to_sql(
 
     data_mdx = Template(data_mdx_template).substitute(**expand_kwargs)
 
-    basic_logger.info(expand_kwargs)
+    basic_logger.info(f"Executing slice for expand_kwargs: {expand_kwargs}")
 
     load_tm1_cube_to_sql_table(
         tm1_service=tm1_service,
@@ -340,7 +334,7 @@ def execute_slice_task_csv_to_tm1(
         **kwargs
 ) -> int:
 
-    basic_logger.info(f"Source csv file path: {source_csv_file_path}")
+    basic_logger.info(f"Executing slice for source csv file: {source_csv_file_path}")
 
     load_csv_data_to_tm1_cube(
         tm1_service=tm1_service,
@@ -368,7 +362,7 @@ def execute_slice_task_tm1_to_csv(
 
     data_mdx = Template(data_mdx_template).substitute(**expand_kwargs)
 
-    basic_logger.info(expand_kwargs)
+    basic_logger.info(f"Executing slice for expand_kwargs: {expand_kwargs}")
 
     load_tm1_cube_to_csv_file(
         tm1_service=tm1_service,
