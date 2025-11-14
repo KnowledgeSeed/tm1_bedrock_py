@@ -1821,7 +1821,7 @@ def load_csv_data_to_tm1_cube(
         delimiter: Optional[str] = None,
         decimal: Optional[str] = None,
         dtype: Optional[dict] = None,
-        validate_datatypes: Optional[bool] = True,
+        use_mixed_datatypes: Optional[bool] = False,
         nrows: Optional[int] = None,
         chunksize: Optional[int] = None,
         parse_dates: Optional[bool | Sequence[Hashable]] = None,
@@ -1848,7 +1848,6 @@ def load_csv_data_to_tm1_cube(
         _execution_id: int = 0,
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
-        data_mdx: Optional[str] = None,
         **kwargs
 ) -> None:
     """
@@ -1883,7 +1882,7 @@ def load_csv_data_to_tm1_cube(
             directly to `pandas.read_csv`.
         dtype: A dictionary mapping column names to specific data types for
             `pandas.read_csv` to use during parsing.
-        validate_datatypes: If True, the function will validate that the 'Value'
+        use_mixed_datatypes: If True, the function will validate that the 'Value'
             column's data type matches the type (Numeric or String) of the
             corresponding measure element in the TM1 cube. It will also ensure
             all numeric values are cast to `float` to meet TM1 API requirements.
@@ -1932,12 +1931,10 @@ def load_csv_data_to_tm1_cube(
         _execution_id: An identifier used by async executors for logging.
         verbose_logging_mode: If True, intermediate DataFrames will be logged to
             CSV files for debugging.
-        data_mdx: An optional MDX query used solely for retrieving metadata if the
-            target cube structure needs to be inferred from a query context.
 
     Raises:
         ValueError: If the configuration is invalid or a mapping step fails.
-        TypeError: If `validate_datatypes` is True and a value for a numeric
+        TypeError: If `use_mixed_datatypes` is True and a value for a numeric
             measure cannot be converted to a number.
         TM1py.Exceptions.TM1pyRestException: If the final write to TM1 fails.
 
@@ -1945,7 +1942,7 @@ def load_csv_data_to_tm1_cube(
         - Data Integrity: The function automatically enforces two best practices:
             1. All columns in the DataFrame that correspond to a TM1 dimension
                are converted to the `string` data type to ensure consistency.
-            2. If `validate_datatypes` is True, the 'Value' column is rigorously
+            2. If `use_mixed_datatypes` is True, the 'Value' column is rigorously
                cleaned to match the TM1 cube's measure types (Numeric vs. String),
                ensuring that numbers are loaded as `float` and strings as `str`.
         - Performance: For the fastest load into TM1, it is recommended to set
@@ -1982,9 +1979,8 @@ def load_csv_data_to_tm1_cube(
         tm1_service=tm1_service,
         cube_name=target_cube_name,
         metadata_function=target_metadata_function,
-        mdx=data_mdx,
         collect_dim_element_identifiers=ignore_missing_elements,
-        collect_measure_types=validate_datatypes,
+        collect_measure_types=use_mixed_datatypes,
         **kwargs
     )
 
@@ -1995,13 +1991,13 @@ def load_csv_data_to_tm1_cube(
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs
     )
 
-    transformer.dataframe_add_column_assign_value(
+    utility.dataframe_verbose_logger(
         dataframe=dataframe,
-        column_value=target_metadata.get_filter_dict(),
-        case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
+        step_number="start_load_csv_data_to_tm1_cube",
+        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
-
     cube_dims = target_metadata.get_cube_dims()
 
     utility.cast_coordinates_to_str(cube_dims, dataframe)
@@ -2065,7 +2061,7 @@ def load_csv_data_to_tm1_cube(
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs
     )
 
-    if validate_datatypes:
+    if use_mixed_datatypes:
         measure_dim_name = target_metadata.get_cube_dims()[-1]
         measure_types = target_metadata.get_measure_element_types()
         transformer.dataframe_cast_value_by_measure_type(

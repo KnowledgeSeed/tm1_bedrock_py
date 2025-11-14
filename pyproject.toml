@@ -35,9 +35,15 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-airflow= [
-    "airflow_provider_tm1>=0.3.0,<1.0.0",
-    "apache_airflow>=2.4.0,<=2.10.5"
+airflow = [
+    "airflow_provider_tm1>=0.5.1",
+    "apache_airflow>=2.4.0,<=2.11.0"
+]
+postgres= [
+    "apache-airflow-providers-postgres>=3.3.0,<7.0.0"
+]
+microsoft-mssql= [
+    "apache-airflow-providers-microsoft-mssql>=3.3.0,<7.0.0"
 ]
 dev = [
     "parametrize_from_file>=0.20.0,<1.0.0",
@@ -52,8 +58,8 @@ Repository = "https://github.com/KnowledgeSeed/tm1_bedrock_py"
 Issues = "https://github.com/KnowledgeSeed/tm1_bedrock_py/issues"
 Changelog = "https://github.com/KnowledgeSeed/tm1_bedrock_py/CHANGELOG.md"
 
-[tool.setuptools]
-packages = ["TM1_bedrock_py"]
+[tool.setuptools.packages.find]
+include = ["TM1_bedrock_py", "TM1_bedrock_py.*"]
 
 [tool.setuptools.package-data]
 "TM1_bedrock_py" = ["logging.json"]

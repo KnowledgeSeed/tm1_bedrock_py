@@ -165,11 +165,16 @@ The toolkit includes a robust logging framework to help you debug your data inte
 ## Installation
 > Install without airflow
 ```
-pip install tm1_bedrock_py
+pip install tm1-bedrock-py
 ```
 > Install with `airflow`
 ```
-pip install "tm1_bedrock_py[airflow]"
+pip install tm1-bedrock-py[airflow]
+```
+> Additional options for `airflow` database connectors for Microsoft-MSSQL and Postgres
+```
+pip install tm1-bedrock-py[airflow, microsoft-mssql]
+pip install tm1-bedrock-py[airflow, postgres]
 ```
 
 ## Development
