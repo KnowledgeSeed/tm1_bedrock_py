@@ -141,10 +141,13 @@ def manage():
 
 def test_nativeview_functions():
     set_mdx_list = ['{{[Period].[Period].[202406]}}', '{{[Product].[Product].[P0000001],[Product].[Product].[P0000004],[Product].[Product].[P0000005],[Product].[Product].[P0000007],[Product].[Product].[P0000008],[Product].[Product].[P0000009],[Product].[Product].[P0000012],[Product].[Product].[P0000014],[Product].[Product].[P0000015],[Product].[Product].[P0000017],[Product].[Product].[P0000019],[Product].[Product].[P0000023]}}', '{{[Employee].[Employee].[Employee1],[Employee].[Employee].[Employee8],[Employee].[Employee].[Employee35],[Employee].[Employee].[Employee56],[Employee].[Employee].[Employee81],[Employee].[Employee].[Employee87],[Employee].[Employee].[Employee99]}}', '{[Version].[Version].[Actual]}', '{[Currency].[Currency].[LC]}', '{[MeasuresSales].[MeasuresSales].[Input]}', '{[OrganizationUnit].[OrganizationUnit].[Company01]}', '{[LineitemSales].[LineitemSales].[Quantity]}']
+
+    set = "{Tm1FilterByLevel(Tm1SubsetAll([Period]), 0)} "
+
     mdx = """
     SELECT 
       NON EMPTY 
-       {[Period].[Period].[202406]} 
+       {[Period].[Period].[202406]}
        * {[Lineitem Sales].[Lineitem Sales].[Quantity], [Lineitem Sales].[Lineitem Sales].[Revenue]}
       ON COLUMNS , 
       NON EMPTY 
@@ -180,6 +183,7 @@ def test_nativeview_functions():
 
     #df = extractor.__tm1_mdx_to_native_view_to_dataframe(tm1_service=tm1_service, data_mdx=mdx, skip_zeros=True)
     #print(df)
+    """
     bedrock.data_copy_intercube(
         tm1_service=tm1_service,
         target_cube_name="Sales",
@@ -192,6 +196,14 @@ def test_nativeview_functions():
         view_and_subset_cleanup=False,
         verbose_logging_mode="print_console"
     )
+    """
+    utility.set_logging_level("DEBUG")
+    df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_service, data_mdx=mdx)
+    utility.normalize_dataframe_strings(df)
+    df.attribute = "test"
+    print(df)
+    print(df.attribute)
+
 
 def benchpy_sample():
     schema_dir = 'C:\\Users\\ullmann.david\\PycharmProjects\\tm1bedrockpy\\schema'

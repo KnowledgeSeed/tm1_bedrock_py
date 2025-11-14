@@ -192,6 +192,19 @@ def test_rename_columns_with_reference(input_df, input_list, expected_df):
     pd.testing.assert_frame_equal(output_df, expected_df)
 
 
+@parametrize_from_file
+def test_normalize_dict_strings(input_dict, expected_dict):
+    output_dict = utility.normalize_structure_strings(input_dict)
+    assert output_dict == expected_dict
+
+
+@parametrize_from_file
+def test_normalize_dataframe_strings(input_df, expected_df):
+    output_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+    utility.normalize_dataframe_strings(output_df)
+    pd.testing.assert_frame_equal(output_df, expected_df)
+
 # ------------------------------------------------------------------------------------------------------------
 # Utility: Cube metadata collection using input MDXs and/or other cubes
 # ------------------------------------------------------------------------------------------------------------
@@ -336,7 +349,7 @@ def test_normalize_dataframe_is_dataframe_true(tm1_connection_factory, data_mdx)
     with tm1_connection_factory("tm1srv") as conn:
         try:
             df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=data_mdx)
-            transformer.normalize_dataframe(tm1_service=conn, dataframe=df, mdx=data_mdx)
+            transformer.normalize_dataframe_for_testing(dataframe=df, tm1_service=conn, mdx=data_mdx)
             assert isinstance(df, DataFrame)
         except Exception as e:
             pytest.fail(f"MDX query execution failed: {e}")
@@ -348,7 +361,7 @@ def test_normalize_dataframe_match_number_of_dimensions_success(tm1_connection_f
     with tm1_connection_factory("tm1srv") as conn:
         try:
             df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=data_mdx)
-            transformer.normalize_dataframe(tm1_service=conn, dataframe=df, mdx=data_mdx)
+            transformer.normalize_dataframe_for_testing(dataframe=df, tm1_service=conn, mdx=data_mdx)
             df.keys()
             assert len(df.keys()) == expected_dimensions
         except Exception as e:
@@ -361,7 +374,7 @@ def test_normalize_dataframe_match_dimensions_success(tm1_connection_factory, da
     with tm1_connection_factory("tm1srv") as conn:
         try:
             df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=data_mdx)
-            transformer.normalize_dataframe(tm1_service=conn, dataframe=df, mdx=data_mdx)
+            transformer.normalize_dataframe_for_testing(dataframe=df, tm1_service=conn, mdx=data_mdx)
             keys = [key for key in df.keys()]
             assert expected_dimensions == keys
         except Exception as e:
@@ -377,7 +390,7 @@ def test_build_mdx_from_cube_filter_create_dataframe_success(tm1_connection_fact
         )
         try:
             df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=data_mdx)
-            transformer.normalize_dataframe(tm1_service=conn, dataframe=df, mdx=data_mdx)
+            transformer.normalize_dataframe_for_testing(dataframe=df, tm1_service=conn, mdx=data_mdx)
             assert isinstance(df, DataFrame)
         except Exception as e:
             pytest.fail(f"MDX query execution failed: {e}")
@@ -458,15 +471,6 @@ def test_dataframe_reorder_dimensions(dataframe, cube_cols, expected_dataframe):
     df = pd.DataFrame(dataframe)
     expected_df = pd.DataFrame(expected_dataframe)
     transformer.dataframe_reorder_dimensions(dataframe=df, cube_dimensions=cube_cols)
-
-    pd.testing.assert_frame_equal(df, expected_df)
-
-
-@parametrize_from_file
-def test_dataframe_force_float64_on_numerical_values(dataframe, expected_dataframe):
-    df = pd.DataFrame(dataframe)
-    expected_df = pd.DataFrame(expected_dataframe)
-    transformer.dataframe_force_float64_on_numeric_values(df)
 
     pd.testing.assert_frame_equal(df, expected_df)
 
@@ -711,7 +715,7 @@ def test_dataframe_to_csv_build_dataframe_form_mdx(tm1_connection_factory, data_
             expected_df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=data_mdx)
             dtype_mapping = expected_df.dtypes.apply(lambda x: x.name).to_dict()
 
-            transformer.normalize_dataframe(tm1_service=conn, dataframe=expected_df, mdx=data_mdx)
+            transformer.normalize_dataframe_for_testing(dataframe=expected_df, tm1_service=conn, mdx=data_mdx)
 
             loader.dataframe_to_csv(
                 dataframe=expected_df, csv_file_name=csv_file_name, csv_output_dir="./", decimal=".", mode="a"

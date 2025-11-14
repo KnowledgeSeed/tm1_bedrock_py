@@ -7,9 +7,8 @@ from pandas import DataFrame
 from TM1_bedrock_py import utility, basic_logger
 
 
-def normalize_dataframe(
-        dataframe: DataFrame,
-        metadata_function: Optional[Callable[..., Any]] = None,
+def normalize_dataframe_for_testing(
+        dataframe: DataFrame, metadata_function: Optional[Callable[..., Any]] = None,
         **kwargs: Any
 ) -> None:
     """
@@ -37,6 +36,7 @@ def dataframe_cast_value_by_measure_type(
         dataframe: DataFrame,
         measure_dimension_name: str,
         measure_element_types: Dict[str, str],
+        case_and_space_insensitive_inputs: Optional[bool] = False,
         **_kwargs
 ) -> None:
     """
@@ -54,14 +54,26 @@ def dataframe_cast_value_by_measure_type(
         ValueError: If measures exist in the data that are not defined in the cube.
         TypeError: If a value for a 'Numeric' measure cannot be converted to a number.
     """
+    numeric_flag = 'Numeric'
+    string_flag = 'String'
+    value_column_name = 'Value'
+
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+        measure_dimension_name = utility.normalize_string(measure_dimension_name)
+        measure_element_types = utility.normalize_structure_strings(measure_element_types)
+        numeric_flag = 'numeric'
+        string_flag = 'string'
+        value_column_name = 'value'
+
     if measure_dimension_name not in dataframe.columns:
-        basic_logger.warning(
+        basic_logger.error(
             f"Measure dimension '{measure_dimension_name}' not in DataFrame. Skipping datatype validation."
         )
         return
 
-    numeric_measures = {elem for elem, dtype in measure_element_types.items() if dtype == 'Numeric'}
-    string_measures = {elem for elem, dtype in measure_element_types.items() if dtype == 'String'}
+    numeric_measures = {elem for elem, dtype in measure_element_types.items() if dtype == numeric_flag}
+    string_measures = {elem for elem, dtype in measure_element_types.items() if dtype == string_flag}
 
     all_measures_in_data = set(dataframe[measure_dimension_name].unique())
     known_measures = numeric_measures.union(string_measures)
@@ -76,7 +88,7 @@ def dataframe_cast_value_by_measure_type(
 
     if numeric_mask.any():
         numeric_values = pd.to_numeric(
-            dataframe.loc[numeric_mask, 'Value'].astype(str).str.replace(',', '.', regex=False),
+            dataframe.loc[numeric_mask, value_column_name].astype(str).str.replace(',', '.', regex=False),
             errors='coerce'
         )
 
@@ -87,18 +99,19 @@ def dataframe_cast_value_by_measure_type(
             basic_logger.error(msg)
             raise TypeError(msg)
 
-        dataframe.loc[numeric_mask, 'Value'] = numeric_values.astype(np.float64)
+        dataframe.loc[numeric_mask, value_column_name] = numeric_values.astype(np.float64)
 
     if string_mask.any():
-        dataframe.loc[string_mask, 'Value'] = dataframe.loc[string_mask, 'Value'].astype(str)
+        dataframe.loc[string_mask, value_column_name] = dataframe.loc[string_mask, value_column_name].astype(str)
 
-    dataframe["Value"] = dataframe["Value"].astype(object)
+    dataframe[value_column_name] = dataframe[value_column_name].astype(object)
 
 
 @utility.log_exec_metrics
 def dataframe_reorder_dimensions(
         dataframe: DataFrame,
         cube_dimensions: List[str],
+        case_and_space_insensitive_inputs: Optional[bool] = False,
         **_kwargs
 ) -> None:
     """
@@ -125,32 +138,22 @@ def dataframe_reorder_dimensions(
     KeyError:
         If any column in `cube_dimensions` does not exist in the DataFrame.
     """
-    temp_reordered = dataframe[cube_dimensions+["Value"]]
+    value_column_name = 'Value'
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+        cube_dimensions = utility.normalize_structure_strings(cube_dimensions)
+        value_column_name = 'value'
+
+    temp_reordered = dataframe[cube_dimensions+[value_column_name]]
     dataframe.drop(columns=dataframe.columns, inplace=True)
     for col in temp_reordered.columns:
         dataframe[col] = temp_reordered[col]
 
 
-@utility.log_exec_metrics
-def dataframe_force_float64_on_numeric_values(dataframe: DataFrame, **_kwargs) -> None:
-    """
-    Format and then enforce numpy float values in pandas dataframes, if the value is numeric, otherwise keep strings.
-
-    Parameter:
-    --------
-    dataframe: DataFrame - the input dataframe to mutate
-    **kwargs (Any): Additional keyword arguments.
-
-    Returns:
-    --------
-    None, mutates the dataframe in place
-    """
-    dataframe["Value"] = dataframe["Value"].apply(utility.force_float64_on_numeric_values)
-
-
 def dataframe_filter_inplace(
         dataframe: pd.DataFrame,
-        filter_condition: Dict[str, Any]
+        filter_condition: Dict[str, Any],
+        case_and_space_insensitive_inputs: Optional[bool] = False
 ) -> None:
     """
     Filters a DataFrame in-place based on a given filter_condition.
@@ -165,6 +168,10 @@ def dataframe_filter_inplace(
     Returns:
         None: Modifies the DataFrame in-place.
     """
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+        filter_condition = utility.normalize_structure_strings(filter_condition)
+
     valid_columns = [col for col in filter_condition.keys() if col in dataframe.columns]
 
     if not valid_columns:
@@ -181,7 +188,8 @@ def dataframe_filter_inplace(
 
 def dataframe_filter(
         dataframe: DataFrame,
-        filter_condition: Dict[str, Any]
+        filter_condition: Dict[str, Any],
+        case_and_space_insensitive_inputs: Optional[bool] = False
 ) -> DataFrame:
     """
     Filters a DataFrame based on a given filter_condition.
@@ -196,6 +204,10 @@ def dataframe_filter(
     Returns:
         DataFrame: The filtered DataFrame.
     """
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+        filter_condition = utility.normalize_structure_strings(filter_condition)
+
     valid_columns = [col for col in filter_condition.keys() if col in dataframe.columns]
 
     if not valid_columns:
@@ -210,7 +222,8 @@ def dataframe_filter(
 
 def dataframe_drop_column(
         dataframe: DataFrame,
-        column_list: list[str]
+        column_list: list[str],
+        case_and_space_insensitive_inputs: Optional[bool] = False
 ) -> None:
     """
     Drops columns from DataFrame in-place if the values in the input column_list are found in the DataFrame.
@@ -223,6 +236,10 @@ def dataframe_drop_column(
     Returns:
         None: The DataFrame is modified in-place.
     """
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+        column_list = utility.normalize_structure_strings(column_list)
+
     columns_to_drop = [col for col in column_list if col in dataframe.columns]
 
     if columns_to_drop:
@@ -234,6 +251,7 @@ def dataframe_drop_column(
 def dataframe_add_column_assign_value(
         dataframe: DataFrame,
         column_value: dict,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
         **_kwargs
 ) -> None:
     """
@@ -248,6 +266,10 @@ def dataframe_add_column_assign_value(
     Returns:
         DataFrame: The updated DataFrame.
     """
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+        column_value = utility.normalize_structure_strings(column_value)
+
     new_columns = {col: value for col, value in column_value.items() if col not in dataframe.columns}
 
     if new_columns:
@@ -257,7 +279,8 @@ def dataframe_add_column_assign_value(
 
 def dataframe_drop_filtered_column(
         dataframe: DataFrame,
-        filter_condition: dict
+        filter_condition: dict,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
 ) -> None:
     """
     Filters DataFrame based on filter_condition and drops columns given in column_list.
@@ -269,6 +292,9 @@ def dataframe_drop_filtered_column(
     Returns:
         DataFrame: The updated DataFrame.
     """
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+        filter_condition = utility.normalize_structure_strings(filter_condition)
 
     dataframe_filter_inplace(dataframe=dataframe, filter_condition=filter_condition)
     column_list = list(map(str, filter_condition.keys()))
@@ -276,7 +302,8 @@ def dataframe_drop_filtered_column(
 
 
 def dataframe_drop_zero_and_values(
-        dataframe: DataFrame
+        dataframe: DataFrame,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
 ) -> None:
     """
     Drops all rows with zero values from DaraFrame, then drops the values column.
@@ -286,15 +313,20 @@ def dataframe_drop_zero_and_values(
     Return:
         DataFrame: The updated DataFrame without the zero values.
     """
+    value_column_name = 'Value'
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+        value_column_name = 'value'
 
-    dataframe.drop(dataframe[dataframe["Value"] == 0].index, inplace=True)
-    dataframe.drop(columns=["Value"], inplace=True)
+    dataframe.drop(dataframe[dataframe[value_column_name] == 0].index, inplace=True)
+    dataframe.drop(columns=[value_column_name], inplace=True)
     dataframe.reset_index(drop=True, inplace=True)
 
 
 def dataframe_relabel(
         dataframe: DataFrame,
-        columns: dict
+        columns: dict,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
 ) -> None:
     """
     Relabels DataFrame column(s) if the original label is found in the DataFrame.
@@ -306,6 +338,10 @@ def dataframe_relabel(
                          The key stands for the original column label, the value for the new label.
     Return: None
     """
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+        columns = utility.normalize_structure_strings(columns)
+
     dataframe.rename(columns=columns, inplace=True)
 
 
@@ -314,11 +350,11 @@ def rename_columns_by_reference(dataframe: DataFrame, column_names: list[str]) -
     Rename columns in `df` to match the names in `column_names`,
     matching case/whitespace-insensitively, without reordering.
     """
-    ref_map = {utility.normalize_column_name(col): col for col in column_names}
+    ref_map = {utility.normalize_string(col): col for col in column_names}
 
     rename_map = {}
     for col in dataframe.columns:
-        norm_col = utility.normalize_column_name(col)
+        norm_col = utility.normalize_string(col)
         if norm_col in ref_map:
             rename_map[col] = ref_map[norm_col]
 
@@ -329,6 +365,7 @@ def rename_columns_by_reference(dataframe: DataFrame, column_names: list[str]) -
 def dataframe_value_scale(
         dataframe: DataFrame,
         value_function: callable,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
         **_kwargs
 ) -> None:
     """
@@ -342,7 +379,12 @@ def dataframe_value_scale(
     Returns:
         DataFrame: The modified DataFrame (in place).
     """
-    dataframe["Value"] = dataframe["Value"].apply(value_function)
+    value_column_name = 'Value'
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+        value_column_name = 'value'
+
+    dataframe[value_column_name] = dataframe[value_column_name].apply(value_function)
 
 
 def dataframe_redimension_and_transform(
@@ -350,8 +392,14 @@ def dataframe_redimension_and_transform(
         source_dim_mapping: Optional[dict] = None,
         related_dimensions: Optional[dict] = None,
         target_dim_mapping: Optional[dict] = None,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
         **_kwargs
 ) -> None:
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+        source_dim_mapping = utility.normalize_structure_strings(source_dim_mapping)
+        related_dimensions = utility.normalize_structure_strings(related_dimensions)
+        target_dim_mapping = utility.normalize_structure_strings(target_dim_mapping)
 
     if source_dim_mapping is not None:
         dataframe_drop_filtered_column(dataframe=dataframe, filter_condition=source_dim_mapping)
@@ -366,8 +414,14 @@ def dataframe_redimension_and_transform(
 def normalize_table_source_dataframe(
         dataframe: DataFrame,
         column_mapping: Optional[dict] = None,
-        columns_to_drop: Optional[list] = None
+        columns_to_drop: Optional[list] = None,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
 ) -> None:
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+        column_mapping = utility.normalize_structure_strings(column_mapping)
+        columns_to_drop = utility.normalize_structure_strings(columns_to_drop)
+
     if column_mapping is None:
         column_mapping = {}
     if column_mapping:
@@ -381,6 +435,7 @@ def dataframe_itemskip_elements(
     dataframe: pd.DataFrame,
     check_dfs: list[pd.DataFrame],
     logging_enabled: Optional[bool] = False,
+    case_and_space_insensitive_inputs: Optional[bool] = False,
     **_kwargs
 ) -> None:
     """
@@ -408,6 +463,10 @@ def dataframe_itemskip_elements(
     - Operates in place (modifies `dataframe` directly).
     - Uses fast hash lookups (O(n + m) complexity per dimension).
     """
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+        check_dfs = utility.normalize_structure_strings(check_dfs)
+
     mask = np.ones(len(dataframe), dtype=bool)
 
     for df_check in check_dfs:
@@ -433,7 +492,8 @@ def dataframe_itemskip_elements(
 
 def dataframe_find_and_replace(
         dataframe: DataFrame,
-        mapping: Dict[str, Dict[Any, Any]]
+        mapping: Dict[str, Dict[Any, Any]],
+        case_and_space_insensitive_inputs: Optional[bool] = False,
 ) -> DataFrame:
     """
     Remaps elements in a DataFrame based on a provided mapping.
@@ -446,6 +506,10 @@ def dataframe_find_and_replace(
     Returns:
         DataFrame: The updated DataFrame with elements remapped.
     """
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+        mapping = utility.normalize_structure_strings(mapping)
+
     dataframe.replace({col: mapping[col] for col in mapping.keys() if col in dataframe.columns}, inplace=True)
     return dataframe
 
@@ -453,7 +517,8 @@ def dataframe_find_and_replace(
 def dataframe_map_and_replace(
         data_df: DataFrame,
         mapping_df: DataFrame,
-        mapped_dimensions: Dict[str, str]
+        mapped_dimensions: Dict[str, str],
+        case_and_space_insensitive_inputs: Optional[bool] = False,
 ) -> DataFrame:
     """
     Map specified dimension columns in 'data_df' using 'mapping_df',
@@ -476,36 +541,46 @@ def dataframe_map_and_replace(
         A dataframe with the same columns (and order) as 'data_df',
         but with specified dimensions mapped from 'mapping_df'.
     """
+    value_column_name = 'Value'
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(data_df)
+        utility.normalize_dataframe_strings(mapping_df)
+        mapped_dimensions = utility.normalize_structure_strings(mapped_dimensions)
+        value_column_name = 'value'
 
-    shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - set(mapped_dimensions.keys()) - {"Value"})
+    shared_dimensions = (
+        list(set(data_df.columns) & set(mapping_df.columns) - set(mapped_dimensions.keys()) - {value_column_name}))
     if len(shared_dimensions) == 0:
-        shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - {"Value"})
+        shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - {value_column_name})
         if len(shared_dimensions) == 0:
             raise ValueError
 
     original_columns = data_df.columns
 
-    data_df = data_df.merge(
-        mapping_df[shared_dimensions + list(mapped_dimensions.values())],
-        how='inner',
-        on=shared_dimensions,
-        suffixes=('', '_mapped')
-    )
+    merged_df = data_df.merge(mapping_df[shared_dimensions + list(mapped_dimensions.values())],
+                              how='inner',
+                              on=shared_dimensions,
+                              suffixes=('', '_mapped'))
 
     columns_to_drop = []
     for data_col, map_col in mapped_dimensions.items():
         map_col = f"{map_col}_mapped" if map_col == data_col or map_col in original_columns else map_col
-        data_df[data_col] = data_df[map_col]
+        merged_df[data_col] = merged_df[map_col]
         columns_to_drop.append(map_col)
 
-    data_df.drop(columns=columns_to_drop, inplace=True)
-    return data_df
+    merged_df.drop(columns=columns_to_drop, inplace=True)
+
+    if case_and_space_insensitive_inputs:
+        merged_df.normalized = True
+
+    return merged_df
 
 
 def dataframe_map_and_join(
         data_df: DataFrame,
         mapping_df: DataFrame,
-        joined_columns: List[str]
+        joined_columns: List[str],
+        case_and_space_insensitive_inputs: Optional[bool] = False,
 ) -> DataFrame:
     """
     Joins specified columns from 'mapping_df' to 'data_df' based on shared dimensions.
@@ -527,13 +602,24 @@ def dataframe_map_and_join(
     None
         The original DataFrame (`data_df`) is modified in-place.
     """
-    shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - set(joined_columns) - {"Value"})
+    value_column_name = 'Value'
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(data_df)
+        utility.normalize_dataframe_strings(mapping_df)
+        joined_columns = utility.normalize_structure_strings(joined_columns)
+        value_column_name = 'value'
 
-    return data_df.merge(
-        mapping_df[shared_dimensions + joined_columns],
-        how='inner',
-        on=shared_dimensions
-    )
+    shared_dimensions = (
+        list(set(data_df.columns) & set(mapping_df.columns) - set(joined_columns) - {value_column_name}))
+
+    merged_df = data_df.merge(mapping_df[shared_dimensions + joined_columns],
+                              how='inner',
+                              on=shared_dimensions)
+
+    if case_and_space_insensitive_inputs:
+        merged_df.normalized = True
+
+    return merged_df
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -544,7 +630,8 @@ def dataframe_map_and_join(
 def __apply_replace(
         data_df: DataFrame,
         mapping_step: Dict[str, Any],
-        shared_mapping_df
+        shared_mapping_df,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
 ) -> DataFrame:
     """
     Handle the 'replace' mapping step.
@@ -564,13 +651,16 @@ def __apply_replace(
         The modified DataFrame after applying the literal remap.
     """
     _ = shared_mapping_df
-    return dataframe_find_and_replace(dataframe=data_df, mapping=mapping_step["mapping"])
+    return dataframe_find_and_replace(
+        dataframe=data_df, mapping=mapping_step["mapping"],
+        case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
 
 
 def __apply_map_and_replace(
         data_df: DataFrame,
         mapping_step: Dict[str, Any],
-        shared_mapping_df: DataFrame
+        shared_mapping_df: Optional[DataFrame] = None,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
 ) -> DataFrame:
     """
     Handle the 'map_and_replace' mapping step.
@@ -602,16 +692,21 @@ def __apply_map_and_replace(
 
     if "mapping_filter" in mapping_step:
         if step_uses_independent_mapping:
-            dataframe_filter_inplace(dataframe=mapping_df, filter_condition=mapping_step["mapping_filter"])
+            dataframe_filter_inplace(
+                dataframe=mapping_df, filter_condition=mapping_step["mapping_filter"],
+                case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
         else:
-            mapping_df = dataframe_filter(dataframe=mapping_df, filter_condition=mapping_step["mapping_filter"])
+            mapping_df = dataframe_filter(
+                dataframe=mapping_df, filter_condition=mapping_step["mapping_filter"],
+                case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
 
     data_df = dataframe_map_and_replace(
-        data_df=data_df, mapping_df=mapping_df, mapped_dimensions=mapping_step["mapping_dimensions"]
-    )
+        data_df=data_df, mapping_df=mapping_df, mapped_dimensions=mapping_step["mapping_dimensions"],
+        case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
 
     if mapping_step.get("relabel_dimensions"):
-        dataframe_relabel(dataframe=data_df, columns=mapping_step["mapping_dimensions"])
+        dataframe_relabel(dataframe=data_df, columns=mapping_step["mapping_dimensions"],
+                          case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
 
     return data_df
 
@@ -619,7 +714,8 @@ def __apply_map_and_replace(
 def __apply_map_and_join(
         data_df: DataFrame,
         mapping_step: Dict[str, Any],
-        shared_mapping_df
+        shared_mapping_df: Optional[DataFrame] = None,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
 ) -> DataFrame:
     """
     Handle the 'map_and_join' mapping step.
@@ -652,14 +748,21 @@ def __apply_map_and_join(
 
     if "mapping_filter" in mapping_step:
         if step_uses_independent_mapping:
-            dataframe_filter_inplace(dataframe=mapping_df, filter_condition=mapping_step["mapping_filter"])
+            dataframe_filter_inplace(
+                dataframe=mapping_df, filter_condition=mapping_step["mapping_filter"],
+                case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
         else:
-            mapping_df = dataframe_filter(dataframe=mapping_df, filter_condition=mapping_step["mapping_filter"])
+            mapping_df = dataframe_filter(
+                dataframe=mapping_df, filter_condition=mapping_step["mapping_filter"],
+                case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
 
-    data_df = dataframe_map_and_join(data_df=data_df, mapping_df=mapping_df, joined_columns=mapping_step["joined_columns"])
+    data_df = dataframe_map_and_join(
+        data_df=data_df, mapping_df=mapping_df, joined_columns=mapping_step["joined_columns"],
+        case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
 
     if "dropped_columns" in mapping_step:
-        dataframe_drop_column(dataframe=data_df, column_list=mapping_step["dropped_columns"])
+        dataframe_drop_column(dataframe=data_df, column_list=mapping_step["dropped_columns"],
+                              case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
 
     return data_df
 
@@ -669,6 +772,7 @@ def dataframe_execute_mappings(
         data_df: DataFrame,
         mapping_steps: List[Dict],
         shared_mapping_df: Optional[DataFrame] = None,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
         **kwargs
 ) -> DataFrame:
     """
@@ -740,7 +844,9 @@ def dataframe_execute_mappings(
     for i, step in enumerate(mapping_steps):
         method = step["method"]
         if method in method_handlers:
-            data_df = method_handlers[method](data_df, step, shared_mapping_df)
+            data_df = method_handlers[method](
+                data_df, step, shared_mapping_df,
+                case_and_space_insensitive_inputs)
             utility.dataframe_verbose_logger(
                 dataframe=data_df,
                 step_number="mapping_step_{i+1}_result",
