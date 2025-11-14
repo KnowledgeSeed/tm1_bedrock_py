@@ -27,7 +27,7 @@ def parse_and_filter(df: pd.DataFrame, **kwargs):
     print("test2 dim values:" + str(df.location.values))
     tm1_conn_id = kwargs.get('task').tm1_conn_id
     with TM1Hook(tm1_conn_id=tm1_conn_id).get_conn() as tm1:
-        md = transformer.normalize_dataframe(dataframe=df, tm1_service=tm1, cube_name="Revenue")
+        md = transformer.normalize_dataframe_for_testing(dataframe=df, tm1_service=tm1, cube_name="Revenue")
         print("test1 dim values:" + str(md.time.values))
         print("test2 dim values:" + str(md.location.values))
     return df

@@ -813,6 +813,36 @@ test_rename_columns_with_reference:
       "Value": [ 1000, 1100 ]
     }
 
+test_normalize_dict_strings:
+  -
+    input_dict: {
+      "Outer Key": {"Middle  Key": {"Inner Key": "Value"}},
+      "List Key": ["Value 1", " Value 2", "Value 3 "],
+      "String Key": "String Value Test"
+    }
+    expected_dict: {
+      "outerkey": { "middlekey": { "innerkey": "value" } },
+      "listkey": [ "value1", "value2", "value3" ],
+      "stringkey": "stringvaluetest"
+    }
+
+test_normalize_dataframe_strings:
+  -
+    input_df: {
+      "Lineitem Sales": [ "Revenue", "Quantity" ],
+      "Organization Units": [ "abc123", "xzy456" ],
+      "Periods": [ "202402", "202403" ],
+      "Versions": [ "Actuals", "Actuals" ],
+      "Value": [ 1000, 1100 ]
+    }
+    expected_df: {
+      "lineitemsales": ["revenue", "quantity"],
+      "organizationunits": ["abc123", "xzy456"],
+      "periods": ["202402", "202403"],
+      "versions": ["actuals", "actuals"],
+      "value": [1000, 1100]
+    }
+
 # Utility: Cube metadata collection using input MDXs and/or other cubes
 test_tm1_cube_object_metadata_collect_based_on_cube_name_success:
   -
@@ -1222,68 +1252,6 @@ test_dataframe_reorder_dimensions:
       "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
       "Measure": [ "Value", "Value", "Value", "Value" ],
       "Value": [ 120, 120, 120, 120 ]
-    }
-
-test_dataframe_force_float64_on_numerical_values:
-  -
-    dataframe: {
-      "Period": [ "202202", "202202", "202202", "202202" ],
-      "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
-      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
-      "Measure": [ "Value", "Value", "Value", "Value" ],
-      "Value": [ 120, 120, 120, 120 ]
-    }
-    expected_dataframe: {
-      "Period": [ "202202", "202202", "202202", "202202" ],
-      "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
-      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
-      "Measure": [ "Value", "Value", "Value", "Value" ],
-      "Value": [ 120.0, 120.0, 120.0, 120.0 ]
-    }
-  -
-    dataframe: {
-      "Period": [ "202202", "202202", "202202", "202202" ],
-      "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
-      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
-      "Measure": [ "Value", "Value", "Value", "Value" ],
-      "Value": [ "120,0", "120,0", "120,0", "120,0" ]
-    }
-    expected_dataframe: {
-      "Period": [ "202202", "202202", "202202", "202202" ],
-      "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
-      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
-      "Measure": [ "Value", "Value", "Value", "Value" ],
-      "Value": [ 120.0, 120.0, 120.0, 120.0 ]
-    }
-  -
-    dataframe: {
-      "Period": [ "202202", "202202", "202202", "202202" ],
-      "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
-      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
-      "Measure": [ "Value", "Value", "Value", "Value" ],
-      "Value": [ 120.0, 120.0, 120.0, 120.0 ]
-    }
-    expected_dataframe: {
-      "Period": [ "202202", "202202", "202202", "202202" ],
-      "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
-      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
-      "Measure": [ "Value", "Value", "Value", "Value" ],
-      "Value": [ 120.0, 120.0, 120.0, 120.0 ]
-    }
-  -
-    dataframe: {
-      "Period": [ "202202", "202202", "202202", "202202" ],
-      "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
-      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
-      "Measure": [ "Value", "Value", "Value", "Value" ],
-      "Value": [ "cost", "cost", "cost", "cost" ]
-    }
-    expected_dataframe: {
-      "Period": [ "202202", "202202", "202202", "202202" ],
-      "OrgUnit": [ "ABC123A", "ABC123A", "XYZ123X", "XYZ123X" ],
-      "Employee": [ "00000001", "00000002", "00000003", "00000004" ],
-      "Measure": [ "Value", "Value", "Value", "Value" ],
-      "Value": [ "cost", "cost", "cost", "cost" ]
     }
 
 test_dataframe_value_scale:
