@@ -48,7 +48,7 @@ def dataframe_verbose_logger(
 
         elif verbose_logging_mode == "print_console":
             num_rows_to_log = 5
-            basic_logger.debug(f"First {num_rows_to_log} rows of DataFrame: {dataframe.head(num_rows_to_log)}")
+            basic_logger.debug(f"First {num_rows_to_log} rows of DataFrame:\n{dataframe.head(num_rows_to_log)}")
 
 
 def execution_metrics_logger(logger, func, *args, **kwargs):
@@ -543,14 +543,16 @@ def normalize_structure_strings(d: Any) -> Any:
     return d
 
 
-@log_exec_metrics
-def normalize_dataframe_strings(dataframe: DataFrame, **_kwargs) -> None:
+def normalize_dataframe_strings(dataframe: DataFrame) -> None:
     """Normalize a dataframe, including columns, string values, and object type columns with strings."""
     if not getattr(dataframe, "normalized", False):
         dataframe.rename(columns=lambda c: normalize_string(str(c)), inplace=True)
         for col in dataframe.select_dtypes(include=['object', 'string']):
             dataframe[col] = dataframe[col].map(lambda x: normalize_string(x) if isinstance(x, str) else x)
         dataframe.normalized = True
+        basic_logger.debug("Dataframe object " + str(id(dataframe)) + " was normalized.")
+    else:
+        basic_logger.debug("Dataframe object " + str(id(dataframe)) + " already normalized.")
 
 # ------------------------------------------------------------------------------------------------------------
 # Utility: Cube metadata collection using input MDXs and/or other cubes
