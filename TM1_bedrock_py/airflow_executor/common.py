@@ -138,6 +138,24 @@ def generate_mapping_data_task(
     return 0
 
 
+def generate_mapping_queries_from_templates(
+        mapping_steps: List[Dict],
+        shared_mapping: Dict,
+        expand_kwargs: Dict
+) -> None:
+    for step in mapping_steps:
+        if "mapping_mdx_template" in step:
+            step["mapping_mdx"] = Template(step["mapping_mdx_template"]).substitute(**expand_kwargs)
+        elif "mapping_sql_template" in step:
+            step["mapping_sql_query"] = Template(step["mapping_sql_template"]).substitute(**expand_kwargs)
+
+    if "mapping_mdx_template" in shared_mapping:
+        shared_mapping["mapping_mdx"] = Template(shared_mapping["mapping_mdx_template"]).substitute(**expand_kwargs)
+    elif "mapping_sql_template" in shared_mapping:
+        shared_mapping["mapping_sql_query"] = (Template(shared_mapping["mapping_sql_template"])
+                                               .substitute(**expand_kwargs))
+
+
 def build_bedrock_params_list(
         tm1_connection: str,
         cube_names: list[str],
@@ -246,6 +264,8 @@ def execute_slice_tm1_task(
         target_metadata_function: Callable,
         logging_level: str,
         expand_kwargs: Dict,
+        mapping_steps: List[Dict],
+        shared_mapping: Dict,
         **kwargs
 ) -> int:
 
@@ -274,6 +294,8 @@ def execute_slice_task_sql_to_tm1(
         target_metadata_function: Callable,
         logging_level: str,
         expand_kwargs: Dict,
+        mapping_steps: List[Dict],
+        shared_mapping: Dict,
         **kwargs
 ) -> int:
 
@@ -303,6 +325,8 @@ def execute_slice_task_tm1_to_sql(
         target_metadata_function: Callable,
         logging_level: str,
         expand_kwargs: Dict,
+        mapping_steps: List[Dict],
+        shared_mapping: Dict,
         **kwargs
 ) -> int:
 
@@ -357,6 +381,8 @@ def execute_slice_task_tm1_to_csv(
         target_metadata_function: Callable,
         logging_level: str,
         expand_kwargs: Dict,
+        mapping_steps: List[Dict],
+        shared_mapping: Dict,
         **kwargs
 ) -> int:
 
