@@ -128,20 +128,16 @@ def generate_mapping_queries_for_slice(
         elif "mapping_sql_template" in obj:
             obj["mapping_sql_query"] = Template(obj["mapping_sql_template"]).substitute(**expand_kwargs)
 
-    if not mapping_steps:
-        slice_mapping_steps = None
-    else:
-        slice_mapping_steps = []
-        for step in mapping_steps:
-            slice_step = step.copy()
-            apply_template(slice_step)
-            slice_mapping_steps.append(slice_step)
+    def clone_and_apply_template(obj: Dict) -> Dict:
+        new_obj = obj.copy()
+        apply_template(new_obj)
+        return new_obj
 
-    if not shared_mapping:
-        slice_shared_mapping = None
-    else:
-        slice_shared_mapping = shared_mapping.copy()
-        apply_template(slice_shared_mapping)
+    slice_mapping_steps = ([clone_and_apply_template(step) for step in mapping_steps]
+                           if mapping_steps else None)
+
+    slice_shared_mapping = (clone_and_apply_template(shared_mapping)
+                            if shared_mapping else None)
 
     return slice_mapping_steps, slice_shared_mapping
 
