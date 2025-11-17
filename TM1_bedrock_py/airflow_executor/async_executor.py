@@ -273,7 +273,7 @@ def tm1_to_csv_dynamic_executor_task_group(
             tm1_service=tm1_service,
             target_cube_name=target_cube_name,
             ignore_missing_elements=False,
-            collect_measure_types = False
+            collect_measure_types=False
         )
 
         def _target_metadata_function(**_kwargs): return target_metadata_obj

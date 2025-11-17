@@ -118,24 +118,30 @@ def generate_expand_kwargs_task(
 
 
 def generate_mapping_queries_for_slice(
-        mapping_steps: List[Dict],
-        shared_mapping: Dict,
-        expand_kwargs: Dict
-) -> Tuple[List[Dict], Dict]:
+        expand_kwargs: Dict,
+        mapping_steps: Optional[List[Dict]] = None,
+        shared_mapping: Optional[Dict] = None
+) -> Tuple[List[Dict] | None, Dict | None]:
     def apply_template(obj: Dict):
         if "mapping_mdx_template" in obj:
             obj["mapping_mdx"] = Template(obj["mapping_mdx_template"]).substitute(**expand_kwargs)
         elif "mapping_sql_template" in obj:
             obj["mapping_sql_query"] = Template(obj["mapping_sql_template"]).substitute(**expand_kwargs)
 
-    slice_mapping_steps = []
-    for step in mapping_steps:
-        slice_step = step.copy()
-        apply_template(slice_step)
-        slice_mapping_steps.append(slice_step)
+    if not mapping_steps:
+        slice_mapping_steps = None
+    else:
+        slice_mapping_steps = []
+        for step in mapping_steps:
+            slice_step = step.copy()
+            apply_template(slice_step)
+            slice_mapping_steps.append(slice_step)
 
-    slice_shared_mapping = shared_mapping.copy()
-    apply_template(slice_shared_mapping)
+    if not shared_mapping:
+        slice_shared_mapping = None
+    else:
+        slice_shared_mapping = shared_mapping.copy()
+        apply_template(slice_shared_mapping)
 
     return slice_mapping_steps, slice_shared_mapping
 
@@ -221,8 +227,8 @@ def execute_slice_tm1_task(
         target_metadata_function: Callable,
         logging_level: str,
         expand_kwargs: Dict,
-        mapping_steps: List[Dict],
-        shared_mapping: Dict,
+        mapping_steps: Optional[List[Dict]] = None,
+        shared_mapping: Optional[Dict] = None,
         **kwargs
 ) -> int:
 
@@ -257,8 +263,8 @@ def execute_slice_task_sql_to_tm1(
         target_metadata_function: Callable,
         logging_level: str,
         expand_kwargs: Dict,
-        mapping_steps: List[Dict],
-        shared_mapping: Dict,
+        mapping_steps: Optional[List[Dict]] = None,
+        shared_mapping: Optional[Dict] = None,
         **kwargs
 ) -> int:
 
@@ -294,8 +300,8 @@ def execute_slice_task_tm1_to_sql(
         target_metadata_function: Callable,
         logging_level: str,
         expand_kwargs: Dict,
-        mapping_steps: List[Dict],
-        shared_mapping: Dict,
+        mapping_steps: Optional[List[Dict]] = None,
+        shared_mapping: Optional[Dict] = None,
         **kwargs
 ) -> int:
 
@@ -356,8 +362,8 @@ def execute_slice_task_tm1_to_csv(
         target_metadata_function: Callable,
         logging_level: str,
         expand_kwargs: Dict,
-        mapping_steps: List[Dict],
-        shared_mapping: Dict,
+        mapping_steps: Optional[List[Dict]] = None,
+        shared_mapping: Optional[Dict] = None,
         **kwargs
 ) -> int:
 
