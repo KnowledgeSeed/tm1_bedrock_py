@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 from itertools import product
 from string import  Template
 from airflow.decorators import task
@@ -138,22 +138,27 @@ def generate_mapping_data_task(
     return 0
 
 
-def generate_mapping_queries_from_templates(
+def generate_mapping_queries_for_slice(
         mapping_steps: List[Dict],
         shared_mapping: Dict,
         expand_kwargs: Dict
-) -> None:
-    for step in mapping_steps:
-        if "mapping_mdx_template" in step:
-            step["mapping_mdx"] = Template(step["mapping_mdx_template"]).substitute(**expand_kwargs)
-        elif "mapping_sql_template" in step:
-            step["mapping_sql_query"] = Template(step["mapping_sql_template"]).substitute(**expand_kwargs)
+) -> Tuple[List[Dict], Dict]:
+    def apply_template(obj: Dict):
+        if "mapping_mdx_template" in obj:
+            obj["mapping_mdx"] = Template(obj["mapping_mdx_template"]).substitute(**expand_kwargs)
+        elif "mapping_sql_template" in obj:
+            obj["mapping_sql_query"] = Template(obj["mapping_sql_template"]).substitute(**expand_kwargs)
 
-    if "mapping_mdx_template" in shared_mapping:
-        shared_mapping["mapping_mdx"] = Template(shared_mapping["mapping_mdx_template"]).substitute(**expand_kwargs)
-    elif "mapping_sql_template" in shared_mapping:
-        shared_mapping["mapping_sql_query"] = (Template(shared_mapping["mapping_sql_template"])
-                                               .substitute(**expand_kwargs))
+    slice_mapping_steps = []
+    for step in mapping_steps:
+        slice_step = step.copy()
+        apply_template(slice_step)
+        slice_mapping_steps.append(slice_step)
+
+    slice_shared_mapping = shared_mapping.copy()
+    apply_template(slice_shared_mapping)
+
+    return slice_mapping_steps, slice_shared_mapping
 
 
 def build_bedrock_params_list(
@@ -244,6 +249,10 @@ def execute_slice_tm1_task(
 
     data_mdx = Template(data_mdx_template).substitute(**expand_kwargs)
 
+    slice_mapping_steps, slice_shared_mapping = generate_mapping_queries_for_slice(mapping_steps=mapping_steps,
+                                                                                   shared_mapping=shared_mapping,
+                                                                                   expand_kwargs=expand_kwargs)
+
     basic_logger.info(f"Executing slice for expand_kwargs: {expand_kwargs}")
 
     data_copy_intercube(
@@ -253,6 +262,8 @@ def execute_slice_tm1_task(
         logging_level=logging_level,
         use_blob=True,
         clear_target=False,
+        mapping_steps=slice_mapping_steps,
+        shared_mapping=slice_shared_mapping,
         **kwargs
     )
 
@@ -274,6 +285,10 @@ def execute_slice_task_sql_to_tm1(
 
     sql_query = Template(sql_query_template).substitute(**expand_kwargs)
 
+    slice_mapping_steps, slice_shared_mapping = generate_mapping_queries_for_slice(mapping_steps=mapping_steps,
+                                                                                   shared_mapping=shared_mapping,
+                                                                                   expand_kwargs=expand_kwargs)
+
     basic_logger.info(f"Executing slice for expand_kwargs: {expand_kwargs}")
 
     load_sql_data_to_tm1_cube(
@@ -284,6 +299,8 @@ def execute_slice_task_sql_to_tm1(
         logging_level=logging_level,
         use_blob=True,
         clear_target=False,
+        mapping_steps=slice_mapping_steps,
+        shared_mapping=slice_shared_mapping,
         **kwargs
     )
 
@@ -305,6 +322,10 @@ def execute_slice_task_tm1_to_sql(
 
     data_mdx = Template(data_mdx_template).substitute(**expand_kwargs)
 
+    slice_mapping_steps, slice_shared_mapping = generate_mapping_queries_for_slice(mapping_steps=mapping_steps,
+                                                                                   shared_mapping=shared_mapping,
+                                                                                   expand_kwargs=expand_kwargs)
+
     basic_logger.info(f"Executing slice for expand_kwargs: {expand_kwargs}")
 
     load_tm1_cube_to_sql_table(
@@ -315,6 +336,8 @@ def execute_slice_task_tm1_to_sql(
         logging_level=logging_level,
         use_blob=True,
         clear_target=False,
+        mapping_steps=slice_mapping_steps,
+        shared_mapping=slice_shared_mapping,
         **kwargs
     )
 
@@ -361,6 +384,10 @@ def execute_slice_task_tm1_to_csv(
 
     data_mdx = Template(data_mdx_template).substitute(**expand_kwargs)
 
+    slice_mapping_steps, slice_shared_mapping = generate_mapping_queries_for_slice(mapping_steps=mapping_steps,
+                                                                                   shared_mapping=shared_mapping,
+                                                                                   expand_kwargs=expand_kwargs)
+
     basic_logger.info(f"Executing slice for expand_kwargs: {expand_kwargs}")
 
     load_tm1_cube_to_csv_file(
@@ -370,6 +397,8 @@ def execute_slice_task_tm1_to_csv(
         logging_level=logging_level,
         use_blob=True,
         clear_target=False,
+        mapping_steps=slice_mapping_steps,
+        shared_mapping=slice_shared_mapping,
         **kwargs
     )
 
