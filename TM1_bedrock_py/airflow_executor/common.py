@@ -197,35 +197,8 @@ def build_bedrock_params_list(
 
         bedrock_params_list.append(cube_specific_bedrock_params)
 
-    print(bedrock_params_list)
-    print(type(bedrock_params_list))
     return bedrock_params_list
 
-
-"""
-@task_group
-def copy_cube_data_on_elements(
-        tm1_connection: str,
-        cube_names: list[str],
-        unified_bedrock_params: dict,
-        logging_level: str = "INFO",
-):
-    bedrock_params_list = build_bedrock_params_list(
-        tm1_connection=tm1_connection,
-        unified_bedrock_params=unified_bedrock_params,
-        cube_names=cube_names,
-    )
-    i = 0
-    for bedrock_params in bedrock_params_list:
-        group_id = cube_names[i].replace(" ", "_")
-        tm1_dynamic_executor_task_group.override(group_id=group_id)(
-            tm1_connection=tm1_connection,
-            dry_run=False,
-            logging_level=logging_level,
-            bedrock_params=bedrock_params
-        )
-        i += 1
-"""      
 
 # ------------------------------------------------------------------------------------------------------------
 # Clear target functions

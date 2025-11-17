@@ -327,3 +327,26 @@ def tm1_to_csv_dynamic_executor_task_group(
     else:
         func_name = inspect.currentframe().f_code.co_name
         common.dry_run_task(func_name, bedrock_params)
+
+
+@task_group
+def copy_cube_data_on_elements(
+        tm1_connection: str,
+        cube_names: list[str],
+        unified_bedrock_params: dict,
+        logging_level: str = "INFO",
+):
+    bedrock_params_list = common.build_bedrock_params_list(
+        tm1_connection=tm1_connection,
+        unified_bedrock_params=unified_bedrock_params,
+        cube_names=cube_names,
+    )
+
+    for i, bedrock_params in enumerate(bedrock_params_list):
+        group_id = cube_names[i].replace(" ", "_")
+        tm1_dynamic_executor_task_group.override(group_id=group_id)(
+            tm1_connection=tm1_connection,
+            dry_run=False,
+            logging_level=logging_level,
+            bedrock_params=bedrock_params
+        )
