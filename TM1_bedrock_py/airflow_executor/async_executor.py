@@ -40,11 +40,6 @@ def tm1_dynamic_executor_task_group(
             bedrock_params.get("param_set_mdx_list")
         )
 
-        generate_mapping_data = common.generate_mapping_data_task(
-            tm1_service=tm1_service,
-            mapping_steps=bedrock_params.get('mapping_steps')
-        )
-
         clear_target_cube = common.clear_tm1_cube_task(
             tm1_service=tm1_service,
             cube_name=bedrock_params.get('target_cube_name'),
@@ -81,7 +76,7 @@ def tm1_dynamic_executor_task_group(
                 tm1_service=tm1_service, param_set_mdx_list=bedrock_params.get('param_set_mdx_list')
             )
         )
-        [generate_mapping_data, clear_target_cube] >> execute_slice_tm1
+        clear_target_cube >> execute_slice_tm1
 
     else:
         func_name = inspect.currentframe().f_code.co_name
@@ -110,11 +105,6 @@ def sql_to_tm1_dynamic_executor_task_group(
 
         bedrock_params["param_set_mdx_list"] = common.remove_whitespace_from_list(
             bedrock_params.get("param_set_mdx_list")
-        )
-
-        generate_mapping_data = common.generate_mapping_data_task(
-            tm1_service=tm1_service,
-            mapping_steps=bedrock_params.get('mapping_steps')
         )
 
         clear_target_cube = common.clear_tm1_cube_task(
@@ -149,7 +139,7 @@ def sql_to_tm1_dynamic_executor_task_group(
                 tm1_service=tm1_service, param_set_mdx_list=param_set_mdx_list
             )
         )
-        [generate_mapping_data, clear_target_cube] >> execute_slice_sql_to_tm1
+        clear_target_cube >> execute_slice_sql_to_tm1
 
     else:
         func_name = inspect.currentframe().f_code.co_name
@@ -171,12 +161,6 @@ def tm1_to_sql_dynamic_executor_task_group(
     sql_engine = hook.get_sqlalchemy_engine()
 
     if not dry_run:
-        generate_mapping_data = common.generate_mapping_data_task(
-            tm1_service=tm1_service,
-            shared_mapping=bedrock_params.get('shared_mapping'),
-            mapping_steps=bedrock_params.get('mapping_steps')
-        )
-
         clear_target_table = common.clear_sql_table_task(
             sql_engine=sql_engine,
             table_name=bedrock_params.get('table_name'),
@@ -213,12 +197,11 @@ def tm1_to_sql_dynamic_executor_task_group(
                 tm1_service=tm1_service, param_set_mdx_list=param_set_mdx_list
             )
         )
-        [generate_mapping_data, clear_target_table] >> execute_slice_tm1_to_sql
+        clear_target_table >> execute_slice_tm1_to_sql
 
     else:
         func_name = inspect.currentframe().f_code.co_name
         common.dry_run_task(func_name, bedrock_params)
-
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -237,12 +220,6 @@ def csv_to_tm1_dynamic_executor_task_group(
 
     if not dry_run:
         source_csv_files = glob.glob(f"{bedrock_params.get('source_directory')}/*.csv")
-
-        generate_mapping_data = common.generate_mapping_data_task(
-            tm1_service=tm1_service,
-            shared_mapping=bedrock_params.get('shared_mapping'),
-            mapping_steps=bedrock_params.get('mapping_steps')
-        )
 
         clear_target_cube = common.clear_tm1_cube_task(
             tm1_service=tm1_service,
@@ -273,7 +250,7 @@ def csv_to_tm1_dynamic_executor_task_group(
         ).expand(
             source_csv_file_path=source_csv_files
         )
-        [generate_mapping_data, clear_target_cube] >> execute_slice_csv_to_tm1
+        clear_target_cube >> execute_slice_csv_to_tm1
 
     else:
         func_name = inspect.currentframe().f_code.co_name
@@ -291,12 +268,6 @@ def tm1_to_csv_dynamic_executor_task_group(
     tm1_service = tm1_hook.get_conn()
 
     if not dry_run:
-        generate_mapping_data = common.generate_mapping_data_task(
-            tm1_service=tm1_service,
-            shared_mapping=bedrock_params.get('shared_mapping'),
-            mapping_steps=bedrock_params.get('mapping_steps')
-        )
-
         target_cube_name = utility.get_cube_name_from_mdx(bedrock_params.get('data_mdx_template'))
         target_metadata_obj = common.gather_target_metadata(
             tm1_service=tm1_service,
@@ -322,8 +293,7 @@ def tm1_to_csv_dynamic_executor_task_group(
                 tm1_service=tm1_service, param_set_mdx_list=bedrock_params.get('param_set_mdx_list')
             )
         )
-        generate_mapping_data >> execute_slice_tm1_to_csv
-
+        execute_slice_tm1_to_csv
     else:
         func_name = inspect.currentframe().f_code.co_name
         common.dry_run_task(func_name, bedrock_params)

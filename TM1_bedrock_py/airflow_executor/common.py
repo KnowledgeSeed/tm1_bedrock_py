@@ -117,27 +117,6 @@ def generate_expand_kwargs_task(
     return [dict(zip(param_dict.keys(), values)) for values in product(*param_dict.values())]
 
 
-@task
-def generate_mapping_data_task(
-        tm1_service: Any,
-        mapping_steps: Optional[List[Dict]] = None,
-        shared_mapping: Optional[Dict] = None
-) -> int:
-    if mapping_steps:
-        extractor.generate_step_specific_mapping_dataframes(
-            mapping_steps=mapping_steps,
-            tm1_service=tm1_service,
-        )
-
-    if shared_mapping:
-        extractor.generate_dataframe_for_mapping_info(
-            mapping_info=shared_mapping,
-            tm1_service=tm1_service,
-        )
-
-    return 0
-
-
 def generate_mapping_queries_for_slice(
         mapping_steps: List[Dict],
         shared_mapping: Dict,
