@@ -39,7 +39,8 @@ def data_copy_intercube(
         related_dimensions: Optional[Dict] = None,
         target_dim_mapping: Optional[Dict] = None,
         value_function: Optional[Callable[..., Any]] = None,
-        ignore_missing_elements: bool = False,
+        ignore_missing_elements: Optional[bool] = False,
+        fallback_elements: Optional[Dict] = None,
         clear_target: Optional[bool] = False,
         target_clear_set_mdx_list: Optional[List[str]] = None,
         clear_source: Optional[bool] = False,
@@ -333,13 +334,11 @@ def data_copy_intercube(
     if ignore_missing_elements:
         dimension_check_dfs = target_metadata.get_dimension_check_dfs()
 
-        transformer.dataframe_itemskip_elements(
-            dataframe=dataframe,
-            check_dfs=dimension_check_dfs,
-            logging_enabled=verbose_logging_mode is not None,
-            case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
-            **kwargs
-        )
+        transformer.dataframe_itemskip_elements(dataframe=dataframe, check_dfs=dimension_check_dfs,
+                                                logging_enabled=verbose_logging_mode is not None,
+                                                case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
+                                                fallback_elements=fallback_elements,
+                                                **kwargs)
 
     if dataframe.empty:
         if clear_target:
@@ -917,7 +916,8 @@ def load_sql_data_to_tm1_cube(
         mapping_steps: Optional[List[Dict]] = None,
         shared_mapping: Optional[Dict] = None,
         value_function: Optional[Callable[..., Any]] = None,
-        ignore_missing_elements: bool = False,
+        ignore_missing_elements: Optional[bool] = False,
+        fallback_elements: Optional[Dict] = None,
         target_clear_set_mdx_list: Optional[List[str]] = None,
         clear_target: Optional[bool] = False,
         clear_source: Optional[bool] = False,
@@ -1081,13 +1081,12 @@ def load_sql_data_to_tm1_cube(
     utility.cast_coordinates_to_str(cube_dims, dataframe)
 
     if ignore_missing_elements:
-        transformer.dataframe_itemskip_elements(
-            dataframe=dataframe,
-            check_dfs=target_metadata.get_dimension_check_dfs(),
-            logging_enabled=verbose_logging_mode is not None,
-            case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
-            **kwargs
-        )
+        transformer.dataframe_itemskip_elements(dataframe=dataframe,
+                                                check_dfs=target_metadata.get_dimension_check_dfs(),
+                                                logging_enabled=verbose_logging_mode is not None,
+                                                case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
+                                                fallback_elements=fallback_elements,
+                                                **kwargs)
 
     if dataframe.empty:
         if clear_target:
@@ -1879,7 +1878,8 @@ def load_csv_data_to_tm1_cube(
         mapping_steps: Optional[List[Dict]] = None,
         shared_mapping: Optional[Dict] = None,
         value_function: Optional[Callable[..., Any]] = None,
-        ignore_missing_elements: bool = False,
+        ignore_missing_elements: Optional[bool] = False,
+        fallback_elements: Optional[Dict] = None,
         target_clear_set_mdx_list: Optional[List[str]] = None,
         pre_load_function: Optional[Callable] = None,
         pre_load_args: Optional[List] = None,
@@ -2050,13 +2050,12 @@ def load_csv_data_to_tm1_cube(
     utility.cast_coordinates_to_str(cube_dims, dataframe)
 
     if ignore_missing_elements:
-        transformer.dataframe_itemskip_elements(
-            dataframe=dataframe,
-            check_dfs=target_metadata.get_dimension_check_dfs(),
-            logging_enabled=verbose_logging_mode is not None,
-            case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
-            **kwargs
-        )
+        transformer.dataframe_itemskip_elements(dataframe=dataframe,
+                                                check_dfs=target_metadata.get_dimension_check_dfs(),
+                                                logging_enabled=verbose_logging_mode is not None,
+                                                case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
+                                                fallback_elements=fallback_elements,
+                                                **kwargs)
 
     if dataframe.empty:
         if clear_target:
