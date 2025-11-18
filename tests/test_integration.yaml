@@ -174,6 +174,80 @@ test_data_copy_intercube_for_multiple_steps:
 
     target_cube_name: "Cost and FTE by Groups"
 
+test_data_copy_intercube_for_multiple_steps_with_custom_function:
+  -
+    base_data_mdx:
+      "SELECT {[Groups].[Groups].[Group_1],[Groups].[Groups].[Group_2],[Groups].[Groups].[Group_3],[Groups].[Groups].[Group_4],[Groups].[Groups].[Group_5]} ON COLUMNS , {TM1FILTERBYLEVEL({DRILLDOWNMEMBER({[Employees].[Employees].[Total Employees]}, {[Employees].[Employees].[Total Employees]})}, 0)} ON ROWS FROM [Cost and FTE by Groups] WHERE ( [Periods].[Periods].[202310], [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[Caculated Salary], [Versions].[Versions].[Base Plan], [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value] ) 
+       "
+
+    shared_mapping: {
+      "mapping_mdx":"
+        SELECT
+        {[Groups].[Groups].[Group_1],[Groups].[Groups].[Group_2],[Groups].[Groups].[Group_3],[Groups].[Groups].[Group_4],[Groups].[Groups].[Group_5]}
+        ON COLUMNS ,
+        {[Employees].[Employees].[Employees_1],[Employees].[Employees].[Employees_2],[Employees].[Employees].[Employees_3],[Employees].[Employees].[Employees_4],[Employees].[Employees].[Employees_5],[Employees].[Employees].[Employees_6],[Employees].[Employees].[Employees_7],[Employees].[Employees].[Employees_8],[Employees].[Employees].[Employees_9],[Employees].[Employees].[Employees_10],[Employees].[Employees].[Employees_11],[Employees].[Employees].[Employees_12],[Employees].[Employees].[Employees_13],[Employees].[Employees].[Employees_14],[Employees].[Employees].[Employees_15],[Employees].[Employees].[Employees_16],[Employees].[Employees].[Employees_17],[Employees].[Employees].[Employees_18],[Employees].[Employees].[Employees_19],[Employees].[Employees].[Employees_20],[Employees].[Employees].[Employees_21],[Employees].[Employees].[Employees_22],[Employees].[Employees].[Employees_23],[Employees].[Employees].[Employees_24],[Employees].[Employees].[Employees_25],[Employees].[Employees].[Employees_26],[Employees].[Employees].[Employees_27],[Employees].[Employees].[Employees_28],[Employees].[Employees].[Employees_29],[Employees].[Employees].[Employees_30],[Employees].[Employees].[Employees_31],[Employees].[Employees].[Employees_32],[Employees].[Employees].[Employees_33],[Employees].[Employees].[Employees_34],[Employees].[Employees].[Employees_35],[Employees].[Employees].[Employees_36],[Employees].[Employees].[Employees_37],[Employees].[Employees].[Employees_38],[Employees].[Employees].[Employees_39],[Employees].[Employees].[Employees_40],[Employees].[Employees].[Employees_41],[Employees].[Employees].[Employees_42],[Employees].[Employees].[Employees_43],[Employees].[Employees].[Employees_44],[Employees].[Employees].[Employees_45],[Employees].[Employees].[Employees_46],[Employees].[Employees].[Employees_47],[Employees].[Employees].[Employees_48],[Employees].[Employees].[Employees_49],[Employees].[Employees].[Employees_50]}
+        ON ROWS
+        FROM [Group Employee DataCopy Test]
+        WHERE
+        (
+        [Measures Group Employee].[Measures Group Employee].[Assignment Flag]
+        )"
+    }
+
+    mapping_steps: [
+      {
+        "method":"replace",
+        "mapping":{
+          "Versions":{
+            "Base Plan":"DataCopy Integration Test"
+          }
+        }
+      },
+      {
+        "method":"map_and_replace",
+        "mapping_dimensions":{"Groups":"Groups"},
+      }
+    ]
+
+    target_cube_name: "Cost and FTE by Groups"
+
+test_data_copy_intercube_for_multiple_steps_with_itemskip_fallback:
+  -
+    base_data_mdx:
+      "SELECT {[Groups].[Groups].[Group_1],[Groups].[Groups].[Group_2],[Groups].[Groups].[Group_3],[Groups].[Groups].[Group_4],[Groups].[Groups].[Group_5]} ON COLUMNS , {TM1FILTERBYLEVEL({DRILLDOWNMEMBER({[Employees].[Employees].[Total Employees]}, {[Employees].[Employees].[Total Employees]})}, 0)} ON ROWS FROM [Cost and FTE by Groups] WHERE ( [Periods].[Periods].[202310], [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[Caculated Salary], [Versions].[Versions].[Base Plan], [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value] ) 
+       "
+
+    shared_mapping: {
+      "mapping_mdx":"
+        SELECT
+        {[Groups].[Groups].[Group_1],[Groups].[Groups].[Group_2],[Groups].[Groups].[Group_3],[Groups].[Groups].[Group_4],[Groups].[Groups].[Group_5]}
+        ON COLUMNS ,
+        {[Employees].[Employees].[Employees_1],[Employees].[Employees].[Employees_2],[Employees].[Employees].[Employees_3],[Employees].[Employees].[Employees_4],[Employees].[Employees].[Employees_5],[Employees].[Employees].[Employees_6],[Employees].[Employees].[Employees_7],[Employees].[Employees].[Employees_8],[Employees].[Employees].[Employees_9],[Employees].[Employees].[Employees_10],[Employees].[Employees].[Employees_11],[Employees].[Employees].[Employees_12],[Employees].[Employees].[Employees_13],[Employees].[Employees].[Employees_14],[Employees].[Employees].[Employees_15],[Employees].[Employees].[Employees_16],[Employees].[Employees].[Employees_17],[Employees].[Employees].[Employees_18],[Employees].[Employees].[Employees_19],[Employees].[Employees].[Employees_20],[Employees].[Employees].[Employees_21],[Employees].[Employees].[Employees_22],[Employees].[Employees].[Employees_23],[Employees].[Employees].[Employees_24],[Employees].[Employees].[Employees_25],[Employees].[Employees].[Employees_26],[Employees].[Employees].[Employees_27],[Employees].[Employees].[Employees_28],[Employees].[Employees].[Employees_29],[Employees].[Employees].[Employees_30],[Employees].[Employees].[Employees_31],[Employees].[Employees].[Employees_32],[Employees].[Employees].[Employees_33],[Employees].[Employees].[Employees_34],[Employees].[Employees].[Employees_35],[Employees].[Employees].[Employees_36],[Employees].[Employees].[Employees_37],[Employees].[Employees].[Employees_38],[Employees].[Employees].[Employees_39],[Employees].[Employees].[Employees_40],[Employees].[Employees].[Employees_41],[Employees].[Employees].[Employees_42],[Employees].[Employees].[Employees_43],[Employees].[Employees].[Employees_44],[Employees].[Employees].[Employees_45],[Employees].[Employees].[Employees_46],[Employees].[Employees].[Employees_47],[Employees].[Employees].[Employees_48],[Employees].[Employees].[Employees_49],[Employees].[Employees].[Employees_50]}
+        ON ROWS
+        FROM [Group Employee DataCopy Test]
+        WHERE
+        (
+        [Measures Group Employee].[Measures Group Employee].[Assignment Flag]
+        )"
+    }
+
+    mapping_steps: [
+      {
+        "method": "map_and_replace",
+        "mapping_dimensions": { "Groups": "Groups" },
+      },
+      {
+        "method":"replace",
+        "mapping":{
+          "Versions":{
+            "Base Plan":"DataCopy Integration Test (invalid)"
+          }
+        }
+      }
+    ]
+
+    target_cube_name: "Cost and FTE by Groups"
+
 test_data_copy_intercube_for_multiple_steps_with_lazy_input:
   -
     base_data_mdx:
