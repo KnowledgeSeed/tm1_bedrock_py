@@ -1756,3 +1756,297 @@ test_dataframe_to_csv_build_dataframe_form_mdx_fail:
            [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[FTE],
            [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
           )"
+
+test_generate_mapping_queries_for_slice:
+  -
+    kwargs: { "Periods": "202202", "Versions": "Actual" }
+    ms:
+      - mapping_mdx_template: |
+          SELECT
+          {[Periods].[Periods].[$Periods]}
+          ON COLUMNS,
+          {[Versions].[Versions].[$Versions]}
+          FROM [CubeName]
+    sm: null
+    expected_ms:
+      - mapping_mdx_template: |
+          SELECT
+          {[Periods].[Periods].[$Periods]}
+          ON COLUMNS,
+          {[Versions].[Versions].[$Versions]}
+          FROM [CubeName]
+        mapping_mdx: |
+          SELECT
+          {[Periods].[Periods].[202202]}
+          ON COLUMNS,
+          {[Versions].[Versions].[Actual]}
+          FROM [CubeName]
+    expected_sm: null
+  -
+    kwargs: { "Periods": "202202", "Versions": "Actual" }
+    ms:
+      - mapping_sql_template: |
+          select
+              [Versions],
+              [Periods],
+              [Key Account Managers],
+              [Business Partners],
+              [Measures Key Account Manager to Business Partner],
+              [Value]
+          from [PlanData].[dbo].[IFL_FACT_RESTATED_KAM_TO_BP]
+          where [Periods] = $Periods and [Versions] = '$Versions'
+          and [Key Account Managers] <> 'legacy k' and [Key Account Managers] is not null
+          and [Business Partners] is not null
+    sm: null
+    expected_ms:
+      - mapping_sql_template: |
+          select
+              [Versions],
+              [Periods],
+              [Key Account Managers],
+              [Business Partners],
+              [Measures Key Account Manager to Business Partner],
+              [Value]
+          from [PlanData].[dbo].[IFL_FACT_RESTATED_KAM_TO_BP]
+          where [Periods] = $Periods and [Versions] = '$Versions'
+          and [Key Account Managers] <> 'legacy k' and [Key Account Managers] is not null
+          and [Business Partners] is not null
+        mapping_sql_query: |
+          select
+              [Versions],
+              [Periods],
+              [Key Account Managers],
+              [Business Partners],
+              [Measures Key Account Manager to Business Partner],
+              [Value]
+          from [PlanData].[dbo].[IFL_FACT_RESTATED_KAM_TO_BP]
+          where [Periods] = 202202 and [Versions] = 'Actual'
+          and [Key Account Managers] <> 'legacy k' and [Key Account Managers] is not null
+          and [Business Partners] is not null
+    expected_sm: null
+  -
+    kwargs: {"Periods": "202202", "Versions": "Actual"}
+    ms:
+      -
+        mapping_mdx_template: |
+          SELECT
+          {[Periods].[Periods].[$Periods]}
+          ON COLUMNS,
+          {[Versions].[Versions].[$Versions]}
+          FROM [CubeName]
+      -
+        mapping_sql_template: |
+          select
+              [Versions],
+              [Periods],
+              [Key Account Managers],
+              [Business Partners],
+              [Measures Key Account Manager to Business Partner],
+              [Value]
+          from [PlanData].[dbo].[IFL_FACT_RESTATED_KAM_TO_BP]
+          where [Periods] = $Periods and [Versions] = '$Versions'
+          and [Key Account Managers] <> 'legacy k' and [Key Account Managers] is not null
+          and [Business Partners] is not null
+    sm: null
+    expected_ms:
+      -
+        mapping_mdx_template: |
+          SELECT
+          {[Periods].[Periods].[$Periods]}
+          ON COLUMNS,
+          {[Versions].[Versions].[$Versions]}
+          FROM [CubeName]
+        mapping_mdx: |
+          SELECT
+          {[Periods].[Periods].[202202]}
+          ON COLUMNS,
+          {[Versions].[Versions].[Actual]}
+          FROM [CubeName]
+      -
+        mapping_sql_template: |
+          select
+              [Versions],
+              [Periods],
+              [Key Account Managers],
+              [Business Partners],
+              [Measures Key Account Manager to Business Partner],
+              [Value]
+          from [PlanData].[dbo].[IFL_FACT_RESTATED_KAM_TO_BP]
+          where [Periods] = $Periods and [Versions] = '$Versions'
+          and [Key Account Managers] <> 'legacy k' and [Key Account Managers] is not null
+          and [Business Partners] is not null
+        mapping_sql_query: |
+          select
+              [Versions],
+              [Periods],
+              [Key Account Managers],
+              [Business Partners],
+              [Measures Key Account Manager to Business Partner],
+              [Value]
+          from [PlanData].[dbo].[IFL_FACT_RESTATED_KAM_TO_BP]
+          where [Periods] = 202202 and [Versions] = 'Actual'
+          and [Key Account Managers] <> 'legacy k' and [Key Account Managers] is not null
+          and [Business Partners] is not null
+    expected_sm: null
+  -
+    kwargs: {"Periods": "202202", "Versions": "Actual"}
+    ms: null
+    sm: null
+    expected_ms: null
+    expected_sm: null
+  -
+    kwargs: { "Periods": "202202", "Versions": "Actual" }
+    ms: null
+    sm:
+      mapping_mdx_template: |
+        SELECT
+        {[Periods].[Periods].[$Periods]}
+        ON COLUMNS,
+        {[Versions].[Versions].[$Versions]}
+        FROM [CubeName]
+
+    expected_ms: null
+    expected_sm:
+      mapping_mdx_template: |
+        SELECT
+        {[Periods].[Periods].[$Periods]}
+        ON COLUMNS,
+        {[Versions].[Versions].[$Versions]}
+        FROM [CubeName]
+
+      mapping_mdx: |
+        SELECT
+        {[Periods].[Periods].[202202]}
+        ON COLUMNS,
+        {[Versions].[Versions].[Actual]}
+        FROM [CubeName]
+
+  -
+    kwargs: { "Periods": "202202", "Versions": "Actual" }
+    ms:
+      - mapping_mdx_template: |
+          SELECT
+          {[Periods].[Periods].[$Periods]}
+          ON COLUMNS,
+          {[Versions].[Versions].[$Versions]}
+          FROM [CubeName]
+
+      - mapping_sql_template: |
+          select
+              [Versions],
+              [Periods],
+              [Key Account Managers],
+              [Business Partners],
+              [Measures Key Account Manager to Business Partner],
+              [Value]
+          from [PlanData].[dbo].[IFL_FACT_RESTATED_KAM_TO_BP]
+          where [Periods] = $Periods and [Versions] = '$Versions'
+          and [Key Account Managers] <> 'legacy k' and [Key Account Managers] is not null
+          and [Business Partners] is not null
+
+    sm:
+      mapping_mdx_template: |
+        SELECT
+        {[Periods].[Periods].[$Periods]}
+        ON COLUMNS,
+        {[Versions].[Versions].[$Versions]}
+        FROM [CubeName]
+
+    expected_ms:
+      - mapping_mdx_template: |
+          SELECT
+          {[Periods].[Periods].[$Periods]}
+          ON COLUMNS,
+          {[Versions].[Versions].[$Versions]}
+          FROM [CubeName]
+
+        mapping_mdx: |
+          SELECT
+          {[Periods].[Periods].[202202]}
+          ON COLUMNS,
+          {[Versions].[Versions].[Actual]}
+          FROM [CubeName]
+
+      - mapping_sql_template: |
+          select
+              [Versions],
+              [Periods],
+              [Key Account Managers],
+              [Business Partners],
+              [Measures Key Account Manager to Business Partner],
+              [Value]
+          from [PlanData].[dbo].[IFL_FACT_RESTATED_KAM_TO_BP]
+          where [Periods] = $Periods and [Versions] = '$Versions'
+          and [Key Account Managers] <> 'legacy k' and [Key Account Managers] is not null
+          and [Business Partners] is not null
+
+        mapping_sql_query: |
+          select
+              [Versions],
+              [Periods],
+              [Key Account Managers],
+              [Business Partners],
+              [Measures Key Account Manager to Business Partner],
+              [Value]
+          from [PlanData].[dbo].[IFL_FACT_RESTATED_KAM_TO_BP]
+          where [Periods] = 202202 and [Versions] = 'Actual'
+          and [Key Account Managers] <> 'legacy k' and [Key Account Managers] is not null
+          and [Business Partners] is not null
+
+    expected_sm:
+      mapping_mdx_template: |
+        SELECT
+        {[Periods].[Periods].[$Periods]}
+        ON COLUMNS,
+        {[Versions].[Versions].[$Versions]}
+        FROM [CubeName]
+
+      mapping_mdx: |
+        SELECT
+        {[Periods].[Periods].[202202]}
+        ON COLUMNS,
+        {[Versions].[Versions].[Actual]}
+        FROM [CubeName]
+
+  -
+    kwargs: { "Periods": "202202", "Versions": "Actual" }
+    ms:
+      - mapping_sql_template: |
+          select
+              [Versions],
+              [Periods],
+              [Key Account Managers],
+              [Business Partners],
+              [Measures Key Account Manager to Business Partner],
+              [Value]
+          from [PlanData].[dbo].[IFL_FACT_RESTATED_KAM_TO_BP]
+          where [Periods] = $Periods
+          and [Key Account Managers] <> 'legacy k' and [Key Account Managers] is not null
+          and [Business Partners] is not null
+    sm: null
+    expected_ms:
+      - mapping_sql_template: |
+          select
+              [Versions],
+              [Periods],
+              [Key Account Managers],
+              [Business Partners],
+              [Measures Key Account Manager to Business Partner],
+              [Value]
+          from [PlanData].[dbo].[IFL_FACT_RESTATED_KAM_TO_BP]
+          where [Periods] = $Periods
+          and [Key Account Managers] <> 'legacy k' and [Key Account Managers] is not null
+          and [Business Partners] is not null
+        mapping_sql_query: |
+          select
+              [Versions],
+              [Periods],
+              [Key Account Managers],
+              [Business Partners],
+              [Measures Key Account Manager to Business Partner],
+              [Value]
+          from [PlanData].[dbo].[IFL_FACT_RESTATED_KAM_TO_BP]
+          where [Periods] = 202202
+          and [Key Account Managers] <> 'legacy k' and [Key Account Managers] is not null
+          and [Business Partners] is not null
+    expected_sm: null
