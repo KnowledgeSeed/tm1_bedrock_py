@@ -11,7 +11,7 @@ from typing import Callable, List, Dict, Optional, Any, Sequence, Hashable, Mapp
 
 from TM1py.Exceptions import TM1pyRestException
 from requests.cookies import CookieConflictError
-from pandas import DataFrame, to_numeric, notna
+from pandas import DataFrame
 
 from TM1_bedrock_py import utility, transformer, loader, extractor, basic_logger
 
@@ -44,6 +44,9 @@ def data_copy_intercube(
         target_clear_set_mdx_list: Optional[List[str]] = None,
         clear_source: Optional[bool] = False,
         source_clear_set_mdx_list: Optional[List[str]] = None,
+        pre_load_function: Optional[Callable] = None,
+        pre_load_args: Optional[List] = None,
+        pre_load_kwargs: Optional[Dict] = None,
         async_write: Optional[bool] = False,
         slice_size_of_dataframe: Optional[int] = 50000,
         use_ti: Optional[bool] = False,
@@ -370,6 +373,14 @@ def data_copy_intercube(
         **kwargs
     )
 
+    if pre_load_function is not None:
+        if pre_load_args is None:
+            pre_load_args = []
+        if pre_load_kwargs is None:
+            pre_load_kwargs = {}
+
+        dataframe = pre_load_function(dataframe, *pre_load_args, **pre_load_kwargs)
+
     loader.dataframe_to_cube(
         tm1_service=target_tm1_service,
         dataframe=dataframe,
@@ -414,6 +425,9 @@ def data_copy(
         value_function: Optional[Callable[..., Any]] = None,
         target_clear_set_mdx_list: Optional[List[str]] = None,
         clear_target: Optional[bool] = False,
+        pre_load_function: Optional[Callable] = None,
+        pre_load_args: Optional[List] = None,
+        pre_load_kwargs: Optional[Dict] = None,
         async_write: bool = False,
         slice_size_of_dataframe: int = 50000,
         use_ti: bool = False,
@@ -682,6 +696,14 @@ def data_copy(
         **kwargs
     )
 
+    if pre_load_function is not None:
+        if pre_load_args is None:
+            pre_load_args = []
+        if pre_load_kwargs is None:
+            pre_load_kwargs = {}
+
+        dataframe = pre_load_function(dataframe, *pre_load_args, **pre_load_kwargs)
+
     loader.dataframe_to_cube(
         tm1_service=target_tm1_service,
         dataframe=dataframe,
@@ -900,6 +922,9 @@ def load_sql_data_to_tm1_cube(
         clear_target: Optional[bool] = False,
         clear_source: Optional[bool] = False,
         sql_delete_statement: Optional[List[str]] = None,
+        pre_load_function: Optional[Callable] = None,
+        pre_load_args: Optional[List] = None,
+        pre_load_kwargs: Optional[Dict] = None,
         async_write: bool = False,
         slice_size_of_dataframe: int = 250000,
         use_ti: bool = False,
@@ -1138,6 +1163,14 @@ def load_sql_data_to_tm1_cube(
         **kwargs
     )
 
+    if pre_load_function is not None:
+        if pre_load_args is None:
+            pre_load_args = []
+        if pre_load_kwargs is None:
+            pre_load_kwargs = {}
+
+        dataframe = pre_load_function(dataframe, *pre_load_args, **pre_load_kwargs)
+
     loader.dataframe_to_cube(
         tm1_service=tm1_service,
         dataframe=dataframe,
@@ -1187,6 +1220,9 @@ def load_tm1_cube_to_sql_table(
         sql_delete_statement: Optional[str] = None,
         clear_source: Optional[bool] = False,
         source_clear_set_mdx_list: Optional[List[str]] = None,
+        pre_load_function: Optional[Callable] = None,
+        pre_load_args: Optional[List] = None,
+        pre_load_kwargs: Optional[Dict] = None,
         dtype: Optional[dict] = None,
         decimal: Optional[str] = None,
         logging_level: str = "ERROR",
@@ -1397,6 +1433,14 @@ def load_tm1_cube_to_sql_table(
         verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
+
+    if pre_load_function is not None:
+        if pre_load_args is None:
+            pre_load_args = []
+        if pre_load_kwargs is None:
+            pre_load_kwargs = {}
+
+        dataframe = pre_load_function(dataframe, *pre_load_args, **pre_load_kwargs)
 
     loader.dataframe_to_sql(
         dataframe=dataframe,
@@ -1837,6 +1881,9 @@ def load_csv_data_to_tm1_cube(
         value_function: Optional[Callable[..., Any]] = None,
         ignore_missing_elements: bool = False,
         target_clear_set_mdx_list: Optional[List[str]] = None,
+        pre_load_function: Optional[Callable] = None,
+        pre_load_args: Optional[List] = None,
+        pre_load_kwargs: Optional[Dict] = None,
         async_write: bool = False,
         use_ti: bool = False,
         increment: bool = False,
@@ -2086,6 +2133,14 @@ def load_csv_data_to_tm1_cube(
         **kwargs
     )
 
+    if pre_load_function is not None:
+        if pre_load_args is None:
+            pre_load_args = []
+        if pre_load_kwargs is None:
+            pre_load_kwargs = {}
+
+        dataframe = pre_load_function(dataframe, *pre_load_args, **pre_load_kwargs)
+
     loader.dataframe_to_cube(
         tm1_service=tm1_service,
         dataframe=dataframe,
@@ -2134,6 +2189,9 @@ def load_tm1_cube_to_csv_file(
         value_function: Optional[Callable[..., Any]] = None,
         clear_source: Optional[bool] = False,
         source_clear_set_mdx_list: Optional[List[str]] = None,
+        pre_load_function: Optional[Callable] = None,
+        pre_load_args: Optional[List] = None,
+        pre_load_kwargs: Optional[Dict] = None,
         logging_level: str = "ERROR",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
@@ -2318,6 +2376,14 @@ def load_tm1_cube_to_csv_file(
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
         target_csv_file_name = f"{source_cube_name}_{timestamp}.csv"
+
+    if pre_load_function is not None:
+        if pre_load_args is None:
+            pre_load_args = []
+        if pre_load_kwargs is None:
+            pre_load_kwargs = {}
+
+        dataframe = pre_load_function(dataframe, *pre_load_args, **pre_load_kwargs)
 
     loader.dataframe_to_csv(
         dataframe=dataframe,
