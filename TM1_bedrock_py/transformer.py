@@ -432,11 +432,12 @@ def normalize_table_source_dataframe(
 
 @utility.log_exec_metrics
 def dataframe_itemskip_elements(
-    dataframe: pd.DataFrame,
-    check_dfs: list[pd.DataFrame],
-    logging_enabled: Optional[bool] = False,
-    case_and_space_insensitive_inputs: Optional[bool] = False,
-    **_kwargs
+        dataframe: pd.DataFrame,
+        check_dfs: list[pd.DataFrame],
+        fallback_elements: Optional[Dict] = None,
+        logging_enabled: Optional[bool] = False,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
+        **_kwargs
 ) -> None:
     """
     Filters the given dataframe *in place* to keep only rows whose coordinate
@@ -463,21 +464,32 @@ def dataframe_itemskip_elements(
     - Operates in place (modifies `dataframe` directly).
     - Uses fast hash lookups (O(n + m) complexity per dimension).
     """
+    if fallback_elements is None:
+        fallback_elements = {}
+
     if case_and_space_insensitive_inputs:
         utility.normalize_dataframe_strings(dataframe)
         check_dfs = utility.normalize_structure_strings(check_dfs)
+        fallback_elements = utility.normalize_structure_strings(fallback_elements)
 
     mask = np.ones(len(dataframe), dtype=bool)
 
     for df_check in check_dfs:
         col = df_check.columns[0]
         valid_set = set(df_check[col])
+
         current_col_mask = dataframe[col].isin(valid_set).to_numpy()
-        mask &= current_col_mask
 
         if logging_enabled:
             invalid_rows = dataframe.loc[~current_col_mask, [col]].copy()
-            basic_logger.debug(invalid_rows )
+            basic_logger.debug(invalid_rows)
+
+        if col in fallback_elements:
+            default_element = fallback_elements[col]
+            dataframe.loc[~current_col_mask, [col]] = default_element
+            basic_logger.debug("Invalid elements in dimension " + col + " changed to " + default_element)
+        else:
+            mask &= current_col_mask
 
     invalid_total = np.count_nonzero(~mask)
     basic_logger.debug(f"Total dropped rows: {invalid_total}")

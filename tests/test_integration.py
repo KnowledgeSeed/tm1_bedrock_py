@@ -137,6 +137,63 @@ def test_data_copy_intercube_for_multiple_steps(
 
 
 @parametrize_from_file
+def test_data_copy_intercube_for_multiple_steps_with_custom_function(
+        tm1_connection_factory, base_data_mdx, shared_mapping, mapping_steps, target_cube_name
+):
+    def do_nothing(df: pd.DataFrame, arg1: int, arg2: int, kwarg1: int, kwarg2: int) -> pd.DataFrame:
+        arg_kwarg_sum = arg1 + arg2 + kwarg1 + kwarg2
+        print(str(arg_kwarg_sum))
+        return df
+
+    do_nothing_args = [1, 2]
+    do_nothing_kwargs = {"kwarg1": 3, "kwarg2": 4}
+
+    with tm1_connection_factory("tm1srv") as conn:
+        bedrock.data_copy_intercube(
+            tm1_service=conn,
+            shared_mapping=shared_mapping,
+            target_cube_name=target_cube_name,
+            data_mdx=base_data_mdx,
+            mapping_steps=mapping_steps,
+            clear_target=True,
+            target_clear_set_mdx_list=["{[Versions].[Versions].[DataCopy Integration Test]}"],
+            skip_zeros=True,
+            pre_load_function=do_nothing,
+            pre_load_args=do_nothing_args,
+            pre_load_kwargs=do_nothing_kwargs,
+            async_write=True,
+            slice_size_of_dataframe=2,
+            use_blob=True,
+            logging_level="DEBUG",
+
+        )
+
+
+@parametrize_from_file
+def test_data_copy_intercube_for_multiple_steps_with_itemskip_fallback(
+        tm1_connection_factory, base_data_mdx, shared_mapping, mapping_steps, target_cube_name
+):
+    with tm1_connection_factory("tm1srv") as conn:
+        bedrock.data_copy_intercube(
+            tm1_service=conn,
+            shared_mapping=shared_mapping,
+            target_cube_name=target_cube_name,
+            data_mdx=base_data_mdx,
+            mapping_steps=mapping_steps,
+            clear_target=True,
+            target_clear_set_mdx_list=["{[Versions].[Versions].[DataCopy Integration Test]}"],
+            skip_zeros=True,
+            ignore_missing_elements=True,
+            fallback_elements={"Versions": "DataCopy Integration Test"},
+            async_write=True,
+            slice_size_of_dataframe=2,
+            use_blob=True,
+            logging_level="DEBUG",
+            #verbose_logging_mode="print_console"
+        )
+
+
+@parametrize_from_file
 def test_async_data_copy_intercube(
         tm1_connection_factory, param_set_mdx_list, data_mdx_template, target_clear_set_mdx_list,
         target_cube_name, shared_mapping, mapping_steps

@@ -9,6 +9,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
 from TM1_bedrock_py import extractor, transformer, utility, loader
+from TM1_bedrock_py.airflow_executor import common as airflow_common
 from tests.config import tm1_connection_factory, sql_engine_factory
 
 EXCEPTION_MAP = {
@@ -489,12 +490,12 @@ def test_dataframe_value_scale(dataframe, expected_dataframe):
 
 
 @parametrize_from_file
-def test_dataframe_itemskip_elements(source, check1, check2, expected):
+def test_dataframe_itemskip_elements(source, check1, check2, defaults, expected):
     utility.set_logging_level("DEBUG")
     df = pd.DataFrame(source)
     check_dfs = [pd.DataFrame(check1), pd.DataFrame(check2)]
     expected_df = pd.DataFrame(expected)
-    transformer.dataframe_itemskip_elements(dataframe=df, check_dfs=check_dfs, logging_level="DEBUG")
+    transformer.dataframe_itemskip_elements(dataframe=df, check_dfs=check_dfs, fallback_elements=defaults)
     pd.testing.assert_frame_equal(df, expected_df)
 
 
@@ -786,5 +787,15 @@ def test_dataframe_to_csv_build_dataframe_form_mdx_fail(tm1_connection_factory, 
 
 
 # ------------------------------------------------------------------------------------------------------------
-# Main: tests for input processes
+# Main: tests for airflow executor common functions
 # ------------------------------------------------------------------------------------------------------------
+
+
+@parametrize_from_file
+def test_generate_mapping_queries_for_slice(kwargs, ms, sm, expected_ms, expected_sm):
+    output_ms, output_sm = airflow_common.generate_mapping_queries_for_slice(
+        expand_kwargs=kwargs,
+        mapping_steps=ms,
+        shared_mapping=sm
+    )
+    assert (output_ms, output_sm) == (expected_ms, expected_sm)
