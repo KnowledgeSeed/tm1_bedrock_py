@@ -434,6 +434,7 @@ def normalize_table_source_dataframe(
 def dataframe_itemskip_elements(
     dataframe: pd.DataFrame,
     check_dfs: list[pd.DataFrame],
+    default_elements: Optional[Dict] = None,
     logging_enabled: Optional[bool] = False,
     case_and_space_insensitive_inputs: Optional[bool] = False,
     **_kwargs
@@ -463,21 +464,32 @@ def dataframe_itemskip_elements(
     - Operates in place (modifies `dataframe` directly).
     - Uses fast hash lookups (O(n + m) complexity per dimension).
     """
+    if default_elements is None:
+        default_elements = {}
+
     if case_and_space_insensitive_inputs:
         utility.normalize_dataframe_strings(dataframe)
         check_dfs = utility.normalize_structure_strings(check_dfs)
+        default_elements = utility.normalize_structure_strings(default_elements)
 
     mask = np.ones(len(dataframe), dtype=bool)
 
     for df_check in check_dfs:
         col = df_check.columns[0]
         valid_set = set(df_check[col])
+
         current_col_mask = dataframe[col].isin(valid_set).to_numpy()
-        mask &= current_col_mask
 
         if logging_enabled:
             invalid_rows = dataframe.loc[~current_col_mask, [col]].copy()
-            basic_logger.debug(invalid_rows )
+            basic_logger.debug(invalid_rows)
+
+        if col in default_elements:
+            default_element = default_elements[col]
+            dataframe.loc[~current_col_mask, [col]] = default_element
+            basic_logger.debug("Invalid elements in dimension " + col + " changed to " + default_element)
+        else:
+            mask &= current_col_mask
 
     invalid_total = np.count_nonzero(~mask)
     basic_logger.debug(f"Total dropped rows: {invalid_total}")

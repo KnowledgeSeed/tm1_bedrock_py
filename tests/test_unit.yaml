@@ -1275,10 +1275,25 @@ test_dataframe_itemskip_elements:
     }
     check1: {"A": ["apple", "cherry"]}
     check2: {"B": ["x", "y"]}
+    defaults: {}
     expected: {
       "A": [ "apple" ],
       "B": [ "x" ],
       "Value": [ 10 ]
+    }
+  -
+    source: {
+      "A": [ "apple", "banana", "cherry", "date" ],
+      "B": [ "x", "y", "z", "w" ],
+      "Value": [ 10, 20, 30, 40 ]
+    }
+    check1: { "A": [ "apple", "cherry" ] }
+    check2: { "B": [ "x", "y" ] }
+    defaults: {"A": "default_elem"}
+    expected: {
+      "A": [ "apple", "default_elem" ],
+      "B": [ "x", "y" ],
+      "Value": [ 10, 20 ]
     }
 
 test_dataframe_validate_datatypes:
