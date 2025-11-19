@@ -130,7 +130,7 @@ def set_logging_level(logging_level: str):
 
 
 # ------------------------------------------------------------------------------------------------------------
-# Utility: MDX query parsing functions
+# Utility: set and view mdx related helpers
 # ------------------------------------------------------------------------------------------------------------
 
 
@@ -472,9 +472,6 @@ def extract_mdx_components(mdx: str) -> List[str]:
     def extract_select_part(input_mdx: str):
         mdx_clean = input_mdx
 
-        # -------------------
-        # 1. Extract everything between SELECT and FROM
-        # -------------------
         select_match = re.search(r"SELECT\s+(.*?)\s+FROM", mdx_clean, re.IGNORECASE | re.DOTALL)
         if not select_match:
             raise ValueError("No SELECT ... FROM clause found")
@@ -488,7 +485,6 @@ def extract_mdx_components(mdx: str) -> List[str]:
 
         axes = []
         for item in axes_raw:
-            # Remove trailing whitespace
             item_clean = item.strip()
             if item_clean.upper() not in ("ON COLUMNS", "ON ROWS") and item_clean.upper()[:3] != "ON ":
                 axes.extend([p.strip() for p in item_clean.split('*') if p.strip()])
@@ -522,6 +518,94 @@ def extract_mdx_components(mdx: str) -> List[str]:
     set_mdx_list = extract_select_part(cleaned_mdx) + extract_where_part(cleaned_mdx)
     set_mdx_list = ["{" + re.sub(r"\s+", "", item) + "}" for item in set_mdx_list]
     return set_mdx_list
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Utility: locale related helpers
+# ------------------------------------------------------------------------------------------------------------
+
+
+def get_local_decimal_separator() -> str:
+    locale.getlocale()
+    return locale.localeconv()['decimal_point']
+
+
+def get_local_regex_separator() -> str:
+    """Detects the CSV separator based on the system's locale settings with cross-platform support."""
+    try:
+        locale.setlocale(locale.LC_ALL, "")
+        decimal_sep = get_local_decimal_separator()
+
+        csv_sep = ";" if decimal_sep == "," else ","
+
+        return csv_sep
+    except Exception as e:
+        basic_logger.info(f"Warning: Unable to detect locale settings ({e}). Defaulting to comma (',').")
+        return ","
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Utility: sql extraction related helpers
+# ------------------------------------------------------------------------------------------------------------
+
+
+def create_sql_engine(
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        connection_type: Optional[str] = None,
+        connection_string: Optional[str] = None,
+        host: Optional[str] = "localhost",
+        port: Optional[str] = None,
+        mssql_driver: Optional[str] = "ODBC+Driver+17+for+SQL+Server",
+        sqlite_file_path: Optional[str] = None,
+        oracle_sid: Optional[str] = None,
+        database: Optional[str] = None,
+        **kwargs
+) -> Any:
+    """ So far tested for mssql and postgresql connections. Expected to be extended in the future. """
+    connection_strings = {
+        'mssql': f"mssql+pyodbc://{username}:{password}@{host}:{port}/{database}?driver={mssql_driver}&TrustServerCertificate=yes&fast_executemany=true",
+        'postgresql': f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}",
+        #'sqlite': f"sqlite:///{sqlite_file_path}",
+        #'mysql': f"mysql+mysqlconnector://{username}:{password}@{host}:{port}/{database}",
+        #'mariadb': f"mariadb+mariadbconnector://{username}:{password}@{host}:{port}/{database}",
+        #'oracle': f"oracle+cx_oracle://{username}:{password}@{host}:{port}/{oracle_sid}",
+        #'ibmdb2': f"ibm_db_sa://{username}:{password}@{host}:{port}/{database}",
+        #'sqlite_inmemory': "sqlite:///:memory:",
+        #'firebird': f"firebird+fdb://{username}:{password}@{host}:{port}/{database}",
+    }
+    if connection_type and not connection_string:
+        connection_string = connection_strings.get(connection_type)
+        if 'mssql' in connection_string:
+            return create_engine(connection_string, fast_executemany=True)
+    return create_engine(connection_string)
+
+
+def inspect_table(engine: Any, table_name: str, schema: Optional[str]=None) -> dict:
+    return inspect(engine).get_columns(table_name=table_name, schema=schema)
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Utility: ignore missing elements related helpers
+# ------------------------------------------------------------------------------------------------------------
+
+
+@log_exec_metrics
+def all_leaves_identifiers_to_dataframe(
+        tm1_service: Any, dimension_name: [str], hierarchy_name: Optional[str] = None
+) -> DataFrame:
+    # caseandspaceinsensitiveset datastruct to dataframe
+    if not hierarchy_name:
+        hierarchy_name = dimension_name
+    dataset = tm1_service.elements.get_all_leaf_element_identifiers(
+        dimension_name=dimension_name, hierarchy_name=hierarchy_name
+    )
+    return DataFrame({dimension_name: list(dataset)})
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Utility: dataframe normalization for case and space insensitive inputs
+# ------------------------------------------------------------------------------------------------------------
 
 
 def normalize_string(input_string: str) -> str:
@@ -759,314 +843,3 @@ class TM1CubeObjectMetadata:
             metadata[cls._DIM_CHECK_DFS].append(
                 all_leaves_identifiers_to_dataframe(tm1_service=tm1_service, dimension_name=dimension)
             )
-
-
-# ------------------------------------------------------------------------------------------------------------
-# Utility: DataFrame validation functions
-# ------------------------------------------------------------------------------------------------------------
-
-
-def validate_dataframe_columns(
-        dataframe: DataFrame,
-        cube_name: str,
-        metadata_function: Optional[Callable[..., Any]] = None,
-        **kwargs: Any
-) -> bool:
-    """
-    Collects the column labels from the DataFrame and compares them with the column labels collected from the Metadata
-    based on a cube_name or metadata_function.
-    Compares them as lists to check for matching label names and order.
-
-    Args:
-        dataframe: (DataFrame): The DataFrame to validate.
-        cube_name: (srt): The name of the Cube.
-        metadata_function: (Optional[Callable]): A function to collect metadata for validation.
-                                                 If None, a default function is used.
-        **kwargs: (Any): Additional keyword arguments passed to the function.
-    Returns:
-        boolean: True if the column label names and their order in the input DataFrame match the column labels
-                 of the Metadata. False if the column labels or their order does not match.
-    """
-
-    metadata = TM1CubeObjectMetadata.collect(metadata_function=metadata_function, cube_name=cube_name, **kwargs)
-    dimensions_from_metadata = metadata.get_cube_dims()
-    dimensions_from_dataframe = list(map(str, dataframe.keys()))
-    dimensions_from_dataframe.remove("Value")
-
-    return dimensions_from_metadata == dimensions_from_dataframe
-
-
-def validate_dataframe_values_for_na(dataframe: DataFrame) -> bool:
-    """
-    Checks if the DataFrame rows contain NaN values in the "Value" column
-
-    Args:
-        dataframe: (DataFrame): The DataFrame to check for NaN values.
-    Returns:
-         boolean: True if the DataFrame does not contain NaN values.
-                  False if it does.
-    """
-
-    return not dataframe["Value"].isna().values.any()
-
-
-def validate_dataframe_no_duplicates(dataframe: DataFrame) -> bool:
-    """
-    Checks if the DataFrame rows contain duplicate values for validating the DataFrame.
-
-    Args:
-        dataframe: (DataFrame): The DataFrame to check for duplicate values.
-    Returns:
-         boolean: True if the DataFrame does not contain duplicate values.
-                  False if it does.
-    """
-    return not dataframe.duplicated(keep=False).any()
-
-
-def validate_dataframe_rows(dataframe: DataFrame) -> bool:
-    """
-    Checks if the DataFrame rows are valid. A row is valid if it does not contain duplicate or NaN values.
-
-    Args:
-        dataframe: (DataFrame): The DataFrame to check for duplicate and NaN values.
-    Returns:
-        boolean: True if the DataFrame does not contain duplicate or NaN values.
-                 False if it does contain either.
-    """
-    return (validate_dataframe_values_for_na(dataframe=dataframe)
-            and validate_dataframe_no_duplicates(dataframe=dataframe))
-
-
-def validate_dataframe_for_cube_objects(
-        dataframe: DataFrame,
-        cube_name: str,
-        metadata_function: Optional[Callable[..., Any]] = None,
-        **kwargs: Any
-) -> bool:
-    """
-    Calls the validate_dataframe_rows() and validate_dataframe_columns() functions and returns only returns True if both
-    conditions are met.
-
-    Args:
-        dataframe: (DataFrame): The DataFrame to validate.
-        cube_name: (srt): The name of the Cube.
-        metadata_function: (Optional[Callable]): A function to collect metadata for validation.
-                                                 If None, a default function is used.
-        **kwargs: (Any): Additional keyword arguments passed to the function.
-    Returns:
-        boolean: True if all conditions are met.
-                 False if any of the called functions returned False.
-    """
-    return (validate_dataframe_rows(dataframe=dataframe) and
-            validate_dataframe_columns(
-                dataframe=dataframe,
-                cube_name=cube_name,
-                metadata_function=metadata_function,
-                **kwargs
-            ))
-
-
-def validate_dataframe_transformations(
-        source_dataframe: DataFrame,
-        target_cube_name: str,
-        source_dim_mapping: dict,
-        related_dimensions: dict,
-        target_dim_mapping: dict,
-        **kwargs
-) -> bool:
-
-    source_dimensions = source_dataframe.columns()
-    target_dimensions = TM1CubeObjectMetadata.collect(cube_name=target_cube_name, **kwargs).get_cube_dims()
-
-    if source_dimensions == target_dimensions:
-        return True
-    else:
-        return (__validate_dataframe_transformations_for_source(
-                        source_dimensions=source_dimensions,
-                        source_dim_mapping=source_dim_mapping,
-                        related_dimensions=related_dimensions)
-                and __validate_dataframe_transformations_for_target(
-                        target_dimensions=target_dimensions,
-                        target_dim_mapping=target_dim_mapping,
-                        related_dimensions=related_dimensions)
-                )
-
-
-def __validate_dataframe_transformations_for_source(
-        source_dimensions: list,
-        source_dim_mapping: dict,
-        related_dimensions: dict
-) -> bool:
-    related_dim_list = list(map(str, related_dimensions.keys()))
-    if related_dim_list in source_dimensions:
-        return True
-    else:
-        source_dim_list = list(map(str, source_dim_mapping.keys()))
-        return source_dimensions == source_dim_list
-
-
-def __validate_dataframe_transformations_for_target(
-        target_dimensions: list,
-        target_dim_mapping: dict,
-        related_dimensions: dict
-) -> bool:
-    related_dim_list = list(map(str, related_dimensions.values()))
-    if related_dim_list in target_dimensions:
-        return True
-    else:
-        source_dim_list = list(map(str, target_dim_mapping.keys()))
-        return target_dimensions == source_dim_list
-
-
-# ------------------------------------------------------------------------------------------------------------
-# Utility: MDX builder functions
-# ------------------------------------------------------------------------------------------------------------
-
-
-def build_mdx_from_cube_filter(
-        cube_name: str,
-        cube_filter: dict,
-        metadata_function: Optional[Callable[..., Any]] = None,
-        **kwargs: Any
-) -> str:
-    """
-    Returns a valid MDX from a cube and dictionary filters. All dimensions not specified in the filter dictionary
-    will get all leaves elements put in the query.
-
-    Args:
-
-
-    Returns:
-        DataFrame: The normalized DataFrame.
-    """
-
-    metadata = TM1CubeObjectMetadata.collect(
-        metadata_function=metadata_function, cube_name=cube_name, **kwargs
-    )
-    dataframe_dimensions = metadata.get_cube_dims()
-
-    mdx_object = MdxBuilder.from_cube(cube_name)
-    dim_keys = [key for key in cube_filter]
-
-    for dim in dataframe_dimensions:
-        if dim not in dim_keys:
-            mdx_object.add_hierarchy_set_to_axis(1, MdxHierarchySet.all_leaves(dim))
-        else:
-            member_keys = [key for key in cube_filter[dim].keys()]
-            value = member_keys[0]
-            mdx_object.add_hierarchy_set_to_axis(0, MdxHierarchySet.member(Member.of(dim, value)))
-
-    return mdx_object.to_mdx()
-
-
-# ------------------------------------------------------------------------------------------------------------
-# Utility: Additional helpers
-# ------------------------------------------------------------------------------------------------------------
-
-def cast_coordinates_to_str(cube_dims: list, dataframe: pandas.DataFrame):
-    """
-        Convert all dimension (coordinate) columns in the given DataFrame to string type
-        for TM1py compatibility. The 'Value' column, if present, is left unchanged.
-
-        Args:
-            cube_dims: List of cube dimension (coordinate) column names.
-            dataframe: DataFrame whose dimension columns will be cast to string.
-
-        Returns:
-             The same DataFrame instance with dimension columns converted to string type.
-    """
-    basic_logger.info("Converting dimension columns to string type for consistency.")
-    for dim_col in cube_dims:
-        if dim_col in dataframe.columns:
-            dataframe[dim_col] = dataframe[dim_col].astype(str)
-
-
-def force_float64_on_numeric_values(input_value: Any) -> float64 | str:
-    """
-    Convert string '12,34' → '12.34' and then parse as np.float64 if it is a numeric (optionally with decimal).
-    Otherwise, return the original value unchanged.
-
-    Args:
-        input_value: any type of value to be converted if numerical
-
-    Returns:
-        the converted and cast numerical value or the string unchanged
-    """
-
-    if not isinstance(input_value, str):
-        return float64(input_value)
-    pattern = re.compile(r"^-?\d+(?:[.,]\d+)?$")
-    if pattern.match(input_value):
-        input_value = input_value.replace(',', '.')
-    try:
-        return float64(input_value)
-    except ValueError:
-        return input_value
-
-
-def get_local_decimal_separator() -> str:
-    locale.getlocale()
-    return locale.localeconv()['decimal_point']
-
-
-def get_local_regex_separator() -> str:
-    """Detects the CSV separator based on the system's locale settings with cross-platform support."""
-    try:
-        locale.setlocale(locale.LC_ALL, "")
-        decimal_sep = get_local_decimal_separator()
-
-        csv_sep = ";" if decimal_sep == "," else ","
-
-        return csv_sep
-    except Exception as e:
-        basic_logger.info(f"Warning: Unable to detect locale settings ({e}). Defaulting to comma (',').")
-        return ","
-
-
-def create_sql_engine(
-        username: Optional[str] = None,
-        password: Optional[str] = None,
-        connection_type: Optional[str] = None,
-        connection_string: Optional[str] = None,
-        host: Optional[str] = "localhost",
-        port: Optional[str] = None,
-        mssql_driver: Optional[str] = "ODBC+Driver+17+for+SQL+Server",
-        sqlite_file_path: Optional[str] = None,
-        oracle_sid: Optional[str] = None,
-        database: Optional[str] = None,
-        **kwargs
-) -> Any:
-    """ So far tested for mssql and postgresql connections. Expected to be extended in the future. """
-    connection_strings = {
-        'mssql': f"mssql+pyodbc://{username}:{password}@{host}:{port}/{database}?driver={mssql_driver}&TrustServerCertificate=yes&fast_executemany=true",
-        'postgresql': f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}",
-        #'sqlite': f"sqlite:///{sqlite_file_path}",
-        #'mysql': f"mysql+mysqlconnector://{username}:{password}@{host}:{port}/{database}",
-        #'mariadb': f"mariadb+mariadbconnector://{username}:{password}@{host}:{port}/{database}",
-        #'oracle': f"oracle+cx_oracle://{username}:{password}@{host}:{port}/{oracle_sid}",
-        #'ibmdb2': f"ibm_db_sa://{username}:{password}@{host}:{port}/{database}",
-        #'sqlite_inmemory': "sqlite:///:memory:",
-        #'firebird': f"firebird+fdb://{username}:{password}@{host}:{port}/{database}",
-    }
-    if connection_type and not connection_string:
-        connection_string = connection_strings.get(connection_type)
-        if 'mssql' in connection_string:
-            return create_engine(connection_string, fast_executemany=True)
-    return create_engine(connection_string)
-
-
-def inspect_table(engine: Any, table_name: str, schema: Optional[str]=None) -> dict:
-    return inspect(engine).get_columns(table_name=table_name, schema=schema)
-
-
-@log_exec_metrics
-def all_leaves_identifiers_to_dataframe(
-        tm1_service: Any, dimension_name: [str], hierarchy_name: Optional[str] = None
-) -> DataFrame:
-    # caseandspaceinsensitiveset datastruct to dataframe
-    if not hierarchy_name:
-        hierarchy_name = dimension_name
-    dataset = tm1_service.elements.get_all_leaf_element_identifiers(
-        dimension_name=dimension_name, hierarchy_name=hierarchy_name
-    )
-    return DataFrame({dimension_name: list(dataset)})

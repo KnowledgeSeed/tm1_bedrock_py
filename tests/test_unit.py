@@ -382,21 +382,6 @@ def test_normalize_dataframe_match_dimensions_success(tm1_connection_factory, da
             pytest.fail(f"MDX query execution failed: {e}")
 
 
-@parametrize_from_file
-def test_build_mdx_from_cube_filter_create_dataframe_success(tm1_connection_factory, cube_filter, cube_name):
-    """Run MDX query created by the MDX builder and verifies that the output is a DataFrame object"""
-    with tm1_connection_factory("tm1srv") as conn:
-        data_mdx = utility.build_mdx_from_cube_filter(
-            tm1_service=conn, cube_name=cube_name, cube_filter=cube_filter
-        )
-        try:
-            df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=data_mdx)
-            transformer.normalize_dataframe_for_testing(dataframe=df, tm1_service=conn, mdx=data_mdx)
-            assert isinstance(df, DataFrame)
-        except Exception as e:
-            pytest.fail(f"MDX query execution failed: {e}")
-
-
 # ------------------------------------------------------------------------------------------------------------
 # Main: dataframe transform utility functions
 # ------------------------------------------------------------------------------------------------------------

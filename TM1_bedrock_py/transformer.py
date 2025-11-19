@@ -32,6 +32,24 @@ def normalize_dataframe_for_testing(
     dataframe_reorder_dimensions(dataframe=dataframe, cube_dimensions=metadata.get_cube_dims())
 
 
+def cast_coordinates_to_str(cube_dims: list, dataframe: DataFrame):
+    """
+        Convert all dimension (coordinate) columns in the given DataFrame to string type
+        for TM1py compatibility. The 'Value' column, if present, is left unchanged.
+
+        Args:
+            cube_dims: List of cube dimension (coordinate) column names.
+            dataframe: DataFrame whose dimension columns will be cast to string.
+
+        Returns:
+             The same DataFrame instance with dimension columns converted to string type.
+    """
+    basic_logger.info("Converting dimension columns to string type for consistency.")
+    for dim_col in cube_dims:
+        if dim_col in dataframe.columns:
+            dataframe[dim_col] = dataframe[dim_col].astype(str)
+
+
 def dataframe_cast_value_by_measure_type(
         dataframe: DataFrame,
         measure_dimension_name: str,
@@ -299,28 +317,6 @@ def dataframe_drop_filtered_column(
     dataframe_filter_inplace(dataframe=dataframe, filter_condition=filter_condition)
     column_list = list(map(str, filter_condition.keys()))
     dataframe_drop_column(dataframe=dataframe, column_list=column_list)
-
-
-def dataframe_drop_zero_and_values(
-        dataframe: DataFrame,
-        case_and_space_insensitive_inputs: Optional[bool] = False,
-) -> None:
-    """
-    Drops all rows with zero values from DaraFrame, then drops the values column.
-
-    Args:
-        dataframe: (DataFrame): The DataFrame to update.
-    Return:
-        DataFrame: The updated DataFrame without the zero values.
-    """
-    value_column_name = 'Value'
-    if case_and_space_insensitive_inputs:
-        utility.normalize_dataframe_strings(dataframe)
-        value_column_name = 'value'
-
-    dataframe.drop(dataframe[dataframe[value_column_name] == 0].index, inplace=True)
-    dataframe.drop(columns=[value_column_name], inplace=True)
-    dataframe.reset_index(drop=True, inplace=True)
 
 
 def dataframe_relabel(
