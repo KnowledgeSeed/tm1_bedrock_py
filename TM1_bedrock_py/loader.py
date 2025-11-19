@@ -1,4 +1,3 @@
-import os
 from typing import Callable, List, Optional, Any, Literal
 from TM1py import TM1Service
 from pandas import DataFrame

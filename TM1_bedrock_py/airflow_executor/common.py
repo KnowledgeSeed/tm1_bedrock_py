@@ -4,7 +4,6 @@ from string import  Template
 from airflow.decorators import task
 from airflow_provider_tm1.hooks.tm1 import TM1Hook
 
-from TM1_bedrock_py import extractor
 from TM1_bedrock_py.utility import (
     basic_logger,
     get_dimensions_from_set_mdx_list,
@@ -19,7 +18,6 @@ from TM1_bedrock_py.bedrock import (
     load_csv_data_to_tm1_cube,
     load_tm1_cube_to_csv_file
 )
-
 
 
 # ------------------------------------------------------------------------------------------------------------
