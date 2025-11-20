@@ -6,7 +6,7 @@ import time
 import locale
 import itertools
 from typing import Iterable, Callable, List, Dict, Optional, Any, Union, Iterator, Tuple, Literal
-
+from dataclasses import dataclass
 from sqlalchemy import create_engine, inspect
 from pandas import DataFrame
 
@@ -841,3 +841,60 @@ class TM1CubeObjectMetadata:
             metadata[cls._DIM_CHECK_DFS].append(
                 all_leaves_identifiers_to_dataframe(tm1_service=tm1_service, dimension_name=dimension)
             )
+
+
+@dataclass
+class ContextParameter:
+    name: str
+    type: Literal["dimension element", "dimension element list"] | None
+    type_context: str | None
+    value: Any
+
+
+class ContextMetadata:
+    def __init__(self):
+        self._params: dict[str, ContextParameter] = {}
+
+    def register_context_parameter(self, param: ContextParameter):
+        self._params[param.name] = param
+
+    def add_parameter(self, name: str, value: Any,
+                      parameter_type: Optional[str] = None,
+                      parameter_type_context: Optional[str] = None):
+        if parameter_type == "dimension element" and type(value) is str:
+            raise TypeError("Dimension element type parameters must be of string type")
+        if parameter_type == "dimension element list" and type(value) is List:
+            raise TypeError("Dimension element list type parameters must be of List type")
+        if parameter_type in ("dimension element list", "dimension element") and parameter_type_context is None:
+            raise ValueError("Must fill parameter type context for this type of parameter")
+
+        new_parameter = ContextParameter(name, parameter_type, parameter_type_context, value)
+        self.register_context_parameter(new_parameter)
+
+    def get(self, name: str) -> ContextParameter:
+        return self._params[name]
+
+    def get_value(self, name: str):
+        return self._params[name].value
+
+    def __contains__(self, name: str):
+        return name in self._params
+
+    def as_dict(self):
+        return {name: vars(p) for name, p in self._params.items()}
+
+    def get_value_as_member_unique_name_string(self, name: str) -> str:
+        parameter = self.get(name)
+        if parameter.type != "dimension element":
+            raise TypeError("Parameter type must be dimension element")
+        return f"[{parameter.type_context}].[{parameter.value}]"
+
+    def get_value_as_set_mdx_string(self, name: str) -> str:
+        parameter = self.get(name)
+        if parameter.type not in ("dimension element", "dimension element list"):
+            raise TypeError("Parameter type must be dimension element or dimension element list")
+        if parameter.type == "dimension element":
+            return f"{{[{parameter.type_context}].[{parameter.value}]}}"
+        else:
+            return "{" + ", ".join(f"[{parameter.type_context}].[{str(e)}]" for e in parameter.value) + "}"
+
