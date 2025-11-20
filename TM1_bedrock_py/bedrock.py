@@ -68,6 +68,8 @@ def data_copy_intercube(
     ----------
     tm1_service : Optional[Any]
         TM1 service instance used to interact with the TM1 server.
+    target_tm1_service : Optional[Any]
+        Optional TM1 service dedicated to writing into the target cube.
     data_mdx : Optional[str]
         MDX query string for retrieving source data. Currently, this can be the only source
     mdx_function : Optional[Callable[..., DataFrame]]
@@ -78,14 +80,16 @@ def data_copy_intercube(
         Function to execute a SQL query and return a DataFrame.
     data_mdx_list : Optional[list[str]]
         List of MDX queries for retrieving multiple data sets.
+    case_and_space_insensitive_inputs: When False (default) then the user has to pay attention to the
+        case/whitespace-sensitive behaviour of SQL databases and other data sources distinct from TM1.
+        If set to True, then dataframes, mapping data, etc. will be normalized to adhere to
+        TM1's case/whitespace-insensitive behaviour. In this case the user is responsible for loading to the target.
     skip_zeros : Optional[bool], default=False
         Whether to skip zero values when retrieving source data.
     skip_consolidated_cells : Optional[bool], default=False
         Whether to skip consolidated cells in the source data.
     skip_rule_derived_cells : Optional[bool], default=False
         Whether to skip rule-derived cells in the source data.
-    data_metadata_function : Optional[Callable[..., DataFrame]]
-        Function to retrieve metadata about the data source.
     target_cube_name : Optional[str]
         Name of the target cube where the data should be copied. If omitted, it will be set as the source cube name.
     target_metadata_function: Optional[Callable[..., DataFrame]]
@@ -109,8 +113,6 @@ def data_copy_intercube(
         dimension. Dimensions (columns) will be added to the dataframe, and their values will be set uniformly.
     value_function : Optional[Callable[..., Any]]
         Function for transforming values before writing to the target cube.
-    clear_set_mdx_list : Optional[List[str]]
-        List of MDX queries to clear specific data areas in the target cube.
     clear_target : Optional[bool], default=False
         Whether to clear target before writing.
     target_clear_set_mdx_list: Optional[List[str]]
@@ -119,16 +121,28 @@ def data_copy_intercube(
         Whether to clear the source after writing.
     source_clear_set_mdx_list: Optional[List[str]]
         List of MDX queries to clear specific data areas in the source cube.
+    fallback_elements : Optional[Dict]
+        Per-dimension fallback elements applied when ``ignore_missing_elements`` is True.
     async_write : bool, default=False
         Whether to write data asynchronously. Currently, divides the data into 250.000 row chunks.
+    slice_size_of_dataframe : Optional[int], default=50000
+        Chunk size for synchronous writes when ``async_write`` is False.
     use_ti : bool, default=False
         Whether to use TurboIntegrator (TI) for writing data.
     use_blob : bool, default=False
         Whether to use BLOB storage for data transfer.
+    use_mixed_datatypes : Optional[bool], default=False
+        Whether to cast values based on measure element data types.
     increment : bool, default=False
         Whether to increment existing values instead of replacing them in the cube.
     sum_numeric_duplicates : bool, default=True
         Whether to sum duplicate numeric values in the dataframe instead of overwriting them.
+    logging_level : Optional[str], default="ERROR"
+        Logging level applied while processing the data copy.
+    verbose_logging_mode : Optional[Literal["file", "print_console"]]
+        Enables verbose dataframe snapshots either to file or console.
+    verbose_logging_output_dir : Optional[str]
+        Target directory for verbose log files when ``verbose_logging_mode`` is ``"file"``.
     **kwargs
         Additional keyword arguments for customization.
 
@@ -446,6 +460,8 @@ def data_copy(
     ----------
     tm1_service : Optional[Any]
         TM1 service instance used to interact with the TM1 server.
+    target_tm1_service : Optional[Any]
+        Optional TM1 service used when writes should go to a different connection.
     data_mdx : Optional[str]
         MDX query string for retrieving source data. Currently, this can be the only source
     mdx_function : Optional[Callable[..., DataFrame]]
@@ -456,49 +472,56 @@ def data_copy(
         Function to execute a SQL query and return a DataFrame.
     data_mdx_list : Optional[list[str]]
         List of MDX queries for retrieving multiple data sets.
+    case_and_space_insensitive_inputs: When False (default) then the user has to pay attention to the
+        case/whitespace-sensitive behaviour of SQL databases and other data sources distinct from TM1.
+        If set to True, then dataframes, mapping data, etc. will be normalized to adhere to
+        TM1's case/whitespace-insensitive behaviour. In this case the user is responsible for loading to the target.
     skip_zeros : Optional[bool], default=False
         Whether to skip zero values when retrieving source data.
     skip_consolidated_cells : Optional[bool], default=False
         Whether to skip consolidated cells in the source data.
     skip_rule_derived_cells : Optional[bool], default=False
         Whether to skip rule-derived cells in the source data.
-    data_metadata_function : Optional[Callable[..., DataFrame]]
-        Function to retrieve metadata about the data source.
+    target_metadata_function : Optional[Callable[..., Any]]
+        Function to retrieve metadata for the cube being updated.
     mapping_steps : Optional[List[Dict]]
         Steps for mapping data from source to target.
     shared_mapping: Optional[Dict]
         Information about the shared mapping data that can be used for the mapping steps.
         Will generate a dataframe if any inputs are provided.
         Has the same format as a singular mapping step
-    shared_mapping_metadata_function : Optional[Callable[..., Any]]
-        Function to retrieve metadata for the shared mapping.
-    source_dim_mapping : Optional[dict]
-        Declaration of the dimensions present in the source dataframe, but not present in the target cube.
-        If there are such dimensions, these need to be specified, with for each dimension.
-        Rows will be filtered with the specified element, and then the dimension (column) will be dropped.
-    related_dimensions : Optional[dict]
-        Dictionary defining related dimensions for transformation. Source dimensions will be relabeled to the target
-        dimensions. Dimensionality and elements will stay unchanged.
-    target_dim_mapping : Optional[dict]
-        Declarations of the dimensions present in the target cube, but not in the data dataframe,
-        after all mapping steps. If there are such dimensions, these need to be specified, with an element for each
-        dimension. Dimensions (columns) will be added to the dataframe, and their values will be set uniformly.
     value_function : Optional[Callable[..., Any]]
         Function for transforming values before writing to the target cube.
-    clear_set_mdx_list : Optional[List[str]]
-        List of MDX queries to clear specific data areas in the target cube.
     clear_target : Optional[bool], default=False
         Whether to clear target before writing.
+    target_clear_set_mdx_list : Optional[List[str]]
+        List of MDX queries to clear specific data areas in the cube prior to writing.
+    pre_load_function : Optional[Callable]
+        Callable executed on the dataframe before persisting the data.
+    pre_load_args : Optional[List]
+        Positional arguments forwarded to ``pre_load_function``.
+    pre_load_kwargs : Optional[Dict]
+        Keyword arguments forwarded to ``pre_load_function``.
     async_write : bool, default=False
         Whether to write data asynchronously. Currently, divides the data into 250.000 row chunks.
+    slice_size_of_dataframe : int, default=50000
+        Row count for each chunk when ``async_write`` is False.
     use_ti : bool, default=False
         Whether to use TurboIntegrator (TI) for writing data.
     use_blob : bool, default=False
         Whether to use BLOB storage for data transfer.
+    use_mixed_datatypes : Optional[bool], default=False
+        Whether to cast values based on target measure element data types.
     increment : bool, default=False
         Whether to increment existing values instead of replacing them in the cube.
     sum_numeric_duplicates : bool, default=True
         Whether to sum duplicate numeric values in the dataframe instead of overwriting them.
+    logging_level : str, default="ERROR"
+        Logging verbosity applied during the transformation.
+    verbose_logging_mode : Optional[Literal["file", "print_console"]]
+        Enables verbose dataframe snapshots for debugging.
+    verbose_logging_output_dir : Optional[str]
+        Directory for verbose output files when ``verbose_logging_mode`` is ``"file"``.
     **kwargs
         Additional keyword arguments for customization.
 
@@ -934,7 +957,6 @@ def load_sql_data_to_tm1_cube(
         logging_level: str = "ERROR",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
-        _execution_id: int = 0,
         **kwargs
 ) -> None:
     """
@@ -965,31 +987,25 @@ def load_sql_data_to_tm1_cube(
         sql_column_mapping: A dictionary to rename columns from the SQL source to
             match the dimension names in the target TM1 cube.
             Example: `{'PRODUCT_CODE': 'Product', 'SALES_AMT': 'Value'}`.
-        sql_value_column_name: The name of the column in the SQL source that
-            contains the data values to be loaded. This column will be renamed
-            to 'Value'.
-        sql_columns_to_keep: A list of columns to keep from the SQL source after
-            renaming. Used with `drop_other_sql_columns`.
-        drop_other_sql_columns: If True, any columns not in `sql_columns_to_keep`
-            or not renamed via `sql_column_mapping` will be dropped.
+        sql_columns_to_drop: Columns removed from the SQL source after renaming.
         chunksize: The number of rows to read from the SQL database at a time.
             This is a memory optimization for very large source tables.
         sql_engine: A pre-configured SQLAlchemy Engine object for the source
             database connection.
         sql_function: A custom function to execute the SQL data extraction.
+        case_and_space_insensitive_inputs: When False (default) then the user has to pay attention to the
+            case/whitespace-sensitive behaviour of SQL databases and other data sources distinct from TM1.
+            If set to True, then dataframes, mapping data, etc. will be normalized to adhere to
+            TM1's case/whitespace-insensitive behaviour. In this case the user is responsible for loading to the target.
         mapping_steps: A list of dictionaries defining transformation steps to be
             applied to the data after extraction and normalization.
         shared_mapping: A dictionary defining a shared mapping DataFrame that can
             be used by multiple mapping steps.
-        source_dim_mapping: A dictionary to filter and then drop columns from the
-            DataFrame after SQL extraction.
-        related_dimensions: A dictionary to rename columns in the DataFrame.
-        target_dim_mapping: A dictionary to add new columns with constant values
-            to the DataFrame, representing target dimensions not present in the source.
         value_function: A custom function to apply transformations to the 'Value'
             column.
         ignore_missing_elements: If True, rows with elements that do not exist
             in the target TM1 dimensions will be silently dropped.
+        fallback_elements: Per-dimension fallback definitions when ignoring missing elements.
         target_clear_set_mdx_list: A list of MDX set expressions defining the
             slice to be cleared in the target TM1 cube before loading.
         clear_target: If True, the target slice in the TM1 cube will be cleared.
@@ -997,6 +1013,9 @@ def load_sql_data_to_tm1_cube(
             successful load.
         sql_delete_statement: A specific SQL statement to execute for clearing
             the source table. If not provided, a `TRUNCATE` command is used.
+        pre_load_function: Callable executed on the dataframe before persisting to TM1.
+        pre_load_args: Positional arguments forwarded to ``pre_load_function``.
+        pre_load_kwargs: Keyword arguments forwarded to ``pre_load_function``.
         async_write: If True, the final write to the TM1 cube will be performed
             asynchronously in smaller chunks for higher performance.
         slice_size_of_dataframe: The number of rows per chunk when `async_write`
@@ -1009,7 +1028,8 @@ def load_sql_data_to_tm1_cube(
         sum_numeric_duplicates: If True, rows with duplicate dimension intersections
             will have their numeric values summed before loading.
         logging_level: The logging verbosity level (e.g., "DEBUG", "INFO").
-        _execution_id: An identifier used by async executors for logging.
+        verbose_logging_mode: Enables verbose dataframe logging (console or file).
+        verbose_logging_output_dir: Directory used when verbose logging writes files.
 
     Raises:
         ValueError: If the configuration is invalid (e.g., both `sql_query` and
@@ -1227,7 +1247,6 @@ def load_tm1_cube_to_sql_table(
         logging_level: str = "ERROR",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
-        _execution_id: int = 0,
         **kwargs
 ) -> None:
     """
@@ -1252,6 +1271,10 @@ def load_tm1_cube_to_sql_table(
         sql_function: A function to execute SQL queries, used by mapping steps.
         csv_function: A function to read CSV files, used by mapping steps.
         sql_schema: The schema of the target table in the SQL database (e.g., 'dbo').
+        case_and_space_insensitive_inputs: When False (default) then the user has to pay attention to the
+            case/whitespace-sensitive behaviour of SQL databases and other data sources distinct from TM1.
+            If set to True, then dataframes, mapping data, etc. will be normalized to adhere to
+            TM1's case/whitespace-insensitive behaviour. In this case the user is responsible for loading to the target.
         chunksize: The number of rows to write to the SQL table in a single batch.
             This is a memory optimization for very large datasets. For moderate
             datasets using a high-speed insert method like `fast_executemany`,
@@ -1289,8 +1312,12 @@ def load_tm1_cube_to_sql_table(
             Providing this is a best practice for ensuring reliability.
         decimal: Optional parameter to set the decimal separator.
             If None, it detects the local decimal separator of the user.
+        pre_load_function: Callable executed on the dataframe before writing it to SQL.
+        pre_load_args: Positional arguments forwarded to ``pre_load_function``.
+        pre_load_kwargs: Keyword arguments forwarded to ``pre_load_function``.
         logging_level: The logging verbosity level (e.g., "DEBUG", "INFO").
-        _execution_id: An identifier used by async executors for logging.
+        verbose_logging_mode: Enables verbose dataframe logging (console or file).
+        verbose_logging_output_dir: Directory used when verbose logging writes files.
 
     Raises:
         ValueError: If the configuration is invalid (e.g., cannot find the SQL table).
@@ -1892,7 +1919,6 @@ def load_csv_data_to_tm1_cube(
         slice_size_of_dataframe: int = 50000,
         clear_target: Optional[bool] = False,
         logging_level: str = "ERROR",
-        _execution_id: int = 0,
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
         **kwargs
@@ -1918,10 +1944,13 @@ def load_csv_data_to_tm1_cube(
             target TM1 cube.
         mdx_function: A custom function to execute MDX queries, used by mapping steps.
         csv_function: A custom function to read CSV files, used by mapping steps.
+        case_and_space_insensitive_inputs: When False (default) then the user has to pay attention to the
+            case/whitespace-sensitive behaviour of SQL databases and other data sources distinct from TM1.
+            If set to True, then dataframes, mapping data, etc. will be normalized to adhere to
+            TM1's case/whitespace-insensitive behaviour. In this case the user is responsible for loading to the target.
         csv_column_mapping: A dictionary to rename columns from the CSV source to
             match the dimension names in the target TM1 cube.
-                csv_columns_to_drop:
-        csv_columns_to_drop: Columns present in the .csv file that should not be loaded to the TM1 cube.
+        csv_columns_to_drop: Columns present in the CSV file that should not be loaded to the TM1 cube.
         delimiter: The delimiter to use when parsing the CSV file (e.g., ',', ';').
             Passed directly to `pandas.read_csv`.
         decimal: The character to recognize as a decimal point (e.g., '.', ',').
@@ -1959,9 +1988,14 @@ def load_csv_data_to_tm1_cube(
             column.
         ignore_missing_elements: If True, rows with elements that do not exist
             in the target TM1 dimensions will be silently dropped.
+        fallback_elements: Dictionary of fallback dimension elements applied when
+            `ignore_missing_elements` is True.
         target_clear_set_mdx_list: A list of MDX set expressions defining the
             slice to be cleared in the target TM1 cube before loading.
         clear_target: If True, the target slice in the TM1 cube will be cleared.
+        pre_load_function: Callable executed on the dataframe before writing to TM1.
+        pre_load_args: Positional arguments forwarded to `pre_load_function`.
+        pre_load_kwargs: Keyword arguments forwarded to `pre_load_function`.
         async_write: If True, the final write to the TM1 cube will be performed
             asynchronously in smaller chunks for higher performance.
         use_ti : bool, default=False
@@ -1975,9 +2009,8 @@ def load_csv_data_to_tm1_cube(
         use_blob: If True, use a high-performance binary transfer for writing
             data to TM1. Recommended.
         logging_level: The logging verbosity level (e.g., "DEBUG", "INFO").
-        _execution_id: An identifier used by async executors for logging.
-        verbose_logging_mode: If True, intermediate DataFrames will be logged to
-            CSV files for debugging.
+        verbose_logging_mode: Enables verbose dataframe logging (console or file).
+        verbose_logging_output_dir: Directory used when verbose logging writes files.
 
     Raises:
         ValueError: If the configuration is invalid or a mapping step fails.
@@ -2194,7 +2227,6 @@ def load_tm1_cube_to_csv_file(
         logging_level: str = "ERROR",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
-        _execution_id: int = 0,
         **kwargs
 ) -> None:
     """
@@ -2232,6 +2264,10 @@ def load_tm1_cube_to_csv_file(
         data_mdx: The MDX query string to extract the source data from TM1.
         mdx_function: A custom function to execute the MDX query.
         data_mdx_list: A list of MDX queries to be executed and concatenated.
+        case_and_space_insensitive_inputs: When False (default) then the user has to pay attention to the
+            case/whitespace-sensitive behaviour of SQL databases and other data sources distinct from TM1.
+            If set to True, then dataframes, mapping data, etc. will be normalized to adhere to
+            TM1's case/whitespace-insensitive behaviour. In this case the user is responsible for loading to the target.
         skip_zeros: If True, cells with zero values will be excluded from the
             TM1 extraction. Highly recommended for performance.
         skip_consolidated_cells: If True, consolidated cells will be excluded.
@@ -2251,8 +2287,12 @@ def load_tm1_cube_to_csv_file(
             "archive" operation.
         source_clear_set_mdx_list: A list of MDX set expressions defining the
             slice to be cleared in the source TM1 cube if `clear_source` is True.
+        pre_load_function: Callable executed on the dataframe before writing the CSV.
+        pre_load_args: Positional arguments forwarded to `pre_load_function`.
+        pre_load_kwargs: Keyword arguments forwarded to `pre_load_function`.
         logging_level: The logging verbosity level (e.g., "DEBUG", "INFO").
-        _execution_id: An identifier used by async executors for logging.
+        verbose_logging_mode: Enables verbose dataframe logging (console or file).
+        verbose_logging_output_dir: Directory used when verbose logging writes files.
 
     Raises:
         TM1py.Exceptions.TM1pyRestException: If the MDX query to TM1 fails.

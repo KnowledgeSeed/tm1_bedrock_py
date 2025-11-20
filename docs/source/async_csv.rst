@@ -155,9 +155,10 @@ Parameter Reference
 
    - An MDX query template used solely for metadata inference by the underlying ``load_csv_data_to_tm1_cube`` function.
 
-5. **clear_param_templates** *(optional, list[string])*
+5. **target_clear_set_mdx_list** *(required, list[string])*
 
-   - A list of MDX set templates. For each worker, these are populated with the worker's specific parameters, allowing each worker to **clear its own target slice** before loading.
+  - A list of set MDX lists for clearing the target slices of the input cube.
+  - *Example*: :python:`["{[Period].[All Months]}", "{[Version].[ForeCast]}"]`
 
 6. ****kwargs** *(optional)*
 

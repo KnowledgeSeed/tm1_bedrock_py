@@ -67,7 +67,7 @@ def tm1_dynamic_executor_task_group(
             ignore_missing_elements=bedrock_params.get('ignore_missing_elements'),
             remove_blob=bedrock_params.get('remove_blob'),
             verbose_logging_mode=bedrock_params.get('verbose_logging_mode'),
-            verbose_logging_output_dir=bedrock_params.get('verbose_logging_mode'),
+            verbose_logging_output_dir=bedrock_params.get('verbose_logging_output_dir'),
             decimal=bedrock_params.get('decimal'),
             use_mixed_datatypes=bedrock_params.get('use_mixed_datatypes'),
             skip_rule_derived_cells=bedrock_params.get('skip_rule_derived_cells')
@@ -133,7 +133,9 @@ def sql_to_tm1_dynamic_executor_task_group(
             shared_mapping=bedrock_params.get('shared_mapping'),
             target_cube_name=bedrock_params.get('target_cube_name'),
             ignore_missing_elements=bedrock_params.get('ignore_missing_elements'),
-            use_mixed_datatypes=bedrock_params.get('use_mixed_datatypes')
+            use_mixed_datatypes=bedrock_params.get('use_mixed_datatypes'),
+            verbose_logging_mode=bedrock_params.get('verbose_logging_mode'),
+            verbose_logging_output_dir=bedrock_params.get('verbose_logging_output_dir')
         ).expand(
             expand_kwargs=common.generate_expand_kwargs_task(
                 tm1_service=tm1_service, param_set_mdx_list=param_set_mdx_list
@@ -191,7 +193,9 @@ def tm1_to_sql_dynamic_executor_task_group(
             decimal=bedrock_params.get('decimal'),
             target_metadata_function=_target_metadata_function,
             mapping_steps=bedrock_params.get('mapping_steps'),
-            shared_mapping=bedrock_params.get('shared_mapping')
+            shared_mapping=bedrock_params.get('shared_mapping'),
+            verbose_logging_mode=bedrock_params.get('verbose_logging_mode'),
+            verbose_logging_output_dir=bedrock_params.get('verbose_logging_output_dir')
         ).expand(
             expand_kwargs=common.generate_expand_kwargs_task(
                 tm1_service=tm1_service, param_set_mdx_list=param_set_mdx_list
@@ -246,7 +250,9 @@ def csv_to_tm1_dynamic_executor_task_group(
             decimal=bedrock_params.get('decimal'),
             delimiter= bedrock_params.get('delimiter'),
             ignore_missing_elements=bedrock_params.get('ignore_missing_elements'),
-            use_mixed_datatypes=bedrock_params.get('use_mixed_datatypes')
+            use_mixed_datatypes=bedrock_params.get('use_mixed_datatypes'),
+            verbose_logging_mode=bedrock_params.get('verbose_logging_mode'),
+            verbose_logging_output_dir=bedrock_params.get('verbose_logging_output_dir')
         ).expand(
             source_csv_file_path=source_csv_files
         )
@@ -287,7 +293,9 @@ def tm1_to_csv_dynamic_executor_task_group(
             shared_mapping=bedrock_params.get('shared_mapping'),
             target_csv_output_dir=bedrock_params.get('target_csv_output_dir'),
             decimal=bedrock_params.get('decimal'),
-            delimiter= bedrock_params.get('delimiter')
+            delimiter= bedrock_params.get('delimiter'),
+            verbose_logging_mode=bedrock_params.get('verbose_logging_mode'),
+            verbose_logging_output_dir=bedrock_params.get('verbose_logging_output_dir')
         ).expand(
             expand_kwargs=common.generate_expand_kwargs_task(
                 tm1_service=tm1_service, param_set_mdx_list=bedrock_params.get('param_set_mdx_list')
