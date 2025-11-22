@@ -9,6 +9,8 @@ from typing import Iterable, Callable, List, Dict, Optional, Any, Union, Iterato
 from dataclasses import dataclass
 from sqlalchemy import create_engine, inspect
 from pandas import DataFrame
+from jinja2 import Environment, BaseLoader
+import yaml
 
 from datetime import datetime
 
@@ -850,9 +852,28 @@ class ContextParameter:
     type_context: str | None
     value: Any
 
+    @property
+    def as_string(self) -> str:
+        return str(self.value)
+
+    @property
+    def as_member_unique_name(self) -> str:
+        if self.type != "dimension element":
+            raise TypeError("Parameter type must be dimension element")
+        return f"[{self.type_context}].[{self.value}]"
+
+    @property
+    def as_set_mdx(self) -> str:
+        if self.type not in ("dimension element", "dimension element list"):
+            raise TypeError("Parameter type must be dimension element or dimension element list")
+        if self.type == "dimension element":
+            return f"{{[{self.type_context}].[{self.value}]}}"
+        else:
+            return "{" + ",".join(f"[{self.type_context}].[{str(e)}]" for e in self.value) + "}"
+
 
 class ContextMetadata:
-    def __init__(self):
+    def __init__(self, path_to_init_yaml: Optional[str] = None):
         self._params: dict[str, ContextParameter] = {}
 
     def register_context_parameter(self, param: ContextParameter):
@@ -861,9 +882,9 @@ class ContextMetadata:
     def add_parameter(self, name: str, value: Any,
                       parameter_type: Optional[str] = None,
                       parameter_type_context: Optional[str] = None):
-        if parameter_type == "dimension element" and type(value) is str:
+        if parameter_type == "dimension element" and not isinstance(value, str):
             raise TypeError("Dimension element type parameters must be of string type")
-        if parameter_type == "dimension element list" and type(value) is List:
+        if parameter_type == "dimension element list" and not isinstance(value, list):
             raise TypeError("Dimension element list type parameters must be of List type")
         if parameter_type in ("dimension element list", "dimension element") and parameter_type_context is None:
             raise ValueError("Must fill parameter type context for this type of parameter")
@@ -883,18 +904,16 @@ class ContextMetadata:
     def as_dict(self):
         return {name: vars(p) for name, p in self._params.items()}
 
-    def get_value_as_member_unique_name_string(self, name: str) -> str:
-        parameter = self.get(name)
-        if parameter.type != "dimension element":
-            raise TypeError("Parameter type must be dimension element")
-        return f"[{parameter.type_context}].[{parameter.value}]"
+    def as_value_dict(self) -> dict[str, Any]:
+        return {name: param.value for name, param in self._params.items()}
 
-    def get_value_as_set_mdx_string(self, name: str) -> str:
-        parameter = self.get(name)
-        if parameter.type not in ("dimension element", "dimension element list"):
-            raise TypeError("Parameter type must be dimension element or dimension element list")
-        if parameter.type == "dimension element":
-            return f"{{[{parameter.type_context}].[{parameter.value}]}}"
-        else:
-            return "{" + ", ".join(f"[{parameter.type_context}].[{str(e)}]" for e in parameter.value) + "}"
+    def render_template_yaml(self, yaml_path: str):
+        with open(yaml_path, encoding="utf-8") as f:
+            yaml_text = f.read()
+
+        env = Environment(loader=BaseLoader())
+        template = env.from_string(yaml_text)
+        rendered = template.render(**self.as_dict())
+        return yaml.safe_load(rendered)
+
 
