@@ -14,7 +14,7 @@ import yaml
 
 from datetime import datetime
 
-from TM1_bedrock_py import exec_metrics_logger, basic_logger, benchmark_metrics_logger
+from TM1_bedrock_py import exec_metrics_logger, basic_logger, benchmark_metrics_logger, extractor
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -872,14 +872,31 @@ class ContextParameter:
             return "{" + ",".join(f"[{self.type_context}].[{str(e)}]" for e in self.value) + "}"
 
 
+def extract_param_value_from_dataframe(dataframe: DataFrame, parameter_type: str | None):
+    if parameter_type == "dimension element":
+        value = dataframe.iloc[0, 0]
+    elif parameter_type == "dimension element list":
+        value = dataframe.iloc[:, 0].tolist()
+    else:
+        value = dataframe.iloc[0, 0]
+    return value
+
+
 class ContextMetadata:
-    def __init__(self, path_to_init_yaml: Optional[str] = None):
+    def __init__(self,
+                 sql_engine: Optional[Any] = None,
+                 tm1_service: Optional[Any] = None,
+                 path_to_init_yaml: Optional[str] = None):
         self._params: dict[str, ContextParameter] = {}
+        self._sql_engine = sql_engine
+        self._tm1_service = tm1_service
+        if path_to_init_yaml:
+            self.load_init_yaml_to_parameters(path_to_init_yaml)
 
     def register_context_parameter(self, param: ContextParameter):
         self._params[param.name] = param
 
-    def add_parameter(self, name: str, value: Any,
+    def add_parameter(self, param_name: str, value: Any,
                       parameter_type: Optional[str] = None,
                       parameter_type_context: Optional[str] = None):
         if parameter_type == "dimension element" and not isinstance(value, str):
@@ -889,8 +906,22 @@ class ContextMetadata:
         if parameter_type in ("dimension element list", "dimension element") and parameter_type_context is None:
             raise ValueError("Must fill parameter type context for this type of parameter")
 
-        new_parameter = ContextParameter(name, parameter_type, parameter_type_context, value)
+        new_parameter = ContextParameter(param_name, parameter_type, parameter_type_context, value)
         self.register_context_parameter(new_parameter)
+
+    def add_parameter_from_sql(self, param_name: str, sql_query: str,
+                               parameter_type: Optional[str] = None,
+                               parameter_type_context: Optional[str] = None):
+        extracted_df = extractor.sql_to_dataframe(engine=self._sql_engine, sql_query=sql_query)
+        value = extract_param_value_from_dataframe(extracted_df, parameter_type)
+        self.add_parameter(param_name, value, parameter_type, parameter_type_context)
+
+    def add_parameter_from_tm1(self, param_name: str, mdx_query: str,
+                               parameter_type: Optional[str] = None,
+                               parameter_type_context: Optional[str] = None):
+        extracted_df = extractor.tm1_mdx_to_dataframe(tm1_service=self._tm1_service, data_mdx=mdx_query)
+        value = extract_param_value_from_dataframe(extracted_df, parameter_type)
+        self.add_parameter(param_name, value, parameter_type, parameter_type_context)
 
     def get(self, name: str) -> ContextParameter:
         return self._params[name]
@@ -907,6 +938,23 @@ class ContextMetadata:
     def as_value_dict(self) -> dict[str, Any]:
         return {name: param.value for name, param in self._params.items()}
 
+    def load_init_yaml_to_parameters(self, yaml_path: str):
+        with open(yaml_path, "r") as f:
+            parameters_init = yaml.safe_load(f)
+
+        for param_name, param_data in parameters_init.items():
+            param_type = param_data.get("type")
+            param_type_context = param_data.get("type_context")
+            if "value" in param_data:
+                value = param_data["value"]
+                self.add_parameter(param_name, value, param_type, param_type_context)
+            elif "sql_query" in param_data:
+                sql_query = param_data["sql_query"]
+                self.add_parameter_from_sql(param_name, sql_query, param_type, param_type_context)
+            elif "mdx_query" in param_data:
+                mdx_query = param_data["mdx_query"]
+                self.add_parameter_from_tm1(param_name, mdx_query, param_type, param_type_context)
+
     def render_template_yaml(self, yaml_path: str):
         with open(yaml_path, encoding="utf-8") as f:
             yaml_text = f.read()
@@ -915,5 +963,3 @@ class ContextMetadata:
         template = env.from_string(yaml_text)
         rendered = template.render(**self.as_dict())
         return yaml.safe_load(rendered)
-
-
