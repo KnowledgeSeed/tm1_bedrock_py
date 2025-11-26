@@ -872,11 +872,6 @@ class ContextParameter:
             return "{" + ",".join(f"[{self.type_context}].[{str(e)}]" for e in self.value) + "}"
 
 
-def extract_param_value_from_dataframe(dataframe: DataFrame, parameter_type: str | None):
-
-    return value
-
-
 class ContextMetadata:
     def __init__(self,
                  sql_engine: Optional[Any] = None,
