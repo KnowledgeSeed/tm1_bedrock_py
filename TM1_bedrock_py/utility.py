@@ -873,12 +873,7 @@ class ContextParameter:
 
 
 def extract_param_value_from_dataframe(dataframe: DataFrame, parameter_type: str | None):
-    if parameter_type == "dimension element":
-        value = dataframe.iloc[0, 0]
-    elif parameter_type == "dimension element list":
-        value = dataframe.iloc[:, 0].tolist()
-    else:
-        value = dataframe.iloc[0, 0]
+
     return value
 
 
@@ -913,14 +908,28 @@ class ContextMetadata:
                                parameter_type: Optional[str] = None,
                                parameter_type_context: Optional[str] = None):
         extracted_df = extractor.sql_to_dataframe(engine=self._sql_engine, sql_query=sql_query)
-        value = extract_param_value_from_dataframe(extracted_df, parameter_type)
+
+        if parameter_type == "dimension element":
+            value = extracted_df.iloc[0, 0]
+        elif parameter_type == "dimension element list":
+            value = extracted_df.iloc[:, 0].tolist()
+        else:
+            value = extracted_df.iloc[0, 0]
+
         self.add_parameter(param_name, value, parameter_type, parameter_type_context)
 
     def add_parameter_from_tm1(self, param_name: str, mdx_query: str,
                                parameter_type: Optional[str] = None,
                                parameter_type_context: Optional[str] = None):
         extracted_df = extractor.tm1_mdx_to_dataframe(tm1_service=self._tm1_service, data_mdx=mdx_query)
-        value = extract_param_value_from_dataframe(extracted_df, parameter_type)
+
+        if parameter_type == "dimension element":
+            value = extracted_df["Value"][0]
+        elif parameter_type == "dimension element list":
+            value = extracted_df["Value"].tolist()
+        else:
+            value = extracted_df["Value"][0]
+
         self.add_parameter(param_name, value, parameter_type, parameter_type_context)
 
     def get(self, name: str) -> ContextParameter:
