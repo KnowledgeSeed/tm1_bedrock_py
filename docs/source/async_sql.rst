@@ -291,7 +291,7 @@ Developer Comments & Performance Tuning
 
     **Tested Databases**
 
-    For the 1.0.0 release, this functionality has been explicitly tested against **MS SQL Server** and **PostgreSQL**. Behavior with other database backends is yet to be verified.
+    For the 1.1.1 release, this functionality has been explicitly tested against **MS SQL Server** and **PostgreSQL**. Behavior with other database backends is yet to be verified.
 
 .. note::
 

@@ -34,11 +34,16 @@ For high performance use-cases, refer to :doc:`async_executor`, :doc:`async_csv`
    async_csv
    async_sql
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Airflow Integration:
+
+   airflow_executor
+
 Indices and tables
 ==================
 
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
 
