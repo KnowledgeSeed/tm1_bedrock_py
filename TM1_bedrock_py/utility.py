@@ -852,9 +852,12 @@ class ContextParameter:
     type_context: str | None
     value: Any
 
-    @property
-    def as_string(self) -> str:
+    def __repr__(self) -> str:
         return str(self.value)
+
+    @property
+    def as_raw_value(self) -> Any:
+        return self.value
 
     @property
     def as_member_unique_name(self) -> str:
