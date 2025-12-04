@@ -77,7 +77,7 @@ def __dataframe_to_cube_default(
         cube_name: str,
         cube_dims: List[str],
         use_blob: bool,
-        slice_size_of_dataframe: int,
+        slice_size_of_dataframe: int = 250_000,
         async_write: bool = False,
         use_ti: bool = False,
         increment: bool = False,
