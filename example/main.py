@@ -40,8 +40,6 @@ def test_context_metadata():
     print(rendered_yaml)
 
 
-
-
 def test_nativeview_functions():
     set_mdx_list = ['{{[Period].[Period].[202406]}}', '{{[Product].[Product].[P0000001],[Product].[Product].[P0000004],[Product].[Product].[P0000005],[Product].[Product].[P0000007],[Product].[Product].[P0000008],[Product].[Product].[P0000009],[Product].[Product].[P0000012],[Product].[Product].[P0000014],[Product].[Product].[P0000015],[Product].[Product].[P0000017],[Product].[Product].[P0000019],[Product].[Product].[P0000023]}}', '{{[Employee].[Employee].[Employee1],[Employee].[Employee].[Employee8],[Employee].[Employee].[Employee35],[Employee].[Employee].[Employee56],[Employee].[Employee].[Employee81],[Employee].[Employee].[Employee87],[Employee].[Employee].[Employee99]}}', '{[Version].[Version].[Actual]}', '{[Currency].[Currency].[LC]}', '{[MeasuresSales].[MeasuresSales].[Input]}', '{[OrganizationUnit].[OrganizationUnit].[Company01]}', '{[LineitemSales].[LineitemSales].[Quantity]}']
 

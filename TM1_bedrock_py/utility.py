@@ -9,7 +9,7 @@ from typing import Iterable, Callable, List, Dict, Optional, Any, Union, Iterato
 from dataclasses import dataclass
 from sqlalchemy import create_engine, inspect
 from pandas import DataFrame
-from jinja2 import Environment, BaseLoader
+from jinja2 import Environment, BaseLoader, StrictUndefined
 import yaml
 
 from datetime import datetime
@@ -853,6 +853,9 @@ class ContextParameter:
     value: Any
 
     def __repr__(self) -> str:
+        return f"ContextParameter({self.name}={self.value})"
+
+    def __str__(self) -> str:
         return str(self.value)
 
     @property
@@ -883,6 +886,7 @@ class ContextMetadata:
         self._params: dict[str, ContextParameter] = {}
         self._sql_engine = sql_engine
         self._tm1_service = tm1_service
+
         if path_to_init_yaml:
             self.load_init_yaml_to_parameters(path_to_init_yaml)
 
@@ -905,6 +909,9 @@ class ContextMetadata:
     def add_parameter_from_sql(self, param_name: str, sql_query: str,
                                parameter_type: Optional[str] = None,
                                parameter_type_context: Optional[str] = None):
+        if self._sql_engine is None:
+            raise RuntimeError("Cannot execute SQL query: 'sql_engine' was not provided during initialization.")
+
         extracted_df = extractor.sql_to_dataframe(engine=self._sql_engine, sql_query=sql_query)
 
         if parameter_type == "dimension_element":
@@ -919,6 +926,9 @@ class ContextMetadata:
     def add_parameter_from_tm1(self, param_name: str, mdx_query: str,
                                parameter_type: Optional[str] = None,
                                parameter_type_context: Optional[str] = None):
+        if self._tm1_service is None:
+            raise RuntimeError("Cannot execute MDX query: 'tm1_service' was not provided during initialization.")
+
         extracted_df = extractor.tm1_mdx_to_dataframe(tm1_service=self._tm1_service, data_mdx=mdx_query)
 
         if parameter_type == "dimension_element":
@@ -962,11 +972,18 @@ class ContextMetadata:
                 mdx_query = param_data["mdx_query"]
                 self.add_parameter_from_tm1(param_name, mdx_query, param_type, param_type_context)
 
-    def render_template_yaml(self, yaml_path: str):
+    def render_template_yaml(self,
+                             yaml_path: str,
+                             variable_start_string: str = "{{",
+                             variable_end_string: str = "}}"):
         with open(yaml_path, encoding="utf-8") as f:
             yaml_text = f.read()
 
-        env = Environment(loader=BaseLoader())
+        env = Environment(
+            loader=BaseLoader(),
+            variable_start_string=variable_start_string,
+            variable_end_string=variable_end_string,
+            undefined=StrictUndefined)
         template = env.from_string(yaml_text)
-        rendered = template.render(**self.as_dict())
+        rendered = template.render(**self._params)
         return yaml.safe_load(rendered)

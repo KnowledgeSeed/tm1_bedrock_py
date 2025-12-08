@@ -1,5 +1,5 @@
 Testing Parameters:
-  key: "this is an mdx string of valid versions: {{LiveVersions}}"
+  key: "this is an mdx string: {{LiveVersions.as_set_mdx}}"
 
 Testing Another Parameter:
-  key:  "this is a period parameter as a member unique name: {{ActivePeriodEnd}}"
+  key:  "this is a member unique name: {{ActivePeriodEnd.as_member_unique_name}}"
