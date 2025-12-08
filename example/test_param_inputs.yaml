@@ -1,0 +1,21 @@
+LiveVersions:
+  sql_query: |
+    SELECT DISTINCT [Version Name]
+    FROM [HRDEMO].[dbo].[Version Control]
+    WHERE [Version Live Flag] = 1
+  type: "dimension_element_list"
+  type_context: "Version"
+
+ActivePeriodEnd:
+  value: "202606"
+  type: "dimension_element"
+  type_context: "Period"
+
+UserPrefix:
+  mdx_query: |
+    SELECT
+        {[zSYS Maintenance Parameter Measure].[zSYS Maintenance Parameter Measure].[S Type]}
+    ON COLUMNS,
+        {[zSYS Maintenance Parameter].[zSYS Maintenance Parameter].[User Prefix]}
+    ON ROWS
+    FROM [zSYS Maintenance Parameter]

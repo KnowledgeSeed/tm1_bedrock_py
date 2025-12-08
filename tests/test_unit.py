@@ -157,21 +157,6 @@ def test_extract_mdx_components(input_mdx, expected_set_mdx_list):
 
 
 @parametrize_from_file
-def test_utility_float_casting_values(input_value, expected_value):
-    output_value = utility.force_float64_on_numeric_values(input_value)
-    print(f"input value: {input_value}, output_value: {output_value}")
-    assert output_value == expected_value
-
-
-@parametrize_from_file
-def test_utility_float_casting_types(input_value, expected_type):
-    output_value = utility.force_float64_on_numeric_values(input_value)
-    output_type = str(type(output_value))
-    print(output_type)
-    assert output_type == expected_type
-
-
-@parametrize_from_file
 def test_add_nonempty_to_mdx_all_modes(input_mdx, expected_mdx):
     output_mdx = utility.add_non_empty_to_mdx(input_mdx)
     assert "".join(output_mdx.split()) == "".join(expected_mdx.split())
@@ -311,16 +296,6 @@ def test_tm1_cube_object_metadata_collect_filter_dict_match(tm1_connection_facto
 # Main: MDX query to normalized pandas dataframe functions
 # ------------------------------------------------------------------------------------------------------------
 
-@parametrize_from_file
-def test_build_mdx_from_cube_filter_is_valid_format_true(tm1_connection_factory, cube_filter, cube_name, expected_mdx):
-    """Build MDX from cube name and dimension and check if the returned MDX matches the expected."""
-    with tm1_connection_factory("tm1srv") as conn:
-        mdx = utility.build_mdx_from_cube_filter(tm1_service=conn, cube_name=cube_name, cube_filter=cube_filter)
-        mdx = mdx.replace(" ", "")
-        expected_mdx = expected_mdx.replace(" ", "")
-
-        assert mdx == expected_mdx
-
 
 @parametrize_from_file
 def test_mdx_to_dataframe_execute_query_success(tm1_connection_factory, data_mdx):
@@ -378,21 +353,6 @@ def test_normalize_dataframe_match_dimensions_success(tm1_connection_factory, da
             transformer.normalize_dataframe_for_testing(dataframe=df, tm1_service=conn, mdx=data_mdx)
             keys = [key for key in df.keys()]
             assert expected_dimensions == keys
-        except Exception as e:
-            pytest.fail(f"MDX query execution failed: {e}")
-
-
-@parametrize_from_file
-def test_build_mdx_from_cube_filter_create_dataframe_success(tm1_connection_factory, cube_filter, cube_name):
-    """Run MDX query created by the MDX builder and verifies that the output is a DataFrame object"""
-    with tm1_connection_factory("tm1srv") as conn:
-        data_mdx = utility.build_mdx_from_cube_filter(
-            tm1_service=conn, cube_name=cube_name, cube_filter=cube_filter
-        )
-        try:
-            df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=data_mdx)
-            transformer.normalize_dataframe_for_testing(dataframe=df, tm1_service=conn, mdx=data_mdx)
-            assert isinstance(df, DataFrame)
         except Exception as e:
             pytest.fail(f"MDX query execution failed: {e}")
 

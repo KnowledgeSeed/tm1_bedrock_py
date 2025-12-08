@@ -6,15 +6,15 @@ import time
 import locale
 import itertools
 from typing import Iterable, Callable, List, Dict, Optional, Any, Union, Iterator, Tuple, Literal
-
-import pandas
-from mdxpy import MdxBuilder, MdxHierarchySet, Member
+from dataclasses import dataclass
 from sqlalchemy import create_engine, inspect
 from pandas import DataFrame
-from numpy import float64
+from jinja2 import Environment, BaseLoader, StrictUndefined
+import yaml
+
 from datetime import datetime
 
-from TM1_bedrock_py import exec_metrics_logger, basic_logger, benchmark_metrics_logger
+from TM1_bedrock_py import exec_metrics_logger, basic_logger, benchmark_metrics_logger, extractor
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -130,7 +130,7 @@ def set_logging_level(logging_level: str):
 
 
 # ------------------------------------------------------------------------------------------------------------
-# Utility: MDX query parsing functions
+# Utility: set and view mdx related helpers
 # ------------------------------------------------------------------------------------------------------------
 
 
@@ -472,9 +472,6 @@ def extract_mdx_components(mdx: str) -> List[str]:
     def extract_select_part(input_mdx: str):
         mdx_clean = input_mdx
 
-        # -------------------
-        # 1. Extract everything between SELECT and FROM
-        # -------------------
         select_match = re.search(r"SELECT\s+(.*?)\s+FROM", mdx_clean, re.IGNORECASE | re.DOTALL)
         if not select_match:
             raise ValueError("No SELECT ... FROM clause found")
@@ -488,7 +485,6 @@ def extract_mdx_components(mdx: str) -> List[str]:
 
         axes = []
         for item in axes_raw:
-            # Remove trailing whitespace
             item_clean = item.strip()
             if item_clean.upper() not in ("ON COLUMNS", "ON ROWS") and item_clean.upper()[:3] != "ON ":
                 axes.extend([p.strip() for p in item_clean.split('*') if p.strip()])
@@ -522,6 +518,94 @@ def extract_mdx_components(mdx: str) -> List[str]:
     set_mdx_list = extract_select_part(cleaned_mdx) + extract_where_part(cleaned_mdx)
     set_mdx_list = ["{" + re.sub(r"\s+", "", item) + "}" for item in set_mdx_list]
     return set_mdx_list
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Utility: locale related helpers
+# ------------------------------------------------------------------------------------------------------------
+
+
+def get_local_decimal_separator() -> str:
+    locale.getlocale()
+    return locale.localeconv()['decimal_point']
+
+
+def get_local_regex_separator() -> str:
+    """Detects the CSV separator based on the system's locale settings with cross-platform support."""
+    try:
+        locale.setlocale(locale.LC_ALL, "")
+        decimal_sep = get_local_decimal_separator()
+
+        csv_sep = ";" if decimal_sep == "," else ","
+
+        return csv_sep
+    except Exception as e:
+        basic_logger.info(f"Warning: Unable to detect locale settings ({e}). Defaulting to comma (',').")
+        return ","
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Utility: sql extraction related helpers
+# ------------------------------------------------------------------------------------------------------------
+
+
+def create_sql_engine(
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        connection_type: Optional[str] = None,
+        connection_string: Optional[str] = None,
+        host: Optional[str] = "localhost",
+        port: Optional[str] = None,
+        mssql_driver: Optional[str] = "ODBC+Driver+17+for+SQL+Server",
+        sqlite_file_path: Optional[str] = None,
+        oracle_sid: Optional[str] = None,
+        database: Optional[str] = None,
+        **kwargs
+) -> Any:
+    """ So far tested for mssql and postgresql connections. Expected to be extended in the future. """
+    connection_strings = {
+        'mssql': f"mssql+pyodbc://{username}:{password}@{host}:{port}/{database}?driver={mssql_driver}&TrustServerCertificate=yes&fast_executemany=true",
+        'postgresql': f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}",
+        #'sqlite': f"sqlite:///{sqlite_file_path}",
+        #'mysql': f"mysql+mysqlconnector://{username}:{password}@{host}:{port}/{database}",
+        #'mariadb': f"mariadb+mariadbconnector://{username}:{password}@{host}:{port}/{database}",
+        #'oracle': f"oracle+cx_oracle://{username}:{password}@{host}:{port}/{oracle_sid}",
+        #'ibmdb2': f"ibm_db_sa://{username}:{password}@{host}:{port}/{database}",
+        #'sqlite_inmemory': "sqlite:///:memory:",
+        #'firebird': f"firebird+fdb://{username}:{password}@{host}:{port}/{database}",
+    }
+    if connection_type and not connection_string:
+        connection_string = connection_strings.get(connection_type)
+        if 'mssql' in connection_string:
+            return create_engine(connection_string, fast_executemany=True)
+    return create_engine(connection_string)
+
+
+def inspect_table(engine: Any, table_name: str, schema: Optional[str]=None) -> dict:
+    return inspect(engine).get_columns(table_name=table_name, schema=schema)
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Utility: ignore missing elements related helpers
+# ------------------------------------------------------------------------------------------------------------
+
+
+@log_exec_metrics
+def all_leaves_identifiers_to_dataframe(
+        tm1_service: Any, dimension_name: [str], hierarchy_name: Optional[str] = None
+) -> DataFrame:
+    # caseandspaceinsensitiveset datastruct to dataframe
+    if not hierarchy_name:
+        hierarchy_name = dimension_name
+    dataset = tm1_service.elements.get_all_leaf_element_identifiers(
+        dimension_name=dimension_name, hierarchy_name=hierarchy_name
+    )
+    return DataFrame({dimension_name: list(dataset)})
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Utility: dataframe normalization for case and space insensitive inputs
+# ------------------------------------------------------------------------------------------------------------
 
 
 def normalize_string(input_string: str) -> str:
@@ -761,312 +845,145 @@ class TM1CubeObjectMetadata:
             )
 
 
-# ------------------------------------------------------------------------------------------------------------
-# Utility: DataFrame validation functions
-# ------------------------------------------------------------------------------------------------------------
+@dataclass
+class ContextParameter:
+    name: str
+    type: Literal["dimension_element", "dimension_element_list"] | None
+    type_context: str | None
+    value: Any
 
+    def __repr__(self) -> str:
+        return f"ContextParameter({self.name}={self.value})"
 
-def validate_dataframe_columns(
-        dataframe: DataFrame,
-        cube_name: str,
-        metadata_function: Optional[Callable[..., Any]] = None,
-        **kwargs: Any
-) -> bool:
-    """
-    Collects the column labels from the DataFrame and compares them with the column labels collected from the Metadata
-    based on a cube_name or metadata_function.
-    Compares them as lists to check for matching label names and order.
+    def __str__(self) -> str:
+        return str(self.value)
 
-    Args:
-        dataframe: (DataFrame): The DataFrame to validate.
-        cube_name: (srt): The name of the Cube.
-        metadata_function: (Optional[Callable]): A function to collect metadata for validation.
-                                                 If None, a default function is used.
-        **kwargs: (Any): Additional keyword arguments passed to the function.
-    Returns:
-        boolean: True if the column label names and their order in the input DataFrame match the column labels
-                 of the Metadata. False if the column labels or their order does not match.
-    """
+    @property
+    def as_raw_value(self) -> Any:
+        return self.value
 
-    metadata = TM1CubeObjectMetadata.collect(metadata_function=metadata_function, cube_name=cube_name, **kwargs)
-    dimensions_from_metadata = metadata.get_cube_dims()
-    dimensions_from_dataframe = list(map(str, dataframe.keys()))
-    dimensions_from_dataframe.remove("Value")
+    @property
+    def as_member_unique_name(self) -> str:
+        if self.type != "dimension_element":
+            raise TypeError("Parameter type must be dimension element")
+        return f"[{self.type_context}].[{self.value}]"
 
-    return dimensions_from_metadata == dimensions_from_dataframe
-
-
-def validate_dataframe_values_for_na(dataframe: DataFrame) -> bool:
-    """
-    Checks if the DataFrame rows contain NaN values in the "Value" column
-
-    Args:
-        dataframe: (DataFrame): The DataFrame to check for NaN values.
-    Returns:
-         boolean: True if the DataFrame does not contain NaN values.
-                  False if it does.
-    """
-
-    return not dataframe["Value"].isna().values.any()
-
-
-def validate_dataframe_no_duplicates(dataframe: DataFrame) -> bool:
-    """
-    Checks if the DataFrame rows contain duplicate values for validating the DataFrame.
-
-    Args:
-        dataframe: (DataFrame): The DataFrame to check for duplicate values.
-    Returns:
-         boolean: True if the DataFrame does not contain duplicate values.
-                  False if it does.
-    """
-    return not dataframe.duplicated(keep=False).any()
-
-
-def validate_dataframe_rows(dataframe: DataFrame) -> bool:
-    """
-    Checks if the DataFrame rows are valid. A row is valid if it does not contain duplicate or NaN values.
-
-    Args:
-        dataframe: (DataFrame): The DataFrame to check for duplicate and NaN values.
-    Returns:
-        boolean: True if the DataFrame does not contain duplicate or NaN values.
-                 False if it does contain either.
-    """
-    return (validate_dataframe_values_for_na(dataframe=dataframe)
-            and validate_dataframe_no_duplicates(dataframe=dataframe))
-
-
-def validate_dataframe_for_cube_objects(
-        dataframe: DataFrame,
-        cube_name: str,
-        metadata_function: Optional[Callable[..., Any]] = None,
-        **kwargs: Any
-) -> bool:
-    """
-    Calls the validate_dataframe_rows() and validate_dataframe_columns() functions and returns only returns True if both
-    conditions are met.
-
-    Args:
-        dataframe: (DataFrame): The DataFrame to validate.
-        cube_name: (srt): The name of the Cube.
-        metadata_function: (Optional[Callable]): A function to collect metadata for validation.
-                                                 If None, a default function is used.
-        **kwargs: (Any): Additional keyword arguments passed to the function.
-    Returns:
-        boolean: True if all conditions are met.
-                 False if any of the called functions returned False.
-    """
-    return (validate_dataframe_rows(dataframe=dataframe) and
-            validate_dataframe_columns(
-                dataframe=dataframe,
-                cube_name=cube_name,
-                metadata_function=metadata_function,
-                **kwargs
-            ))
-
-
-def validate_dataframe_transformations(
-        source_dataframe: DataFrame,
-        target_cube_name: str,
-        source_dim_mapping: dict,
-        related_dimensions: dict,
-        target_dim_mapping: dict,
-        **kwargs
-) -> bool:
-
-    source_dimensions = source_dataframe.columns()
-    target_dimensions = TM1CubeObjectMetadata.collect(cube_name=target_cube_name, **kwargs).get_cube_dims()
-
-    if source_dimensions == target_dimensions:
-        return True
-    else:
-        return (__validate_dataframe_transformations_for_source(
-                        source_dimensions=source_dimensions,
-                        source_dim_mapping=source_dim_mapping,
-                        related_dimensions=related_dimensions)
-                and __validate_dataframe_transformations_for_target(
-                        target_dimensions=target_dimensions,
-                        target_dim_mapping=target_dim_mapping,
-                        related_dimensions=related_dimensions)
-                )
-
-
-def __validate_dataframe_transformations_for_source(
-        source_dimensions: list,
-        source_dim_mapping: dict,
-        related_dimensions: dict
-) -> bool:
-    related_dim_list = list(map(str, related_dimensions.keys()))
-    if related_dim_list in source_dimensions:
-        return True
-    else:
-        source_dim_list = list(map(str, source_dim_mapping.keys()))
-        return source_dimensions == source_dim_list
-
-
-def __validate_dataframe_transformations_for_target(
-        target_dimensions: list,
-        target_dim_mapping: dict,
-        related_dimensions: dict
-) -> bool:
-    related_dim_list = list(map(str, related_dimensions.values()))
-    if related_dim_list in target_dimensions:
-        return True
-    else:
-        source_dim_list = list(map(str, target_dim_mapping.keys()))
-        return target_dimensions == source_dim_list
-
-
-# ------------------------------------------------------------------------------------------------------------
-# Utility: MDX builder functions
-# ------------------------------------------------------------------------------------------------------------
-
-
-def build_mdx_from_cube_filter(
-        cube_name: str,
-        cube_filter: dict,
-        metadata_function: Optional[Callable[..., Any]] = None,
-        **kwargs: Any
-) -> str:
-    """
-    Returns a valid MDX from a cube and dictionary filters. All dimensions not specified in the filter dictionary
-    will get all leaves elements put in the query.
-
-    Args:
-
-
-    Returns:
-        DataFrame: The normalized DataFrame.
-    """
-
-    metadata = TM1CubeObjectMetadata.collect(
-        metadata_function=metadata_function, cube_name=cube_name, **kwargs
-    )
-    dataframe_dimensions = metadata.get_cube_dims()
-
-    mdx_object = MdxBuilder.from_cube(cube_name)
-    dim_keys = [key for key in cube_filter]
-
-    for dim in dataframe_dimensions:
-        if dim not in dim_keys:
-            mdx_object.add_hierarchy_set_to_axis(1, MdxHierarchySet.all_leaves(dim))
+    @property
+    def as_set_mdx(self) -> str:
+        if self.type not in ("dimension_element", "dimension_element_list"):
+            raise TypeError("Parameter type must be dimension element or dimension element list")
+        if self.type == "dimension_element":
+            return f"{{[{self.type_context}].[{self.value}]}}"
         else:
-            member_keys = [key for key in cube_filter[dim].keys()]
-            value = member_keys[0]
-            mdx_object.add_hierarchy_set_to_axis(0, MdxHierarchySet.member(Member.of(dim, value)))
-
-    return mdx_object.to_mdx()
+            return "{" + ",".join(f"[{self.type_context}].[{str(e)}]" for e in self.value) + "}"
 
 
-# ------------------------------------------------------------------------------------------------------------
-# Utility: Additional helpers
-# ------------------------------------------------------------------------------------------------------------
+class ContextMetadata:
+    def __init__(self,
+                 sql_engine: Optional[Any] = None,
+                 tm1_service: Optional[Any] = None,
+                 path_to_init_yaml: Optional[str] = None):
+        self._params: dict[str, ContextParameter] = {}
+        self._sql_engine = sql_engine
+        self._tm1_service = tm1_service
 
-def cast_coordinates_to_str(cube_dims: list, dataframe: pandas.DataFrame):
-    """
-        Convert all dimension (coordinate) columns in the given DataFrame to string type
-        for TM1py compatibility. The 'Value' column, if present, is left unchanged.
+        if path_to_init_yaml:
+            self.load_init_yaml_to_parameters(path_to_init_yaml)
 
-        Args:
-            cube_dims: List of cube dimension (coordinate) column names.
-            dataframe: DataFrame whose dimension columns will be cast to string.
+    def register_context_parameter(self, param: ContextParameter):
+        self._params[param.name] = param
 
-        Returns:
-             The same DataFrame instance with dimension columns converted to string type.
-    """
-    basic_logger.info("Converting dimension columns to string type for consistency.")
-    for dim_col in cube_dims:
-        if dim_col in dataframe.columns:
-            dataframe[dim_col] = dataframe[dim_col].astype(str)
+    def add_parameter(self, param_name: str, value: Any,
+                      parameter_type: Optional[str] = None,
+                      parameter_type_context: Optional[str] = None):
+        if parameter_type == "dimension_element" and not isinstance(value, str):
+            raise TypeError("Dimension element type parameters must be of string type")
+        if parameter_type == "dimension_element_list" and not isinstance(value, list):
+            raise TypeError("Dimension element list type parameters must be of List type")
+        if parameter_type in ("dimension_element_list", "dimension_element") and parameter_type_context is None:
+            raise ValueError("Must fill parameter type context for this type of parameter")
 
+        new_parameter = ContextParameter(param_name, parameter_type, parameter_type_context, value)
+        self.register_context_parameter(new_parameter)
 
-def force_float64_on_numeric_values(input_value: Any) -> float64 | str:
-    """
-    Convert string '12,34' → '12.34' and then parse as np.float64 if it is a numeric (optionally with decimal).
-    Otherwise, return the original value unchanged.
+    def add_parameter_from_sql(self, param_name: str, sql_query: str,
+                               parameter_type: Optional[str] = None,
+                               parameter_type_context: Optional[str] = None):
+        if self._sql_engine is None:
+            raise RuntimeError("Cannot execute SQL query: 'sql_engine' was not provided during initialization.")
 
-    Args:
-        input_value: any type of value to be converted if numerical
+        extracted_df = extractor.sql_to_dataframe(engine=self._sql_engine, sql_query=sql_query)
 
-    Returns:
-        the converted and cast numerical value or the string unchanged
-    """
+        if parameter_type == "dimension_element":
+            value = extracted_df.iloc[0, 0]
+        elif parameter_type == "dimension_element_list":
+            value = extracted_df.iloc[:, 0].tolist()
+        else:
+            value = extracted_df.iloc[0, 0]
 
-    if not isinstance(input_value, str):
-        return float64(input_value)
-    pattern = re.compile(r"^-?\d+(?:[.,]\d+)?$")
-    if pattern.match(input_value):
-        input_value = input_value.replace(',', '.')
-    try:
-        return float64(input_value)
-    except ValueError:
-        return input_value
+        self.add_parameter(param_name, value, parameter_type, parameter_type_context)
 
+    def add_parameter_from_tm1(self, param_name: str, mdx_query: str,
+                               parameter_type: Optional[str] = None,
+                               parameter_type_context: Optional[str] = None):
+        if self._tm1_service is None:
+            raise RuntimeError("Cannot execute MDX query: 'tm1_service' was not provided during initialization.")
 
-def get_local_decimal_separator() -> str:
-    locale.getlocale()
-    return locale.localeconv()['decimal_point']
+        extracted_df = extractor.tm1_mdx_to_dataframe(tm1_service=self._tm1_service, data_mdx=mdx_query)
 
+        if parameter_type == "dimension_element":
+            value = extracted_df["Value"][0]
+        elif parameter_type == "dimension_element_list":
+            value = extracted_df["Value"].tolist()
+        else:
+            value = extracted_df["Value"][0]
 
-def get_local_regex_separator() -> str:
-    """Detects the CSV separator based on the system's locale settings with cross-platform support."""
-    try:
-        locale.setlocale(locale.LC_ALL, "")
-        decimal_sep = get_local_decimal_separator()
+        self.add_parameter(param_name, value, parameter_type, parameter_type_context)
 
-        csv_sep = ";" if decimal_sep == "," else ","
+    def get(self, name: str) -> ContextParameter:
+        return self._params[name]
 
-        return csv_sep
-    except Exception as e:
-        basic_logger.info(f"Warning: Unable to detect locale settings ({e}). Defaulting to comma (',').")
-        return ","
+    def get_value(self, name: str):
+        return self._params[name].value
 
+    def __contains__(self, name: str):
+        return name in self._params
 
-def create_sql_engine(
-        username: Optional[str] = None,
-        password: Optional[str] = None,
-        connection_type: Optional[str] = None,
-        connection_string: Optional[str] = None,
-        host: Optional[str] = "localhost",
-        port: Optional[str] = None,
-        mssql_driver: Optional[str] = "ODBC+Driver+17+for+SQL+Server",
-        sqlite_file_path: Optional[str] = None,
-        oracle_sid: Optional[str] = None,
-        database: Optional[str] = None,
-        **kwargs
-) -> Any:
-    """ So far tested for mssql and postgresql connections. Expected to be extended in the future. """
-    connection_strings = {
-        'mssql': f"mssql+pyodbc://{username}:{password}@{host}:{port}/{database}?driver={mssql_driver}&TrustServerCertificate=yes&fast_executemany=true",
-        'postgresql': f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}",
-        #'sqlite': f"sqlite:///{sqlite_file_path}",
-        #'mysql': f"mysql+mysqlconnector://{username}:{password}@{host}:{port}/{database}",
-        #'mariadb': f"mariadb+mariadbconnector://{username}:{password}@{host}:{port}/{database}",
-        #'oracle': f"oracle+cx_oracle://{username}:{password}@{host}:{port}/{oracle_sid}",
-        #'ibmdb2': f"ibm_db_sa://{username}:{password}@{host}:{port}/{database}",
-        #'sqlite_inmemory': "sqlite:///:memory:",
-        #'firebird': f"firebird+fdb://{username}:{password}@{host}:{port}/{database}",
-    }
-    if connection_type and not connection_string:
-        connection_string = connection_strings.get(connection_type)
-        if 'mssql' in connection_string:
-            return create_engine(connection_string, fast_executemany=True)
-    return create_engine(connection_string)
+    def as_dict(self):
+        return {name: vars(p) for name, p in self._params.items()}
 
+    def as_value_dict(self) -> dict[str, Any]:
+        return {name: param.value for name, param in self._params.items()}
 
-def inspect_table(engine: Any, table_name: str, schema: Optional[str]=None) -> dict:
-    return inspect(engine).get_columns(table_name=table_name, schema=schema)
+    def load_init_yaml_to_parameters(self, yaml_path: str):
+        with open(yaml_path, "r") as f:
+            parameters_init = yaml.safe_load(f)
 
+        for param_name, param_data in parameters_init.items():
+            param_type = param_data.get("type")
+            param_type_context = param_data.get("type_context")
+            if "value" in param_data:
+                value = param_data["value"]
+                self.add_parameter(param_name, value, param_type, param_type_context)
+            elif "sql_query" in param_data:
+                sql_query = param_data["sql_query"]
+                self.add_parameter_from_sql(param_name, sql_query, param_type, param_type_context)
+            elif "mdx_query" in param_data:
+                mdx_query = param_data["mdx_query"]
+                self.add_parameter_from_tm1(param_name, mdx_query, param_type, param_type_context)
 
-@log_exec_metrics
-def all_leaves_identifiers_to_dataframe(
-        tm1_service: Any, dimension_name: [str], hierarchy_name: Optional[str] = None
-) -> DataFrame:
-    # caseandspaceinsensitiveset datastruct to dataframe
-    if not hierarchy_name:
-        hierarchy_name = dimension_name
-    dataset = tm1_service.elements.get_all_leaf_element_identifiers(
-        dimension_name=dimension_name, hierarchy_name=hierarchy_name
-    )
-    return DataFrame({dimension_name: list(dataset)})
+    def render_template_yaml(self,
+                             yaml_path: str,
+                             variable_start_string: str = "{{",
+                             variable_end_string: str = "}}"):
+        with open(yaml_path, encoding="utf-8") as f:
+            yaml_text = f.read()
+
+        env = Environment(
+            loader=BaseLoader(),
+            variable_start_string=variable_start_string,
+            variable_end_string=variable_end_string,
+            undefined=StrictUndefined)
+        template = env.from_string(yaml_text)
+        rendered = template.render(**self._params)
+        return yaml.safe_load(rendered)
