@@ -848,7 +848,7 @@ class TM1CubeObjectMetadata:
 @dataclass
 class ContextParameter:
     name: str
-    type: Literal["dimension element", "dimension element list"] | None
+    type: Literal["dimension_element", "dimension_element_list"] | None
     type_context: str | None
     value: Any
 
@@ -861,15 +861,15 @@ class ContextParameter:
 
     @property
     def as_member_unique_name(self) -> str:
-        if self.type != "dimension element":
+        if self.type != "dimension_element":
             raise TypeError("Parameter type must be dimension element")
         return f"[{self.type_context}].[{self.value}]"
 
     @property
     def as_set_mdx(self) -> str:
-        if self.type not in ("dimension element", "dimension element list"):
+        if self.type not in ("dimension_element", "dimension_element_list"):
             raise TypeError("Parameter type must be dimension element or dimension element list")
-        if self.type == "dimension element":
+        if self.type == "dimension_element":
             return f"{{[{self.type_context}].[{self.value}]}}"
         else:
             return "{" + ",".join(f"[{self.type_context}].[{str(e)}]" for e in self.value) + "}"
@@ -892,11 +892,11 @@ class ContextMetadata:
     def add_parameter(self, param_name: str, value: Any,
                       parameter_type: Optional[str] = None,
                       parameter_type_context: Optional[str] = None):
-        if parameter_type == "dimension element" and not isinstance(value, str):
+        if parameter_type == "dimension_element" and not isinstance(value, str):
             raise TypeError("Dimension element type parameters must be of string type")
-        if parameter_type == "dimension element list" and not isinstance(value, list):
+        if parameter_type == "dimension_element_list" and not isinstance(value, list):
             raise TypeError("Dimension element list type parameters must be of List type")
-        if parameter_type in ("dimension element list", "dimension element") and parameter_type_context is None:
+        if parameter_type in ("dimension_element_list", "dimension_element") and parameter_type_context is None:
             raise ValueError("Must fill parameter type context for this type of parameter")
 
         new_parameter = ContextParameter(param_name, parameter_type, parameter_type_context, value)
@@ -907,9 +907,9 @@ class ContextMetadata:
                                parameter_type_context: Optional[str] = None):
         extracted_df = extractor.sql_to_dataframe(engine=self._sql_engine, sql_query=sql_query)
 
-        if parameter_type == "dimension element":
+        if parameter_type == "dimension_element":
             value = extracted_df.iloc[0, 0]
-        elif parameter_type == "dimension element list":
+        elif parameter_type == "dimension_element_list":
             value = extracted_df.iloc[:, 0].tolist()
         else:
             value = extracted_df.iloc[0, 0]
@@ -921,9 +921,9 @@ class ContextMetadata:
                                parameter_type_context: Optional[str] = None):
         extracted_df = extractor.tm1_mdx_to_dataframe(tm1_service=self._tm1_service, data_mdx=mdx_query)
 
-        if parameter_type == "dimension element":
+        if parameter_type == "dimension_element":
             value = extracted_df["Value"][0]
-        elif parameter_type == "dimension element list":
+        elif parameter_type == "dimension_element_list":
             value = extracted_df["Value"].tolist()
         else:
             value = extracted_df["Value"][0]

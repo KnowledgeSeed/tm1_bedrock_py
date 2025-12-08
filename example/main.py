@@ -1,15 +1,15 @@
 from TM1py import TM1Service
 import pprint
-from TM1_bedrock_py import utility, extractor, transformer, loader, bedrock
+from TM1_bedrock_py import extractor, transformer, loader, bedrock
 from TM1_bedrock_py.transformer import normalize_table_source_dataframe
 from string import Template
+from TM1_bedrock_py.utility import ContextMetadata, create_sql_engine
 from tm1_bench_py import tm1_bench, df_generator_for_dataset, dimension_builder, dimension_period_builder
 import re
 import os
 
 
-
-def manage():
+def test_context_metadata():
     tm1_params = {
         "address": "localhost",
         "port": 5365,
@@ -27,116 +27,19 @@ def manage():
         "database": "HRDEMO"
     }
 
-    sql_table_name = "Employee Group Mapping"
+    tm1_service = TM1Service(**tm1_params)
+    sql_engine = create_sql_engine(**sql_params)
 
-    data_mdx = """
-        SELECT 
-           {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],
-           [Periods].[Periods].[202304],[Periods].[Periods].[202305],[Periods].[Periods].[202306],
-           [Periods].[Periods].[202307],[Periods].[Periods].[202308],[Periods].[Periods].[202309],
-           [Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]}  
-          ON COLUMNS , 
-           {[Groups].[Groups].Members}
-           * {[Employees].[Employees].Members} 
-          ON ROWS 
-        FROM [Cost and FTE by Groups] 
-        WHERE 
-          (
-           [Versions].[Versions].[Base Plan], 
-           [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[FTE],
-           [Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value]
-          )
-         """
+    context_metadata = ContextMetadata(sql_engine=sql_engine,
+                                       tm1_service=tm1_service,
+                                       path_to_init_yaml="test_param_inputs.yaml")
+    print(context_metadata.as_dict())
 
-    mapping_target_data_mdx = """
-        SELECT 
-           {[Periods].[Periods].[202301],[Periods].[Periods].[202302],[Periods].[Periods].[202303],
-           [Periods].[Periods].[202304],[Periods].[Periods].[202305],[Periods].[Periods].[202306],
-           [Periods].[Periods].[202307],[Periods].[Periods].[202308],[Periods].[Periods].[202309],
-           [Periods].[Periods].[202310],[Periods].[Periods].[202311],[Periods].[Periods].[202312]} 
-          ON COLUMNS , 
-           {[Groups].[Groups].Members}
-           * {[Employees].[Employees].Members} 
-          ON ROWS 
-        FROM [Cost and FTE by Groups] 
-        WHERE 
-          (
-           [Versions].[Versions].[TM1py Test Version], 
-           [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[FTE],
-           [Measures Cost and FTE by Group].[Measures Cost and FTE by Groups].[Value]
-          )
-         """
+    rendered_yaml = context_metadata.render_template_yaml(yaml_path="test_template_render.yaml")
 
-    literal_mapping = {
-        "Versions": {"Base Plan": "TM1py Test Version"}
-    }
-    cube_name = "Cost and FTE by Groups"
-
-    clear_set_mdx_list = ["{[Versions].[TM1py Test Version]}",
-                          "{[Periods].[Periods].[2023].Children}"]
-
-    """
-    sql = utility.create_sql_engine(**sql_params)
-    columninfo = utility.inspect_table(sql, "Write Test Table")
-    print(columninfo)
-    """
-    tm1 = TM1Service(**tm1_params)
+    print(rendered_yaml)
 
 
-    """
-    
-    SELECT 
-       {[Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Value],[Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Input]} 
-      ON COLUMNS , 
-       {[Versions].[Versions].[Base Plan],[Versions].[Versions].[Bedrock Input Test]} 
-      ON ROWS 
-    FROM [Cost and FTE by Groups] 
-    WHERE 
-      (
-       [Periods].[Periods].[202307],
-       [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[Caculated Salary],
-       [Employees].[Employees].[Total Employees],
-       [Groups].[Groups].[Total Groups]
-      )
-    
-    
-    unique_element_names=[
-                "[Groups].[Groups].[Total Groups]",
-                "[Employees].[Employees].[Total Employees]",
-                "[Periods].[Periods].[202307]",
-                "[Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[Caculated Salary]",
-                "[Versions].[Versions].[Bedrock Input Test]",
-                "[Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Input]"
-            ],
-    
-    
-    """
-
-    try:
-        mdx = """
-            SELECT 
-               {[Measures Cost and FTE by Groups].[Measures Cost and FTE by Groups].[Input]} 
-              ON COLUMNS , 
-               {[Versions].[Versions].[Bedrock Input Test]} 
-              ON ROWS 
-            FROM [Cost and FTE by Groups] 
-            WHERE 
-              (
-               [Periods].[Periods].[202307],
-               [Lineitems Cost and FTE by Groups].[Lineitems Cost and FTE by Groups].[Caculated Salary],
-               [Employees].[Employees].[Total Employees],
-               [Groups].[Groups].[Total Groups]
-              )
-              """
-        try:
-            all_server_files = tm1.files.get_all_names()
-            print("Files found via TM1 REST API:")
-            print(all_server_files)
-            # Check if your expected file name (e.g., "your_unique_name.csv") is in the list
-        except Exception as e:
-            print(f"Error listing files via API: {e}")
-    finally:
-        tm1.logout()
 
 
 def test_nativeview_functions():
@@ -197,13 +100,14 @@ def test_nativeview_functions():
         verbose_logging_mode="print_console"
     )
     """
+    """
     utility.set_logging_level("DEBUG")
     df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_service, data_mdx=mdx)
     utility.normalize_dataframe_strings(df)
     df.attribute = "test"
     print(df)
     print(df.attribute)
-
+    """
 
 def benchpy_sample():
     schema_dir = 'C:\\Users\\ullmann.david\\PycharmProjects\\tm1bedrockpy\\schema'
@@ -230,4 +134,4 @@ def benchpy_sample():
 
 
 if __name__ == '__main__':
-    test_nativeview_functions()
+    test_context_metadata()
