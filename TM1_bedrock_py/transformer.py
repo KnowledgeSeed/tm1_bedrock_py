@@ -857,7 +857,7 @@ def dataframe_execute_mappings(
                 case_and_space_insensitive_inputs)
             utility.dataframe_verbose_logger(
                 dataframe=data_df,
-                step_number="mapping_step_{i+1}_result",
+                step_number=f"mapping_step_{i+1}_result",
                 **kwargs
             )
         else:

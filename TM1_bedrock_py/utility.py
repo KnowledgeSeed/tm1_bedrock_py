@@ -103,7 +103,7 @@ def log_async_exec_metrics(func):
     """Decorator to measure function execution time."""
     @functools.wraps(func)
     async def wrapper(*args, **kwargs):
-        return await execution_metrics_logger(exec_metrics_logger, func, *args, **kwargs)
+        return await async_execution_metrics_logger(exec_metrics_logger, func, *args, **kwargs)
     return wrapper
 
 
