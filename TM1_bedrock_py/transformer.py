@@ -526,6 +526,7 @@ def dataframe_map_and_replace(
         data_df: DataFrame,
         mapping_df: DataFrame,
         mapped_dimensions: Dict[str, str],
+        include_mapped_in_join: bool = False,
         case_and_space_insensitive_inputs: Optional[bool] = False,
 ) -> DataFrame:
     """
@@ -556,12 +557,13 @@ def dataframe_map_and_replace(
         mapped_dimensions = utility.normalize_structure_strings(mapped_dimensions)
         value_column_name = 'value'
 
-    shared_dimensions = (
-        list(set(data_df.columns) & set(mapping_df.columns) - set(mapped_dimensions.keys()) - {value_column_name}))
+    shared_dimensions_set = set(data_df.columns) & set(mapping_df.columns) - {value_column_name}
+    if not include_mapped_in_join:
+        shared_dimensions_set -= set(mapped_dimensions.keys())
+    shared_dimensions = list(shared_dimensions_set)
+
     if len(shared_dimensions) == 0:
-        shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - {value_column_name})
-        if len(shared_dimensions) == 0:
-            raise ValueError
+        raise ValueError
 
     original_columns = data_df.columns
 
@@ -610,6 +612,9 @@ def dataframe_map_and_join(
     None
         The original DataFrame (`data_df`) is modified in-place.
     """
+    if not set(joined_columns).issubset(mapping_df.columns):
+        raise ValueError("Some or all columns were not found in mapping df.")
+
     value_column_name = 'Value'
     if case_and_space_insensitive_inputs:
         utility.normalize_dataframe_strings(data_df)
@@ -617,12 +622,33 @@ def dataframe_map_and_join(
         joined_columns = utility.normalize_structure_strings(joined_columns)
         value_column_name = 'value'
 
-    shared_dimensions = (
-        list(set(data_df.columns) & set(mapping_df.columns) - set(joined_columns) - {value_column_name}))
+    shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - {value_column_name})
 
     merged_df = data_df.merge(mapping_df[shared_dimensions + joined_columns],
                               how='inner',
                               on=shared_dimensions)
+
+    if case_and_space_insensitive_inputs:
+        merged_df.normalized = True
+
+    return merged_df
+
+
+def dataframe_cartesian_product(
+        data_df: DataFrame,
+        mapping_df: DataFrame,
+        joined_columns: List[str],
+        case_and_space_insensitive_inputs: Optional[bool] = False,
+):
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(data_df)
+        utility.normalize_dataframe_strings(mapping_df)
+        joined_columns = utility.normalize_structure_strings(joined_columns)
+
+    merged_df = data_df.merge(
+        mapping_df[joined_columns].drop_duplicates(),
+        how="cross"
+    )
 
     if case_and_space_insensitive_inputs:
         merged_df.normalized = True
@@ -710,6 +736,7 @@ def __apply_map_and_replace(
 
     data_df = dataframe_map_and_replace(
         data_df=data_df, mapping_df=mapping_df, mapped_dimensions=mapping_step["mapping_dimensions"],
+        include_mapped_in_join=mapping_step["include_mapped_in_join"],
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
 
     if mapping_step.get("relabel_dimensions"):
@@ -773,6 +800,142 @@ def __apply_map_and_join(
                               case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
 
     return data_df
+
+
+def __apply_cartesian_product(
+        data_df: DataFrame,
+        mapping_step: Dict[str, Any],
+        shared_mapping_df: Optional[DataFrame] = None,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
+) -> DataFrame:
+    """
+    Handle the 'map_and_join' mapping step.
+
+    Parameters
+    ----------
+    data_df : DataFrame
+        The main DataFrame that will be remapped using the MDX approach.
+    mapping_step : Dict[str, Any]
+        The dictionary specifying how to map, which may contain 'mapping_filter',
+        'mapping_mdx', 'mapping_dimensions', etc.
+    shared_mapping_df: DataFrame
+        pandas dataframe containing shared mapping data.
+
+    Returns
+    -------
+    None
+        Modifies the dataframe in place
+    """
+
+    step_uses_independent_mapping = (
+        "mapping_df" in mapping_step and mapping_step["mapping_df"] is not None
+    )
+
+    mapping_df = (
+        mapping_step["mapping_df"]
+        if step_uses_independent_mapping
+        else shared_mapping_df
+    )
+
+    if "mapping_filter" in mapping_step:
+        if step_uses_independent_mapping:
+            dataframe_filter_inplace(
+                dataframe=mapping_df, filter_condition=mapping_step["mapping_filter"],
+                case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
+        else:
+            mapping_df = dataframe_filter(
+                dataframe=mapping_df, filter_condition=mapping_step["mapping_filter"],
+                case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
+
+    data_df = dataframe_cartesian_product(
+        data_df=data_df, mapping_df=mapping_df, joined_columns=mapping_step["joined_columns"],
+        case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
+
+    return data_df
+
+
+def __apply_pivot(
+        data_df: DataFrame,
+        mapping_step: Dict[str, Any],
+        shared_mapping_df: Optional[DataFrame] = None,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
+):
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(data_df)
+        utility.normalize_structure_strings(mapping_step)
+
+    # make columns from row values
+    dataframe_pivoted = data_df.pivot(
+        index=mapping_step["index"],
+        columns=mapping_step["columns"],
+        values=mapping_step["values"]
+    )
+
+    if case_and_space_insensitive_inputs:
+        dataframe_pivoted.normalized = True
+
+    return dataframe_pivoted
+
+
+def __apply_unpivot(
+        data_df: DataFrame,
+        mapping_step: Dict[str, Any],
+        shared_mapping_df: Optional[DataFrame] = None,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
+):
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(data_df)
+        utility.normalize_structure_strings(mapping_step)
+
+    # make row values from columns
+    dataframe_unpivot = data_df.melt(
+        id_vars=mapping_step["id_vars"],
+        var_name=mapping_step["var_name"],
+        value_name=mapping_step["value_name"]
+    )
+
+    if case_and_space_insensitive_inputs:
+        dataframe_unpivot.normalized = True
+
+    return dataframe_unpivot
+
+
+def __apply_basic_dimension_reshaping(
+        data_df: DataFrame,
+        mapping_step: Dict[str, Any],
+        shared_mapping_df: Optional[DataFrame] = None,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
+):
+    # either or: literal row filter, literal column drop, literal column add with value assign, literal relabel
+    # can be used in any combination.
+    # tip: for more complex reshaping, call this method in sequence
+
+    if "filter_condition" in mapping_step:
+        dataframe_filter_inplace(data_df, mapping_step["filter_condition"],
+                                 case_and_space_insensitive_inputs)
+
+    if "columns_to_drop" in mapping_step:
+        dataframe_drop_column(data_df, mapping_step["columns_to_drop"],
+                              case_and_space_insensitive_inputs)
+
+    if "new_columns_with_values" in mapping_step:
+        dataframe_add_column_assign_value(data_df, mapping_step["new_columns_with_values"],
+                                          case_and_space_insensitive_inputs)
+
+    if "column_relabel_map" in mapping_step:
+        dataframe_relabel(data_df, mapping_step["column_relabel_map"],
+                          case_and_space_insensitive_inputs)
+
+
+method_handlers = {
+    "replace": __apply_replace,
+    "map_and_replace": __apply_map_and_replace,
+    "map_and_join": __apply_map_and_join,
+    "cartesian": __apply_cartesian_product,
+    "pivot": __apply_pivot,
+    "unpivot": __apply_unpivot,
+    "basic_reshaping": __apply_basic_dimension_reshaping
+}
 
 
 @utility.log_exec_metrics
@@ -841,11 +1004,7 @@ def dataframe_execute_mappings(
             }
         ]
     """
-    method_handlers = {
-        "replace": __apply_replace,
-        "map_and_replace": __apply_map_and_replace,
-        "map_and_join": __apply_map_and_join,
-    }
+
     if not mapping_steps:
         return data_df
 
