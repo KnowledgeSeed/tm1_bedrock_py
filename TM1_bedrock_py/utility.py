@@ -47,8 +47,10 @@ def dataframe_verbose_logger(
             basic_logger.debug(f"DataFrame logged to {filepath}")
 
         elif verbose_logging_mode == "print_console":
-            num_rows_to_log = 5
-            basic_logger.debug(f"First {num_rows_to_log} rows of DataFrame:\n{dataframe.head(num_rows_to_log)}")
+            rows = 5
+            basic_logger.debug(
+                f"First {rows} rows of DataFrame:\n\n{dataframe.head(rows).to_string(line_width=1000)}\n"
+            )
 
 
 def execution_metrics_logger(logger, func, *args, **kwargs):

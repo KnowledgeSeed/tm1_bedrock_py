@@ -8,7 +8,7 @@ from tm1_bench_py import tm1_bench, df_generator_for_dataset, dimension_builder,
 import re
 import os
 
-
+"""
 def test_context_metadata():
     tm1_params = {
         "address": "localhost",
@@ -45,7 +45,7 @@ def test_nativeview_functions():
 
     set = "{Tm1FilterByLevel(Tm1SubsetAll([Period]), 0)} "
 
-    mdx = """
+    mdx = """"""
     SELECT 
       NON EMPTY 
        {[Period].[Period].[202406]}
@@ -71,7 +71,7 @@ def test_nativeview_functions():
        [Measures Sales].[Measures Sales].[Input],
        [Organization Unit].[Organization Unit].[Company01]
       )
-    """
+
     tm1_params = {
         "address": "dev.knowledgeseed.local",
         "port": 5379,
@@ -84,7 +84,7 @@ def test_nativeview_functions():
 
     #df = extractor.__tm1_mdx_to_native_view_to_dataframe(tm1_service=tm1_service, data_mdx=mdx, skip_zeros=True)
     #print(df)
-    """
+
     bedrock.data_copy_intercube(
         tm1_service=tm1_service,
         target_cube_name="Sales",
@@ -97,15 +97,15 @@ def test_nativeview_functions():
         view_and_subset_cleanup=False,
         verbose_logging_mode="print_console"
     )
-    """
-    """
+
+
+
     utility.set_logging_level("DEBUG")
     df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_service, data_mdx=mdx)
     utility.normalize_dataframe_strings(df)
     df.attribute = "test"
     print(df)
     print(df.attribute)
-    """
 
 def benchpy_sample():
     schema_dir = 'C:\\Users\\ullmann.david\\PycharmProjects\\tm1bedrockpy\\schema'
@@ -129,6 +129,7 @@ def benchpy_sample():
         #tm1_bench.destroy_model(tm1=tm1, schema=schema)
     finally:
         tm1.logout()
+    """
 
 
 def complex_transform_demo():
@@ -139,13 +140,14 @@ def complex_transform_demo():
 
     tm1_params = {
         "address": "localhost",
-        "port": 5365,
-        "user": "admin",
-        "password": "",
+        "port": 5379,
+        "user": "testbench",
+        "password": "testbench",
         "ssl": False
     }
     tm1_service = TM1Service(**tm1_params)
 
+    target_cube_name = "Sales"
     data_mdx = """
         SELECT
         NON EMPTY
@@ -161,7 +163,7 @@ def complex_transform_demo():
         FROM [Sales]
         WHERE (
             [Version].[Version].[Actual],
-            [Measures Sales].[Measures Sales].[Corrected Value] )
+            [Measures Sales].[Measures Sales].[Input] )
         """
 
     mapping_steps = [
@@ -173,13 +175,13 @@ def complex_transform_demo():
             "method": "map_and_replace",
             "mapping_mdx": """
                 SELECT
-                    {[}ElementAttributes_Period].[}ElementAttributes_Period].[next_year_period]}
+                    {[}ElementAttributes_Period].[}ElementAttributes_Period].[NEXT_Y_PERIOD]}
                 ON COLUMNS,
                     {TM1FILTERBYLEVEL( {TM1SUBSETALL([Period].[Period])} , 0)}
                 ON ROWS
                 FROM [}ElementAttributes_Period]
                 """,
-            "mapping_dimensions": {"Period": "next_year_period"},
+            "mapping_dimensions": {"Period": "Value"},
             "include_mapped_in_join": True
         },
         {
@@ -205,20 +207,33 @@ def complex_transform_demo():
     clear_target = True
     target_clear_set_mdx_list = [
         "{[Version].[Version].[Budget]}",
-        "{strtomember(""[Period].[Period].["" + [Period].[Period].[202406].Properties(""next_year_period"") + ""]"")}"
+        "{[Period].[Period].[202506]}"
     ]
 
     logging_level = "DEBUG"
+    use_mixed_datatypes = True
+    ignore_missing_elements = True
     use_blob = True
 
+    def inflation_value_scale(x):
+        return x * 1.0912
+
     try:
-        bedrock.data_copy(tm1_service=tm1_service,
-                          data_mdx=data_mdx,
-                          mapping_steps=mapping_steps,
-                          clear_target=clear_target,
-                          target_clear_set_mdx_list=target_clear_set_mdx_list,
-                          use_blob=use_blob,
-                          logging_level=logging_level)
+        #bedrock.data_copy_intercube(
+        bedrock.data_copy(
+            #target_cube_name=target_cube_name,
+            tm1_service=tm1_service,
+            data_mdx=data_mdx,
+            mapping_steps=mapping_steps,
+            value_function=inflation_value_scale,
+            clear_target=clear_target,
+            target_clear_set_mdx_list=target_clear_set_mdx_list,
+            use_blob=use_blob,
+            logging_level=logging_level,
+            #use_mixed_datatypes=use_mixed_datatypes,
+            #ignore_missing_elements=ignore_missing_elements,
+            verbose_logging_mode="print_console"
+        )
     finally:
         tm1_service.logout()
 

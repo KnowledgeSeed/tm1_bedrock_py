@@ -72,7 +72,7 @@ def dataframe_cast_value_by_measure_type(
         ValueError: If measures exist in the data that are not defined in the cube.
         TypeError: If a value for a 'Numeric' measure cannot be converted to a number.
     """
-    numeric_flag = 'Numeric'
+    numeric_flags = ['Numeric', 'Consolidated']
     string_flag = 'String'
     value_column_name = 'Value'
 
@@ -80,7 +80,7 @@ def dataframe_cast_value_by_measure_type(
         utility.normalize_dataframe_strings(dataframe)
         measure_dimension_name = utility.normalize_string(measure_dimension_name)
         measure_element_types = utility.normalize_structure_strings(measure_element_types)
-        numeric_flag = 'numeric'
+        numeric_flags = ['numeric', 'consolidated']
         string_flag = 'string'
         value_column_name = 'value'
 
@@ -90,7 +90,7 @@ def dataframe_cast_value_by_measure_type(
         )
         return
 
-    numeric_measures = {elem for elem, dtype in measure_element_types.items() if dtype == numeric_flag}
+    numeric_measures = {elem for elem, dtype in measure_element_types.items() if dtype in numeric_flags}
     string_measures = {elem for elem, dtype in measure_element_types.items() if dtype == string_flag}
 
     all_measures_in_data = set(dataframe[measure_dimension_name].unique())
