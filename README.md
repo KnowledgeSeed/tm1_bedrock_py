@@ -1,3 +1,5 @@
+![Project Banner](banner.png)
+
 # TM1 Data Integration and Automation Toolkit
 
 This project is a Python-based toolkit by Knowledgeseed, designed to streamline data integration and automation tasks with IBM Planning Analytics (TM1). It leverages the `TM1py` library to provide a high-level, configurable, and extensible framework for moving data between TM1 cubes, SQL databases, and CSV files. The toolkit is built with a focus on performance, offering features like asynchronous operations and detailed logging for debugging and optimization.
