@@ -526,7 +526,7 @@ def dataframe_map_and_replace(
         data_df: DataFrame,
         mapping_df: DataFrame,
         mapped_dimensions: Dict[str, str],
-        include_mapped_in_join: bool = False,
+        include_mapped_in_join: Optional[bool] = False,
         case_and_space_insensitive_inputs: Optional[bool] = False,
 ) -> DataFrame:
     """
@@ -736,7 +736,7 @@ def __apply_map_and_replace(
 
     data_df = dataframe_map_and_replace(
         data_df=data_df, mapping_df=mapping_df, mapped_dimensions=mapping_step["mapping_dimensions"],
-        include_mapped_in_join=mapping_step["include_mapped_in_join"],
+        include_mapped_in_join=mapping_step.get("include_mapped_in_join"),
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
 
     if mapping_step.get("relabel_dimensions"):
