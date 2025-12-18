@@ -7,7 +7,7 @@ import math
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 from string import Template
-from typing import Callable, List, Dict, Optional, Any, Sequence, Hashable, Mapping, Iterable, Literal
+from typing import Callable, List, Dict, Optional, Any, Sequence, Hashable, Mapping, Iterable, Literal, Union
 
 from TM1py.Exceptions import TM1pyRestException
 from requests.cookies import CookieConflictError
@@ -23,11 +23,11 @@ def data_copy_intercube(
         tm1_service: Optional[Any],
         target_tm1_service: Optional[Any] = None,
         data_mdx: Optional[str] = None,
-        mdx_function: Optional[Callable[..., DataFrame] | Literal["native_view_extractor"]] = None,
+        mdx_function: Optional[Union[Callable[..., DataFrame], Literal["native_view_extractor"]]] = None,
         sql_engine: Optional[Any] = None,
         sql_function: Optional[Callable[..., DataFrame]] = None,
         csv_function: Optional[Callable[..., DataFrame]] = None,
-        data_mdx_list: Optional[list[str]] = None,
+        data_mdx_list: Optional[List[str]] = None,
         case_and_space_insensitive_inputs: Optional[bool] = False,
         skip_zeros: Optional[bool] = False,
         skip_consolidated_cells: Optional[bool] = False,
@@ -423,11 +423,11 @@ def data_copy(
         tm1_service: Optional[Any],
         target_tm1_service: Optional[Any] = None,
         data_mdx: Optional[str] = None,
-        mdx_function: Optional[Callable[..., DataFrame] | Literal["native_view_extractor"]] = None,
+        mdx_function: Optional[Union[Callable[..., DataFrame], Literal["native_view_extractor"]]] = None,
         sql_engine: Optional[Any] = None,
         sql_function: Optional[Callable[..., DataFrame]] = None,
         csv_function: Optional[Callable[..., DataFrame]] = None,
-        data_mdx_list: Optional[list[str]] = None,
+        data_mdx_list: Optional[List[str]] = None,
         case_and_space_insensitive_inputs: Optional[bool] = False,
         skip_zeros: Optional[bool] = False,
         skip_consolidated_cells: Optional[bool] = False,
@@ -924,7 +924,7 @@ def load_sql_data_to_tm1_cube(
         target_cube_name: str,
         tm1_service: Optional[Any],
         target_metadata_function: Optional[Callable[..., Any]] = None,
-        mdx_function: Optional[Callable[..., DataFrame] | Literal["native_view_extractor"]] = None,
+        mdx_function: Optional[Union[Callable[..., DataFrame], Literal["native_view_extractor"]]] = None,
         csv_function: Optional[Callable[..., DataFrame]] = None,
         sql_query: Optional[str] = None,
         sql_table_name: Optional[str] = None,
@@ -1222,8 +1222,8 @@ def load_tm1_cube_to_sql_table(
         sql_schema: Optional[str] = None,
         chunksize: Optional[int] = None,
         data_mdx: Optional[str] = None,
-        mdx_function: Optional[Callable[..., DataFrame] | Literal["native_view_extractor"]] = None,
-        data_mdx_list: Optional[list[str]] = None,
+        mdx_function: Optional[Union[Callable[..., DataFrame], Literal["native_view_extractor"]]] = None,
+        data_mdx_list: Optional[List[str]] = None,
         case_and_space_insensitive_inputs: Optional[bool] = False,
         skip_zeros: Optional[bool] = False,
         skip_consolidated_cells: Optional[bool] = False,
@@ -1883,7 +1883,7 @@ def load_csv_data_to_tm1_cube(
         source_csv_file_path: str,
         tm1_service: Optional[Any],
         target_metadata_function: Optional[Callable[..., Any]] = None,
-        mdx_function: Optional[Callable[..., DataFrame] | Literal["native_view_extractor"]] = None,
+        mdx_function: Optional[Union[Callable[..., DataFrame], Literal["native_view_extractor"]]] = None,
         csv_function: Optional[Callable[..., DataFrame]] = None,
         case_and_space_insensitive_inputs: Optional[bool] = False,
         csv_column_mapping: Optional[dict] = None,
@@ -1894,11 +1894,12 @@ def load_csv_data_to_tm1_cube(
         use_mixed_datatypes: Optional[bool] = False,
         nrows: Optional[int] = None,
         chunksize: Optional[int] = None,
-        parse_dates: Optional[bool | Sequence[Hashable]] = None,
-        na_values: Optional[Hashable
-                            | Iterable[Hashable]
-                            | Mapping[Hashable, Iterable[Hashable]]
-                            ] = None,
+        parse_dates: Optional[Union[bool, Sequence[Hashable]]] = None,
+        na_values: Optional[Union[
+            Hashable,
+            Iterable[Hashable],
+            Mapping[Hashable, Iterable[Hashable]]
+        ]] = None,
         keep_default_na: Optional[bool] = True,
         low_memory: bool = True,
         memory_map: bool = True,
@@ -2199,15 +2200,15 @@ def load_tm1_cube_to_csv_file(
         csv_function: Optional[Callable[..., DataFrame]] = None,
         mode: str = "w",
         chunksize: Optional[int] = None,
-        float_format: Optional[str | Callable] = None,
+        float_format: Optional[Union[str, Callable]] = None,
         delimiter: Optional[str] = None,
         decimal: Optional[str] = None,
         na_rep: Optional[str] = "NULL",
-        compression: Optional[str | dict] = None,
+        compression: Optional[Union[str, dict]] = None,
         index: Optional[bool] = False,
         data_mdx: Optional[str] = None,
-        mdx_function: Optional[Callable[..., DataFrame] | Literal["native_view_extractor"]] = None,
-        data_mdx_list: Optional[list[str]] = None,
+        mdx_function: Optional[Union[Callable[..., DataFrame], Literal["native_view_extractor"]]] = None,
+        data_mdx_list: Optional[List[str]] = None,
         case_and_space_insensitive_inputs: Optional[bool] = False,
         skip_zeros: Optional[bool] = False,
         skip_consolidated_cells: Optional[bool] = False,

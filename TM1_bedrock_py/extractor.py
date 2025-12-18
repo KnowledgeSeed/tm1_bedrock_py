@@ -1,4 +1,4 @@
-from typing import Callable, List, Dict, Optional, Any, Literal
+from typing import Callable, List, Dict, Optional, Any, Literal, Union
 
 from TM1py import TM1Service, NativeView, Subset
 from pandas import DataFrame, read_sql_table, read_sql_query, concat, read_csv
@@ -15,7 +15,7 @@ from TM1_bedrock_py import utility, transformer, basic_logger
 
 @utility.log_exec_metrics
 def tm1_mdx_to_dataframe(
-        mdx_function: Optional[Callable[..., DataFrame] | Literal["native_view_extractor"]] = None,
+        mdx_function: Optional[Union[Callable[..., DataFrame], Literal["native_view_extractor"]]] = None,
         **kwargs: Any
 ) -> DataFrame:
     """
@@ -44,7 +44,7 @@ def tm1_mdx_to_dataframe(
 def __tm1_mdx_to_dataframe_default(
         tm1_service: TM1Service,
         data_mdx: Optional[str] = None,
-        data_mdx_list:  Optional[list[str]] = None,
+        data_mdx_list:  Optional[List[str]] = None,
         skip_zeros: bool = False,
         skip_consolidated_cells: bool = False,
         skip_rule_derived_cells: bool = False,
@@ -60,7 +60,7 @@ def __tm1_mdx_to_dataframe_default(
     Args:
         tm1_service (TM1Service): An active TM1Service object for connecting to the TM1 server.
         data_mdx (str): The MDX query string to execute.
-        data_mdx_list (list[str]): A list of mdx queries to execute in an asynchronous way.
+        data_mdx_list (List[str]): A list of mdx queries to execute in an asynchronous way.
         skip_zeros (bool, optional): If True, cells with zero values will be excluded. Defaults to False.
         skip_consolidated_cells (bool, optional): If True, consolidated cells will be excluded. Defaults to False.
         skip_rule_derived_cells (bool, optional): If True, rule-derived cells will be excluded. Defaults to False.
@@ -176,7 +176,7 @@ def _handle_mapping_df(
 
 def _handle_mapping_mdx(
     step: Dict[str, Any],
-    mdx_function: Optional[Callable[..., DataFrame] | Literal["native_view_extractor"]] = None,
+    mdx_function: Optional[Union[Callable[..., DataFrame], Literal["native_view_extractor"]]] = None,
     tm1_service: Optional[Any] = None,
     **kwargs
 ) -> DataFrame:
@@ -254,7 +254,7 @@ def _handle_mapping_csv(
         sep: Optional[str] = None,
         decimal: Optional[str] = None,
         dtype: Optional[dict] = None,
-        chunksize: Optional[int | None] = None,
+        chunksize: Optional[int] = None,
     """
     csv_file_path = step["mapping_csv_file_path"]
     sep = step.get("csv_separator")
@@ -434,13 +434,14 @@ def __csv_to_dataframe_default(
         sep: Optional[str] = None,
         decimal: Optional[str] = None,
         dtype: Optional[dict] = None,
-        nrows: Optional[int | None] = None,
-        chunksize: Optional[int | None] = None,
-        parse_dates: Optional[bool | Sequence[Hashable] | None] = None,
-        na_values: Optional[Hashable
-                            | Iterable[Hashable]
-                            | Mapping[Hashable, Iterable[Hashable]]
-                            | None] = None,
+        nrows: Optional[int] = None,
+        chunksize: Optional[int] = None,
+        parse_dates: Optional[Union[bool, Sequence[Hashable]]] = None,
+        na_values: Optional[Union[
+            Hashable,
+            Iterable[Hashable],
+            Mapping[Hashable, Iterable[Hashable]]
+        ]] = None,
         keep_default_na: Optional[bool] = True,
         low_memory: bool = True,
         memory_map: bool = True,

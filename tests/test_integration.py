@@ -66,8 +66,7 @@ def test_data_copy_for_multiple_steps(
             target_clear_set_mdx_list=["{[Versions].[Versions].[DataCopy Integration Test]}"],
             skip_zeros=True,
             async_write=True,
-            logging_level="WARNING",
-            df_verbose_logging=False
+            logging_level="WARNING"
         )
 
 
@@ -131,8 +130,7 @@ def test_data_copy_intercube_for_multiple_steps(
             async_write=True,
             slice_size_of_dataframe=2,
             use_blob=True,
-            logging_level="DEBUG",
-
+            logging_level="DEBUG"
         )
 
 
@@ -249,8 +247,7 @@ def test_async_data_copy_intercube_multi_parameter(
             logging_level="INFO",
             param_set_mdx_list=param_set_mdx_list,
             target_clear_set_mdx_list=target_clear_set_mdx_list,
-            ignore_missing_elements=True,
-            df_verbose_logging=False
+            ignore_missing_elements=True
         ))
         run_time = time.time() - start_time_total
         print('Time: {:.4f} sec'.format(run_time))
@@ -470,7 +467,7 @@ def test_load_csv_data_to_tm1_cube(
                 logging_level="DEBUG",
                 decimal=".",
                 delimiter=",",
-                df_verbose_logging=False
+                use_mixed_datatypes=True
             )
             df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=expected_mdx)
             print(df)
@@ -506,7 +503,7 @@ def test_async_load_csv_data_to_tm1_cube(
                 ignore_missing_elements=True,
                 decimal=",",
                 delimiter=";",
-                df_verbose_logging=False,
+                use_mixed_datatypes=True,
                 async_write=False,
                 max_workers=8
             ))
