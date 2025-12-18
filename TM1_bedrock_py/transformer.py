@@ -240,7 +240,7 @@ def dataframe_filter(
 
 def dataframe_drop_column(
         dataframe: DataFrame,
-        column_list: list[str],
+        column_list: List[str],
         case_and_space_insensitive_inputs: Optional[bool] = False
 ) -> None:
     """
@@ -341,7 +341,7 @@ def dataframe_relabel(
     dataframe.rename(columns=columns, inplace=True)
 
 
-def rename_columns_by_reference(dataframe: DataFrame, column_names: list[str]) -> DataFrame:
+def rename_columns_by_reference(dataframe: DataFrame, column_names: List[str]) -> DataFrame:
     """
     Rename columns in `df` to match the names in `column_names`,
     matching case/whitespace-insensitively, without reordering.
@@ -429,7 +429,7 @@ def normalize_table_source_dataframe(
 @utility.log_exec_metrics
 def dataframe_itemskip_elements(
         dataframe: pd.DataFrame,
-        check_dfs: list[pd.DataFrame],
+        check_dfs: List[pd.DataFrame],
         fallback_elements: Optional[Dict] = None,
         logging_enabled: Optional[bool] = False,
         case_and_space_insensitive_inputs: Optional[bool] = False,
