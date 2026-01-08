@@ -547,8 +547,9 @@ def test_mssql_database_connection(sql_engine_factory):
 
 def test_mssql_server_responds_to_query(sql_engine_factory):
     with sql_engine_factory('mssqlsrv') as sql_engine:
-        result = sql_engine.execute(text("SELECT 1"))
-        response = result.fetchone()
+        with sql_engine.connect() as connection:
+            result = connection.execute(text("SELECT 1"))
+            response = result.fetchone()
     assert response == (1,)
 
 
