@@ -27,25 +27,23 @@ setup(
     ],
     install_requires=[
         "TM1py>=2.1, <3.0",
-        "pandas>=2.0.0,<2.2.0; python_version < '3.13'",
-        "pandas>=2.2.3,<2.4.0; python_version >= '3.13'",
+        "pandas>=2.3.3,<3.0.0",
         "json_logging>=1.3.0, <2.0.0",
-        "sqlalchemy>=1.4.42,<2.0.0",
+        "sqlalchemy>=2.0.0,<3.0.0",
         "pyodbc>=5.2.0,<6.0.0",
         "pyyaml>=6.0,<7.0"
     ],
     extras_require={
         "airflow": [
-            "apache-airflow>=3.1.0; python_version >= '3.13'",
             "apache-airflow>=2.4.0,<=2.11.0; python_version < '3.13'",
-            "airflow_provider_tm1>=0.5.1",
-            "jinja2>=3.1.2,<3.2.0"
+            "airflow_provider_tm1>=0.5.1; python_version < '3.13'",
+            "jinja2>=3.1.2,<3.2.0; python_version < '3.13'"
         ],
         "postgres": [
-            "apache-airflow-providers-postgres>=3.3.0,<7.0.0"
+            "apache-airflow-providers-postgres>=3.3.0,<7.0.0; python_version < '3.13'"
         ],
         "microsoft-mssql": [
-            "apache-airflow-providers-microsoft-mssql>=3.3.0,<7.0.0"
+            "apache-airflow-providers-microsoft-mssql>=3.3.0,<7.0.0; python_version < '3.13'"
         ],
         "dev": [
             "parametrize_from_file>=0.20.0,<1.0.0",
@@ -54,5 +52,5 @@ setup(
             "matplotlib>=3.7.0,<4.0.0"
         ]
     },
-    python_requires=">=3.8"
+    python_requires=">=3.9"
 )
