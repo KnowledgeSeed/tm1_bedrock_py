@@ -5,6 +5,10 @@ on:
     branches: [ "main" ]
   workflow_dispatch: {}
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   TM1_ADDRESS: ${{ secrets.TM1_ADDRESS }}
   TM1_PORT: ${{ secrets.TM1_PORT }}
@@ -20,9 +24,6 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    concurrency:
-      group: ci-${{ github.ref }}
-      cancel-in-progress: true
 
     strategy:
       fail-fast: false
