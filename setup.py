@@ -27,17 +27,18 @@ setup(
     ],
     install_requires=[
         "TM1py>=2.1, <3.0",
-        "pandas>=2.0.0,<2.2.0",
+        "pandas>=2.0.0,<2.2.0; python_version < '3.13'",
+        "pandas>=2.2.3,<2.4.0; python_version >= '3.13'",
         "json_logging>=1.3.0, <2.0.0",
         "sqlalchemy>=1.4.42,<2.0.0",
         "pyodbc>=5.2.0,<6.0.0",
-        "jinja2>=3.1.2,<4.0.0",
         "pyyaml>=6.0,<7.0"
     ],
     extras_require={
         "airflow": [
+            "apache-airflow>=3.1.0; python_version >= '3.13'",
+            "apache-airflow>=2.4.0,<=2.11.0; python_version < '3.13'",
             "airflow_provider_tm1>=0.5.1",
-            "apache_airflow>=2.4.0,<=2.11.0",
             "jinja2>=3.1.2,<3.2.0"
         ],
         "postgres": [
@@ -50,7 +51,7 @@ setup(
             "parametrize_from_file>=0.20.0,<1.0.0",
             "pytest>=8.3.4,<9.0.0",
             "build>=1.2.2.post1,<2.0.0",
-            "matplotlib>=3.10.1,<4.0.0"
+            "matplotlib>=3.7.0,<4.0.0"
         ]
     },
     python_requires=">=3.8"
