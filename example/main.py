@@ -174,12 +174,12 @@ def complex_transform_demo():
         {
             "method": "map_and_replace",
             "mapping_mdx": """
-                SELECT
-                    {[}ElementAttributes_Period].[}ElementAttributes_Period].[NEXT_Y_PERIOD]}
-                ON COLUMNS,
-                    {TM1FILTERBYLEVEL( {TM1SUBSETALL([Period].[Period])} , 0)}
-                ON ROWS
-                FROM [}ElementAttributes_Period]
+                    SELECT
+                        {[}ElementAttributes_Period].[}ElementAttributes_Period].[NEXT_Y_PERIOD]}
+                    ON COLUMNS,
+                        {TM1FILTERBYLEVEL( {TM1SUBSETALL([Period].[Period])} , 0)}
+                    ON ROWS
+                    FROM [}ElementAttributes_Period]
                 """,
             "mapping_dimensions": {"Period": "Value"},
             "include_mapped_in_join": True
