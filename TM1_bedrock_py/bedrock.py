@@ -1218,7 +1218,7 @@ def load_tm1_cube_to_sql_table(
 
         data_mdx: Optional[str] = None,
         chunksize: Optional[int] = None,
-        mdx_function: Optional[Callable[..., DataFrame] | Literal["native_view_extractor"]] = None,
+        mdx_function: Optional[Union[Callable[..., DataFrame], Literal["native_view_extractor"]]] = None,
         data_mdx_list: Optional[list[str]] = None,
         skip_zeros: Optional[bool] = False,
         skip_consolidated_cells: Optional[bool] = False,
