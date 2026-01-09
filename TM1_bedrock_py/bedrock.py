@@ -19,35 +19,40 @@ from TM1_bedrock_py import utility, transformer, loader, extractor, basic_logger
 @utility.log_benchmark_metrics
 @utility.log_exec_metrics
 def data_copy_intercube(
-        target_cube_name: str,
         tm1_service: Optional[Any],
+
+        target_cube_name: str,
         target_tm1_service: Optional[Any] = None,
+        target_metadata_function: Optional[Callable[..., Any]] = None,
+
         data_mdx: Optional[str] = None,
         mdx_function: Optional[Union[Callable[..., DataFrame], Literal["native_view_extractor"]]] = None,
-        sql_engine: Optional[Any] = None,
-        sql_function: Optional[Callable[..., DataFrame]] = None,
-        csv_function: Optional[Callable[..., DataFrame]] = None,
-        data_mdx_list: Optional[List[str]] = None,
-        case_and_space_insensitive_inputs: Optional[bool] = False,
+        data_mdx_list: Optional[list[str]] = None,
         skip_zeros: Optional[bool] = False,
         skip_consolidated_cells: Optional[bool] = False,
         skip_rule_derived_cells: Optional[bool] = False,
-        target_metadata_function: Optional[Callable[..., Any]] = None,
-        mapping_steps: Optional[List[Dict]] = None,
-        shared_mapping: Optional[Dict] = None,
-        source_dim_mapping: Optional[Dict] = None,
-        related_dimensions: Optional[Dict] = None,
-        target_dim_mapping: Optional[Dict] = None,
-        value_function: Optional[Callable[..., Any]] = None,
+
+        sql_engine: Optional[Any] = None,
+        sql_function: Optional[Callable[..., DataFrame]] = None,
+        csv_function: Optional[Callable[..., DataFrame]] = None,
+
+        case_and_space_insensitive_inputs: Optional[bool] = False,
         ignore_missing_elements: Optional[bool] = False,
         fallback_elements: Optional[Dict] = None,
+
+        mapping_steps: Optional[List[Dict]] = None,
+        shared_mapping: Optional[Dict] = None,
+
         clear_target: Optional[bool] = False,
         target_clear_set_mdx_list: Optional[List[str]] = None,
         clear_source: Optional[bool] = False,
         source_clear_set_mdx_list: Optional[List[str]] = None,
+
+        value_function: Optional[Callable[..., Any]] = None,
         pre_load_function: Optional[Callable] = None,
         pre_load_args: Optional[List] = None,
         pre_load_kwargs: Optional[Dict] = None,
+
         async_write: Optional[bool] = False,
         slice_size_of_dataframe: Optional[int] = 50000,
         use_ti: Optional[bool] = False,
@@ -55,9 +60,11 @@ def data_copy_intercube(
         use_mixed_datatypes: Optional[bool] = False,
         increment: Optional[bool] = False,
         sum_numeric_duplicates: Optional[bool] = True,
+
         logging_level: Optional[str] = "ERROR",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
+
         **kwargs
 ) -> None:
     """
@@ -335,15 +342,6 @@ def data_copy_intercube(
                               clear_set_mdx_list=target_clear_set_mdx_list,
                               **kwargs)
         return
-
-    transformer.dataframe_redimension_and_transform(
-        dataframe=dataframe,
-        source_dim_mapping=source_dim_mapping,
-        related_dimensions=related_dimensions,
-        target_dim_mapping=target_dim_mapping,
-        case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
-        **kwargs
-    )
 
     if ignore_missing_elements:
         dimension_check_dfs = target_metadata.get_dimension_check_dfs()
@@ -1215,35 +1213,41 @@ def load_sql_data_to_tm1_cube(
 @utility.log_exec_metrics
 def load_tm1_cube_to_sql_table(
         tm1_service: Optional[Any],
+
         target_table_name: str,
-        sql_engine: Optional[Any] = None,
-        sql_function: Optional[Callable[..., DataFrame]] = None,
-        csv_function: Optional[Callable[..., DataFrame]] = None,
-        sql_schema: Optional[str] = None,
-        chunksize: Optional[int] = None,
+
         data_mdx: Optional[str] = None,
+        chunksize: Optional[int] = None,
         mdx_function: Optional[Union[Callable[..., DataFrame], Literal["native_view_extractor"]]] = None,
-        data_mdx_list: Optional[List[str]] = None,
-        case_and_space_insensitive_inputs: Optional[bool] = False,
+        data_mdx_list: Optional[list[str]] = None,
         skip_zeros: Optional[bool] = False,
         skip_consolidated_cells: Optional[bool] = False,
         skip_rule_derived_cells: Optional[bool] = False,
         data_metadata_function: Optional[Callable[..., Any]] = None,
+
+        sql_engine: Optional[Any] = None,
+        sql_function: Optional[Callable[..., DataFrame]] = None,
+        csv_function: Optional[Callable[..., DataFrame]] = None,
+        sql_schema: Optional[str] = None,
+
+        case_and_space_insensitive_inputs: Optional[bool] = False,
+
         mapping_steps: Optional[List[Dict]] = None,
         shared_mapping: Optional[Dict] = None,
-        source_dim_mapping: Optional[dict] = None,
-        related_dimensions: Optional[dict] = None,
-        target_dim_mapping: Optional[dict] = None,
-        value_function: Optional[Callable[..., Any]] = None,
+
         clear_target: Optional[bool] = False,
         sql_delete_statement: Optional[str] = None,
         clear_source: Optional[bool] = False,
         source_clear_set_mdx_list: Optional[List[str]] = None,
+
+        value_function: Optional[Callable[..., Any]] = None,
         pre_load_function: Optional[Callable] = None,
         pre_load_args: Optional[List] = None,
         pre_load_kwargs: Optional[Dict] = None,
+
         dtype: Optional[dict] = None,
         decimal: Optional[str] = None,
+
         logging_level: str = "ERROR",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
@@ -1292,11 +1296,6 @@ def load_tm1_cube_to_sql_table(
             to be applied to the data.
         shared_mapping: A dictionary defining a shared mapping DataFrame that can
             be used by multiple mapping steps.
-        source_dim_mapping: A dictionary to filter and then drop columns from the
-            source DataFrame.
-        related_dimensions: A dictionary to rename columns in the DataFrame.
-        target_dim_mapping: A dictionary to add new columns with constant values
-            to the DataFrame.
         value_function: A custom function to apply transformations to the 'Value'
             column.
         clear_target: If True, the target SQL table will be cleared before loading.
@@ -1434,14 +1433,6 @@ def load_tm1_cube_to_sql_table(
     if initial_row_count != final_row_count:
         filtered_count = initial_row_count - final_row_count
         basic_logger.warning(f"Number of rows filtered out through inner joins: {filtered_count}/{initial_row_count}")
-
-    transformer.dataframe_redimension_and_transform(
-        dataframe=dataframe,
-        source_dim_mapping=source_dim_mapping,
-        related_dimensions=related_dimensions,
-        target_dim_mapping=target_dim_mapping,
-        case_and_space_insensitive_inputs=case_and_space_insensitive_inputs
-    )
 
     if value_function is not None:
         transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function,
@@ -2195,6 +2186,15 @@ def load_csv_data_to_tm1_cube(
 @utility.log_exec_metrics
 def load_tm1_cube_to_csv_file(
         tm1_service: Optional[Any],
+
+        data_mdx: Optional[str] = None,
+        mdx_function: Optional[Union[Callable[..., DataFrame], Literal["native_view_extractor"]]] = None,
+        data_mdx_list: Optional[list[str]] = None,
+        skip_zeros: Optional[bool] = False,
+        skip_consolidated_cells: Optional[bool] = False,
+        skip_rule_derived_cells: Optional[bool] = False,
+        data_metadata_function: Optional[Callable[..., Any]] = None,
+
         target_csv_file_name: Optional[str] = None,
         target_csv_output_dir: Optional[str] = None,
         csv_function: Optional[Callable[..., DataFrame]] = None,
@@ -2206,25 +2206,20 @@ def load_tm1_cube_to_csv_file(
         na_rep: Optional[str] = "NULL",
         compression: Optional[Union[str, dict]] = None,
         index: Optional[bool] = False,
-        data_mdx: Optional[str] = None,
-        mdx_function: Optional[Union[Callable[..., DataFrame], Literal["native_view_extractor"]]] = None,
-        data_mdx_list: Optional[List[str]] = None,
+
         case_and_space_insensitive_inputs: Optional[bool] = False,
-        skip_zeros: Optional[bool] = False,
-        skip_consolidated_cells: Optional[bool] = False,
-        skip_rule_derived_cells: Optional[bool] = False,
-        data_metadata_function: Optional[Callable[..., Any]] = None,
+
         mapping_steps: Optional[List[Dict]] = None,
         shared_mapping: Optional[Dict] = None,
-        source_dim_mapping: Optional[dict] = None,
-        related_dimensions: Optional[dict] = None,
-        target_dim_mapping: Optional[dict] = None,
-        value_function: Optional[Callable[..., Any]] = None,
+
         clear_source: Optional[bool] = False,
         source_clear_set_mdx_list: Optional[List[str]] = None,
+
+        value_function: Optional[Callable[..., Any]] = None,
         pre_load_function: Optional[Callable] = None,
         pre_load_args: Optional[List] = None,
         pre_load_kwargs: Optional[Dict] = None,
+
         logging_level: str = "ERROR",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
@@ -2278,9 +2273,6 @@ def load_tm1_cube_to_csv_file(
         mapping_steps: A list of dictionaries defining transformation steps to be
             applied to the data before writing.
         shared_mapping: A dictionary for a shared mapping DataFrame.
-        source_dim_mapping: A dictionary to filter and then drop columns.
-        related_dimensions: A dictionary to rename columns.
-        target_dim_mapping: A dictionary to add new columns with constant values.
         value_function: A custom function to apply transformations to the 'Value'
             column.
         clear_source: If True, the source data in the TM1 cube will be cleared
@@ -2398,14 +2390,6 @@ def load_tm1_cube_to_csv_file(
     if initial_row_count != final_row_count:
         filtered_count = initial_row_count - final_row_count
         basic_logger.warning(f"Number of rows filtered out through inner joins: {filtered_count}/{initial_row_count}")
-
-    transformer.dataframe_redimension_and_transform(
-        dataframe=dataframe,
-        source_dim_mapping=source_dim_mapping,
-        related_dimensions=related_dimensions,
-        target_dim_mapping=target_dim_mapping,
-        case_and_space_insensitive_inputs=case_and_space_insensitive_inputs
-    )
 
     if value_function is not None:
         transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function,

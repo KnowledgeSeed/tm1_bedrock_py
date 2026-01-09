@@ -159,17 +159,19 @@ The toolkit includes a robust logging framework to help you debug your data inte
 
 ## Requirements
 * TM1py >=2.1, <3.0
-* pandas >=2.0.0, <2.2.0
+* pandas >=2.3.3, <3.0.0
 * json_logging >=1.3.0, <2.0.0
-* sqlalchemy >=1.4.42, <2.0.0
+* sqlalchemy >=2.0.0, <3.0.0
 * pyodbc >=5.2.0, <6.0.0
+* pyyaml >=6.0, <7.0
 
 ## Installation
-> Install without airflow
+### Install without airflow
 ```
 pip install tm1-bedrock-py
 ```
-> Install with `airflow`
+### Install with `airflow`
+As of now the _airflow_executor_ sub-package of `tm1-bedrock-py` only supports `apache-airflow` for versions >=2.4.0, <=2.11.0, with Python versions 3.9 to 3.12.
 ```
 pip install tm1-bedrock-py[airflow]
 ```
