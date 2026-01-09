@@ -1,4 +1,4 @@
-from typing import Callable, List, Optional, Any, Literal
+from typing import Callable, List, Optional, Any, Literal, Union
 from TM1py import TM1Service
 from pandas import DataFrame
 from sqlalchemy import text
@@ -171,7 +171,7 @@ def __dataframe_to_sql_default(
         schema: Optional[str] = None,
         chunksize: Optional[int] = None,
         dtype: Optional[dict] = None,
-        method: Optional[str | Callable] = None,
+        method: Optional[Union[str, Callable]] = None,
         **kwargs
 ) -> None:
     if not engine:
@@ -240,12 +240,12 @@ def dataframe_to_csv(
         dataframe: DataFrame,
         csv_file_name: str,
         csv_output_dir: Optional[str] = None,
-        chunksize: Optional[int | None] = None,
-        float_format: Optional[str | Callable] = None,
+        chunksize: Optional[int] = None,
+        float_format: Optional[Union[str, Callable]] = None,
         sep: Optional[str] = None,
         decimal: Optional[str] = None,
         na_rep: Optional[str] = "NULL",
-        compression: Optional[str | dict] = None,
+        compression: Optional[Union[str, dict]] = None,
         index: Optional[bool] = False,
         mode: str = "w",
         **_kwargs
