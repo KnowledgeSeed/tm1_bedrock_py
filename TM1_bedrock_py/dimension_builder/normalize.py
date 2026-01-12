@@ -24,7 +24,7 @@ def normalize_level_columns(input_df: pd.DataFrame, dimension_name: str, level_c
     stack = {hier: {} for hier in hierarchies}
 
     for row_index, df_row in input_df.iterrows():
-        current_hierarchy = input_df["Hierarchy"]
+        current_hierarchy = df_row["Hierarchy"]
         elements_in_row = 0
         element_level = 0
         element_name = ""
