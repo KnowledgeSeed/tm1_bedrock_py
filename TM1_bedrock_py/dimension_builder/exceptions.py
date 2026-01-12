@@ -1,3 +1,5 @@
+from typing import Hashable
+
 # custom error handling for dimension builder module
 
 class DimensionNotFoundError(Exception):
@@ -42,3 +44,9 @@ class ElementTypeConflictError(Exception):
     def __init__(self, element, type_old, type_new):
         super().__init__("Cannot resolve type change of element "+element+" from "+type_old+" to "+type_new+"."
                          "Edit parameter is disabled.")
+
+
+class LevelColumnInvalidRowError(Exception):
+    def __init__(self, row_index: Hashable, error_type: str):
+        super().__init__("Invalid row at index "+str(row_index)+"."
+                         "Cause of error: "+error_type)
