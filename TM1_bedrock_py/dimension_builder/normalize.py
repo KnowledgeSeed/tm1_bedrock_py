@@ -47,7 +47,10 @@ def normalize_level_columns(input_df: pd.DataFrame, dimension_name: str, level_c
             if stack_level > element_level:
                 del stack[current_hierarchy][stack_level]
 
-        parent_element_name = "" if element_level == 0 else stack[current_hierarchy][element_level-1]
+        parent_element_name = None if element_level == 0 else stack[current_hierarchy][element_level-1]
+
+        if not edges_df.query('Parent == @parent_element_name and Child == @element_name').empty:
+            raise LevelColumnInvalidRowError(row_index=row_index, error_type="Edge already exists")
 
         edges_df.loc[len(edges_df)] = {"Parent": parent_element_name, "Child": element_name,
                                        "ElementType": df_row["ElementType"], "Weight": df_row["Weight"],
