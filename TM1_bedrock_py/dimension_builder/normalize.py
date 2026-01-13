@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from TM1_bedrock_py.dimension_builder.exceptions import LevelColumnInvalidRowError
 
 # input dimension dataframe normalization functions to ensure uniform format.
@@ -12,6 +13,10 @@ def normalize_parent_child(input_df: pd.DataFrame, dimension_name: str) -> pd.Da
 
     column_order = ["Parent", "Child", "ElementType", "Weight", "Hierarchy"]
     edges_df = input_df[column_order]
+
+    edges_df['Weight'] = edges_df['Weight'].replace(r'^\s*$', np.nan, regex=True).fillna(1.0)
+    edges_df['Hierarchy'] = edges_df['Hierarchy'].replace(r'^\s*$', np.nan, regex=True).fillna(dimension_name)
+
     return edges_df
 
 
@@ -20,6 +25,10 @@ def normalize_level_columns(input_df: pd.DataFrame, dimension_name: str, level_c
         input_df["Weight"] = 1.0
     if "Hierarchy" not in input_df.columns:
         input_df["Hierarchy"] = dimension_name
+
+    input_df['Weight'] = input_df['Weight'].replace(r'^\s*$', np.nan, regex=True).fillna(1.0)
+    input_df['Hierarchy'] = input_df['Hierarchy'].replace(r'^\s*$', np.nan, regex=True).fillna(dimension_name)
+
     edges_df = pd.DataFrame(columns=pd.Index(["Parent", "Child", "ElementType", "Weight", "Hierarchy"]))
 
     hierarchies = input_df["Hierarchy"].unique()
