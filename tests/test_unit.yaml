@@ -2050,3 +2050,156 @@ test_generate_mapping_queries_for_slice:
           and [Key Account Managers] <> 'legacy k' and [Key Account Managers] is not null
           and [Business Partners] is not null
     expected_sm: null
+
+
+test_normalize_level_column_success:
+  -
+    # test edges_df schema generation with all columns provided
+    input_df:
+      {
+        "Level1": [ All Regions, null, null, null, null, null, null, null, All Regions, null, null, null ],
+        "Level2": [ null, EMEA, null, null, AMER, null, null, null, null, EU, null, null ],
+        "Level3": [ null, null, Hungary, Germany, null, USA, null, null, null, null, Hungary, Germany ],
+        "Level4": [ null, null, null, null, null, null, California, New York, null, null, null, null ],
+        "ElementType": ["C", "C", "N", "N", "C", "C", "N", "N", "C", "C", "N", "N"],
+        "Weight": [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ],
+        "Hierarchy": [ "Default", "Default", "Default", "Default", "Default", "Default", "Default", "Default", "Alt", "Alt", "Alt", "Alt" ]
+      }
+    edges_df_expected:
+      {
+        "Parent": [
+          null, "All Regions", "EMEA", "EMEA", "All Regions", "AMER", "USA", "USA",
+          null, "All Regions", "EU", "EU"
+        ],
+        "Child": [
+          "All Regions", "EMEA", "Hungary", "Germany", "AMER", "USA", "California", "New York",
+          "All Regions", "EU", "Hungary", "Germany"
+        ],
+        "ElementType":
+          ["C", "C", "N", "N", "C", "C", "N", "N",
+           "C", "C", "N", "N"],
+        "Weight": [
+          1, 1, 1, 1, 1, 1, 1, 1,
+          1, 1, 1, 1
+        ],
+        "Hierarchy": [
+          "Default", "Default", "Default", "Default", "Default", "Default", "Default", "Default",
+          "Alt", "Alt", "Alt", "Alt"
+        ]
+      }
+  -
+    # test weight column addition
+    input_df:
+      {
+        "Level1": [ All Regions, null, null, null, null, null, null, null, All Regions, null, null, null ],
+        "Level2": [ null, EMEA, null, null, AMER, null, null, null, null, EU, null, null ],
+        "Level3": [ null, null, Hungary, Germany, null, USA, null, null, null, null, Hungary, Germany ],
+        "Level4": [ null, null, null, null, null, null, California, New York, null, null, null, null ],
+        "ElementType": [ "C", "C", "N", "N", "C", "C", "N", "N", "C", "C", "N", "N" ],
+        "Hierarchy": [ "Default", "Default", "Default", "Default", "Default", "Default", "Default", "Default", "Alt", "Alt", "Alt", "Alt" ]
+      }
+    edges_df_expected:
+      {
+        "Parent": [
+          null, "All Regions", "EMEA", "EMEA", "All Regions", "AMER", "USA", "USA",
+          null, "All Regions", "EU", "EU"
+        ],
+        "Child": [
+          "All Regions", "EMEA", "Hungary", "Germany", "AMER", "USA", "California", "New York",
+          "All Regions", "EU", "Hungary", "Germany"
+        ],
+        "ElementType":
+          [ "C", "C", "N", "N", "C", "C", "N", "N",
+            "C", "C", "N", "N" ],
+        "Weight": [
+          1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+          1.0, 1.0, 1.0, 1.0
+        ],
+        "Hierarchy": [
+          "Default", "Default", "Default", "Default", "Default", "Default", "Default", "Default",
+          "Alt", "Alt", "Alt", "Alt"
+        ]
+      }
+  -
+    # test hierarchy column addition
+    input_df:
+      {
+        "Level1": [ All Regions, null, null, null, null, null, null, null],
+        "Level2": [ null, EMEA, null, null, AMER, null, null, null],
+        "Level3": [ null, null, Hungary, Germany, null, USA, null, null],
+        "Level4": [ null, null, null, null, null, null, California, New York],
+        "ElementType": [ "C", "C", "N", "N", "C", "C", "N", "N"],
+        "Weight": [ 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+      }
+    edges_df_expected:
+      {
+        "Parent": [
+          null, "All Regions", "EMEA", "EMEA", "All Regions", "AMER", "USA", "USA"
+        ],
+        "Child": [
+          "All Regions", "EMEA", "Hungary", "Germany", "AMER", "USA", "California", "New York"
+        ],
+        "ElementType": [
+          "C", "C", "N", "N", "C", "C", "N", "N"
+        ],
+        "Weight": [
+          1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0
+        ],
+        "Hierarchy": [
+          "Country", "Country", "Country", "Country", "Country", "Country", "Country", "Country"
+        ]
+      }
+
+test_normalize_level_column_fail:
+  -
+    input_df:
+      {
+        "Level1": [ All Regions, null, null, null, null, null, null, null, All Regions, null, null, null ],
+        "Level2": [ null, EMEA, null, null, AMER, null, null, null, null, EU, null, null ],
+        "Level3": [ null, null, null, Germany, null, USA, null, null, null, null, Hungary, Germany ],
+        "Level4": [ null, null, null, null, null, null, California, New York, null, null, null, null ],
+        "ElementType": ["C", "C", "N", "N", "C", "C", "N", "N", "C", "C", "N", "N"],
+        "Weight": [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ],
+        "Hierarchy": [ "Default", "Default", "Default", "Default", "Default", "Default", "Default", "Default", "Alt", "Alt", "Alt", "Alt" ]
+      }
+    expected_exception: "LevelColumnInvalidRowError"
+    expected_errormessage: "Empty row, no element found"
+  -
+    input_df:
+      {
+        "Level1": [ All Regions, null, null, null, null, null, null, null, All Regions, null, null, null ],
+        "Level2": [ null, EMEA, null, null, AMER, null, null, null, null, EU, null, null ],
+        "Level3": [ null, null, Hungary, Germany, null, USA, null, null, null, null, Hungary, Germany ],
+        "Level4": [ null, null, Budapest, null, null, null, California, New York, null, null, null, null ],
+        "ElementType": [ "C", "C", "N", "N", "C", "C", "N", "N", "C", "C", "N", "N" ],
+        "Weight": [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ],
+        "Hierarchy": [ "Default", "Default", "Default", "Default", "Default", "Default", "Default", "Default", "Alt", "Alt", "Alt", "Alt" ]
+      }
+    expected_exception: "LevelColumnInvalidRowError"
+    expected_errormessage: "Multiple elements found"
+  -
+    input_df:
+      {
+        "Level1": [ All Regions, null, null, null, null, null, null, null, All Regions, null, null, null ],
+        "Level2": [ null, EMEA, null, null, AMER, null, null, null, null, EU, null, null ],
+        "Level3": [ null, null, null, Germany, null, USA, null, null, null, null, Hungary, Germany ],
+        "Level4": [ null, null, Hungary, null, null, null, California, New York, null, null, null, null ],
+        "ElementType": [ "C", "C", "N", "N", "C", "C", "N", "N", "C", "C", "N", "N" ],
+        "Weight": [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ],
+        "Hierarchy": [ "Default", "Default", "Default", "Default", "Default", "Default", "Default", "Default", "Alt", "Alt", "Alt", "Alt" ]
+      }
+    expected_exception: "LevelColumnInvalidRowError"
+    expected_errormessage: "Missing parent of child element"
+  -
+    input_df:
+      {
+        "Level1": [ All Regions, null, null, null, null, null, null, null, null, All Regions, null, null, null ],
+        "Level2": [ null, EMEA, null, null, null, AMER, null, null, null, null, EU, null, null ],
+        "Level3": [ null, null, Hungary, Hungary, Germany, null, USA, null, null, null, null, Hungary, Germany ],
+        "Level4": [ null, null, null, null, null, null, null, California, New York, null, null, null, null ],
+        "ElementType": [ "C", "C", "N", "N", "N", "C", "C", "N", "N", "C", "C", "N", "N" ],
+        "Weight": [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ],
+        "Hierarchy": [ "Default", "Default", "Default", "Default", "Default", "Default", "Default", "Default", "Default", "Alt", "Alt", "Alt", "Alt" ]
+      }
+    expected_exception: "LevelColumnInvalidRowError"
+    expected_errormessage: "Edge already exists"

@@ -9,6 +9,8 @@ from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
 from TM1_bedrock_py import extractor, transformer, utility, loader
+from TM1_bedrock_py.dimension_builder import normalize
+from TM1_bedrock_py.dimension_builder.exceptions import LevelColumnInvalidRowError
 from tests.config import tm1_connection_factory, sql_engine_factory
 
 EXCEPTION_MAP = {
@@ -763,3 +765,27 @@ def test_generate_mapping_queries_for_slice(kwargs, ms, sm, expected_ms, expecte
         assert (output_ms, output_sm) == (expected_ms, expected_sm)
     except ModuleNotFoundError as e:
         print(f"Airflow executor sub-modul packages were not installed: {e}")
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Main: tests for dimension builder module
+# ------------------------------------------------------------------------------------------------------------
+
+
+@parametrize_from_file
+def test_normalize_level_column_success(input_df, edges_df_expected):
+    input_df = pd.DataFrame(input_df)
+    edges_df = normalize.normalize_level_columns(input_df=input_df, dimension_name="Country",
+                                                 level_columns=["Level1", "Level2", "Level3", "Level4"])
+    edges_df_expected = pd.DataFrame(edges_df_expected)
+    pd.testing.assert_frame_equal(edges_df, edges_df_expected)
+
+
+@parametrize_from_file
+def test_normalize_level_column_fail(input_df, expected_exception, expected_errormessage):
+    input_df = pd.DataFrame(input_df)
+    exception_type = eval(expected_exception)
+    with pytest.raises(exception_type) as excinfo:
+        edges_df = normalize.normalize_level_columns(input_df=input_df, dimension_name="Country",
+                                                     level_columns=["Level1", "Level2", "Level3", "Level4"])
+    assert expected_errormessage in str(excinfo.value)
