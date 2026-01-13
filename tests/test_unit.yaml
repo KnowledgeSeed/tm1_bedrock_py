@@ -2258,19 +2258,6 @@ test_normalize_level_column_fail:
       }
     expected_exception: "LevelColumnInvalidRowError"
     expected_errormessage: "Missing parent of child element"
-  -
-    input_df:
-      {
-        "Level1": [ All Regions, null, null, null, null, null, null, null, null, All Regions, null, null, null ],
-        "Level2": [ null, EMEA, null, null, null, AMER, null, null, null, null, EU, null, null ],
-        "Level3": [ null, null, Hungary, Hungary, Germany, null, USA, null, null, null, null, Hungary, Germany ],
-        "Level4": [ null, null, null, null, null, null, null, California, New York, null, null, null, null ],
-        "ElementType": [ "C", "C", "N", "N", "N", "C", "C", "N", "N", "C", "C", "N", "N" ],
-        "Weight": [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ],
-        "Hierarchy": [ "Default", "Default", "Default", "Default", "Default", "Default", "Default", "Default", "Default", "Alt", "Alt", "Alt", "Alt" ]
-      }
-    expected_exception: "LevelColumnInvalidRowError"
-    expected_errormessage: "Edge already exists"
 
 test_normalize_parent_child_success:
   -

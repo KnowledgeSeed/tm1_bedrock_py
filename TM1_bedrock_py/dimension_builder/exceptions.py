@@ -2,6 +2,7 @@ from typing import Hashable
 
 # custom error handling for dimension builder module
 
+
 class DimensionNotFoundError(Exception):
     def __init__(self, dimension: str = ""):
         super().__init__("The dimension "+dimension+" is not found."
@@ -31,8 +32,8 @@ class InvalidInputFormatError(Exception):
 
 
 class SchemaValidationError(Exception):
-    def __init__(self):
-        super().__init__("Input schema is invalid.")
+    def __init__(self, message):
+        super().__init__("Input schema is invalid. "+message)
 
 
 class GraphValidationError(Exception):
