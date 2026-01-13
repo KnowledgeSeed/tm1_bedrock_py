@@ -17,6 +17,8 @@ def normalize_parent_child(input_df: pd.DataFrame, dimension_name: str) -> pd.Da
     edges_df['Weight'] = edges_df['Weight'].replace(r'^\s*$', np.nan, regex=True).fillna(1.0)
     edges_df['Hierarchy'] = edges_df['Hierarchy'].replace(r'^\s*$', np.nan, regex=True).fillna(dimension_name)
 
+    edges_df["Weight"] = edges_df["Weight"].astype(float)
+
     return edges_df
 
 
@@ -66,5 +68,7 @@ def normalize_level_columns(input_df: pd.DataFrame, dimension_name: str, level_c
         for stack_level in list(stack[current_hierarchy].keys()):
             if stack_level > element_level:
                 del stack[current_hierarchy][stack_level]
+
+    edges_df["Weight"] = edges_df["Weight"].astype(float)
 
     return edges_df

@@ -2062,7 +2062,7 @@ test_normalize_level_column_success:
         "Level3": [ null, null, Hungary, Germany, null, USA, null, null, null, null, Hungary, Germany ],
         "Level4": [ null, null, null, null, null, null, California, New York, null, null, null, null ],
         "ElementType": ["C", "C", "N", "N", "C", "C", "N", "N", "C", "C", "N", "N"],
-        "Weight": [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ],
+        "Weight": [ 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 ],
         "Hierarchy": [ "Default", "Default", "Default", "Default", "Default", "Default", "Default", "Default", "Alt", "Alt", "Alt", "Alt" ]
       }
     edges_df_expected:
@@ -2079,8 +2079,8 @@ test_normalize_level_column_success:
           ["C", "C", "N", "N", "C", "C", "N", "N",
            "C", "C", "N", "N"],
         "Weight": [
-          1, 1, 1, 1, 1, 1, 1, 1,
-          1, 1, 1, 1
+          1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+          1.0, 1.0, 1.0, 1.0
         ],
         "Hierarchy": [
           "Default", "Default", "Default", "Default", "Default", "Default", "Default", "Default",
@@ -2150,7 +2150,7 @@ test_normalize_level_column_success:
         ]
       }
   -
-    # test edges_df schema generation with all columns provided
+    # test for missing value defaulting
     input_df:
       {
         "Level1": [ All Regions, null, null, null, null, null, null, null, All Regions, null, null, null ],
@@ -2180,6 +2180,40 @@ test_normalize_level_column_success:
         ],
         "Hierarchy": [
           "Country", "Country", "Country", "Country", "Country", "Country", "Country", "Country",
+          "Alt", "Alt", "Alt", "Alt"
+        ]
+      }
+  -
+    # test for number to float conversion
+    input_df:
+      {
+        "Level1": [ All Regions, null, null, null, null, null, null, null, All Regions, null, null, null ],
+        "Level2": [ null, EMEA, null, null, AMER, null, null, null, null, EU, null, null ],
+        "Level3": [ null, null, Hungary, Germany, null, USA, null, null, null, null, Hungary, Germany ],
+        "Level4": [ null, null, null, null, null, null, California, New York, null, null, null, null ],
+        "ElementType": [ "C", "C", "N", "N", "C", "C", "N", "N", "C", "C", "N", "N" ],
+        "Weight": [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ],
+        "Hierarchy": [ "Default", "Default", "Default", "Default", "Default", "Default", "Default", "Default", "Alt", "Alt", "Alt", "Alt" ]
+      }
+    edges_df_expected:
+      {
+        "Parent": [
+          null, "All Regions", "EMEA", "EMEA", "All Regions", "AMER", "USA", "USA",
+          null, "All Regions", "EU", "EU"
+        ],
+        "Child": [
+          "All Regions", "EMEA", "Hungary", "Germany", "AMER", "USA", "California", "New York",
+          "All Regions", "EU", "Hungary", "Germany"
+        ],
+        "ElementType":
+          [ "C", "C", "N", "N", "C", "C", "N", "N",
+            "C", "C", "N", "N" ],
+        "Weight": [
+          1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+          1.0, 1.0, 1.0, 1.0
+        ],
+        "Hierarchy": [
+          "Default", "Default", "Default", "Default", "Default", "Default", "Default", "Default",
           "Alt", "Alt", "Alt", "Alt"
         ]
       }
