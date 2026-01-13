@@ -10,7 +10,9 @@ def normalize_parent_child(input_df: pd.DataFrame, dimension_name: str) -> pd.Da
     if "Hierarchy" not in input_df.columns:
         input_df["Hierarchy"] = dimension_name
 
-    return input_df
+    column_order = ["Parent", "Child", "ElementType", "Weight", "Hierarchy"]
+    edges_df = input_df[column_order]
+    return edges_df
 
 
 def normalize_level_columns(input_df: pd.DataFrame, dimension_name: str, level_columns: list[str]) -> pd.DataFrame:

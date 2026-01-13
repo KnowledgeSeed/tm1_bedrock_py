@@ -326,7 +326,7 @@ def test_normalize_dataframe_is_dataframe_true(tm1_connection_factory, data_mdx)
     with tm1_connection_factory("tm1srv") as conn:
         try:
             df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=data_mdx)
-            transformer.normalize_dataframe_for_testing(dataframe=df, tm1_service=conn, mdx=data_mdx)
+            df = transformer.normalize_dataframe_for_testing(dataframe=df, tm1_service=conn, mdx=data_mdx)
             assert isinstance(df, DataFrame)
         except Exception as e:
             pytest.fail(f"MDX query execution failed: {e}")
@@ -338,7 +338,7 @@ def test_normalize_dataframe_match_number_of_dimensions_success(tm1_connection_f
     with tm1_connection_factory("tm1srv") as conn:
         try:
             df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=data_mdx)
-            transformer.normalize_dataframe_for_testing(dataframe=df, tm1_service=conn, mdx=data_mdx)
+            df = transformer.normalize_dataframe_for_testing(dataframe=df, tm1_service=conn, mdx=data_mdx)
             df.keys()
             assert len(df.keys()) == expected_dimensions
         except Exception as e:
@@ -351,7 +351,7 @@ def test_normalize_dataframe_match_dimensions_success(tm1_connection_factory, da
     with tm1_connection_factory("tm1srv") as conn:
         try:
             df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=data_mdx)
-            transformer.normalize_dataframe_for_testing(dataframe=df, tm1_service=conn, mdx=data_mdx)
+            df = transformer.normalize_dataframe_for_testing(dataframe=df, tm1_service=conn, mdx=data_mdx)
             keys = [key for key in df.keys()]
             assert expected_dimensions == keys
         except Exception as e:
@@ -432,7 +432,7 @@ def test_dataframe_redimension_and_transform(
 def test_dataframe_reorder_dimensions(dataframe, cube_cols, expected_dataframe):
     df = pd.DataFrame(dataframe)
     expected_df = pd.DataFrame(expected_dataframe)
-    transformer.dataframe_reorder_dimensions(dataframe=df, cube_dimensions=cube_cols)
+    df = transformer.dataframe_reorder_dimensions(dataframe=df, cube_dimensions=cube_cols)
 
     pd.testing.assert_frame_equal(df, expected_df)
 
@@ -678,7 +678,7 @@ def test_dataframe_to_csv_build_dataframe_form_mdx(tm1_connection_factory, data_
             expected_df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=data_mdx)
             dtype_mapping = expected_df.dtypes.apply(lambda x: x.name).to_dict()
 
-            transformer.normalize_dataframe_for_testing(dataframe=expected_df, tm1_service=conn, mdx=data_mdx)
+            expected_df = transformer.normalize_dataframe_for_testing(dataframe=expected_df, tm1_service=conn, mdx=data_mdx)
 
             loader.dataframe_to_csv(
                 dataframe=expected_df, csv_file_name=csv_file_name, csv_output_dir="./", decimal=".", mode="a"
@@ -789,3 +789,12 @@ def test_normalize_level_column_fail(input_df, expected_exception, expected_erro
         edges_df = normalize.normalize_level_columns(input_df=input_df, dimension_name="Country",
                                                      level_columns=["Level1", "Level2", "Level3", "Level4"])
     assert expected_errormessage in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_normalize_parent_child_success(input_df, edges_df_expected):
+    input_df = pd.DataFrame(input_df)
+    edges_df = normalize.normalize_parent_child(input_df=input_df, dimension_name="Country")
+    edges_df_expected = pd.DataFrame(edges_df_expected)
+    pd.testing.assert_frame_equal(edges_df, edges_df_expected)
+

@@ -366,7 +366,7 @@ def data_copy_intercube(
             case_and_space_insensitive_inputs=case_and_space_insensitive_inputs
         )
 
-    transformer.dataframe_reorder_dimensions(
+    dataframe = transformer.dataframe_reorder_dimensions(
         dataframe=dataframe, cube_dimensions=target_cube_dims,
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, **kwargs
     )
@@ -698,7 +698,7 @@ def data_copy(
         transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function,
                                           case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
 
-    transformer.dataframe_reorder_dimensions(
+    dataframe = transformer.dataframe_reorder_dimensions(
         dataframe=dataframe, cube_dimensions=cube_dims,
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, **kwargs
     )
@@ -1161,7 +1161,7 @@ def load_sql_data_to_tm1_cube(
         transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function,
                                           case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
 
-    transformer.dataframe_reorder_dimensions(
+    dataframe = transformer.dataframe_reorder_dimensions(
         dataframe=dataframe, cube_dimensions=cube_dims,
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs
     )
@@ -2127,7 +2127,7 @@ def load_csv_data_to_tm1_cube(
         transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function,
                                           case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
 
-    transformer.dataframe_reorder_dimensions(
+    dataframe = transformer.dataframe_reorder_dimensions(
         dataframe=dataframe, cube_dimensions=cube_dims,
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs
     )

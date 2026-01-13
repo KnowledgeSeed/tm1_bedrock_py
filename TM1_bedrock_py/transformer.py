@@ -10,7 +10,7 @@ from TM1_bedrock_py import utility, basic_logger
 def normalize_dataframe_for_testing(
         dataframe: DataFrame, metadata_function: Optional[Callable[..., Any]] = None,
         **kwargs: Any
-) -> None:
+) -> DataFrame:
     """
     Returns a normalized dataframe using the raw output dataframe of the execute mdx function, and necessary cube
     and query based metadata. Makes sure that all cube dimensions are present in the dataframe and that they are in
@@ -29,7 +29,8 @@ def normalize_dataframe_for_testing(
     metadata = utility.TM1CubeObjectMetadata.collect(metadata_function=metadata_function, **kwargs)
 
     dataframe_add_column_assign_value(dataframe=dataframe, column_value=metadata.get_filter_dict())
-    dataframe_reorder_dimensions(dataframe=dataframe, cube_dimensions=metadata.get_cube_dims())
+    dataframe = dataframe_reorder_dimensions(dataframe=dataframe, cube_dimensions=metadata.get_cube_dims())
+    return dataframe
 
 
 def cast_coordinates_to_str(cube_dims: list, dataframe: DataFrame):
@@ -131,7 +132,7 @@ def dataframe_reorder_dimensions(
         cube_dimensions: List[str],
         case_and_space_insensitive_inputs: Optional[bool] = False,
         **_kwargs
-) -> None:
+) -> DataFrame:
     """
     Rearranges the columns of a DataFrame based on the specified cube dimensions.
 
@@ -162,10 +163,9 @@ def dataframe_reorder_dimensions(
         cube_dimensions = utility.normalize_structure_strings(cube_dimensions)
         value_column_name = 'value'
 
-    temp_reordered = dataframe[cube_dimensions+[value_column_name]]
-    dataframe.drop(columns=dataframe.columns, inplace=True)
-    for col in temp_reordered.columns:
-        dataframe[col] = temp_reordered[col]
+    new_order = cube_dimensions + [value_column_name]
+    reordered_dataframe = dataframe[new_order]
+    return reordered_dataframe
 
 
 def dataframe_filter_inplace(

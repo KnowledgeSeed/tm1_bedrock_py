@@ -2203,3 +2203,73 @@ test_normalize_level_column_fail:
       }
     expected_exception: "LevelColumnInvalidRowError"
     expected_errormessage: "Edge already exists"
+
+test_normalize_parent_child_success:
+  -
+    input_df:
+      {
+        "Parent": [
+          null, "All Regions", "EMEA", "EMEA", "All Regions", "AMER", "USA", "USA"
+        ],
+        "Child": [
+          "All Regions", "EMEA", "Hungary", "Germany", "AMER", "USA", "California", "New York"
+        ],
+        "ElementType": [
+          "C", "C", "N", "N", "C", "C", "N", "N"
+        ],
+        "Hierarchy": [
+          "Country", "Country", "Country", "Country", "Country", "Country", "Country", "Country"
+        ]
+      }
+    edges_df_expected:
+      {
+        "Parent": [
+          null, "All Regions", "EMEA", "EMEA", "All Regions", "AMER", "USA", "USA"
+        ],
+        "Child": [
+          "All Regions", "EMEA", "Hungary", "Germany", "AMER", "USA", "California", "New York"
+        ],
+        "ElementType": [
+          "C", "C", "N", "N", "C", "C", "N", "N"
+        ],
+        "Weight": [
+          1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0
+        ],
+        "Hierarchy": [
+          "Country", "Country", "Country", "Country", "Country", "Country", "Country", "Country"
+        ]
+      }
+  -
+    input_df:
+      {
+        "Parent": [
+          null, "All Regions", "EMEA", "EMEA", "All Regions", "AMER", "USA", "USA"
+        ],
+        "Child": [
+          "All Regions", "EMEA", "Hungary", "Germany", "AMER", "USA", "California", "New York"
+        ],
+        "ElementType": [
+          "C", "C", "N", "N", "C", "C", "N", "N"
+        ],
+        "Weight": [
+          1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0
+        ]
+      }
+    edges_df_expected:
+      {
+        "Parent": [
+          null, "All Regions", "EMEA", "EMEA", "All Regions", "AMER", "USA", "USA"
+        ],
+        "Child": [
+          "All Regions", "EMEA", "Hungary", "Germany", "AMER", "USA", "California", "New York"
+        ],
+        "ElementType": [
+          "C", "C", "N", "N", "C", "C", "N", "N"
+        ],
+        "Weight": [
+          1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0
+        ],
+        "Hierarchy": [
+          "Country", "Country", "Country", "Country", "Country", "Country", "Country", "Country"
+        ]
+      }
