@@ -1,0 +1,110 @@
+test_read_sql_parent_child_to_df:
+  -
+    sql_query: "
+    SELECT
+      Parent,
+      Child,
+      ElementType,
+      Weight,
+      Hierarchy
+    FROM dbo.Dim_Product_Edges;
+    "
+    dtype_mapping: {
+            "Parent": "object",
+            "Child": "object",
+            "ElementType": "object",
+            "Weight": "float64",
+            "Hierarchy": "object",
+    }
+    expected_df: {
+    "Parent": [ "Total Products", "Total Products", "All Regions", "EMEA", "EMEA" ],
+    "Child": [ "Product A", "Product B", "EMEA", "Hungary", "Germany" ],
+    "ElementType": [ "N", "N", "C", "N", "N" ],
+    "Weight": [ 1, 1, 1, 1, 1 ],
+    "Hierarchy": [ "Default", "Default", "Default", "Default", "Default" ]
+    }
+  -
+    sql_query: "
+     SELECT
+       Parent,
+       Child,
+       ElementType,
+       Weight,
+       Hierarchy
+     FROM dbo.Dim_Product_Edges;
+     "
+    dtype_mapping: {
+      "Parent": "object",
+      "Child": "object",
+      "ElementType": "object",
+      "Weight": "float64"
+    }
+    expected_df: {
+      "Parent": [ "Total Products", "Total Products", "All Regions", "EMEA", "EMEA" ],
+      "Child": [ "Product A", "Product B", "EMEA", "Hungary", "Germany" ],
+      "ElementType": [ "N", "N", "C", "N", "N" ]
+    }
+
+test_read_yaml_parent_child_to_df:
+    format: parent_child
+    hierarchy_column: Hierarchy
+    rows:
+      - { Parent: "Total Products", Child: "Product A", ElementType: "N", Weight: 1, Hierarchy:
+      "Default" }
+      - { Parent: "Total Products", Child: "Product B", ElementType: "N", Weight: 1, Hierarchy:
+      "Default" }
+      - { Parent: "All Regions", Child: "EMEA", ElementType: "C", Weight: 1, Hierarchy:
+      "Default" }
+      - { Parent: "EMEA", Child: "Hungary", ElementType: "N", Weight: 1, Hierarchy:
+      "Default" }
+      - { Parent: "EMEA", Child: "Germany", ElementType: "N", Weight: 1, Hierarchy:
+        "Default" }
+
+
+test_read_yaml_parent_child_to_df_mandatory_only:
+    format: parent_child
+    hierarchy_column: Hierarchy
+    rows:
+      - { Parent: "Total Products", Child: "Product A" }
+      - { Parent: "Total Products", Child: "Product B" }
+      - { Parent: "All Regions", Child: "EMEA" }
+      - { Parent: "EMEA", Child: "Hungary" }
+      - { Parent: "EMEA", Child: "Germany" }
+
+
+
+test_read_yaml_parent_child_to_df_aliases:
+    format: parent_child
+    hierarchy_column: Hierarchy
+    rows:
+      - { Forbearer: "Total Products", Offspring: "Product A", Type: "N", W: 1, Hier:
+      "Default" }
+      - { Forbearer: "Total Products", Offspring: "Product B", Type: "N", W: 1, Hier:
+      "Default" }
+      - { Forbearer: "All Regions", Offspring: "EMEA", Type: "C", W: 1, Hier:
+      "Default" }
+      - { Forbearer: "EMEA", Offspring: "Hungary", Type: "N", W: 1, Hier:
+      "Default" }
+      - { Forbearer: "EMEA", Offspring: "Germany", Type: "N", W: 1, Hier:
+        "Default" }
+
+# -------------------------------- Format Two -------------------------------- #
+
+test_read_yaml_parent_child_to_df_format_two:
+  -
+    format: level_columns
+    hierarchy_column: Hierarchy
+    level_columns: [ Level1, Level2, Level3, Level4 ]
+    rows:
+      - { Hierarchy: "Default", Level1: "All Regions", Weight: 1 }
+      - { Hierarchy: "Default", Level2: "EMEA", Weight: 1 }
+      - { Hierarchy: "Default", Level3: "Hungary", Weight: 1 }
+      - { Hierarchy: "Default", Level3: "Germany", Weight: 1 }
+      - { Hierarchy: "Default", Level2: "AMER", Weight: 1 }
+      - { Hierarchy: "Default", Level3: "USA", Weight: 1 }
+      - { Hierarchy: "Default", Level4: "California", Weight: 1 }
+      - { Hierarchy: "Default", Level4: "New York", Weight: 1 }
+      - { Hierarchy: "Alt", Level1: "All Regions", Weight: 1 }
+      - { Hierarchy: "Alt", Level2: "EU", Weight: 1 }
+      - { Hierarchy: "Alt", Level3: "Hungary", Weight: 1 }
+      - { Hierarchy: "Alt", Level3: "Germany", Weight: 1 }
