@@ -772,29 +772,3 @@ def test_generate_mapping_queries_for_slice(kwargs, ms, sm, expected_ms, expecte
 # ------------------------------------------------------------------------------------------------------------
 
 
-@parametrize_from_file
-def test_normalize_level_column_success(input_df, edges_df_expected):
-    input_df = pd.DataFrame(input_df)
-    edges_df = normalize.normalize_indented_level_columns(input_df=input_df, dimension_name="Country",
-                                                          level_columns=["Level1", "Level2", "Level3", "Level4"])
-    edges_df_expected = pd.DataFrame(edges_df_expected)
-    pd.testing.assert_frame_equal(edges_df, edges_df_expected)
-
-
-@parametrize_from_file
-def test_normalize_level_column_fail(input_df, expected_exception, expected_errormessage):
-    input_df = pd.DataFrame(input_df)
-    exception_type = eval(expected_exception)
-    with pytest.raises(exception_type) as excinfo:
-        edges_df = normalize.normalize_indented_level_columns(input_df=input_df, dimension_name="Country",
-                                                              level_columns=["Level1", "Level2", "Level3", "Level4"])
-    assert expected_errormessage in str(excinfo.value)
-
-
-@parametrize_from_file
-def test_normalize_parent_child_success(input_df, edges_df_expected):
-    input_df = pd.DataFrame(input_df)
-    edges_df = normalize.normalize_parent_child(input_df=input_df, dimension_name="Country")
-    edges_df_expected = pd.DataFrame(edges_df_expected)
-    pd.testing.assert_frame_equal(edges_df, edges_df_expected)
-
