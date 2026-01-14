@@ -3,6 +3,9 @@ on:
   push:
     branches-ignore:
       - main
+    paths-ignore:
+      - "TM1_bedrock_py/dimension_builder/**"
+      - "tests/tests_dimension_builder/**"
   workflow_dispatch: {}
 
 concurrency:

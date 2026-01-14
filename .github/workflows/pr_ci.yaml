@@ -77,8 +77,12 @@ jobs:
         sudo apt-get update
         sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17
 
-    - name: Run unit tests
+    - name: Run unit tests for TM1_bedrock_py
       run: |
-        cd tests
-        echo "Running unit tests..."
-        pytest test_unit.py
+        echo "Running unit tests for TM1_bedrock_py"
+        pytest tests/test_unit.py
+
+    - name: Run unit tests for dimension_builder
+      run: |
+        echo "Running unit tests for dimension_builder"
+        pytest tests/tests_dimension_builder/test_unit.py
