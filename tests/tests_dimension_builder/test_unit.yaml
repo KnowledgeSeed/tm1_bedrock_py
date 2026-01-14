@@ -96,15 +96,15 @@ test_read_yaml_parent_child_to_df_format_two:
     hierarchy_column: Hierarchy
     level_columns: [ Level1, Level2, Level3, Level4 ]
     rows:
-      - { Hierarchy: "Default", Level1: "All Regions", Weight: 1 }
-      - { Hierarchy: "Default", Level2: "EMEA", Weight: 1 }
-      - { Hierarchy: "Default", Level3: "Hungary", Weight: 1 }
-      - { Hierarchy: "Default", Level3: "Germany", Weight: 1 }
-      - { Hierarchy: "Default", Level2: "AMER", Weight: 1 }
-      - { Hierarchy: "Default", Level3: "USA", Weight: 1 }
-      - { Hierarchy: "Default", Level4: "California", Weight: 1 }
-      - { Hierarchy: "Default", Level4: "New York", Weight: 1 }
-      - { Hierarchy: "Alt", Level1: "All Regions", Weight: 1 }
-      - { Hierarchy: "Alt", Level2: "EU", Weight: 1 }
-      - { Hierarchy: "Alt", Level3: "Hungary", Weight: 1 }
-      - { Hierarchy: "Alt", Level3: "Germany", Weight: 1 }
+      - { Level1: "All Regions", Weight: 1, Hierarchy: "Default" }
+      - { Level2: "EMEA", Weight: 1, Hierarchy: "Default" }
+      - { Level3: "Hungary", Weight: 1, Hierarchy: "Default" }
+      - { Level3: "Germany", Weight: 1, Hierarchy: "Default" }
+      - { Level2: "AMER", Weight: 1, Hierarchy: "Default" }
+      - { Level3: "USA", Weight: 1, Hierarchy: "Default" }
+      - { Level4: "California", Weight: 1, Hierarchy: "Default" }
+      - { Level4: "New York", Weight: 1, Hierarchy: "Default" }
+      - { Level1: "All Regions", Weight: 1, Hierarchy: "Alt" }
+      - { Level2: "EU", Weight: 1, Hierarchy: "Alt" }
+      - { Level3: "Hungary", Weight: 1, Hierarchy: "Alt" }
+      - { Level3: "Germany", Weight: 1, Hierarchy: "Alt" }
