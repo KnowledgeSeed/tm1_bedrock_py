@@ -2,6 +2,10 @@ import pandas as pd
 import numpy as np
 from typing import Optional, Any, Hashable, Tuple
 from TM1_bedrock_py.dimension_builder.exceptions import LevelColumnInvalidRowError
+from TM1_bedrock_py.dimension_builder.validate import (validate_row_for_element_count,
+                                                       validate_row_for_parent_child_in_filled_level_columns,
+                                                       validate_row_for_parent_child_in_indented_level_columns)
+
 
 # input dimension dataframe normalization functions to ensure uniform format.
 
@@ -126,15 +130,6 @@ def update_stack(stack: dict, hierarchy: str, element_level: int, element_name: 
     return stack
 
 
-def validate_row_for_element_count(
-        elements_in_row: int, row_index: Hashable
-) -> None:
-    if elements_in_row == 0:
-        raise LevelColumnInvalidRowError(row_index=row_index, error_type="Empty row, no element found")
-    if elements_in_row > 1:
-        raise LevelColumnInvalidRowError(row_index=row_index, error_type="Multiple elements found")
-
-
 def parse_indented_level_columns(df_row: pd.Series, row_index: Hashable, level_columns: list):
     elements_in_row = 0
     element_level = 0
@@ -160,20 +155,6 @@ def parse_filled_level_columns(df_row: pd.Series, level_columns: list):
             element_level = level_index
 
     return element_name, element_level
-
-
-def validate_row_for_parent_child_in_indented_level_columns(
-        row_index: Hashable, element_level: int, hierarchy: str, stack: dict
-):
-    if element_level != 0 and stack[hierarchy].get(element_level - 1) is None:
-        raise LevelColumnInvalidRowError(row_index=row_index, error_type="Missing parent of child element")
-
-
-def validate_row_for_parent_child_in_filled_level_columns(
-        df_row: pd.Series, level_columns: list[str | int], element_level: int, row_index: Hashable
-):
-    if element_level > 0 and df_row[level_columns[element_level - 1]] in (np.nan, None, ""):
-        raise LevelColumnInvalidRowError(row_index=row_index, error_type="Missing parent of child element")
 
 
 def create_empty_edges_df():
