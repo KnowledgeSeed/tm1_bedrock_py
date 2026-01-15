@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 from typing import Optional, Any, Hashable, Tuple
-from TM1_bedrock_py.dimension_builder.exceptions import LevelColumnInvalidRowError
 from TM1_bedrock_py.dimension_builder.validate import (validate_row_for_element_count,
                                                        validate_row_for_parent_child_in_filled_level_columns,
                                                        validate_row_for_parent_child_in_indented_level_columns)
