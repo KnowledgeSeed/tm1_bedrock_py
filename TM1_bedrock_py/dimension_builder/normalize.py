@@ -282,8 +282,11 @@ def normalize_indented_level_columns(
     )
 
     assign_missing_edge_columns(input_df=input_df, dimension_name=dimension_name, hierarchy_name=hierarchy_name)
+
+    # indented levels into parent child specific processes
     input_df = assign_parent_child_to_level_columns(input_df=input_df)
     input_df = parse_indented_levels_into_parent_child(input_df=input_df, level_columns=level_columns)
+
     edges_df = separate_edge_df_columns(edges_df=edges_df, input_df=input_df)
 
     if input_attr_df is None:
@@ -325,8 +328,11 @@ def normalize_filled_level_columns(
     )
 
     assign_missing_edge_columns(input_df=input_df, dimension_name=dimension_name, hierarchy_name=hierarchy_name)
+
+    # filled levels into parent child specific processes
     input_df = assign_parent_child_to_level_columns(input_df=input_df)
     input_df = parse_filled_levels_into_parent_child(input_df=input_df, level_columns=level_columns)
+
     edges_df = separate_edge_df_columns(edges_df=edges_df, input_df=input_df)
 
     if input_attr_df is None:
