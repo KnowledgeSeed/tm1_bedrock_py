@@ -45,6 +45,10 @@ def assign_missing_edge_columns(input_df: pd.DataFrame, dimension_name: str, hie
         input_df["Dimension"] = dimension_name
     if "Hierarchy" not in input_df.columns:
         input_df["Hierarchy"] = hierarchy_name if hierarchy_name is not None else dimension_name
+    if "Parent" not in input_df.columns:
+        input_df["Parent"] = ""
+    if "Child" not in input_df.columns:
+        input_df["Child"] = ""
 
     return input_df
 
@@ -84,6 +88,18 @@ def separate_edge_df_columns(edges_df: pd.DataFrame, input_df: pd.DataFrame) -> 
     return edges_df
 
 
+def separate_attr_df_columns(
+        input_df: pd.DataFrame,
+        attr_columns: Optional[list[str]] = None
+):
+    attr_columns = attr_columns if attr_columns is not None else []
+    type_column = ["ElementType"] if "ElementType" in input_df.columns else []
+    attr_df = input_df[["Child"] + type_column + attr_columns].copy()
+    attr_df = attr_df.rename(columns={"Child": "ElementName"})
+    attr_df = attr_df.drop_duplicates(subset=["ElementName"]).reset_index(drop=True)
+    return attr_df
+
+
 def reorder_edge_df_columns(input_df: pd.DataFrame) -> pd.DataFrame:
     column_order = ["Parent", "Child", "Weight", "Dimension", "Hierarchy"]
     return input_df[column_order]
@@ -119,7 +135,7 @@ def validate_row_for_element_count(
         raise LevelColumnInvalidRowError(row_index=row_index, error_type="Multiple elements found")
 
 
-def parse_level_columns(df_row: pd.Series, row_index: Hashable, level_columns: list):
+def parse_indented_level_columns(df_row: pd.Series, row_index: Hashable, level_columns: list):
     elements_in_row = 0
     element_level = 0
     element_name = ""
@@ -131,6 +147,18 @@ def parse_level_columns(df_row: pd.Series, row_index: Hashable, level_columns: l
             elements_in_row += 1
 
     validate_row_for_element_count(elements_in_row=elements_in_row, row_index=row_index)
+    return element_name, element_level
+
+
+def parse_filled_level_columns(df_row: pd.Series, level_columns: list):
+    element_level = 0
+    element_name = ""
+    for level_index, level_column in enumerate(level_columns):
+        current_level_value = df_row[level_column]
+        if current_level_value is not None and current_level_value != "":
+            element_name = current_level_value
+            element_level = level_index
+
     return element_name, element_level
 
 
@@ -151,6 +179,45 @@ def create_empty_attr_df(attr_columns: Optional[list] = None):
     attr_df_columns = ["ElementName", "ElementType"] + attr_columns
     attr_df = pd.DataFrame(columns=pd.Index(attr_df_columns))
     return attr_df
+
+
+def parse_indented_levels_into_parent_child(input_df: pd.DataFrame, level_columns: list[str] | list[int],):
+    stack = create_stack(input_df)
+    for row_index, df_row in input_df.iterrows():
+        current_hierarchy = df_row["Hierarchy"]
+
+        element_name, element_level = parse_indented_level_columns(df_row=df_row, row_index=row_index,
+                                                                   level_columns=level_columns)
+        input_df.at[(row_index, "Child")] = element_name
+        validate_row_for_parent_child_in_indented_level_columns(
+            row_index=row_index, element_level=element_level,
+            hierarchy=current_hierarchy, stack=stack
+        )
+
+        parent_element_name = None if element_level == 0 else stack[current_hierarchy][element_level - 1]
+        input_df.at[(row_index, "Parent")] = parent_element_name
+
+        stack = update_stack(
+            stack=stack, hierarchy=current_hierarchy,
+            element_level=element_level, element_name=element_name
+        )
+    return input_df
+
+
+def parse_filled_levels_into_parent_child(input_df: pd.DataFrame, level_columns: list[str] | list[int],):
+    for row_index, df_row in input_df.iterrows():
+        element_name, element_level = parse_filled_level_columns(df_row=df_row, level_columns=level_columns)
+        parent_element_name = df_row[level_columns[element_level-1]] if element_level > 0 else ""
+        input_df.at[(row_index, "Child")] = element_name
+        input_df.at[(row_index, "Parent")] = parent_element_name
+
+    return input_df
+
+
+def drop_invalid_edges_df_rows(edges_df: pd.DataFrame) -> pd.DataFrame:
+    edges_df['Parent'] = edges_df['Parent'].replace("", np.nan)
+    edges_df = edges_df.dropna(subset=['Name'])
+    return edges_df
 
 
 def normalize_parent_child(
@@ -181,11 +248,7 @@ def normalize_parent_child(
     edges_df = separate_edge_df_columns(edges_df=edges_df, input_df=input_df)
 
     if input_attr_df is None:
-        attr_columns = attr_columns if attr_columns is not None else []
-        type_column = ["ElementType"] if "ElementType" in input_df.columns else []
-        attr_df = input_df[["Child"] + type_column + attr_columns].copy()
-        attr_df = attr_df.rename(columns={"Child": "ElementName"})
-        attr_df = attr_df.drop_duplicates(subset=["ElementName"]).reset_index(drop=True)
+        attr_df = separate_attr_df_columns(input_df=input_df, attr_columns=attr_columns)
     assign_missing_type_column(input_df=attr_df)
 
     assign_missing_edge_values(input_df=edges_df, dimension_name=dimension_name, hierarchy_name=hierarchy_name)
@@ -194,12 +257,14 @@ def normalize_parent_child(
     reorder_edge_df_columns(input_df=edges_df)
     reorder_attr_df_columns(input_df=attr_df)
 
+    edges_df = drop_invalid_edges_df_rows(edges_df)
+
     return edges_df, attr_df
 
 
 def normalize_indented_level_columns(
         input_df: pd.DataFrame,
-        level_columns: Optional[list[str] | list[int]],
+        level_columns: list[str] | list[int],
         dimension_name: str, hierarchy_name: str = None,
         dim_column: Optional[str | int] = None, hier_column: Optional[str | int] = None,
         type_column: Optional[str | int] = None, weight_column: Optional[str | int] = None,
@@ -222,42 +287,62 @@ def normalize_indented_level_columns(
     )
 
     assign_missing_edge_columns(input_df=input_df, dimension_name=dimension_name, hierarchy_name=hierarchy_name)
+    input_df = parse_indented_levels_into_parent_child(input_df=input_df, level_columns=level_columns)
+    edges_df = separate_edge_df_columns(edges_df=edges_df, input_df=input_df)
+
+    if input_attr_df is None:
+        attr_df = separate_attr_df_columns(input_df=input_df, attr_columns=attr_columns)
     assign_missing_type_column(input_df=attr_df)
-
-    stack = create_stack(input_df)
-
-    for row_index, df_row in input_df.iterrows():
-        current_hierarchy = df_row["Hierarchy"]
-
-        element_name, element_level = parse_level_columns(
-            df_row=df_row, row_index=row_index, level_columns=level_columns
-        )
-
-        validate_row_for_parent_child_in_indented_level_columns(
-            row_index=row_index, element_level=element_level,
-            hierarchy=current_hierarchy, stack=stack
-        )
-
-        parent_element_name = None if element_level == 0 else stack[current_hierarchy][element_level - 1]
-
-        edges_df.loc[len(edges_df)] = {"Parent": parent_element_name, "Child": element_name,
-                                       "Weight": df_row["Weight"],
-                                       "Dimension": df_row["Dimension"], "Hierarchy": df_row["Hierarchy"]}
-
-        if input_attr_df is None and element_name not in attr_df["ElementName"].unique():
-            element_type = df_row["ElementType"] if "ElementType" in df_row.columns else ""
-            new_row = {"ElementName": element_name, "ElementType": element_type}
-            attr_df.loc[len(attr_df)] = {**new_row, **df_row[attr_columns].to_dict()}
-
-        stack = update_stack(
-            stack=stack, hierarchy=current_hierarchy,
-            element_level=element_level, element_name=element_name
-        )
 
     assign_missing_edge_values(input_df=edges_df, dimension_name=dimension_name, hierarchy_name=hierarchy_name)
     assign_missing_type_values(edges_df=edges_df, attr_df=attr_df)
 
     reorder_edge_df_columns(input_df=edges_df)
     reorder_attr_df_columns(input_df=attr_df)
+
+    edges_df = drop_invalid_edges_df_rows(edges_df)
+
+    return edges_df, attr_df
+
+
+def normalize_filled_level_columns(
+        input_df: pd.DataFrame,
+        level_columns: list[str] | list[int],
+        dimension_name: str, hierarchy_name: str = None,
+        dim_column: Optional[str | int] = None, hier_column: Optional[str | int] = None,
+        type_column: Optional[str | int] = None, weight_column: Optional[str | int] = None,
+        attr_columns: Optional[list[str] | list[int]] = None,
+        input_attr_df: pd.DataFrame = None,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+
+    edges_df = create_empty_edges_df()
+    attr_df = create_empty_attr_df(attr_columns) if input_attr_df is None else input_attr_df
+
+    input_df = normalize_all_column_names(
+        input_df=input_df, dim_column=dim_column, hier_column=hier_column,
+        level_columns=level_columns,
+        type_column=type_column, weight_column=weight_column
+    )
+    attr_df = normalize_all_column_names(
+        input_df=attr_df,
+        element_column=attr_df.columns[0],
+        type_column=type_column,
+    )
+
+    assign_missing_edge_columns(input_df=input_df, dimension_name=dimension_name, hierarchy_name=hierarchy_name)
+    input_df = parse_filled_levels_into_parent_child(input_df=input_df, level_columns=level_columns)
+    edges_df = separate_edge_df_columns(edges_df=edges_df, input_df=input_df)
+
+    if input_attr_df is None:
+        attr_df = separate_attr_df_columns(input_df=input_df, attr_columns=attr_columns)
+    assign_missing_type_column(input_df=attr_df)
+
+    assign_missing_edge_values(input_df=edges_df, dimension_name=dimension_name, hierarchy_name=hierarchy_name)
+    assign_missing_type_values(edges_df=edges_df, attr_df=attr_df)
+
+    reorder_edge_df_columns(input_df=edges_df)
+    reorder_attr_df_columns(input_df=attr_df)
+
+    edges_df = drop_invalid_edges_df_rows(edges_df)
 
     return edges_df, attr_df
