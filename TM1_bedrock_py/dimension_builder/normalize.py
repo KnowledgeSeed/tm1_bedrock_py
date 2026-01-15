@@ -169,6 +169,13 @@ def validate_row_for_parent_child_in_indented_level_columns(
         raise LevelColumnInvalidRowError(row_index=row_index, error_type="Missing parent of child element")
 
 
+def validate_row_for_parent_child_in_filled_level_columns(
+        df_row: pd.Series, level_columns: list[str | int], element_level: int, row_index: Hashable
+):
+    if element_level > 0 and df_row[level_columns[element_level - 1]] in (np.nan, None, ""):
+        raise LevelColumnInvalidRowError(row_index=row_index, error_type="Missing parent of child element")
+
+
 def create_empty_edges_df():
     edges_df = pd.DataFrame(columns=pd.Index(["Parent", "Child", "Weight", "Dimension", "Hierarchy"]))
     return edges_df
@@ -207,6 +214,10 @@ def parse_indented_levels_into_parent_child(input_df: pd.DataFrame, level_column
 def parse_filled_levels_into_parent_child(input_df: pd.DataFrame, level_columns: list[str] | list[int],):
     for row_index, df_row in input_df.iterrows():
         element_name, element_level = parse_filled_level_columns(df_row=df_row, level_columns=level_columns)
+
+        validate_row_for_parent_child_in_filled_level_columns(
+            df_row=df_row, level_columns=level_columns, element_level=element_level, row_index=row_index
+        )
         parent_element_name = df_row[level_columns[element_level-1]] if element_level > 0 else ""
         input_df.at[(row_index, "Child")] = element_name
         input_df.at[(row_index, "Parent")] = parent_element_name
