@@ -36,6 +36,12 @@ def validate_schema_for_parent_child(input_df: pd.DataFrame) -> None:
         raise SchemaValidationError("Child column is missing.")
 
 
+def validate_schema_for_level_columns(input_df: pd.DataFrame, level_columns: list[str]) -> None:
+    for level_column in level_columns:
+        if level_column not in input_df.columns:
+            raise SchemaValidationError("Level column "+level_column+" is missing.")
+
+
 def validate_schema_data(edges_df: pd.DataFrame) -> None:
     is_null = edges_df["Child"].isna()
     is_empty_string = edges_df["Child"].astype(str).str.strip() == ""

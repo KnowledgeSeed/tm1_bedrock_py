@@ -4,7 +4,8 @@ from typing import Optional, Any, Hashable, Tuple
 from TM1_bedrock_py.dimension_builder.validate import (validate_row_for_element_count,
                                                        validate_row_for_parent_child_in_filled_level_columns,
                                                        validate_row_for_parent_child_in_indented_level_columns,
-                                                       validate_schema_for_parent_child)
+                                                       validate_schema_for_parent_child,
+                                                       validate_schema_for_level_columns)
 
 
 # input dimension dataframe normalization functions to ensure uniform format.
@@ -12,27 +13,19 @@ from TM1_bedrock_py.dimension_builder.validate import (validate_row_for_element_
 
 def normalize_all_column_names(
         input_df: pd.DataFrame,
-        dim_column: Optional[str | int] = None, hier_column: Optional[str | int] = None,
-        level_columns: Optional[list[str] | list[int]] = None,
-        parent_column: Optional[str | int] = None, child_column: Optional[str | int] = None,
-        element_column: Optional[str | int] = None,
-        type_column: Optional[str | int] = None, weight_column: Optional[str | int] = None
+        dim_column: Optional[str] = None, hier_column: Optional[str] = None,
+        parent_column: Optional[str] = None, child_column: Optional[str] = None,
+        element_column: Optional[str] = None,
+        type_column: Optional[str] = None, weight_column: Optional[str] = None
 ) -> pd.DataFrame:
 
-    def normalize_column_name(column_id: Optional[str | int], column_name: str) -> None:
+    def normalize_column_name(column_id: Optional[str], column_name: str) -> None:
         if column_id is None:
             return
-        if isinstance(column_id, int):
-            column_id = input_df.columns[column_id]
         input_df.rename(columns={column_id: column_name}, inplace=True)
 
     normalize_column_name(dim_column, "Dimension")
     normalize_column_name(hier_column, "Hierarchy")
-
-    if level_columns is not None:
-        for index, level in enumerate(level_columns):
-            normalize_column_name(level, "Level"+str(index))
-
     normalize_column_name(parent_column, "Parent")
     normalize_column_name(child_column, "Child")
     normalize_column_name(element_column, "ElementName")
@@ -176,7 +169,9 @@ def create_empty_attr_df(attr_columns: Optional[list] = None):
     return attr_df
 
 
-def parse_indented_levels_into_parent_child(input_df: pd.DataFrame, level_columns: list[str] | list[int],):
+def parse_indented_levels_into_parent_child(input_df: pd.DataFrame, level_columns: list[str],):
+    validate_schema_for_level_columns(input_df, level_columns)
+
     stack = create_stack(input_df)
     for row_index, df_row in input_df.iterrows():
         current_hierarchy = df_row["Hierarchy"]
@@ -199,7 +194,9 @@ def parse_indented_levels_into_parent_child(input_df: pd.DataFrame, level_column
     return input_df
 
 
-def parse_filled_levels_into_parent_child(input_df: pd.DataFrame, level_columns: list[str] | list[int],):
+def parse_filled_levels_into_parent_child(input_df: pd.DataFrame, level_columns: list[str],):
+    validate_schema_for_level_columns(input_df, level_columns)
+
     for row_index, df_row in input_df.iterrows():
         element_name, element_level = parse_filled_level_columns(df_row=df_row, level_columns=level_columns)
 
@@ -222,10 +219,10 @@ def drop_invalid_edges_df_rows(edges_df: pd.DataFrame) -> pd.DataFrame:
 def normalize_parent_child(
         input_df: pd.DataFrame,
         dimension_name: str, hierarchy_name: str = None,
-        dim_column: Optional[str | int] = None, hier_column: Optional[str | int] = None,
-        parent_column: Optional[str | int] = None, child_column: Optional[str | int] = None,
-        type_column: Optional[str | int] = None, weight_column: Optional[str | int] = None,
-        attr_columns: Optional[list[str] | list[int]] = None,
+        dim_column: Optional[str] = None, hier_column: Optional[str] = None,
+        parent_column: Optional[str] = None, child_column: Optional[str] = None,
+        type_column: Optional[str] = None, weight_column: Optional[str] = None,
+        attr_columns: Optional[list[str]] = None,
         input_attr_df: pd.DataFrame = None,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
@@ -263,11 +260,11 @@ def normalize_parent_child(
 
 def normalize_indented_level_columns(
         input_df: pd.DataFrame,
-        level_columns: list[str] | list[int],
+        level_columns: list[str],
         dimension_name: str, hierarchy_name: str = None,
-        dim_column: Optional[str | int] = None, hier_column: Optional[str | int] = None,
-        type_column: Optional[str | int] = None, weight_column: Optional[str | int] = None,
-        attr_columns: Optional[list[str] | list[int]] = None,
+        dim_column: Optional[str] = None, hier_column: Optional[str] = None,
+        type_column: Optional[str] = None, weight_column: Optional[str] = None,
+        attr_columns: Optional[list[str]] = None,
         input_attr_df: pd.DataFrame = None,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
@@ -276,7 +273,6 @@ def normalize_indented_level_columns(
 
     input_df = normalize_all_column_names(
         input_df=input_df, dim_column=dim_column, hier_column=hier_column,
-        level_columns=level_columns,
         type_column=type_column, weight_column=weight_column
     )
     attr_df = normalize_all_column_names(
@@ -307,11 +303,11 @@ def normalize_indented_level_columns(
 
 def normalize_filled_level_columns(
         input_df: pd.DataFrame,
-        level_columns: list[str] | list[int],
+        level_columns: list[str],
         dimension_name: str, hierarchy_name: str = None,
-        dim_column: Optional[str | int] = None, hier_column: Optional[str | int] = None,
-        type_column: Optional[str | int] = None, weight_column: Optional[str | int] = None,
-        attr_columns: Optional[list[str] | list[int]] = None,
+        dim_column: Optional[str] = None, hier_column: Optional[str] = None,
+        type_column: Optional[str] = None, weight_column: Optional[str] = None,
+        attr_columns: Optional[list[str]] = None,
         input_attr_df: pd.DataFrame = None,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
@@ -320,7 +316,6 @@ def normalize_filled_level_columns(
 
     input_df = normalize_all_column_names(
         input_df=input_df, dim_column=dim_column, hier_column=hier_column,
-        level_columns=level_columns,
         type_column=type_column, weight_column=weight_column
     )
     attr_df = normalize_all_column_names(
