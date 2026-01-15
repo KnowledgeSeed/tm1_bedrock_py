@@ -1,8 +1,11 @@
 import pandas as pd
 import numpy as np
 from typing import Optional, Any, Hashable, Tuple
-from TM1_bedrock_py.dimension_builder.validate import (validate_row_for_element_count,
-                                                       validate_row_for_parent_child_in_filled_level_columns,
+
+from TM1_bedrock_py.dimension_builder.exceptions import LevelColumnInvalidRowError
+from TM1_bedrock_py.dimension_builder.validate import (validate_row_for_element_count_indented_levels,
+                                                       validate_row_for_element_count_filled_levels,
+                                                       validate_row_for_complete_fill_filled_levels,
                                                        validate_row_for_parent_child_in_indented_level_columns,
                                                        validate_schema_for_parent_child,
                                                        validate_schema_for_level_columns)
@@ -101,18 +104,6 @@ def separate_attr_df_columns(
     return attr_df
 
 
-def reorder_edges_df_columns(input_df: pd.DataFrame) -> pd.DataFrame:
-    column_order = ["Parent", "Child", "Weight", "Dimension", "Hierarchy"]
-    return input_df[column_order]
-
-
-def reorder_attr_df_columns(input_df: pd.DataFrame) -> pd.DataFrame:
-    cols_to_move = ["ElementName", "ElementType", "Dimension", "Hierarchy"]
-    new_columns = cols_to_move + [col for col in input_df.columns if col not in cols_to_move]
-    output_df = input_df[new_columns]
-    return output_df
-
-
 def create_stack(input_df: pd.DataFrame) -> dict:
     hierarchies = input_df["Hierarchy"].unique()
     stack = {hier: {} for hier in hierarchies}
@@ -138,18 +129,26 @@ def parse_indented_level_columns(df_row: pd.Series, row_index: Hashable, level_c
             element_level = level_index
             elements_in_row += 1
 
-    validate_row_for_element_count(elements_in_row=elements_in_row, row_index=row_index)
+    validate_row_for_element_count_indented_levels(elements_in_row=elements_in_row, row_index=row_index)
     return element_name, element_level
 
 
-def parse_filled_level_columns(df_row: pd.Series, level_columns: list):
-    element_level = 0
+def parse_filled_level_columns(df_row: pd.Series, row_index: Hashable, level_columns: list):
     element_name = ""
+    element_level = -1
+    found_empty = False
+
     for level_index, level_column in enumerate(level_columns):
-        current_level_value = df_row[level_column]
-        if current_level_value is not None and current_level_value != "":
-            element_name = current_level_value
+        val = df_row[level_column]
+        is_filled = val is not None and val != ""
+        if is_filled:
+            validate_row_for_complete_fill_filled_levels(found_empty, row_index)
+            element_name = val
             element_level = level_index
+        else:
+            found_empty = True
+
+    validate_row_for_element_count_filled_levels(element_level, row_index)
 
     return element_name, element_level
 
@@ -183,11 +182,10 @@ def parse_filled_levels_into_parent_child(input_df: pd.DataFrame, level_columns:
     validate_schema_for_level_columns(input_df, level_columns)
 
     for row_index, df_row in input_df.iterrows():
-        element_name, element_level = parse_filled_level_columns(df_row=df_row, level_columns=level_columns)
-
-        validate_row_for_parent_child_in_filled_level_columns(
-            df_row=df_row, level_columns=level_columns, element_level=element_level, row_index=row_index
+        element_name, element_level = parse_filled_level_columns(
+            df_row=df_row, level_columns=level_columns, row_index=row_index
         )
+
         parent_element_name = df_row[level_columns[element_level-1]] if element_level > 0 else ""
         input_df.at[(row_index, "Child")] = element_name
         input_df.at[(row_index, "Parent")] = parent_element_name
@@ -197,7 +195,7 @@ def parse_filled_levels_into_parent_child(input_df: pd.DataFrame, level_columns:
 
 def drop_invalid_edges_df_rows(edges_df: pd.DataFrame) -> pd.DataFrame:
     edges_df['Parent'] = edges_df['Parent'].replace("", np.nan)
-    edges_df = edges_df.dropna(subset=['Name'])
+    edges_df = edges_df.dropna(subset=['Parent'])
     return edges_df
 
 
@@ -241,9 +239,6 @@ def normalize_parent_child(
 
     edges_df = separate_edge_df_columns(input_df=input_df)
     attr_df = separate_attr_df_columns(input_df=input_df, attr_columns=attr_columns)
-
-    reorder_edges_df_columns(input_df=edges_df)
-    reorder_attr_df_columns(input_df=attr_df)
 
     edges_df = drop_invalid_edges_df_rows(edges_df)
     attr_df = drop_invalid_attr_df_rows(attr_df)
@@ -290,9 +285,6 @@ def normalize_indented_level_columns(
     edges_df = separate_edge_df_columns(input_df=input_df)
     attr_df = separate_attr_df_columns(input_df=input_df, attr_columns=attr_columns)
 
-    reorder_edges_df_columns(input_df=edges_df)
-    reorder_attr_df_columns(input_df=attr_df)
-
     edges_df = drop_invalid_edges_df_rows(edges_df)
     attr_df = drop_invalid_attr_df_rows(attr_df)
 
@@ -337,9 +329,6 @@ def normalize_filled_level_columns(
 
     edges_df = separate_edge_df_columns(input_df=input_df)
     attr_df = separate_attr_df_columns(input_df=input_df, attr_columns=attr_columns)
-
-    reorder_edges_df_columns(input_df=edges_df)
-    reorder_attr_df_columns(input_df=attr_df)
 
     edges_df = drop_invalid_edges_df_rows(edges_df)
     attr_df = drop_invalid_attr_df_rows(attr_df)

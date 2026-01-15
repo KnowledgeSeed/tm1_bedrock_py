@@ -6,26 +6,39 @@ from TM1_bedrock_py.dimension_builder.exceptions import (SchemaValidationError,
                                                          LevelColumnInvalidRowError)
 
 
-def validate_row_for_element_count(
+def validate_row_for_element_count_indented_levels(
         elements_in_row: int, row_index: Hashable
 ) -> None:
     if elements_in_row == 0:
-        raise LevelColumnInvalidRowError(row_index=row_index, error_type="Empty row, no element found")
+        raise LevelColumnInvalidRowError(
+            row_index=row_index, error_type="Empty row, no element found. Exactly one is expected."
+        )
     if elements_in_row > 1:
-        raise LevelColumnInvalidRowError(row_index=row_index, error_type="Multiple elements found")
+        raise LevelColumnInvalidRowError(
+            row_index=row_index, error_type="Multiple elements found. Exactly one is expected."
+        )
+
+
+def validate_row_for_element_count_filled_levels(
+        element_level: int, row_index: Hashable
+) -> None:
+    if element_level == -1:
+        raise LevelColumnInvalidRowError(
+            row_index=row_index, error_type="Empty row, no element found. Exactly one is expected."
+        )
+
+
+def validate_row_for_complete_fill_filled_levels(found_empty: bool, row_index: Hashable) -> None:
+    if found_empty:
+        raise LevelColumnInvalidRowError(
+            row_index, f"Row has a gap: level is filled but a previous level was empty."
+        )
 
 
 def validate_row_for_parent_child_in_indented_level_columns(
         row_index: Hashable, element_level: int, hierarchy: str, stack: dict
 ):
     if element_level != 0 and stack[hierarchy].get(element_level - 1) is None:
-        raise LevelColumnInvalidRowError(row_index=row_index, error_type="Missing parent of child element")
-
-
-def validate_row_for_parent_child_in_filled_level_columns(
-        df_row: pd.Series, level_columns: list[str | int], element_level: int, row_index: Hashable
-):
-    if element_level > 0 and df_row[level_columns[element_level - 1]] in (np.nan, None, ""):
         raise LevelColumnInvalidRowError(row_index=row_index, error_type="Missing parent of child element")
 
 
@@ -40,22 +53,5 @@ def validate_schema_for_level_columns(input_df: pd.DataFrame, level_columns: lis
     for level_column in level_columns:
         if level_column not in input_df.columns:
             raise SchemaValidationError("Level column "+level_column+" is missing.")
-
-
-def validate_schema_data(edges_df: pd.DataFrame) -> None:
-    is_null = edges_df["Child"].isna()
-    is_empty_string = edges_df["Child"].astype(str).str.strip() == ""
-    if (is_null | is_empty_string).any():
-        raise SchemaValidationError("Column 'Child' contains null, empty, or whitespace-only strings.")
-
-    valid_elements = {"N", "C", "S"}
-    actual_elements = set(edges_df["ElementType"].unique())
-    invalid_elements = actual_elements - valid_elements
-
-    if invalid_elements:
-        raise SchemaValidationError(
-            f"Column 'ElementType' contains invalid values: {invalid_elements}. "
-            f"Allowed values are: {valid_elements}"
-        )
 
 

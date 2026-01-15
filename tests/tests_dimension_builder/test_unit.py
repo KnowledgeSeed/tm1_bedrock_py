@@ -20,6 +20,8 @@ test_data_csv_format_1 = [
         ColumnSpec(aliases={name: name for name in level_columns}),
     ),
 ]
+
+
 @pytest.mark.parametrize("expected_df, column_spec", test_data_csv_format_1)
 def test_read_csv_parent_child_to_df(tmp_path, expected_df, column_spec):
     source = tmp_path / "input.csv"
@@ -34,6 +36,8 @@ test_data_xlsx_format_1 = [
     (EXPECTED_DF_MANDATORY_ONLY, "Hierarchy"),
     (EXPECTED_DF_FORMAT_2, "Hierarchy"),
 ]
+
+
 @pytest.mark.parametrize("expected_df, sheet_name", test_data_xlsx_format_1)
 def test_read_xlsx_parent_child_to_df(tmp_path, expected_df, sheet_name):
     source = tmp_path / "input.xlsx"
@@ -54,6 +58,8 @@ test_data_sql_format_1 = [
     (EXPECTED_DF_MANDATORY_ONLY, sql_query_m_o, dtype_mapping_m_o, "format_one"),
     (EXPECTED_DF_FORMAT_2, sql_query_format_2, dtype_mapping_format_2, "format_two"),
 ]
+
+
 @pytest.mark.parametrize("expected_df, query, dtype, format_type", test_data_sql_format_1)
 def test_read_sql_parent_child_to_df(expected_df, query, dtype, format_type):
     connection = sqlite3.connect(":memory:")
@@ -131,6 +137,8 @@ test_data_yaml_format_1 = [
     (EXPECTED_DF, "test_read_yaml_parent_child_to_df_aliases", ColumnSpec(aliases=yaml_aliases)),
     (EXPECTED_DF_FORMAT_2_ALT, "test_read_yaml_parent_child_to_df_format_two", None),
 ]
+
+
 @pytest.mark.parametrize("expected_df, template_key, col_spec", test_data_yaml_format_1)
 def test_read_yaml_parent_child_to_df(expected_df, template_key, col_spec):
     source = "tests/tests_dimension_builder/test_unit.yaml"
@@ -138,3 +146,7 @@ def test_read_yaml_parent_child_to_df(expected_df, template_key, col_spec):
     expected_dataframe.fillna("")
     dataframe = read_source_to_df(source=source, source_type="yaml", template_key=template_key, column_spec=col_spec)
     pd.testing.assert_frame_equal(dataframe, expected_dataframe)
+
+
+# test normalize functions
+

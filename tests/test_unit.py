@@ -9,8 +9,8 @@ from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
 from TM1_bedrock_py import extractor, transformer, utility, loader
+from TM1_bedrock_py.dimension_builder.exceptions import LevelColumnInvalidRowError, SchemaValidationError
 from TM1_bedrock_py.dimension_builder import normalize
-from TM1_bedrock_py.dimension_builder.exceptions import LevelColumnInvalidRowError
 from tests.config import tm1_connection_factory, sql_engine_factory
 
 EXCEPTION_MAP = {
@@ -768,7 +768,303 @@ def test_generate_mapping_queries_for_slice(kwargs, ms, sm, expected_ms, expecte
 
 
 # ------------------------------------------------------------------------------------------------------------
-# Main: tests for dimension builder module
+# Main: tests for dimension builder normalize module
 # ------------------------------------------------------------------------------------------------------------
 
+@parametrize_from_file
+def test_normalize_all_column_names(
+    input_df,
+    dim_column,
+    hier_column,
+    parent_column,
+    child_column,
+    element_column,
+    type_column,
+    weight_column,
+    expected_df
+):
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
 
+    output_df = normalize.normalize_all_column_names(
+        input_df=input_df,
+        dim_column=dim_column,
+        hier_column=hier_column,
+        parent_column=parent_column,
+        child_column=child_column,
+        element_column=element_column,
+        type_column=type_column,
+        weight_column=weight_column
+    )
+
+    pd.testing.assert_frame_equal(output_df, expected_df)
+
+
+@parametrize_from_file
+def test_assign_missing_edge_columns(input_df, dimension_name, hierarchy_name, expected_df):
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+
+    output_df = normalize.assign_missing_edge_columns(
+        input_df=input_df,
+        dimension_name=dimension_name,
+        hierarchy_name=hierarchy_name
+    )
+
+    pd.testing.assert_frame_equal(output_df, expected_df)
+
+
+@parametrize_from_file
+def test_assign_parent_child_to_level_columns(input_df, expected_df):
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+
+    output_df = normalize.assign_parent_child_to_level_columns(input_df=input_df)
+
+    pd.testing.assert_frame_equal(output_df, expected_df)
+
+
+@parametrize_from_file
+def test_fill_column_empty_values_with_defaults(input_df, column_name, default_value, expected_df):
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+
+    normalize.fill_column_empty_values_with_defaults(
+        input_df=input_df,
+        column_name=column_name,
+        default_value=default_value
+    )
+
+    pd.testing.assert_frame_equal(input_df, expected_df)
+
+
+@parametrize_from_file
+def test_assign_missing_edge_values(input_df, dimension_name, hierarchy_name, expected_df):
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+
+    normalize.assign_missing_edge_values(
+        input_df=input_df,
+        dimension_name=dimension_name,
+        hierarchy_name=hierarchy_name
+    )
+
+    pd.testing.assert_frame_equal(input_df, expected_df)
+
+
+@parametrize_from_file
+def test_assign_missing_type_column(input_df, expected_df):
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+
+    normalize.assign_missing_type_column(input_df=input_df)
+
+    pd.testing.assert_frame_equal(input_df, expected_df)
+
+
+@parametrize_from_file
+def test_assign_missing_type_values(input_df, expected_df):
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+
+    normalize.assign_missing_type_values(input_df=input_df)
+
+    pd.testing.assert_frame_equal(input_df, expected_df)
+
+
+@parametrize_from_file
+def test_separate_edge_df_columns(input_df, expected_df):
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+
+    output_df = normalize.separate_edge_df_columns(input_df=input_df)
+
+    pd.testing.assert_frame_equal(output_df, expected_df)
+
+
+@parametrize_from_file
+def test_separate_attr_df_columns(input_df, attr_columns, expected_df):
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+
+    output_df = normalize.separate_attr_df_columns(
+        input_df=input_df,
+        attr_columns=attr_columns
+    )
+
+    pd.testing.assert_frame_equal(output_df, expected_df)
+
+
+@parametrize_from_file
+def test_create_stack(input_df, expected_stack):
+    input_df = pd.DataFrame(input_df)
+
+    output_stack = normalize.create_stack(input_df=input_df)
+
+    assert output_stack == expected_stack
+
+
+@parametrize_from_file
+def test_update_stack(stack, hierarchy, element_level, element_name, expected_stack):
+    output_stack = normalize.update_stack(
+        stack=stack,
+        hierarchy=hierarchy,
+        element_level=element_level,
+        element_name=element_name
+    )
+    assert output_stack == expected_stack
+
+
+@parametrize_from_file
+def test_parse_indented_level_columns(input_row, row_index, level_columns, expected_name, expected_level):
+    df_row = pd.Series(input_row)
+
+    element_name, element_level = normalize.parse_indented_level_columns(
+        df_row=df_row,
+        row_index=row_index,
+        level_columns=level_columns
+    )
+
+    assert element_name == expected_name
+    assert element_level == expected_level
+
+
+@parametrize_from_file
+def test_parse_indented_level_columns_failure(input_row, row_index, level_columns, expected_exception,
+                                              expected_message):
+    df_row = pd.Series(input_row)
+    exception_type = eval(expected_exception)
+
+    with pytest.raises(exception_type) as excinfo:
+        normalize.parse_indented_level_columns(
+            df_row=df_row,
+            row_index=row_index,
+            level_columns=level_columns
+        )
+
+    assert expected_message in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_parse_filled_level_columns(input_row, row_index, level_columns, expected_name, expected_level):
+    df_row = pd.Series(input_row)
+    element_name, element_level = normalize.parse_filled_level_columns(
+        df_row=df_row,
+        row_index=row_index,
+        level_columns=level_columns
+    )
+    assert element_name == expected_name
+    assert element_level == expected_level
+
+
+@parametrize_from_file
+def test_parse_filled_level_columns_failure(
+        input_row,
+        row_index,
+        level_columns,
+        expected_exception,
+        expected_message
+):
+    df_row = pd.Series(input_row)
+    exception_type = eval(expected_exception)
+
+    with pytest.raises(exception_type) as excinfo:
+        normalize.parse_filled_level_columns(
+            df_row=df_row,
+            row_index=row_index,
+            level_columns=level_columns
+        )
+
+    assert expected_message in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_parse_indented_levels_into_parent_child(input_df, level_columns, expected_df):
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+
+    output_df = normalize.parse_indented_levels_into_parent_child(
+        input_df=input_df,
+        level_columns=level_columns
+    )
+
+    pd.testing.assert_frame_equal(output_df, expected_df)
+
+
+@parametrize_from_file
+def test_parse_indented_levels_into_parent_child_failure(
+        input_df,
+        level_columns,
+        expected_exception,
+        expected_message
+):
+    input_df = pd.DataFrame(input_df)
+    exception_type = eval(expected_exception)
+
+    with pytest.raises(exception_type) as excinfo:
+        normalize.parse_indented_levels_into_parent_child(
+            input_df=input_df,
+            level_columns=level_columns
+        )
+
+    assert expected_message in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_parse_filled_levels_into_parent_child(input_df, level_columns, expected_df):
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+
+    output_df = normalize.parse_filled_levels_into_parent_child(
+        input_df=input_df,
+        level_columns=level_columns
+    )
+
+    pd.testing.assert_frame_equal(output_df, expected_df)
+
+
+@parametrize_from_file
+def test_parse_filled_levels_into_parent_child_failure(
+        input_df,
+        level_columns,
+        expected_exception,
+        expected_message
+):
+    input_df = pd.DataFrame(input_df)
+    exception_type = eval(expected_exception)
+
+    with pytest.raises(exception_type) as excinfo:
+        normalize.parse_indented_levels_into_parent_child(
+            input_df=input_df,
+            level_columns=level_columns
+        )
+
+    assert expected_message in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_drop_invalid_edges_df_rows(input_df, expected_df):
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+
+    output_df = normalize.drop_invalid_edges_df_rows(edges_df=input_df)
+
+    pd.testing.assert_frame_equal(
+        output_df.reset_index(drop=True),
+        expected_df.reset_index(drop=True),
+        check_dtype=False
+    )
+
+
+@parametrize_from_file
+def test_drop_invalid_attr_df_rows(input_df, expected_df):
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+
+    output_df = normalize.drop_invalid_attr_df_rows(attr_df=input_df)
+
+    pd.testing.assert_frame_equal(
+        output_df,
+        expected_df,
+        check_dtype=False
+    )
