@@ -29,6 +29,13 @@ def validate_row_for_parent_child_in_filled_level_columns(
         raise LevelColumnInvalidRowError(row_index=row_index, error_type="Missing parent of child element")
 
 
+def validate_schema_for_parent_child(input_df: pd.DataFrame) -> None:
+    if "Parent" not in input_df.columns:
+        raise SchemaValidationError("Parent column is missing.")
+    if "Child" not in input_df.columns:
+        raise SchemaValidationError("Child column is missing.")
+
+
 def validate_schema_data(edges_df: pd.DataFrame) -> None:
     is_null = edges_df["Child"].isna()
     is_empty_string = edges_df["Child"].astype(str).str.strip() == ""

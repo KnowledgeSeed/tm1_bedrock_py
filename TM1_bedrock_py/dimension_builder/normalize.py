@@ -3,7 +3,8 @@ import numpy as np
 from typing import Optional, Any, Hashable, Tuple
 from TM1_bedrock_py.dimension_builder.validate import (validate_row_for_element_count,
                                                        validate_row_for_parent_child_in_filled_level_columns,
-                                                       validate_row_for_parent_child_in_indented_level_columns)
+                                                       validate_row_for_parent_child_in_indented_level_columns,
+                                                       validate_schema_for_parent_child)
 
 
 # input dimension dataframe normalization functions to ensure uniform format.
@@ -48,6 +49,11 @@ def assign_missing_edge_columns(input_df: pd.DataFrame, dimension_name: str, hie
         input_df["Dimension"] = dimension_name
     if "Hierarchy" not in input_df.columns:
         input_df["Hierarchy"] = hierarchy_name if hierarchy_name is not None else dimension_name
+
+    return input_df
+
+
+def assign_parent_child_to_level_columns(input_df: pd.DataFrame) -> pd.DataFrame:
     if "Parent" not in input_df.columns:
         input_df["Parent"] = ""
     if "Child" not in input_df.columns:
@@ -83,6 +89,8 @@ def assign_missing_type_values(edges_df: pd.DataFrame, attr_df: pd.DataFrame) ->
 
 
 def separate_edge_df_columns(edges_df: pd.DataFrame, input_df: pd.DataFrame) -> pd.DataFrame:
+    validate_schema_for_parent_child(input_df)
+
     edges_df["Parent"] = input_df["Parent"]
     edges_df["Child"] = input_df["Child"]
     edges_df["Weight"] = input_df["Weight"]
@@ -278,6 +286,7 @@ def normalize_indented_level_columns(
     )
 
     assign_missing_edge_columns(input_df=input_df, dimension_name=dimension_name, hierarchy_name=hierarchy_name)
+    input_df = assign_parent_child_to_level_columns(input_df=input_df)
     input_df = parse_indented_levels_into_parent_child(input_df=input_df, level_columns=level_columns)
     edges_df = separate_edge_df_columns(edges_df=edges_df, input_df=input_df)
 
@@ -321,6 +330,7 @@ def normalize_filled_level_columns(
     )
 
     assign_missing_edge_columns(input_df=input_df, dimension_name=dimension_name, hierarchy_name=hierarchy_name)
+    input_df = assign_parent_child_to_level_columns(input_df=input_df)
     input_df = parse_filled_levels_into_parent_child(input_df=input_df, level_columns=level_columns)
     edges_df = separate_edge_df_columns(edges_df=edges_df, input_df=input_df)
 
