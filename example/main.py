@@ -165,6 +165,43 @@ def hierarchy_attributes():
         tm1_service.logout()
 
 
+def element_attributes():
+    tm1_params = {
+        "address": "localhost",
+        "port": 5379,
+        "user": "testbench",
+        "password": "testbench",
+        "ssl": False
+    }
+    tm1_service = TM1Service(**tm1_params)
+
+    dimension = "Period"
+    hierarchy = "Period"
+    try:
+        attr_df = tm1_service.elements.get_elements_dataframe(
+            dimension_name=dimension,
+            hierarchy_name=hierarchy,
+            skip_consolidations=False,
+            attribute_suffix=True,
+            skip_parents=True,
+            skip_weights=True,
+            element_type_column="ElementType"
+        )
+        attr_df.rename(columns={dimension: "ElementName"}, inplace=True)
+        attr_df["ElementType"] = attr_df["ElementType"].replace({
+            "Numeric": "N",
+            "Consolidated": "C",
+            "String": "S"
+        })
+
+        attr_df.insert(2, "Dimension", dimension)
+        attr_df.insert(3, "Hierarchy", hierarchy)
+        print(attr_df.columns)
+        print(attr_df)
+    finally:
+        tm1_service.logout()
+
+
 def complex_transform_demo():
     # letárolás másik verzióra
     # újrastruktúrálás mapping kockával (employee-orgunit) az eredeti idősíkon
@@ -272,4 +309,4 @@ def complex_transform_demo():
 
 
 if __name__ == '__main__':
-    hierarchy_attributes()
+    element_attributes()

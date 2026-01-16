@@ -286,3 +286,27 @@ def read_existing_edges_df(tm1_service: Any, dimension_name: str, hierarchy_name
     ]
     existing_edges_df = pd.DataFrame(edge_list)
     return existing_edges_df
+
+
+def read_existing_attr_df(tm1_service: Any, dimension_name: str, hierarchy_name: Optional[str] = None):
+    if hierarchy_name is None:
+        hierarchy_name = dimension_name
+    existing_attr_df = tm1_service.elements.get_elements_dataframe(
+        dimension_name=dimension_name,
+        hierarchy_name=hierarchy_name,
+        skip_consolidations=False,
+        attribute_suffix=True,
+        skip_parents=True,
+        skip_weights=True,
+        element_type_column="ElementType"
+    )
+    existing_attr_df.rename(columns={dimension_name: "ElementName"}, inplace=True)
+    existing_attr_df["ElementType"] = existing_attr_df["ElementType"].replace({
+        "Numeric": "N",
+        "Consolidated": "C",
+        "String": "S"
+    })
+
+    existing_attr_df.insert(2, "Dimension", dimension_name)
+    existing_attr_df.insert(3, "Hierarchy", hierarchy_name)
+    return existing_attr_df
