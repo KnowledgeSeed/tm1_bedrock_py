@@ -72,7 +72,7 @@ def validate_attr_df_schema_for_inconsistent_element_type(input_df: pd.DataFrame
         raise SchemaValidationError(f"Inconsistency found! These ElementNames have multiple types: {bad_elements}")
 
 
-def validate_attr_df_schema_for_inconsistent_leave_attributes(input_df: pd.DataFrame) -> None:
+def validate_attr_df_schema_for_inconsistent_leaf_attributes(input_df: pd.DataFrame) -> None:
     n_df = input_df[input_df["ElementType"].isin(["N", "S"])]
     exclude_cols = ["Hierarchy", "Dimension"]
     check_cols = [col for col in input_df.columns if col not in exclude_cols]
@@ -106,12 +106,12 @@ def validate_graph_for_leaves_as_parents(edges_df: pd.DataFrame, attr_df: pd.Dat
         GraphValidationError(f"The following N/S elements were found as Parents: {found_elements}")
 
 
-def validate_edges_df_graph_for_self_loop(input_df: pd.DataFrame) -> None:
+def validate_graph_for_self_loop(input_df: pd.DataFrame) -> None:
     if input_df["Parent"].eq(input_df["Child"]).any():
         raise GraphValidationError("A child is the parent of itself, self loop detected.")
 
 
-def validate_edges_df_graph_for_cycles_with_dfs(input_df: pd.DataFrame) -> None:
+def validate_graph_for_cycles_with_dfs(input_df: pd.DataFrame) -> None:
     adj = input_df.groupby("Parent")["Child"].apply(list).to_dict()
     visited = set()
     rec_stack = set()
@@ -135,3 +135,12 @@ def validate_edges_df_graph_for_cycles_with_dfs(input_df: pd.DataFrame) -> None:
         if node not in visited:
             if has_cycle(node):
                 raise GraphValidationError(f"Graph contains a cycle starting from node: {node}")
+
+
+def post_validation_steps(edges_df: pd.DataFrame, attr_df: pd.DataFrame) -> None:
+    validate_attr_df_schema_for_inconsistent_element_type(input_df=attr_df)
+    validate_attr_df_schema_for_inconsistent_leaf_attributes(input_df=attr_df)
+
+    validate_graph_for_self_loop(input_df=edges_df)
+    validate_graph_for_leaves_as_parents(edges_df=edges_df, attr_df=attr_df)
+    validate_graph_for_cycles_with_dfs(input_df=edges_df)
