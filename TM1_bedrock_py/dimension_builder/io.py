@@ -268,3 +268,21 @@ def read_source_to_df(
         return read_yaml_parent_child_to_df(source=source, column_spec=column_spec, **kwargs)
     else:
         raise ValueError
+
+
+def read_existing_edges_df(tm1_service: Any, dimension_name: str, hierarchy_name: Optional[str] = None):
+    if hierarchy_name is None:
+        hierarchy_name = dimension_name
+    hierarchy = tm1_service.hierarchies.get(dimension_name, hierarchy_name)
+    edge_list = [
+        {
+            "Parent": parent,
+            "Child": child,
+            "Weight": weight,
+            "Dimension": hierarchy.dimension_name,
+            "Hierarchy": hierarchy.name
+        }
+        for (parent, child), weight in hierarchy.edges.items()
+    ]
+    existing_edges_df = pd.DataFrame(edge_list)
+    return existing_edges_df
