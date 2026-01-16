@@ -103,7 +103,7 @@ def validate_graph_for_leaves_as_parents(edges_df: pd.DataFrame, attr_df: pd.Dat
 
     if is_in_parents.any():
         found_elements = target_elements[is_in_parents].unique().tolist()
-        GraphValidationError(f"The following N/S elements were found as Parents: {found_elements}")
+        raise GraphValidationError(f"The following N/S elements were found as Parents: {found_elements}")
 
 
 def validate_graph_for_self_loop(input_df: pd.DataFrame) -> None:
