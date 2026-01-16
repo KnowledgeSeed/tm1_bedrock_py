@@ -7,7 +7,7 @@ from TM1_bedrock_py.dimension_builder.validate import (validate_row_for_element_
                                                        validate_row_for_element_count_filled_levels,
                                                        validate_row_for_complete_fill_filled_levels,
                                                        validate_row_for_parent_child_in_indented_level_columns,
-                                                       validate_schema_for_parent_child,
+                                                       validate_schema_for_parent_child_columns,
                                                        validate_schema_for_level_columns)
 
 
@@ -86,7 +86,7 @@ def assign_missing_type_values(input_df: pd.DataFrame) -> None:
 
 
 def separate_edge_df_columns(input_df: pd.DataFrame) -> pd.DataFrame:
-    validate_schema_for_parent_child(input_df)
+    validate_schema_for_parent_child_columns(input_df)
     column_list = ["Parent", "Child", "Weight", "Dimension", "Hierarchy"]
     edges_df = input_df[column_list].copy()
     return edges_df
@@ -196,6 +196,7 @@ def parse_filled_levels_into_parent_child(input_df: pd.DataFrame, level_columns:
 def drop_invalid_edges_df_rows(edges_df: pd.DataFrame) -> pd.DataFrame:
     edges_df['Parent'] = edges_df['Parent'].replace("", np.nan)
     edges_df = edges_df.dropna(subset=['Parent'])
+    edges_df = edges_df.drop_duplicates(subset=["Parent", "Child"])
     return edges_df
 
 
