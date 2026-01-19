@@ -202,6 +202,28 @@ def element_attributes():
         tm1_service.logout()
 
 
+def dimension_attributes():
+    tm1_params = {
+        "address": "localhost",
+        "port": 5379,
+        "user": "testbench",
+        "password": "testbench",
+        "ssl": False
+    }
+    tm1_service = TM1Service(**tm1_params)
+
+    dimension = "Hierarchy Test 2"
+    hierarchy = "Hierarchy Test Obj"
+    try:
+        tm1_service.hierarchies.create(dimension_name=dimension, hierarchy_name=hierarchy)
+        hier_obj = tm1_service.hierarchies.get(dimension_name=dimension, hierarchy_name=hierarchy)
+        print(hier_obj)
+
+
+    finally:
+        tm1_service.logout()
+
+
 def complex_transform_demo():
     # letárolás másik verzióra
     # újrastruktúrálás mapping kockával (employee-orgunit) az eredeti idősíkon
@@ -309,4 +331,4 @@ def complex_transform_demo():
 
 
 if __name__ == '__main__':
-    element_attributes()
+    dimension_attributes()

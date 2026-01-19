@@ -5,20 +5,22 @@ from typing import Hashable
 
 class DimensionNotFoundError(Exception):
     def __init__(self, dimension: str = ""):
-        super().__init__("The dimension "+dimension+" is not found."
-                         "Create is disabled.")
+        super().__init__("The dimension " + dimension + " does not exist.")
 
 
 class DimensionAlreadyExistsError(Exception):
     def __init__(self, dimension: str = ""):
-        super().__init__("The dimension " + dimension + " already exists."
-                         "Edit parameters are disabled.")
+        super().__init__("The dimension " + dimension + " already exists.")
 
 
 class HierarchyNotFoundError(Exception):
     def __init__(self, dimension: str = "", hierarchy: str = ""):
-        super().__init__("The hierarchy "+hierarchy+" does not exist in the dimension "+dimension+"."
-                         "Create is disabled.")
+        super().__init__("The hierarchy " + hierarchy + " does not exist in the dimension " + dimension + ".")
+
+
+class HierarchyAlreadyExistsError(Exception):
+    def __init__(self, hierarchy: str = "", dimension: str = ""):
+        super().__init__("The hierarchy " + hierarchy + " already exists in the dimension" + dimension + ".")
 
 
 class InvalidInputFormatError(Exception):

@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from typing import Optional, Any, Hashable, Tuple
+from typing import Optional, Any, Hashable, Tuple, Callable
 
 from TM1_bedrock_py.dimension_builder.exceptions import LevelColumnInvalidRowError
 from TM1_bedrock_py.dimension_builder.validate import (validate_row_for_element_count_indented_levels,
@@ -104,8 +104,12 @@ def separate_attr_df_columns(
     return attr_df
 
 
+def get_hierarchy_list(input_df: pd.DataFrame) -> list[str]:
+    return input_df["Hierarchy"].unique()
+
+
 def create_stack(input_df: pd.DataFrame) -> dict:
-    hierarchies = input_df["Hierarchy"].unique()
+    hierarchies = get_hierarchy_list(input_df=input_df)
     stack = {hier: {} for hier in hierarchies}
     return stack
 
@@ -335,3 +339,33 @@ def normalize_filled_level_columns(
     attr_df = drop_invalid_attr_df_rows(attr_df)
 
     return edges_df, attr_df
+
+
+def get_leaves_df(attr_df: pd.DataFrame) -> pd.DataFrame:
+    return attr_df[attr_df['ElementType'].isin(['S', 'N'])][['ElementName', 'ElementType']].drop_duplicates()
+
+
+def delete_leaves_hierarchy_from_df(input_df: pd.DataFrame) -> None:
+    input_df.drop(input_df[input_df['Hierarchy'] == 'Leaves'].index, inplace=True)
+    input_df.reset_index(drop=True, inplace=True)
+
+
+def get_element_attribute_names_as_list(attr_df: pd.DataFrame) -> list[str]:
+    exclude = ["ElementName", "ElementType", "Dimension", "Hierarchy"]
+    return attr_df.columns.difference(exclude, sort=False).tolist()
+
+
+def _parse_attribute_string_default(attr_name_and_type: str) -> Tuple[str, str]:
+    attr_type_mapping = {
+        "s": "String", "S": "String",
+        "n": "Numeric", "N": "Numeric",
+        "a": "Alias", "A": "Alias"
+    }
+    parts = attr_name_and_type.split(":")
+    return parts[0], attr_type_mapping.get(parts[1])
+
+
+def parse_attribute_string(attr_name_and_type: str, parse_function: Callable = None) -> Tuple[str, str]:
+    if parse_function is None:
+        parse_function = _parse_attribute_string_default
+    return parse_function(attr_name_and_type)
