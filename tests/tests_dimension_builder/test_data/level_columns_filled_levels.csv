@@ -1,0 +1,13 @@
+Hierarchy,Level1,Level2,Level3,Level4,Weight
+Default,All Regions,,,,1
+Default,All Regions,EMEA,,,1
+Default,All Regions,EMEA,Hungary,,1
+Default,All Regions,EMEA,Germany,,1
+Default,All Regions,AMER,,,1
+Default,All Regions,AMER,USA,,1
+Default,All Regions,AMER,USA,California,1
+Default,All Regions,AMER,USA,New York,1
+Alt,All Regions,,,,1
+Alt,All Regions,EU,,,1
+Alt,All Regions,EU,Hungary,,1
+Alt,All Regions,EU,Germany,,1

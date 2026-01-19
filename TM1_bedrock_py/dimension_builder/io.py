@@ -8,12 +8,58 @@ import pandas as pd
 import yaml
 
 from TM1_bedrock_py import utility
+from TM1_bedrock_py.dimension_builder.exceptions import InvalidInputFormatError, SchemaValidationError
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=False)
 class ColumnSpec:
+    parent_name: Optional[str] = None
+    child_name: Optional[str] = None
+    type_name: Optional[str] = None
+    weight_name: Optional[str] = None
+    dim_name: Optional[str] = None
+    hier_name: Optional[str] = None
+    level_names: Optional[List[str]] = None
+    attribute_names: Optional[List[str]] = None
     aliases: Optional[Dict[Union[str, int], str]] = None
-    has_header: bool = True
+    source_format: Optional[Literal["parent_child", "indented_levels", "attributes"]] = None
+
+    def relabel_columns_on_aliases(self):
+        if self.aliases:
+            self.parent_name = self.aliases.get("Parent")
+            self.child_name = self.aliases.get("Child")
+            self.type_name = self.aliases.get("ElementType")
+            self.weight_name = self.aliases.get("Weight")
+            self.dim_name = self.aliases.get("Dimension")
+            self.hier_name = self.aliases.get("Hierarchy")
+            self.level_names = self.aliases.get("Levels")
+            self.attribute_names = self.aliases.get("Attributes")
+
+    def as_list(self):
+        col = [self.parent_name, self.child_name, self.type_name, self.weight_name, self.dim_name, self.hier_name]
+        if self.level_names:
+            col.extend(self.level_names)
+        if self.attribute_names:
+            col.extend(self.attribute_names)
+        return [x for x in col if x is not None]
+
+    def as_list_parent_child(self):
+        col = [self.parent_name, self.child_name, self.type_name, self.weight_name, self.dim_name, self.hier_name]
+        if self.attribute_names:
+             col.extend(self.attribute_names)
+        return [x for x in col if x is not None]
+
+    def as_list_indented_levels(self):
+        col = self.level_names + [self.type_name, self.weight_name, self.dim_name, self.hier_name]
+        if self.attribute_names:
+            col.extend(self.attribute_names)
+        return [x for x in col if x is not None]
+
+    def add_optional_columns(self, extras):
+        if "ElementType" in extras: self.type_name = "ElementType"
+        if "Weight" in extras: self.weight_name = "Weight"
+        if "Dimension" in extras: self.dim_name = "Dimension"
+        if "Hierarchy" in extras: self.hier_name = "Hierarchy"
 
 
 def normalize_dataframe_header(column_spec: Union[ColumnSpec, None], df: pd.DataFrame) -> pd.DataFrame:
@@ -22,9 +68,9 @@ def normalize_dataframe_header(column_spec: Union[ColumnSpec, None], df: pd.Data
     return df
 
 
-def verify_format_one(
-        query: Optional[str] = None,
-        column_list: Optional[List[str]] = None
+def verify_parent_child(
+        column_list: Optional[List[str]] = None,
+        col_spec: Optional[ColumnSpec] = None
 ) -> bool:
     mandatory_columns = ["Parent", "Child"]
     optional_columns = ["ElementType", "Dimension", "Hierarchy", "Weight"]
@@ -39,35 +85,48 @@ def verify_format_one(
         normalized = [normalize_column_name(column) for column in columns]
         has_mandatory = all(column in normalized for column in mandatory_columns)
         extras = set(normalized) - set(mandatory_columns)
+        if col_spec:
+            optional_columns.extend(col_spec.attribute_names or [])
+            col_spec.add_optional_columns(extras & set(optional_columns))
         return has_mandatory and extras.issubset(optional_columns)
 
     if column_list:
         return has_required_columns(column_list)
-    if query:
-        match = re.search(r"select\s+(.*?)\s+from\s", query, flags=re.IGNORECASE | re.DOTALL)
-        if not match:
-            return False
-        select_list = match.group(1)
-        columns = [part.strip() for part in select_list.split(",") if part.strip()]
-        return has_required_columns(columns)
-    raise ValueError("No columns or query provided for validation.")
+
+    raise InvalidInputFormatError
 
 
-def verify_format_two(
-        column_list: Optional[List[str]] = None
+def verify_indented_levels(
+        column_list: Optional[List[str]] = None,
+        col_spec: Optional[ColumnSpec] = None
 ) -> bool:
-    optional_columns = ["Hierarchy", "Weight", "Dimension", "ElementType"]
+    optional_columns = ["Hierarchy", "Weight", "Dimension", "ElementType", "Attributes"]
 
     if not column_list:
         return False
 
     normalized = [col.strip() for col in column_list]
     level_columns = [col for col in normalized if re.match(r"^level\d+$", col, flags=re.IGNORECASE)]
-    if not level_columns:
-        return False
 
     extras = set(normalized) - set(level_columns)
+    if col_spec:
+        col_spec.level_names = level_columns
+        if not level_columns:
+            return False
+        optional_columns.extend(col_spec.attribute_names or [])
+        col_spec.add_optional_columns(extras & set(optional_columns))
     return extras.issubset(optional_columns)
+
+
+def normalize_format(column_spec: Union[ColumnSpec, None], df: pd.DataFrame) -> Any:
+    if column_spec.source_format is "attributes":
+        return df.fillna("")
+    if (verify_parent_child(column_list=list(df.columns), col_spec=column_spec)
+            or verify_indented_levels(column_list=list(df.columns), col_spec=column_spec)):
+        df = df[column_spec.as_list()].fillna("")
+        return df
+    else:
+        raise SchemaValidationError("Source columns must include Parent and Child or Level# columns")
 
 
 def extract_select_columns(sql_query: str) -> Optional[List[str]]:
@@ -78,10 +137,9 @@ def extract_select_columns(sql_query: str) -> Optional[List[str]]:
     return [part.strip() for part in select_list.split(",") if part.strip()]
 
 
-def read_csv_parent_child_to_df(
+def read_csv_source_to_df(
         source: Union[str, Path, PathLike[str]],
         column_spec: Optional[ColumnSpec] = None,
-        header: Optional[int] = None,
         sep: Optional[str] = None,
         decimal: Optional[str] = None,
         **kwargs
@@ -92,11 +150,10 @@ def read_csv_parent_child_to_df(
     if sep is None:
         sep = utility.get_local_regex_separator()
     if column_spec is not None:
-        header = 0 if column_spec.has_header else None
         if column_spec.aliases:
             kwargs["usecols"] = list(column_spec.aliases.keys())
-    if column_spec is not None or header is not None:
-        kwargs["header"] = header
+        elif column_spec.source_format is "attributes":
+            kwargs["usecols"] = column_spec.attribute_names
 
     df = pd.read_csv(
             filepath_or_buffer=source,
@@ -106,27 +163,21 @@ def read_csv_parent_child_to_df(
         )
 
     df = normalize_dataframe_header(column_spec, df)
-
-    if verify_format_one(column_list=list(df.columns)):
-        return df
-    if verify_format_two(column_list=list(df.columns)):
-        return df.fillna("")
-    raise ValueError(
-        "CSV columns must include Parent and Child (Format 1) or Level# columns (Format 2) "
-        "and only allow optional ElementType, Dimension, Hierarchy, Weight."
-    )
+    df = normalize_format(column_spec, df)
+    return df
 
 
-def read_xlsx_parent_child_to_df(
+def read_xlsx_source_to_df(
         source: Union[str, Path, PathLike[str]],
-        sheet_name: str,
+        sheet_name: Optional[str] = None,
         column_spec: Optional[ColumnSpec] = None,
         **kwargs
 ) -> pd.DataFrame:
     if column_spec is not None:
-        kwargs["header"] = 0 if column_spec.has_header else None
         if column_spec.aliases:
             kwargs["usecols"] = list(column_spec.aliases.keys())
+        elif column_spec.source_format is "attributes":
+            kwargs["usecols"] = column_spec.attribute_names
     df = pd.read_excel(
         io=source,
         sheet_name=sheet_name,
@@ -134,35 +185,32 @@ def read_xlsx_parent_child_to_df(
     )
 
     df = normalize_dataframe_header(column_spec, df)
-
-    if verify_format_one(column_list=list(df.columns)):
-        return df
-    if verify_format_two(column_list=list(df.columns)):
-        return df.fillna("")
-    raise ValueError(
-        "XLSX columns must include Parent and Child (Format 1) or Level# columns (Format 2) "
-        "and only allow optional ElementType, Dimension, Hierarchy, Weight."
-    )
+    df = normalize_format(column_spec, df)
+    return df
 
 
-def read_sql_parent_child_to_df(
+def read_sql_source_to_df(
         engine: Optional[Any] = None,
         sql_query: Optional[str] = None,
         table_name: Optional[str] = None,
-        table_columns: Optional[list] = None,
         schema: Optional[str] = None,
+        column_spec: Optional[ColumnSpec] = None,
         **kwargs
 ) -> pd.DataFrame:
-    columns = None
-    if table_columns:
-        columns = table_columns
-    elif sql_query:
+    columns = column_spec.as_list()
+    if column_spec.source_format is "attributes":
+        columns = column_spec.attribute_names
+    if sql_query:
         columns = extract_select_columns(sql_query)
-    if not columns or not (verify_format_one(column_list=columns) or verify_format_two(column_list=columns)):
-        raise ValueError(
-            "SQL columns must include Parent and Child (Format 1) or Level# columns (Format 2) "
-            "and only allow optional ElementType, Dimension, Hierarchy, Weight."
-        )
+    elif column_spec.source_format is not "attributes":
+        if column_spec.aliases:
+            columns = column_spec.as_list()
+        if not columns or not (verify_parent_child(column_list=columns, col_spec=column_spec)
+                               or verify_indented_levels(column_list=columns, col_spec=column_spec)):
+            raise ValueError(
+                "SQL columns must include Parent and Child or Level# columns "
+                "and only allow optional ElementType, Dimension, Hierarchy, Weight, Attributes list."
+            )
 
     if not engine:
         engine = utility.create_sql_engine(**kwargs)
@@ -171,7 +219,7 @@ def read_sql_parent_child_to_df(
         df = pd.read_sql_table(
                      con=engine,
                      table_name=table_name,
-                     columns=table_columns,
+                     columns=columns,
                      schema=schema,
         )
     elif sql_query:
@@ -181,12 +229,10 @@ def read_sql_parent_child_to_df(
         )
     else:
         raise ValueError
-    if verify_format_two(column_list=list(df.columns)):
-        return df.fillna("")
-    return df
+    return df.fillna("")
 
 
-def read_yaml_parent_child_to_df(
+def read_yaml_source_to_df(
         source: Union[str, Path, PathLike[str]],
         template_key: Optional[str] = None,
         column_spec: Optional[ColumnSpec] = None,
@@ -213,15 +259,21 @@ def read_yaml_parent_child_to_df(
     rows = payload.get("rows", [])
 
     if payload.get("format") == "parent_child":
-        df = pd.DataFrame(rows)
+        if column_spec.aliases:
+            df_columns = list(column_spec.aliases.keys())
+        else:
+            df_columns = column_spec.as_list_parent_child()
+            for row in rows:
+                col_keys = list(row.keys())
+                df_columns += [key for key in col_keys if key not in df_columns]
+            if not verify_parent_child(column_list=df_columns, col_spec=column_spec):
+                df_columns = column_spec.as_list_parent_child()
+
+        df = pd.DataFrame(data=rows, columns=df_columns)
         df = normalize_dataframe_header(column_spec, df)
-        if not verify_format_one(column_list=list(df.columns)):
-            raise ValueError(
-                "YAML columns must include Parent, Child and only allow optional ElementType, Dimension, Hierarchy, Weight."
-            )
         return df.fillna("")
 
-    if payload.get("format") == "level_columns":
+    elif payload.get("format") == "level_columns":
         level_columns = payload.get("level_columns")
         if column_spec.aliases:
             df_columns = list(column_spec.aliases.keys())
@@ -234,37 +286,62 @@ def read_yaml_parent_child_to_df(
         df = pd.DataFrame(data=rows, columns=df_columns)
         df = normalize_dataframe_header(column_spec, df)
 
-        if not verify_format_two(column_list=list(df.columns)):
+        if not verify_indented_levels(column_list=list(df.columns), col_spec=column_spec):
             raise ValueError(
                 "YAML columns must include Level# columns and only allow optional ElementType, Dimension, Hierarchy, Weight."
             )
         return df.fillna("")
+    elif payload.get("format") == "attributes":
+        columns = column_spec.attribute_names
+        return pd.DataFrame(data=rows, columns=columns).fillna("")
     else:
         raise ValueError
 
 
 def read_source_to_df(
-        source: Union[str, Path, PathLike[str]],
         source_type: Literal["csv", "sql", "xlsx", "yaml"],
+        source: Optional[Union[str, Path, PathLike[str]]] = None,
+        source_format: Optional[Literal["parent_child", "indented_levels", "attributes"]] = None,
         *,
+        parent_name: Optional[str] = None,
+        child_name: Optional[str] = None,
+        type_name: Optional[str] = None,
+        weight_name: Optional[str] = None,
+        dim_name: Optional[str] = None,
+        hier_name: Optional[str] = None,
+        level_names: Optional[List[str]] = None,
+        attribute_names: Optional[List[str]] = None,
         column_aliases: Optional[Dict] = None,
-        has_header: Optional[bool] = True,
-        column_spec: Optional[ColumnSpec] = None,
         engine: Optional[Any] = None,
         sql_query: Optional[str] = None,
+        table_name: Optional[str] = None,
         **kwargs
 ) -> pd.DataFrame:
-    """ either has mandatory or I get their names/pos and rename them"""
-    if column_spec is None:
-        column_spec = ColumnSpec(aliases=column_aliases, has_header=has_header)
+    column_spec = ColumnSpec(source_format=source_format)
+    if source_format is "parent_child":
+        column_spec.parent_name = parent_name or "Parent"
+        column_spec.child_name = child_name or "Child"
+    if source_format is "indented_levels":
+        column_spec.level_names=level_names or "Level1"
+    column_spec.type_name = type_name
+    column_spec.weight_name = weight_name
+    column_spec.dim_name = dim_name
+    column_spec.hier_name = hier_name
+
+    if attribute_names:
+        column_spec.attribute_names = attribute_names
+
+    if column_aliases:
+        column_spec.aliases=column_aliases
+        column_spec.relabel_columns_on_aliases()
 
     if source_type is "csv":
-        return read_csv_parent_child_to_df(source=source, column_spec=column_spec, **kwargs)
+        return read_csv_source_to_df(source=source, column_spec=column_spec, **kwargs)
     if source_type is "xlsx":
-        return read_xlsx_parent_child_to_df(source=source, column_spec=column_spec, **kwargs)
+        return read_xlsx_source_to_df(source=source, column_spec=column_spec, **kwargs)
     if source_type is "sql":
-        return read_sql_parent_child_to_df(engine=engine, sql_query=sql_query, **kwargs)
+        return read_sql_source_to_df(engine=engine, sql_query=sql_query, table_name=table_name, column_spec=column_spec, **kwargs)
     if source_type is "yaml":
-        return read_yaml_parent_child_to_df(source=source, column_spec=column_spec, **kwargs)
+        return read_yaml_source_to_df(source=source, column_spec=column_spec, **kwargs)
     else:
         raise ValueError

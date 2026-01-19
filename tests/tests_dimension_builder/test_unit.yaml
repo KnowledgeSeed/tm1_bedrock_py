@@ -1,4 +1,4 @@
-test_read_sql_parent_child_to_df:
+test_read_sql_source_to_df:
   -
     sql_query: "
     SELECT
@@ -45,7 +45,7 @@ test_read_sql_parent_child_to_df:
       "ElementType": [ "N", "N", "C", "N", "N" ]
     }
 
-test_read_yaml_parent_child_to_df:
+test_read_yaml_source_to_df:
     format: parent_child
     hierarchy_column: Hierarchy
     rows:
@@ -61,7 +61,7 @@ test_read_yaml_parent_child_to_df:
         "Default" }
 
 
-test_read_yaml_parent_child_to_df_mandatory_only:
+test_read_yaml_source_to_df_mandatory_only:
     format: parent_child
     hierarchy_column: Hierarchy
     rows:
@@ -72,8 +72,7 @@ test_read_yaml_parent_child_to_df_mandatory_only:
       - { Parent: "EMEA", Child: "Germany" }
 
 
-
-test_read_yaml_parent_child_to_df_aliases:
+test_read_yaml_source_to_df_aliases:
     format: parent_child
     hierarchy_column: Hierarchy
     rows:
@@ -88,9 +87,40 @@ test_read_yaml_parent_child_to_df_aliases:
       - { Forbearer: "EMEA", Offspring: "Germany", Type: "N", W: 1, Hier:
         "Default" }
 
+
+test_read_yaml_source_to_df_extra_cols:
+    format: parent_child
+    hierarchy_column: Hierarchy
+    rows:
+      - { Parent: "Total Products", Child: "Product A", ElementType: "N", Weight: 1, Hierarchy:
+      "Default", Level1: "EMEA" }
+      - { Parent: "Total Products", Child: "Product B", ElementType: "N", Weight: 1, Hierarchy:
+      "Default", Level1: "EMEA" }
+      - { Parent: "All Regions", Child: "EMEA", ElementType: "C", Weight: 1, Hierarchy:
+      "Default", Level1: "EMEA" }
+      - { Parent: "EMEA", Child: "Hungary", ElementType: "N", Weight: 1, Hierarchy:
+      "Default", Level1: "EMEA" }
+      - { Parent: "EMEA", Child: "Germany", ElementType: "N", Weight: 1, Hierarchy:
+        "Default", Level1: "EMEA" }
+
+test_read_yaml_source_to_df_attr_list:
+    format: parent_child
+    hierarchy_column: Hierarchy
+    rows:
+      - { Parent: "Total Products", Child: "Product A", ElementType: "N", Weight: 1, Hierarchy: "Default",
+          Element: "Hungary", Color: "Red", CountryCode: "HU", IsActive: 1 }
+      - { Parent: "Total Products", Child: "Product B", ElementType: "N", Weight: 1, Hierarchy: "Default",
+          Element: "Germany", Color: "Black", CountryCode: "DE", IsActive: 1 }
+      - { Parent: "All Regions", Child: "EMEA", ElementType: "C", Weight: 1, Hierarchy: "Default",
+          Element: "USA", Color: "Blue", CountryCode: "US", IsActive: 1 }
+      - { Parent: "EMEA", Child: "Hungary", ElementType: "N", Weight: 1, Hierarchy: "Default",
+          Element: "", Color: "", CountryCode: "", IsActive: 1 }
+      - { Parent: "EMEA", Child: "Germany", ElementType: "N", Weight: 1, Hierarchy: "Default",
+          Element: "", Color: "", CountryCode: "", IsActive: 1 }
+
 # -------------------------------- Format Two -------------------------------- #
 
-test_read_yaml_parent_child_to_df_format_two:
+test_read_yaml_source_to_df_indented_levels:
   -
     format: level_columns
     hierarchy_column: Hierarchy
@@ -108,3 +138,44 @@ test_read_yaml_parent_child_to_df_format_two:
       - { Level2: "EU", Weight: 1, Hierarchy: "Alt" }
       - { Level3: "Hungary", Weight: 1, Hierarchy: "Alt" }
       - { Level3: "Germany", Weight: 1, Hierarchy: "Alt" }
+
+
+test_read_yaml_source_to_df_indented_levels_attr_list:
+  -
+    format: level_columns
+    hierarchy_column: Hierarchy
+    level_columns: [ Level1, Level2, Level3, Level4 ]
+    rows:
+      - { Level1: "All Regions", Weight: 1, Hierarchy: "Default",
+          Element: "Hungary", Color: "Red", CountryCode: "HU", IsActive: 1 }
+      - { Level2: "EMEA", Weight: 1, Hierarchy: "Default",
+          Element: "Germany", Color: "Black", CountryCode: "DE", IsActive: 1 }
+      - { Level3: "Hungary", Weight: 1, Hierarchy: "Default",
+          Element: "USA", Color: "Blue", CountryCode: "US", IsActive: 1 }
+      - { Level3: "Germany", Weight: 1, Hierarchy: "Default",
+          Element: "", Color: "", CountryCode: "", IsActive: 1 }
+      - { Level2: "AMER", Weight: 1, Hierarchy: "Default",
+          Element: "", Color: "", CountryCode: "", IsActive: 1 }
+      - { Level3: "USA", Weight: 1, Hierarchy: "Default",
+          Element: "", Color: "", CountryCode: "", IsActive: 1 }
+      - { Level4: "California", Weight: 1, Hierarchy: "Default",
+          Element: "", Color: "", CountryCode: "", IsActive: 1 }
+      - { Level4: "New York", Weight: 1, Hierarchy: "Default",
+          Element: "", Color: "", CountryCode: "", IsActive: 1 }
+      - { Level1: "All Regions", Weight: 1, Hierarchy: "Alt",
+          Element: "", Color: "", CountryCode: "", IsActive: 1 }
+      - { Level2: "EU", Weight: 1, Hierarchy: "Alt",
+          Element: "", Color: "", CountryCode: "", IsActive: 1 }
+      - { Level3: "Hungary", Weight: 1, Hierarchy: "Alt",
+          Element: "", Color: "", CountryCode: "", IsActive: 1 }
+      - { Level3: "Germany", Weight: 1, Hierarchy: "Alt",
+          Element: "", Color: "", CountryCode: "", IsActive: 1 }
+
+
+test_read_yaml_source_to_df_attr_only:
+  -
+    format: attributes
+    rows:
+      - { Element: "Hungary", Color: "Red", CountryCode: "HU", IsActive: 1 }
+      - { Element: "Germany", Color: "Black", CountryCode: "DE", IsActive: 1 }
+      - { Element: "USA", Color: "Blue", CountryCode: "US", IsActive: 1 }
