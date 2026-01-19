@@ -119,7 +119,7 @@ def verify_indented_levels(
 
 
 def normalize_format(column_spec: Union[ColumnSpec, None], df: pd.DataFrame) -> Any:
-    if column_spec.source_format is "attributes":
+    if column_spec.source_format == "attributes":
         return df.fillna("")
     if (verify_parent_child(column_list=list(df.columns), col_spec=column_spec)
             or verify_indented_levels(column_list=list(df.columns), col_spec=column_spec)):
@@ -152,7 +152,7 @@ def read_csv_source_to_df(
     if column_spec is not None:
         if column_spec.aliases:
             kwargs["usecols"] = list(column_spec.aliases.keys())
-        elif column_spec.source_format is "attributes":
+        elif column_spec.source_format == "attributes":
             kwargs["usecols"] = column_spec.attribute_names
 
     df = pd.read_csv(
@@ -176,7 +176,7 @@ def read_xlsx_source_to_df(
     if column_spec is not None:
         if column_spec.aliases:
             kwargs["usecols"] = list(column_spec.aliases.keys())
-        elif column_spec.source_format is "attributes":
+        elif column_spec.source_format == "attributes":
             kwargs["usecols"] = column_spec.attribute_names
     df = pd.read_excel(
         io=source,
@@ -198,11 +198,11 @@ def read_sql_source_to_df(
         **kwargs
 ) -> pd.DataFrame:
     columns = column_spec.as_list()
-    if column_spec.source_format is "attributes":
+    if column_spec.source_format == "attributes":
         columns = column_spec.attribute_names
     if sql_query:
         columns = extract_select_columns(sql_query)
-    elif column_spec.source_format is not "attributes":
+    elif column_spec.source_format != "attributes":
         if column_spec.aliases:
             columns = column_spec.as_list()
         if not columns or not (verify_parent_child(column_list=columns, col_spec=column_spec)
@@ -318,10 +318,10 @@ def read_source_to_df(
         **kwargs
 ) -> pd.DataFrame:
     column_spec = ColumnSpec(source_format=source_format)
-    if source_format is "parent_child":
+    if source_format == "parent_child":
         column_spec.parent_name = parent_name or "Parent"
         column_spec.child_name = child_name or "Child"
-    if source_format is "indented_levels":
+    if source_format == "indented_levels":
         column_spec.level_names=level_names or "Level1"
     column_spec.type_name = type_name
     column_spec.weight_name = weight_name
@@ -335,13 +335,13 @@ def read_source_to_df(
         column_spec.aliases=column_aliases
         column_spec.relabel_columns_on_aliases()
 
-    if source_type is "csv":
+    if source_type == "csv":
         return read_csv_source_to_df(source=source, column_spec=column_spec, **kwargs)
-    if source_type is "xlsx":
+    if source_type == "xlsx":
         return read_xlsx_source_to_df(source=source, column_spec=column_spec, **kwargs)
-    if source_type is "sql":
+    if source_type == "sql":
         return read_sql_source_to_df(engine=engine, sql_query=sql_query, table_name=table_name, column_spec=column_spec, **kwargs)
-    if source_type is "yaml":
+    if source_type == "yaml":
         return read_yaml_source_to_df(source=source, column_spec=column_spec, **kwargs)
     else:
         raise ValueError
