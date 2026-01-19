@@ -1,8 +1,7 @@
 import pandas as pd
 import numpy as np
-from typing import Optional, Any, Hashable, Tuple, Callable
-
-from TM1_bedrock_py.dimension_builder.exceptions import LevelColumnInvalidRowError
+from typing import Optional, Any, Hashable, Tuple, Callable, Literal
+import re
 from TM1_bedrock_py.dimension_builder.validate import (validate_row_for_element_count_indented_levels,
                                                        validate_row_for_element_count_filled_levels,
                                                        validate_row_for_complete_fill_filled_levels,
@@ -365,9 +364,23 @@ def _parse_attribute_string_default(attr_name_and_type: str) -> Tuple[str, str]:
     return parts[0], attr_type_mapping.get(parts[1])
 
 
-def parse_attribute_string(attr_name_and_type: str, parse_function: Callable = None) -> Tuple[str, str]:
-    if parse_function is None:
+def _parse_attribute_string_square_brackets(attr_name_and_type: str) -> Tuple[str, str]:
+    attr_type_mapping = {
+        "s": "String", "S": "String",
+        "n": "Numeric", "N": "Numeric",
+        "a": "Alias", "A": "Alias"
+    }
+    parts = re.search(r"^(.*)\[(.*)\]$", attr_name_and_type).groups()
+    return parts[0], attr_type_mapping.get(parts[1])
+
+
+def parse_attribute_string(
+        attr_name_and_type: str, parse_function: Literal["colon", "square_brackets"] | Callable = "colon"
+) -> Tuple[str, str]:
+    if parse_function == "colon":
         parse_function = _parse_attribute_string_default
+    elif parse_function == "square_brackets":
+        parse_function = _parse_attribute_string_square_brackets
     return parse_function(attr_name_and_type)
 
 
