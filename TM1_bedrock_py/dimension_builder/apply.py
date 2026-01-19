@@ -1,7 +1,8 @@
 from typing import Any
 import pandas as pd
-from TM1py.Objects import Dimension, Hierarchy, Element, ElementAttribute
+from TM1py.Objects import Dimension, Hierarchy
 from TM1_bedrock_py.dimension_builder import normalize
+from TM1_bedrock_py.loader import dataframe_to_cube
 
 
 def rebuild_dimension(
@@ -50,3 +51,14 @@ def rebuild_dimension(
         dimension.add_hierarchy(leaves_hierarchy)
 
     tm1_service.dimensions.update_or_create(dimension)
+
+    writable_attr_df = normalize.get_writable_attr_df(attr_df=attr_df, dimension_name=dimension_name)
+    element_attributes_cube_name = "}ElementAttributes_" + dimension_name
+    element_attributes_cube_dims = [dimension_name, element_attributes_cube_name]
+    dataframe_to_cube(
+        tm1_service=tm1_service,
+        dataframe=writable_attr_df,
+        cube_name=element_attributes_cube_name,
+        cube_dims=element_attributes_cube_dims,
+        use_blob=True,
+    )

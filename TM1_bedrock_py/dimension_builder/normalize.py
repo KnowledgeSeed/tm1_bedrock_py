@@ -369,3 +369,22 @@ def parse_attribute_string(attr_name_and_type: str, parse_function: Callable = N
     if parse_function is None:
         parse_function = _parse_attribute_string_default
     return parse_function(attr_name_and_type)
+
+
+def get_writable_attr_df(attr_df: pd.DataFrame, dimension_name: str) -> pd.DataFrame:
+    attribute_dimension_name = "}ElementAttributes_" + dimension_name
+    attribute_strings = get_element_attribute_names_as_list(attr_df)
+
+    attr_df_copy = attr_df.copy()
+    attr_df_copy[dimension_name] = attr_df_copy['Hierarchy'] + ':' + attr_df_copy['ElementName']
+    df_to_melt = attr_df_copy.drop(columns=['ElementName', 'ElementType', 'Dimension', 'Hierarchy'])
+    df_to_melt = df_to_melt.rename(columns={
+        attr_string: parse_attribute_string(attr_string)[0]
+        for attr_string in attribute_strings
+    })
+
+    return df_to_melt.melt(
+        id_vars=[dimension_name],
+        var_name=attribute_dimension_name,
+        value_name='Value'
+    )
