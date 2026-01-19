@@ -3,10 +3,12 @@ import pprint
 from TM1_bedrock_py import extractor, transformer, loader, bedrock
 from TM1_bedrock_py.transformer import normalize_table_source_dataframe
 from string import Template
-from TM1_bedrock_py.utility import ContextMetadata, create_sql_engine
+from TM1_bedrock_py.utility import create_sql_engine
+from TM1_bedrock_py.context_metadata import ContextMetadata
 from tm1_bench_py import tm1_bench, df_generator_for_dataset, dimension_builder, dimension_period_builder
 import re
 import os
+import pandas as pd
 
 """
 def test_context_metadata():
@@ -132,6 +134,74 @@ def benchpy_sample():
     """
 
 
+def hierarchy_attributes():
+    tm1_params = {
+        "address": "localhost",
+        "port": 5379,
+        "user": "testbench",
+        "password": "testbench",
+        "ssl": False
+    }
+    tm1_service = TM1Service(**tm1_params)
+
+    dimension = "Period"
+    hierarchy = "Period"
+
+    try:
+        hierarchy = tm1_service.hierarchies.get(dimension, hierarchy)
+        edge_list = [
+            {
+                "Parent": parent,
+                "Child": child,
+                "Weight": weight,
+                "Dimension": hierarchy.dimension_name,
+                "Hierarchy": hierarchy.name
+            }
+            for (parent, child), weight in hierarchy.edges.items()
+        ]
+        df = pd.DataFrame(edge_list)
+        print(df)
+    finally:
+        tm1_service.logout()
+
+
+def element_attributes():
+    tm1_params = {
+        "address": "localhost",
+        "port": 5379,
+        "user": "testbench",
+        "password": "testbench",
+        "ssl": False
+    }
+    tm1_service = TM1Service(**tm1_params)
+
+    dimension = "Period"
+    hierarchy = "Period"
+    try:
+        attr_df = tm1_service.elements.get_elements_dataframe(
+            dimension_name=dimension,
+            hierarchy_name=hierarchy,
+            skip_consolidations=False,
+            attribute_suffix=True,
+            skip_parents=True,
+            skip_weights=True,
+            element_type_column="ElementType"
+        )
+        attr_df.rename(columns={dimension: "ElementName"}, inplace=True)
+        attr_df["ElementType"] = attr_df["ElementType"].replace({
+            "Numeric": "N",
+            "Consolidated": "C",
+            "String": "S"
+        })
+
+        attr_df.insert(2, "Dimension", dimension)
+        attr_df.insert(3, "Hierarchy", hierarchy)
+        print(attr_df.columns)
+        print(attr_df)
+    finally:
+        tm1_service.logout()
+
+
 def complex_transform_demo():
     # letárolás másik verzióra
     # újrastruktúrálás mapping kockával (employee-orgunit) az eredeti idősíkon
@@ -237,5 +307,6 @@ def complex_transform_demo():
     finally:
         tm1_service.logout()
 
+
 if __name__ == '__main__':
-    complex_transform_demo()
+    element_attributes()

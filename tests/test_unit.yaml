@@ -3125,7 +3125,7 @@ test_parse_indented_levels_into_parent_child_failure:
     }
     level_columns: [ "Level0", "L1" ]
     expected_exception: "SchemaValidationError"
-    expected_message: "Input schema is invalid. Level column Level0 is missing."
+    expected_message: "Level column Level0 is missing."
 
 test_parse_filled_levels_into_parent_child:
   - # Scenario 1: Standard filled hierarchy with varying depths
@@ -3186,7 +3186,7 @@ test_parse_filled_levels_into_parent_child_failure:
     }
     level_columns: [ "Level0", "L1" ]
     expected_exception: "SchemaValidationError"
-    expected_message: "Input schema is invalid. Level column Level0 is missing."
+    expected_message: "Level column Level0 is missing."
 
 test_drop_invalid_edges_df_rows:
   - # Scenario 1: Mixed valid and invalid parents
@@ -3267,3 +3267,178 @@ test_drop_invalid_attr_df_rows:
       "Dimension": ["Dim1", "Dim2", "Dim1"],
       "Hierarchy": ["H1", "H1", "H2"]
     }
+
+test_validate_attr_df_schema_for_inconsistent_element_type_success:
+  - # All elements have exactly one type
+    df_data:
+      - {ElementName: "Elem1", ElementType: "N"}
+      - {ElementName: "Elem2", ElementType: "C"}
+      - {ElementName: "Elem1", ElementType: "N"} # Duplicate entry is consistent
+
+test_validate_attr_df_schema_for_inconsistent_element_type_failure:
+  - # Case: Single inconsistent element
+    df_data:
+      - {ElementName: "Elem1", ElementType: "N"}
+      - {ElementName: "Elem1", ElementType: "S"}
+    expected_exception: "SchemaValidationError"
+    expected_message_part: "Inconsistency found! These ElementNames have multiple types: ['Elem1']"
+
+  - # Case: Multiple inconsistent elements (alphabetical order check)
+    df_data:
+      - {ElementName: "Alpha", ElementType: "N"}
+      - {ElementName: "Alpha", ElementType: "S"}
+      - {ElementName: "Beta", ElementType: "C"}
+      - {ElementName: "Beta", ElementType: "N"}
+    expected_exception: "SchemaValidationError"
+    expected_message_part: "Inconsistency found! These ElementNames have multiple types: ['Alpha', 'Beta']"
+
+test_validate_attr_df_schema_for_inconsistent_leaf_attributes_success:
+  - # Case: N elements differ ONLY in Hierarchy or Dimension (Allowed)
+    df_data:
+      - {ElementName: "Elem1", ElementType: "N", AttributeX: "Val1", Hierarchy: "H1", Dimension: "D1"}
+      - {ElementName: "Elem1", ElementType: "N", AttributeX: "Val1", Hierarchy: "H2", Dimension: "D2"}
+  - # Case: Non-N/S elements (like 'C') are ignored even if attributes differ
+    df_data:
+      - {ElementName: "Consol1", ElementType: "C", AttributeX: "Val1", Hierarchy: "H1", Dimension: "D1"}
+      - {ElementName: "Consol1", ElementType: "C", AttributeX: "Val2", Hierarchy: "H1", Dimension: "D1"}
+
+test_validate_attr_df_schema_for_inconsistent_leaf_attributes_failure:
+  - # Case: Element 'N' has different AttributeX values
+    df_data:
+      - {ElementName: "LeafA", ElementType: "N", AttributeX: "Red", Hierarchy: "H1"}
+      - {ElementName: "LeafA", ElementType: "N", AttributeX: "Blue", Hierarchy: "H2"}
+    expected_exception: "SchemaValidationError"
+    expected_message_part: "Inconsistency Error: The following ElementNames (type 'N' and 'S') have conflicting values in required columns: ['LeafA']"
+
+  - # Case: Element 'S' has different AttributeX values
+    df_data:
+      - {ElementName: "StringB", ElementType: "S", AttributeX: "Alpha", Hierarchy: "H1"}
+      - {ElementName: "StringB", ElementType: "S", AttributeX: "Beta", Hierarchy: "H1"}
+    expected_exception: "SchemaValidationError"
+    expected_message_part: "Inconsistency Error: The following ElementNames (type 'N' and 'S') have conflicting values in required columns: ['StringB']"
+
+  - # Case: Verifying that 'Conflicting data:' header is present in the message
+    df_data:
+      - {ElementName: "Fail", ElementType: "N", AttributeX: "1"}
+      - {ElementName: "Fail", ElementType: "N", AttributeX: "2"}
+    expected_exception: "SchemaValidationError"
+    expected_message_part: "Conflicting data:"
+
+test_validate_graph_for_leaves_as_parents_success:
+  - # Case: 'C' (Consolidated) is a parent, 'N' is a child (Valid)
+    edges_data:
+      - {Parent: "Consol_A", Child: "Leaf_1"}
+    attr_data:
+      - {ElementName: "Consol_A", ElementType: "C"}
+      - {ElementName: "Leaf_1", ElementType: "N"}
+  - # Case: N/S elements exist in attributes but are not parents in edges
+    edges_data:
+      - {Parent: "Total_Sales", Child: "Region_West"}
+    attr_data:
+      - {ElementName: "Total_Sales", ElementType: "C"}
+      - {ElementName: "Unrelated_Leaf", ElementType: "N"}
+
+test_validate_graph_for_leaves_as_parents_failure:
+  - # Case: An 'N' type element is used as a Parent
+    edges_data:
+      - {Parent: "Invalid_Parent", Child: "Some_Child"}
+    attr_data:
+      - {ElementName: "Invalid_Parent", ElementType: "N"}
+      - {ElementName: "Some_Child", ElementType: "N"}
+    expected_exception: "GraphValidationError"
+    expected_message_part: "The following N/S elements were found as Parents: ['Invalid_Parent']"
+
+  - # Case: An 'S' type element is used as a Parent
+    edges_data:
+      - {Parent: "String_Node", Child: "Leaf_X"}
+    attr_data:
+      - {ElementName: "String_Node", ElementType: "S"}
+      - {ElementName: "Leaf_X", ElementType: "N"}
+    expected_exception: "GraphValidationError"
+    expected_message_part: "The following N/S elements were found as Parents: ['String_Node']"
+
+  - # Case: Multiple invalid elements (check list formatting in message)
+    edges_data:
+      - {Parent: "Bad_N", Child: "Child1"}
+      - {Parent: "Bad_S", Child: "Child2"}
+    attr_data:
+      - {ElementName: "Bad_N", ElementType: "N"}
+      - {ElementName: "Bad_S", ElementType: "S"}
+    expected_exception: "GraphValidationError"
+    expected_message_part: "The following N/S elements were found as Parents: ['Bad_N', 'Bad_S']"
+
+test_validate_graph_for_self_loop_success:
+  - # Case: Standard hierarchy
+    df_data:
+      - {Parent: "A", Child: "B"}
+      - {Parent: "B", Child: "C"}
+
+test_validate_graph_for_self_loop_failure:
+  - # Case: Single row self-loop
+    df_data:
+      - {Parent: "Node_A", Child: "Node_A"}
+    expected_exception: "GraphValidationError"
+    expected_message_part: "A child is the parent of itself, self loop detected."
+
+  - # Case: Self-loop hidden among valid rows
+    df_data:
+      - {Parent: "Total", Child: "Region"}
+      - {Parent: "Region", Child: "Region"} # The loop
+      - {Parent: "Region", Child: "Store"}
+    expected_exception: "GraphValidationError"
+    expected_message_part: "A child is the parent of itself, self loop detected."
+
+  - # Case: Multiple self-loops
+    df_data:
+      - {Parent: "A", Child: "A"}
+      - {Parent: "B", Child: "B"}
+    expected_exception: "GraphValidationError"
+    expected_message_part: "A child is the parent of itself, self loop detected."
+
+test_validate_graph_for_cycles_with_dfs_success:
+  - # Case: Simple chain (A -> B -> C)
+    df_data:
+      - {Parent: "A", Child: "B"}
+      - {Parent: "B", Child: "C"}
+  - # Case: Diamond Shape (Valid: A points to B and C, both point to D)
+    # This is a key test for DFS to ensure it handles multiple paths correctly.
+    df_data:
+      - {Parent: "A", Child: "B"}
+      - {Parent: "A", Child: "C"}
+      - {Parent: "B", Child: "D"}
+      - {Parent: "C", Child: "D"}
+  - # Case: Multiple separate trees
+    df_data:
+      - {Parent: "A", Child: "B"}
+      - {Parent: "X", Child: "Y"}
+
+test_validate_graph_for_cycles_with_dfs_failure:
+  - # Case: Direct cycle (A -> B -> A)
+    df_data:
+      - {Parent: "A", Child: "B"}
+      - {Parent: "B", Child: "A"}
+    expected_exception: "GraphValidationError"
+    expected_message_part: "Graph contains a cycle starting from node:"
+
+  - # Case: Indirect cycle (A -> B -> C -> A)
+    df_data:
+      - {Parent: "A", Child: "B"}
+      - {Parent: "B", Child: "C"}
+      - {Parent: "C", Child: "A"}
+    expected_exception: "GraphValidationError"
+    expected_message_part: "Graph contains a cycle starting from node:"
+
+  - # Case: Self-loop (A -> A)
+    df_data:
+      - {Parent: "Self", Child: "Self"}
+    expected_exception: "GraphValidationError"
+    expected_message_part: "Graph contains a cycle starting from node: Self"
+
+  - # Case: Cycle hidden deep in a hierarchy
+    df_data:
+      - {Parent: "Root", Child: "Level1"}
+      - {Parent: "Level1", Child: "LoopA"}
+      - {Parent: "LoopA", Child: "LoopB"}
+      - {Parent: "LoopB", Child: "LoopA"}
+    expected_exception: "GraphValidationError"
+    expected_message_part: "Graph contains a cycle starting from node:"

@@ -9,8 +9,10 @@ from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
 from TM1_bedrock_py import extractor, transformer, utility, loader
-from TM1_bedrock_py.dimension_builder.exceptions import LevelColumnInvalidRowError, SchemaValidationError
-from TM1_bedrock_py.dimension_builder import normalize
+from TM1_bedrock_py.dimension_builder.exceptions import (LevelColumnInvalidRowError,
+                                                         SchemaValidationError,
+                                                         GraphValidationError)
+from TM1_bedrock_py.dimension_builder import normalize, validate
 from tests.config import tm1_connection_factory, sql_engine_factory
 
 EXCEPTION_MAP = {
@@ -1068,3 +1070,129 @@ def test_drop_invalid_attr_df_rows(input_df, expected_df):
         expected_df,
         check_dtype=False
     )
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Main: tests for dimension builder validate module
+# ------------------------------------------------------------------------------------------------------------
+
+
+@parametrize_from_file
+def test_validate_attr_df_schema_for_inconsistent_element_type_success(df_data):
+    """
+    Tests cases where the schema is consistent and no exception should be raised.
+    """
+    input_df = pd.DataFrame(df_data)
+    validate.validate_attr_df_schema_for_inconsistent_element_type(input_df)
+
+
+@parametrize_from_file
+def test_validate_attr_df_schema_for_inconsistent_element_type_failure(df_data, expected_exception,
+                                                                       expected_message_part):
+    """
+    Tests cases where inconsistent element types are detected.
+    """
+    input_df = pd.DataFrame(df_data)
+    exception_type = eval(expected_exception)
+
+    with pytest.raises(exception_type) as excinfo:
+        validate.validate_attr_df_schema_for_inconsistent_element_type(input_df)
+
+    assert expected_message_part in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_validate_attr_df_schema_for_inconsistent_leaf_attributes_success(df_data):
+    """
+    Tests that N/S elements can have different Hierarchy/Dimension values
+    without triggering an exception.
+    """
+    input_df = pd.DataFrame(df_data)
+    validate.validate_attr_df_schema_for_inconsistent_leaf_attributes(input_df)
+
+
+@parametrize_from_file
+def test_validate_attr_df_schema_for_inconsistent_leaf_attributes_failure(df_data, expected_exception,
+                                                                          expected_message_part):
+    """
+    Tests that conflicting attributes for N/S elements raise SchemaValidationError.
+    """
+    input_df = pd.DataFrame(df_data)
+    exception_type = eval(expected_exception)
+
+    with pytest.raises(exception_type) as excinfo:
+        validate.validate_attr_df_schema_for_inconsistent_leaf_attributes(input_df)
+
+    # We check for the main error description and the specific bad elements
+    assert expected_message_part in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_validate_graph_for_leaves_as_parents_success(edges_data, attr_data):
+    """
+    Tests cases where no N or S elements act as parents in the hierarchy.
+    """
+    edges_df = pd.DataFrame(edges_data)
+    attr_df = pd.DataFrame(attr_data)
+    validate.validate_graph_for_leaves_as_parents(edges_df, attr_df)
+
+
+@parametrize_from_file
+def test_validate_graph_for_leaves_as_parents_failure(edges_data, attr_data, expected_exception, expected_message_part):
+    """
+    Tests that a GraphValidationError is raised if an N or S element is a parent.
+    """
+    edges_df = pd.DataFrame(edges_data)
+    attr_df = pd.DataFrame(attr_data)
+    exception_type = eval(expected_exception)
+
+    with pytest.raises(exception_type) as excinfo:
+        validate.validate_graph_for_leaves_as_parents(edges_df, attr_df)
+
+    assert expected_message_part in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_validate_graph_for_self_loop_success(df_data):
+    """
+    Tests that no exception is raised when all Parent-Child pairs are different.
+    """
+    input_df = pd.DataFrame(df_data)
+    validate.validate_graph_for_self_loop(input_df)
+
+
+@parametrize_from_file
+def test_validate_graph_for_self_loop_failure(df_data, expected_exception, expected_message_part):
+    """
+    Tests that GraphValidationError is raised when a Parent is equal to its Child.
+    """
+    input_df = pd.DataFrame(df_data)
+    exception_type = eval(expected_exception)
+
+    with pytest.raises(exception_type) as excinfo:
+        validate.validate_graph_for_self_loop(input_df)
+
+    assert expected_message_part in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_validate_graph_for_cycles_with_dfs_success(df_data):
+    """
+    Tests acyclic graphs (DAGs), including complex shapes like diamonds.
+    """
+    input_df = pd.DataFrame(df_data)
+    validate.validate_graph_for_cycles_with_dfs(input_df)
+
+
+@parametrize_from_file
+def test_validate_graph_for_cycles_with_dfs_failure(df_data, expected_exception, expected_message_part):
+    """
+    Tests that cycles (direct and indirect) raise a GraphValidationError.
+    """
+    input_df = pd.DataFrame(df_data)
+    exception_type = eval(expected_exception)
+
+    with pytest.raises(exception_type) as excinfo:
+        validate.validate_graph_for_cycles_with_dfs(input_df)
+
+    assert expected_message_part in str(excinfo.value)

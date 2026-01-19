@@ -33,12 +33,12 @@ class InvalidInputFormatError(Exception):
 
 class SchemaValidationError(Exception):
     def __init__(self, message):
-        super().__init__("Input schema is invalid. "+message)
+        super().__init__(message)
 
 
 class GraphValidationError(Exception):
-    def __init__(self):
-        super().__init__("Graph has a recursive self loop.")
+    def __init__(self, message):
+        super().__init__(message)
 
 
 class ElementTypeConflictError(Exception):
