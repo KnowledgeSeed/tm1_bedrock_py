@@ -62,6 +62,14 @@ def validate_schema_for_level_columns(input_df: pd.DataFrame, level_columns: lis
             raise SchemaValidationError("Level column "+level_column+" is missing.")
 
 
+def validate_schema_for_type_mapping(input_df: pd.DataFrame, type_mapping: dict) -> None:
+    current_values = set(input_df['ElementType'].unique())
+    valid_keys = set(type_mapping.keys())
+    unknown_values = current_values - valid_keys
+    if unknown_values:
+        bad_vals_list = sorted(list(unknown_values))
+        raise SchemaValidationError(f"Type normalization failed: Found unknown 'ElementType' values: {bad_vals_list}")
+
 # schema validations for post-validation
 
 

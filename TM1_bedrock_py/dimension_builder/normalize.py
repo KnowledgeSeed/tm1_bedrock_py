@@ -9,7 +9,21 @@ from TM1_bedrock_py.dimension_builder.validate import (validate_row_for_element_
                                                        validate_row_for_complete_fill_filled_levels,
                                                        validate_row_for_parent_child_in_indented_level_columns,
                                                        validate_schema_for_parent_child_columns,
-                                                       validate_schema_for_level_columns)
+                                                       validate_schema_for_level_columns,
+                                                       validate_schema_for_type_mapping)
+
+
+_TYPE_MAPPING = {
+    "s": "String", "S": "String", "String": "String",  "string": "String", "numeric": "Numeric",
+    "n": "Numeric", "N": "Numeric", "Numeric": "Numeric",
+    "c": "Consolidated", "C": "Consolidated", "Consolidated": "Consolidated", "consolidated": "Consolidated"
+}
+
+_ATTR_TYPE_MAPPING = {
+    "s": "String", "S": "String", "String": "String",  "string": "String", "numeric": "Numeric",
+    "n": "Numeric", "N": "Numeric", "Numeric": "Numeric",
+    "a": "Alias",  "A": "Alias", "Alias": "Alias", "alias": "Alias"
+}
 
 
 # input dimension dataframe normalization functions to ensure uniform format.
@@ -82,8 +96,14 @@ def assign_missing_type_values(input_df: pd.DataFrame) -> None:
     parent_list = input_df['Parent'].unique()
     is_empty = input_df['ElementType'].isin([np.nan, None, ""])
 
-    input_df.loc[is_empty & input_df['Child'].isin(parent_list), 'ElementType'] = 'N'
-    input_df.loc[is_empty & ~input_df['Child'].isin(parent_list), 'ElementType'] = 'C'
+    input_df.loc[is_empty & input_df['Child'].isin(parent_list), 'ElementType'] = 'Numeric'
+    input_df.loc[is_empty & ~input_df['Child'].isin(parent_list), 'ElementType'] = 'Consolidated'
+
+
+def normalize_element_types(input_df: pd.DataFrame) -> pd.DataFrame:
+    validate_schema_for_type_mapping(input_df=input_df, type_mapping=_TYPE_MAPPING)
+    input_df['ElementType'] = input_df['ElementType'].map(_TYPE_MAPPING)
+    return input_df
 
 
 def assign_missing_attribute_values(
@@ -268,6 +288,7 @@ def normalize_parent_child(
     assign_missing_type_column(input_df=input_df)
     assign_missing_edge_values(input_df=input_df, dimension_name=dimension_name, hierarchy_name=hierarchy_name)
     assign_missing_type_values(input_df=input_df)
+    normalize_element_types(input_df=input_df)
 
     attribute_columns = get_attribute_columns_list(input_df=input_df, level_columns=[])
     assign_missing_attribute_values(input_df=input_df, attribute_columns=attribute_columns, parser=attribute_parser)
@@ -316,6 +337,7 @@ def normalize_indented_level_columns(
     assign_missing_type_column(input_df=input_df)
     assign_missing_edge_values(input_df=input_df, dimension_name=dimension_name, hierarchy_name=hierarchy_name)
     assign_missing_type_values(input_df=input_df)
+    normalize_element_types(input_df=input_df)
 
     attribute_columns = get_attribute_columns_list(input_df=input_df, level_columns=level_columns)
     assign_missing_attribute_values(input_df=input_df, attribute_columns=attribute_columns, parser=attribute_parser)
@@ -364,6 +386,7 @@ def normalize_filled_level_columns(
     assign_missing_type_column(input_df=input_df)
     assign_missing_edge_values(input_df=input_df, dimension_name=dimension_name, hierarchy_name=hierarchy_name)
     assign_missing_type_values(input_df=input_df)
+    normalize_element_types(input_df=input_df)
 
     attribute_columns = get_attribute_columns_list(input_df=input_df, level_columns=level_columns)
     assign_missing_attribute_values(input_df=input_df, attribute_columns=attribute_columns, parser=attribute_parser)
@@ -378,7 +401,7 @@ def normalize_filled_level_columns(
 
 
 def get_leaves_df(attr_df: pd.DataFrame) -> pd.DataFrame:
-    return attr_df[attr_df['ElementType'].isin(['S', 'N'])][['ElementName', 'ElementType']].drop_duplicates()
+    return attr_df[attr_df['ElementType'].isin(['String', 'Numeric'])][['ElementName', 'ElementType']].drop_duplicates()
 
 
 def delete_leaves_hierarchy_from_df(input_df: pd.DataFrame) -> None:
@@ -389,15 +412,6 @@ def delete_leaves_hierarchy_from_df(input_df: pd.DataFrame) -> None:
 def get_element_attribute_names_as_list(attr_df: pd.DataFrame) -> list[str]:
     exclude = ["ElementName", "ElementType", "Dimension", "Hierarchy"]
     return attr_df.columns.difference(exclude, sort=False).tolist()
-
-
-_ATTR_TYPE_MAPPING = {
-    "s": "String", "S": "String",
-    "n": "Numeric", "N": "Numeric",
-    "a": "Alias",  "A": "Alias",
-    "String": "String", "Numeric": "Numeric", "Alias": "Alias",
-    "string": "String", "numeric": "Numeric", "alias": "Alias"
-}
 
 
 def _validate_and_parse_attribute_string_default(attr_name_and_type: str) -> Tuple[str, str]:

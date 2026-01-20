@@ -9,7 +9,7 @@ from tm1_bench_py import tm1_bench, df_generator_for_dataset, dimension_builder,
 import re
 import os
 import pandas as pd
-from TM1_bedrock_py.dimension_builder import normalize
+from TM1_bedrock_py.dimension_builder import normalize, apply
 
 
 def hierarchy_attributes():
@@ -209,6 +209,15 @@ def complex_transform_demo():
 
 
 def test_dim_builder_v1():
+    tm1_params = {
+        "address": "localhost",
+        "port": 5379,
+        "user": "testbench",
+        "password": "testbench",
+        "ssl": False
+    }
+    tm1_service = TM1Service(**tm1_params)
+
     dimension_name = "DimBuildTest"
     data = {
         "Level0": [
@@ -249,7 +258,11 @@ def test_dim_builder_v1():
         ],
         "TestAttribute2:s": [
             "Value01", "Value02", "Value03", "Value04", "Value05", "Value03", "Value07",
-            "Value01", "Value02", "Value03", "Value04", "Value05", "Value03", "Value07"
+            "Value01", "Value02", "Value03", "Value04", None, "Value03", None
+        ],
+        "TestAttribute3:n": [
+            10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0,
+            10.0, 10.0, 10.0, 10.0, None, 10.0, None
         ],
     }
     input_df_indented_levels = pd.DataFrame(data)
@@ -263,8 +276,9 @@ def test_dim_builder_v1():
         level_columns=["Level0", "Level1", "Level2"],
         dimension_name=dimension_name,
     )
-    print(edges_df)
-    print(attr_df)
+    apply.rebuild_dimension_structure(tm1_service=tm1_service, dimension_name=dimension_name,
+                                      edges_df=edges_df, attr_df=attr_df,
+                                      recreate_leaves=False)
 
 
 if __name__ == '__main__':
