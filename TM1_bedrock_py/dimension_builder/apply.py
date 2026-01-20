@@ -6,8 +6,7 @@ from TM1_bedrock_py.loader import dataframe_to_cube
 
 
 def rebuild_dimension_structure(
-        tm1_service: Any, dimension_name: str, edges_df: pd.DataFrame, attr_df: pd.DataFrame,
-        recreate_leaves: bool = True
+        tm1_service: Any, dimension_name: str, edges_df: pd.DataFrame, attr_df: pd.DataFrame
 ) -> None:
     hierarchy_names = normalize.get_hierarchy_list(input_df=attr_df)
 
@@ -40,15 +39,6 @@ def rebuild_dimension_structure(
 
     for hierarchy in hierarchies.values():
         dimension.add_hierarchy(hierarchy)
-
-    if recreate_leaves:
-        leaves_hierarchy = Hierarchy(name="Leaves", dimension_name=dimension_name)
-        leaves_df = normalize.get_leaves_df(attr_df)
-        for _, leaves_df_row in leaves_df.iterrows():
-            element_name = leaves_df_row['ElementName']
-            element_type = leaves_df_row['ElementType']
-            leaves_hierarchy.add_element(element_name=element_name, element_type=element_type)
-        dimension.add_hierarchy(leaves_hierarchy)
 
     tm1_service.dimensions.update_or_create(dimension)
 

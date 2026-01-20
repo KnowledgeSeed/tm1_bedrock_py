@@ -225,12 +225,12 @@ def test_dim_builder_v1():
             "Total", None, None, None, None, None, None
         ],
         "Level1": [
-            None, "Subtotal1", None, None, "Subtotal2", None, None,
-            None, "Subtotal1", None, None, "Subtotal2", None, None
+            None, "Subtotal1", None, None, "Subtotal3", None, None,
+            None, "Subtotal1", None, None, "Subtotal3", None, None
         ],
         "Level2": [
-            None, None, "Element1", "Element2", None, "Element1", "Element3",
-            None, None, "Element1", "Element2", None, "Element1", "Element3"
+            None, None, "Element1", "Element4", None, "Element1", "Element3",
+            None, None, "Element1", "Element4", None, "Element1", "Element3"
         ],
         "Dimension": [
             "DimBuildTest", "DimBuildTest", "DimBuildTest", "DimBuildTest",
@@ -266,10 +266,6 @@ def test_dim_builder_v1():
         ],
     }
     input_df_indented_levels = pd.DataFrame(data)
-    # print(input_df_indented_levels)
-    value = input_df_indented_levels.iloc[0, 1]
-    print(type(value))
-    print(value)
 
     edges_df, attr_df = normalize.normalize_indented_level_columns(
         input_df=input_df_indented_levels,
@@ -277,8 +273,10 @@ def test_dim_builder_v1():
         dimension_name=dimension_name,
     )
     apply.rebuild_dimension_structure(tm1_service=tm1_service, dimension_name=dimension_name,
-                                      edges_df=edges_df, attr_df=attr_df,
-                                      recreate_leaves=False)
+                                      edges_df=edges_df, attr_df=attr_df)
+
+    apply.fill_dimension_element_attributes(tm1_service=tm1_service, attr_df=attr_df, dimension_name=dimension_name)
+    print("Dimension update successful")
 
 
 if __name__ == '__main__':

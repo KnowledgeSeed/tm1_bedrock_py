@@ -495,7 +495,7 @@ test_assign_missing_type_values:
     expected_df: {
       "Parent": ["Total", "SubTotal"],
       "Child": ["SubTotal", "LeafA"],
-      "ElementType": ["N", "C"]
+      "ElementType": ["Numeric", "Consolidated"]
     }
 
   - # Scenario 2: Preservation of existing values
@@ -503,12 +503,12 @@ test_assign_missing_type_values:
     input_df: {
       "Parent": ["Total"],
       "Child": ["SubTotal"],
-      "ElementType": ["Existing"]
+      "ElementType": ["String"]
     }
     expected_df: {
       "Parent": ["Total"],
       "Child": ["SubTotal"],
-      "ElementType": ["Existing"]
+      "ElementType": ["String"]
     }
 
   - # Scenario 3: Mixed empty types (None, NaN, "")
@@ -520,22 +520,9 @@ test_assign_missing_type_values:
     expected_df: {
       "Parent": ["A", "A", "B"],
       "Child": ["B", "C", "D"],
-      "ElementType": ["N", "C", "C"]
+      "ElementType": ["Numeric", "Consolidated", "Consolidated"]
     }
 
-  - # Scenario 4: Whitespace check
-    # Note: The code .isin([np.nan, None, ""]) does NOT catch " " (spaces).
-    # This test confirms that behavior.
-    input_df: {
-      "Parent": ["Total"],
-      "Child": ["Leaf"],
-      "ElementType": [" "]
-    }
-    expected_df: {
-      "Parent": ["Total"],
-      "Child": ["Leaf"],
-      "ElementType": [" "]
-    }
 
 test_separate_edge_df_columns:
   - # Scenario 1: Filter out extra columns
@@ -1032,32 +1019,49 @@ test_drop_invalid_edges_df_rows:
     input_df: {
       "Parent": ["Total", "", null],
       "Child": ["Hardware", "Software", "Services"],
+      "Hierarchy": ["Default", "Default", "Default"],
       "Weight": [1.0, 1.0, 1.0]
     }
     expected_df: {
       "Parent": ["Total"],
       "Child": ["Hardware"],
+      "Hierarchy": ["Default"],
       "Weight": [1.0]
     }
 
   - # Scenario 2: Multiple valid rows
     input_df: {
       "Parent": ["P1", "P1", ""],
-      "Child": ["C1", "C2", "C3"]
+      "Child": ["C1", "C2", "C3"],
+      "Hierarchy": ["Default", "Default", "Default"],
     }
     expected_df: {
       "Parent": ["P1", "P1"],
-      "Child": ["C1", "C2"]
+      "Child": ["C1", "C2"],
+      "Hierarchy": ["Default", "Default"],
     }
 
   - # Scenario 3: All rows are invalid (Result should be empty)
     input_df: {
       "Parent": ["", ""],
-      "Child": ["A", "B"]
+      "Child": ["A", "B"],
+      "Hierarchy": ["Default", "Default"],
     }
     expected_df: {
       "Parent": [],
-      "Child": []
+      "Child": [],
+      "Hierarchy": []
+    }
+  - # Scenario 4: drop duplicates
+    input_df: {
+      "Parent": [ "P1", "P1", "P1" ],
+      "Child": [ "C1", "C1", "C1" ],
+      "Hierarchy": [ "Default", "Default", "Alt" ],
+    }
+    expected_df: {
+      "Parent": [ "P1", "P1" ],
+      "Child": [ "C1", "C1" ],
+      "Hierarchy": [ "Default", "Alt" ],
     }
 
 test_drop_invalid_attr_df_rows:

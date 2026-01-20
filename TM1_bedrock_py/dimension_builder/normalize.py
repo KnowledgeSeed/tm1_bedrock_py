@@ -440,10 +440,6 @@ def normalize_filled_level_columns(
     return edges_df, attr_df
 
 
-def get_leaves_df(attr_df: pd.DataFrame) -> pd.DataFrame:
-    return attr_df[attr_df['ElementType'].isin(['String', 'Numeric'])][['ElementName', 'ElementType']].drop_duplicates()
-
-
 def delete_leaves_hierarchy_from_df(input_df: pd.DataFrame) -> None:
     input_df.drop(input_df[input_df['Hierarchy'] == 'Leaves'].index, inplace=True)
     input_df.reset_index(drop=True, inplace=True)
