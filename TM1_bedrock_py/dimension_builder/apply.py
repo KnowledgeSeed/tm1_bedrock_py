@@ -5,7 +5,7 @@ from TM1_bedrock_py.dimension_builder import normalize
 from TM1_bedrock_py.loader import dataframe_to_cube
 
 
-def rebuild_dimension(
+def rebuild_dimension_structure(
         tm1_service: Any, dimension_name: str, edges_df: pd.DataFrame, attr_df: pd.DataFrame,
         recreate_leaves: bool = True
 ) -> None:
@@ -52,6 +52,8 @@ def rebuild_dimension(
 
     tm1_service.dimensions.update_or_create(dimension)
 
+
+def fill_dimension_element_attributes(tm1_service: Any, attr_df: pd.DataFrame, dimension_name: str) -> None:
     writable_attr_df = normalize.get_writable_attr_df(attr_df=attr_df, dimension_name=dimension_name)
     element_attributes_cube_name = "}ElementAttributes_" + dimension_name
     element_attributes_cube_dims = [dimension_name, element_attributes_cube_name]
