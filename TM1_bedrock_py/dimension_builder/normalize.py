@@ -86,6 +86,28 @@ def assign_missing_type_values(input_df: pd.DataFrame) -> None:
     input_df.loc[is_empty & ~input_df['Child'].isin(parent_list), 'ElementType'] = 'C'
 
 
+def assign_missing_attribute_values(
+        input_df: pd.DataFrame, attribute_columns: list[str],
+        parser: Literal["colon", "square_brackets"] | Callable) -> None:
+    for attribute_info in attribute_columns:
+        _, attr_type = parse_attribute_string(attribute_info, parser)
+
+        if attr_type == "String":
+            input_df[attribute_info] = input_df[attribute_info].fillna("")
+
+        elif attr_type == "Numeric":
+            input_df[attribute_info] = input_df[attribute_info].fillna(0.0)
+
+        elif attr_type == "Alias":
+            condition = input_df[attribute_info].isna() | (input_df[attribute_info] == "")
+
+            input_df[attribute_info] = np.where(
+                condition,
+                input_df['Child'],
+                input_df[attribute_info]
+            )
+
+
 def separate_edge_df_columns(input_df: pd.DataFrame) -> pd.DataFrame:
     validate_schema_for_parent_child_columns(input_df)
     column_list = ["Parent", "Child", "Weight", "Dimension", "Hierarchy"]
@@ -221,7 +243,8 @@ def normalize_parent_child(
         parent_column: Optional[str] = None, child_column: Optional[str] = None,
         type_column: Optional[str] = None, weight_column: Optional[str] = None,
         input_attr_df: pd.DataFrame = None,
-        input_attr_df_element_column: Optional[str] = None
+        input_attr_df_element_column: Optional[str] = None,
+        attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon"
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     input_df = normalize_all_column_names(
@@ -247,6 +270,7 @@ def normalize_parent_child(
     assign_missing_type_values(input_df=input_df)
 
     attribute_columns = get_attribute_columns_list(input_df=input_df, level_columns=[])
+    assign_missing_attribute_values(input_df=input_df, attribute_columns=attribute_columns, parser=attribute_parser)
 
     edges_df = separate_edge_df_columns(input_df=input_df)
     attr_df = separate_attr_df_columns(input_df=input_df, attribute_columns=attribute_columns)
@@ -264,7 +288,8 @@ def normalize_indented_level_columns(
         dim_column: Optional[str] = None, hier_column: Optional[str] = None,
         type_column: Optional[str] = None, weight_column: Optional[str] = None,
         input_attr_df: pd.DataFrame = None,
-        input_attr_df_element_column: Optional[str] = None
+        input_attr_df_element_column: Optional[str] = None,
+        attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon"
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     input_df = normalize_all_column_names(
@@ -293,6 +318,7 @@ def normalize_indented_level_columns(
     assign_missing_type_values(input_df=input_df)
 
     attribute_columns = get_attribute_columns_list(input_df=input_df, level_columns=level_columns)
+    assign_missing_attribute_values(input_df=input_df, attribute_columns=attribute_columns, parser=attribute_parser)
 
     edges_df = separate_edge_df_columns(input_df=input_df)
     attr_df = separate_attr_df_columns(input_df=input_df, attribute_columns=attribute_columns)
@@ -310,7 +336,8 @@ def normalize_filled_level_columns(
         dim_column: Optional[str] = None, hier_column: Optional[str] = None,
         type_column: Optional[str] = None, weight_column: Optional[str] = None,
         input_attr_df: pd.DataFrame = None,
-        input_attr_df_element_column: Optional[str] = None
+        input_attr_df_element_column: Optional[str] = None,
+        attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon"
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     input_df = normalize_all_column_names(
@@ -339,6 +366,7 @@ def normalize_filled_level_columns(
     assign_missing_type_values(input_df=input_df)
 
     attribute_columns = get_attribute_columns_list(input_df=input_df, level_columns=level_columns)
+    assign_missing_attribute_values(input_df=input_df, attribute_columns=attribute_columns, parser=attribute_parser)
 
     edges_df = separate_edge_df_columns(input_df=input_df)
     attr_df = separate_attr_df_columns(input_df=input_df, attribute_columns=attribute_columns)
