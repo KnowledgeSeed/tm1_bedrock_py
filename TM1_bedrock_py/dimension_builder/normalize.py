@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 from typing import Optional, Any, Hashable, Tuple, Callable, Literal
 import re
+
+from TM1_bedrock_py.dimension_builder.exceptions import InvalidAttributeColumnNameError
 from TM1_bedrock_py.dimension_builder.validate import (validate_row_for_element_count_indented_levels,
                                                        validate_row_for_element_count_filled_levels,
                                                        validate_row_for_complete_fill_filled_levels,
@@ -93,10 +95,11 @@ def separate_edge_df_columns(input_df: pd.DataFrame) -> pd.DataFrame:
 
 def separate_attr_df_columns(
         input_df: pd.DataFrame,
-        attr_columns: Optional[list[str]] = None
+        level_columns: list[str]
 ) -> pd.DataFrame:
-    attr_columns = attr_columns if attr_columns is not None else []
     base_columns = ["Child", "ElementType", "Dimension", "Hierarchy"]
+    non_attribute_columns = ["Parent", "Child", "ElementType", "Weight", "Dimension", "Hierarchy"] + level_columns
+    attr_columns = [c for c in input_df.columns if c not in non_attribute_columns]
 
     attr_df = input_df[base_columns + attr_columns].copy()
     attr_df = attr_df.rename(columns={"Child": "ElementName"})
@@ -199,7 +202,7 @@ def parse_filled_levels_into_parent_child(input_df: pd.DataFrame, level_columns:
 def drop_invalid_edges_df_rows(edges_df: pd.DataFrame) -> pd.DataFrame:
     edges_df['Parent'] = edges_df['Parent'].replace("", np.nan)
     edges_df = edges_df.dropna(subset=['Parent'])
-    edges_df = edges_df.drop_duplicates(subset=["Parent", "Child"])
+    edges_df = edges_df.drop_duplicates(subset=["Parent", "Child", "Hierarchy"])
     return edges_df
 
 
@@ -214,7 +217,6 @@ def normalize_parent_child(
         dim_column: Optional[str] = None, hier_column: Optional[str] = None,
         parent_column: Optional[str] = None, child_column: Optional[str] = None,
         type_column: Optional[str] = None, weight_column: Optional[str] = None,
-        attr_columns: Optional[list[str]] = None,
         input_attr_df: pd.DataFrame = None,
         input_attr_df_element_column: Optional[str] = None
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -242,7 +244,7 @@ def normalize_parent_child(
     assign_missing_type_values(input_df=input_df)
 
     edges_df = separate_edge_df_columns(input_df=input_df)
-    attr_df = separate_attr_df_columns(input_df=input_df, attr_columns=attr_columns)
+    attr_df = separate_attr_df_columns(input_df=input_df, level_columns=[])
 
     edges_df = drop_invalid_edges_df_rows(edges_df)
     attr_df = drop_invalid_attr_df_rows(attr_df)
@@ -256,7 +258,6 @@ def normalize_indented_level_columns(
         dimension_name: str, hierarchy_name: str = None,
         dim_column: Optional[str] = None, hier_column: Optional[str] = None,
         type_column: Optional[str] = None, weight_column: Optional[str] = None,
-        attr_columns: Optional[list[str]] = None,
         input_attr_df: pd.DataFrame = None,
         input_attr_df_element_column: Optional[str] = None
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -287,7 +288,7 @@ def normalize_indented_level_columns(
     assign_missing_type_values(input_df=input_df)
 
     edges_df = separate_edge_df_columns(input_df=input_df)
-    attr_df = separate_attr_df_columns(input_df=input_df, attr_columns=attr_columns)
+    attr_df = separate_attr_df_columns(input_df=input_df, level_columns=level_columns)
 
     edges_df = drop_invalid_edges_df_rows(edges_df)
     attr_df = drop_invalid_attr_df_rows(attr_df)
@@ -301,7 +302,6 @@ def normalize_filled_level_columns(
         dimension_name: str, hierarchy_name: str = None,
         dim_column: Optional[str] = None, hier_column: Optional[str] = None,
         type_column: Optional[str] = None, weight_column: Optional[str] = None,
-        attr_columns: Optional[list[str]] = None,
         input_attr_df: pd.DataFrame = None,
         input_attr_df_element_column: Optional[str] = None
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -332,7 +332,7 @@ def normalize_filled_level_columns(
     assign_missing_type_values(input_df=input_df)
 
     edges_df = separate_edge_df_columns(input_df=input_df)
-    attr_df = separate_attr_df_columns(input_df=input_df, attr_columns=attr_columns)
+    attr_df = separate_attr_df_columns(input_df=input_df, level_columns=level_columns)
 
     edges_df = drop_invalid_edges_df_rows(edges_df)
     attr_df = drop_invalid_attr_df_rows(attr_df)
@@ -354,33 +354,69 @@ def get_element_attribute_names_as_list(attr_df: pd.DataFrame) -> list[str]:
     return attr_df.columns.difference(exclude, sort=False).tolist()
 
 
-def _parse_attribute_string_default(attr_name_and_type: str) -> Tuple[str, str]:
-    attr_type_mapping = {
-        "s": "String", "S": "String",
-        "n": "Numeric", "N": "Numeric",
-        "a": "Alias", "A": "Alias"
-    }
-    parts = attr_name_and_type.split(":")
-    return parts[0], attr_type_mapping.get(parts[1])
+_ATTR_TYPE_MAPPING = {
+    "s": "String", "S": "String",
+    "n": "Numeric", "N": "Numeric",
+    "a": "Alias",  "A": "Alias",
+    "String": "String", "Numeric": "Numeric", "Alias": "Alias",
+    "string": "String", "numeric": "Numeric", "alias": "Alias"
+}
 
 
-def _parse_attribute_string_square_brackets(attr_name_and_type: str) -> Tuple[str, str]:
-    attr_type_mapping = {
-        "s": "String", "S": "String",
-        "n": "Numeric", "N": "Numeric",
-        "a": "Alias", "A": "Alias"
-    }
-    parts = re.search(r"^(.*)\[(.*)\]$", attr_name_and_type).groups()
-    return parts[0], attr_type_mapping.get(parts[1])
+def _validate_and_parse_attribute_string_default(attr_name_and_type: str) -> Tuple[str, str]:
+    if attr_name_and_type.count(":") != 1:
+        raise InvalidAttributeColumnNameError(
+            f"Invalid attribute format: '{attr_name_and_type}'. "
+            "Expected format: <name>:<type>"
+        )
+
+    name, type_code = attr_name_and_type.split(sep=":", maxsplit=1)
+
+    if not name.strip():
+        raise InvalidAttributeColumnNameError("Attribute name must not be empty")
+
+    if not type_code.strip():
+        raise InvalidAttributeColumnNameError("Attribute type must not be empty")
+
+    if type_code not in _ATTR_TYPE_MAPPING:
+        raise InvalidAttributeColumnNameError(
+            f"Invalid attribute type '{type_code}'. "
+            f"Allowed types: {sorted(set(_ATTR_TYPE_MAPPING))}"
+        )
+
+    return name, _ATTR_TYPE_MAPPING[type_code]
+
+
+def _validate_and_parse_attribute_string_square_brackets(attr_name_and_type: str) -> Tuple[str, str]:
+    match = re.fullmatch(r"([^\[\]]+)\[([^\[\]]+)\]", attr_name_and_type)
+
+    if not match:
+        raise InvalidAttributeColumnNameError(
+            f"Invalid attribute format: '{attr_name_and_type}'. "
+            "Expected format: <name>[<type>]"
+        )
+
+    name, type_code = match.groups()
+
+    if not name.strip():
+        raise InvalidAttributeColumnNameError("Attribute name must not be empty")
+
+    if type_code not in _ATTR_TYPE_MAPPING:
+        raise InvalidAttributeColumnNameError(
+            f"Invalid attribute type '{type_code}'. "
+            f"Allowed types: {sorted(set(_ATTR_TYPE_MAPPING))}"
+        )
+
+    return name, _ATTR_TYPE_MAPPING[type_code]
 
 
 def parse_attribute_string(
         attr_name_and_type: str, parse_function: Literal["colon", "square_brackets"] | Callable = "colon"
 ) -> Tuple[str, str]:
     if parse_function == "colon":
-        parse_function = _parse_attribute_string_default
+        parse_function = _validate_and_parse_attribute_string_default
     elif parse_function == "square_brackets":
-        parse_function = _parse_attribute_string_square_brackets
+        parse_function = _validate_and_parse_attribute_string_square_brackets
     return parse_function(attr_name_and_type)
 
 

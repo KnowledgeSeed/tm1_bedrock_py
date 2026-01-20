@@ -591,15 +591,15 @@ test_separate_edge_df_columns:
     }
 
 test_separate_attr_df_columns:
-  - # Scenario 1: Only base columns (attr_columns is None)
+  - # Scenario 1: only base columns, remove parent, rename child
     input_df: {
+      "Parent": ["Total"],
       "Child": ["Item1"],
       "ElementType": ["N"],
       "Dimension": ["Product"],
-      "Hierarchy": ["Standard"],
-      "Extra_Col": ["Ignore"]
+      "Hierarchy": ["Standard"]
     }
-    attr_columns: null
+    input_level_columns: []
     expected_df: {
       "ElementName": ["Item1"],
       "ElementType": ["N"],
@@ -617,7 +617,7 @@ test_separate_attr_df_columns:
       "Size": [10, 20],
       "Weight": [1.0, 1.0]
     }
-    attr_columns: ["Color", "Size"]
+    input_level_columns: []
     expected_df: {
       "ElementName": ["Item1", "Item2"],
       "ElementType": ["N", "C"],
@@ -636,13 +636,33 @@ test_separate_attr_df_columns:
       "ElementType": ["T1"],
       "Price": [100]
     }
-    attr_columns: ["Price"]
+    input_level_columns: []
     expected_df: {
       "ElementName": ["C1"],
       "ElementType": ["T1"],
       "Dimension": ["D1"],
       "Hierarchy": ["H1"],
       "Price": [100]
+    }
+  - # Scenario 4: Verify level column, parent removal, and reordering
+
+    input_df: {
+      "Level1": [ "P1" ],
+      "Level2": [ "C1" ],
+      "Dimension": [ "D1" ],
+      "Hierarchy": [ "H1" ],
+      "Parent": [ "P1" ],
+      "Child": [ "C1" ],
+      "ElementType": [ "T1" ],
+      "Price": [ 100 ]
+    }
+    input_level_columns: [ "Level1", "Level2"]
+    expected_df: {
+      "ElementName": [ "C1" ],
+      "ElementType": [ "T1" ],
+      "Dimension": [ "D1" ],
+      "Hierarchy": [ "H1" ],
+      "Price": [ 100 ]
     }
 
 test_create_stack:

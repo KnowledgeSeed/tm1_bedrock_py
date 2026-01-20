@@ -311,13 +311,13 @@ def test_separate_edge_df_columns(input_df, expected_df):
 
 
 @parametrize_from_file
-def test_separate_attr_df_columns(input_df, attr_columns, expected_df):
+def test_separate_attr_df_columns(input_df, input_level_columns, expected_df):
     input_df = pd.DataFrame(input_df)
     expected_df = pd.DataFrame(expected_df)
 
     output_df = normalize.separate_attr_df_columns(
         input_df=input_df,
-        attr_columns=attr_columns
+        level_columns=input_level_columns
     )
 
     pd.testing.assert_frame_equal(output_df, expected_df)

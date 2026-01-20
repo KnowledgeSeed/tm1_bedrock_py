@@ -3,7 +3,8 @@ import numpy as np
 from typing import Hashable
 from TM1_bedrock_py.dimension_builder.exceptions import (SchemaValidationError,
                                                          GraphValidationError,
-                                                         LevelColumnInvalidRowError)
+                                                         LevelColumnInvalidRowError,
+                                                         ElementTypeConflictError)
 
 
 # level column invalid row errors for normalize functions
@@ -62,6 +63,17 @@ def validate_schema_for_level_columns(input_df: pd.DataFrame, level_columns: lis
 
 
 # schema validations for post-validation
+
+
+def validate_schema_for_node_integrity(edges_df: pd.DataFrame, attr_df: pd.DataFrame):
+    edge_nodes = set(edges_df['Parent'].unique()) | set(edges_df['Child'].unique())
+    attr_nodes = set(attr_df['ElementName'].unique())
+
+    missing_nodes = edge_nodes - attr_nodes
+    if missing_nodes:
+        missing_list = sorted(list(missing_nodes))
+        error_msg = f"Validation Failed: Found {len(missing_list)} node(s) in 'edges_df' not defined in 'attr_df'."
+        raise SchemaValidationError(error_msg)
 
 
 def validate_attr_df_schema_for_inconsistent_element_type(input_df: pd.DataFrame) -> None:
@@ -138,9 +150,34 @@ def validate_graph_for_cycles_with_dfs(input_df: pd.DataFrame) -> None:
 
 
 def post_validation_steps(edges_df: pd.DataFrame, attr_df: pd.DataFrame) -> None:
+    validate_schema_for_node_integrity(edges_df=edges_df, attr_df=attr_df)
     validate_attr_df_schema_for_inconsistent_element_type(input_df=attr_df)
     validate_attr_df_schema_for_inconsistent_leaf_attributes(input_df=attr_df)
 
     validate_graph_for_self_loop(input_df=edges_df)
     validate_graph_for_leaves_as_parents(edges_df=edges_df, attr_df=attr_df)
     validate_graph_for_cycles_with_dfs(input_df=edges_df)
+
+
+def validate_element_type_consistency(existing_attr_df: pd.DataFrame, input_attr_df: pd.DataFrame):
+    cols_needed = ['ElementName', 'Hierarchy', 'ElementType']
+    df_existing_sub = existing_attr_df[cols_needed]
+    df_input_sub = input_attr_df[cols_needed]
+
+    merged_df = pd.merge(
+        df_existing_sub,
+        df_input_sub,
+        on=['ElementName', 'Hierarchy'],
+        how='inner',
+        suffixes=('_existing', '_input')
+    )
+
+    conflicts = merged_df[merged_df['ElementType_existing'] != merged_df['ElementType_input']]
+
+    if not conflicts.empty:
+        num_conflicts = len(conflicts)
+        examples = conflicts.head(10).to_dict(orient='records')
+
+        error_msg = f"Validation Failed: Found {num_conflicts} conflict(s) where 'ElementType' changed."
+        error_msg += f"\nConflicts (First 10): {examples}"
+        raise ElementTypeConflictError(error_msg)
