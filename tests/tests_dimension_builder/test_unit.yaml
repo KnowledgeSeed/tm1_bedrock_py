@@ -599,7 +599,7 @@ test_separate_attr_df_columns:
       "Dimension": ["Product"],
       "Hierarchy": ["Standard"]
     }
-    input_level_columns: []
+    attribute_columns: []
     expected_df: {
       "ElementName": ["Item1"],
       "ElementType": ["N"],
@@ -617,7 +617,7 @@ test_separate_attr_df_columns:
       "Size": [10, 20],
       "Weight": [1.0, 1.0]
     }
-    input_level_columns: []
+    attribute_columns: ["Color", "Size"]
     expected_df: {
       "ElementName": ["Item1", "Item2"],
       "ElementType": ["N", "C"],
@@ -636,7 +636,7 @@ test_separate_attr_df_columns:
       "ElementType": ["T1"],
       "Price": [100]
     }
-    input_level_columns: []
+    attribute_columns: ["Price"]
     expected_df: {
       "ElementName": ["C1"],
       "ElementType": ["T1"],
@@ -656,7 +656,7 @@ test_separate_attr_df_columns:
       "ElementType": [ "T1" ],
       "Price": [ 100 ]
     }
-    input_level_columns: [ "Level1", "Level2"]
+    attribute_columns: [ "Price" ]
     expected_df: {
       "ElementName": [ "C1" ],
       "ElementType": [ "T1" ],

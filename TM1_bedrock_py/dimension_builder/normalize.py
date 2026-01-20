@@ -95,19 +95,22 @@ def separate_edge_df_columns(input_df: pd.DataFrame) -> pd.DataFrame:
 
 def separate_attr_df_columns(
         input_df: pd.DataFrame,
-        level_columns: list[str]
+        attribute_columns: list[str]
 ) -> pd.DataFrame:
     base_columns = ["Child", "ElementType", "Dimension", "Hierarchy"]
-    non_attribute_columns = ["Parent", "Child", "ElementType", "Weight", "Dimension", "Hierarchy"] + level_columns
-    attr_columns = [c for c in input_df.columns if c not in non_attribute_columns]
-
-    attr_df = input_df[base_columns + attr_columns].copy()
+    attr_df = input_df[base_columns + attribute_columns].copy()
     attr_df = attr_df.rename(columns={"Child": "ElementName"})
     return attr_df
 
 
 def get_hierarchy_list(input_df: pd.DataFrame) -> list[str]:
     return input_df["Hierarchy"].unique()
+
+
+def get_attribute_columns_list(input_df: pd.DataFrame, level_columns: list[str]) -> list[str]:
+    non_attribute_columns = ["Parent", "Child", "ElementType", "Weight", "Dimension", "Hierarchy"] + level_columns
+    attr_columns = [c for c in input_df.columns if c not in non_attribute_columns]
+    return attr_columns
 
 
 def create_stack(input_df: pd.DataFrame) -> dict:
@@ -243,8 +246,10 @@ def normalize_parent_child(
     assign_missing_edge_values(input_df=input_df, dimension_name=dimension_name, hierarchy_name=hierarchy_name)
     assign_missing_type_values(input_df=input_df)
 
+    attribute_columns = get_attribute_columns_list(input_df=input_df, level_columns=[])
+
     edges_df = separate_edge_df_columns(input_df=input_df)
-    attr_df = separate_attr_df_columns(input_df=input_df, level_columns=[])
+    attr_df = separate_attr_df_columns(input_df=input_df, attribute_columns=attribute_columns)
 
     edges_df = drop_invalid_edges_df_rows(edges_df)
     attr_df = drop_invalid_attr_df_rows(attr_df)
@@ -287,8 +292,10 @@ def normalize_indented_level_columns(
     assign_missing_edge_values(input_df=input_df, dimension_name=dimension_name, hierarchy_name=hierarchy_name)
     assign_missing_type_values(input_df=input_df)
 
+    attribute_columns = get_attribute_columns_list(input_df=input_df, level_columns=level_columns)
+
     edges_df = separate_edge_df_columns(input_df=input_df)
-    attr_df = separate_attr_df_columns(input_df=input_df, level_columns=level_columns)
+    attr_df = separate_attr_df_columns(input_df=input_df, attribute_columns=attribute_columns)
 
     edges_df = drop_invalid_edges_df_rows(edges_df)
     attr_df = drop_invalid_attr_df_rows(attr_df)
@@ -331,8 +338,10 @@ def normalize_filled_level_columns(
     assign_missing_edge_values(input_df=input_df, dimension_name=dimension_name, hierarchy_name=hierarchy_name)
     assign_missing_type_values(input_df=input_df)
 
+    attribute_columns = get_attribute_columns_list(input_df=input_df, level_columns=level_columns)
+
     edges_df = separate_edge_df_columns(input_df=input_df)
-    attr_df = separate_attr_df_columns(input_df=input_df, level_columns=level_columns)
+    attr_df = separate_attr_df_columns(input_df=input_df, attribute_columns=attribute_columns)
 
     edges_df = drop_invalid_edges_df_rows(edges_df)
     attr_df = drop_invalid_attr_df_rows(attr_df)
