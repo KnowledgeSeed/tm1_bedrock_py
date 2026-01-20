@@ -10,7 +10,8 @@ from TM1_bedrock_py.dimension_builder.validate import (validate_row_for_element_
                                                        validate_row_for_parent_child_in_indented_level_columns,
                                                        validate_schema_for_parent_child_columns,
                                                        validate_schema_for_level_columns,
-                                                       validate_schema_for_type_mapping)
+                                                       validate_schema_for_type_mapping,
+                                                       validate_schema_for_numeric_values)
 
 
 _TYPE_MAPPING = {
@@ -87,6 +88,36 @@ def assign_missing_edge_values(input_df: pd.DataFrame, dimension_name: str, hier
     )
 
 
+def normalize_numeric_values(input_df: pd.DataFrame, column_name: str) -> None:
+    converted_series = pd.to_numeric(input_df[column_name], errors='coerce')
+    validate_schema_for_numeric_values(input_df, converted_series, column_name)
+
+    input_df[column_name] = converted_series.astype(float)
+
+
+def normalize_string_values(input_df: pd.DataFrame, column_name: str) -> None:
+    input_df[column_name] = input_df[column_name].fillna("")
+    input_df[column_name] = input_df[column_name].astype(str)
+    input_df[column_name] = input_df[column_name].str.strip()
+
+
+def normalize_base_column_types(input_df: pd.DataFrame, level_columns: list[str]) -> None:
+    base_string_columns = ["Parent", "Child", "ElementType", "Dimension", "Hierarchy"] + level_columns
+    for column_name in base_string_columns:
+        normalize_string_values(input_df=input_df, column_name=column_name)
+    normalize_numeric_values(input_df=input_df, column_name="Weight")
+
+
+def normalize_attr_column_types(input_df: pd.DataFrame, attr_columns: list[str],
+                                attribute_parser: Literal["colon", "square_brackets"] | Callable) -> None:
+    for attr_column in attr_columns:
+        _, attr_type = parse_attribute_string(attr_column, attribute_parser)
+        if attr_type in ("Alias", "String"):
+            normalize_string_values(input_df=input_df, column_name=attr_column)
+        else:
+            normalize_numeric_values(input_df=input_df, column_name=attr_column)
+
+
 def assign_missing_type_column(input_df: pd.DataFrame):
     if "ElementType" not in input_df.columns:
         input_df["ElementType"] = ""
@@ -100,7 +131,7 @@ def assign_missing_type_values(input_df: pd.DataFrame) -> None:
     input_df.loc[is_empty & ~input_df['Child'].isin(parent_list), 'ElementType'] = 'Consolidated'
 
 
-def normalize_element_types(input_df: pd.DataFrame) -> pd.DataFrame:
+def normalize_type_values(input_df: pd.DataFrame) -> pd.DataFrame:
     validate_schema_for_type_mapping(input_df=input_df, type_mapping=_TYPE_MAPPING)
     input_df['ElementType'] = input_df['ElementType'].map(_TYPE_MAPPING)
     return input_df
@@ -288,10 +319,13 @@ def normalize_parent_child(
     assign_missing_type_column(input_df=input_df)
     assign_missing_edge_values(input_df=input_df, dimension_name=dimension_name, hierarchy_name=hierarchy_name)
     assign_missing_type_values(input_df=input_df)
-    normalize_element_types(input_df=input_df)
 
     attribute_columns = get_attribute_columns_list(input_df=input_df, level_columns=[])
     assign_missing_attribute_values(input_df=input_df, attribute_columns=attribute_columns, parser=attribute_parser)
+
+    normalize_base_column_types(input_df=input_df, level_columns=[])
+    normalize_attr_column_types(input_df=input_df, attr_columns=attribute_columns, attribute_parser=attribute_parser)
+    normalize_type_values(input_df=input_df)
 
     edges_df = separate_edge_df_columns(input_df=input_df)
     attr_df = separate_attr_df_columns(input_df=input_df, attribute_columns=attribute_columns)
@@ -337,10 +371,13 @@ def normalize_indented_level_columns(
     assign_missing_type_column(input_df=input_df)
     assign_missing_edge_values(input_df=input_df, dimension_name=dimension_name, hierarchy_name=hierarchy_name)
     assign_missing_type_values(input_df=input_df)
-    normalize_element_types(input_df=input_df)
 
     attribute_columns = get_attribute_columns_list(input_df=input_df, level_columns=level_columns)
     assign_missing_attribute_values(input_df=input_df, attribute_columns=attribute_columns, parser=attribute_parser)
+
+    normalize_base_column_types(input_df=input_df, level_columns=level_columns)
+    normalize_attr_column_types(input_df=input_df, attr_columns=attribute_columns, attribute_parser=attribute_parser)
+    normalize_type_values(input_df=input_df)
 
     edges_df = separate_edge_df_columns(input_df=input_df)
     attr_df = separate_attr_df_columns(input_df=input_df, attribute_columns=attribute_columns)
@@ -386,10 +423,13 @@ def normalize_filled_level_columns(
     assign_missing_type_column(input_df=input_df)
     assign_missing_edge_values(input_df=input_df, dimension_name=dimension_name, hierarchy_name=hierarchy_name)
     assign_missing_type_values(input_df=input_df)
-    normalize_element_types(input_df=input_df)
 
     attribute_columns = get_attribute_columns_list(input_df=input_df, level_columns=level_columns)
     assign_missing_attribute_values(input_df=input_df, attribute_columns=attribute_columns, parser=attribute_parser)
+
+    normalize_base_column_types(input_df=input_df, level_columns=level_columns)
+    normalize_attr_column_types(input_df=input_df, attr_columns=attribute_columns, attribute_parser=attribute_parser)
+    normalize_type_values(input_df=input_df)
 
     edges_df = separate_edge_df_columns(input_df=input_df)
     attr_df = separate_attr_df_columns(input_df=input_df, attribute_columns=attribute_columns)

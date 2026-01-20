@@ -70,6 +70,17 @@ def validate_schema_for_type_mapping(input_df: pd.DataFrame, type_mapping: dict)
         bad_vals_list = sorted(list(unknown_values))
         raise SchemaValidationError(f"Type normalization failed: Found unknown 'ElementType' values: {bad_vals_list}")
 
+
+def validate_schema_for_numeric_values(input_df: pd.DataFrame, converted_series: pd.Series, col_name: str) -> None:
+    failed_mask = converted_series.isna() & input_df[col_name].notna()
+    if failed_mask.any():
+        bad_values = input_df.loc[failed_mask, col_name].unique()
+
+        raise SchemaValidationError(
+            f"Conversion Failed: The weight column contains non-numeric values that cannot be converted to float.\n"
+            f"Invalid values found: {list(bad_values)}"
+        )
+
 # schema validations for post-validation
 
 
