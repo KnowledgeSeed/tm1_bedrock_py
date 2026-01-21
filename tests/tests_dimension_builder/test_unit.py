@@ -454,7 +454,7 @@ def test_parse_filled_levels_into_parent_child_failure(
 
 
 @parametrize_from_file
-def test_ensure_row_consistency_edges_df(input_df, expected_df):
+def test_drop_invalid_edges(input_df, expected_df):
     input_df = pd.DataFrame(input_df)
     expected_df = pd.DataFrame(expected_df)
 
@@ -469,7 +469,7 @@ def test_ensure_row_consistency_edges_df(input_df, expected_df):
 
 
 @parametrize_from_file
-def test_ensure_row_consistency_attr_df(input_df, expected_df):
+def test_deduplicate_elements(input_df, expected_df):
     input_df = pd.DataFrame(input_df)
     expected_df = pd.DataFrame(expected_df)
 
