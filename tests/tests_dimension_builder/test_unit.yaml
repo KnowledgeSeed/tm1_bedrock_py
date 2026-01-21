@@ -1011,7 +1011,7 @@ test_parse_filled_levels_into_parent_child_failure:
     expected_exception: "SchemaValidationError"
     expected_message: "Level column Level0 is missing."
 
-test_drop_invalid_edges_df_rows:
+test_ensure_row_consistency_edges_df:
   - # Scenario 1: Mixed valid and invalid parents
     # Row 0: Valid -> Kept
     # Row 1: Empty string -> Dropped
@@ -1064,7 +1064,7 @@ test_drop_invalid_edges_df_rows:
       "Hierarchy": [ "Default", "Alt" ],
     }
 
-test_drop_invalid_attr_df_rows:
+test_ensure_row_consistency_attr_df:
   - # Scenario 1: Exact duplicates across all columns
     input_df: {
       "ElementName": ["Item1", "Item1", "Item2"],

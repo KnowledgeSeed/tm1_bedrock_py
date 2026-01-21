@@ -1,16 +1,16 @@
-from typing import Any, Literal, Callable
+from typing import Any, Literal
 import pandas as pd
 from TM1py.Objects import Dimension, Hierarchy
-from TM1_bedrock_py.dimension_builder import normalize
+from TM1_bedrock_py.dimension_builder import normalize, utility
 from TM1_bedrock_py.loader import dataframe_to_cube
 
 
-def apply_update_without_unwind_on_edges_df(
+def apply_update_on_edges(
         existing_df: pd.DataFrame, input_df: pd.DataFrame, orphan_consolidation_name: str = "OrphanParent"
 ) -> pd.DataFrame:
     # get difference, set all parents to OP if the parent is in input and the child isn't
 
-    existing_only = normalize.get_edges_difference(existing_df, input_df)
+    existing_only = utility.get_legacy_edges(existing_df, input_df)
 
     input_children = set(input_df["Child"].unique().tolist())
     input_parents = set(input_df["Parent"].unique().tolist())
@@ -21,12 +21,12 @@ def apply_update_without_unwind_on_edges_df(
     return pd.concat([input_df, existing_only], ignore_index=True).drop_duplicates()
 
 
-def apply_update_with_unwind_on_edges_df(
+def apply_update_with_unwind_on_edges(
         existing_df: pd.DataFrame, input_df: pd.DataFrame, orphan_consolidation_name: str = "OrphanParent"
 ) -> pd.DataFrame:
     # get difference, set all parent names to OP, delete rows that have a child in input
 
-    existing_only = normalize.get_edges_difference(existing_df, input_df)
+    existing_only = utility.get_legacy_edges(existing_df, input_df)
     existing_only["Parent"] = orphan_consolidation_name
 
     input_children = set(input_df["Child"].unique().tolist())
@@ -35,7 +35,7 @@ def apply_update_with_unwind_on_edges_df(
     return pd.concat([input_df, existing_only_filtered], ignore_index=True).drop_duplicates()
 
 
-def assign_orphan_consolidation_rows_to_attr_df(
+def add_orphan_consolidation_elements(
         input_hierarchies: list[str],
         attribute_columns: list[str],
         dimension_name: str,
@@ -54,20 +54,20 @@ def assign_orphan_consolidation_rows_to_attr_df(
     return orphan_parent_elements_df
 
 
-def apply_update_on_attr_df(
+def apply_update_on_elements(
         existing_df: pd.DataFrame, input_df: pd.DataFrame,
         dimension_name: str, orphan_consolidation_name: str = "OrphanParent"
 ) -> pd.DataFrame:
-    existing_only = normalize.get_attr_difference(existing_df, input_df)
+    existing_only = utility.get_legacy_element_attributes(existing_df, input_df)
     output_df = pd.concat([input_df, existing_only], ignore_index=True).drop_duplicates()
 
     input_hierarchies = input_df["Hierarchy"].unique().tolist()
-    attribute_columns = normalize.get_attribute_columns_list(input_df=input_df, level_columns=[])
+    attribute_columns = utility.get_attribute_columns_list(input_df=input_df, level_columns=[])
 
-    orphan_parent_elements_df = assign_orphan_consolidation_rows_to_attr_df(
-        input_hierarchies=input_hierarchies, attribute_columns=attribute_columns,
-        dimension_name=dimension_name, orphan_consolidation_name=orphan_consolidation_name
-    )
+    orphan_parent_elements_df = add_orphan_consolidation_elements(input_hierarchies=input_hierarchies,
+                                                                  attribute_columns=attribute_columns,
+                                                                  dimension_name=dimension_name,
+                                                                  orphan_consolidation_name=orphan_consolidation_name)
 
     return pd.concat([output_df, orphan_parent_elements_df], ignore_index=True).drop_duplicates()
 
@@ -79,18 +79,15 @@ def apply_update(
         dimension_name: str, orphan_consolidation_name: str = "OrphanParent"
 ):
     if mode == "update":
-        updated_edges_df = apply_update_without_unwind_on_edges_df(
-            existing_df=existing_edges_df, input_df=input_edges_df, orphan_consolidation_name=orphan_consolidation_name
-        )
+        updated_edges_df = apply_update_on_edges(existing_df=existing_edges_df, input_df=input_edges_df,
+                                                 orphan_consolidation_name=orphan_consolidation_name)
     else:
-        updated_edges_df = apply_update_with_unwind_on_edges_df(
-            existing_df=existing_edges_df, input_df=input_edges_df, orphan_consolidation_name=orphan_consolidation_name
-        )
+        updated_edges_df = apply_update_with_unwind_on_edges(existing_df=existing_edges_df, input_df=input_edges_df,
+                                                             orphan_consolidation_name=orphan_consolidation_name)
 
-    updated_attr_df = apply_update_on_attr_df(
-        existing_df=existing_attr_df, input_df=input_attr_df, dimension_name=dimension_name,
-        orphan_consolidation_name=orphan_consolidation_name
-    )
+    updated_attr_df = apply_update_on_elements(existing_df=existing_attr_df, input_df=input_attr_df,
+                                               dimension_name=dimension_name,
+                                               orphan_consolidation_name=orphan_consolidation_name)
 
     return updated_edges_df, updated_attr_df
 
@@ -98,7 +95,7 @@ def apply_update(
 def rebuild_dimension_structure(
         tm1_service: Any, dimension_name: str, edges_df: pd.DataFrame, attr_df: pd.DataFrame
 ) -> None:
-    hierarchy_names = normalize.get_hierarchy_list(input_df=attr_df)
+    hierarchy_names = utility.get_hierarchy_list(input_df=attr_df)
 
     dimension = Dimension(name=dimension_name)
     hierarchies = {
@@ -106,11 +103,11 @@ def rebuild_dimension_structure(
         for hierarchy_name in hierarchy_names
     }
 
-    attribute_strings = normalize.get_attribute_columns_as_list(attr_df)
+    attribute_strings = utility.get_attribute_columns_list(input_df=attr_df, level_columns=[])
 
     for hierarchy_name in hierarchies.keys():
         for attr_string in attribute_strings:
-            attr_name, attr_type = normalize.parse_attribute_string(attr_string)
+            attr_name, attr_type = utility.parse_attribute_string(attr_string)
             hierarchies[hierarchy_name].add_element_attribute(attr_name, attr_type)
 
     for _, attr_df_row in attr_df.iterrows():
@@ -133,8 +130,8 @@ def rebuild_dimension_structure(
     tm1_service.dimensions.update_or_create(dimension)
 
 
-def fill_dimension_element_attributes(tm1_service: Any, attr_df: pd.DataFrame, dimension_name: str) -> None:
-    writable_attr_df = normalize.get_writable_attr_df(attr_df=attr_df, dimension_name=dimension_name)
+def update_element_attributes(tm1_service: Any, attr_df: pd.DataFrame, dimension_name: str) -> None:
+    writable_attr_df = utility.unpivot_attributes_to_cube_format(attr_df=attr_df, dimension_name=dimension_name)
     element_attributes_cube_name = "}ElementAttributes_" + dimension_name
     element_attributes_cube_dims = [dimension_name, element_attributes_cube_name]
     dataframe_to_cube(

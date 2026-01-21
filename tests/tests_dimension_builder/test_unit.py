@@ -1,11 +1,10 @@
 from pathlib import Path
-
 import pandas as pd
 import parametrize_from_file
 import pytest
 from sqlalchemy import create_engine
 
-from TM1_bedrock_py.dimension_builder import validate, normalize
+from TM1_bedrock_py.dimension_builder import validate, normalize, utility
 from TM1_bedrock_py.dimension_builder.io import read_source_to_df
 from TM1_bedrock_py.dimension_builder.exceptions import (
     SchemaValidationError,
@@ -23,6 +22,8 @@ test_data_csv = [
     ("level_columns.csv", EXPECTED_DF_LEVEL_COLUMNS, "indented_levels"),
     ("level_columns_filled_levels.csv", EXPECTED_DF_LEVEL_COLUMNS_FILLED, "indented_levels")
 ]
+
+
 @pytest.mark.parametrize("file_path, expected_df, source_format", test_data_csv)
 def test_read_csv_source_to_df(file_path, expected_df, source_format):
     source = DATA_DIR / file_path
@@ -40,6 +41,8 @@ test_data_csv_attr_list = [
     ("level_columns_attribute_list.csv", EXPECTED_DF_LEVEL_COLUMNS_ATTR, "indented_levels"),
     ("attributes_only.csv", EXPECTED_DF_ATTR_ONLY, "attributes")
 ]
+
+
 @pytest.mark.parametrize("file_path, expected_df, source_format", test_data_csv_attr_list)
 def test_read_csv_source_to_df_with_attribute_list(file_path, expected_df, source_format):
     source = DATA_DIR / file_path
@@ -59,6 +62,8 @@ test_data_xlsx = [
     (EXPECTED_DF_LEVEL_COLUMNS, "Hierarchy", "indented_levels"),
     (EXPECTED_DF_LEVEL_COLUMNS_FILLED, "Hierarchy", "indented_levels")
 ]
+
+
 @pytest.mark.parametrize("expected_df, sheet_name, source_format", test_data_xlsx)
 def test_read_xlsx_source_to_df(tmp_path, expected_df, sheet_name, source_format):
     source = tmp_path / "input.xlsx"
@@ -78,6 +83,8 @@ test_data_xlsx_attr_list = [
     (EXPECTED_DF_LEVEL_COLUMNS_ATTR, "Hierarchy", "indented_levels"),
     (EXPECTED_DF_ATTR_ONLY, "Attributes", "attributes")
 ]
+
+
 @pytest.mark.parametrize("expected_df, sheet_name, source_format", test_data_xlsx_attr_list)
 def test_read_xlsx_source_to_df_with_attribute_list(tmp_path, expected_df, sheet_name, source_format):
     source = tmp_path / "input.xlsx"
@@ -99,6 +106,8 @@ test_data_sql = [
     (EXPECTED_DF_PC_MO, sql_query_pc_mo, dtype_mapping_pc_mo, "parent_child"),
     (EXPECTED_DF_LEVEL_COLUMNS, sql_query_level_columns, dtype_mapping_level_columns, "indented_levels"),
 ]
+
+
 @pytest.mark.parametrize("expected_df, query, dtype, format_type", test_data_sql)
 def test_read_sql_source_to_df(expected_df, query,  dtype, format_type):
     engine = create_engine('sqlite://', echo=False)
@@ -128,6 +137,8 @@ test_data_sql = [
     (EXPECTED_DF_ATTR_ONLY, columns_attr_only, dtype_mapping_attr_only, "attributes"),
     (EXPECTED_DF_LEVEL_COLUMNS_ATTR, columns_level_columns, dtype_mapping_level_columns, "indented_levels"),
 ]
+
+
 @pytest.mark.parametrize("expected_df, columns, dtype, format_type", test_data_sql)
 def test_read_sql_source_to_df_attribute_list(expected_df, columns,  dtype, format_type):
     engine = create_engine('sqlite://', echo=False)
@@ -158,6 +169,8 @@ test_data_yaml = [
     (EXPECTED_DF_PARENT_CHILD, "parent_child", "test_read_yaml_source_to_df_extra_cols", None),
     (EXPECTED_DF_LEVEL_COLUMNS, "indented_levels", "test_read_yaml_source_to_df_indented_levels", None),
 ]
+
+
 @pytest.mark.parametrize("expected_df, source_format, template_key, yaml_aliases", test_data_yaml)
 def test_read_yaml_source_to_df(expected_df, source_format, template_key, yaml_aliases):
     source = Path(__file__).resolve().parent / "test_unit.yaml"
@@ -178,6 +191,8 @@ test_data_yaml = [
     (EXPECTED_DF_LEVEL_COLUMNS_ATTR, "indented_levels", "test_read_yaml_source_to_df_indented_levels_attr_list"),
     (EXPECTED_DF_ATTR_ONLY, "attributes", "test_read_yaml_source_to_df_attr_only")
 ]
+
+
 @pytest.mark.parametrize("expected_df, source_format, template_key", test_data_yaml)
 def test_read_yaml_source_to_df_attribute_list(expected_df, source_format, template_key):
     source = Path(__file__).resolve().parent / "test_unit.yaml"
@@ -307,14 +322,14 @@ def test_separate_attr_df_columns(input_df, attribute_columns, expected_df):
 def test_create_stack(input_df, expected_stack):
     input_df = pd.DataFrame(input_df)
 
-    output_stack = normalize.create_stack(input_df=input_df)
+    output_stack = utility.create_stack(input_df=input_df)
 
     assert output_stack == expected_stack
 
 
 @parametrize_from_file
 def test_update_stack(stack, hierarchy, element_level, element_name, expected_stack):
-    output_stack = normalize.update_stack(
+    output_stack = utility.update_stack(
         stack=stack,
         hierarchy=hierarchy,
         element_level=element_level,
@@ -327,7 +342,7 @@ def test_update_stack(stack, hierarchy, element_level, element_name, expected_st
 def test_parse_indented_level_columns(input_row, row_index, level_columns, expected_name, expected_level):
     df_row = pd.Series(input_row)
 
-    element_name, element_level = normalize.parse_indented_level_columns(
+    element_name, element_level = utility.parse_indented_level_columns(
         df_row=df_row,
         row_index=row_index,
         level_columns=level_columns
@@ -344,7 +359,7 @@ def test_parse_indented_level_columns_failure(input_row, row_index, level_column
     exception_type = eval(expected_exception)
 
     with pytest.raises(exception_type) as excinfo:
-        normalize.parse_indented_level_columns(
+        utility.parse_indented_level_columns(
             df_row=df_row,
             row_index=row_index,
             level_columns=level_columns
@@ -356,7 +371,7 @@ def test_parse_indented_level_columns_failure(input_row, row_index, level_column
 @parametrize_from_file
 def test_parse_filled_level_columns(input_row, row_index, level_columns, expected_name, expected_level):
     df_row = pd.Series(input_row)
-    element_name, element_level = normalize.parse_filled_level_columns(
+    element_name, element_level = utility.parse_filled_level_columns(
         df_row=df_row,
         row_index=row_index,
         level_columns=level_columns
@@ -377,7 +392,7 @@ def test_parse_filled_level_columns_failure(
     exception_type = eval(expected_exception)
 
     with pytest.raises(exception_type) as excinfo:
-        normalize.parse_filled_level_columns(
+        utility.parse_filled_level_columns(
             df_row=df_row,
             row_index=row_index,
             level_columns=level_columns
@@ -391,10 +406,7 @@ def test_parse_indented_levels_into_parent_child(input_df, level_columns, expect
     input_df = pd.DataFrame(input_df)
     expected_df = pd.DataFrame(expected_df)
 
-    output_df = normalize.parse_indented_levels_into_parent_child(
-        input_df=input_df,
-        level_columns=level_columns
-    )
+    output_df = normalize.assign_parent_child_to_indented_levels(input_df=input_df, level_columns=level_columns)
 
     pd.testing.assert_frame_equal(output_df, expected_df)
 
@@ -410,10 +422,7 @@ def test_parse_indented_levels_into_parent_child_failure(
     exception_type = eval(expected_exception)
 
     with pytest.raises(exception_type) as excinfo:
-        normalize.parse_indented_levels_into_parent_child(
-            input_df=input_df,
-            level_columns=level_columns
-        )
+        normalize.assign_parent_child_to_indented_levels(input_df=input_df, level_columns=level_columns)
 
     assert expected_message in str(excinfo.value)
 
@@ -423,10 +432,7 @@ def test_parse_filled_levels_into_parent_child(input_df, level_columns, expected
     input_df = pd.DataFrame(input_df)
     expected_df = pd.DataFrame(expected_df)
 
-    output_df = normalize.parse_filled_levels_into_parent_child(
-        input_df=input_df,
-        level_columns=level_columns
-    )
+    output_df = normalize.assign_parent_child_to_filled_levels(input_df=input_df, level_columns=level_columns)
 
     pd.testing.assert_frame_equal(output_df, expected_df)
 
@@ -442,20 +448,18 @@ def test_parse_filled_levels_into_parent_child_failure(
     exception_type = eval(expected_exception)
 
     with pytest.raises(exception_type) as excinfo:
-        normalize.parse_indented_levels_into_parent_child(
-            input_df=input_df,
-            level_columns=level_columns
-        )
+        normalize.assign_parent_child_to_indented_levels(input_df=input_df, level_columns=level_columns)
 
     assert expected_message in str(excinfo.value)
 
 
 @parametrize_from_file
-def test_drop_invalid_edges_df_rows(input_df, expected_df):
+def test_ensure_row_consistency_edges_df(input_df, expected_df):
     input_df = pd.DataFrame(input_df)
     expected_df = pd.DataFrame(expected_df)
 
-    output_df = normalize.drop_invalid_edges_df_rows(edges_df=input_df)
+    output_df = normalize.drop_invalid_edges(edges_df=input_df)
+    output_df = normalize.deduplicate_edges(edges_df=output_df)
 
     pd.testing.assert_frame_equal(
         output_df.reset_index(drop=True),
@@ -465,11 +469,11 @@ def test_drop_invalid_edges_df_rows(input_df, expected_df):
 
 
 @parametrize_from_file
-def test_drop_invalid_attr_df_rows(input_df, expected_df):
+def test_ensure_row_consistency_attr_df(input_df, expected_df):
     input_df = pd.DataFrame(input_df)
     expected_df = pd.DataFrame(expected_df)
 
-    output_df = normalize.drop_invalid_attr_df_rows(attr_df=input_df)
+    output_df = normalize.deduplicate_elements(attr_df=input_df)
 
     pd.testing.assert_frame_equal(
         output_df,

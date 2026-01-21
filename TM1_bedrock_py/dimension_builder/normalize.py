@@ -1,17 +1,16 @@
 import pandas as pd
 import numpy as np
-from typing import Optional, Hashable, Tuple, Callable, Literal
-import re
+from typing import Optional, Tuple, Callable, Literal
+from TM1_bedrock_py.dimension_builder import utility
 
+from TM1_bedrock_py.dimension_builder.validate import (
+    validate_row_for_parent_child_in_indented_level_columns,
+    validate_schema_for_parent_child_columns,
+    validate_schema_for_level_columns,
+    validate_schema_for_type_mapping,
+    validate_schema_for_numeric_values
+)
 from TM1_bedrock_py.dimension_builder.exceptions import InvalidAttributeColumnNameError
-from TM1_bedrock_py.dimension_builder.validate import (validate_row_for_element_count_indented_levels,
-                                                       validate_row_for_element_count_filled_levels,
-                                                       validate_row_for_complete_fill_filled_levels,
-                                                       validate_row_for_parent_child_in_indented_level_columns,
-                                                       validate_schema_for_parent_child_columns,
-                                                       validate_schema_for_level_columns,
-                                                       validate_schema_for_type_mapping,
-                                                       validate_schema_for_numeric_values)
 
 
 _TYPE_MAPPING = {
@@ -61,7 +60,7 @@ def normalize_attr_column_names(
     rename_map = {}
 
     for col in attribute_columns:
-        name_part, type_part = parse_attribute_string(col, attribute_parser)
+        name_part, type_part = utility.parse_attribute_string(col, attribute_parser)
         normalized_type = _ATTR_TYPE_MAPPING.get(type_part)
 
         if name_part.strip() is "":
@@ -142,7 +141,7 @@ def normalize_attr_column_types(
         input_df: pd.DataFrame, attr_columns: list[str],
 ) -> None:
     for attr_column in attr_columns:
-        _, attr_type = parse_attribute_string(attr_column)
+        _, attr_type = utility.parse_attribute_string(attr_column)
         if attr_type in ("Alias", "String"):
             normalize_string_values(input_df=input_df, column_name=attr_column)
         else:
@@ -172,7 +171,7 @@ def assign_missing_attribute_values(
         input_df: pd.DataFrame, attribute_columns: list[str],
 ) -> None:
     for attribute_info in attribute_columns:
-        _, attr_type = parse_attribute_string(attribute_info)
+        _, attr_type = utility.parse_attribute_string(attribute_info)
 
         if attr_type == "String":
             input_df[attribute_info] = input_df[attribute_info].fillna("")
@@ -207,76 +206,17 @@ def separate_attr_df_columns(
     return attr_df
 
 
-def get_hierarchy_list(input_df: pd.DataFrame) -> list[str]:
-    return input_df["Hierarchy"].unique()
-
-
-def get_attribute_columns_list(input_df: pd.DataFrame, level_columns: list[str]) -> list[str]:
-    non_attribute_columns = [
-        "Parent", "Child", "ElementName", "ElementType", "Weight", "Dimension", "Hierarchy"
-    ] + level_columns
-    attr_columns = [c for c in input_df.columns if c not in non_attribute_columns]
-    return attr_columns
-
-
-def create_stack(input_df: pd.DataFrame) -> dict:
-    hierarchies = get_hierarchy_list(input_df=input_df)
-    stack = {hier: {} for hier in hierarchies}
-    return stack
-
-
-def update_stack(stack: dict, hierarchy: str, element_level: int, element_name: str) -> dict:
-    stack[hierarchy][element_level] = element_name
-    for stack_level in list(stack[hierarchy].keys()):
-        if stack_level > element_level:
-            del stack[hierarchy][stack_level]
-    return stack
-
-
-def parse_indented_level_columns(df_row: pd.Series, row_index: Hashable, level_columns: list):
-    elements_in_row = 0
-    element_level = 0
-    element_name = ""
-    for level_index, level_column in enumerate(level_columns):
-        current_level_value = df_row[level_column]
-        if current_level_value is not None and current_level_value != "":
-            element_name = current_level_value
-            element_level = level_index
-            elements_in_row += 1
-
-    validate_row_for_element_count_indented_levels(elements_in_row=elements_in_row, row_index=row_index)
-    return element_name, element_level
-
-
-def parse_filled_level_columns(df_row: pd.Series, row_index: Hashable, level_columns: list):
-    element_name = ""
-    element_level = -1
-    found_empty = False
-
-    for level_index, level_column in enumerate(level_columns):
-        val = df_row[level_column]
-        is_filled = val is not None and val != ""
-        if is_filled:
-            validate_row_for_complete_fill_filled_levels(found_empty, row_index)
-            element_name = val
-            element_level = level_index
-        else:
-            found_empty = True
-
-    validate_row_for_element_count_filled_levels(element_level, row_index)
-
-    return element_name, element_level
-
-
-def parse_indented_levels_into_parent_child(input_df: pd.DataFrame, level_columns: list[str],):
+def assign_parent_child_to_indented_levels(input_df: pd.DataFrame, level_columns: list[str], ):
     validate_schema_for_level_columns(input_df, level_columns)
 
-    stack = create_stack(input_df)
+    stack = utility.create_stack(input_df)
     for row_index, df_row in input_df.iterrows():
         current_hierarchy = df_row["Hierarchy"]
 
-        element_name, element_level = parse_indented_level_columns(df_row=df_row, row_index=row_index,
-                                                                   level_columns=level_columns)
+        element_name, element_level = utility.parse_indented_level_columns(
+            df_row=df_row, row_index=row_index,
+            level_columns=level_columns
+        )
         input_df.at[(row_index, "Child")] = element_name
         validate_row_for_parent_child_in_indented_level_columns(
             row_index=row_index, element_level=element_level,
@@ -286,18 +226,18 @@ def parse_indented_levels_into_parent_child(input_df: pd.DataFrame, level_column
         parent_element_name = None if element_level == 0 else stack[current_hierarchy][element_level - 1]
         input_df.at[(row_index, "Parent")] = parent_element_name
 
-        stack = update_stack(
+        stack = utility.update_stack(
             stack=stack, hierarchy=current_hierarchy,
             element_level=element_level, element_name=element_name
         )
     return input_df
 
 
-def parse_filled_levels_into_parent_child(input_df: pd.DataFrame, level_columns: list[str],):
+def assign_parent_child_to_filled_levels(input_df: pd.DataFrame, level_columns: list[str], ):
     validate_schema_for_level_columns(input_df, level_columns)
 
     for row_index, df_row in input_df.iterrows():
-        element_name, element_level = parse_filled_level_columns(
+        element_name, element_level = utility.parse_filled_level_columns(
             df_row=df_row, level_columns=level_columns, row_index=row_index
         )
 
@@ -308,14 +248,18 @@ def parse_filled_levels_into_parent_child(input_df: pd.DataFrame, level_columns:
     return input_df
 
 
-def drop_invalid_edges_df_rows(edges_df: pd.DataFrame) -> pd.DataFrame:
+def drop_invalid_edges(edges_df: pd.DataFrame) -> pd.DataFrame:
     edges_df['Parent'] = edges_df['Parent'].replace("", np.nan)
     edges_df = edges_df.dropna(subset=['Parent'])
+    return edges_df
+
+
+def deduplicate_edges(edges_df: pd.DataFrame) -> pd.DataFrame:
     edges_df = edges_df.drop_duplicates(subset=["Parent", "Child", "Hierarchy"])
     return edges_df
 
 
-def drop_invalid_attr_df_rows(attr_df: pd.DataFrame) -> pd.DataFrame:
+def deduplicate_elements(attr_df: pd.DataFrame) -> pd.DataFrame:
     attr_df = attr_df.drop_duplicates(subset=["ElementName", "Dimension", "Hierarchy"]).reset_index(drop=True)
     return attr_df
 
@@ -328,10 +272,9 @@ def normalize_parent_child(
         type_column: Optional[str] = None, weight_column: Optional[str] = None,
         input_attr_df: pd.DataFrame = None,
         input_attr_df_element_column: Optional[str] = None,
-        attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon",
-        orphan_consolidation_name: str = "OrphanParent"
+        attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon"
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    attribute_columns = get_attribute_columns_list(input_df=input_df, level_columns=[])
+    attribute_columns = utility.get_attribute_columns_list(input_df=input_df, level_columns=[])
 
     input_df = normalize_all_base_column_names(input_df=input_df, dim_column=dim_column, hier_column=hier_column,
                                                parent_column=parent_column, child_column=child_column,
@@ -363,9 +306,9 @@ def normalize_parent_child(
     edges_df = separate_edge_df_columns(input_df=input_df)
     attr_df = separate_attr_df_columns(input_df=input_df, attribute_columns=attribute_columns)
 
-    edges_df = drop_invalid_edges_df_rows(edges_df)
-    edges_df = drop_orphan_parent_edges(edges_df, orphan_consolidation_name)
-    attr_df = drop_invalid_attr_df_rows(attr_df)
+    edges_df = drop_invalid_edges(edges_df)
+    edges_df = deduplicate_edges(edges_df)
+    attr_df = deduplicate_elements(attr_df)
 
     return edges_df, attr_df
 
@@ -378,16 +321,15 @@ def normalize_indented_level_columns(
         type_column: Optional[str] = None, weight_column: Optional[str] = None,
         input_attr_df: pd.DataFrame = None,
         input_attr_df_element_column: Optional[str] = None,
-        attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon",
-        orphan_consolidation_name: str = "OrphanParent"
+        attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon"
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    attribute_columns = get_attribute_columns_list(input_df=input_df, level_columns=level_columns)
+    attribute_columns = utility.get_attribute_columns_list(input_df=input_df, level_columns=level_columns)
 
     input_df = normalize_all_base_column_names(input_df=input_df, dim_column=dim_column, hier_column=hier_column,
                                                type_column=type_column, weight_column=weight_column)
 
     input_df = assign_parent_child_to_level_columns(input_df=input_df)
-    input_df = parse_indented_levels_into_parent_child(input_df=input_df, level_columns=level_columns)
+    input_df = assign_parent_child_to_indented_levels(input_df=input_df, level_columns=level_columns)
 
     if input_attr_df is not None:
         input_attr_df = normalize_all_base_column_names(input_df=input_attr_df, dim_column=dim_column,
@@ -416,9 +358,9 @@ def normalize_indented_level_columns(
     edges_df = separate_edge_df_columns(input_df=input_df)
     attr_df = separate_attr_df_columns(input_df=input_df, attribute_columns=attribute_columns)
 
-    edges_df = drop_invalid_edges_df_rows(edges_df)
-    edges_df = drop_orphan_parent_edges(edges_df, orphan_consolidation_name)
-    attr_df = drop_invalid_attr_df_rows(attr_df)
+    edges_df = drop_invalid_edges(edges_df)
+    edges_df = deduplicate_edges(edges_df)
+    attr_df = deduplicate_elements(attr_df)
 
     return edges_df, attr_df
 
@@ -431,16 +373,15 @@ def normalize_filled_level_columns(
         type_column: Optional[str] = None, weight_column: Optional[str] = None,
         input_attr_df: pd.DataFrame = None,
         input_attr_df_element_column: Optional[str] = None,
-        attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon",
-        orphan_consolidation_name: str = "OrphanParent"
+        attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon"
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    attribute_columns = get_attribute_columns_list(input_df=input_df, level_columns=level_columns)
+    attribute_columns = utility.get_attribute_columns_list(input_df=input_df, level_columns=level_columns)
 
     input_df = normalize_all_base_column_names(input_df=input_df, dim_column=dim_column, hier_column=hier_column,
                                                type_column=type_column, weight_column=weight_column)
 
     input_df = assign_parent_child_to_level_columns(input_df=input_df)
-    input_df = parse_filled_levels_into_parent_child(input_df=input_df, level_columns=level_columns)
+    input_df = assign_parent_child_to_filled_levels(input_df=input_df, level_columns=level_columns)
 
     if input_attr_df is not None:
         input_attr_df = normalize_all_base_column_names(input_df=input_attr_df, dim_column=dim_column,
@@ -470,90 +411,22 @@ def normalize_filled_level_columns(
     edges_df = separate_edge_df_columns(input_df=input_df)
     attr_df = separate_attr_df_columns(input_df=input_df, attribute_columns=attribute_columns)
 
-    edges_df = drop_invalid_edges_df_rows(edges_df)
-    edges_df = drop_orphan_parent_edges(edges_df, orphan_consolidation_name)
-    attr_df = drop_invalid_attr_df_rows(attr_df)
+    edges_df = drop_invalid_edges(edges_df)
+    edges_df = deduplicate_edges(edges_df)
+    attr_df = deduplicate_elements(attr_df)
 
     return edges_df, attr_df
 
 
-def get_attribute_columns_as_list(attr_df: pd.DataFrame) -> list[str]:
-    exclude = ["ElementName", "ElementType", "Dimension", "Hierarchy"]
-    return attr_df.columns.difference(exclude, sort=False).tolist()
-
-
-def _parse_attribute_string_colon(attr_name_and_type: str) -> Tuple[str, str]:
-    name_part, type_part = attr_name_and_type.split(sep=":", maxsplit=1)
-    return name_part, type_part
-
-
-def _parse_attribute_string_square_brackets(attr_name_and_type: str) -> Tuple[str, str]:
-    pattern = r"^(.+)\[(.+)\]$"
-    match = re.match(pattern, attr_name_and_type)
-    if not match:
-        raise ValueError(f"Invalid format: '{attr_name_and_type}'. Expected 'Name[Type]'.")
-
-    name_part, type_part = match.groups()
-    return name_part, type_part
-
-
-def parse_attribute_string(
-        attr_name_and_type: str, parser: Literal["colon", "square_brackets"] | Callable = "colon"
-) -> Tuple[str, str]:
-    strategies = {
-        "square_brackets": _parse_attribute_string_square_brackets,
-        "colon": _parse_attribute_string_colon
-    }
-    func = parser
-
-    if isinstance(func, str):
-        func = strategies[func]
-    return func(attr_name_and_type)
-
-
-def get_writable_attr_df(attr_df: pd.DataFrame, dimension_name: str) -> pd.DataFrame:
-    attribute_dimension_name = "}ElementAttributes_" + dimension_name
-    attribute_strings = get_attribute_columns_as_list(attr_df)
-
-    attr_df_copy = attr_df.copy()
-    attr_df_copy[dimension_name] = attr_df_copy['Hierarchy'] + ':' + attr_df_copy['ElementName']
-    df_to_melt = attr_df_copy.drop(columns=['ElementName', 'ElementType', 'Dimension', 'Hierarchy'])
-    df_to_melt = df_to_melt.rename(columns={
-        attr_string: parse_attribute_string(attr_string)[0]
-        for attr_string in attribute_strings
-    })
-
-    return df_to_melt.melt(
-        id_vars=[dimension_name],
-        var_name=attribute_dimension_name,
-        value_name='Value'
-    )
-
-
-def get_edges_difference(existing_df: pd.DataFrame, input_df: pd.DataFrame) -> pd.DataFrame:
-    keys = ["Parent", "Child", "Dimension", "Hierarchy"]
-    merged = existing_df.merge(
-        input_df[keys].drop_duplicates(),
-        on=keys,
-        how='left',
-        indicator=True
-    )
-    result = merged[merged['_merge'] == 'left_only']
-    return result.drop(columns=['_merge'])
-
-
-def get_attr_difference(existing_df: pd.DataFrame, input_df: pd.DataFrame) -> pd.DataFrame:
-    keys = ["ElementName", "Dimension", "Hierarchy"]
-    merged = existing_df.merge(
-        input_df[keys].drop_duplicates(),
-        on=keys,
-        how='left',
-        indicator=True
-    )
-    result = merged[merged['_merge'] == 'left_only']
-    return result.drop(columns=['_merge'])
-
-
-def drop_orphan_parent_edges(edges_df: pd.DataFrame, orphan_consolidation_name: str = "OrphanParent") -> pd.DataFrame:
+def clear_orphan_parent_edges(
+        edges_df: pd.DataFrame, orphan_consolidation_name: str = "OrphanParent"
+) -> pd.DataFrame:
     edges_df.drop(edges_df[edges_df["Parent"] == orphan_consolidation_name].index, inplace=True)
     return edges_df
+
+
+def clear_orphan_parent_element_attributes(
+        attr_df: pd.DataFrame, orphan_consolidation_name: str = "OrphanParent"
+) -> pd.DataFrame:
+    attr_df.drop(attr_df[attr_df["ElementName"] == orphan_consolidation_name].index, inplace=True)
+    return attr_df
