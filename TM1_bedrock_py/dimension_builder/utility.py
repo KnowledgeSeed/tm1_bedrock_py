@@ -111,7 +111,7 @@ def get_legacy_edges(existing_df: pd.DataFrame, input_df: pd.DataFrame) -> pd.Da
     return result.drop(columns=['_merge'])
 
 
-def get_legacy_element_attributes(existing_df: pd.DataFrame, input_df: pd.DataFrame) -> pd.DataFrame:
+def get_legacy_elements(existing_df: pd.DataFrame, input_df: pd.DataFrame) -> pd.DataFrame:
     keys = ["ElementName", "Dimension", "Hierarchy"]
     merged = existing_df.merge(
         input_df[keys].drop_duplicates(),

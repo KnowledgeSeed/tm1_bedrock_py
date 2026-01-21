@@ -54,10 +54,14 @@ def normalize_all_base_column_names(
 
 def normalize_attr_column_names(
         input_df: pd.DataFrame,
-        attribute_columns: list[str],
+        attribute_columns: list[str] = None,
         attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon"
-) -> pd.DataFrame:
+) -> Tuple[pd.DataFrame, list[str]]:
+    if attribute_columns is None:
+        attribute_columns = utility.get_attribute_columns_list(input_df=input_df, level_columns=[])
+
     rename_map = {}
+    renamed_columns = []
 
     for col in attribute_columns:
         name_part, type_part = utility.parse_attribute_string(col, attribute_parser)
@@ -82,8 +86,9 @@ def normalize_attr_column_names(
             )
 
         rename_map[col] = new_name
+        renamed_columns.append(new_name)
 
-    return input_df.rename(columns=rename_map)
+    return input_df.rename(columns=rename_map), renamed_columns
 
 
 def assign_missing_edge_columns(
@@ -168,8 +173,13 @@ def normalize_type_values(input_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def assign_missing_attribute_values(
-        input_df: pd.DataFrame, attribute_columns: list[str],
+        input_df: pd.DataFrame, attribute_columns: list[str] = None,
 ) -> None:
+    if attribute_columns is None:
+        attribute_columns = utility.get_attribute_columns_list(input_df=input_df, level_columns=[])
+
+    element_name_column = 'Child' if 'Child' in input_df.columns else 'ElementName'
+
     for attribute_info in attribute_columns:
         _, attr_type = utility.parse_attribute_string(attribute_info)
 
@@ -184,7 +194,7 @@ def assign_missing_attribute_values(
 
             input_df[attribute_info] = np.where(
                 condition,
-                input_df['Child'],
+                input_df[element_name_column],
                 input_df[attribute_info]
             )
 
@@ -274,21 +284,22 @@ def normalize_parent_child(
         input_elements_df_element_column: Optional[str] = None,
         attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon"
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    attribute_columns = utility.get_attribute_columns_list(input_df=input_df, level_columns=[])
 
-    input_df = normalize_all_base_column_names(input_df=input_df, dim_column=dim_column, hier_column=hier_column,
-                                               parent_column=parent_column, child_column=child_column,
-                                               type_column=type_column, weight_column=weight_column)
+    input_df = normalize_all_base_column_names(
+        input_df=input_df, dim_column=dim_column, hier_column=hier_column,
+        parent_column=parent_column, child_column=child_column,
+        type_column=type_column, weight_column=weight_column
+    )
+
     if input_elements_df is not None:
-        input_elements_df = normalize_all_base_column_names(input_df=input_elements_df, dim_column=dim_column,
-                                                        hier_column=hier_column,
-                                                        element_column=input_elements_df_element_column,
-                                                        type_column=type_column)
-        input_df = pd.merge(
-            input_df, input_elements_df,
-            on='Child', how='left'
+        input_elements_df = normalize_all_base_column_names(
+            input_df=input_elements_df, dim_column=dim_column, hier_column=hier_column,
+            element_column=input_elements_df_element_column, type_column=type_column
         )
-    input_df = normalize_attr_column_names(
+        input_df = pd.merge(input_df, input_elements_df, on='Child', how='left')
+
+    attribute_columns = utility.get_attribute_columns_list(input_df=input_df, level_columns=[])
+    input_df, attribute_columns = normalize_attr_column_names(
         input_df=input_df, attribute_columns=attribute_columns, attribute_parser=attribute_parser
     )
 
@@ -323,24 +334,24 @@ def normalize_indented_level_columns(
         input_elements_df_element_column: Optional[str] = None,
         attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon"
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    attribute_columns = utility.get_attribute_columns_list(input_df=input_df, level_columns=level_columns)
 
-    input_df = normalize_all_base_column_names(input_df=input_df, dim_column=dim_column, hier_column=hier_column,
-                                               type_column=type_column, weight_column=weight_column)
+    input_df = normalize_all_base_column_names(
+        input_df=input_df, dim_column=dim_column, hier_column=hier_column,
+        type_column=type_column, weight_column=weight_column
+    )
 
     input_df = assign_parent_child_to_level_columns(input_df=input_df)
     input_df = assign_parent_child_to_indented_levels(input_df=input_df, level_columns=level_columns)
 
     if input_elements_df is not None:
-        input_elements_df = normalize_all_base_column_names(input_df=input_elements_df, dim_column=dim_column,
-                                                        hier_column=hier_column,
-                                                        element_column=input_elements_df_element_column,
-                                                        type_column=type_column)
-        input_df = pd.merge(
-            input_df, input_elements_df,
-            on='Child', how='left'
+        input_elements_df = normalize_all_base_column_names(
+            input_df=input_elements_df, dim_column=dim_column, hier_column=hier_column,
+            element_column=input_elements_df_element_column, type_column=type_column
         )
-    input_df = normalize_attr_column_names(
+        input_df = pd.merge(input_df, input_elements_df, on='Child', how='left')
+
+    attribute_columns = utility.get_attribute_columns_list(input_df=input_df, level_columns=level_columns)
+    input_df, attribute_columns = normalize_attr_column_names(
         input_df=input_df, attribute_columns=attribute_columns, attribute_parser=attribute_parser
     )
 
@@ -375,25 +386,24 @@ def normalize_filled_level_columns(
         input_elements_df_element_column: Optional[str] = None,
         attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon"
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    attribute_columns = utility.get_attribute_columns_list(input_df=input_df, level_columns=level_columns)
 
-    input_df = normalize_all_base_column_names(input_df=input_df, dim_column=dim_column, hier_column=hier_column,
-                                               type_column=type_column, weight_column=weight_column)
+    input_df = normalize_all_base_column_names(
+        input_df=input_df, dim_column=dim_column, hier_column=hier_column,
+        type_column=type_column, weight_column=weight_column
+    )
 
     input_df = assign_parent_child_to_level_columns(input_df=input_df)
     input_df = assign_parent_child_to_filled_levels(input_df=input_df, level_columns=level_columns)
 
     if input_elements_df is not None:
-        input_elements_df = normalize_all_base_column_names(input_df=input_elements_df, dim_column=dim_column,
-                                                        hier_column=hier_column,
-                                                        element_column=input_elements_df_element_column,
-                                                        type_column=type_column)
-        input_df = pd.merge(
-            input_df, input_elements_df,
-            on='Child', how='left'
+        input_elements_df = normalize_all_base_column_names(
+            input_df=input_elements_df, dim_column=dim_column, hier_column=hier_column,
+            element_column=input_elements_df_element_column, type_column=type_column
         )
+        input_df = pd.merge(input_df, input_elements_df, on='Child', how='left')
 
-    input_df = normalize_attr_column_names(
+    attribute_columns = utility.get_attribute_columns_list(input_df=input_df, level_columns=level_columns)
+    input_df, attribute_columns = normalize_attr_column_names(
         input_df=input_df, attribute_columns=attribute_columns, attribute_parser=attribute_parser
     )
 

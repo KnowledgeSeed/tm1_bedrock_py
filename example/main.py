@@ -225,12 +225,12 @@ def test_dim_builder_v1():
             "Total", None, None, None, None, None, None
         ],
         "Level1": [
-            None, "Subtotal1", None, None, "Subtotal2", None, None,
-            None, "Subtotal1", None, None, "Subtotal2", None, None
+            None, "Subtotal1", None, None, "Subtotal5", None, None,
+            None, "Subtotal1", None, None, "Subtotal5", None, None
         ],
         "Level2": [
-            None, None, "Element1", "Element2", None, "Element1", "Element3",
-            None, None, "Element1", "Element2", None, "Element1", "Element3"
+            None, None, "Element1", "Element7", None, "Element1", "Element3",
+            None, None, "Element1", "Element7", None, "Element1", "Element3"
         ],
         "Dimension": [
             "DimBuildTest", "DimBuildTest", "DimBuildTest", "DimBuildTest",
@@ -264,6 +264,10 @@ def test_dim_builder_v1():
             10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0,
             10.0, 10.0, 10.0, 10.0, None, 10.0, None
         ],
+        "TestAttribute4:a": [
+            "Value01", "Value02", "Value03", "Value04", "Value05", "Value03", "Value07",
+            "Value01", "Value02", "Value03", "Value04", None, "Value03", None
+        ],
     }
     input_df_indented_levels = pd.DataFrame(data)
 
@@ -272,8 +276,14 @@ def test_dim_builder_v1():
         level_columns=["Level0", "Level1", "Level2"],
         dimension_name=dimension_name,
     )
+
     existing_edges_df = io.read_existing_edges_df(tm1_service, dimension_name)
+    normalize.clear_orphan_parent_edges(existing_edges_df)
+
     existing_elements_df = io.read_existing_elements_df(tm1_service, dimension_name)
+    normalize.clear_orphan_parent_element_attributes(existing_elements_df)
+    existing_elements_df, attribute_columns = normalize.normalize_attr_column_names(existing_elements_df)
+    normalize.assign_missing_attribute_values(existing_elements_df, attribute_columns)
 
     updated_edges_df, updated_elements_df = apply.apply_update(
         mode="update",
@@ -286,13 +296,7 @@ def test_dim_builder_v1():
                                       edges_df=updated_edges_df, elements_df=updated_elements_df)
 
     """
-    existing_edges_df = io.read_existing_edges_df(tm1_service, dimension_name)
-    print(existing_edges_df)
-    
-    apply.rebuild_dimension_structure(tm1_service=tm1_service, dimension_name=dimension_name,
-                                      edges_df=edges_df, elements_df=elements_df)
-
-    apply.fill_dimension_element_attributes(tm1_service=tm1_service, elements_df=elements_df, dimension_name=dimension_name)
+    apply.update_element_attributes(tm1_service=tm1_service, elements_df=elements_df, dimension_name=dimension_name)
     """
     print("Dimension update successful")
 
