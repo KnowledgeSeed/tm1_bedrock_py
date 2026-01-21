@@ -75,17 +75,13 @@ def assign_parent_child_to_level_columns(input_df: pd.DataFrame) -> pd.DataFrame
     return input_df
 
 
-def fill_column_empty_values_with_defaults(input_df: pd.DataFrame, column_name: str, default_value: Any) -> None:
-    input_df[column_name] = input_df[column_name].replace(r'^\s*$', np.nan, regex=True).fillna(default_value)
-
-
 def assign_missing_edge_values(input_df: pd.DataFrame, dimension_name: str, hierarchy_name: str = None):
-    fill_column_empty_values_with_defaults(input_df=input_df, column_name="Weight", default_value=1.0)
-    fill_column_empty_values_with_defaults(input_df=input_df, column_name="Dimension", default_value=dimension_name)
-    fill_column_empty_values_with_defaults(
-        input_df=input_df, column_name="Hierarchy",
-        default_value=hierarchy_name if hierarchy_name is not None else dimension_name
-    )
+    input_df["Weight"] = input_df["Weight"].replace(r'^\s*$', np.nan, regex=True).fillna(1.0)
+    input_df["Dimension"] = input_df["Dimension"].replace(r'^\s*$', np.nan, regex=True).fillna(dimension_name)
+
+    if hierarchy_name is None:
+        hierarchy_name = dimension_name
+    input_df["Hierarchy"] = input_df["Hierarchy"].replace(r'^\s*$', np.nan, regex=True).fillna(hierarchy_name)
 
 
 def normalize_numeric_values(input_df: pd.DataFrame, column_name: str) -> None:
@@ -108,8 +104,10 @@ def normalize_base_column_types(input_df: pd.DataFrame, level_columns: list[str]
     normalize_numeric_values(input_df=input_df, column_name="Weight")
 
 
-def normalize_attr_column_types(input_df: pd.DataFrame, attr_columns: list[str],
-                                attribute_parser: Literal["colon", "square_brackets"] | Callable) -> None:
+def normalize_attr_column_types(
+        input_df: pd.DataFrame, attr_columns: list[str],
+        attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon"
+) -> None:
     for attr_column in attr_columns:
         _, attr_type = parse_attribute_string(attr_column, attribute_parser)
         if attr_type in ("Alias", "String"):
@@ -139,7 +137,8 @@ def normalize_type_values(input_df: pd.DataFrame) -> pd.DataFrame:
 
 def assign_missing_attribute_values(
         input_df: pd.DataFrame, attribute_columns: list[str],
-        parser: Literal["colon", "square_brackets"] | Callable) -> None:
+        parser: Literal["colon", "square_brackets"] | Callable = "colon"
+) -> None:
     for attribute_info in attribute_columns:
         _, attr_type = parse_attribute_string(attribute_info, parser)
 
@@ -181,7 +180,9 @@ def get_hierarchy_list(input_df: pd.DataFrame) -> list[str]:
 
 
 def get_attribute_columns_list(input_df: pd.DataFrame, level_columns: list[str]) -> list[str]:
-    non_attribute_columns = ["Parent", "Child", "ElementType", "Weight", "Dimension", "Hierarchy"] + level_columns
+    non_attribute_columns = [
+        "Parent", "Child", "ElementName", "ElementType", "Weight", "Dimension", "Hierarchy"
+    ] + level_columns
     attr_columns = [c for c in input_df.columns if c not in non_attribute_columns]
     return attr_columns
 
@@ -440,12 +441,7 @@ def normalize_filled_level_columns(
     return edges_df, attr_df
 
 
-def delete_leaves_hierarchy_from_df(input_df: pd.DataFrame) -> None:
-    input_df.drop(input_df[input_df['Hierarchy'] == 'Leaves'].index, inplace=True)
-    input_df.reset_index(drop=True, inplace=True)
-
-
-def get_element_attribute_names_as_list(attr_df: pd.DataFrame) -> list[str]:
+def get_attribute_columns_as_list(attr_df: pd.DataFrame) -> list[str]:
     exclude = ["ElementName", "ElementType", "Dimension", "Hierarchy"]
     return attr_df.columns.difference(exclude, sort=False).tolist()
 
@@ -509,7 +505,7 @@ def parse_attribute_string(
 
 def get_writable_attr_df(attr_df: pd.DataFrame, dimension_name: str) -> pd.DataFrame:
     attribute_dimension_name = "}ElementAttributes_" + dimension_name
-    attribute_strings = get_element_attribute_names_as_list(attr_df)
+    attribute_strings = get_attribute_columns_as_list(attr_df)
 
     attr_df_copy = attr_df.copy()
     attr_df_copy[dimension_name] = attr_df_copy['Hierarchy'] + ':' + attr_df_copy['ElementName']
@@ -524,3 +520,27 @@ def get_writable_attr_df(attr_df: pd.DataFrame, dimension_name: str) -> pd.DataF
         var_name=attribute_dimension_name,
         value_name='Value'
     )
+
+
+def get_edges_difference(existing_df: pd.DataFrame, input_df: pd.DataFrame) -> pd.DataFrame:
+    keys = ["Parent", "Child", "Dimension", "Hierarchy"]
+    merged = existing_df.merge(
+        input_df[keys].drop_duplicates(),
+        on=keys,
+        how='left',
+        indicator=True
+    )
+    result = merged[merged['_merge'] == 'left_only']
+    return result.drop(columns=['_merge'])
+
+
+def get_attr_difference(existing_df: pd.DataFrame, input_df: pd.DataFrame) -> pd.DataFrame:
+    keys = ["ElementName", "Dimension", "Hierarchy"]
+    merged = existing_df.merge(
+        input_df[keys].drop_duplicates(),
+        on=keys,
+        how='left',
+        indicator=True
+    )
+    result = merged[merged['_merge'] == 'left_only']
+    return result.drop(columns=['_merge'])

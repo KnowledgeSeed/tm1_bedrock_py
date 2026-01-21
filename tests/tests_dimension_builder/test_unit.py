@@ -253,20 +253,6 @@ def test_assign_parent_child_to_level_columns(input_df, expected_df):
 
 
 @parametrize_from_file
-def test_fill_column_empty_values_with_defaults(input_df, column_name, default_value, expected_df):
-    input_df = pd.DataFrame(input_df)
-    expected_df = pd.DataFrame(expected_df)
-
-    normalize.fill_column_empty_values_with_defaults(
-        input_df=input_df,
-        column_name=column_name,
-        default_value=default_value
-    )
-
-    pd.testing.assert_frame_equal(input_df, expected_df)
-
-
-@parametrize_from_file
 def test_assign_missing_edge_values(input_df, dimension_name, hierarchy_name, expected_df):
     input_df = pd.DataFrame(input_df)
     expected_df = pd.DataFrame(expected_df)
