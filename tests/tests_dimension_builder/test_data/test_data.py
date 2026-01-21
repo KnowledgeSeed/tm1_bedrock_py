@@ -1,6 +1,8 @@
 import pandas as pd
 import time, random
-from TM1_bedrock_py.dimension_builder.validate import validate_graph_for_cycles_with_kahn
+from TM1_bedrock_py.dimension_builder.validate import (
+    validate_graph_for_cycles_with_kahn, validate_graph_for_cycles_with_dfs
+)
 from TM1_bedrock_py.dimension_builder.exceptions import GraphValidationError
 
 EXPECTED_DF_PARENT_CHILD = {
@@ -225,9 +227,9 @@ def generate_diamond_dag(num_nodes=1000000, layers=20):
     return df
 
 
-def test_khan_algorithm():
+def test_kahn_algorithm():
     # 1. Generate Valid DAG (Diamond structure)
-    df = generate_diamond_dag(num_nodes=100000, layers=10)
+    df = generate_diamond_dag(num_nodes=250000, layers=20)
     print(f"Generated {len(df)} edges.")
 
     new_df = pd.DataFrame({
@@ -236,6 +238,7 @@ def test_khan_algorithm():
     })
     df = pd.concat([df, new_df], ignore_index=True)
 
+    print("validation with khan started")
     start = time.time()
     try:
         validate_graph_for_cycles_with_kahn(df)
@@ -243,3 +246,16 @@ def test_khan_algorithm():
     except GraphValidationError as e:
         print(f"SUCCESS: Cycle detected in {time.time() - start:.4f} seconds.")
         print(f"Error: {e}")
+    print("validation with khan finished")
+
+    print("validation with dfs started")
+    start = time.time()
+    try:
+        validate_graph_for_cycles_with_dfs(df)
+        print("FAILURE: Algorithm failed to detect the cycle.")
+    except GraphValidationError as e:
+        print(f"SUCCESS: Cycle detected in {time.time() - start:.4f} seconds.")
+        print(f"Error: {e}")
+    print("validation with dfs finished")
+
+
