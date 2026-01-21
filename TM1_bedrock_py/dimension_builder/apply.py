@@ -75,7 +75,7 @@ def apply_update_on_elements(
 def apply_update(
         mode: Literal["update", "update_with_unwind"],
         existing_edges_df: pd.DataFrame, input_edges_df: pd.DataFrame,
-        existing_attr_df: pd.DataFrame, input_attr_df: pd.DataFrame,
+        existing_elements_df: pd.DataFrame, input_elements_df: pd.DataFrame,
         dimension_name: str, orphan_consolidation_name: str = "OrphanParent"
 ):
     if mode == "update":
@@ -85,17 +85,17 @@ def apply_update(
         updated_edges_df = apply_update_with_unwind_on_edges(existing_df=existing_edges_df, input_df=input_edges_df,
                                                              orphan_consolidation_name=orphan_consolidation_name)
 
-    updated_attr_df = apply_update_on_elements(existing_df=existing_attr_df, input_df=input_attr_df,
+    updated_elements_df = apply_update_on_elements(existing_df=existing_elements_df, input_df=input_elements_df,
                                                dimension_name=dimension_name,
                                                orphan_consolidation_name=orphan_consolidation_name)
 
-    return updated_edges_df, updated_attr_df
+    return updated_edges_df, updated_elements_df
 
 
 def rebuild_dimension_structure(
-        tm1_service: Any, dimension_name: str, edges_df: pd.DataFrame, attr_df: pd.DataFrame
+        tm1_service: Any, dimension_name: str, edges_df: pd.DataFrame, elements_df: pd.DataFrame
 ) -> None:
-    hierarchy_names = utility.get_hierarchy_list(input_df=attr_df)
+    hierarchy_names = utility.get_hierarchy_list(input_df=elements_df)
 
     dimension = Dimension(name=dimension_name)
     hierarchies = {
@@ -103,17 +103,17 @@ def rebuild_dimension_structure(
         for hierarchy_name in hierarchy_names
     }
 
-    attribute_strings = utility.get_attribute_columns_list(input_df=attr_df, level_columns=[])
+    attribute_strings = utility.get_attribute_columns_list(input_df=elements_df, level_columns=[])
 
     for hierarchy_name in hierarchies.keys():
         for attr_string in attribute_strings:
             attr_name, attr_type = utility.parse_attribute_string(attr_string)
             hierarchies[hierarchy_name].add_element_attribute(attr_name, attr_type)
 
-    for _, attr_df_row in attr_df.iterrows():
-        hierarchy_name = attr_df_row['Hierarchy']
-        element_name = attr_df_row['ElementName']
-        element_type = attr_df_row['ElementType']
+    for _, elements_df_row in elements_df.iterrows():
+        hierarchy_name = elements_df_row['Hierarchy']
+        element_name = elements_df_row['ElementName']
+        element_type = elements_df_row['ElementType']
 
         hierarchies[hierarchy_name].add_element(element_name=element_name, element_type=element_type)
 
@@ -130,13 +130,13 @@ def rebuild_dimension_structure(
     tm1_service.dimensions.update_or_create(dimension)
 
 
-def update_element_attributes(tm1_service: Any, attr_df: pd.DataFrame, dimension_name: str) -> None:
-    writable_attr_df = utility.unpivot_attributes_to_cube_format(attr_df=attr_df, dimension_name=dimension_name)
+def update_element_attributes(tm1_service: Any, elements_df: pd.DataFrame, dimension_name: str) -> None:
+    writable_elements_df = utility.unpivot_attributes_to_cube_format(elements_df=elements_df, dimension_name=dimension_name)
     element_attributes_cube_name = "}ElementAttributes_" + dimension_name
     element_attributes_cube_dims = [dimension_name, element_attributes_cube_name]
     dataframe_to_cube(
         tm1_service=tm1_service,
-        dataframe=writable_attr_df,
+        dataframe=writable_elements_df,
         cube_name=element_attributes_cube_name,
         cube_dims=element_attributes_cube_dims,
         use_blob=True,

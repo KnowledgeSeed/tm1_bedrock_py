@@ -306,11 +306,11 @@ def test_separate_edge_df_columns(input_df, expected_df):
 
 
 @parametrize_from_file
-def test_separate_attr_df_columns(input_df, attribute_columns, expected_df):
+def test_separate_elements_df_columns(input_df, attribute_columns, expected_df):
     input_df = pd.DataFrame(input_df)
     expected_df = pd.DataFrame(expected_df)
 
-    output_df = normalize.separate_attr_df_columns(
+    output_df = normalize.separate_elements_df_columns(
         input_df=input_df,
         attribute_columns=attribute_columns
     )
@@ -473,7 +473,7 @@ def test_deduplicate_elements(input_df, expected_df):
     input_df = pd.DataFrame(input_df)
     expected_df = pd.DataFrame(expected_df)
 
-    output_df = normalize.deduplicate_elements(attr_df=input_df)
+    output_df = normalize.deduplicate_elements(elements_df=input_df)
 
     pd.testing.assert_frame_equal(
         output_df,
@@ -487,16 +487,16 @@ def test_deduplicate_elements(input_df, expected_df):
 # ------------------------------------------------------------------------------------------------------------
 
 @parametrize_from_file
-def test_validate_attr_df_schema_for_inconsistent_element_type_success(df_data):
+def test_validate_elements_df_schema_for_inconsistent_element_type_success(df_data):
     """
     Tests cases where the schema is consistent and no exception should be raised.
     """
     input_df = pd.DataFrame(df_data)
-    validate.validate_attr_df_schema_for_inconsistent_element_type(input_df)
+    validate.validate_elements_df_schema_for_inconsistent_element_type(input_df)
 
 
 @parametrize_from_file
-def test_validate_attr_df_schema_for_inconsistent_element_type_failure(df_data, expected_exception,
+def test_validate_elements_df_schema_for_inconsistent_element_type_failure(df_data, expected_exception,
                                                                        expected_message_part):
     """
     Tests cases where inconsistent element types are detected.
@@ -505,23 +505,23 @@ def test_validate_attr_df_schema_for_inconsistent_element_type_failure(df_data, 
     exception_type = eval(expected_exception)
 
     with pytest.raises(exception_type) as excinfo:
-        validate.validate_attr_df_schema_for_inconsistent_element_type(input_df)
+        validate.validate_elements_df_schema_for_inconsistent_element_type(input_df)
 
     assert expected_message_part in str(excinfo.value)
 
 
 @parametrize_from_file
-def test_validate_attr_df_schema_for_inconsistent_leaf_attributes_success(df_data):
+def test_validate_elements_df_schema_for_inconsistent_leaf_attributes_success(df_data):
     """
     Tests that N/S elements can have different Hierarchy/Dimension values
     without triggering an exception.
     """
     input_df = pd.DataFrame(df_data)
-    validate.validate_attr_df_schema_for_inconsistent_leaf_attributes(input_df)
+    validate.validate_elements_df_schema_for_inconsistent_leaf_attributes(input_df)
 
 
 @parametrize_from_file
-def test_validate_attr_df_schema_for_inconsistent_leaf_attributes_failure(df_data, expected_exception,
+def test_validate_elements_df_schema_for_inconsistent_leaf_attributes_failure(df_data, expected_exception,
                                                                           expected_message_part):
     """
     Tests that conflicting attributes for N/S elements raise SchemaValidationError.
@@ -530,7 +530,7 @@ def test_validate_attr_df_schema_for_inconsistent_leaf_attributes_failure(df_dat
     exception_type = eval(expected_exception)
 
     with pytest.raises(exception_type) as excinfo:
-        validate.validate_attr_df_schema_for_inconsistent_leaf_attributes(input_df)
+        validate.validate_elements_df_schema_for_inconsistent_leaf_attributes(input_df)
 
     # We check for the main error description and the specific bad elements
     assert expected_message_part in str(excinfo.value)
@@ -542,8 +542,8 @@ def test_validate_graph_for_leaves_as_parents_success(edges_data, attr_data):
     Tests cases where no N or S elements act as parents in the hierarchy.
     """
     edges_df = pd.DataFrame(edges_data)
-    attr_df = pd.DataFrame(attr_data)
-    validate.validate_graph_for_leaves_as_parents(edges_df, attr_df)
+    elements_df = pd.DataFrame(attr_data)
+    validate.validate_graph_for_leaves_as_parents(edges_df, elements_df)
 
 
 @parametrize_from_file
@@ -552,11 +552,11 @@ def test_validate_graph_for_leaves_as_parents_failure(edges_data, attr_data, exp
     Tests that a GraphValidationError is raised if an N or S element is a parent.
     """
     edges_df = pd.DataFrame(edges_data)
-    attr_df = pd.DataFrame(attr_data)
+    elements_df = pd.DataFrame(attr_data)
     exception_type = eval(expected_exception)
 
     with pytest.raises(exception_type) as excinfo:
-        validate.validate_graph_for_leaves_as_parents(edges_df, attr_df)
+        validate.validate_graph_for_leaves_as_parents(edges_df, elements_df)
 
     assert expected_message_part in str(excinfo.value)
 

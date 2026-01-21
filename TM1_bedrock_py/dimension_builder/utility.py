@@ -123,13 +123,13 @@ def get_legacy_element_attributes(existing_df: pd.DataFrame, input_df: pd.DataFr
     return result.drop(columns=['_merge'])
 
 
-def unpivot_attributes_to_cube_format(attr_df: pd.DataFrame, dimension_name: str) -> pd.DataFrame:
+def unpivot_attributes_to_cube_format(elements_df: pd.DataFrame, dimension_name: str) -> pd.DataFrame:
     attribute_dimension_name = "}ElementAttributes_" + dimension_name
-    attribute_columns = get_attribute_columns_list(input_df=attr_df, level_columns=[])
+    attribute_columns = get_attribute_columns_list(input_df=elements_df, level_columns=[])
 
-    attr_df_copy = attr_df.copy()
-    attr_df_copy[dimension_name] = attr_df_copy['Hierarchy'] + ':' + attr_df_copy['ElementName']
-    df_to_melt = attr_df_copy.drop(columns=['ElementName', 'ElementType', 'Dimension', 'Hierarchy'])
+    elements_df_copy = elements_df.copy()
+    elements_df_copy[dimension_name] = elements_df_copy['Hierarchy'] + ':' + elements_df_copy['ElementName']
+    df_to_melt = elements_df_copy.drop(columns=['ElementName', 'ElementType', 'Dimension', 'Hierarchy'])
     df_to_melt = df_to_melt.rename(columns={
         attr_string: parse_attribute_string(attr_string)[0]
         for attr_string in attribute_columns

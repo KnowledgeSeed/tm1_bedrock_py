@@ -196,14 +196,14 @@ def separate_edge_df_columns(input_df: pd.DataFrame) -> pd.DataFrame:
     return edges_df
 
 
-def separate_attr_df_columns(
+def separate_elements_df_columns(
         input_df: pd.DataFrame,
         attribute_columns: list[str]
 ) -> pd.DataFrame:
     base_columns = ["Child", "ElementType", "Dimension", "Hierarchy"]
-    attr_df = input_df[base_columns + attribute_columns].copy()
-    attr_df = attr_df.rename(columns={"Child": "ElementName"})
-    return attr_df
+    elements_df = input_df[base_columns + attribute_columns].copy()
+    elements_df = elements_df.rename(columns={"Child": "ElementName"})
+    return elements_df
 
 
 def assign_parent_child_to_indented_levels(input_df: pd.DataFrame, level_columns: list[str], ):
@@ -259,9 +259,9 @@ def deduplicate_edges(edges_df: pd.DataFrame) -> pd.DataFrame:
     return edges_df
 
 
-def deduplicate_elements(attr_df: pd.DataFrame) -> pd.DataFrame:
-    attr_df = attr_df.drop_duplicates(subset=["ElementName", "Dimension", "Hierarchy"]).reset_index(drop=True)
-    return attr_df
+def deduplicate_elements(elements_df: pd.DataFrame) -> pd.DataFrame:
+    elements_df = elements_df.drop_duplicates(subset=["ElementName", "Dimension", "Hierarchy"]).reset_index(drop=True)
+    return elements_df
 
 
 def normalize_parent_child(
@@ -270,8 +270,8 @@ def normalize_parent_child(
         dim_column: Optional[str] = None, hier_column: Optional[str] = None,
         parent_column: Optional[str] = None, child_column: Optional[str] = None,
         type_column: Optional[str] = None, weight_column: Optional[str] = None,
-        input_attr_df: pd.DataFrame = None,
-        input_attr_df_element_column: Optional[str] = None,
+        input_elements_df: pd.DataFrame = None,
+        input_elements_df_element_column: Optional[str] = None,
         attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon"
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     attribute_columns = utility.get_attribute_columns_list(input_df=input_df, level_columns=[])
@@ -279,13 +279,13 @@ def normalize_parent_child(
     input_df = normalize_all_base_column_names(input_df=input_df, dim_column=dim_column, hier_column=hier_column,
                                                parent_column=parent_column, child_column=child_column,
                                                type_column=type_column, weight_column=weight_column)
-    if input_attr_df is not None:
-        input_attr_df = normalize_all_base_column_names(input_df=input_attr_df, dim_column=dim_column,
+    if input_elements_df is not None:
+        input_elements_df = normalize_all_base_column_names(input_df=input_elements_df, dim_column=dim_column,
                                                         hier_column=hier_column,
-                                                        element_column=input_attr_df_element_column,
+                                                        element_column=input_elements_df_element_column,
                                                         type_column=type_column)
         input_df = pd.merge(
-            input_df, input_attr_df,
+            input_df, input_elements_df,
             on='Child', how='left'
         )
     input_df = normalize_attr_column_names(
@@ -304,13 +304,13 @@ def normalize_parent_child(
     normalize_attr_column_types(input_df=input_df, attr_columns=attribute_columns)
 
     edges_df = separate_edge_df_columns(input_df=input_df)
-    attr_df = separate_attr_df_columns(input_df=input_df, attribute_columns=attribute_columns)
+    elements_df = separate_elements_df_columns(input_df=input_df, attribute_columns=attribute_columns)
 
     edges_df = drop_invalid_edges(edges_df)
     edges_df = deduplicate_edges(edges_df)
-    attr_df = deduplicate_elements(attr_df)
+    elements_df = deduplicate_elements(elements_df)
 
-    return edges_df, attr_df
+    return edges_df, elements_df
 
 
 def normalize_indented_level_columns(
@@ -319,8 +319,8 @@ def normalize_indented_level_columns(
         dimension_name: str, hierarchy_name: str = None,
         dim_column: Optional[str] = None, hier_column: Optional[str] = None,
         type_column: Optional[str] = None, weight_column: Optional[str] = None,
-        input_attr_df: pd.DataFrame = None,
-        input_attr_df_element_column: Optional[str] = None,
+        input_elements_df: pd.DataFrame = None,
+        input_elements_df_element_column: Optional[str] = None,
         attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon"
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     attribute_columns = utility.get_attribute_columns_list(input_df=input_df, level_columns=level_columns)
@@ -331,13 +331,13 @@ def normalize_indented_level_columns(
     input_df = assign_parent_child_to_level_columns(input_df=input_df)
     input_df = assign_parent_child_to_indented_levels(input_df=input_df, level_columns=level_columns)
 
-    if input_attr_df is not None:
-        input_attr_df = normalize_all_base_column_names(input_df=input_attr_df, dim_column=dim_column,
+    if input_elements_df is not None:
+        input_elements_df = normalize_all_base_column_names(input_df=input_elements_df, dim_column=dim_column,
                                                         hier_column=hier_column,
-                                                        element_column=input_attr_df_element_column,
+                                                        element_column=input_elements_df_element_column,
                                                         type_column=type_column)
         input_df = pd.merge(
-            input_df, input_attr_df,
+            input_df, input_elements_df,
             on='Child', how='left'
         )
     input_df = normalize_attr_column_names(
@@ -356,13 +356,13 @@ def normalize_indented_level_columns(
     normalize_attr_column_types(input_df=input_df, attr_columns=attribute_columns)
 
     edges_df = separate_edge_df_columns(input_df=input_df)
-    attr_df = separate_attr_df_columns(input_df=input_df, attribute_columns=attribute_columns)
+    elements_df = separate_elements_df_columns(input_df=input_df, attribute_columns=attribute_columns)
 
     edges_df = drop_invalid_edges(edges_df)
     edges_df = deduplicate_edges(edges_df)
-    attr_df = deduplicate_elements(attr_df)
+    elements_df = deduplicate_elements(elements_df)
 
-    return edges_df, attr_df
+    return edges_df, elements_df
 
 
 def normalize_filled_level_columns(
@@ -371,8 +371,8 @@ def normalize_filled_level_columns(
         dimension_name: str, hierarchy_name: str = None,
         dim_column: Optional[str] = None, hier_column: Optional[str] = None,
         type_column: Optional[str] = None, weight_column: Optional[str] = None,
-        input_attr_df: pd.DataFrame = None,
-        input_attr_df_element_column: Optional[str] = None,
+        input_elements_df: pd.DataFrame = None,
+        input_elements_df_element_column: Optional[str] = None,
         attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon"
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     attribute_columns = utility.get_attribute_columns_list(input_df=input_df, level_columns=level_columns)
@@ -383,13 +383,13 @@ def normalize_filled_level_columns(
     input_df = assign_parent_child_to_level_columns(input_df=input_df)
     input_df = assign_parent_child_to_filled_levels(input_df=input_df, level_columns=level_columns)
 
-    if input_attr_df is not None:
-        input_attr_df = normalize_all_base_column_names(input_df=input_attr_df, dim_column=dim_column,
+    if input_elements_df is not None:
+        input_elements_df = normalize_all_base_column_names(input_df=input_elements_df, dim_column=dim_column,
                                                         hier_column=hier_column,
-                                                        element_column=input_attr_df_element_column,
+                                                        element_column=input_elements_df_element_column,
                                                         type_column=type_column)
         input_df = pd.merge(
-            input_df, input_attr_df,
+            input_df, input_elements_df,
             on='Child', how='left'
         )
 
@@ -409,13 +409,13 @@ def normalize_filled_level_columns(
     normalize_attr_column_types(input_df=input_df, attr_columns=attribute_columns)
 
     edges_df = separate_edge_df_columns(input_df=input_df)
-    attr_df = separate_attr_df_columns(input_df=input_df, attribute_columns=attribute_columns)
+    elements_df = separate_elements_df_columns(input_df=input_df, attribute_columns=attribute_columns)
 
     edges_df = drop_invalid_edges(edges_df)
     edges_df = deduplicate_edges(edges_df)
-    attr_df = deduplicate_elements(attr_df)
+    elements_df = deduplicate_elements(elements_df)
 
-    return edges_df, attr_df
+    return edges_df, elements_df
 
 
 def clear_orphan_parent_edges(
@@ -426,7 +426,7 @@ def clear_orphan_parent_edges(
 
 
 def clear_orphan_parent_element_attributes(
-        attr_df: pd.DataFrame, orphan_consolidation_name: str = "OrphanParent"
+        elements_df: pd.DataFrame, orphan_consolidation_name: str = "OrphanParent"
 ) -> pd.DataFrame:
-    attr_df.drop(attr_df[attr_df["ElementName"] == orphan_consolidation_name].index, inplace=True)
-    return attr_df
+    elements_df.drop(elements_df[elements_df["ElementName"] == orphan_consolidation_name].index, inplace=True)
+    return elements_df

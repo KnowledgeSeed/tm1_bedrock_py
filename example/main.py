@@ -56,7 +56,7 @@ def element_attributes():
     dimension = "Period"
     hierarchy = "Period"
     try:
-        attr_df = tm1_service.elements.get_elements_dataframe(
+        elements_df = tm1_service.elements.get_elements_dataframe(
             dimension_name=dimension,
             hierarchy_name=hierarchy,
             skip_consolidations=False,
@@ -65,17 +65,17 @@ def element_attributes():
             skip_weights=True,
             element_type_column="ElementType"
         )
-        attr_df.rename(columns={dimension: "ElementName"}, inplace=True)
-        attr_df["ElementType"] = attr_df["ElementType"].replace({
+        elements_df.rename(columns={dimension: "ElementName"}, inplace=True)
+        elements_df["ElementType"] = elements_df["ElementType"].replace({
             "Numeric": "N",
             "Consolidated": "C",
             "String": "S"
         })
 
-        attr_df.insert(2, "Dimension", dimension)
-        attr_df.insert(3, "Hierarchy", hierarchy)
-        print(attr_df.columns)
-        print(attr_df)
+        elements_df.insert(2, "Dimension", dimension)
+        elements_df.insert(3, "Hierarchy", hierarchy)
+        print(elements_df.columns)
+        print(elements_df)
     finally:
         tm1_service.logout()
 
@@ -267,32 +267,32 @@ def test_dim_builder_v1():
     }
     input_df_indented_levels = pd.DataFrame(data)
 
-    edges_df, attr_df = normalize.normalize_indented_level_columns(
+    edges_df, elements_df = normalize.normalize_indented_level_columns(
         input_df=input_df_indented_levels,
         level_columns=["Level0", "Level1", "Level2"],
         dimension_name=dimension_name,
     )
     existing_edges_df = io.read_existing_edges_df(tm1_service, dimension_name)
-    existing_attr_df = io.read_existing_attr_df(tm1_service, dimension_name)
+    existing_elements_df = io.read_existing_elements_df(tm1_service, dimension_name)
 
-    updated_edges_df, updated_attr_df = apply.apply_update(
+    updated_edges_df, updated_elements_df = apply.apply_update(
         mode="update",
-        existing_edges_df=existing_edges_df, existing_attr_df=existing_attr_df,
-        input_edges_df=edges_df, input_attr_df=attr_df,
+        existing_edges_df=existing_edges_df, existing_elements_df=existing_elements_df,
+        input_edges_df=edges_df, input_elements_df=elements_df,
         dimension_name=dimension_name
     )
 
     apply.rebuild_dimension_structure(tm1_service=tm1_service, dimension_name=dimension_name,
-                                      edges_df=updated_edges_df, attr_df=updated_attr_df)
+                                      edges_df=updated_edges_df, elements_df=updated_elements_df)
 
     """
     existing_edges_df = io.read_existing_edges_df(tm1_service, dimension_name)
     print(existing_edges_df)
     
     apply.rebuild_dimension_structure(tm1_service=tm1_service, dimension_name=dimension_name,
-                                      edges_df=edges_df, attr_df=attr_df)
+                                      edges_df=edges_df, elements_df=elements_df)
 
-    apply.fill_dimension_element_attributes(tm1_service=tm1_service, attr_df=attr_df, dimension_name=dimension_name)
+    apply.fill_dimension_element_attributes(tm1_service=tm1_service, elements_df=elements_df, dimension_name=dimension_name)
     """
     print("Dimension update successful")
 

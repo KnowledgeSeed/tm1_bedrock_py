@@ -577,7 +577,7 @@ test_separate_edge_df_columns:
       "Hierarchy": ["H1"]
     }
 
-test_separate_attr_df_columns:
+test_separate_elements_df_columns:
   - # Scenario 1: only base columns, remove parent, rename child
     input_df: {
       "Parent": ["Total"],
@@ -1110,14 +1110,14 @@ test_deduplicate_elements:
 
 #---------------------------------- Validation -------------------------------------#
 
-test_validate_attr_df_schema_for_inconsistent_element_type_success:
+test_validate_elements_df_schema_for_inconsistent_element_type_success:
   - # All elements have exactly one type
     df_data:
       - {ElementName: "Elem1", ElementType: "N"}
       - {ElementName: "Elem2", ElementType: "C"}
       - {ElementName: "Elem1", ElementType: "N"} # Duplicate entry is consistent
 
-test_validate_attr_df_schema_for_inconsistent_element_type_failure:
+test_validate_elements_df_schema_for_inconsistent_element_type_failure:
   - # Case: Single inconsistent element
     df_data:
       - {ElementName: "Elem1", ElementType: "N"}
@@ -1134,7 +1134,7 @@ test_validate_attr_df_schema_for_inconsistent_element_type_failure:
     expected_exception: "SchemaValidationError"
     expected_message_part: "Inconsistency found! These ElementNames have multiple types: ['Alpha', 'Beta']"
 
-test_validate_attr_df_schema_for_inconsistent_leaf_attributes_success:
+test_validate_elements_df_schema_for_inconsistent_leaf_attributes_success:
   - # Case: N elements differ ONLY in Hierarchy or Dimension (Allowed)
     df_data:
       - {ElementName: "Elem1", ElementType: "N", AttributeX: "Val1", Hierarchy: "H1", Dimension: "D1"}
@@ -1144,7 +1144,7 @@ test_validate_attr_df_schema_for_inconsistent_leaf_attributes_success:
       - {ElementName: "Consol1", ElementType: "C", AttributeX: "Val1", Hierarchy: "H1", Dimension: "D1"}
       - {ElementName: "Consol1", ElementType: "C", AttributeX: "Val2", Hierarchy: "H1", Dimension: "D1"}
 
-test_validate_attr_df_schema_for_inconsistent_leaf_attributes_failure:
+test_validate_elements_df_schema_for_inconsistent_leaf_attributes_failure:
   - # Case: Element 'N' has different AttributeX values
     df_data:
       - {ElementName: "LeafA", ElementType: "N", AttributeX: "Red", Hierarchy: "H1"}

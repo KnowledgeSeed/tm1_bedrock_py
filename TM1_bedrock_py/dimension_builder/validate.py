@@ -84,18 +84,18 @@ def validate_schema_for_numeric_values(input_df: pd.DataFrame, converted_series:
 # schema validations for post-validation
 
 
-def validate_schema_for_node_integrity(edges_df: pd.DataFrame, attr_df: pd.DataFrame):
+def validate_schema_for_node_integrity(edges_df: pd.DataFrame, elements_df: pd.DataFrame):
     edge_nodes = set(edges_df['Parent'].unique()) | set(edges_df['Child'].unique())
-    attr_nodes = set(attr_df['ElementName'].unique())
+    attr_nodes = set(elements_df['ElementName'].unique())
 
     missing_nodes = edge_nodes - attr_nodes
     if missing_nodes:
         missing_list = sorted(list(missing_nodes))
-        error_msg = f"Validation Failed: Found {len(missing_list)} node(s) in 'edges_df' not defined in 'attr_df'."
+        error_msg = f"Validation Failed: Found {len(missing_list)} node(s) in 'edges_df' not defined in 'elements_df'."
         raise SchemaValidationError(error_msg)
 
 
-def validate_attr_df_schema_for_inconsistent_element_type(input_df: pd.DataFrame) -> None:
+def validate_elements_df_schema_for_inconsistent_element_type(input_df: pd.DataFrame) -> None:
     inconsistent_counts = input_df.groupby("ElementName")["ElementType"].nunique()
 
     if (inconsistent_counts > 1).any():
@@ -103,7 +103,7 @@ def validate_attr_df_schema_for_inconsistent_element_type(input_df: pd.DataFrame
         raise SchemaValidationError(f"Inconsistency found! These ElementNames have multiple types: {bad_elements}")
 
 
-def validate_attr_df_schema_for_inconsistent_leaf_attributes(input_df: pd.DataFrame) -> None:
+def validate_elements_df_schema_for_inconsistent_leaf_attributes(input_df: pd.DataFrame) -> None:
     n_df = input_df[input_df["ElementType"].isin(["N", "S"])]
     exclude_cols = ["Hierarchy", "Dimension"]
     check_cols = [col for col in input_df.columns if col not in exclude_cols]
@@ -124,11 +124,11 @@ def validate_attr_df_schema_for_inconsistent_leaf_attributes(input_df: pd.DataFr
 # graph validations for post-validation
 
 
-def validate_graph_for_leaves_as_parents(edges_df: pd.DataFrame, attr_df: pd.DataFrame) -> None:
+def validate_graph_for_leaves_as_parents(edges_df: pd.DataFrame, elements_df: pd.DataFrame) -> None:
     unique_parents = set(edges_df["Parent"].unique())
 
-    mask = attr_df["ElementType"].isin(["N", "S"])
-    target_elements = attr_df.loc[mask, "ElementName"]
+    mask = elements_df["ElementType"].isin(["N", "S"])
+    target_elements = elements_df.loc[mask, "ElementName"]
 
     is_in_parents = target_elements.isin(unique_parents)
 
@@ -227,20 +227,20 @@ def validate_graph_for_cycles_with_kahn(edges_df: pd.DataFrame) -> None:
         )
 
 
-def post_validation_steps(edges_df: pd.DataFrame, attr_df: pd.DataFrame) -> None:
-    validate_schema_for_node_integrity(edges_df=edges_df, attr_df=attr_df)
-    validate_attr_df_schema_for_inconsistent_element_type(input_df=attr_df)
-    validate_attr_df_schema_for_inconsistent_leaf_attributes(input_df=attr_df)
+def post_validation_steps(edges_df: pd.DataFrame, elements_df: pd.DataFrame) -> None:
+    validate_schema_for_node_integrity(edges_df=edges_df, elements_df=elements_df)
+    validate_elements_df_schema_for_inconsistent_element_type(input_df=elements_df)
+    validate_elements_df_schema_for_inconsistent_leaf_attributes(input_df=elements_df)
 
     validate_graph_for_self_loop(input_df=edges_df)
-    validate_graph_for_leaves_as_parents(edges_df=edges_df, attr_df=attr_df)
+    validate_graph_for_leaves_as_parents(edges_df=edges_df, elements_df=elements_df)
     validate_graph_for_cycles_with_kahn(edges_df=edges_df)
 
 
-def validate_element_type_consistency(existing_attr_df: pd.DataFrame, input_attr_df: pd.DataFrame):
+def validate_element_type_consistency(existing_elements_df: pd.DataFrame, input_elements_df: pd.DataFrame):
     cols_needed = ['ElementName', 'Hierarchy', 'ElementType']
-    df_existing_sub = existing_attr_df[cols_needed]
-    df_input_sub = input_attr_df[cols_needed]
+    df_existing_sub = existing_elements_df[cols_needed]
+    df_input_sub = input_elements_df[cols_needed]
 
     merged_df = pd.merge(
         df_existing_sub,

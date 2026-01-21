@@ -365,12 +365,12 @@ def read_existing_edges_df(tm1_service: Any, dimension_name: str) -> pd.DataFram
     return pd.DataFrame(edge_list)
 
 
-def read_existing_attr_df_for_hierarchy(
+def read_existing_elements_df_for_hierarchy(
         tm1_service: Any, dimension_name: str, hierarchy_name: Optional[str] = None
 ) -> pd.DataFrame:
     if hierarchy_name is None:
         hierarchy_name = dimension_name
-    existing_attr_df = tm1_service.elements.get_elements_dataframe(
+    existing_elements_df = tm1_service.elements.get_elements_dataframe(
         dimension_name=dimension_name,
         hierarchy_name=hierarchy_name,
         skip_consolidations=False,
@@ -379,14 +379,14 @@ def read_existing_attr_df_for_hierarchy(
         skip_weights=True,
         element_type_column="ElementType"
     )
-    existing_attr_df.rename(columns={dimension_name: "ElementName"}, inplace=True)
+    existing_elements_df.rename(columns={dimension_name: "ElementName"}, inplace=True)
 
-    existing_attr_df.insert(2, "Dimension", dimension_name)
-    existing_attr_df.insert(3, "Hierarchy", hierarchy_name)
-    return existing_attr_df
+    existing_elements_df.insert(2, "Dimension", dimension_name)
+    existing_elements_df.insert(3, "Hierarchy", hierarchy_name)
+    return existing_elements_df
 
 
-def read_existing_attr_df(
+def read_existing_elements_df(
         tm1_service: Any, dimension_name: str
 ) -> pd.DataFrame:
     leaves = ["Leaves"]
@@ -395,7 +395,7 @@ def read_existing_attr_df(
 
     dfs_to_concat = []
     for hierarchy_name in hierarchy_names:
-        current_attr_df = read_existing_attr_df_for_hierarchy(tm1_service, dimension_name, hierarchy_name)
-        dfs_to_concat.append(current_attr_df)
+        current_elements_df = read_existing_elements_df_for_hierarchy(tm1_service, dimension_name, hierarchy_name)
+        dfs_to_concat.append(current_elements_df)
 
     return pd.concat(dfs_to_concat, ignore_index=True)
