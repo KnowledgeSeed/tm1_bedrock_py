@@ -214,16 +214,10 @@ def test_normalize_all_column_names(
     input_df = pd.DataFrame(input_df)
     expected_df = pd.DataFrame(expected_df)
 
-    output_df = normalize.normalize_all_column_names(
-        input_df=input_df,
-        dim_column=dim_column,
-        hier_column=hier_column,
-        parent_column=parent_column,
-        child_column=child_column,
-        element_column=element_column,
-        type_column=type_column,
-        weight_column=weight_column
-    )
+    output_df = normalize.normalize_all_base_column_names(input_df=input_df, dim_column=dim_column,
+                                                          hier_column=hier_column, parent_column=parent_column,
+                                                          child_column=child_column, element_column=element_column,
+                                                          type_column=type_column, weight_column=weight_column)
 
     pd.testing.assert_frame_equal(output_df, expected_df)
 
@@ -596,6 +590,15 @@ def test_validate_graph_for_cycles_with_dfs_success(df_data):
 
 
 @parametrize_from_file
+def test_validate_graph_for_cycles_with_kahn_success(df_data):
+    """
+    Tests acyclic graphs (DAGs), including complex shapes like diamonds.
+    """
+    input_df = pd.DataFrame(df_data)
+    validate.validate_graph_for_cycles_with_kahn(input_df)
+
+
+@parametrize_from_file
 def test_validate_graph_for_cycles_with_dfs_failure(df_data, expected_exception, expected_message_part):
     """
     Tests that cycles (direct and indirect) raise a GraphValidationError.
@@ -605,5 +608,18 @@ def test_validate_graph_for_cycles_with_dfs_failure(df_data, expected_exception,
 
     with pytest.raises(exception_type) as excinfo:
         validate.validate_graph_for_cycles_with_dfs(input_df)
+    assert expected_message_part in str(excinfo.value)
 
+
+@parametrize_from_file
+def test_validate_graph_for_cycles_with_kahn_failure(df_data, expected_exception, expected_message_part):
+    """
+    Tests that cycles (direct and indirect) raise a GraphValidationError.
+    """
+    input_df = pd.DataFrame(df_data)
+    exception_type = eval(expected_exception)
+
+    with pytest.raises(exception_type) as excinfo:
+        validate.validate_graph_for_cycles_with_kahn(input_df)
+    print(excinfo.value)
     assert expected_message_part in str(excinfo.value)

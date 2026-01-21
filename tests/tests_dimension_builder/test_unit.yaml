@@ -1284,3 +1284,52 @@ test_validate_graph_for_cycles_with_dfs_failure:
       - {Parent: "LoopB", Child: "LoopA"}
     expected_exception: "GraphValidationError"
     expected_message_part: "Graph contains a cycle starting from node:"
+
+
+test_validate_graph_for_cycles_with_kahn_success:
+  - # Case: Simple chain (A -> B -> C)
+    df_data:
+      - {Parent: "A", Child: "B"}
+      - {Parent: "B", Child: "C"}
+  - # Case: Diamond Shape (Valid: A points to B and C, both point to D)
+    # This is a key test for DFS to ensure it handles multiple paths correctly.
+    df_data:
+      - {Parent: "A", Child: "B"}
+      - {Parent: "A", Child: "C"}
+      - {Parent: "B", Child: "D"}
+      - {Parent: "C", Child: "D"}
+  - # Case: Multiple separate trees
+    df_data:
+      - {Parent: "A", Child: "B"}
+      - {Parent: "X", Child: "Y"}
+
+test_validate_graph_for_cycles_with_kahn_failure:
+  - # Case: Direct cycle (A -> B -> A)
+    df_data:
+      - {Parent: "A", Child: "B"}
+      - {Parent: "B", Child: "A"}
+    expected_exception: "GraphValidationError"
+    expected_message_part: "Cycle detected! The graph contains a circular dependency."
+
+  - # Case: Indirect cycle (A -> B -> C -> A)
+    df_data:
+      - {Parent: "A", Child: "B"}
+      - {Parent: "B", Child: "C"}
+      - {Parent: "C", Child: "A"}
+    expected_exception: "GraphValidationError"
+    expected_message_part: "Cycle detected! The graph contains a circular dependency."
+
+  - # Case: Self-loop (A -> A)
+    df_data:
+      - {Parent: "Self", Child: "Self"}
+    expected_exception: "GraphValidationError"
+    expected_message_part: "Cycle detected! The graph contains a circular dependency."
+
+  - # Case: Cycle hidden deep in a hierarchy
+    df_data:
+      - {Parent: "Root", Child: "Level1"}
+      - {Parent: "Level1", Child: "LoopA"}
+      - {Parent: "LoopA", Child: "LoopB"}
+      - {Parent: "LoopB", Child: "LoopA"}
+    expected_exception: "GraphValidationError"
+    expected_message_part: "Cycle detected! The graph contains a circular dependency."

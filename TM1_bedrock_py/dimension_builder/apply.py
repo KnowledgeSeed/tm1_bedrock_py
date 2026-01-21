@@ -12,8 +12,8 @@ def apply_update_without_unwind_on_edges_df(
 
     existing_only = normalize.get_edges_difference(existing_df, input_df)
 
-    input_children = set(input_df["Child"].unique().to_list())
-    input_parents = set(input_df["Parent"].unique().to_list())
+    input_children = set(input_df["Child"].unique().tolist())
+    input_parents = set(input_df["Parent"].unique().tolist())
     cond_parent = existing_only['Parent'].isin(input_parents)
     cond_child = ~existing_only['Child'].isin(input_children)
     existing_only.loc[cond_parent & cond_child, 'Parent'] = orphan_consolidation_name
@@ -29,7 +29,7 @@ def apply_update_with_unwind_on_edges_df(
     existing_only = normalize.get_edges_difference(existing_df, input_df)
     existing_only["Parent"] = orphan_consolidation_name
 
-    input_children = set(input_df["Child"].unique().to_list())
+    input_children = set(input_df["Child"].unique().tolist())
     existing_only_filtered = existing_only[~existing_only['Child'].isin(input_children)]
 
     return pd.concat([input_df, existing_only_filtered], ignore_index=True).drop_duplicates()
@@ -39,37 +39,34 @@ def assign_orphan_consolidation_rows_to_attr_df(
         input_hierarchies: list[str],
         attribute_columns: list[str],
         dimension_name: str,
-        orphan_consolidation_name: str,
-        attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon"
+        orphan_consolidation_name: str
 ) -> pd.DataFrame:
     orphan_parent_elements_df = pd.DataFrame({
-        "Hierarchy": input_hierarchies,
         "ElementName": orphan_consolidation_name,
         "ElementType": "Consolidated",
-        "Dimension": dimension_name
+        "Dimension": dimension_name,
+        "Hierarchy": input_hierarchies
     })
     orphan_parent_elements_df[attribute_columns] = None
     normalize.assign_missing_attribute_values(
-        input_df=orphan_parent_elements_df, attribute_columns=attribute_columns, parser=attribute_parser
+        input_df=orphan_parent_elements_df, attribute_columns=attribute_columns
     )
     return orphan_parent_elements_df
 
 
 def apply_update_on_attr_df(
         existing_df: pd.DataFrame, input_df: pd.DataFrame,
-        dimension_name: str, orphan_consolidation_name: str = "OrphanParent",
-        attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon"
+        dimension_name: str, orphan_consolidation_name: str = "OrphanParent"
 ) -> pd.DataFrame:
     existing_only = normalize.get_attr_difference(existing_df, input_df)
     output_df = pd.concat([input_df, existing_only], ignore_index=True).drop_duplicates()
 
-    input_hierarchies = input_df["Hierarchy"].unique().to_list()
+    input_hierarchies = input_df["Hierarchy"].unique().tolist()
     attribute_columns = normalize.get_attribute_columns_list(input_df=input_df, level_columns=[])
 
     orphan_parent_elements_df = assign_orphan_consolidation_rows_to_attr_df(
         input_hierarchies=input_hierarchies, attribute_columns=attribute_columns,
-        dimension_name=dimension_name, orphan_consolidation_name=orphan_consolidation_name,
-        attribute_parser=attribute_parser
+        dimension_name=dimension_name, orphan_consolidation_name=orphan_consolidation_name
     )
 
     return pd.concat([output_df, orphan_parent_elements_df], ignore_index=True).drop_duplicates()
@@ -79,8 +76,7 @@ def apply_update(
         mode: Literal["update", "update_with_unwind"],
         existing_edges_df: pd.DataFrame, input_edges_df: pd.DataFrame,
         existing_attr_df: pd.DataFrame, input_attr_df: pd.DataFrame,
-        dimension_name: str, orphan_consolidation_name: str = "OrphanParent",
-        attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon"
+        dimension_name: str, orphan_consolidation_name: str = "OrphanParent"
 ):
     if mode == "update":
         updated_edges_df = apply_update_without_unwind_on_edges_df(
@@ -93,7 +89,7 @@ def apply_update(
 
     updated_attr_df = apply_update_on_attr_df(
         existing_df=existing_attr_df, input_df=input_attr_df, dimension_name=dimension_name,
-        orphan_consolidation_name=orphan_consolidation_name, attribute_parser=attribute_parser
+        orphan_consolidation_name=orphan_consolidation_name
     )
 
     return updated_edges_df, updated_attr_df

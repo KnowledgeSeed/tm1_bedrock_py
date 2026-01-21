@@ -1,5 +1,5 @@
 import pandas as pd
-import numpy as np
+from collections import defaultdict
 from typing import Hashable
 from TM1_bedrock_py.dimension_builder.exceptions import (SchemaValidationError,
                                                          GraphValidationError,
@@ -168,6 +168,65 @@ def validate_graph_for_cycles_with_dfs(input_df: pd.DataFrame) -> None:
                 raise GraphValidationError(f"Graph contains a cycle starting from node: {node}")
 
 
+def validate_graph_for_cycles_with_kahn(edges_df: pd.DataFrame) -> None:
+    adj = defaultdict(list)
+    in_degree = defaultdict(int)
+    all_nodes = set()
+
+    for parent, child in zip(edges_df['Parent'], edges_df['Child']):
+        adj[parent].append(child)
+        in_degree[child] += 1
+        all_nodes.add(parent)
+        all_nodes.add(child)
+
+    queue = [node for node in all_nodes if in_degree[node] == 0]
+    processed_count = 0
+
+    while queue:
+        node = queue.pop()
+        processed_count += 1
+
+        if node in adj:
+            for neighbor in adj[node]:
+                in_degree[neighbor] -= 1
+                if in_degree[neighbor] == 0:
+                    queue.append(neighbor)
+
+    total_nodes = len(all_nodes)
+
+    if processed_count != total_nodes:
+        problem_node = next(n for n, deg in in_degree.items() if deg > 0)
+        path_visited = set()
+        current = problem_node
+        path = []
+
+        while current not in path_visited:
+            path_visited.add(current)
+            path.append(current)
+
+            found_next = False
+            for child in adj[current]:
+                if in_degree[child] > 0:
+                    current = child
+                    found_next = True
+                    break
+
+            if not found_next:
+                break
+
+        try:
+            cycle_start_index = path.index(current)
+            actual_cycle = path[cycle_start_index:] + [current]
+            cycle_str = " -> ".join(map(str, actual_cycle))
+        except ValueError:
+            cycle_str = str(current)
+
+        raise GraphValidationError(
+            f"Cycle detected! The graph contains a circular dependency.\n"
+            f"Cycle path: {cycle_str}"
+        )
+
+
 def post_validation_steps(edges_df: pd.DataFrame, attr_df: pd.DataFrame) -> None:
     validate_schema_for_node_integrity(edges_df=edges_df, attr_df=attr_df)
     validate_attr_df_schema_for_inconsistent_element_type(input_df=attr_df)
@@ -175,7 +234,7 @@ def post_validation_steps(edges_df: pd.DataFrame, attr_df: pd.DataFrame) -> None
 
     validate_graph_for_self_loop(input_df=edges_df)
     validate_graph_for_leaves_as_parents(edges_df=edges_df, attr_df=attr_df)
-    validate_graph_for_cycles_with_dfs(input_df=edges_df)
+    validate_graph_for_cycles_with_kahn(edges_df=edges_df)
 
 
 def validate_element_type_consistency(existing_attr_df: pd.DataFrame, input_attr_df: pd.DataFrame):

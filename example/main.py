@@ -9,7 +9,7 @@ from tm1_bench_py import tm1_bench, df_generator_for_dataset, dimension_builder,
 import re
 import os
 import pandas as pd
-from TM1_bedrock_py.dimension_builder import normalize, apply
+from TM1_bedrock_py.dimension_builder import normalize, apply, io
 
 
 def hierarchy_attributes():
@@ -225,12 +225,12 @@ def test_dim_builder_v1():
             "Total", None, None, None, None, None, None
         ],
         "Level1": [
-            None, "Subtotal1", None, None, "Subtotal3", None, None,
-            None, "Subtotal1", None, None, "Subtotal3", None, None
+            None, "Subtotal1", None, None, "Subtotal2", None, None,
+            None, "Subtotal1", None, None, "Subtotal2", None, None
         ],
         "Level2": [
-            None, None, "Element1", "Element4", None, "Element1", "Element3",
-            None, None, "Element1", "Element4", None, "Element1", "Element3"
+            None, None, "Element1", "Element2", None, "Element1", "Element3",
+            None, None, "Element1", "Element2", None, "Element1", "Element3"
         ],
         "Dimension": [
             "DimBuildTest", "DimBuildTest", "DimBuildTest", "DimBuildTest",
@@ -272,10 +272,28 @@ def test_dim_builder_v1():
         level_columns=["Level0", "Level1", "Level2"],
         dimension_name=dimension_name,
     )
+    existing_edges_df = io.read_existing_edges_df(tm1_service, dimension_name)
+    existing_attr_df = io.read_existing_attr_df(tm1_service, dimension_name)
+
+    updated_edges_df, updated_attr_df = apply.apply_update(
+        mode="update",
+        existing_edges_df=existing_edges_df, existing_attr_df=existing_attr_df,
+        input_edges_df=edges_df, input_attr_df=attr_df,
+        dimension_name=dimension_name
+    )
+
+    apply.rebuild_dimension_structure(tm1_service=tm1_service, dimension_name=dimension_name,
+                                      edges_df=updated_edges_df, attr_df=updated_attr_df)
+
+    """
+    existing_edges_df = io.read_existing_edges_df(tm1_service, dimension_name)
+    print(existing_edges_df)
+    
     apply.rebuild_dimension_structure(tm1_service=tm1_service, dimension_name=dimension_name,
                                       edges_df=edges_df, attr_df=attr_df)
 
     apply.fill_dimension_element_attributes(tm1_service=tm1_service, attr_df=attr_df, dimension_name=dimension_name)
+    """
     print("Dimension update successful")
 
 

@@ -1,3 +1,8 @@
+import pandas as pd
+import time, random
+from TM1_bedrock_py.dimension_builder.validate import validate_graph_for_cycles_with_kahn
+from TM1_bedrock_py.dimension_builder.exceptions import GraphValidationError
+
 EXPECTED_DF_PARENT_CHILD = {
     "Parent": ["Total Products", "Total Products", "All Regions", "EMEA", "EMEA"],
     "Child": ["Product A", "Product B", "EMEA", "Hungary", "Germany"],
@@ -186,3 +191,55 @@ columns_level_columns = {
     "hier_name": "Hierarchy",
     "attribute_names": ["Element", "Color", "CountryCode", "IsActive"]
 }
+
+
+def generate_diamond_dag(num_nodes=1000000, layers=20):
+    print(f"Generating DAG with ~{num_nodes} nodes and diamonds...")
+
+    parents = []
+    children = []
+
+    # 1. Distribute nodes into layers
+    nodes_per_layer = num_nodes // layers
+    layer_nodes = {}
+    current_id = 0
+    for i in range(layers):
+        layer_nodes[i] = list(range(current_id, current_id + nodes_per_layer))
+        current_id += nodes_per_layer
+
+    # 2. Create Forward Edges (Valid DAG parts)
+    # Connect Layer i -> Layer i+1
+    for i in range(layers - 1):
+        current_layer = layer_nodes[i]
+        next_layer = layer_nodes[i + 1]
+
+        for p_node in current_layer:
+            # Connect to 2 random nodes in next layer (Creates Diamonds)
+            # Using random.sample ensures we don't pick the same child twice for one parent
+            targets = random.sample(next_layer, min(2, len(next_layer)))
+            for c_node in targets:
+                parents.append(p_node)
+                children.append(c_node)
+
+    df = pd.DataFrame({'Parent': parents, 'Child': children})
+    return df
+
+
+def test_khan_algorithm():
+    # 1. Generate Valid DAG (Diamond structure)
+    df = generate_diamond_dag(num_nodes=100000, layers=10)
+    print(f"Generated {len(df)} edges.")
+
+    new_df = pd.DataFrame({
+        "Parent": ["1", "2", "3", "4", "5", "6"],
+        "Child": ["2", "3", "4", "5", "6", "1"],
+    })
+    df = pd.concat([df, new_df], ignore_index=True)
+
+    start = time.time()
+    try:
+        validate_graph_for_cycles_with_kahn(df)
+        print("FAILURE: Algorithm failed to detect the cycle.")
+    except GraphValidationError as e:
+        print(f"SUCCESS: Cycle detected in {time.time() - start:.4f} seconds.")
+        print(f"Error: {e}")

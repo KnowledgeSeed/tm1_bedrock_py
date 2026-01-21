@@ -347,25 +347,27 @@ def read_source_to_df(
         raise ValueError
 
 
-def read_existing_edges_df(tm1_service: Any, dimension_name: str, hierarchy_name: Optional[str] = None):
-    if hierarchy_name is None:
-        hierarchy_name = dimension_name
-    hierarchy = tm1_service.hierarchies.get(dimension_name, hierarchy_name)
+def read_existing_edges_df(tm1_service: Any, dimension_name: str) -> pd.DataFrame:
+    dimension = tm1_service.dimensions.get(dimension_name)
     edge_list = [
         {
             "Parent": parent,
             "Child": child,
             "Weight": weight,
-            "Dimension": hierarchy.dimension_name,
+            "Dimension": dimension_name,
             "Hierarchy": hierarchy.name
         }
+        for hierarchy in dimension.hierarchies
+        if hierarchy.name != "Leaves"
         for (parent, child), weight in hierarchy.edges.items()
     ]
-    existing_edges_df = pd.DataFrame(edge_list)
-    return existing_edges_df
+
+    return pd.DataFrame(edge_list)
 
 
-def read_existing_attr_df(tm1_service: Any, dimension_name: str, hierarchy_name: Optional[str] = None):
+def read_existing_attr_df_for_hierarchy(
+        tm1_service: Any, dimension_name: str, hierarchy_name: Optional[str] = None
+) -> pd.DataFrame:
     if hierarchy_name is None:
         hierarchy_name = dimension_name
     existing_attr_df = tm1_service.elements.get_elements_dataframe(
@@ -378,12 +380,22 @@ def read_existing_attr_df(tm1_service: Any, dimension_name: str, hierarchy_name:
         element_type_column="ElementType"
     )
     existing_attr_df.rename(columns={dimension_name: "ElementName"}, inplace=True)
-    existing_attr_df["ElementType"] = existing_attr_df["ElementType"].replace({
-        "Numeric": "N",
-        "Consolidated": "C",
-        "String": "S"
-    })
 
     existing_attr_df.insert(2, "Dimension", dimension_name)
     existing_attr_df.insert(3, "Hierarchy", hierarchy_name)
     return existing_attr_df
+
+
+def read_existing_attr_df(
+        tm1_service: Any, dimension_name: str
+) -> pd.DataFrame:
+    leaves = ["Leaves"]
+    hierarchy_names = tm1_service.hierarchies.get_all_names(dimension_name)
+    hierarchy_names = list(set(hierarchy_names) - set(leaves))
+
+    dfs_to_concat = []
+    for hierarchy_name in hierarchy_names:
+        current_attr_df = read_existing_attr_df_for_hierarchy(tm1_service, dimension_name, hierarchy_name)
+        dfs_to_concat.append(current_attr_df)
+
+    return pd.concat(dfs_to_concat, ignore_index=True)
