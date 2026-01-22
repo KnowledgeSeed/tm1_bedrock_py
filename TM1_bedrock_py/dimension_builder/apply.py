@@ -6,60 +6,84 @@ from TM1_bedrock_py.loader import dataframe_to_cube
 
 
 def apply_update_on_edges(
-        legacy_df: pd.DataFrame, input_df: pd.DataFrame, orphan_consolidation_name: str = "OrphanParent"
+        legacy_df: pd.DataFrame,
+        input_df: pd.DataFrame,
+        input_hierarchies: list[str],
+        orphan_consolidation_name: str = "OrphanParent"
 ) -> pd.DataFrame:
-    # get difference, set all parents to OP if the parent is in input and the child isn't
-
     if len(legacy_df) == 0:
         return input_df
 
-    input_children = set(input_df["Child"].unique().tolist())
-    input_parents = set(input_df["Parent"].unique().tolist())
-    cond_parent = legacy_df['Parent'].isin(input_parents)
-    cond_child = ~legacy_df['Child'].isin(input_children)
-    legacy_df.loc[cond_parent & cond_child, 'Parent'] = orphan_consolidation_name
+    for hierarchy in input_hierarchies:
+        curr_input = input_df[input_df["Hierarchy"] == hierarchy]
+
+        input_parents = curr_input["Parent"].unique()
+        input_children = curr_input["Child"].unique()
+
+        in_hierarchy = legacy_df['Hierarchy'].eq(hierarchy)
+
+        if not in_hierarchy.any():
+            continue
+
+        cond_parent = legacy_df['Parent'].isin(input_parents)
+        cond_child = ~legacy_df['Child'].isin(input_children)
+        legacy_df.loc[in_hierarchy & cond_parent & cond_child, 'Parent'] = orphan_consolidation_name
 
     return pd.concat([input_df, legacy_df], ignore_index=True).drop_duplicates()
 
 
 def apply_update_with_unwind_on_edges(
-        legacy_df: pd.DataFrame, input_df: pd.DataFrame, orphan_consolidation_name: str = "OrphanParent"
+        legacy_df: pd.DataFrame,
+        input_df: pd.DataFrame,
+        input_hierarchies: list[str],
+        orphan_consolidation_name: str = "OrphanParent"
 ) -> pd.DataFrame:
-    # get difference, set all parent names to OP, delete rows that have a child in input
-
     if len(legacy_df) == 0:
         return input_df
 
-    legacy_df["Parent"] = orphan_consolidation_name
+    keep_mask = pd.Series(True, index=legacy_df.index)
 
-    input_children = set(input_df["Child"].unique().tolist())
-    legacy_filtered = legacy_df[~legacy_df['Child'].isin(input_children)]
+    for hierarchy in input_hierarchies:
+        curr_input = input_df[input_df["Hierarchy"] == hierarchy]
 
-    return pd.concat([input_df, legacy_filtered], ignore_index=True).drop_duplicates()
+        input_children = set(curr_input["Child"])
+        in_hierarchy = legacy_df['Hierarchy'].eq(hierarchy)
+
+        if not in_hierarchy.any():
+            continue
+
+        legacy_df.loc[in_hierarchy, "Parent"] = orphan_consolidation_name
+
+        rows_to_drop = in_hierarchy & legacy_df['Child'].isin(input_children)
+        keep_mask = keep_mask & (~rows_to_drop)
+
+    legacy_final = legacy_df[keep_mask]
+    return pd.concat([input_df, legacy_final], ignore_index=True).drop_duplicates()
 
 
 def add_orphan_consolidation_elements(
+        elements_df: pd.DataFrame,
         orphan_consolidation_name: str,
         dimension_name: str,
-        input_hierarchies: list[str],
-        attribute_columns: list[str],
+        retained_hierarchies: list[str]
 ) -> pd.DataFrame:
-    orphan_parent_elements_df = pd.DataFrame({
+    attribute_columns = utility.get_attribute_columns_list(input_df=elements_df, level_columns=[])
+    orphan_parent_df = pd.DataFrame({
         "ElementName": orphan_consolidation_name,
         "ElementType": "Consolidated",
         "Dimension": dimension_name,
-        "Hierarchy": input_hierarchies
+        "Hierarchy": retained_hierarchies
     })
-    orphan_parent_elements_df[attribute_columns] = None
+    orphan_parent_df[attribute_columns] = None
     normalize.assign_missing_attribute_values(
-        input_df=orphan_parent_elements_df, attribute_columns=attribute_columns
+        input_df=orphan_parent_df, attribute_columns=attribute_columns
     )
-    return orphan_parent_elements_df
+    return pd.concat([elements_df, orphan_parent_df], ignore_index=True).drop_duplicates()
 
 
 def assign_root_orphan_edges(
-        legacy_edges: pd.DataFrame,
-        legacy_elements: pd.DataFrame,
+        legacy_edges_df: pd.DataFrame,
+        legacy_elements_df: pd.DataFrame,
         edges_df: pd.DataFrame,
         orphan_consolidation_name: str,
         dimension_name: str,
@@ -67,17 +91,17 @@ def assign_root_orphan_edges(
 ) -> pd.DataFrame:
 
     new_rows_collection = []
-    legacy_edges_exist = len(legacy_edges) > 0
+    legacy_edges_exist = len(legacy_edges_df) > 0
 
     for hierarchy in input_hierarchies:
         if legacy_edges_exist:
-            current_edges_subset = legacy_edges[legacy_edges['Hierarchy'] == hierarchy]
-            current_elements_subset = legacy_elements[legacy_elements['Hierarchy'] == hierarchy]
+            current_edges_subset = legacy_edges_df[legacy_edges_df['Hierarchy'] == hierarchy]
+            current_elements_subset = legacy_elements_df[legacy_elements_df['Hierarchy'] == hierarchy]
             legacy_children_set = set(current_edges_subset['Child'])
             legacy_elements_set = set(current_elements_subset['ElementName'])
             root_orphans = list(legacy_elements_set - legacy_children_set)
         else:
-            root_orphans = legacy_elements[legacy_elements['Hierarchy'] == hierarchy]['ElementName'].tolist()
+            root_orphans = legacy_elements_df[legacy_elements_df['Hierarchy'] == hierarchy]['ElementName'].tolist()
 
         if root_orphans:
             hierarchy_orphan_rows = pd.DataFrame({
@@ -98,19 +122,9 @@ def assign_root_orphan_edges(
 
 def apply_update_on_elements(
         legacy_df: pd.DataFrame, input_df: pd.DataFrame,
-        dimension_name: str, input_hierarchies: list[str], orphan_consolidation_name: str = "OrphanParent"
 ) -> pd.DataFrame:
 
-    updated_df = pd.concat([input_df, legacy_df], ignore_index=True).drop_duplicates()
-
-    attribute_columns = utility.get_attribute_columns_list(input_df=input_df, level_columns=[])
-    orphan_parent_elements_df = add_orphan_consolidation_elements(
-        orphan_consolidation_name=orphan_consolidation_name,
-        dimension_name=dimension_name, input_hierarchies=input_hierarchies,
-        attribute_columns=attribute_columns
-    )
-
-    return pd.concat([updated_df, orphan_parent_elements_df], ignore_index=True).drop_duplicates()
+    return pd.concat([input_df, legacy_df], ignore_index=True).drop_duplicates()
 
 
 def apply_update(
@@ -119,33 +133,41 @@ def apply_update(
         existing_elements_df: pd.DataFrame, input_elements_df: pd.DataFrame,
         dimension_name: str, orphan_consolidation_name: str = "OrphanParent"
 ):
-    legacy_elements = utility.get_legacy_elements(existing_elements_df, input_elements_df)
-    if len(legacy_elements) == 0:
+    legacy_elements_df = utility.get_legacy_elements(existing_elements_df, input_elements_df)
+    if len(legacy_elements_df) == 0:
         return input_edges_df, input_elements_df
 
-    legacy_edges = utility.get_legacy_edges(existing_edges_df, input_edges_df)
+    legacy_edges_df = utility.get_legacy_edges(existing_edges_df, input_edges_df)
+
+    input_edges_hierarchies = utility.get_hierarchy_list(input_edges_df)
+
+    updated_elements_df = apply_update_on_elements(
+        legacy_df=legacy_elements_df, input_df=input_elements_df,
+    )
 
     if mode == "update":
         updated_edges_df = apply_update_on_edges(
-            legacy_df=legacy_edges, input_df=input_edges_df,
+            legacy_df=legacy_edges_df, input_df=input_edges_df, input_hierarchies=input_edges_hierarchies,
             orphan_consolidation_name=orphan_consolidation_name
         )
     else:
         updated_edges_df = apply_update_with_unwind_on_edges(
-            legacy_df=legacy_edges, input_df=input_edges_df,
+            legacy_df=legacy_edges_df, input_df=input_edges_df, input_hierarchies=input_edges_hierarchies,
             orphan_consolidation_name=orphan_consolidation_name
         )
 
-    input_hierarchies = input_elements_df["Hierarchy"].unique().tolist()
-    updated_edges_df = assign_root_orphan_edges(
-        legacy_edges=legacy_edges, legacy_elements=legacy_elements, edges_df=updated_edges_df,
-        orphan_consolidation_name=orphan_consolidation_name,
-        dimension_name=dimension_name, input_hierarchies=input_hierarchies
+    input_element_hierarchies = utility.get_hierarchy_list(input_elements_df)
+    legacy_element_hierarchies = utility.get_hierarchy_list(legacy_edges_df)
+    retained_element_hierarchies = list(set(input_element_hierarchies) & set(legacy_element_hierarchies))
+    add_orphan_consolidation_elements(
+        elements_df=updated_elements_df, orphan_consolidation_name=orphan_consolidation_name,
+        dimension_name=dimension_name, retained_hierarchies=retained_element_hierarchies
     )
-    updated_elements_df = apply_update_on_elements(
-        legacy_df=legacy_elements, input_df=input_elements_df,
-        dimension_name=dimension_name, input_hierarchies=input_hierarchies,
-        orphan_consolidation_name=orphan_consolidation_name
+
+    updated_edges_df = assign_root_orphan_edges(
+        legacy_edges_df=legacy_edges_df, legacy_elements_df=legacy_elements_df, edges_df=updated_edges_df,
+        orphan_consolidation_name=orphan_consolidation_name,
+        dimension_name=dimension_name, input_hierarchies=input_edges_hierarchies
     )
 
     return updated_edges_df, updated_elements_df
@@ -190,7 +212,9 @@ def rebuild_dimension_structure(
 
 
 def update_element_attributes(tm1_service: Any, elements_df: pd.DataFrame, dimension_name: str) -> None:
-    writable_elements_df = utility.unpivot_attributes_to_cube_format(elements_df=elements_df, dimension_name=dimension_name)
+    writable_elements_df = utility.unpivot_attributes_to_cube_format(
+        elements_df=elements_df, dimension_name=dimension_name
+    )
     element_attributes_cube_name = "}ElementAttributes_" + dimension_name
     element_attributes_cube_dims = [dimension_name, element_attributes_cube_name]
     dataframe_to_cube(

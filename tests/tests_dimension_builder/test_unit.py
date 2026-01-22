@@ -496,8 +496,9 @@ def test_validate_elements_df_schema_for_inconsistent_element_type_success(df_da
 
 
 @parametrize_from_file
-def test_validate_elements_df_schema_for_inconsistent_element_type_failure(df_data, expected_exception,
-                                                                       expected_message_part):
+def test_validate_elements_df_schema_for_inconsistent_element_type_failure(
+        df_data, expected_exception, expected_message_part
+):
     """
     Tests cases where inconsistent element types are detected.
     """
@@ -521,8 +522,9 @@ def test_validate_elements_df_schema_for_inconsistent_leaf_attributes_success(df
 
 
 @parametrize_from_file
-def test_validate_elements_df_schema_for_inconsistent_leaf_attributes_failure(df_data, expected_exception,
-                                                                          expected_message_part):
+def test_validate_elements_df_schema_for_inconsistent_leaf_attributes_failure(
+        df_data, expected_exception, expected_message_part
+):
     """
     Tests that conflicting attributes for N/S elements raise SchemaValidationError.
     """

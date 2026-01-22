@@ -10,7 +10,7 @@ from TM1_bedrock_py.dimension_builder.validate import (
 
 
 def get_hierarchy_list(input_df: pd.DataFrame) -> list[str]:
-    return input_df["Hierarchy"].unique()
+    return input_df["Hierarchy"].unique().tolist()
 
 
 def get_attribute_columns_list(input_df: pd.DataFrame, level_columns: list[str]) -> list[str]:
