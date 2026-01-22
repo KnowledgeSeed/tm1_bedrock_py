@@ -124,6 +124,8 @@ def get_legacy_elements(existing_df: pd.DataFrame, input_df: pd.DataFrame) -> pd
 
 
 def unpivot_attributes_to_cube_format(elements_df: pd.DataFrame, dimension_name: str) -> pd.DataFrame:
+    pd.options.mode.chained_assignment = None
+
     attribute_dimension_name = "}ElementAttributes_" + dimension_name
     attribute_columns = get_attribute_columns_list(input_df=elements_df, level_columns=[])
 
@@ -134,9 +136,9 @@ def unpivot_attributes_to_cube_format(elements_df: pd.DataFrame, dimension_name:
         attr_string: parse_attribute_string(attr_string)[0]
         for attr_string in attribute_columns
     })
-
-    return df_to_melt.melt(
+    unpivoted_df = df_to_melt.melt(
         id_vars=[dimension_name],
         var_name=attribute_dimension_name,
         value_name='Value'
     )
+    return unpivoted_df

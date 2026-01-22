@@ -13,6 +13,8 @@ from TM1_bedrock_py.dimension_builder.validate import (
 from TM1_bedrock_py.dimension_builder.exceptions import InvalidAttributeColumnNameError
 
 
+pd.set_option('future.no_silent_downcasting', True)
+
 _TYPE_MAPPING = {
     "s": "String", "S": "String", "String": "String",  "string": "String", "numeric": "Numeric",
     "n": "Numeric", "N": "Numeric", "Numeric": "Numeric",
@@ -67,7 +69,7 @@ def normalize_attr_column_names(
         name_part, type_part = utility.parse_attribute_string(col, attribute_parser)
         normalized_type = _ATTR_TYPE_MAPPING.get(type_part)
 
-        if name_part.strip() is "":
+        if name_part.strip() == "":
             raise InvalidAttributeColumnNameError(
                 f"Missing attribute name in column '{col}'. "
             )
@@ -448,7 +450,7 @@ def normalize_existing_schema(
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     # further enhance if necessary, currently this seems enough
     existing_edges_df = clear_orphan_parent_edges(existing_edges_df, old_orphan_parent_name)
-    existing_elements_df = clear_orphan_parent_elements(existing_elements_df)
+    existing_elements_df = clear_orphan_parent_elements(existing_elements_df, old_orphan_parent_name)
     existing_elements_df, attribute_columns = normalize_attr_column_names(existing_elements_df)
     assign_missing_attribute_values(existing_elements_df, attribute_columns)
     return existing_edges_df, existing_elements_df

@@ -265,6 +265,7 @@ def validate_element_type_consistency(existing_elements_df: pd.DataFrame, input_
     )
 
     conflicts = merged_df[merged_df['ElementType_existing'] != merged_df['ElementType_input']]
+    print(conflicts)
 
     if not conflicts.empty:
         num_conflicts = len(conflicts)

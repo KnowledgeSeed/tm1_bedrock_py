@@ -214,15 +214,25 @@ def resolve_schema(
         tm1_service: Any, dimension_name: str,
         input_edges_df: pd.DataFrame, input_elements_df: pd.DataFrame,
         mode: Literal["rebuild", "update", "update_with_unwind"] = "rebuild",
+        allow_type_changes: bool = False,
         old_orphan_parent_name: str = "OrphanParent", orphant_parent_name: str = "OrphanParent"
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+
+    existing_edges_df, existing_elements_df = pd.DataFrame(), pd.DataFrame()
+
+    if tm1_service.dimensions.exists(dimension_name):
+        existing_edges_df, existing_elements_df = io.retrieve_existing_schema(tm1_service, dimension_name)
+        existing_edges_df, existing_elements_df = normalize.normalize_existing_schema(
+            existing_edges_df, existing_elements_df, old_orphan_parent_name
+        )
+    else:
+        print("dimension does not exist, running create")
+
+    if len(existing_elements_df) > 0 and not allow_type_changes:
+        validate.validate_element_type_consistency(existing_elements_df, input_elements_df)
+
     if mode == "rebuild":
         return input_edges_df, input_elements_df
-
-    existing_edges_df, existing_elements_df = io.retrieve_existing_schema(tm1_service, dimension_name)
-    existing_edges_df, existing_elements_df = normalize.normalize_existing_schema(
-        existing_edges_df, existing_elements_df, old_orphan_parent_name
-    )
 
     updated_edges_df, updated_elements_df = apply_updates(
         mode=mode,

@@ -1,5 +1,5 @@
 import pandas as pd
-import time, random
+import time, random, string
 from TM1_bedrock_py.dimension_builder.validate import (
     validate_graph_for_cycles_with_kahn, validate_graph_for_cycles_with_dfs
 )
@@ -260,6 +260,7 @@ def test_kahn_algorithm():
 
 
 def generate_random_dimension_data(
+        dimension_name: str = "DimGenerator",
         hierarchy_count: int = 1,
         node_count_per_hierarchy: int = 100,
         root_node_count: int = 1,
@@ -280,7 +281,7 @@ def generate_random_dimension_data(
     attr_defs = []
     for i in range(1, attribute_count + 1):
         # Randomly assign type 's' (string) or 'n' (numeric)
-        a_type = random.choice(['s', 'n'])
+        a_type = 's'
         attr_defs.append({'name': f"TestAttribute{i}:{a_type}", 'type': a_type})
 
     # Initialize the output dictionary
@@ -296,9 +297,6 @@ def generate_random_dimension_data(
         data[attr['name']] = []
 
     # --- 2. Generate the Tree Structure (Graph) ---
-    # We generate one generic tree structure (or forest of trees) that will be
-    # repeated for each hierarchy.
-
     nodes = []  # List of dicts representing nodes
 
     # Create Roots
@@ -311,18 +309,14 @@ def generate_random_dimension_data(
         })
 
     # Create remaining nodes attached to random valid parents
-    # We use indices to reference nodes in the 'nodes' list
     current_count = root_node_count
-
     while current_count < node_count_per_hierarchy:
-        # Find potential parents: nodes that are not at max_depth - 1 (leaves of the max depth)
         potential_parents_indices = [
             i for i, n in enumerate(nodes)
             if n['depth'] < max_depth - 1
         ]
 
         if not potential_parents_indices:
-            # Fallback if max depth is too restrictive for the node count
             break
 
         parent_idx = random.choice(potential_parents_indices)
@@ -343,34 +337,26 @@ def generate_random_dimension_data(
     # --- 3. Helper Functions for Values ---
 
     def get_attr_value(attr_type):
-        # 10% chance of empty (None)
         if random.random() < 0.10:
             return None
-
         if attr_type == 's':
-            # Random string length 10
             return ''.join(random.choices(string.ascii_letters + string.digits, k=10))
         elif attr_type == 'n':
-            # Random float 0-100
             return round(random.uniform(0, 100), 2)
         return None
 
     # --- 4. Populate Data (Flatten Tree per Hierarchy) ---
 
-    def recursive_add_rows(node_idx, hierarchy_name, dim_name="DimGen"):
+    def recursive_add_rows(node_idx, hierarchy_name, dim_name):
         node = nodes[node_idx]
-
-        # Determine Element Type
-        # C if it has children, N if it does not
         el_type = "C" if len(node['children_indices']) > 0 else "N"
 
         # 1. Fill Level Columns
-        # All levels are None except the one matching the node's depth
-        for i, col in enumerate(level_cols):
+        for i, column in enumerate(level_cols):
             if i == node['depth']:
-                data[col].append(node['id'])
+                data[column].append(node['id'])
             else:
-                data[col].append(None)
+                data[column].append(None)
 
         # 2. Fill Fixed Columns
         data["Dimension"].append(dim_name)
@@ -379,26 +365,26 @@ def generate_random_dimension_data(
         data["ElementType"].append(el_type)
 
         # 3. Fill Attribute Columns
-        for attr in attr_defs:
-            data[attr['name']].append(get_attr_value(attr['type']))
+        for attribute in attr_defs:
+            data[attribute['name']].append(get_attr_value(attribute['type']))
 
         # 4. Recursion: Process Children
         for child_idx in node['children_indices']:
             recursive_add_rows(child_idx, hierarchy_name, dim_name)
 
     # Main Loop over Hierarchies
-    dim_name = "DimGenerated"
-
     for h in range(hierarchy_count):
-        hier_name = f"Hierarchy_{h + 1}"
+        # Implementation of hierarchy naming logic:
+        # First is dimension_name, then hier2, hier3, etc.
         if h == 0:
-            hier_name = dim_name  # Usually main hierarchy has same name as dim
+            hier_name = dimension_name
+        else:
+            hier_name = f"hier{h + 1}"
 
         # Identify roots (depth 0) and start traversal
         root_indices = [i for i, n in enumerate(nodes) if n['depth'] == 0]
-
         for root_idx in root_indices:
-            recursive_add_rows(root_idx, hier_name, dim_name)
+            recursive_add_rows(root_idx, hier_name, dimension_name)
 
-    return data
+    return data, level_cols
 

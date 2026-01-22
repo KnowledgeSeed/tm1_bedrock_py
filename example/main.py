@@ -7,9 +7,10 @@ from TM1_bedrock_py.utility import create_sql_engine
 from TM1_bedrock_py.context_metadata import ContextMetadata
 from tm1_bench_py import tm1_bench, df_generator_for_dataset, dimension_builder, dimension_period_builder
 import re
-import os
+import os, glob, subprocess
 import pandas as pd
-from TM1_bedrock_py.dimension_builder import normalize, apply, io, validate
+from TM1_bedrock_py.dimension_builder import apply
+
 
 
 def hierarchy_attributes():
@@ -217,9 +218,9 @@ def test_dim_builder_v1():
         "ssl": False
     }
     tm1_service = TM1Service(**tm1_params)
-
+    """
     dimension_name = "DimBuildTest"
-    old_orphan_parent_name = "OrphanParent2"
+    old_orphan_parent_name = "OrphanParent3"
     orphan_parent_name = "OrphanParent3"
     level_columns = ["Level0", "Level1", "Level2"]
 
@@ -273,6 +274,22 @@ def test_dim_builder_v1():
             "Value01", "Value02", "Value03", "Value04", None, "Value03", None
         ],
     }
+    """
+    dimension_name = "DimGenerator"
+    old_orphan_parent_name = "OrphanParent"
+    orphan_parent_name = "OrphanParent"
+    allow_type_changes = False
+
+
+    from tests.tests_dimension_builder.test_data.test_data import generate_random_dimension_data as generate
+    data, level_columns = generate(
+        dimension_name=dimension_name,
+        hierarchy_count=3,
+        node_count_per_hierarchy=10000,
+        root_node_count=1,
+        max_depth=10,
+        attribute_count=5
+    )
 
     input_edges_df, input_elements_df = apply.init_schema(
         input_datasource=data, input_format="indented_levels", dimension_name=dimension_name,
@@ -282,21 +299,25 @@ def test_dim_builder_v1():
     updated_edges_df, updated_elements_df = apply.resolve_schema(
         tm1_service=tm1_service, dimension_name=dimension_name,
         input_edges_df=input_edges_df, input_elements_df=input_elements_df,
-        mode="update",
-        old_orphan_parent_name=old_orphan_parent_name, orphant_parent_name=orphan_parent_name
+        mode="rebuild",
+        old_orphan_parent_name=old_orphan_parent_name, orphant_parent_name=orphan_parent_name,
+        allow_type_changes=allow_type_changes
     )
 
     apply.rebuild_dimension_structure(
         tm1_service=tm1_service, dimension_name=dimension_name,
         edges_df=updated_edges_df, elements_df=updated_elements_df
     )
+    """
 
     apply.update_element_attributes(
         tm1_service=tm1_service, dimension_name=dimension_name, elements_df=updated_elements_df
     )
-
+    """
     print("Dimension update successful")
 
 
 if __name__ == '__main__':
     test_dim_builder_v1()
+
+
