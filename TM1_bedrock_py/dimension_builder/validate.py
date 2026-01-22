@@ -1,10 +1,24 @@
 import pandas as pd
 from collections import defaultdict
-from typing import Hashable
-from TM1_bedrock_py.dimension_builder.exceptions import (SchemaValidationError,
-                                                         GraphValidationError,
-                                                         LevelColumnInvalidRowError,
-                                                         ElementTypeConflictError)
+from typing import Hashable, Literal, Optional
+from TM1_bedrock_py.dimension_builder.exceptions import (
+    SchemaValidationError,
+    GraphValidationError,
+    LevelColumnInvalidRowError,
+    ElementTypeConflictError,
+    InvalidInputParameterError
+)
+
+
+def validate_parameters_for_input_format(
+        input_format: Literal["parent_child", "indented_levels", "filled_levels"],
+        level_columns: Optional[list[str]],
+):
+    if input_format != "parent_child" and level_columns is None:
+        raise InvalidInputParameterError(
+            "Missing required parameter 'level_columns'."
+            "Parameter is mandatory for level column type inputs."
+        )
 
 
 # level column invalid row errors for normalize functions

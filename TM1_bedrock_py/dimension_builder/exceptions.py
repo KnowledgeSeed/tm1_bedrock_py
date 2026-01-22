@@ -3,26 +3,6 @@ from typing import Hashable
 # custom error handling for dimension builder module
 
 
-class DimensionNotFoundError(Exception):
-    def __init__(self, dimension: str = ""):
-        super().__init__("The dimension " + dimension + " does not exist.")
-
-
-class DimensionAlreadyExistsError(Exception):
-    def __init__(self, dimension: str = ""):
-        super().__init__("The dimension " + dimension + " already exists.")
-
-
-class HierarchyNotFoundError(Exception):
-    def __init__(self, dimension: str = "", hierarchy: str = ""):
-        super().__init__("The hierarchy " + hierarchy + " does not exist in the dimension " + dimension + ".")
-
-
-class HierarchyAlreadyExistsError(Exception):
-    def __init__(self, hierarchy: str = "", dimension: str = ""):
-        super().__init__("The hierarchy " + hierarchy + " already exists in the dimension" + dimension + ".")
-
-
 class InvalidInputFormatError(Exception):
     def __init__(self, expected_list: list = None, input_list: list = None):
         if expected_list is None: expected_list = []
@@ -55,5 +35,10 @@ class LevelColumnInvalidRowError(Exception):
 
 
 class InvalidAttributeColumnNameError(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
+class InvalidInputParameterError(Exception):
     def __init__(self, message: str):
         super().__init__(message)

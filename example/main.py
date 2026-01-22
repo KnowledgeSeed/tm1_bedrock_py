@@ -9,7 +9,7 @@ from tm1_bench_py import tm1_bench, df_generator_for_dataset, dimension_builder,
 import re
 import os
 import pandas as pd
-from TM1_bedrock_py.dimension_builder import normalize, apply, io
+from TM1_bedrock_py.dimension_builder import normalize, apply, io, validate
 
 
 def hierarchy_attributes():
@@ -219,6 +219,10 @@ def test_dim_builder_v1():
     tm1_service = TM1Service(**tm1_params)
 
     dimension_name = "DimBuildTest"
+    old_orphan_parent_name = "OrphanParent2"
+    orphan_parent_name = "OrphanParent3"
+    level_columns = ["Level0", "Level1", "Level2"]
+
     data = {
         "Level0": [
             "Total", None, None, None, None, None, None,
@@ -269,40 +273,28 @@ def test_dim_builder_v1():
             "Value01", "Value02", "Value03", "Value04", None, "Value03", None
         ],
     }
-    input_df_indented_levels = pd.DataFrame(data)
-    new_orphan_parent_name = "OrphanParent2"
-    old_orphan_parent_name = "OrphanParent"
 
-    edges_df, elements_df = normalize.normalize_indented_level_columns(
-        input_df=input_df_indented_levels,
-        level_columns=["Level0", "Level1", "Level2"],
-        dimension_name=dimension_name,
+    input_edges_df, input_elements_df = apply.init_schema(
+        input_datasource=data, input_format="indented_levels", dimension_name=dimension_name,
+        level_columns=level_columns
     )
 
-    existing_edges_df = io.read_existing_edges_df(tm1_service, dimension_name)
-    normalize.clear_orphan_parent_edges(existing_edges_df, old_orphan_parent_name)
-
-    existing_elements_df = io.read_existing_elements_df(tm1_service, dimension_name)
-    normalize.clear_orphan_parent_element_attributes(existing_elements_df)
-
-    # (
-    existing_elements_df, attribute_columns = normalize.normalize_attr_column_names(existing_elements_df)
-    normalize.assign_missing_attribute_values(existing_elements_df, attribute_columns)
-    # )
-
-    updated_edges_df, updated_elements_df = apply.apply_update(
+    updated_edges_df, updated_elements_df = apply.resolve_schema(
+        tm1_service=tm1_service, dimension_name=dimension_name,
+        input_edges_df=input_edges_df, input_elements_df=input_elements_df,
         mode="update",
-        existing_edges_df=existing_edges_df, existing_elements_df=existing_elements_df,
-        input_edges_df=edges_df, input_elements_df=elements_df,
-        dimension_name=dimension_name, orphan_consolidation_name=new_orphan_parent_name
+        old_orphan_parent_name=old_orphan_parent_name, orphant_parent_name=orphan_parent_name
     )
 
-    apply.rebuild_dimension_structure(tm1_service=tm1_service, dimension_name=dimension_name,
-                                      edges_df=updated_edges_df, elements_df=updated_elements_df)
+    apply.rebuild_dimension_structure(
+        tm1_service=tm1_service, dimension_name=dimension_name,
+        edges_df=updated_edges_df, elements_df=updated_elements_df
+    )
 
-    """
-    apply.update_element_attributes(tm1_service=tm1_service, elements_df=elements_df, dimension_name=dimension_name)
-    """
+    apply.update_element_attributes(
+        tm1_service=tm1_service, dimension_name=dimension_name, elements_df=updated_elements_df
+    )
+
     print("Dimension update successful")
 
 

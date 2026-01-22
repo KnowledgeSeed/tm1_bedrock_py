@@ -274,7 +274,7 @@ def deduplicate_elements(elements_df: pd.DataFrame) -> pd.DataFrame:
     return elements_df
 
 
-def normalize_parent_child(
+def normalize_parent_child_input(
         input_df: pd.DataFrame,
         dimension_name: str, hierarchy_name: str = None,
         dim_column: Optional[str] = None, hier_column: Optional[str] = None,
@@ -282,9 +282,9 @@ def normalize_parent_child(
         type_column: Optional[str] = None, weight_column: Optional[str] = None,
         input_elements_df: pd.DataFrame = None,
         input_elements_df_element_column: Optional[str] = None,
-        attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon"
+        attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon",
+        **_kwargs
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-
     input_df = normalize_all_base_column_names(
         input_df=input_df, dim_column=dim_column, hier_column=hier_column,
         parent_column=parent_column, child_column=child_column,
@@ -324,7 +324,7 @@ def normalize_parent_child(
     return edges_df, elements_df
 
 
-def normalize_indented_level_columns(
+def normalize_indented_levels_input(
         input_df: pd.DataFrame,
         level_columns: list[str],
         dimension_name: str, hierarchy_name: str = None,
@@ -332,9 +332,9 @@ def normalize_indented_level_columns(
         type_column: Optional[str] = None, weight_column: Optional[str] = None,
         input_elements_df: pd.DataFrame = None,
         input_elements_df_element_column: Optional[str] = None,
-        attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon"
+        attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon",
+        **_kwargs
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-
     input_df = normalize_all_base_column_names(
         input_df=input_df, dim_column=dim_column, hier_column=hier_column,
         type_column=type_column, weight_column=weight_column
@@ -376,7 +376,7 @@ def normalize_indented_level_columns(
     return edges_df, elements_df
 
 
-def normalize_filled_level_columns(
+def normalize_filled_levels_input(
         input_df: pd.DataFrame,
         level_columns: list[str],
         dimension_name: str, hierarchy_name: str = None,
@@ -384,9 +384,9 @@ def normalize_filled_level_columns(
         type_column: Optional[str] = None, weight_column: Optional[str] = None,
         input_elements_df: pd.DataFrame = None,
         input_elements_df_element_column: Optional[str] = None,
-        attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon"
+        attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon",
+        **_kwargs
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-
     input_df = normalize_all_base_column_names(
         input_df=input_df, dim_column=dim_column, hier_column=hier_column,
         type_column=type_column, weight_column=weight_column
@@ -435,8 +435,28 @@ def clear_orphan_parent_edges(
     return edges_df
 
 
-def clear_orphan_parent_element_attributes(
+def clear_orphan_parent_elements(
         elements_df: pd.DataFrame, orphan_consolidation_name: str = "OrphanParent"
 ) -> pd.DataFrame:
     elements_df.drop(elements_df[elements_df["ElementName"] == orphan_consolidation_name].index, inplace=True)
     return elements_df
+
+
+def normalize_existing_schema(
+        existing_edges_df: pd.DataFrame, existing_elements_df: pd.DataFrame,
+        old_orphan_parent_name: str = "OrphanParent"
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    # further enhance if necessary, currently this seems enough
+    existing_edges_df = clear_orphan_parent_edges(existing_edges_df, old_orphan_parent_name)
+    existing_elements_df = clear_orphan_parent_elements(existing_elements_df)
+    existing_elements_df, attribute_columns = normalize_attr_column_names(existing_elements_df)
+    assign_missing_attribute_values(existing_elements_df, attribute_columns)
+    return existing_edges_df, existing_elements_df
+
+
+def normalize_updated_schema(
+    updated_edges_df: pd.DataFrame, updated_elements_df: pd.DataFrame
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    # further enhance if necessary, currently this seems enough
+    assign_missing_attribute_values(updated_elements_df)
+    return updated_edges_df, updated_elements_df

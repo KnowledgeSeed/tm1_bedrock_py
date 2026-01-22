@@ -2,7 +2,7 @@ import re
 from dataclasses import dataclass
 from os import PathLike
 from pathlib import Path
-from typing import Optional, Union, Sequence, Literal, Any, List, Dict
+from typing import Optional, Union, Sequence, Literal, Any, List, Dict, Tuple
 
 import pandas as pd
 import yaml
@@ -399,3 +399,9 @@ def read_existing_elements_df(
         dfs_to_concat.append(current_elements_df)
 
     return pd.concat(dfs_to_concat, ignore_index=True)
+
+
+def retrieve_existing_schema(tm1_service: Any, dimension_name: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    existing_edges_df = read_existing_edges_df(tm1_service, dimension_name)
+    existing_elements_df = read_existing_elements_df(tm1_service, dimension_name)
+    return existing_edges_df, existing_elements_df

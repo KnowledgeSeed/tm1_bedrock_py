@@ -1,11 +1,9 @@
-from typing import Any, Literal
+from typing import Any, Literal, Tuple, Optional, Callable
 import pandas as pd
 from TM1py.Objects import Dimension, Hierarchy
-from TM1_bedrock_py.dimension_builder import normalize, utility
+from TM1_bedrock_py.dimension_builder import normalize, utility, io, validate
+from TM1_bedrock_py.dimension_builder.validate import post_validation_steps
 from TM1_bedrock_py.loader import dataframe_to_cube
-
-
-
 
 
 def apply_update_on_edges(
@@ -132,12 +130,12 @@ def apply_update_on_elements(
     return pd.concat([input_df, legacy_df], ignore_index=True).drop_duplicates()
 
 
-def apply_update(
-        mode: Literal["update", "update_with_unwind"],
+def apply_updates(
+        mode: Literal["rebuild", "update", "update_with_unwind"],
         existing_edges_df: pd.DataFrame, input_edges_df: pd.DataFrame,
         existing_elements_df: pd.DataFrame, input_elements_df: pd.DataFrame,
         dimension_name: str, orphan_consolidation_name: str = "OrphanParent"
-):
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     legacy_elements_df = utility.get_legacy_elements(existing_elements_df, input_elements_df)
     if len(legacy_elements_df) == 0:
         return input_edges_df, input_elements_df
@@ -164,6 +162,76 @@ def apply_update(
         orphan_consolidation_name=orphan_consolidation_name,
         dimension_name=dimension_name, retained_hierarchies=retained_element_hierarchies
     )
+
+    return updated_edges_df, updated_elements_df
+
+
+_NORMALIZER_REGISTRY = {
+    "parent_child": normalize.normalize_parent_child_input,
+    "indented_levels": normalize.normalize_indented_levels_input,
+    "filled_levels": normalize.normalize_filled_levels_input
+}
+
+
+# input to be completed with io
+def init_schema(
+        input_datasource: dict, input_format: Literal["parent_child", "indented_levels", "filled_levels"],
+        dimension_name: str, hierarchy_name: str = None,
+        tm1_service: Any = None, other_service: Any = None,
+        dim_column: Optional[str] = None, hier_column: Optional[str] = None,
+        parent_column: Optional[str] = None, child_column: Optional[str] = None,
+        level_columns: Optional[list[str]] = None,
+        type_column: Optional[str] = None, weight_column: Optional[str] = None,
+        input_elements_datasource: dict = None,
+        input_elements_df_element_column: Optional[str] = None,
+        attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon",
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+
+    validate.validate_parameters_for_input_format(input_format, level_columns)
+
+    # to be used in io with other datasources
+    _ = tm1_service
+    _ = other_service
+    # to be completed with io for edges/complete data retrieval
+    raw_input_df = pd.DataFrame(input_datasource)
+    # to be completed with io for extension element/attribute
+    raw_input_elements_df = pd.DataFrame(input_elements_datasource) if input_elements_datasource is not None else None
+
+    input_edges_df, input_elements_df = _NORMALIZER_REGISTRY[input_format](
+        input_df=raw_input_df, dimension_name=dimension_name, hierarchy_name=hierarchy_name,
+        level_columns=level_columns, parent_column=parent_column, child_column=child_column,
+        dim_column=dim_column, hier_column=hier_column,
+        type_column=type_column, weight_column=weight_column,
+        input_elements_df=raw_input_elements_df,
+        input_elements_df_element_column=input_elements_df_element_column,
+        attribute_parser=attribute_parser
+    )
+    post_validation_steps(input_edges_df, input_elements_df)
+    return input_edges_df, input_elements_df
+
+
+def resolve_schema(
+        tm1_service: Any, dimension_name: str,
+        input_edges_df: pd.DataFrame, input_elements_df: pd.DataFrame,
+        mode: Literal["rebuild", "update", "update_with_unwind"] = "rebuild",
+        old_orphan_parent_name: str = "OrphanParent", orphant_parent_name: str = "OrphanParent"
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    if mode == "rebuild":
+        return input_edges_df, input_elements_df
+
+    existing_edges_df, existing_elements_df = io.retrieve_existing_schema(tm1_service, dimension_name)
+    existing_edges_df, existing_elements_df = normalize.normalize_existing_schema(
+        existing_edges_df, existing_elements_df, old_orphan_parent_name
+    )
+
+    updated_edges_df, updated_elements_df = apply_updates(
+        mode=mode,
+        existing_edges_df=existing_edges_df, input_edges_df=input_edges_df,
+        existing_elements_df=existing_elements_df, input_elements_df=input_elements_df,
+        dimension_name=dimension_name, orphan_consolidation_name=orphant_parent_name
+    )
+    updated_edges_df, updated_elements_df = normalize.normalize_updated_schema(updated_edges_df, updated_elements_df)
+    validate.post_validation_steps(updated_edges_df, updated_elements_df)
 
     return updated_edges_df, updated_elements_df
 
