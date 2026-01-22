@@ -5,29 +5,30 @@ from TM1_bedrock_py.dimension_builder import normalize, utility
 from TM1_bedrock_py.loader import dataframe_to_cube
 
 
+
+
+
 def apply_update_on_edges(
         legacy_df: pd.DataFrame,
         input_df: pd.DataFrame,
-        input_hierarchies: list[str],
+        retained_hierarchies: list[str],
         orphan_consolidation_name: str = "OrphanParent"
 ) -> pd.DataFrame:
     if len(legacy_df) == 0:
         return input_df
 
-    for hierarchy in input_hierarchies:
+    for hierarchy in retained_hierarchies:
         curr_input = input_df[input_df["Hierarchy"] == hierarchy]
-
         input_parents = curr_input["Parent"].unique()
         input_children = curr_input["Child"].unique()
 
-        in_hierarchy = legacy_df['Hierarchy'].eq(hierarchy)
-
-        if not in_hierarchy.any():
+        cond_hierarchy = legacy_df['Hierarchy'].eq(hierarchy)
+        if not cond_hierarchy.any():
             continue
 
         cond_parent = legacy_df['Parent'].isin(input_parents)
         cond_child = ~legacy_df['Child'].isin(input_children)
-        legacy_df.loc[in_hierarchy & cond_parent & cond_child, 'Parent'] = orphan_consolidation_name
+        legacy_df.loc[cond_hierarchy & cond_parent & cond_child, 'Parent'] = orphan_consolidation_name
 
     return pd.concat([input_df, legacy_df], ignore_index=True).drop_duplicates()
 
@@ -35,7 +36,7 @@ def apply_update_on_edges(
 def apply_update_with_unwind_on_edges(
         legacy_df: pd.DataFrame,
         input_df: pd.DataFrame,
-        input_hierarchies: list[str],
+        retained_hierarchies: list[str],
         orphan_consolidation_name: str = "OrphanParent"
 ) -> pd.DataFrame:
     if len(legacy_df) == 0:
@@ -43,12 +44,11 @@ def apply_update_with_unwind_on_edges(
 
     keep_mask = pd.Series(True, index=legacy_df.index)
 
-    for hierarchy in input_hierarchies:
+    for hierarchy in retained_hierarchies:
         curr_input = input_df[input_df["Hierarchy"] == hierarchy]
-
         input_children = set(curr_input["Child"])
-        in_hierarchy = legacy_df['Hierarchy'].eq(hierarchy)
 
+        in_hierarchy = legacy_df['Hierarchy'].eq(hierarchy)
         if not in_hierarchy.any():
             continue
 
@@ -59,6 +59,12 @@ def apply_update_with_unwind_on_edges(
 
     legacy_final = legacy_df[keep_mask]
     return pd.concat([input_df, legacy_final], ignore_index=True).drop_duplicates()
+
+
+_UPDATE_STRATEGIES = {
+    "update": apply_update_on_edges,
+    "update_with_unwind": apply_update_with_unwind_on_edges
+}
 
 
 def add_orphan_consolidation_elements(
@@ -87,13 +93,13 @@ def assign_root_orphan_edges(
         edges_df: pd.DataFrame,
         orphan_consolidation_name: str,
         dimension_name: str,
-        input_hierarchies: list[str],
+        retained_hierarchies: list[str],
 ) -> pd.DataFrame:
 
     new_rows_collection = []
     legacy_edges_exist = len(legacy_edges_df) > 0
 
-    for hierarchy in input_hierarchies:
+    for hierarchy in retained_hierarchies:
         if legacy_edges_exist:
             current_edges_subset = legacy_edges_df[legacy_edges_df['Hierarchy'] == hierarchy]
             current_elements_subset = legacy_elements_df[legacy_elements_df['Hierarchy'] == hierarchy]
@@ -114,8 +120,8 @@ def assign_root_orphan_edges(
             new_rows_collection.append(hierarchy_orphan_rows)
 
     if new_rows_collection:
-        updated_edges_df = pd.concat([edges_df] + new_rows_collection, ignore_index=True)
-        return updated_edges_df
+        updated_df = pd.concat([edges_df] + new_rows_collection, ignore_index=True)
+        return updated_df
 
     return edges_df
 
@@ -123,7 +129,6 @@ def assign_root_orphan_edges(
 def apply_update_on_elements(
         legacy_df: pd.DataFrame, input_df: pd.DataFrame,
 ) -> pd.DataFrame:
-
     return pd.concat([input_df, legacy_df], ignore_index=True).drop_duplicates()
 
 
@@ -136,38 +141,28 @@ def apply_update(
     legacy_elements_df = utility.get_legacy_elements(existing_elements_df, input_elements_df)
     if len(legacy_elements_df) == 0:
         return input_edges_df, input_elements_df
-
     legacy_edges_df = utility.get_legacy_edges(existing_edges_df, input_edges_df)
 
-    input_edges_hierarchies = utility.get_hierarchy_list(input_edges_df)
+    input_element_hierarchies = utility.get_hierarchy_list(input_elements_df)
+    legacy_element_hierarchies = utility.get_hierarchy_list(legacy_elements_df)
+    retained_element_hierarchies = list(set(input_element_hierarchies) & set(legacy_element_hierarchies))
 
     updated_elements_df = apply_update_on_elements(
-        legacy_df=legacy_elements_df, input_df=input_elements_df,
+        legacy_df=legacy_elements_df, input_df=input_elements_df
     )
-
-    if mode == "update":
-        updated_edges_df = apply_update_on_edges(
-            legacy_df=legacy_edges_df, input_df=input_edges_df, input_hierarchies=input_edges_hierarchies,
-            orphan_consolidation_name=orphan_consolidation_name
-        )
-    else:
-        updated_edges_df = apply_update_with_unwind_on_edges(
-            legacy_df=legacy_edges_df, input_df=input_edges_df, input_hierarchies=input_edges_hierarchies,
-            orphan_consolidation_name=orphan_consolidation_name
-        )
-
-    input_element_hierarchies = utility.get_hierarchy_list(input_elements_df)
-    legacy_element_hierarchies = utility.get_hierarchy_list(legacy_edges_df)
-    retained_element_hierarchies = list(set(input_element_hierarchies) & set(legacy_element_hierarchies))
-    add_orphan_consolidation_elements(
+    updated_elements_df = add_orphan_consolidation_elements(
         elements_df=updated_elements_df, orphan_consolidation_name=orphan_consolidation_name,
         dimension_name=dimension_name, retained_hierarchies=retained_element_hierarchies
     )
 
+    updated_edges_df = _UPDATE_STRATEGIES[mode](
+        legacy_df=legacy_edges_df, input_df=input_edges_df, retained_hierarchies=retained_element_hierarchies,
+        orphan_consolidation_name=orphan_consolidation_name
+    )
     updated_edges_df = assign_root_orphan_edges(
         legacy_edges_df=legacy_edges_df, legacy_elements_df=legacy_elements_df, edges_df=updated_edges_df,
         orphan_consolidation_name=orphan_consolidation_name,
-        dimension_name=dimension_name, input_hierarchies=input_edges_hierarchies
+        dimension_name=dimension_name, retained_hierarchies=retained_element_hierarchies
     )
 
     return updated_edges_df, updated_elements_df
