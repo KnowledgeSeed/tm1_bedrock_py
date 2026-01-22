@@ -1,7 +1,5 @@
 name: Build & Test on Pull Request
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
@@ -27,9 +25,9 @@ jobs:
 
     strategy:
       fail-fast: false
-      max-parallel: 1
+      max-parallel: 2
       matrix:
-        python-version: [ '3.10', '3.11', '3.12', '3.13' ]
+        python-version: [ '3.12', '3.13' ]
 
     steps:
     - name: Set up WireGuard
