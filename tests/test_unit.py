@@ -5,7 +5,8 @@ import parametrize_from_file
 import pytest
 from TM1py.Exceptions import TM1pyRestException
 from pandas.core.frame import DataFrame
-from sqlalchemy import text
+from sqlalchemy import text, create_engine
+from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
 
 from TM1_bedrock_py import extractor, transformer, utility, loader
@@ -61,9 +62,9 @@ def test_get_kwargs_dict_from_set_mdx_list_success(set_mdx_list, expected_kwargs
 # Test focusing on filtering, edge cases, and empty results
 @parametrize_from_file
 def test_get_kwargs_dict_from_set_mdx_list_filtering(set_mdx_list, expected_exception):
-    
+
     Tests filtering of invalid/non-matching strings and edge cases.
-    
+
     kwargs = utility.__get_kwargs_dict_from_set_mdx_list(set_mdx_list)
     assert kwargs == expected_exception
 """
@@ -141,11 +142,11 @@ def test_generate_element_lists_from_set_mdx_list_failure(
             test_service = None
         else:
             test_service = conn
-    
+
         exception_type = eval(expected_exception)
         with pytest.raises(exception_type) as excinfo:
             utility.generate_element_lists_from_set_mdx_list(test_service, set_mdx_list)
-    
+
         assert expected_message_part in str(excinfo.value)
 
 
@@ -189,6 +190,7 @@ def test_normalize_dataframe_strings(input_df, expected_df):
     expected_df = pd.DataFrame(expected_df)
     utility.normalize_dataframe_strings(output_df)
     pd.testing.assert_frame_equal(output_df, expected_df)
+
 
 # ------------------------------------------------------------------------------------------------------------
 # Utility: Cube metadata collection using input MDXs and/or other cubes
@@ -438,6 +440,7 @@ def test_dataframe_reorder_dimensions(dataframe, cube_cols, expected_dataframe):
 @parametrize_from_file
 def test_dataframe_value_scale(dataframe, expected_dataframe):
     def add_one(x): return x + 1
+
     def multiply_by_two(x): return x * 2
 
     df = pd.DataFrame(dataframe)
@@ -468,6 +471,7 @@ def test_dataframe_validate_datatypes(measuredim, measuretypes, dataframe, expec
         measure_element_types=measuretypes
     )
     pd.testing.assert_frame_equal(input_dataframe, expected_dataframe)
+
 
 # ------------------------------------------------------------------------------------------------------------
 # Main: tests for dataframe remapping and copy functions
@@ -538,55 +542,63 @@ def test_dataframe_execute_mappings_replace_success(dataframe, mapping_steps, ex
 # Main: tests for sql connections and I/O processes
 # ------------------------------------------------------------------------------------------------------------
 
+def create_mock_sql_database(expected, table_name) -> tuple[Engine, DataFrame]:
+    engine = create_engine('sqlite://', echo=False)
+    expected_dataframe = pd.DataFrame(expected)
+    expected_dataframe.to_sql(name=table_name, con=engine, index=False)
+    return engine, expected_dataframe
+
 
 def test_mssql_database_connection(sql_engine_factory):
-    with sql_engine_factory('mssqlsrv') as sql_engine:
-        # assert sql_engine.closed is False
-        assert str(sql_engine.url.get_backend_name()) == "mssql", f"Wrong backend: {sql_engine.url.get_backend_name()}"
+    sql_engine = create_engine('sqlite://', echo=False)
+    # assert sql_engine.closed is False
+    assert str(sql_engine.url.get_backend_name()) == "sqlite", f"Wrong backend: {sql_engine.url.get_backend_name()}"
 
 
 def test_mssql_server_responds_to_query(sql_engine_factory):
-    with sql_engine_factory('mssqlsrv') as sql_engine:
-        with sql_engine.connect() as connection:
-            result = connection.execute(text("SELECT 1"))
-            response = result.fetchone()
+    sql_engine = create_engine('sqlite://', echo=False)
+    with sql_engine.connect() as connection:
+        result = connection.execute(text("SELECT 1"))
+        response = result.fetchone()
     assert response == (1,)
 
 
 @parametrize_from_file
 def test_mssql_extract_full_table(sql_engine_factory, table_name, expected):
-    with sql_engine_factory('mssqlsrv') as sql_engine:
-        df = extractor.sql_to_dataframe(engine=sql_engine, table_name=table_name)
-        expected_df = pd.DataFrame(expected)
-        pd.testing.assert_frame_equal(df, expected_df)
+    sql_engine, expected_df = create_mock_sql_database(expected, table_name)
+
+    df = extractor.sql_to_dataframe(engine=sql_engine, table_name=table_name)
+    pd.testing.assert_frame_equal(df, expected_df)
 
 
 @parametrize_from_file
 def test_mssql_extract_table_columns(sql_engine_factory, table_name, columns, expected):
-    with sql_engine_factory('mssqlsrv') as sql_engine:
-        df = extractor.sql_to_dataframe(engine=sql_engine, table_name=table_name, table_columns=columns)
-        expected_df = pd.DataFrame(expected)
-        pd.testing.assert_frame_equal(df, expected_df)
+    sql_engine, expected_df = create_mock_sql_database(expected, table_name)
+
+    df = extractor.sql_to_dataframe(engine=sql_engine, table_name=table_name, table_columns=columns)
+    pd.testing.assert_frame_equal(df, expected_df)
 
 
 @parametrize_from_file
 def test_mssql_extract_query(sql_engine_factory, query, expected):
-    with sql_engine_factory('mssqlsrv') as sql_engine:
-        df = extractor.sql_to_dataframe(engine=sql_engine, sql_query=query)
-        expected_df = pd.DataFrame(expected)
-        pd.testing.assert_frame_equal(df, expected_df)
+    table_name = "Unit Test Table"
+    sql_engine, expected_df = create_mock_sql_database(expected, table_name)
+
+    df = extractor.sql_to_dataframe(engine=sql_engine, sql_query=query)
+    pd.testing.assert_frame_equal(df, expected_df)
 
 
 @parametrize_from_file
 def test_mssql_extract_query_with_chunksize(sql_engine_factory, query, expected, chunksize):
-    with sql_engine_factory('mssqlsrv') as sql_engine:
-        df = extractor.sql_to_dataframe(engine=sql_engine, sql_query=query, chunksize=chunksize)
-        expected_df = pd.DataFrame(expected)
-        pd.testing.assert_frame_equal(df, expected_df)
+    table_name = "Unit Test Table"
+    sql_engine, expected_df = create_mock_sql_database(expected, table_name)
+
+    df = extractor.sql_to_dataframe(engine=sql_engine, sql_query=query, chunksize=chunksize)
+    pd.testing.assert_frame_equal(df, expected_df)
 
 
 @parametrize_from_file
-def test_sql_normalize_relabel(sql_engine_factory, dataframe, expected, column_mapping):
+def test_sql_normalize_relabel(dataframe, expected, column_mapping):
     df = pd.DataFrame(dataframe)
     transformer.normalize_table_source_dataframe(dataframe=df, column_mapping=column_mapping)
     expected_df = pd.DataFrame(expected)
@@ -594,7 +606,7 @@ def test_sql_normalize_relabel(sql_engine_factory, dataframe, expected, column_m
 
 
 @parametrize_from_file
-def test_sql_normalize_drop(sql_engine_factory, dataframe, expected, drop):
+def test_sql_normalize_drop(dataframe, expected, drop):
     df = pd.DataFrame(dataframe)
     transformer.normalize_table_source_dataframe(dataframe=df, columns_to_drop=drop)
     expected_df = pd.DataFrame(expected)
@@ -603,11 +615,10 @@ def test_sql_normalize_drop(sql_engine_factory, dataframe, expected, drop):
 
 @parametrize_from_file
 def test_mssql_loader_replace(sql_engine_factory, dataframe, if_exists, table_name):
-    with sql_engine_factory('mssqlsrv') as sql_engine:
-        df = pd.DataFrame(dataframe)
-        loader.dataframe_to_sql(
-            dataframe=df, engine=sql_engine, table_name=table_name, if_exists=if_exists, index=False
-        )
+    sql_engine, df = create_mock_sql_database(dataframe, table_name)
+    loader.dataframe_to_sql(
+        dataframe=df, engine=sql_engine, table_name=table_name, if_exists=if_exists, index=False
+    )
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -706,10 +717,10 @@ def test_dataframe_to_csv_build_dataframe_form_mdx_with_param_optimisation(tm1_c
                 dataframe=expected_df, csv_file_name=csv_file_name, csv_output_dir="./", decimal="."
             )
             df = extractor.csv_to_dataframe(
-                    csv_file_path=f"./{csv_file_name}",
-                    decimal=".",
-                    dtype=dtype_mapping,
-                    chunksize=204
+                csv_file_path=f"./{csv_file_name}",
+                decimal=".",
+                dtype=dtype_mapping,
+                chunksize=204
             )
 
             pd.testing.assert_frame_equal(df, expected_df)

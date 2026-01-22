@@ -1562,13 +1562,13 @@ test_mssql_extract_table_columns:
 
 test_mssql_extract_query:
   -
-    query: "SELECT [UnitTestStringColumn1], [UnitTestFloatColumn1] FROM dbo.[Unit Test Table]"
+    query: "SELECT [UnitTestStringColumn1], [UnitTestFloatColumn1] FROM [Unit Test Table]"
     expected: {
       "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
       "UnitTestFloatColumn1": [ 12.34, 12.34 ],
     }
   -
-    query: "SELECT * FROM dbo.[Unit Test Table]"
+    query: "SELECT * FROM [Unit Test Table]"
     expected: {
       "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
       "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],
@@ -1578,14 +1578,14 @@ test_mssql_extract_query:
 
 test_mssql_extract_query_with_chunksize:
   -
-    query: "SELECT [UnitTestStringColumn1], [UnitTestFloatColumn1] FROM dbo.[Unit Test Table]"
+    query: "SELECT [UnitTestStringColumn1], [UnitTestFloatColumn1] FROM [Unit Test Table]"
     expected: {
       "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
       "UnitTestFloatColumn1": [ 12.34, 12.34 ],
     }
     chunksize: 1
   -
-    query: "SELECT * FROM dbo.[Unit Test Table]"
+    query: "SELECT * FROM [Unit Test Table]"
     expected: {
       "UnitTestStringColumn1": [ 'TestString1_1', 'TestString2_1' ],
       "UnitTestStringColumn2": [ 'TestString1_2', 'TestString2_2' ],

@@ -14,12 +14,6 @@ env:
   TM1_PORT: ${{ secrets.TM1_PORT }}
   TM1_USER: ${{ secrets.TM1_USER }}
   TM1_SSL: ${{ secrets.TM1_SSL }}
-  SQL_HOST: ${{ secrets.SQL_HOST }}
-  SQL_PORT: ${{ secrets.SQL_PORT }}
-  SQL_USER: ${{ secrets.SQL_USER }}
-  SQL_PASSWORD: ${{ secrets.SQL_PASSWORD }}
-  SQL_CONN_TYPE: ${{ secrets.SQL_CONN_TYPE }}
-  SQL_DB: ${{ secrets.SQL_DB }}
 
 jobs:
   test:
@@ -58,17 +52,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements-dev.txt
         python -m build
-
-    - name: Install UnixODBC and required packages
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y unixodbc-dev curl gnupg2
-        
-        # Install the Microsoft ODBC Driver 17 for SQL Server
-        curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
-        curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list        sudo apt-get update
-        sudo apt-get update
-        sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17
 
     - name: Run unit tests
       run: |
