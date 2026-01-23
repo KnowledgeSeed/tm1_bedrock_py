@@ -3,14 +3,14 @@ import pprint
 from TM1_bedrock_py import extractor, transformer, loader, bedrock
 from TM1_bedrock_py.transformer import normalize_table_source_dataframe
 from string import Template
-from TM1_bedrock_py.utility import create_sql_engine
+from TM1_bedrock_py.utility import create_sql_engine, set_logging_level
 from TM1_bedrock_py.context_metadata import ContextMetadata
 from tm1_bench_py import tm1_bench, df_generator_for_dataset, dimension_builder, dimension_period_builder
 import re
 import os, glob, subprocess
 import pandas as pd
 from TM1_bedrock_py.dimension_builder import apply
-
+from TM1_bedrock_py.utility import basic_logger
 
 
 def hierarchy_attributes():
@@ -209,7 +209,7 @@ def complex_transform_demo():
         tm1_service.logout()
 
 
-def test_dim_builder_v1():
+def run_dim_builder_v1():
     tm1_params = {
         "address": "localhost",
         "port": 5379,
@@ -278,46 +278,56 @@ def test_dim_builder_v1():
     dimension_name = "DimGenerator"
     old_orphan_parent_name = "OrphanParent"
     orphan_parent_name = "OrphanParent"
-    allow_type_changes = False
+    allow_type_changes = True
 
 
     from tests.tests_dimension_builder.test_data.test_data import generate_random_dimension_data as generate
     data, level_columns = generate(
         dimension_name=dimension_name,
         hierarchy_count=3,
-        node_count_per_hierarchy=10000,
+        node_count_per_hierarchy=100,
         root_node_count=1,
-        max_depth=10,
+        max_depth=5,
         attribute_count=5
     )
 
-    input_edges_df, input_elements_df = apply.init_schema(
-        input_datasource=data, input_format="indented_levels", dimension_name=dimension_name,
-        level_columns=level_columns
-    )
+    set_logging_level("DEBUG")
 
+    basic_logger.debug("init input schema started")
+    input_edges_df, input_elements_df = apply.init_input_schema(input_datasource=data, input_format="indented_levels",
+                                                                dimension_name=dimension_name,
+                                                                level_columns=level_columns)
+
+    basic_logger.debug("init existing schema started")
+    existing_edges_df, existing_elements_df = apply.init_existing_schema(tm1_service=tm1_service,
+                                                                         dimension_name=dimension_name,
+                                                                         old_orphan_parent_name=old_orphan_parent_name)
+
+    basic_logger.debug("resolve schema started")
     updated_edges_df, updated_elements_df = apply.resolve_schema(
         tm1_service=tm1_service, dimension_name=dimension_name,
         input_edges_df=input_edges_df, input_elements_df=input_elements_df,
+        existing_edges_df=existing_edges_df, existing_elements_df=existing_elements_df,
+        orphant_parent_name=orphan_parent_name,
         mode="rebuild",
-        old_orphan_parent_name=old_orphan_parent_name, orphant_parent_name=orphan_parent_name,
         allow_type_changes=allow_type_changes
     )
 
+    basic_logger.debug("rebuild started")
     apply.rebuild_dimension_structure(
         tm1_service=tm1_service, dimension_name=dimension_name,
         edges_df=updated_edges_df, elements_df=updated_elements_df
     )
-    """
 
+    basic_logger.debug("attr load started")
     apply.update_element_attributes(
         tm1_service=tm1_service, dimension_name=dimension_name, elements_df=updated_elements_df
     )
-    """
+
     print("Dimension update successful")
 
 
 if __name__ == '__main__':
-    test_dim_builder_v1()
+    run_dim_builder_v1()
 
 

@@ -1,16 +1,23 @@
 from typing import Any, Literal, Tuple, Optional, Callable
 import pandas as pd
 from TM1py.Objects import Dimension, Hierarchy
-from TM1_bedrock_py.dimension_builder import normalize, utility, io, validate
-from TM1_bedrock_py.dimension_builder.validate import post_validation_steps
+from TM1_bedrock_py.dimension_builder import normalize, utility, io
+from TM1_bedrock_py.dimension_builder.validate import (
+    post_validate_schema,
+    pre_validate_input_schema,
+    validate_element_type_consistency
+)
 from TM1_bedrock_py.loader import dataframe_to_cube
+from TM1_bedrock_py import utility as baseutils
 
 
+@baseutils.log_exec_metrics
 def apply_update_on_edges(
         legacy_df: pd.DataFrame,
         input_df: pd.DataFrame,
         retained_hierarchies: list[str],
-        orphan_consolidation_name: str = "OrphanParent"
+        orphan_consolidation_name: str = "OrphanParent",
+        **kwargs
 ) -> pd.DataFrame:
     if len(legacy_df) == 0:
         return input_df
@@ -31,11 +38,13 @@ def apply_update_on_edges(
     return pd.concat([input_df, legacy_df], ignore_index=True).drop_duplicates()
 
 
+@baseutils.log_exec_metrics
 def apply_update_with_unwind_on_edges(
         legacy_df: pd.DataFrame,
         input_df: pd.DataFrame,
         retained_hierarchies: list[str],
-        orphan_consolidation_name: str = "OrphanParent"
+        orphan_consolidation_name: str = "OrphanParent",
+        **kwargs
 ) -> pd.DataFrame:
     if len(legacy_df) == 0:
         return input_df
@@ -65,13 +74,15 @@ _UPDATE_STRATEGIES = {
 }
 
 
+@baseutils.log_exec_metrics
 def add_orphan_consolidation_elements(
         elements_df: pd.DataFrame,
         orphan_consolidation_name: str,
         dimension_name: str,
-        retained_hierarchies: list[str]
+        retained_hierarchies: list[str],
+        **kwargs
 ) -> pd.DataFrame:
-    attribute_columns = utility.get_attribute_columns_list(input_df=elements_df, level_columns=[])
+    attribute_columns = utility.get_attribute_columns_list(input_df=elements_df)
     orphan_parent_df = pd.DataFrame({
         "ElementName": orphan_consolidation_name,
         "ElementType": "Consolidated",
@@ -79,12 +90,10 @@ def add_orphan_consolidation_elements(
         "Hierarchy": retained_hierarchies
     })
     orphan_parent_df[attribute_columns] = None
-    normalize.assign_missing_attribute_values(
-        input_df=orphan_parent_df, attribute_columns=attribute_columns
-    )
     return pd.concat([elements_df, orphan_parent_df], ignore_index=True).drop_duplicates()
 
 
+@baseutils.log_exec_metrics
 def assign_root_orphan_edges(
         legacy_edges_df: pd.DataFrame,
         legacy_elements_df: pd.DataFrame,
@@ -92,6 +101,7 @@ def assign_root_orphan_edges(
         orphan_consolidation_name: str,
         dimension_name: str,
         retained_hierarchies: list[str],
+        **kwargs
 ) -> pd.DataFrame:
 
     new_rows_collection = []
@@ -124,17 +134,21 @@ def assign_root_orphan_edges(
     return edges_df
 
 
+@baseutils.log_exec_metrics
 def apply_update_on_elements(
         legacy_df: pd.DataFrame, input_df: pd.DataFrame,
+        **kwargs
 ) -> pd.DataFrame:
     return pd.concat([input_df, legacy_df], ignore_index=True).drop_duplicates()
 
 
+@baseutils.log_exec_metrics
 def apply_updates(
         mode: Literal["rebuild", "update", "update_with_unwind"],
         existing_edges_df: pd.DataFrame, input_edges_df: pd.DataFrame,
         existing_elements_df: pd.DataFrame, input_elements_df: pd.DataFrame,
-        dimension_name: str, orphan_consolidation_name: str = "OrphanParent"
+        dimension_name: str, orphan_consolidation_name: str = "OrphanParent",
+        **kwargs
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     legacy_elements_df = utility.get_legacy_elements(existing_elements_df, input_elements_df)
     if len(legacy_elements_df) == 0:
@@ -166,28 +180,19 @@ def apply_updates(
     return updated_edges_df, updated_elements_df
 
 
-_NORMALIZER_REGISTRY = {
-    "parent_child": normalize.normalize_parent_child_input,
-    "indented_levels": normalize.normalize_indented_levels_input,
-    "filled_levels": normalize.normalize_filled_levels_input
-}
-
-
 # input to be completed with io
-def init_schema(
+@baseutils.log_exec_metrics
+def init_input_schema(
         input_datasource: dict, input_format: Literal["parent_child", "indented_levels", "filled_levels"],
-        dimension_name: str, hierarchy_name: str = None,
-        tm1_service: Any = None, other_service: Any = None,
-        dim_column: Optional[str] = None, hier_column: Optional[str] = None,
+        dimension_name: str, hierarchy_name: str = None, tm1_service: Any = None,
+        other_service: Any = None, dim_column: Optional[str] = None, hier_column: Optional[str] = None,
         parent_column: Optional[str] = None, child_column: Optional[str] = None,
-        level_columns: Optional[list[str]] = None,
-        type_column: Optional[str] = None, weight_column: Optional[str] = None,
-        input_elements_datasource: dict = None,
+        level_columns: Optional[list[str]] = None, type_column: Optional[str] = None,
+        weight_column: Optional[str] = None, input_elements_datasource: dict = None,
         input_elements_df_element_column: Optional[str] = None,
         attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon",
+        **kwargs
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-
-    validate.validate_parameters_for_input_format(input_format, level_columns)
 
     # to be used in io with other datasources
     _ = tm1_service
@@ -197,39 +202,47 @@ def init_schema(
     # to be completed with io for extension element/attribute
     raw_input_elements_df = pd.DataFrame(input_elements_datasource) if input_elements_datasource is not None else None
 
-    input_edges_df, input_elements_df = _NORMALIZER_REGISTRY[input_format](
+    pre_validate_input_schema(input_format=input_format, input_df=raw_input_df, level_columns=level_columns)
+
+    input_edges_df, input_elements_df = normalize.normalize_input_schema(
         input_df=raw_input_df, dimension_name=dimension_name, hierarchy_name=hierarchy_name,
         level_columns=level_columns, parent_column=parent_column, child_column=child_column,
         dim_column=dim_column, hier_column=hier_column,
         type_column=type_column, weight_column=weight_column,
         input_elements_df=raw_input_elements_df,
         input_elements_df_element_column=input_elements_df_element_column,
-        attribute_parser=attribute_parser
-    )
-    post_validation_steps(input_edges_df, input_elements_df)
+        attribute_parser=attribute_parser)
+
+    post_validate_schema(input_edges_df, input_elements_df)
     return input_edges_df, input_elements_df
 
 
-def resolve_schema(
+def init_existing_schema(
         tm1_service: Any, dimension_name: str,
+        old_orphan_parent_name: str = "OrphanParent"
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    if not tm1_service.dimensions.exists(dimension_name):
+        return pd.DataFrame(), pd.DataFrame()
+
+    existing_edges_df, existing_elements_df = io.retrieve_existing_schema(tm1_service, dimension_name)
+    existing_edges_df, existing_elements_df = normalize.normalize_existing_schema(
+        existing_edges_df, existing_elements_df, old_orphan_parent_name)
+    return existing_edges_df, existing_elements_df
+
+
+@baseutils.log_exec_metrics
+def resolve_schema(
+        dimension_name: str,
         input_edges_df: pd.DataFrame, input_elements_df: pd.DataFrame,
+        existing_edges_df: pd.DataFrame, existing_elements_df: pd.DataFrame,
         mode: Literal["rebuild", "update", "update_with_unwind"] = "rebuild",
         allow_type_changes: bool = False,
-        old_orphan_parent_name: str = "OrphanParent", orphant_parent_name: str = "OrphanParent"
+        orphant_parent_name: str = "OrphanParent",
+        **kwargs
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
-    existing_edges_df, existing_elements_df = pd.DataFrame(), pd.DataFrame()
-
-    if tm1_service.dimensions.exists(dimension_name):
-        existing_edges_df, existing_elements_df = io.retrieve_existing_schema(tm1_service, dimension_name)
-        existing_edges_df, existing_elements_df = normalize.normalize_existing_schema(
-            existing_edges_df, existing_elements_df, old_orphan_parent_name
-        )
-    else:
-        print("dimension does not exist, running create")
-
     if len(existing_elements_df) > 0 and not allow_type_changes:
-        validate.validate_element_type_consistency(existing_elements_df, input_elements_df)
+        validate_element_type_consistency(existing_elements_df, input_elements_df)
 
     if mode == "rebuild":
         return input_edges_df, input_elements_df
@@ -240,14 +253,17 @@ def resolve_schema(
         existing_elements_df=existing_elements_df, input_elements_df=input_elements_df,
         dimension_name=dimension_name, orphan_consolidation_name=orphant_parent_name
     )
-    updated_edges_df, updated_elements_df = normalize.normalize_updated_schema(updated_edges_df, updated_elements_df)
-    validate.post_validation_steps(updated_edges_df, updated_elements_df)
+    normalized_updated_edges_df, normalized_updated_elements_df = normalize.normalize_updated_schema(
+        updated_edges_df, updated_elements_df
+    )
+    post_validate_schema(normalized_updated_edges_df, normalized_updated_elements_df)
 
     return updated_edges_df, updated_elements_df
 
 
+@baseutils.log_exec_metrics
 def rebuild_dimension_structure(
-        tm1_service: Any, dimension_name: str, edges_df: pd.DataFrame, elements_df: pd.DataFrame
+        tm1_service: Any, dimension_name: str, edges_df: pd.DataFrame, elements_df: pd.DataFrame, **kwargs
 ) -> None:
     hierarchy_names = utility.get_hierarchy_list(input_df=elements_df)
 
@@ -257,7 +273,7 @@ def rebuild_dimension_structure(
         for hierarchy_name in hierarchy_names
     }
 
-    attribute_strings = utility.get_attribute_columns_list(input_df=elements_df, level_columns=[])
+    attribute_strings = utility.get_attribute_columns_list(input_df=elements_df)
 
     for hierarchy_name in hierarchies.keys():
         for attr_string in attribute_strings:
@@ -284,7 +300,8 @@ def rebuild_dimension_structure(
     tm1_service.dimensions.update_or_create(dimension)
 
 
-def update_element_attributes(tm1_service: Any, elements_df: pd.DataFrame, dimension_name: str) -> None:
+@baseutils.log_exec_metrics
+def update_element_attributes(tm1_service: Any, elements_df: pd.DataFrame, dimension_name: str, **kwargs) -> None:
     writable_elements_df = utility.unpivot_attributes_to_cube_format(
         elements_df=elements_df, dimension_name=dimension_name
     )

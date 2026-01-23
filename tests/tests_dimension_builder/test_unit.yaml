@@ -1011,6 +1011,74 @@ test_parse_filled_levels_into_parent_child_failure:
     expected_exception: "SchemaValidationError"
     expected_message: "Level column Level0 is missing."
 
+test_convert_levels_to_edges:
+  - # Scenario for indented levels: Standard indented levels with multiple hierarchies
+    input_df: {
+      "Hierarchy": ["Standard", "Standard", "Standard", "Regional", "Regional"],
+      "L0": ["Total", "", "", "World", ""],
+      "L1": ["", "Hardware", "Software", "", "Europe"]
+    }
+    level_columns: ["L0", "L1"]
+    expected_df: {
+      "Hierarchy": ["Standard", "Standard", "Standard", "Regional", "Regional"],
+      "Parent": [null, "Total", "Total", null, "World"],
+      "Child": ["Total", "Hardware", "Software", "World", "Europe"],
+    }
+  - # Scenario for indented levels: Deeply nested hierarchy
+    input_df: {
+      "Hierarchy": [ "H1", "H1", "H1" ],
+      "Level 0": [ "Grandparent", "", "" ],
+      "Level 1": [ "", "Parent", "" ],
+      "Level 2": [ "", "", "Child" ],
+    }
+    level_columns: [ "Level 0", "Level 1", "Level 2" ]
+    expected_df: {
+      "Hierarchy": [ "H1", "H1", "H1" ],
+      "Parent": [ null, "Grandparent", "Parent" ],
+      "Child": [ "Grandparent", "Parent", "Child" ]
+    }
+  - # Scenario for filled levels: Standard filled hierarchy with varying depths
+    input_df: {
+      "Hierarchy":["default", "default", "default"],
+      "L0": [ "Total", "Total", "Total" ],
+      "L1": [ "", "Hardware", "Hardware" ],
+      "L2": [ "", "", "CPU" ]
+    }
+    level_columns: [ "L0", "L1", "L2" ]
+    expected_df: {
+      "Hierarchy":["default", "default", "default"],
+      "Parent": [ null, "Total", "Hardware" ],
+      "Child": [ "Total", "Hardware", "CPU" ]
+
+    }
+
+  - # Scenario for filled levels: Multiple branches in the same table
+    input_df: {
+      "Hierarchy":["default", "default", "default", "default"],
+      "L0": [ "Company", "Company", "Company", "Company" ],
+      "L1": [ "", "Sales", "Sales", "HR" ],
+      "L2": [ "", "", "West", "" ]
+    }
+    level_columns: [ "L0", "L1", "L2" ]
+    expected_df: {
+      "Hierarchy":["default", "default", "default", "default"],
+      "Parent": [ null, "Company", "Sales", "Company" ],
+      "Child": [ "Company", "Sales", "West", "HR" ]
+    }
+
+  - # Scenario for filled levels: Single level only
+    input_df: {
+      "Hierarchy": ["default", "default"],
+      "Level_0": [ "Root1", "Root2" ],
+    }
+    level_columns: [ "Level_0" ]
+    expected_df: {
+      "Hierarchy": ["default", "default"],
+      "Parent": [ null, null ],
+      "Child": [ "Root1", "Root2" ],
+    }
+
+
 test_drop_invalid_edges:
   - # Scenario 1: Mixed valid and invalid parents
     # Row 0: Valid -> Kept

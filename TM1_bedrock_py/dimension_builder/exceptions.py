@@ -28,17 +28,16 @@ class ElementTypeConflictError(Exception):
         super().__init__(message)
 
 
-class LevelColumnInvalidRowError(Exception):
-    def __init__(self, row_index: Hashable, error_type: str):
-        super().__init__("Invalid row at index "+str(row_index)+"."
-                         "Cause of error: "+error_type)
-
-
 class InvalidAttributeColumnNameError(Exception):
     def __init__(self, message: str):
         super().__init__(message)
 
 
 class InvalidInputParameterError(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
+class InvalidLevelColumnRecordError(Exception):
     def __init__(self, message: str):
         super().__init__(message)

@@ -1,8 +1,6 @@
 import pandas as pd
 import time, random, string
-from TM1_bedrock_py.dimension_builder.validate import (
-    validate_graph_for_cycles_with_kahn, validate_graph_for_cycles_with_dfs
-)
+from TM1_bedrock_py.dimension_builder.validate import validate_graph_for_cycles_with_kahn
 from TM1_bedrock_py.dimension_builder.exceptions import GraphValidationError
 
 EXPECTED_DF_PARENT_CHILD = {
@@ -247,16 +245,6 @@ def test_kahn_algorithm():
         print(f"SUCCESS: Cycle detected in {time.time() - start:.4f} seconds.")
         print(f"Error: {e}")
     print("validation with khan finished")
-
-    print("validation with dfs started")
-    start = time.time()
-    try:
-        validate_graph_for_cycles_with_dfs(df)
-        print("FAILURE: Algorithm failed to detect the cycle.")
-    except GraphValidationError as e:
-        print(f"SUCCESS: Cycle detected in {time.time() - start:.4f} seconds.")
-        print(f"Error: {e}")
-    print("validation with dfs finished")
 
 
 def generate_random_dimension_data(

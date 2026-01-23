@@ -1,5 +1,6 @@
 from pathlib import Path
 import pandas as pd
+import numpy as np
 import parametrize_from_file
 import pytest
 from sqlalchemy import create_engine
@@ -8,8 +9,7 @@ from TM1_bedrock_py.dimension_builder import validate, normalize, utility
 from TM1_bedrock_py.dimension_builder.io import read_source_to_df
 from TM1_bedrock_py.dimension_builder.exceptions import (
     SchemaValidationError,
-    GraphValidationError,
-    LevelColumnInvalidRowError
+    GraphValidationError
 )
 from tests.tests_dimension_builder.test_data.test_data import *
 
@@ -229,10 +229,10 @@ def test_normalize_all_column_names(
     input_df = pd.DataFrame(input_df)
     expected_df = pd.DataFrame(expected_df)
 
-    output_df = normalize.normalize_all_base_column_names(input_df=input_df, dim_column=dim_column,
-                                                          hier_column=hier_column, parent_column=parent_column,
-                                                          child_column=child_column, element_column=element_column,
-                                                          type_column=type_column, weight_column=weight_column)
+    output_df = normalize.normalize_base_column_names(input_df=input_df, dim_column=dim_column, hier_column=hier_column,
+                                                      parent_column=parent_column, child_column=child_column,
+                                                      element_column=element_column, type_column=type_column,
+                                                      weight_column=weight_column)
 
     pd.testing.assert_frame_equal(output_df, expected_df)
 
@@ -242,21 +242,8 @@ def test_assign_missing_edge_columns(input_df, dimension_name, hierarchy_name, e
     input_df = pd.DataFrame(input_df)
     expected_df = pd.DataFrame(expected_df)
 
-    output_df = normalize.assign_missing_edge_columns(
-        input_df=input_df,
-        dimension_name=dimension_name,
-        hierarchy_name=hierarchy_name
-    )
-
-    pd.testing.assert_frame_equal(output_df, expected_df)
-
-
-@parametrize_from_file
-def test_assign_parent_child_to_level_columns(input_df, expected_df):
-    input_df = pd.DataFrame(input_df)
-    expected_df = pd.DataFrame(expected_df)
-
-    output_df = normalize.assign_parent_child_to_level_columns(input_df=input_df)
+    output_df = normalize.assign_missing_base_columns(input_df=input_df, dimension_name=dimension_name,
+                                                      hierarchy_name=hierarchy_name)
 
     pd.testing.assert_frame_equal(output_df, expected_df)
 
@@ -266,11 +253,8 @@ def test_assign_missing_edge_values(input_df, dimension_name, hierarchy_name, ex
     input_df = pd.DataFrame(input_df)
     expected_df = pd.DataFrame(expected_df)
 
-    normalize.assign_missing_edge_values(
-        input_df=input_df,
-        dimension_name=dimension_name,
-        hierarchy_name=hierarchy_name
-    )
+    normalize.assign_missing_base_values(input_df=input_df, dimension_name=dimension_name,
+                                         hierarchy_name=hierarchy_name)
 
     pd.testing.assert_frame_equal(input_df, expected_df)
 
@@ -319,138 +303,20 @@ def test_separate_elements_df_columns(input_df, attribute_columns, expected_df):
 
 
 @parametrize_from_file
-def test_create_stack(input_df, expected_stack):
+def test_convert_levels_to_edges(input_df, level_columns, expected_df):
     input_df = pd.DataFrame(input_df)
-
-    output_stack = utility.create_stack(input_df=input_df)
-
-    assert output_stack == expected_stack
-
-
-@parametrize_from_file
-def test_update_stack(stack, hierarchy, element_level, element_name, expected_stack):
-    output_stack = utility.update_stack(
-        stack=stack,
-        hierarchy=hierarchy,
-        element_level=element_level,
-        element_name=element_name
-    )
-    assert output_stack == expected_stack
-
-
-@parametrize_from_file
-def test_parse_indented_level_columns(input_row, row_index, level_columns, expected_name, expected_level):
-    df_row = pd.Series(input_row)
-
-    element_name, element_level = utility.parse_indented_level_columns(
-        df_row=df_row,
-        row_index=row_index,
-        level_columns=level_columns
-    )
-
-    assert element_name == expected_name
-    assert element_level == expected_level
-
-
-@parametrize_from_file
-def test_parse_indented_level_columns_failure(input_row, row_index, level_columns, expected_exception,
-                                              expected_message):
-    df_row = pd.Series(input_row)
-    exception_type = eval(expected_exception)
-
-    with pytest.raises(exception_type) as excinfo:
-        utility.parse_indented_level_columns(
-            df_row=df_row,
-            row_index=row_index,
-            level_columns=level_columns
-        )
-
-    assert expected_message in str(excinfo.value)
-
-
-@parametrize_from_file
-def test_parse_filled_level_columns(input_row, row_index, level_columns, expected_name, expected_level):
-    df_row = pd.Series(input_row)
-    element_name, element_level = utility.parse_filled_level_columns(
-        df_row=df_row,
-        row_index=row_index,
-        level_columns=level_columns
-    )
-    assert element_name == expected_name
-    assert element_level == expected_level
-
-
-@parametrize_from_file
-def test_parse_filled_level_columns_failure(
-        input_row,
-        row_index,
-        level_columns,
-        expected_exception,
-        expected_message
-):
-    df_row = pd.Series(input_row)
-    exception_type = eval(expected_exception)
-
-    with pytest.raises(exception_type) as excinfo:
-        utility.parse_filled_level_columns(
-            df_row=df_row,
-            row_index=row_index,
-            level_columns=level_columns
-        )
-
-    assert expected_message in str(excinfo.value)
-
-
-@parametrize_from_file
-def test_parse_indented_levels_into_parent_child(input_df, level_columns, expected_df):
-    input_df = pd.DataFrame(input_df)
+    print("")
+    print("input_df")
+    print(input_df)
     expected_df = pd.DataFrame(expected_df)
+    expected_df.fillna(value=np.nan, inplace=True)
 
-    output_df = normalize.assign_parent_child_to_indented_levels(input_df=input_df, level_columns=level_columns)
+    output_df = normalize.convert_levels_to_edges(input_df=input_df, level_columns=level_columns)
+    print("")
+    print("output_df")
+    print(output_df)
 
     pd.testing.assert_frame_equal(output_df, expected_df)
-
-
-@parametrize_from_file
-def test_parse_indented_levels_into_parent_child_failure(
-        input_df,
-        level_columns,
-        expected_exception,
-        expected_message
-):
-    input_df = pd.DataFrame(input_df)
-    exception_type = eval(expected_exception)
-
-    with pytest.raises(exception_type) as excinfo:
-        normalize.assign_parent_child_to_indented_levels(input_df=input_df, level_columns=level_columns)
-
-    assert expected_message in str(excinfo.value)
-
-
-@parametrize_from_file
-def test_parse_filled_levels_into_parent_child(input_df, level_columns, expected_df):
-    input_df = pd.DataFrame(input_df)
-    expected_df = pd.DataFrame(expected_df)
-
-    output_df = normalize.assign_parent_child_to_filled_levels(input_df=input_df, level_columns=level_columns)
-
-    pd.testing.assert_frame_equal(output_df, expected_df)
-
-
-@parametrize_from_file
-def test_parse_filled_levels_into_parent_child_failure(
-        input_df,
-        level_columns,
-        expected_exception,
-        expected_message
-):
-    input_df = pd.DataFrame(input_df)
-    exception_type = eval(expected_exception)
-
-    with pytest.raises(exception_type) as excinfo:
-        normalize.assign_parent_child_to_indented_levels(input_df=input_df, level_columns=level_columns)
-
-    assert expected_message in str(excinfo.value)
 
 
 @parametrize_from_file
@@ -587,34 +453,12 @@ def test_validate_graph_for_self_loop_failure(df_data, expected_exception, expec
 
 
 @parametrize_from_file
-def test_validate_graph_for_cycles_with_dfs_success(df_data):
-    """
-    Tests acyclic graphs (DAGs), including complex shapes like diamonds.
-    """
-    input_df = pd.DataFrame(df_data)
-    validate.validate_graph_for_cycles_with_dfs(input_df)
-
-
-@parametrize_from_file
 def test_validate_graph_for_cycles_with_kahn_success(df_data):
     """
     Tests acyclic graphs (DAGs), including complex shapes like diamonds.
     """
     input_df = pd.DataFrame(df_data)
     validate.validate_graph_for_cycles_with_kahn(input_df)
-
-
-@parametrize_from_file
-def test_validate_graph_for_cycles_with_dfs_failure(df_data, expected_exception, expected_message_part):
-    """
-    Tests that cycles (direct and indirect) raise a GraphValidationError.
-    """
-    input_df = pd.DataFrame(df_data)
-    exception_type = eval(expected_exception)
-
-    with pytest.raises(exception_type) as excinfo:
-        validate.validate_graph_for_cycles_with_dfs(input_df)
-    assert expected_message_part in str(excinfo.value)
 
 
 @parametrize_from_file

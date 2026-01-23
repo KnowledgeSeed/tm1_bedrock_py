@@ -1,63 +1,95 @@
 import pandas as pd
+import numpy as np
 from collections import defaultdict
 from typing import Hashable, Literal, Optional
 from TM1_bedrock_py.dimension_builder.exceptions import (
     SchemaValidationError,
     GraphValidationError,
-    LevelColumnInvalidRowError,
     ElementTypeConflictError,
-    InvalidInputParameterError
+    InvalidInputParameterError,
+    InvalidLevelColumnRecordError
 )
-
-
-def validate_parameters_for_input_format(
-        input_format: Literal["parent_child", "indented_levels", "filled_levels"],
-        level_columns: Optional[list[str]],
-):
-    if input_format != "parent_child" and level_columns is None:
-        raise InvalidInputParameterError(
-            "Missing required parameter 'level_columns'."
-            "Parameter is mandatory for level column type inputs."
-        )
 
 
 # level column invalid row errors for normalize functions
 
 
-def validate_row_for_element_count_indented_levels(
-        elements_in_row: int, row_index: Hashable
-) -> None:
-    if elements_in_row == 0:
-        raise LevelColumnInvalidRowError(
-            row_index=row_index, error_type="Empty row, no element found. Exactly one is expected."
-        )
-    if elements_in_row > 1:
-        raise LevelColumnInvalidRowError(
-            row_index=row_index, error_type="Multiple elements found. Exactly one is expected."
-        )
+def validate_filled_structure(input_df: pd.DataFrame, level_columns: list[str]) -> None:
+    mask = input_df[level_columns].notna().to_numpy()
+    rows_count = len(input_df)
+    row_indices = np.arange(rows_count)
 
+    row_sums = mask.sum(axis=1)
+    has_data = row_sums > 0
 
-def validate_row_for_element_count_filled_levels(
-        element_level: int, row_index: Hashable
-) -> None:
-    if element_level == -1:
-        raise LevelColumnInvalidRowError(
-            row_index=row_index, error_type="Empty row, no element found. Exactly one is expected."
-        )
+    first_valid_idx = mask.argmax(axis=1)
+    last_valid_idx = mask.shape[1] - 1 - np.fliplr(mask).argmax(axis=1)
 
+    # 1. LEFT ALIGNMENT CHECK
+    # -----------------------------------------------------
+    # If a row has data, the first value MUST be at index 0.
+    not_left_aligned = (first_valid_idx != 0) & has_data
 
-def validate_row_for_complete_fill_filled_levels(found_empty: bool, row_index: Hashable) -> None:
-    if found_empty:
-        raise LevelColumnInvalidRowError(
-            row_index, f"Row has a gap: level is filled but a previous level was empty."
+    if not_left_aligned.any():
+        bad_rows = row_indices[not_left_aligned]
+        raise InvalidLevelColumnRecordError(
+            f"Filled Validation Failed: Rows must start at Level 1: {list(bad_rows)}"
         )
 
+    # 2. GAP CHECK
+    # -----------------------------------------------------
+    # The span (distance from start to end) must equal the count of items.
+    span = last_valid_idx - first_valid_idx + 1
+    has_gaps = (span != row_sums) & has_data
 
-def validate_row_for_parent_child_in_indented_level_columns(
-        row_index: Hashable, element_level: int, hierarchy: str, stack: dict
-):
-    if element_level != 0 and stack[hierarchy].get(element_level - 1) is None:
-        raise LevelColumnInvalidRowError(row_index=row_index, error_type="Missing parent of child element")
+    if has_gaps.any():
+        bad_rows = row_indices[has_gaps]
+        raise InvalidLevelColumnRecordError(
+            f"Filled Validation Failed: Rows cannot contain gaps: {list(bad_rows)}"
+        )
+
+
+def validate_indented_structure(input_df: pd.DataFrame, level_columns: list[str]) -> None:
+    mask = input_df[level_columns].notna().to_numpy()
+    rows_count = len(input_df)
+    row_indices = np.arange(rows_count)
+
+    # 1. SINGLE VALUE CHECK
+    # -----------------------------------------------------
+    row_sums = mask.sum(axis=1)
+    has_data = row_sums > 0
+    invalid_counts = (row_sums != 1) & has_data
+
+    if invalid_counts.any():
+        bad_rows = row_indices[invalid_counts]
+        raise InvalidLevelColumnRecordError(
+            f"Indented Validation Failed: Rows must contain exactly ONE value: {list(bad_rows)}"
+        )
+
+    # 2. ORPHAN / CONNECTIVITY CHECK
+    # -----------------------------------------------------
+    # Logic: If I am at Column 2 (Level 3), the contextual hierarchy at Row-1
+    # must have a value at Column 1 (Level 2).
+
+    context_mask = input_df[level_columns].ffill(axis=0).notna().to_numpy()
+    prev_context = np.vstack([
+        np.zeros(len(level_columns), dtype=bool),
+        context_mask[:-1]
+    ])
+
+    current_col_idx = mask.argmax(axis=1)
+    required_parent_col = current_col_idx - 1
+
+    is_not_root = current_col_idx > 0
+    parent_missing = ~prev_context[row_indices, required_parent_col]
+
+    is_orphan = has_data & is_not_root & parent_missing
+
+    if is_orphan.any():
+        bad_rows = row_indices[is_orphan]
+        raise InvalidLevelColumnRecordError(
+            f"Indented Validation Failed: Rows are indented too far: {list(bad_rows)}"
+        )
 
 
 # schema validation for normalize functions
@@ -71,6 +103,11 @@ def validate_schema_for_parent_child_columns(input_df: pd.DataFrame) -> None:
 
 
 def validate_schema_for_level_columns(input_df: pd.DataFrame, level_columns: list[str]) -> None:
+    if level_columns is None:
+        raise InvalidInputParameterError(
+            "Missing required parameter 'level_columns'."
+            "Parameter is mandatory for level column type inputs.")
+
     for level_column in level_columns:
         if level_column not in input_df.columns:
             raise SchemaValidationError("Level column "+level_column+" is missing.")
@@ -156,32 +193,6 @@ def validate_graph_for_self_loop(input_df: pd.DataFrame) -> None:
         raise GraphValidationError("A child is the parent of itself, self loop detected.")
 
 
-def validate_graph_for_cycles_with_dfs(input_df: pd.DataFrame) -> None:
-    adj = input_df.groupby("Parent")["Child"].apply(list).to_dict()
-    visited = set()
-    rec_stack = set()
-
-    def has_cycle(graph_node):
-        visited.add(graph_node)
-        rec_stack.add(graph_node)
-
-        for child in adj.get(graph_node, []):
-            if child not in visited:
-                if has_cycle(child):
-                    return True
-            elif child in rec_stack:
-                return True
-
-        rec_stack.remove(graph_node)
-        return False
-
-    all_nodes = set(input_df["Parent"]).union(set(input_df["Child"]))
-    for node in all_nodes:
-        if node not in visited:
-            if has_cycle(node):
-                raise GraphValidationError(f"Graph contains a cycle starting from node: {node}")
-
-
 def validate_graph_for_cycles_with_kahn(edges_df: pd.DataFrame) -> None:
     adj = defaultdict(list)
     in_degree = defaultdict(int)
@@ -241,7 +252,7 @@ def validate_graph_for_cycles_with_kahn(edges_df: pd.DataFrame) -> None:
         )
 
 
-def post_validation_steps(edges_df: pd.DataFrame, elements_df: pd.DataFrame) -> None:
+def post_validate_schema(edges_df: pd.DataFrame, elements_df: pd.DataFrame) -> None:
     validate_schema_for_node_integrity(edges_df=edges_df, elements_df=elements_df)
     validate_elements_df_schema_for_inconsistent_element_type(input_df=elements_df)
     validate_elements_df_schema_for_inconsistent_leaf_attributes(input_df=elements_df)
@@ -249,6 +260,21 @@ def post_validation_steps(edges_df: pd.DataFrame, elements_df: pd.DataFrame) -> 
     validate_graph_for_self_loop(input_df=edges_df)
     validate_graph_for_leaves_as_parents(edges_df=edges_df, elements_df=elements_df)
     validate_graph_for_cycles_with_kahn(edges_df=edges_df)
+
+
+def pre_validate_input_schema(
+        input_format: Literal["parent_child", "indented_levels", "filled_levels"],
+        input_df: pd.DataFrame, level_columns: Optional[list[str]] = None
+) -> None:
+    if input_format == "parent_child":
+        validate_schema_for_parent_child_columns(input_df)
+        return
+
+    validate_schema_for_level_columns(input_df, level_columns)
+    if input_format == "indented_levels":
+        validate_indented_structure(input_df, level_columns)
+    else:
+        validate_filled_structure(input_df, level_columns)
 
 
 def validate_element_type_consistency(existing_elements_df: pd.DataFrame, input_elements_df: pd.DataFrame):
