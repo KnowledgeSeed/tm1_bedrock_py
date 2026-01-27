@@ -277,7 +277,9 @@ def pre_validate_input_schema(
         validate_filled_structure(input_df, level_columns)
 
 
-def validate_element_type_consistency(existing_elements_df: pd.DataFrame, input_elements_df: pd.DataFrame):
+def validate_element_type_consistency(
+        existing_elements_df: pd.DataFrame, input_elements_df: pd.DataFrame, allow_type_changes: bool
+) -> Optional[pd.DataFrame]:
     cols_needed = ['ElementName', 'Hierarchy', 'ElementType']
     df_existing_sub = existing_elements_df[cols_needed]
     df_input_sub = input_elements_df[cols_needed]
@@ -291,12 +293,16 @@ def validate_element_type_consistency(existing_elements_df: pd.DataFrame, input_
     )
 
     conflicts = merged_df[merged_df['ElementType_existing'] != merged_df['ElementType_input']]
-    print(conflicts)
 
     if not conflicts.empty:
         num_conflicts = len(conflicts)
         examples = conflicts.head(10).to_dict(orient='records')
 
-        error_msg = f"Validation Failed: Found {num_conflicts} conflict(s) where 'ElementType' changed."
-        error_msg += f"\nConflicts (First 10): {examples}"
-        raise ElementTypeConflictError(error_msg)
+        if not allow_type_changes:
+            error_msg = f"Validation Failed: Found {num_conflicts} conflict(s) where 'ElementType' changed."
+            error_msg += f"\nConflicts (First 10): {examples}"
+            raise ElementTypeConflictError(error_msg)
+
+        return conflicts
+
+    return None

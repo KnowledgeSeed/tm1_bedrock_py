@@ -1,5 +1,5 @@
 import pandas as pd
-from typing import Tuple, Callable, Literal
+from typing import Tuple, Callable, Literal, Optional
 import re
 
 
@@ -44,7 +44,10 @@ def parse_attribute_string(
     return func(attr_name_and_type)
 
 
-def get_legacy_edges(existing_df: pd.DataFrame, input_df: pd.DataFrame) -> pd.DataFrame:
+def get_legacy_edges(existing_df: Optional[pd.DataFrame], input_df: pd.DataFrame) -> Optional[pd.DataFrame]:
+    if existing_df is None:
+        return None
+
     keys = ["Parent", "Child", "Dimension", "Hierarchy"]
     merged = existing_df.merge(
         input_df[keys].drop_duplicates(),
@@ -87,3 +90,18 @@ def unpivot_attributes_to_cube_format(elements_df: pd.DataFrame, dimension_name:
         value_name='Value'
     )
     return unpivoted_df
+
+
+def get_non_conflicting_edges(edges_df: pd.DataFrame, conflicts_df: pd.DataFrame) -> pd.DataFrame:
+    conflict_keys = pd.MultiIndex.from_frame(conflicts_df[['ElementName', 'Hierarchy']])
+    parent_keys = pd.MultiIndex.from_frame(edges_df[['Parent', 'Hierarchy']])
+    child_keys = pd.MultiIndex.from_frame(edges_df[['Child', 'Hierarchy']])
+    mask = parent_keys.isin(conflict_keys) | child_keys.isin(conflict_keys)
+    return edges_df[~mask].copy()
+
+
+def get_non_conflicting_elements(elements_df: pd.DataFrame, conflicts_df: pd.DataFrame) -> pd.DataFrame:
+    conflict_keys = pd.MultiIndex.from_frame(conflicts_df[['ElementName', 'Hierarchy']])
+    element_keys = pd.MultiIndex.from_frame(elements_df[['Parent', 'Hierarchy']])
+    mask = element_keys.isin(conflict_keys)
+    return elements_df[~mask].copy()

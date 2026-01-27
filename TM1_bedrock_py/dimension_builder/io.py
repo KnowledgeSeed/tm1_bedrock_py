@@ -347,7 +347,7 @@ def read_source_to_df(
         raise ValueError
 
 
-def read_existing_edges_df(tm1_service: Any, dimension_name: str) -> pd.DataFrame:
+def read_existing_edges_df(tm1_service: Any, dimension_name: str) -> Optional[pd.DataFrame]:
     dimension = tm1_service.dimensions.get(dimension_name)
     edge_list = [
         {
@@ -361,7 +361,8 @@ def read_existing_edges_df(tm1_service: Any, dimension_name: str) -> pd.DataFram
         if hierarchy.name != "Leaves"
         for (parent, child), weight in hierarchy.edges.items()
     ]
-
+    if len(edge_list) == 0:
+        return None
     return pd.DataFrame(edge_list)
 
 
@@ -401,7 +402,7 @@ def read_existing_elements_df(
     return pd.concat(dfs_to_concat, ignore_index=True)
 
 
-def retrieve_existing_schema(tm1_service: Any, dimension_name: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def retrieve_existing_schema(tm1_service: Any, dimension_name: str) -> Tuple[Optional[pd.DataFrame], pd.DataFrame]:
     existing_edges_df = read_existing_edges_df(tm1_service, dimension_name)
     existing_elements_df = read_existing_elements_df(tm1_service, dimension_name)
     return existing_edges_df, existing_elements_df

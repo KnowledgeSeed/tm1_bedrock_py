@@ -329,13 +329,18 @@ def clear_orphan_parent_elements(
 
 
 def normalize_existing_schema(
-        existing_edges_df: pd.DataFrame, existing_elements_df: pd.DataFrame,
+        existing_edges_df: Optional[pd.DataFrame], existing_elements_df: pd.DataFrame,
         old_orphan_parent_name: str = "OrphanParent"
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+) -> Tuple[Optional[pd.DataFrame], pd.DataFrame]:
     # further enhance if necessary, currently this seems enough
-    existing_edges_df = clear_orphan_parent_edges(existing_edges_df, old_orphan_parent_name)
     existing_elements_df = clear_orphan_parent_elements(existing_elements_df, old_orphan_parent_name)
     existing_elements_df, attribute_columns = normalize_attr_column_names(existing_elements_df)
+
+    if existing_edges_df is None:
+        return None, existing_elements_df
+
+    existing_edges_df = clear_orphan_parent_edges(existing_edges_df, old_orphan_parent_name)
+
     return existing_edges_df, existing_elements_df
 
 

@@ -13,13 +13,13 @@ from TM1_bedrock_py import utility as baseutils
 
 @baseutils.log_exec_metrics
 def apply_update_on_edges(
-        legacy_df: pd.DataFrame,
+        legacy_df: Optional[pd.DataFrame],
         input_df: pd.DataFrame,
         retained_hierarchies: list[str],
         orphan_consolidation_name: str = "OrphanParent",
         **kwargs
 ) -> pd.DataFrame:
-    if len(legacy_df) == 0:
+    if legacy_df is None:
         return input_df
 
     for hierarchy in retained_hierarchies:
@@ -40,13 +40,13 @@ def apply_update_on_edges(
 
 @baseutils.log_exec_metrics
 def apply_update_with_unwind_on_edges(
-        legacy_df: pd.DataFrame,
+        legacy_df: Optional[pd.DataFrame],
         input_df: pd.DataFrame,
         retained_hierarchies: list[str],
         orphan_consolidation_name: str = "OrphanParent",
         **kwargs
 ) -> pd.DataFrame:
-    if len(legacy_df) == 0:
+    if legacy_df is None:
         return input_df
 
     keep_mask = pd.Series(True, index=legacy_df.index)
@@ -95,7 +95,7 @@ def add_orphan_consolidation_elements(
 
 @baseutils.log_exec_metrics
 def assign_root_orphan_edges(
-        legacy_edges_df: pd.DataFrame,
+        legacy_edges_df: Optional[pd.DataFrame],
         legacy_elements_df: pd.DataFrame,
         edges_df: pd.DataFrame,
         orphan_consolidation_name: str,
@@ -105,10 +105,9 @@ def assign_root_orphan_edges(
 ) -> pd.DataFrame:
 
     new_rows_collection = []
-    legacy_edges_exist = len(legacy_edges_df) > 0
 
     for hierarchy in retained_hierarchies:
-        if legacy_edges_exist:
+        if legacy_edges_df is not None:
             current_edges_subset = legacy_edges_df[legacy_edges_df['Hierarchy'] == hierarchy]
             current_elements_subset = legacy_elements_df[legacy_elements_df['Hierarchy'] == hierarchy]
             legacy_children_set = set(current_edges_subset['Child'])
@@ -145,7 +144,7 @@ def apply_update_on_elements(
 @baseutils.log_exec_metrics
 def apply_updates(
         mode: Literal["rebuild", "update", "update_with_unwind"],
-        existing_edges_df: pd.DataFrame, input_edges_df: pd.DataFrame,
+        existing_edges_df: Optional[pd.DataFrame], input_edges_df: pd.DataFrame,
         existing_elements_df: pd.DataFrame, input_elements_df: pd.DataFrame,
         dimension_name: str, orphan_consolidation_name: str = "OrphanParent",
         **kwargs
@@ -220,9 +219,9 @@ def init_input_schema(
 def init_existing_schema(
         tm1_service: Any, dimension_name: str,
         old_orphan_parent_name: str = "OrphanParent"
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+) -> Tuple[Optional[pd.DataFrame], Optional[pd.DataFrame]]:
     if not tm1_service.dimensions.exists(dimension_name):
-        return pd.DataFrame(), pd.DataFrame()
+        return None, None
 
     existing_edges_df, existing_elements_df = io.retrieve_existing_schema(tm1_service, dimension_name)
     existing_edges_df, existing_elements_df = normalize.normalize_existing_schema(
@@ -232,30 +231,34 @@ def init_existing_schema(
 
 @baseutils.log_exec_metrics
 def resolve_schema(
-        dimension_name: str,
+        dimension_name: str, tm1_service: Any,
         input_edges_df: pd.DataFrame, input_elements_df: pd.DataFrame,
-        existing_edges_df: pd.DataFrame, existing_elements_df: pd.DataFrame,
+        existing_edges_df: Optional[pd.DataFrame], existing_elements_df: Optional[pd.DataFrame],
         mode: Literal["rebuild", "update", "update_with_unwind"] = "rebuild",
         allow_type_changes: bool = False,
         orphant_parent_name: str = "OrphanParent",
         **kwargs
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-
-    if len(existing_elements_df) > 0 and not allow_type_changes:
-        validate_element_type_consistency(existing_elements_df, input_elements_df)
-
-    if mode == "rebuild":
+    if existing_elements_df is None:
         return input_edges_df, input_elements_df
+
+    conflicts = validate_element_type_consistency(existing_elements_df, input_elements_df, allow_type_changes)
+
+    if allow_type_changes and not conflicts.empty:
+        non_conflicting_existing_edges_df = utility.get_non_conflicting_edges(existing_edges_df, conflicts)
+        non_conflicting_existing_elements_df = utility.get_non_conflicting_elements(existing_elements_df, conflicts)
+        rebuild_dimension_structure(
+            tm1_service, dimension_name, non_conflicting_existing_edges_df, non_conflicting_existing_elements_df)
 
     updated_edges_df, updated_elements_df = apply_updates(
         mode=mode,
         existing_edges_df=existing_edges_df, input_edges_df=input_edges_df,
         existing_elements_df=existing_elements_df, input_elements_df=input_elements_df,
-        dimension_name=dimension_name, orphan_consolidation_name=orphant_parent_name
-    )
+        dimension_name=dimension_name, orphan_consolidation_name=orphant_parent_name)
+
     normalized_updated_edges_df, normalized_updated_elements_df = normalize.normalize_updated_schema(
-        updated_edges_df, updated_elements_df
-    )
+        updated_edges_df, updated_elements_df)
+
     post_validate_schema(normalized_updated_edges_df, normalized_updated_elements_df)
 
     return updated_edges_df, updated_elements_df

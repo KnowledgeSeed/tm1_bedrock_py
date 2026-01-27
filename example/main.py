@@ -284,10 +284,10 @@ def run_dim_builder_v1():
     from tests.tests_dimension_builder.test_data.test_data import generate_random_dimension_data as generate
     data, level_columns = generate(
         dimension_name=dimension_name,
-        hierarchy_count=3,
-        node_count_per_hierarchy=100,
+        hierarchy_count=1,
+        node_count_per_hierarchy=10,
         root_node_count=1,
-        max_depth=5,
+        max_depth=2,
         attribute_count=5
     )
 
@@ -309,7 +309,7 @@ def run_dim_builder_v1():
         input_edges_df=input_edges_df, input_elements_df=input_elements_df,
         existing_edges_df=existing_edges_df, existing_elements_df=existing_elements_df,
         orphant_parent_name=orphan_parent_name,
-        mode="rebuild",
+        mode="update",
         allow_type_changes=allow_type_changes
     )
 
@@ -327,7 +327,23 @@ def run_dim_builder_v1():
     print("Dimension update successful")
 
 
+def run_empty_dim_query():
+    tm1_params = {
+        "address": "localhost",
+        "port": 5379,
+        "user": "testbench",
+        "password": "testbench",
+        "ssl": False
+    }
+    tm1_service = TM1Service(**tm1_params)
+    df = tm1_service.elements.get_elements_dataframe("EmptyDimension")
+    print(type(df))
+    print(df)
+
+
+
 if __name__ == '__main__':
     run_dim_builder_v1()
+    # run_empty_dim_query()
 
 
