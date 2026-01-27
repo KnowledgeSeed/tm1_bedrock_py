@@ -13,14 +13,14 @@ from TM1_bedrock_py.dimension_builder.exceptions import InvalidAttributeColumnNa
 pd.set_option('future.no_silent_downcasting', True)
 
 _TYPE_MAPPING = {
-    "s": "String", "S": "String", "String": "String",  "string": "String", "numeric": "Numeric",
-    "n": "Numeric", "N": "Numeric", "Numeric": "Numeric",
+    "s": "String", "S": "String", "String": "String",  "string": "String",
+    "numeric": "Numeric", "n": "Numeric", "N": "Numeric", "Numeric": "Numeric",
     "c": "Consolidated", "C": "Consolidated", "Consolidated": "Consolidated", "consolidated": "Consolidated"
 }
 
 _ATTR_TYPE_MAPPING = {
-    "s": "String", "S": "String", "String": "String",  "string": "String", "numeric": "Numeric",
-    "n": "Numeric", "N": "Numeric", "Numeric": "Numeric",
+    "s": "String", "S": "String", "String": "String",  "string": "String",
+    "numeric": "Numeric", "n": "Numeric", "N": "Numeric", "Numeric": "Numeric",
     "a": "Alias",  "A": "Alias", "Alias": "Alias", "alias": "Alias"
 }
 
