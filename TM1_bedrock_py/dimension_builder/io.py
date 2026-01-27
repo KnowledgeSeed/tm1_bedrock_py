@@ -122,10 +122,10 @@ def read_source_to_df(
         column_names: Optional[List[str]] = None,
         **kwargs
 ) -> Optional[pd.DataFrame]:
-    args = locals()
-    if all(v is None for k, v in args.items() if k != 'kwargs') and \
-            all(v is None for v in kwargs.values()):
+
+    if source is None and engine is None:
         return None
+
     if source:
         filename, file_extension = os.path.splitext(source)
         source_type = file_extension

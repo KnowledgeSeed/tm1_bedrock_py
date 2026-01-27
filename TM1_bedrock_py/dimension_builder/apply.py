@@ -184,40 +184,50 @@ def apply_updates(
 # input to be completed with io
 @baseutils.log_exec_metrics
 def init_input_schema(
-        input_datasource: Union[str, Path],
+        dimension_name: str,
         input_format: Literal["parent_child", "indented_levels", "filled_levels"],
-        dimension_name: str, hierarchy_name: str = None, tm1_service: Any = None,
-        other_service: Any = None, dim_column: Optional[str] = None, hier_column: Optional[str] = None,
-        parent_column: Optional[str] = None, child_column: Optional[str] = None,
-        level_columns: Optional[list[str]] = None, type_column: Optional[str] = None,
-        weight_column: Optional[str] = None,
-        input_elements_datasource: Optional[Union[str, Path]] = None,
-        input_elements_df_element_column: Optional[str] = None,
-        attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon",
+
+        input_datasource: Optional[Union[str, Path]],
+
+
         sql_engine: Optional[Any] = None,
         sql_table_name: Optional[str] = None,
         sql_query: Optional[str] = None,
         sql_elements_engine: Optional[Any] = None,
         sql_table_elements_name: Optional[str] = None,
         sql_elements_query: Optional[str] = None,
+
         filter_input_columns: Optional[list[str]] = None,
         filter_input_elements_columns: Optional[list[str]] = None,
+
+        raw_input_df: pd.DataFrame = None,
+        raw_input_elements_df: pd.DataFrame = None,
+
+        hierarchy_name: str = None,
+        dim_column: Optional[str] = None, hier_column: Optional[str] = None,
+        parent_column: Optional[str] = None, child_column: Optional[str] = None,
+        level_columns: Optional[list[str]] = None, type_column: Optional[str] = None,
+        weight_column: Optional[str] = None,
+        input_elements_datasource: Optional[Union[str, Path]] = None,
+        input_elements_df_element_column: Optional[str] = None,
+        attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon",
+
         **kwargs
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
-    # to be used in io with other datasources
-    _ = tm1_service
-    _ = other_service
-    raw_input_df = io.read_source_to_df(
-        source=input_datasource, column_names=filter_input_columns,
-        engine=sql_engine, sql_query=sql_query, table_name=sql_table_name, **kwargs
-    )
-    if not sql_elements_engine and (sql_elements_query or sql_table_elements_name):
-        sql_elements_engine = sql_engine
-    raw_input_elements_df = io.read_source_to_df(
-        source=input_elements_datasource, column_names=filter_input_elements_columns,
-        engine=sql_elements_engine, sql_query=sql_elements_query, table_name=sql_table_elements_name, **kwargs
-    )
+    if not raw_input_df:
+        raw_input_df = io.read_source_to_df(
+            source=input_datasource, column_names=filter_input_columns,
+            engine=sql_engine, sql_query=sql_query, table_name=sql_table_name, **kwargs
+        )
+
+    if not raw_input_elements_df:
+        if not sql_elements_engine and (sql_elements_query or sql_table_elements_name):
+            sql_elements_engine = sql_engine
+        raw_input_elements_df = io.read_source_to_df(
+            source=input_elements_datasource, column_names=filter_input_elements_columns,
+            engine=sql_elements_engine, sql_query=sql_elements_query, table_name=sql_table_elements_name, **kwargs
+        )
 
     pre_validate_input_schema(input_format=input_format, input_df=raw_input_df, level_columns=level_columns)
 
