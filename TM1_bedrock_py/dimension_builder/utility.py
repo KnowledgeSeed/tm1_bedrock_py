@@ -102,6 +102,6 @@ def get_non_conflicting_edges(edges_df: pd.DataFrame, conflicts_df: pd.DataFrame
 
 def get_non_conflicting_elements(elements_df: pd.DataFrame, conflicts_df: pd.DataFrame) -> pd.DataFrame:
     conflict_keys = pd.MultiIndex.from_frame(conflicts_df[['ElementName', 'Hierarchy']])
-    element_keys = pd.MultiIndex.from_frame(elements_df[['Parent', 'Hierarchy']])
+    element_keys = pd.MultiIndex.from_frame(elements_df[['ElementName', 'Hierarchy']])
     mask = element_keys.isin(conflict_keys)
     return elements_df[~mask].copy()
