@@ -252,7 +252,6 @@ test_assign_missing_edge_columns:
     expected_df: {
       "Parent": ["Total", "Total"],
       "Child": ["A", "B"],
-      "Weight": [1.0, 1.0],
       "Dimension": ["Product", "Product"],
       "Hierarchy": ["Product", "Product"]
     }
@@ -260,16 +259,16 @@ test_assign_missing_edge_columns:
   - # Scenario 2: All edge columns missing (Hierarchy provided)
     input_df: {
       "Parent": ["Region"],
-      "Child": ["North"]
+      "Child": ["North"],
+      "Hierarchy": ["SalesTerritory"]
     }
     dimension_name: "Geography"
     hierarchy_name: "SalesTerritory"
     expected_df: {
       "Parent": ["Region"],
       "Child": ["North"],
-      "Weight": [1.0],
-      "Dimension": ["Geography"],
-      "Hierarchy": ["SalesTerritory"]
+      "Hierarchy": ["SalesTerritory"],
+      "Dimension": ["Geography"]
     }
 
   - # Scenario 3: Some columns already exist (Should NOT be overwritten)
