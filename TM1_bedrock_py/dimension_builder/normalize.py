@@ -5,13 +5,10 @@ from TM1_bedrock_py.dimension_builder import utility
 from TM1_bedrock_py import utility as baseutils
 
 from TM1_bedrock_py.dimension_builder.validate import (
-    validate_schema_for_parent_child_columns,
-    validate_schema_for_level_columns,
     validate_schema_for_type_mapping,
     validate_schema_for_numeric_values
 )
-from TM1_bedrock_py.dimension_builder.exceptions import InvalidAttributeColumnNameError
-
+from TM1_bedrock_py.dimension_builder.exceptions import InvalidAttributeColumnNameError, SchemaValidationError
 
 pd.set_option('future.no_silent_downcasting', True)
 
@@ -56,6 +53,22 @@ def normalize_base_column_names(input_df: pd.DataFrame, dim_column: Optional[str
     return input_df
 
 
+def add_attribute_type_suffixes(input_df: pd.DataFrame, attr_type_map: Optional[dict]) -> pd.DataFrame:
+    if attr_type_map is None:
+        return input_df
+
+    missing_cols = set(attr_type_map.keys()) - set(input_df.columns)
+    if missing_cols:
+        raise SchemaValidationError(
+            f"The following attributes from the map are missing in the DataFrame: {missing_cols}")
+
+    rename_dict = {
+        attr_name: f"{attr_name}:{attr_type}"
+        for attr_name, attr_type in attr_type_map.items()
+    }
+    return input_df.rename(columns=rename_dict)
+
+
 @baseutils.log_exec_metrics
 def normalize_attr_column_names(
         input_df: pd.DataFrame,
@@ -93,8 +106,6 @@ def normalize_attr_column_names(
 def assign_missing_base_columns(
         input_df: pd.DataFrame, dimension_name: str, hierarchy_name: str = None
 ) -> pd.DataFrame:
-    if "Weight" not in input_df.columns:
-        input_df["Weight"] = 1.0
     if "Dimension" not in input_df.columns:
         input_df["Dimension"] = dimension_name
     if "Hierarchy" not in input_df.columns:
@@ -103,14 +114,24 @@ def assign_missing_base_columns(
     return input_df
 
 
+def assign_missing_weight_column(input_df: pd.DataFrame) -> pd.DataFrame:
+    if "Weight" not in input_df.columns:
+        input_df["Weight"] = 1.0
+
+    return input_df
+
+
 @baseutils.log_exec_metrics
-def assign_missing_base_values(input_df: pd.DataFrame, dimension_name: str, hierarchy_name: str = None, **kwargs):
+def assign_missing_base_values(
+        input_df: pd.DataFrame, dimension_name: str, hierarchy_name: str = None, **kwargs
+) -> pd.DataFrame:
     input_df["Weight"] = input_df["Weight"].replace(r'^\s*$', np.nan, regex=True).fillna(1.0)
     input_df["Dimension"] = input_df["Dimension"].replace(r'^\s*$', np.nan, regex=True).fillna(dimension_name)
 
     if hierarchy_name is None:
         hierarchy_name = dimension_name
     input_df["Hierarchy"] = input_df["Hierarchy"].replace(r'^\s*$', np.nan, regex=True).fillna(hierarchy_name)
+    return input_df
 
 
 def validate_and_normalize_numeric_values(input_df: pd.DataFrame, column_name: str) -> None:
@@ -127,8 +148,8 @@ def normalize_string_values(input_df: pd.DataFrame, column_name: str) -> None:
 
 
 @baseutils.log_exec_metrics
-def validate_and_normalize_base_column_types(input_df: pd.DataFrame, level_columns: list[str], **kwargs) -> None:
-    base_string_columns = ["Parent", "Child", "ElementType", "Dimension", "Hierarchy"] + level_columns
+def validate_and_normalize_base_column_types(input_df: pd.DataFrame, **kwargs) -> None:
+    base_string_columns = ["Parent", "Child", "ElementType", "Dimension", "Hierarchy"]
     for column_name in base_string_columns:
         normalize_string_values(input_df=input_df, column_name=column_name)
     validate_and_normalize_numeric_values(input_df=input_df, column_name="Weight")
@@ -266,6 +287,7 @@ def normalize_input_schema(
         level_columns: Optional[list[str]] = None,
         parent_column: Optional[str] = None, child_column: Optional[str] = None,
         type_column: Optional[str] = None, weight_column: Optional[str] = None,
+        attr_type_map: Optional[dict] = None,
         input_elements_df: pd.DataFrame = None,
         input_elements_df_element_column: Optional[str] = None,
         attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon",
@@ -276,8 +298,10 @@ def normalize_input_schema(
     input_df = normalize_base_column_names(input_df=input_df, dim_column=dim_column, hier_column=hier_column,
                                            parent_column=parent_column, child_column=child_column,
                                            type_column=type_column, weight_column=weight_column)
-    assign_missing_base_columns(input_df=input_df, dimension_name=dimension_name, hierarchy_name=hierarchy_name)
-    assign_missing_base_values(input_df=input_df, dimension_name=dimension_name, hierarchy_name=hierarchy_name)
+    input_df = assign_missing_base_columns(input_df=input_df, dimension_name=dimension_name,
+                                           hierarchy_name=hierarchy_name)
+    input_df = assign_missing_base_values(input_df=input_df,
+                                          dimension_name=dimension_name, hierarchy_name=hierarchy_name)
 
     # format handling
     if level_columns:
@@ -289,10 +313,16 @@ def normalize_input_schema(
                                                         hier_column=hier_column,
                                                         element_column=input_elements_df_element_column,
                                                         type_column=type_column)
-        input_df = pd.merge(input_df, input_elements_df, on='Child', how='left')
+        input_elements_df = assign_missing_base_columns(input_df=input_elements_df,
+                                                        dimension_name=dimension_name, hierarchy_name=hierarchy_name)
+        input_elements_df = assign_missing_base_values(input_df=input_elements_df,
+                                                       dimension_name=dimension_name, hierarchy_name=hierarchy_name)
+        input_df = pd.merge(input_df, input_elements_df, on=['Child', 'Dimension', 'Hierarchy'], how='left')
 
     # combined input structure base normalization final step
-    validate_and_normalize_base_column_types(input_df=input_df, level_columns=[])
+    input_df = assign_missing_weight_column(input_df)
+    validate_and_normalize_base_column_types(input_df)
+    input_df = add_attribute_type_suffixes(input_df, attr_type_map)
 
     # attribute normalization
     attribute_columns = utility.get_attribute_columns_list(input_df=input_df)
