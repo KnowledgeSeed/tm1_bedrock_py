@@ -280,29 +280,37 @@ def run_dim_builder_v1():
     orphan_parent_name = "OrphanParent"
     allow_type_changes = True
 
-
     from tests.tests_dimension_builder.test_data.test_data import generate_random_dimension_data as generate
     data, level_columns = generate(
         dimension_name=dimension_name,
-        hierarchy_count=1,
-        node_count_per_hierarchy=10,
-        root_node_count=1,
-        max_depth=2,
-        attribute_count=5
-    )
+        hierarchy_count=3,
+        node_count_per_hierarchy=100000,
+        root_node_count=2,
+        max_depth=6,
+        attribute_count=4)
 
     set_logging_level("DEBUG")
 
+    # scope bedrock.py 1.2 - dimension builder
+    # elements_df - input, existing
+    # edges_df - input, existing
+
+    # get -> (pre-validate) -> normalize -> post-validate
+
+    # get and clear inputs
     basic_logger.debug("init input schema started")
     input_edges_df, input_elements_df = apply.init_input_schema(input_datasource=data, input_format="indented_levels",
                                                                 dimension_name=dimension_name,
                                                                 level_columns=level_columns)
 
+    # get existing if dim exists - important for type check consistency too
     basic_logger.debug("init existing schema started")
     existing_edges_df, existing_elements_df = apply.init_existing_schema(tm1_service=tm1_service,
                                                                          dimension_name=dimension_name,
                                                                          old_orphan_parent_name=old_orphan_parent_name)
 
+    # clear conflicts and make updates on input using existing
+    # rebuild: full rebuild/create - update: not deleting elements -
     basic_logger.debug("resolve schema started")
     updated_edges_df, updated_elements_df = apply.resolve_schema(
         tm1_service=tm1_service, dimension_name=dimension_name,
@@ -310,19 +318,18 @@ def run_dim_builder_v1():
         existing_edges_df=existing_edges_df, existing_elements_df=existing_elements_df,
         orphant_parent_name=orphan_parent_name,
         mode="update",
-        allow_type_changes=allow_type_changes
-    )
+        allow_type_changes=allow_type_changes)
 
+    # upload updated dim structure using tm1py dimension/hierarchy/element objects
     basic_logger.debug("rebuild started")
     apply.rebuild_dimension_structure(
         tm1_service=tm1_service, dimension_name=dimension_name,
-        edges_df=updated_edges_df, elements_df=updated_elements_df
-    )
+        edges_df=updated_edges_df, elements_df=updated_elements_df)
 
+    # upload updated attribute values using bedrock load
     basic_logger.debug("attr load started")
     apply.update_element_attributes(
-        tm1_service=tm1_service, dimension_name=dimension_name, elements_df=updated_elements_df
-    )
+        tm1_service=tm1_service, dimension_name=dimension_name, elements_df=updated_elements_df)
 
     print("Dimension update successful")
 
@@ -339,7 +346,6 @@ def run_empty_dim_query():
     df = tm1_service.elements.get_elements_dataframe("EmptyDimension")
     print(type(df))
     print(df)
-
 
 
 if __name__ == '__main__':
