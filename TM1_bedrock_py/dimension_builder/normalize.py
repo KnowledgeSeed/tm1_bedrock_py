@@ -306,7 +306,7 @@ def normalize_input_schema(
     input_df = assign_missing_base_values(input_df=input_df,
                                           dimension_name=dimension_name, hierarchy_name=hierarchy_name)
 
-    # format handling
+    # level format handling
     if level_columns:
         input_df = convert_levels_to_edges(input_df=input_df, level_columns=level_columns)
 
@@ -322,7 +322,7 @@ def normalize_input_schema(
                                                        dimension_name=dimension_name, hierarchy_name=hierarchy_name)
         input_df = pd.merge(input_df, input_elements_df, on=['Child', 'Dimension', 'Hierarchy'], how='left')
 
-    # combined input structure base normalization final step
+    # combined input structure base normalization final steps
     input_df = assign_missing_weight_column(input_df)
     input_df = assign_missing_weight_values(input_df)
     validate_and_normalize_base_column_types(input_df)
@@ -331,14 +331,16 @@ def normalize_input_schema(
     validate_and_normalize_type_values(input_df=input_df)
     input_df = add_attribute_type_suffixes(input_df, attr_type_map)
 
-    # attribute normalization
+    # attribute normalization steps
     attribute_columns = utility.get_attribute_columns_list(input_df=input_df)
     input_df, attribute_columns = normalize_attr_column_names(
         input_df=input_df, attribute_columns=attribute_columns, attribute_parser=attribute_parser)
 
+    # schema separation steps
     edges_df = separate_edge_df_columns(input_df=input_df)
     elements_df = separate_elements_df_columns(input_df=input_df, attribute_columns=attribute_columns)
 
+    # separated schema clearing steps
     edges_df = drop_invalid_edges(edges_df)
     edges_df = deduplicate_edges(edges_df)
     elements_df = deduplicate_elements(elements_df)
