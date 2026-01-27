@@ -24,6 +24,7 @@ from pathlib import Path
 def dimension_builder(
         dimension_name: str,
         input_format: Literal["parent_child", "indented_levels", "filled_levels"],
+        build_strategy: Literal["rebuild", "update", "update_with_unwind"],
         tm1_service: Any,
         hierarchy_name: str = None,
 
@@ -84,7 +85,7 @@ def dimension_builder(
         input_edges_df=input_edges_df, input_elements_df=input_elements_df,
         existing_edges_df=existing_edges_df, existing_elements_df=existing_elements_df,
         orphant_parent_name=new_orphan_parent_name,
-        mode="update",
+        mode=build_strategy,
         allow_type_changes=allow_type_changes)
 
     # upload updated dim structure using tm1py dimension/hierarchy/element objects
