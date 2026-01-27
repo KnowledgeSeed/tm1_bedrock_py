@@ -233,6 +233,7 @@ def separate_elements_df_columns(
     return elements_df
 
 
+@baseutils.log_exec_metrics
 def convert_levels_to_edges(input_df: pd.DataFrame, level_columns: list[str]) -> pd.DataFrame:
     input_df[level_columns] = input_df[level_columns].replace(r'^\s*$', np.nan, regex=True)
 

@@ -9,8 +9,10 @@ from tm1_bench_py import tm1_bench, df_generator_for_dataset, dimension_builder,
 import re
 import os, glob, subprocess
 import pandas as pd
+import ast
 from TM1_bedrock_py.dimension_builder import apply
 from TM1_bedrock_py.utility import basic_logger
+from tests.tests_dimension_builder.test_data.test_data import generate_hierarchy_data
 
 
 def hierarchy_attributes():
@@ -276,20 +278,23 @@ def run_dim_builder_v1():
     }
     """
     dimension_name = "DimGenerator"
+    hierarchy_names = ["DimGenerator", "DimGeneratorAlt", "DimGeneratorAlt2"]
     old_orphan_parent_name = "OrphanParent"
     orphan_parent_name = "OrphanParent"
     allow_type_changes = True
-
-    from tests.tests_dimension_builder.test_data.test_data import generate_random_dimension_data as generate
-    data, level_columns = generate(
-        dimension_name=dimension_name,
-        hierarchy_count=3,
-        node_count_per_hierarchy=100000,
-        root_node_count=2,
-        max_depth=6,
-        attribute_count=4)
-
     set_logging_level("DEBUG")
+
+    basic_logger.debug("test data generation started")
+    data, level_columns = generate_hierarchy_data(
+        dimension_name=dimension_name,
+        hierarchy_names=hierarchy_names,
+        nodes_per_hierarchy=100000,
+        max_depth=5,
+        number_of_attributes=10,
+        consistent_leaf_attributes=True
+    )
+
+
 
     # scope bedrock.py 1.2 - dimension builder
     # elements_df - input, existing
@@ -299,9 +304,12 @@ def run_dim_builder_v1():
 
     # get and clear inputs
     basic_logger.debug("init input schema started")
-    input_edges_df, input_elements_df = apply.init_input_schema(input_datasource=data, input_format="indented_levels",
+    input_edges_df, input_elements_df = apply.init_input_schema(input_datasource=data,
+                                                                input_format="indented_levels",
                                                                 dimension_name=dimension_name,
                                                                 level_columns=level_columns)
+
+    return
 
     # get existing if dim exists - important for type check consistency too
     basic_logger.debug("init existing schema started")

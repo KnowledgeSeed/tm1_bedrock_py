@@ -9,6 +9,7 @@ from TM1_bedrock_py.dimension_builder.validate import (
 )
 from TM1_bedrock_py.loader import dataframe_to_cube
 from TM1_bedrock_py import utility as baseutils
+from TM1_bedrock_py.utility import basic_logger
 
 
 @baseutils.log_exec_metrics
@@ -197,7 +198,9 @@ def init_input_schema(
     _ = tm1_service
     _ = other_service
     # to be completed with io for edges/complete data retrieval
+    basic_logger.debug("pandas data conversion started")
     raw_input_df = pd.DataFrame(input_datasource)
+    basic_logger.debug("pandas data conversion ended")
     # to be completed with io for extension element/attribute
     raw_input_elements_df = pd.DataFrame(input_elements_datasource) if input_elements_datasource is not None else None
 

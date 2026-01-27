@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from collections import defaultdict
-from typing import Hashable, Literal, Optional
+from typing import Literal, Optional
 from TM1_bedrock_py.dimension_builder.exceptions import (
     SchemaValidationError,
     GraphValidationError,
@@ -9,11 +9,12 @@ from TM1_bedrock_py.dimension_builder.exceptions import (
     InvalidInputParameterError,
     InvalidLevelColumnRecordError
 )
-
+from TM1_bedrock_py import utility as baseutils
 
 # level column invalid row errors for normalize functions
 
 
+@baseutils.log_exec_metrics
 def validate_filled_structure(input_df: pd.DataFrame, level_columns: list[str]) -> None:
     mask = input_df[level_columns].notna().to_numpy()
     rows_count = len(input_df)
@@ -49,6 +50,7 @@ def validate_filled_structure(input_df: pd.DataFrame, level_columns: list[str]) 
         )
 
 
+@baseutils.log_exec_metrics
 def validate_indented_structure(input_df: pd.DataFrame, level_columns: list[str]) -> None:
     mask = input_df[level_columns].notna().to_numpy()
     rows_count = len(input_df)
@@ -95,6 +97,7 @@ def validate_indented_structure(input_df: pd.DataFrame, level_columns: list[str]
 # schema validation for normalize functions
 
 
+@baseutils.log_exec_metrics
 def validate_schema_for_parent_child_columns(input_df: pd.DataFrame) -> None:
     if "Parent" not in input_df.columns:
         raise SchemaValidationError("Parent column is missing.")
@@ -102,6 +105,7 @@ def validate_schema_for_parent_child_columns(input_df: pd.DataFrame) -> None:
         raise SchemaValidationError("Child column is missing.")
 
 
+@baseutils.log_exec_metrics
 def validate_schema_for_level_columns(input_df: pd.DataFrame, level_columns: list[str]) -> None:
     if level_columns is None:
         raise InvalidInputParameterError(
@@ -113,6 +117,7 @@ def validate_schema_for_level_columns(input_df: pd.DataFrame, level_columns: lis
             raise SchemaValidationError("Level column "+level_column+" is missing.")
 
 
+@baseutils.log_exec_metrics
 def validate_schema_for_type_mapping(input_df: pd.DataFrame, type_mapping: dict) -> None:
     current_values = set(input_df['ElementType'].unique())
     valid_keys = set(type_mapping.keys())
@@ -122,6 +127,7 @@ def validate_schema_for_type_mapping(input_df: pd.DataFrame, type_mapping: dict)
         raise SchemaValidationError(f"Type normalization failed: Found unknown 'ElementType' values: {bad_vals_list}")
 
 
+@baseutils.log_exec_metrics
 def validate_schema_for_numeric_values(input_df: pd.DataFrame, converted_series: pd.Series, col_name: str) -> None:
     failed_mask = converted_series.isna() & input_df[col_name].notna()
     if failed_mask.any():
@@ -135,6 +141,7 @@ def validate_schema_for_numeric_values(input_df: pd.DataFrame, converted_series:
 # schema validations for post-validation
 
 
+@baseutils.log_exec_metrics
 def validate_schema_for_node_integrity(edges_df: pd.DataFrame, elements_df: pd.DataFrame):
     edge_nodes = set(edges_df['Parent'].unique()) | set(edges_df['Child'].unique())
     attr_nodes = set(elements_df['ElementName'].unique())
@@ -146,6 +153,7 @@ def validate_schema_for_node_integrity(edges_df: pd.DataFrame, elements_df: pd.D
         raise SchemaValidationError(error_msg)
 
 
+@baseutils.log_exec_metrics
 def validate_elements_df_schema_for_inconsistent_element_type(input_df: pd.DataFrame) -> None:
     inconsistent_counts = input_df.groupby("ElementName")["ElementType"].nunique()
 
@@ -154,8 +162,9 @@ def validate_elements_df_schema_for_inconsistent_element_type(input_df: pd.DataF
         raise SchemaValidationError(f"Inconsistency found! These ElementNames have multiple types: {bad_elements}")
 
 
+@baseutils.log_exec_metrics
 def validate_elements_df_schema_for_inconsistent_leaf_attributes(input_df: pd.DataFrame) -> None:
-    n_df = input_df[input_df["ElementType"].isin(["N", "S"])]
+    n_df = input_df[input_df["ElementType"].isin(["Numeric", "String"])]
     exclude_cols = ["Hierarchy", "Dimension"]
     check_cols = [col for col in input_df.columns if col not in exclude_cols]
 
@@ -167,7 +176,7 @@ def validate_elements_df_schema_for_inconsistent_leaf_attributes(input_df: pd.Da
         offending_data = n_df[n_df["ElementName"].isin(bad_elements)].sort_values("ElementName")
 
         raise SchemaValidationError(
-            f"Inconsistency Error: The following ElementNames (type 'N' and 'S') have conflicting "
+            f"Inconsistency Error: The following ElementNames (type 'Numeric' and 'String') have conflicting "
             f"values in required columns: {bad_elements}\n"
             f"Conflicting data:\n{offending_data}"
         )
@@ -175,6 +184,7 @@ def validate_elements_df_schema_for_inconsistent_leaf_attributes(input_df: pd.Da
 # graph validations for post-validation
 
 
+@baseutils.log_exec_metrics
 def validate_graph_for_leaves_as_parents(edges_df: pd.DataFrame, elements_df: pd.DataFrame) -> None:
     unique_parents = set(edges_df["Parent"].unique())
 
@@ -188,11 +198,13 @@ def validate_graph_for_leaves_as_parents(edges_df: pd.DataFrame, elements_df: pd
         raise GraphValidationError(f"The following N/S elements were found as Parents: {found_elements}")
 
 
+@baseutils.log_exec_metrics
 def validate_graph_for_self_loop(input_df: pd.DataFrame) -> None:
     if input_df["Parent"].eq(input_df["Child"]).any():
         raise GraphValidationError("A child is the parent of itself, self loop detected.")
 
 
+@baseutils.log_exec_metrics
 def validate_graph_for_cycles_with_kahn(edges_df: pd.DataFrame) -> None:
     adj = defaultdict(list)
     in_degree = defaultdict(int)
@@ -252,6 +264,7 @@ def validate_graph_for_cycles_with_kahn(edges_df: pd.DataFrame) -> None:
         )
 
 
+@baseutils.log_exec_metrics
 def post_validate_schema(edges_df: pd.DataFrame, elements_df: pd.DataFrame) -> None:
     validate_schema_for_node_integrity(edges_df=edges_df, elements_df=elements_df)
     validate_elements_df_schema_for_inconsistent_element_type(input_df=elements_df)
@@ -262,6 +275,7 @@ def post_validate_schema(edges_df: pd.DataFrame, elements_df: pd.DataFrame) -> N
     validate_graph_for_cycles_with_kahn(edges_df=edges_df)
 
 
+@baseutils.log_exec_metrics
 def pre_validate_input_schema(
         input_format: Literal["parent_child", "indented_levels", "filled_levels"],
         input_df: pd.DataFrame, level_columns: Optional[list[str]] = None
@@ -277,6 +291,7 @@ def pre_validate_input_schema(
         validate_filled_structure(input_df, level_columns)
 
 
+@baseutils.log_exec_metrics
 def validate_element_type_consistency(
         existing_elements_df: pd.DataFrame, input_elements_df: pd.DataFrame, allow_type_changes: bool
 ) -> Optional[pd.DataFrame]:

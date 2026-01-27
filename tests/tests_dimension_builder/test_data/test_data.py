@@ -2,6 +2,8 @@ import pandas as pd
 import time, random, string
 from TM1_bedrock_py.dimension_builder.validate import validate_graph_for_cycles_with_kahn
 from TM1_bedrock_py.dimension_builder.exceptions import GraphValidationError
+from typing import Tuple
+from TM1_bedrock_py import utility as baseutils
 
 EXPECTED_DF_PARENT_CHILD = {
     "Parent": ["Total Products", "Total Products", "All Regions", "EMEA", "EMEA"],
@@ -247,132 +249,123 @@ def test_kahn_algorithm():
     print("validation with khan finished")
 
 
-def generate_random_dimension_data(
-        dimension_name: str = "DimGenerator",
-        hierarchy_count: int = 1,
-        node_count_per_hierarchy: int = 100,
-        root_node_count: int = 1,
-        max_depth: int = 5,
-        attribute_count: int = 3
-):
+@baseutils.log_exec_metrics
+def generate_hierarchy_data(
+        dimension_name: str,
+        hierarchy_names: list[str],
+        nodes_per_hierarchy: int,
+        max_depth: int,
+        number_of_attributes: int,
+        consistent_leaf_attributes: bool,
+        **kwargs
+) -> Tuple[dict, list[str]]:
     """
-    Generates a dictionary representing dimension data in an indented level format
-    with combined edges, elements, and attributes.
+    Generates a dictionary representing a dimension structure in 'indented levels' format.
+
+    Args:
+        dimension_name (str): The value for the 'Dimension' column.
+        hierarchy_names (list[str]): A list of hierarchy names to iterate over.
+        nodes_per_hierarchy (int): The number of elements to generate per hierarchy.
+        max_depth (int): The depth of the hierarchy.
+        number_of_attributes (int): Number of attribute columns to generate.
+        consistent_leaf_attributes (bool):
+            If True, 'N' type elements will have the same attribute values across hierarchies (valid TM1 data).
+            If False, every row gets a unique random value (invalid TM1 data).
+
+    Returns:
+        dict: The data in the specified dictionary format.
     """
 
-    # --- 1. Setup Column Headers and Containers ---
+    # --- 1. PRE-CALCULATE STRUCTURE (Single Hierarchy Base) ---
+    indices = range(nodes_per_hierarchy)
 
-    # Level columns
-    level_cols = [f"Level{i}" for i in range(max_depth)]
+    # Element Names (e.g., Element1, Element2...)
+    base_element_names = [f"Element{i + 1}" for i in indices]
 
-    # Attribute columns
-    attr_defs = []
-    for i in range(1, attribute_count + 1):
-        # Randomly assign type 's' (string) or 'n' (numeric)
-        a_type = 's'
-        attr_defs.append({'name': f"TestAttribute{i}:{a_type}", 'type': a_type})
-
-    # Initialize the output dictionary
-    data = {}
-    for col in level_cols:
-        data[col] = []
-
-    fixed_cols = ["Dimension", "Hierarchy", "Weight", "ElementType"]
-    for col in fixed_cols:
-        data[col] = []
-
-    for attr in attr_defs:
-        data[attr['name']] = []
-
-    # --- 2. Generate the Tree Structure (Graph) ---
-    nodes = []  # List of dicts representing nodes
-
-    # Create Roots
-    for r in range(root_node_count):
-        nodes.append({
-            'id': f"Root_{r + 1}",
-            'depth': 0,
-            'parent_index': None,
-            'children_indices': []
-        })
-
-    # Create remaining nodes attached to random valid parents
-    current_count = root_node_count
-    while current_count < node_count_per_hierarchy:
-        potential_parents_indices = [
-            i for i, n in enumerate(nodes)
-            if n['depth'] < max_depth - 1
+    # Levels (Indented diagonal pattern)
+    base_levels = {}
+    data_level_columns = []
+    for level in range(max_depth):
+        base_levels[f"Level{level}"] = [
+            base_element_names[i] if (i % max_depth) == level else None
+            for i in indices
         ]
+        data_level_columns.append(f"Level{level}")
 
-        if not potential_parents_indices:
-            break
+    # ElementType ("N" if at max depth, else "C")
+    # We use (max_depth - 1) because indices are 0-based
+    base_element_types = [
+        "N" if (i % max_depth) == (max_depth - 1) else "C"
+        for i in indices
+    ]
 
-        parent_idx = random.choice(potential_parents_indices)
-        parent_node = nodes[parent_idx]
+    # Create a boolean mask for Leaf nodes to speed up attribute generation
+    # True if N, False if C
+    is_leaf_mask_base = [(t == "N") for t in base_element_types]
 
-        new_node_idx = len(nodes)
-        new_node = {
-            'id': f"Element_{current_count + 1}",
-            'depth': parent_node['depth'] + 1,
-            'parent_index': parent_idx,
-            'children_indices': []
-        }
+    # --- 2. EXPAND STRUCTURE (Multiply by Number of Hierarchies) ---
+    num_hierarchies = len(hierarchy_names)
+    total_rows = nodes_per_hierarchy * num_hierarchies
 
-        nodes.append(new_node)
-        nodes[parent_idx]['children_indices'].append(new_node_idx)
-        current_count += 1
+    data = {}
 
-    # --- 3. Helper Functions for Values ---
+    # Expand Levels
+    for level_name, col_data in base_levels.items():
+        data[level_name] = col_data * num_hierarchies
 
-    def get_attr_value(attr_type):
-        if random.random() < 0.10:
-            return None
-        if attr_type == 's':
-            return ''.join(random.choices(string.ascii_letters + string.digits, k=10))
-        elif attr_type == 'n':
-            return round(random.uniform(0, 100), 2)
-        return None
+    # Expand Metadata
+    data["Dimension"] = [dimension_name] * total_rows
+    data["Hierarchy"] = [h for h in hierarchy_names for _ in range(nodes_per_hierarchy)]
+    data["Weight"] = [1.0] * total_rows
+    data["ElementType"] = base_element_types * num_hierarchies
 
-    # --- 4. Populate Data (Flatten Tree per Hierarchy) ---
+    # --- 3. GENERATE ATTRIBUTES ---
 
-    def recursive_add_rows(node_idx, hierarchy_name, dim_name):
-        node = nodes[node_idx]
-        el_type = "C" if len(node['children_indices']) > 0 else "N"
+    # Expand the leaf mask for the full dataset
+    full_leaf_mask = is_leaf_mask_base * num_hierarchies
 
-        # 1. Fill Level Columns
-        for i, column in enumerate(level_cols):
-            if i == node['depth']:
-                data[column].append(node['id'])
-            else:
-                data[column].append(None)
+    for i in range(number_of_attributes):
+        is_string_attr = (i % 2 == 0)
+        attr_key = f"TestAttribute{i}:{'s' if is_string_attr else 'n'}"
 
-        # 2. Fill Fixed Columns
-        data["Dimension"].append(dim_name)
-        data["Hierarchy"].append(hierarchy_name)
-        data["Weight"].append(1.0)
-        data["ElementType"].append(el_type)
-
-        # 3. Fill Attribute Columns
-        for attribute in attr_defs:
-            data[attribute['name']].append(get_attr_value(attribute['type']))
-
-        # 4. Recursion: Process Children
-        for child_idx in node['children_indices']:
-            recursive_add_rows(child_idx, hierarchy_name, dim_name)
-
-    # Main Loop over Hierarchies
-    for h in range(hierarchy_count):
-        # Implementation of hierarchy naming logic:
-        # First is dimension_name, then hier2, hier3, etc.
-        if h == 0:
-            hier_name = dimension_name
+        # A. Generate purely random noise for the ENTIRE dataset (used for C levels or everything if flag is False)
+        if is_string_attr:
+            # Generate total_rows * random 8-char strings
+            # k=8,
+            random_noise = [
+                ''.join(random.choices(string.ascii_letters, k=8))
+                for _ in range(total_rows)
+            ]
         else:
-            hier_name = f"hier{h + 1}"
+            # Generate total_rows * random floats
+            random_noise = [random.uniform(0, 100) for _ in range(total_rows)]
 
-        # Identify roots (depth 0) and start traversal
-        root_indices = [i for i, n in enumerate(nodes) if n['depth'] == 0]
-        for root_idx in root_indices:
-            recursive_add_rows(root_idx, hier_name, dimension_name)
+        # B. Apply Logic
+        if not consistent_leaf_attributes:
+            # Case 1: All Random (Invalid Data)
+            data[attr_key] = random_noise
+        else:
+            # Case 2: Consistent Leaves, Random Parents
 
-    return data, level_cols
+            # Generate consistent values for the Base Hierarchy (size = nodes_per_hierarchy)
+            if is_string_attr:
+                base_consistent_values = [
+                    ''.join(random.choices(string.ascii_letters, k=8))
+                    for _ in indices
+                ]
+            else:
+                base_consistent_values = [random.uniform(0, 100) for _ in indices]
+
+            # Repeat these consistent values for all hierarchies
+            full_consistent_values = base_consistent_values * num_hierarchies
+
+            # Merge: Use consistent value if Leaf, otherwise use random noise
+            # Zip is very fast here, avoiding index lookups
+            data[attr_key] = [
+                cons if is_leaf else rand
+                for cons, rand, is_leaf in zip(full_consistent_values, random_noise, full_leaf_mask)
+            ]
+
+    return data, data_level_columns
+
 
