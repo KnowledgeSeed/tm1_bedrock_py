@@ -33,6 +33,8 @@ test_data_csv = [
     ("level_columns.csv", EXPECTED_DF_LEVEL_COLUMNS, None),
     ("level_columns_filled_levels.csv", EXPECTED_DF_LEVEL_COLUMNS_FILLED, None)
 ]
+
+
 @pytest.mark.parametrize("file_path, expected_df, columns", test_data_csv)
 def test_read_csv_source_to_df(file_path, expected_df, columns):
     source = DATA_DIR / file_path
@@ -50,6 +52,8 @@ test_data_xlsx = [
     (EXPECTED_DF_LEVEL_COLUMNS, "Hierarchy", None),
     (EXPECTED_DF_LEVEL_COLUMNS_FILLED, "Hierarchy", None)
 ]
+
+
 @pytest.mark.parametrize("expected_df, sheet_name, columns", test_data_xlsx)
 def test_read_xlsx_source_to_df(tmp_path, expected_df, sheet_name, columns):
     source = tmp_path / "input.xlsx"
@@ -68,6 +72,8 @@ test_data_sql = [
     (EXPECTED_DF_PC_MO, sql_query_pc_mo, dtype_mapping_pc_mo, "parent_child"),
     (EXPECTED_DF_LEVEL_COLUMNS, sql_query_level_columns, dtype_mapping_level_columns, "indented_levels"),
 ]
+
+
 @pytest.mark.parametrize("expected_df, query, dtype, format_type", test_data_sql)
 def test_read_sql_source_to_df(expected_df, query,  dtype, format_type):
     engine = create_engine('sqlite://', echo=False)
@@ -95,6 +101,8 @@ test_data_yaml = [
     (EXPECTED_DF_PARENT_CHILD_ATTR, "test_read_yaml_source_to_df_attr_list", None),
     (EXPECTED_DF_LEVEL_COLUMNS, "test_read_yaml_source_to_df_indented_levels", None)
 ]
+
+
 @pytest.mark.parametrize("expected_df, template_key, columns", test_data_yaml)
 def test_read_yaml_source_to_df(expected_df, template_key, columns):
     source = Path(__file__).resolve().parent / "test_unit.yaml"
@@ -203,17 +211,10 @@ def test_separate_elements_df_columns(input_df, attribute_columns, expected_df):
 @parametrize_from_file
 def test_convert_levels_to_edges(input_df, level_columns, expected_df):
     input_df = pd.DataFrame(input_df)
-    print("")
-    print("input_df")
-    print(input_df)
     expected_df = pd.DataFrame(expected_df)
     expected_df.fillna(value=np.nan, inplace=True)
 
     output_df = normalize.convert_levels_to_edges(input_df=input_df, level_columns=level_columns)
-    print("")
-    print("output_df")
-    print(output_df)
-
     pd.testing.assert_frame_equal(output_df, expected_df)
 
 
@@ -369,5 +370,4 @@ def test_validate_graph_for_cycles_with_kahn_failure(df_data, expected_exception
 
     with pytest.raises(exception_type) as excinfo:
         validate.validate_graph_for_cycles_with_kahn(input_df)
-    print(excinfo.value)
     assert expected_message_part in str(excinfo.value)

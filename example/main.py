@@ -215,8 +215,8 @@ def run_dim_builder_v1():
     tm1_params = {
         "address": "localhost",
         "port": 5379,
-        "user": "testbench",
-        "password": "testbench",
+        "user": "admin",
+        "password": "admin",
         "ssl": False
     }
     tm1_service = TM1Service(**tm1_params)
@@ -288,7 +288,7 @@ def run_dim_builder_v1():
     data, level_columns = generate_hierarchy_data(
         dimension_name=dimension_name,
         hierarchy_names=hierarchy_names,
-        nodes_per_hierarchy=100000,
+        nodes_per_hierarchy=75000,
         max_depth=5,
         number_of_attributes=10,
         consistent_leaf_attributes=True
@@ -308,8 +308,6 @@ def run_dim_builder_v1():
                                                                 input_format="indented_levels",
                                                                 dimension_name=dimension_name,
                                                                 level_columns=level_columns)
-
-    return
 
     # get existing if dim exists - important for type check consistency too
     basic_logger.debug("init existing schema started")

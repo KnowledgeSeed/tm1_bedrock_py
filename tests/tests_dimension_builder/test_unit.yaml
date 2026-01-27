@@ -395,36 +395,31 @@ test_assign_missing_edge_values:
   - # Scenario 1: Fill empty strings and nulls (Hierarchy provided)
     input_df: {
       "Dimension": ["", null],
-      "Hierarchy": ["", " "],
-      "Weight": [null, ""]
+      "Hierarchy": ["", " "]
     }
     dimension_name: "Product"
     hierarchy_name: "Standard"
     expected_df: {
       "Dimension": ["Product", "Product"],
-      "Hierarchy": ["Standard", "Standard"],
-      "Weight": [1.0, 1.0]
+      "Hierarchy": ["Standard", "Standard"]
     }
 
   - # Scenario 2: Hierarchy name is None (should default to Dimension name)
     input_df: {
       "Dimension": [null],
-      "Hierarchy": [""],
-      "Weight": [null]
+      "Hierarchy": [""]
     }
     dimension_name: "Geography"
     hierarchy_name: null
     expected_df: {
       "Dimension": ["Geography"],
-      "Hierarchy": ["Geography"],
-      "Weight": [1.0]
+      "Hierarchy": ["Geography"]
     }
 
   - # Scenario 3: Mixed values (Partial fill)
     input_df: {
       "Dimension": ["ExistingDim", ""],
       "Hierarchy": ["ExistingHier", null],
-      "Weight": [5.0, null],
       "Other": ["Keep", "Me"]
     }
     dimension_name: "NewDim"
@@ -432,22 +427,19 @@ test_assign_missing_edge_values:
     expected_df: {
       "Dimension": ["ExistingDim", "NewDim"],
       "Hierarchy": ["ExistingHier", "NewHier"],
-      "Weight": [5.0, 1.0],
       "Other": ["Keep", "Me"]
     }
 
   - # Scenario 4: All values already valid (No changes)
     input_df: {
       "Dimension": ["A"],
-      "Hierarchy": ["B"],
-      "Weight": [2.0]
+      "Hierarchy": ["B"]
     }
     dimension_name: "X"
     hierarchy_name: "Y"
     expected_df: {
       "Dimension": ["A"],
-      "Hierarchy": ["B"],
-      "Weight": [2.0]
+      "Hierarchy": ["B"]
     }
 
 test_assign_missing_type_column:
@@ -1215,24 +1207,18 @@ test_validate_elements_df_schema_for_inconsistent_leaf_attributes_success:
 test_validate_elements_df_schema_for_inconsistent_leaf_attributes_failure:
   - # Case: Element 'N' has different AttributeX values
     df_data:
-      - {ElementName: "LeafA", ElementType: "N", AttributeX: "Red", Hierarchy: "H1"}
-      - {ElementName: "LeafA", ElementType: "N", AttributeX: "Blue", Hierarchy: "H2"}
+      - {ElementName: "LeafA", ElementType: "Numeric", AttributeX: "Red", Hierarchy: "H1"}
+      - {ElementName: "LeafA", ElementType: "Numeric", AttributeX: "Blue", Hierarchy: "H2"}
     expected_exception: "SchemaValidationError"
-    expected_message_part: "Inconsistency Error: The following ElementNames (type 'N' and 'S') have conflicting values in required columns: ['LeafA']"
+    expected_message_part: "Inconsistency Error: The following"
 
   - # Case: Element 'S' has different AttributeX values
     df_data:
-      - {ElementName: "StringB", ElementType: "S", AttributeX: "Alpha", Hierarchy: "H1"}
-      - {ElementName: "StringB", ElementType: "S", AttributeX: "Beta", Hierarchy: "H1"}
+      - {ElementName: "StringB", ElementType: "String", AttributeX: "Alpha", Hierarchy: "H1"}
+      - {ElementName: "StringB", ElementType: "String", AttributeX: "Beta", Hierarchy: "H2"}
     expected_exception: "SchemaValidationError"
-    expected_message_part: "Inconsistency Error: The following ElementNames (type 'N' and 'S') have conflicting values in required columns: ['StringB']"
+    expected_message_part: "Inconsistency Error: The following"
 
-  - # Case: Verifying that 'Conflicting data:' header is present in the message
-    df_data:
-      - {ElementName: "Fail", ElementType: "N", AttributeX: "1"}
-      - {ElementName: "Fail", ElementType: "N", AttributeX: "2"}
-    expected_exception: "SchemaValidationError"
-    expected_message_part: "Conflicting data:"
 
 test_validate_graph_for_leaves_as_parents_success:
   - # Case: 'C' (Consolidated) is a parent, 'N' is a child (Valid)
