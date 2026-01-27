@@ -54,10 +54,9 @@ def dimension_builder(
         attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon",
         **kwargs
 ) -> None:
-    basic_logger.debug("init input schema started")
+
     input_edges_df, input_elements_df = apply.init_input_schema(
         dimension_name=dimension_name, hierarchy_name=hierarchy_name, input_format=input_format,
-
 
         input_datasource=input_datasource,
         sql_engine=sql_engine, sql_table_name=sql_table_name, sql_query=sql_query,
@@ -72,8 +71,7 @@ def dimension_builder(
         sql_table_elements_name=sql_table_elements_name, sql_elements_query=sql_elements_query,
         filter_input_elements_columns=filter_input_elements_columns,
         raw_input_elements_df=raw_input_elements_df,
-        attribute_parser=attribute_parser
-    )
+        attribute_parser=attribute_parser)
 
     # get existing if dim exists - important for type check consistency too
     existing_edges_df, existing_elements_df = apply.init_existing_schema(tm1_service=tm1_service,
