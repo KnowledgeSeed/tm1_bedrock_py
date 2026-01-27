@@ -27,30 +27,29 @@ _ATTR_TYPE_MAPPING = {
 
 # input dimension dataframe normalization functions to ensure uniform format.
 
-@baseutils.log_exec_metrics
 def normalize_base_column_names(input_df: pd.DataFrame, dim_column: Optional[str] = None,
                                 hier_column: Optional[str] = None, parent_column: Optional[str] = None,
                                 child_column: Optional[str] = None, element_column: Optional[str] = None,
                                 type_column: Optional[str] = None, weight_column: Optional[str] = None, **kwargs
                                 ) -> pd.DataFrame:
+    mapping_rules = {
+        "Dimension": ["dimension", dim_column],
+        "Hierarchy": ["hierarchy", hier_column],
+        "Parent": ["parent", parent_column],
+        "Child": ["child", child_column, element_column, "elementname", "ElementName", "name", "Name"],
+        "ElementType": ["type", "Type", "elementtype", type_column],
+        "Weight": ["weight", weight_column]
+    }
+    existing_columns = set(input_df.columns)
 
-    def normalize_column_name(column_name: Optional[str], new_column_name: str) -> None:
-        if column_name is not None and column_name in input_df.columns:
-            input_df.rename(columns={column_name: new_column_name}, inplace=True)
+    rename_dict = {
+        source: target
+        for target, sources in mapping_rules.items()
+        for source in sources
+        if source and source in existing_columns
+    }
 
-    normalize_column_name(dim_column, "Dimension")
-    normalize_column_name(hier_column, "Hierarchy")
-    normalize_column_name(parent_column, "Parent")
-    normalize_column_name(child_column, "Child")
-
-    # have to do this to join the two input dataframes if they are separate, will rename in a later step
-    normalize_column_name(element_column, "Child")
-    normalize_column_name("ElementName", "Child")
-
-    normalize_column_name(type_column, "ElementType")
-    normalize_column_name(weight_column, "Weight")
-
-    return input_df
+    return input_df.rename(columns=rename_dict)
 
 
 def add_attribute_type_suffixes(input_df: pd.DataFrame, attr_type_map: Optional[dict]) -> pd.DataFrame:
