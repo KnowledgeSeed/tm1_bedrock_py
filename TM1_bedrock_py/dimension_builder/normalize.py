@@ -59,7 +59,7 @@ def add_attribute_type_suffixes(input_df: pd.DataFrame, attr_type_map: Optional[
 
     missing_cols = set(attr_type_map.keys()) - set(input_df.columns)
     if missing_cols:
-        raise SchemaValidationError(
+        raise InvalidAttributeColumnNameError(
             f"The following attributes from the map are missing in the DataFrame: {missing_cols}")
 
     rename_dict = {
