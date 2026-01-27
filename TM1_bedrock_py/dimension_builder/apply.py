@@ -187,41 +187,39 @@ def init_input_schema(
         dimension_name: str,
         input_format: Literal["parent_child", "indented_levels", "filled_levels"],
 
-        input_datasource: Optional[Union[str, Path]],
-
-
+        input_datasource: Optional[Union[str, Path]] = None,
         sql_engine: Optional[Any] = None,
         sql_table_name: Optional[str] = None,
         sql_query: Optional[str] = None,
-        sql_elements_engine: Optional[Any] = None,
-        sql_table_elements_name: Optional[str] = None,
-        sql_elements_query: Optional[str] = None,
-
         filter_input_columns: Optional[list[str]] = None,
-        filter_input_elements_columns: Optional[list[str]] = None,
-
         raw_input_df: pd.DataFrame = None,
-        raw_input_elements_df: pd.DataFrame = None,
 
         hierarchy_name: str = None,
         dim_column: Optional[str] = None, hier_column: Optional[str] = None,
         parent_column: Optional[str] = None, child_column: Optional[str] = None,
         level_columns: Optional[list[str]] = None, type_column: Optional[str] = None,
         weight_column: Optional[str] = None,
+
         input_elements_datasource: Optional[Union[str, Path]] = None,
         input_elements_df_element_column: Optional[str] = None,
+        sql_elements_engine: Optional[Any] = None,
+        sql_table_elements_name: Optional[str] = None,
+        sql_elements_query: Optional[str] = None,
+        filter_input_elements_columns: Optional[list[str]] = None,
+        raw_input_elements_df: pd.DataFrame = None,
+
         attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon",
 
         **kwargs
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
-    if not raw_input_df:
+    if raw_input_df is None:
         raw_input_df = io.read_source_to_df(
             source=input_datasource, column_names=filter_input_columns,
             engine=sql_engine, sql_query=sql_query, table_name=sql_table_name, **kwargs
         )
 
-    if not raw_input_elements_df:
+    if raw_input_elements_df is None:
         if not sql_elements_engine and (sql_elements_query or sql_table_elements_name):
             sql_elements_engine = sql_engine
         raw_input_elements_df = io.read_source_to_df(

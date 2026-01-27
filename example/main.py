@@ -293,7 +293,7 @@ def run_dim_builder_v1():
         number_of_attributes=10,
         consistent_leaf_attributes=True
     )
-
+    raw_input_df = pd.DataFrame(data)
 
 
     # scope bedrock.py 1.2 - dimension builder
@@ -304,7 +304,7 @@ def run_dim_builder_v1():
 
     # get and clear inputs
     basic_logger.debug("init input schema started")
-    input_edges_df, input_elements_df = apply.init_input_schema(input_datasource=data,
+    input_edges_df, input_elements_df = apply.init_input_schema(raw_input_df=raw_input_df,
                                                                 input_format="indented_levels",
                                                                 dimension_name=dimension_name,
                                                                 level_columns=level_columns)
