@@ -184,7 +184,7 @@ def apply_updates(
 @baseutils.log_exec_metrics
 def init_input_schema(
         input_datasource: Union[str, Path],
-        input_format: Literal["parent_child", "indented_levels", "filled_levels", "attributes"],
+        input_format: Literal["parent_child", "indented_levels", "filled_levels"],
         dimension_name: str, hierarchy_name: str = None, tm1_service: Any = None,
         other_service: Any = None, dim_column: Optional[str] = None, hier_column: Optional[str] = None,
         parent_column: Optional[str] = None, child_column: Optional[str] = None,
@@ -207,12 +207,10 @@ def init_input_schema(
     # to be used in io with other datasources
     _ = tm1_service
     _ = other_service
-    # to be completed with io for edges/complete data retrieval
     raw_input_df = io.read_source_to_df(
         source=input_datasource, column_names=filter_input_columns,
         engine=sql_engine, sql_query=sql_query, table_name=sql_table_name, **kwargs
     )
-    # to be completed with io for extension element/attribute
     if not sql_elements_engine and (sql_elements_query or sql_table_elements_name):
         sql_elements_engine = sql_engine
     raw_input_elements_df = io.read_source_to_df(
