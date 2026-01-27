@@ -124,12 +124,16 @@ def assign_missing_weight_column(input_df: pd.DataFrame) -> pd.DataFrame:
 def assign_missing_base_values(
         input_df: pd.DataFrame, dimension_name: str, hierarchy_name: str = None, **kwargs
 ) -> pd.DataFrame:
-    input_df["Weight"] = input_df["Weight"].replace(r'^\s*$', np.nan, regex=True).fillna(1.0)
     input_df["Dimension"] = input_df["Dimension"].replace(r'^\s*$', np.nan, regex=True).fillna(dimension_name)
 
     if hierarchy_name is None:
         hierarchy_name = dimension_name
     input_df["Hierarchy"] = input_df["Hierarchy"].replace(r'^\s*$', np.nan, regex=True).fillna(hierarchy_name)
+    return input_df
+
+
+def assign_missing_weight_values(input_df: pd.DataFrame) -> pd.DataFrame:
+    input_df["Weight"] = input_df["Weight"].replace(r'^\s*$', np.nan, regex=True).fillna(1.0)
     return input_df
 
 
@@ -320,18 +324,17 @@ def normalize_input_schema(
 
     # combined input structure base normalization final step
     input_df = assign_missing_weight_column(input_df)
+    input_df = assign_missing_weight_values(input_df)
     validate_and_normalize_base_column_types(input_df)
+    assign_missing_type_column(input_df=input_df)
+    assign_missing_type_values(input_df=input_df)
+    validate_and_normalize_type_values(input_df=input_df)
     input_df = add_attribute_type_suffixes(input_df, attr_type_map)
 
     # attribute normalization
     attribute_columns = utility.get_attribute_columns_list(input_df=input_df)
     input_df, attribute_columns = normalize_attr_column_names(
         input_df=input_df, attribute_columns=attribute_columns, attribute_parser=attribute_parser)
-
-    # element type normalization
-    assign_missing_type_column(input_df=input_df)
-    assign_missing_type_values(input_df=input_df)
-    validate_and_normalize_type_values(input_df=input_df)
 
     edges_df = separate_edge_df_columns(input_df=input_df)
     elements_df = separate_elements_df_columns(input_df=input_df, attribute_columns=attribute_columns)
