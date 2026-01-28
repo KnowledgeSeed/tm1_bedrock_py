@@ -5,7 +5,7 @@ import parametrize_from_file
 import pytest
 from sqlalchemy import create_engine
 
-from TM1_bedrock_py.dimension_builder import validate, normalize
+from TM1_bedrock_py.dimension_builder import validate, normalize, utility
 from TM1_bedrock_py.dimension_builder.io import read_source_to_df
 from TM1_bedrock_py.dimension_builder.exceptions import (
     SchemaValidationError,
@@ -768,3 +768,15 @@ def test_validate_graph_for_cycles_with_kahn_failure(df_data, expected_exception
     with pytest.raises(exception_type) as excinfo:
         validate.validate_graph_for_cycles_with_kahn(input_df)
     assert expected_message_part in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_get_delete_records_for_conflicting_elements(conflicts_input, expected_tuples):
+    """
+    Tests acyclic graphs (DAGs), including complex shapes like diamonds.
+    """
+    conflicts = pd.DataFrame(conflicts_input)
+    output_tuples = utility.get_delete_records_for_conflicting_elements(conflicts)
+    expected_output = [tuple(x) for x in expected_tuples]
+    assert output_tuples == expected_output
+

@@ -1707,3 +1707,22 @@ test_validate_graph_for_cycles_with_kahn_failure:
       - {Parent: "LoopB", Child: "LoopA"}
     expected_exception: "GraphValidationError"
     expected_message_part: "Cycle detected! The graph contains a circular dependency."
+
+test_get_delete_dict_for_conflicting_elements:
+  -
+    conflicts_input:
+      - {ElementName: "element1", Hierarchy: "default", ElementType_existing: "Numeric"}
+      - { ElementName: "element1", Hierarchy: "alt", ElementType_existing: "Numeric" }
+      - { ElementName: "element2", Hierarchy: "default", ElementType_existing: "Numeric" }
+      - { ElementName: "element3", Hierarchy: "default", ElementType_existing: "String" }
+      - { ElementName: "element4", Hierarchy: "default", ElementType_existing: "Consolidated" }
+
+    expected_tuples:
+      - [ "default", "element1" ]
+      - [ "default", "element2" ]
+      - [ "default", "element3" ]
+      - [ "default", "element4" ]
+      - [ "alt", "element1" ]
+      - [ "Leaves", "element1" ]
+      - [ "Leaves", "element2" ]
+      - [ "Leaves", "element3" ]

@@ -91,18 +91,25 @@ def unpivot_attributes_to_cube_format(elements_df: pd.DataFrame, dimension_name:
     return melted_df
 
 
-def get_non_conflicting_edges(edges_df: Optional[pd.DataFrame], conflicts_df: pd.DataFrame) -> Optional[pd.DataFrame]:
-    if edges_df is None:
-        return None
-    conflict_keys = pd.MultiIndex.from_frame(conflicts_df[['ElementName', 'Hierarchy']])
-    parent_keys = pd.MultiIndex.from_frame(edges_df[['Parent', 'Hierarchy']])
-    child_keys = pd.MultiIndex.from_frame(edges_df[['Child', 'Hierarchy']])
-    mask = parent_keys.isin(conflict_keys) | child_keys.isin(conflict_keys)
-    return edges_df[~mask].copy()
+def get_delete_records_for_conflicting_elements(conflicts: pd.DataFrame) -> list[tuple]:
+    conflicting_hierarchies = conflicts["Hierarchy"].unique().tolist() + ["Leaves"]
+    delete_dict = {
+        hier: []
+        for hier in conflicting_hierarchies
+    }
+    for _, conflicts_row in conflicts.iterrows():
+        element_name = conflicts_row["ElementName"]
+        element_type = conflicts_row["ElementType_existing"]
+        hierarchy_name = conflicts_row["Hierarchy"]
 
+        if element_type in ("String", "Numeric") and element_name not in delete_dict["Leaves"]:
+            delete_dict["Leaves"].append(element_name)
+        delete_dict[hierarchy_name].append(element_name)
 
-def get_non_conflicting_elements(elements_df: pd.DataFrame, conflicts_df: pd.DataFrame) -> pd.DataFrame:
-    conflict_keys = pd.MultiIndex.from_frame(conflicts_df[['ElementName', 'Hierarchy']])
-    element_keys = pd.MultiIndex.from_frame(elements_df[['ElementName', 'Hierarchy']])
-    mask = element_keys.isin(conflict_keys)
-    return elements_df[~mask].copy()
+    targets = [
+        (hier, element)
+        for hier, elements in delete_dict.items()
+        for element in elements
+    ]
+
+    return targets

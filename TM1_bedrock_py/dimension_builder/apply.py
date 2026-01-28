@@ -251,6 +251,14 @@ def init_existing_schema(
 
 
 @baseutils.log_exec_metrics
+def delete_conflicting_elements(tm1_service: Any, conflicts: pd.DataFrame, dimension_name: str):
+    delete_records = utility.get_delete_records_for_conflicting_elements(conflicts)
+    for hierarchy_name, element_name in delete_records:
+        tm1_service.elements.delete(
+            dimension_name=dimension_name, hierarchy_name=hierarchy_name, element_name=element_name)
+
+
+@baseutils.log_exec_metrics
 def resolve_schema(
         dimension_name: str, tm1_service: Any,
         input_edges_df: pd.DataFrame, input_elements_df: pd.DataFrame,
@@ -263,18 +271,9 @@ def resolve_schema(
         return input_edges_df, input_elements_df
 
     conflicts = validate_element_type_consistency(existing_elements_df, input_elements_df, allow_type_changes)
-    print("conflicts: ", conflicts)
 
     if allow_type_changes and (conflicts is not None):
-        non_conflicting_existing_edges_df = utility.get_non_conflicting_edges(existing_edges_df, conflicts)
-        non_conflicting_existing_elements_df = utility.get_non_conflicting_elements(existing_elements_df, conflicts)
-        print("existing df: ", existing_elements_df)
-        print("conflicts: ", conflicts)
-        print("non conf ex elem: ", non_conflicting_existing_elements_df)
-        dimension = build_dimension_object(
-            dimension_name, non_conflicting_existing_edges_df, non_conflicting_existing_elements_df
-        )
-        tm1_service.dimensions.update_or_create(dimension)
+        delete_conflicting_elements(tm1_service=tm1_service, conflicts=conflicts, dimension_name=dimension_name)
 
     updated_edges_df, updated_elements_df = apply_updates(
         mode=mode,
