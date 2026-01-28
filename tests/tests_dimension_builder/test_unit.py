@@ -7,7 +7,13 @@ from sqlalchemy import create_engine
 
 from TM1_bedrock_py.dimension_builder import validate, normalize
 from TM1_bedrock_py.dimension_builder.io import read_source_to_df
-from TM1_bedrock_py.dimension_builder.exceptions import SchemaValidationError
+from TM1_bedrock_py.dimension_builder.exceptions import (
+    SchemaValidationError,
+    InvalidLevelColumnRecordError,
+    InvalidInputParameterError,
+    ElementTypeConflictError,
+    InvalidAttributeColumnNameError
+)
 from tests.tests_dimension_builder.test_data.test_data import *
 
 DATA_DIR = Path(__file__).resolve().parent / "test_data"
@@ -244,9 +250,403 @@ def test_deduplicate_elements(input_df, expected_df):
     )
 
 
+
+@parametrize_from_file
+def test_add_attribute_type_suffixes_success(input_df, attr_type_map, expected_df):
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+    output_df = normalize.add_attribute_type_suffixes(input_df=input_df, attr_type_map=attr_type_map)
+    pd.testing.assert_frame_equal(output_df, expected_df)
+
+
+@parametrize_from_file
+def test_add_attribute_type_suffixes_failure(input_df, attr_type_map, expected_exception, expected_message_part):
+    input_df = pd.DataFrame(input_df)
+    exception_type = eval(expected_exception)
+    with pytest.raises(exception_type) as excinfo:
+        normalize.add_attribute_type_suffixes(input_df=input_df, attr_type_map=attr_type_map)
+    assert expected_message_part in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_normalize_attr_column_names_success(
+        input_df, attribute_columns, attribute_parser, expected_df, expected_columns
+):
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+    output_df, attr_cols = normalize.normalize_attr_column_names(
+        input_df=input_df,
+        attribute_columns=attribute_columns,
+        attribute_parser=attribute_parser
+    )
+    pd.testing.assert_frame_equal(output_df, expected_df)
+    assert attr_cols == expected_columns
+
+
+@parametrize_from_file
+def test_normalize_attr_column_names_failure(
+        input_df, attribute_columns, attribute_parser, expected_exception, expected_message_part
+):
+    input_df = pd.DataFrame(input_df)
+    exception_type = eval(expected_exception)
+    with pytest.raises(exception_type) as excinfo:
+        normalize.normalize_attr_column_names(
+            input_df=input_df,
+            attribute_columns=attribute_columns,
+            attribute_parser=attribute_parser
+        )
+    assert expected_message_part in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_assign_missing_weight_column_success(input_df, expected_df):
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+    output_df = normalize.assign_missing_weight_column(input_df=input_df)
+    pd.testing.assert_frame_equal(output_df, expected_df)
+
+
+@parametrize_from_file
+def test_assign_missing_weight_values_success(input_df, expected_df):
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+    output_df = normalize.assign_missing_weight_values(input_df=input_df)
+    pd.testing.assert_frame_equal(output_df, expected_df)
+
+
+@parametrize_from_file
+def test_validate_and_normalize_numeric_values_success(input_df, column_name, expected_df):
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+    normalize.validate_and_normalize_numeric_values(input_df=input_df, column_name=column_name)
+    pd.testing.assert_frame_equal(input_df, expected_df)
+
+
+@parametrize_from_file
+def test_validate_and_normalize_numeric_values_failure(
+        input_df, column_name, expected_exception, expected_message_part
+):
+    input_df = pd.DataFrame(input_df)
+    exception_type = eval(expected_exception)
+    with pytest.raises(exception_type) as excinfo:
+        normalize.validate_and_normalize_numeric_values(input_df=input_df, column_name=column_name)
+    assert expected_message_part in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_normalize_string_values_success(input_df, column_name, expected_df):
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+    normalize.normalize_string_values(input_df=input_df, column_name=column_name)
+    pd.testing.assert_frame_equal(input_df, expected_df)
+
+
+@parametrize_from_file
+def test_validate_and_normalize_base_column_types_success(input_df, expected_df):
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+    normalize.validate_and_normalize_base_column_types(input_df=input_df)
+    pd.testing.assert_frame_equal(input_df, expected_df)
+
+
+@parametrize_from_file
+def test_validate_and_normalize_base_column_types_failure(input_df, expected_exception, expected_message_part):
+    input_df = pd.DataFrame(input_df)
+    exception_type = eval(expected_exception)
+    with pytest.raises(exception_type) as excinfo:
+        normalize.validate_and_normalize_base_column_types(input_df=input_df)
+    assert expected_message_part in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_validate_and_normalize_attr_column_types_success(elements_df, attr_columns, expected_df):
+    elements_df = pd.DataFrame(elements_df)
+    expected_df = pd.DataFrame(expected_df)
+    normalize.validate_and_normalize_attr_column_types(elements_df=elements_df, attr_columns=attr_columns)
+    pd.testing.assert_frame_equal(elements_df, expected_df)
+
+
+@parametrize_from_file
+def test_validate_and_normalize_attr_column_types_failure(
+        elements_df, attr_columns, expected_exception, expected_message_part
+):
+    elements_df = pd.DataFrame(elements_df)
+    exception_type = eval(expected_exception)
+    with pytest.raises(exception_type) as excinfo:
+        normalize.validate_and_normalize_attr_column_types(elements_df=elements_df, attr_columns=attr_columns)
+    assert expected_message_part in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_validate_and_normalize_type_values_success(input_df, expected_df):
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+    output_df = normalize.validate_and_normalize_type_values(input_df=input_df)
+    pd.testing.assert_frame_equal(output_df, expected_df)
+
+
+@parametrize_from_file
+def test_validate_and_normalize_type_values_failure(input_df, expected_exception, expected_message_part):
+    input_df = pd.DataFrame(input_df)
+    exception_type = eval(expected_exception)
+    with pytest.raises(exception_type) as excinfo:
+        normalize.validate_and_normalize_type_values(input_df=input_df)
+    assert expected_message_part in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_assign_missing_attribute_values_success(elements_df, attribute_columns, expected_df):
+    elements_df = pd.DataFrame(elements_df)
+    expected_df = pd.DataFrame(expected_df)
+    normalize.assign_missing_attribute_values(elements_df=elements_df, attribute_columns=attribute_columns)
+    pd.testing.assert_frame_equal(elements_df, expected_df)
+
+
+@parametrize_from_file
+def test_normalize_input_schema_success(
+        input_df, dimension_name, hierarchy_name, dim_column, hier_column, level_columns,
+        parent_column, child_column, type_column, weight_column, attr_type_map,
+        input_elements_df, input_elements_df_element_column, attribute_parser,
+        expected_edges_df, expected_elements_df
+):
+    input_df = pd.DataFrame(input_df)
+    expected_edges_df = pd.DataFrame(expected_edges_df)
+    expected_elements_df = pd.DataFrame(expected_elements_df)
+    if input_elements_df is not None:
+        input_elements_df = pd.DataFrame(input_elements_df)
+
+    edges_df, elements_df = normalize.normalize_input_schema(
+        input_df=input_df,
+        dimension_name=dimension_name,
+        hierarchy_name=hierarchy_name,
+        dim_column=dim_column,
+        hier_column=hier_column,
+        level_columns=level_columns,
+        parent_column=parent_column,
+        child_column=child_column,
+        type_column=type_column,
+        weight_column=weight_column,
+        attr_type_map=attr_type_map,
+        input_elements_df=input_elements_df,
+        input_elements_df_element_column=input_elements_df_element_column,
+        attribute_parser=attribute_parser
+    )
+    pd.testing.assert_frame_equal(edges_df, expected_edges_df)
+    pd.testing.assert_frame_equal(elements_df, expected_elements_df)
+
+
+@parametrize_from_file
+def test_clear_orphan_parent_edges_success(edges_df, orphan_consolidation_name, expected_df):
+    edges_df = pd.DataFrame(edges_df)
+    expected_df = pd.DataFrame(expected_df)
+    output_df = normalize.clear_orphan_parent_edges(edges_df, orphan_consolidation_name)
+    pd.testing.assert_frame_equal(output_df, expected_df)
+
+
+@parametrize_from_file
+def test_clear_orphan_parent_elements_success(elements_df, orphan_consolidation_name, expected_df):
+    elements_df = pd.DataFrame(elements_df)
+    expected_df = pd.DataFrame(expected_df)
+    output_df = normalize.clear_orphan_parent_elements(elements_df, orphan_consolidation_name)
+    pd.testing.assert_frame_equal(output_df, expected_df)
+
+
+@parametrize_from_file
+def test_normalize_existing_schema_success(
+        existing_edges_df, existing_elements_df, old_orphan_parent_name, expected_edges_df, expected_elements_df
+):
+    if existing_edges_df is not None:
+        existing_edges_df = pd.DataFrame(existing_edges_df)
+    existing_elements_df = pd.DataFrame(existing_elements_df)
+    expected_edges_df = None if expected_edges_df is None else pd.DataFrame(expected_edges_df)
+    expected_elements_df = pd.DataFrame(expected_elements_df)
+
+    output_edges_df, output_elements_df = normalize.normalize_existing_schema(
+        existing_edges_df, existing_elements_df, old_orphan_parent_name
+    )
+    if expected_edges_df is None:
+        assert output_edges_df is None
+    else:
+        pd.testing.assert_frame_equal(output_edges_df, expected_edges_df)
+    pd.testing.assert_frame_equal(output_elements_df, expected_elements_df)
+
+
+@parametrize_from_file
+def test_normalize_updated_schema_success(updated_edges_df, updated_elements_df, expected_edges_df, expected_elements_df):
+    updated_edges_df = pd.DataFrame(updated_edges_df)
+    updated_elements_df = pd.DataFrame(updated_elements_df)
+    expected_edges_df = pd.DataFrame(expected_edges_df)
+    expected_elements_df = pd.DataFrame(expected_elements_df)
+    output_edges_df, output_elements_df = normalize.normalize_updated_schema(
+        updated_edges_df, updated_elements_df
+    )
+    pd.testing.assert_frame_equal(output_edges_df, expected_edges_df)
+    pd.testing.assert_frame_equal(output_elements_df, expected_elements_df)
+
+
 # ------------------------------------------------------------------------------------------------------------
 # Main: tests for dimension builder validate module
 # ------------------------------------------------------------------------------------------------------------
+
+@parametrize_from_file
+def test_validate_filled_structure_success(input_df, level_columns):
+    input_df = pd.DataFrame(input_df)
+    validate.validate_filled_structure(input_df, level_columns)
+
+
+@parametrize_from_file
+def test_validate_filled_structure_failure(input_df, level_columns, expected_message_part):
+    input_df = pd.DataFrame(input_df)
+    with pytest.raises(InvalidLevelColumnRecordError) as excinfo:
+        validate.validate_filled_structure(input_df, level_columns)
+    assert expected_message_part in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_validate_indented_structure_success(input_df, level_columns):
+    input_df = pd.DataFrame(input_df)
+    validate.validate_indented_structure(input_df, level_columns)
+
+
+@parametrize_from_file
+def test_validate_indented_structure_failure(input_df, level_columns, expected_message_part):
+    input_df = pd.DataFrame(input_df)
+    with pytest.raises(InvalidLevelColumnRecordError) as excinfo:
+        validate.validate_indented_structure(input_df, level_columns)
+    assert expected_message_part in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_validate_schema_for_parent_child_columns_success(input_df):
+    input_df = pd.DataFrame(input_df)
+    validate.validate_schema_for_parent_child_columns(input_df)
+
+
+@parametrize_from_file
+def test_validate_schema_for_parent_child_columns_failure(input_df, expected_message_part):
+    input_df = pd.DataFrame(input_df)
+    with pytest.raises(SchemaValidationError) as excinfo:
+        validate.validate_schema_for_parent_child_columns(input_df)
+    assert expected_message_part in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_validate_schema_for_level_columns_success(input_df, level_columns):
+    input_df = pd.DataFrame(input_df)
+    validate.validate_schema_for_level_columns(input_df, level_columns)
+
+
+@parametrize_from_file
+def test_validate_schema_for_level_columns_failure(input_df, level_columns, expected_exception, expected_message_part):
+    input_df = pd.DataFrame(input_df)
+    exception_type = eval(expected_exception)
+    with pytest.raises(exception_type) as excinfo:
+        validate.validate_schema_for_level_columns(input_df, level_columns)
+    assert expected_message_part in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_validate_schema_for_type_mapping_success(input_df, type_mapping):
+    input_df = pd.DataFrame(input_df)
+    validate.validate_schema_for_type_mapping(input_df, type_mapping)
+
+
+@parametrize_from_file
+def test_validate_schema_for_type_mapping_failure(input_df, type_mapping, expected_message_part):
+    input_df = pd.DataFrame(input_df)
+    with pytest.raises(SchemaValidationError) as excinfo:
+        validate.validate_schema_for_type_mapping(input_df, type_mapping)
+    assert expected_message_part in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_validate_schema_for_numeric_values_success(input_df, column_name):
+    input_df = pd.DataFrame(input_df)
+    converted_series = pd.to_numeric(input_df[column_name], errors='coerce')
+    validate.validate_schema_for_numeric_values(input_df, converted_series, column_name)
+
+
+@parametrize_from_file
+def test_validate_schema_for_numeric_values_failure(input_df, column_name, expected_message_part):
+    input_df = pd.DataFrame(input_df)
+    converted_series = pd.to_numeric(input_df[column_name], errors='coerce')
+    with pytest.raises(SchemaValidationError) as excinfo:
+        validate.validate_schema_for_numeric_values(input_df, converted_series, column_name)
+    assert expected_message_part in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_validate_schema_for_node_integrity_success(edges_data, elements_data):
+    edges_df = pd.DataFrame(edges_data)
+    elements_df = pd.DataFrame(elements_data)
+    validate.validate_schema_for_node_integrity(edges_df, elements_df)
+
+
+@parametrize_from_file
+def test_validate_schema_for_node_integrity_failure(edges_data, elements_data, expected_message_part):
+    edges_df = pd.DataFrame(edges_data)
+    elements_df = pd.DataFrame(elements_data)
+    with pytest.raises(SchemaValidationError) as excinfo:
+        validate.validate_schema_for_node_integrity(edges_df, elements_df)
+    assert expected_message_part in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_post_validate_schema_success(edges_data, elements_data):
+    edges_df = pd.DataFrame(edges_data)
+    elements_df = pd.DataFrame(elements_data)
+    validate.post_validate_schema(edges_df, elements_df)
+
+
+@parametrize_from_file
+def test_pre_validate_input_schema_success(input_format, input_df, level_columns):
+    input_df = pd.DataFrame(input_df)
+    validate.pre_validate_input_schema(
+        input_format=input_format,
+        input_df=input_df,
+        level_columns=level_columns
+    )
+
+
+@parametrize_from_file
+def test_validate_element_type_consistency_success(existing_elements_df, input_elements_df, allow_type_changes):
+    existing_elements_df = pd.DataFrame(existing_elements_df)
+    input_elements_df = pd.DataFrame(input_elements_df)
+    result = validate.validate_element_type_consistency(
+        existing_elements_df, input_elements_df, allow_type_changes
+    )
+    assert result is None
+
+
+@parametrize_from_file
+def test_validate_element_type_consistency_failure(
+        existing_elements_df, input_elements_df, allow_type_changes, expected_exception, expected_message_part
+):
+    existing_elements_df = pd.DataFrame(existing_elements_df)
+    input_elements_df = pd.DataFrame(input_elements_df)
+    exception_type = eval(expected_exception)
+    with pytest.raises(exception_type) as excinfo:
+        validate.validate_element_type_consistency(
+            existing_elements_df, input_elements_df, allow_type_changes
+        )
+    assert expected_message_part in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_validate_element_type_consistency_allow_changes(
+        existing_elements_df, input_elements_df, allow_type_changes, expected_conflicts
+):
+    existing_elements_df = pd.DataFrame(existing_elements_df)
+    input_elements_df = pd.DataFrame(input_elements_df)
+    conflicts = validate.validate_element_type_consistency(
+        existing_elements_df, input_elements_df, allow_type_changes
+    )
+    expected_df = pd.DataFrame(expected_conflicts)
+    pd.testing.assert_frame_equal(
+        conflicts.reset_index(drop=True),
+        expected_df.reset_index(drop=True)
+    )
+
 
 @parametrize_from_file
 def test_validate_elements_df_schema_for_inconsistent_element_type_success(df_data):

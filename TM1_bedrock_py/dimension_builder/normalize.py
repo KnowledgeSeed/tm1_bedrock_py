@@ -353,14 +353,14 @@ def clear_orphan_parent_edges(
         edges_df: pd.DataFrame, orphan_consolidation_name: str = "OrphanParent"
 ) -> pd.DataFrame:
     edges_df.drop(edges_df[edges_df["Parent"] == orphan_consolidation_name].index, inplace=True)
-    return edges_df
+    return edges_df.reset_index(drop=True)
 
 
 def clear_orphan_parent_elements(
         elements_df: pd.DataFrame, orphan_consolidation_name: str = "OrphanParent"
 ) -> pd.DataFrame:
     elements_df.drop(elements_df[elements_df["ElementName"] == orphan_consolidation_name].index, inplace=True)
-    return elements_df
+    return elements_df.reset_index(drop=True)
 
 
 def normalize_existing_schema(
@@ -371,10 +371,13 @@ def normalize_existing_schema(
     existing_elements_df = clear_orphan_parent_elements(existing_elements_df, old_orphan_parent_name)
     existing_elements_df, attribute_columns = normalize_attr_column_names(existing_elements_df)
 
+    existing_elements_df.reset_index(drop=True, inplace=True)
+
     if existing_edges_df is None:
         return None, existing_elements_df
 
     existing_edges_df = clear_orphan_parent_edges(existing_edges_df, old_orphan_parent_name)
+    existing_edges_df.reset_index(drop=True, inplace=True)
 
     return existing_edges_df, existing_elements_df
 

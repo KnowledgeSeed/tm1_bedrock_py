@@ -1,50 +1,3 @@
-test_read_sql_source_to_df:
-  -
-    sql_query: "
-    SELECT
-      Parent,
-      Child,
-      ElementType,
-      Weight,
-      Hierarchy
-    FROM dbo.Dim_Product_Edges;
-    "
-    dtype_mapping: {
-            "Parent": "object",
-            "Child": "object",
-            "ElementType": "object",
-            "Weight": "float64",
-            "Hierarchy": "object",
-    }
-    expected_df: {
-    "Parent": [ "Total Products", "Total Products", "All Regions", "EMEA", "EMEA" ],
-    "Child": [ "Product A", "Product B", "EMEA", "Hungary", "Germany" ],
-    "ElementType": [ "N", "N", "C", "N", "N" ],
-    "Weight": [ 1, 1, 1, 1, 1 ],
-    "Hierarchy": [ "Default", "Default", "Default", "Default", "Default" ]
-    }
-  -
-    sql_query: "
-     SELECT
-       Parent,
-       Child,
-       ElementType,
-       Weight,
-       Hierarchy
-     FROM dbo.Dim_Product_Edges;
-     "
-    dtype_mapping: {
-      "Parent": "object",
-      "Child": "object",
-      "ElementType": "object",
-      "Weight": "float64"
-    }
-    expected_df: {
-      "Parent": [ "Total Products", "Total Products", "All Regions", "EMEA", "EMEA" ],
-      "Child": [ "Product A", "Product B", "EMEA", "Hungary", "Germany" ],
-      "ElementType": [ "N", "N", "C", "N", "N" ]
-    }
-
 test_read_yaml_source_to_df:
     format: parent_child
     hierarchy_column: Hierarchy
@@ -59,17 +12,6 @@ test_read_yaml_source_to_df:
       "Default" }
       - { Parent: "EMEA", Child: "Germany", ElementType: "N", Weight: 1, Hierarchy:
         "Default" }
-
-
-test_read_yaml_source_to_df_mandatory_only:
-    format: parent_child
-    hierarchy_column: Hierarchy
-    rows:
-      - { Parent: "Total Products", Child: "Product A" }
-      - { Parent: "Total Products", Child: "Product B" }
-      - { Parent: "All Regions", Child: "EMEA" }
-      - { Parent: "EMEA", Child: "Hungary" }
-      - { Parent: "EMEA", Child: "Germany" }
 
 
 test_read_yaml_source_to_df_aliases:
@@ -88,21 +30,6 @@ test_read_yaml_source_to_df_aliases:
         "Default" }
 
 
-test_read_yaml_source_to_df_extra_cols:
-    format: parent_child
-    hierarchy_column: Hierarchy
-    rows:
-      - { Parent: "Total Products", Child: "Product A", ElementType: "N", Weight: 1, Hierarchy:
-      "Default", Level1: "EMEA" }
-      - { Parent: "Total Products", Child: "Product B", ElementType: "N", Weight: 1, Hierarchy:
-      "Default", Level1: "EMEA" }
-      - { Parent: "All Regions", Child: "EMEA", ElementType: "C", Weight: 1, Hierarchy:
-      "Default", Level1: "EMEA" }
-      - { Parent: "EMEA", Child: "Hungary", ElementType: "N", Weight: 1, Hierarchy:
-      "Default", Level1: "EMEA" }
-      - { Parent: "EMEA", Child: "Germany", ElementType: "N", Weight: 1, Hierarchy:
-        "Default", Level1: "EMEA" }
-
 test_read_yaml_source_to_df_attr_list:
     format: parent_child
     hierarchy_column: Hierarchy
@@ -118,7 +45,6 @@ test_read_yaml_source_to_df_attr_list:
       - { Parent: "EMEA", Child: "Germany", ElementType: "N", Weight: 1, Hierarchy: "Default",
           Element: "", Color: "", CountryCode: "", IsActive: 1 }
 
-# -------------------------------- Format Two -------------------------------- #
 
 test_read_yaml_source_to_df_indented_levels:
   -
@@ -170,15 +96,6 @@ test_read_yaml_source_to_df_indented_levels_attr_list:
           Element: "", Color: "", CountryCode: "", IsActive: 1 }
       - { Level3: "Germany", Weight: 1, Hierarchy: "Alt",
           Element: "", Color: "", CountryCode: "", IsActive: 1 }
-
-
-test_read_yaml_source_to_df_attr_only:
-  -
-    format: attributes
-    rows:
-      - { Element: "Hungary", Color: "Red", CountryCode: "HU", IsActive: 1 }
-      - { Element: "Germany", Color: "Black", CountryCode: "DE", IsActive: 1 }
-      - { Element: "USA", Color: "Blue", CountryCode: "US", IsActive: 1 }
 
 
 #--------------------------------- Normalization -----------------------------------#
@@ -1167,7 +1084,460 @@ test_deduplicate_elements:
       "Hierarchy": ["H1", "H1", "H2"]
     }
 
+test_add_attribute_type_suffixes_success:
+  - input_df:
+      Attr1: ["A", "B"]
+      Attr2: [1, 2]
+    attr_type_map:
+      Attr1: "String"
+      Attr2: "Numeric"
+    expected_df:
+      Attr1:String: ["A", "B"]
+      Attr2:Numeric: [1, 2]
+
+test_add_attribute_type_suffixes_failure:
+  - input_df:
+      Attr1: ["A"]
+    attr_type_map:
+      Attr1: "String"
+      MissingAttr: "Numeric"
+    expected_exception: "InvalidAttributeColumnNameError"
+    expected_message_part: "missing in the DataFrame"
+
+test_normalize_attr_column_names_success:
+  - input_df:
+      Child: ["A", "B"]
+      Color:alias: ["Red", "Blue"]
+      Size:numeric: ["1", "2"]
+    attribute_columns: ["Color:alias", "Size:numeric"]
+    attribute_parser: "colon"
+    expected_df:
+      Child: ["A", "B"]
+      Color:Alias: ["Red", "Blue"]
+      Size:Numeric: ["1", "2"]
+    expected_columns: ["Color:Alias", "Size:Numeric"]
+
+test_normalize_attr_column_names_failure:
+  - input_df:
+      Bad:foo: ["X"]
+    attribute_columns: ["Bad:foo"]
+    attribute_parser: "colon"
+    expected_exception: "InvalidAttributeColumnNameError"
+    expected_message_part: "Unknown attribute type"
+
+test_assign_missing_weight_column_success:
+  - input_df:
+      Parent: ["Total"]
+      Child: ["A"]
+    expected_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      Weight: [1.0]
+  - input_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      Weight: [ 2.0 ]
+    expected_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      Weight: [2.0]
+
+test_assign_missing_weight_values_success:
+  - input_df:
+      Weight: [null, "", 2]
+    expected_df:
+      Weight: [1.0, 1.0, 2.0]
+
+test_validate_and_normalize_numeric_values_success:
+  - input_df:
+      Weight: ["1", "2.5", null]
+    column_name: "Weight"
+    expected_df:
+      Weight: [1.0, 2.5, null]
+
+test_validate_and_normalize_numeric_values_failure:
+  - input_df:
+      Weight: ["1", "bad"]
+    column_name: "Weight"
+    expected_exception: "SchemaValidationError"
+    expected_message_part: "non-numeric values"
+
+test_normalize_string_values_success:
+  - input_df:
+      Parent: [" A ", null, ""]
+    column_name: "Parent"
+    expected_df:
+      Parent: ["A", "", ""]
+
+test_validate_and_normalize_base_column_types_success:
+  - input_df:
+      Parent: [" Total "]
+      Child: [" A "]
+      ElementType: [" N "]
+      Dimension: [" Dim1 "]
+      Hierarchy: [" H1 "]
+      Weight: ["1"]
+    expected_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      ElementType: ["N"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+      Weight: [1.0]
+  - input_df:
+      Parent: [12345]
+      Child: [" A "]
+      ElementType: [" N "]
+      Dimension: [" Dim1 "]
+      Hierarchy: [" H1 "]
+      Weight: ["1"]
+    expected_df:
+      Parent: ["12345"]
+      Child: ["A"]
+      ElementType: ["N"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+      Weight: [1.0]
+
+test_validate_and_normalize_base_column_types_failure:
+  - input_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      ElementType: ["N"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+      Weight: ["bad"]
+    expected_exception: "SchemaValidationError"
+    expected_message_part: "non-numeric values"
+
+test_validate_and_normalize_attr_column_types_success:
+  - elements_df:
+      Color:String: [" Blue ", null]
+      Score:Numeric: ["1", "2.5"]
+    attr_columns: ["Color:String", "Score:Numeric"]
+    expected_df:
+      Color:String: ["Blue", ""]
+      Score:Numeric: [1.0, 2.5]
+
+test_validate_and_normalize_attr_column_types_failure:
+  - elements_df:
+      Score:Numeric: ["bad"]
+    attr_columns: ["Score:Numeric"]
+    expected_exception: "SchemaValidationError"
+    expected_message_part: "non-numeric values"
+
+test_validate_and_normalize_type_values_success:
+  - input_df:
+      ElementType: ["N", "s", "Consolidated"]
+    expected_df:
+      ElementType: ["Numeric", "String", "Consolidated"]
+
+test_validate_and_normalize_type_values_failure:
+  - input_df:
+      ElementType: ["X"]
+    expected_exception: "SchemaValidationError"
+    expected_message_part: "unknown 'ElementType' values"
+
+test_assign_missing_attribute_values_success:
+  - elements_df:
+      ElementName: ["A", "B"]
+      Attr1:String: [null, "Text"]
+      Attr2:Numeric: [null, 2.5]
+      Attr3:Alias: ["", null]
+    attribute_columns: ["Attr1:String", "Attr2:Numeric", "Attr3:Alias"]
+    expected_df:
+      ElementName: ["A", "B"]
+      Attr1:String: ["", "Text"]
+      Attr2:Numeric: [0.0, 2.5]
+      Attr3:Alias: ["A", "B"]
+
+test_normalize_input_schema_success:
+  - input_df:
+      Parent: ["Total", "Total", ""]
+      Child: ["A", "B", "Total"]
+      ElementType: ["N", "C", "C"]
+      Weight: [1, 2, 0]
+    dimension_name: "Dim1"
+    hierarchy_name: "H1"
+    dim_column: null
+    hier_column: null
+    level_columns: null
+    parent_column: null
+    child_column: null
+    type_column: null
+    weight_column: null
+    attr_type_map: null
+    input_elements_df: null
+    input_elements_df_element_column: null
+    attribute_parser: "colon"
+    expected_edges_df:
+      Parent: ["Total", "Total"]
+      Child: ["A", "B"]
+      Weight: [1.0, 2.0]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+    expected_elements_df:
+      ElementName: ["A", "B", "Total"]
+      ElementType: ["Numeric", "Consolidated", "Consolidated"]
+      Dimension: ["Dim1", "Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1", "H1"]
+
+test_clear_orphan_parent_edges_success:
+  - edges_df:
+      Parent: ["OrphanParent", "Total"]
+      Child: ["A", "B"]
+    orphan_consolidation_name: "OrphanParent"
+    expected_df:
+      Parent: ["Total"]
+      Child: ["B"]
+  - edges_df:
+      Parent: ["Total"]
+      Child: ["B"]
+    orphan_consolidation_name: "OrphanParent"
+    expected_df:
+      Parent: ["Total"]
+      Child: ["B"]
+
+test_clear_orphan_parent_elements_success:
+  - elements_df:
+      ElementName: ["OrphanParent", "Total"]
+      ElementType: ["C", "C"]
+    orphan_consolidation_name: "OrphanParent"
+    expected_df:
+      ElementName: ["Total"]
+      ElementType: ["C"]
+
+test_normalize_existing_schema_success:
+  - existing_edges_df:
+      Parent: ["OrphanParent", "Total"]
+      Child: ["A", "B"]
+      Hierarchy: ["H1", "H1"]
+    existing_elements_df:
+      ElementName: ["OrphanParent", "Total", "A", "B"]
+      ElementType: ["C", "C", "N", "N"]
+      Hierarchy: ["H1", "H1", "H1", "H1"]
+      Color:alias: ["", "Red", "Blue", "Green"]
+    old_orphan_parent_name: "OrphanParent"
+    expected_edges_df:
+      Parent: ["Total"]
+      Child: ["B"]
+      Hierarchy: ["H1"]
+    expected_elements_df:
+      ElementName: ["Total", "A", "B"]
+      ElementType: ["C", "N", "N"]
+      Hierarchy: ["H1", "H1", "H1"]
+      Color:Alias: ["Red", "Blue", "Green"]
+
+test_normalize_updated_schema_success:
+  - updated_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      Hierarchy: ["H1"]
+    updated_elements_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+      Color:String: [null]
+      Score:Numeric: [null]
+      Alias:Alias: [""]
+    expected_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      Hierarchy: ["H1"]
+    expected_elements_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+      Color:String: [""]
+      Score:Numeric: [0.0]
+      Alias:Alias: ["A"]
+
 #---------------------------------- Validation -------------------------------------#
+
+test_validate_filled_structure_success:
+  - input_df:
+      Level1: ["All Regions", "All Regions", "All Regions", "APAC"]
+      Level2: ["EMEA", "EMEA", "AMER", null]
+      Level3: ["Hungary", "Germany", null, null]
+    level_columns: [Level1, Level2, Level3]
+
+test_validate_filled_structure_failure:
+  - # Not left aligned: Level1 empty but Level2 has data
+    input_df:
+      Level1: [null, "All Regions"]
+      Level2: ["EMEA", "AMER"]
+      Level3: [null, null]
+    level_columns: [Level1, Level2, Level3]
+    expected_message_part: "Rows must start at Level 1"
+
+  - # Gap in the row: Level2 missing between Level1 and Level3
+    input_df:
+      Level1: ["All Regions"]
+      Level2: [null]
+      Level3: ["Hungary"]
+    level_columns: [Level1, Level2, Level3]
+    expected_message_part: "Rows cannot contain gaps"
+
+test_validate_indented_structure_success:
+  - input_df:
+      Level1: ["All Regions", null, null, "All Regions", null]
+      Level2: [null, "EMEA", "AMER", null, "APAC"]
+      Level3: [null, null, null, null, null]
+    level_columns: [Level1, Level2, Level3]
+
+test_validate_indented_structure_failure:
+  - # Multiple values in a single row
+    input_df:
+      Level1: ["All Regions"]
+      Level2: ["EMEA"]
+      Level3: [null]
+    level_columns: [Level1, Level2, Level3]
+    expected_message_part: "Rows must contain exactly ONE value"
+
+  - # Orphan row: indented too far without prior parent context
+    input_df:
+      Level1: ["All Regions", null]
+      Level2: [null, null]
+      Level3: [null, "Hungary"]
+    level_columns: [Level1, Level2, Level3]
+    expected_message_part: "Rows are indented too far"
+
+test_validate_schema_for_parent_child_columns_success:
+  - input_df:
+      Parent: ["Total", "Total"]
+      Child: ["A", "B"]
+
+test_validate_schema_for_parent_child_columns_failure:
+  - # Missing Parent column
+    input_df:
+      Child: ["A", "B"]
+    expected_message_part: "Parent column is missing."
+  - # Missing Child column
+    input_df:
+      Parent: ["Total", "Total"]
+    expected_message_part: "Child column is missing."
+
+test_validate_schema_for_level_columns_success:
+  - input_df:
+      Level1: ["All Regions", "All Regions"]
+      Level2: ["EMEA", "AMER"]
+      Level3: ["Hungary", "USA"]
+    level_columns: [Level1, Level2, Level3]
+
+test_validate_schema_for_level_columns_failure:
+  - # Missing level_columns parameter
+    input_df:
+      Level1: ["All Regions"]
+    level_columns: null
+    expected_exception: "InvalidInputParameterError"
+    expected_message_part: "Missing required parameter 'level_columns'."
+  - # Missing one column listed in level_columns
+    input_df:
+      Level1: ["All Regions"]
+      Level2: ["EMEA"]
+    level_columns: [Level1, Level2, Level3]
+    expected_exception: "SchemaValidationError"
+    expected_message_part: "Level column Level3 is missing."
+
+test_validate_schema_for_type_mapping_success:
+  - input_df:
+      ElementType: ["N", "S", "C"]
+    type_mapping:
+      N: "Numeric"
+      S: "String"
+      C: "Consolidated"
+
+test_validate_schema_for_type_mapping_failure:
+  - input_df:
+      ElementType: ["N", "X"]
+    type_mapping:
+      N: "Numeric"
+      S: "String"
+      C: "Consolidated"
+    expected_message_part: "Type normalization failed: Found unknown 'ElementType' values: ['X']"
+
+test_validate_schema_for_numeric_values_success:
+  - input_df:
+      Weight: [1, 2.5, "3", null]
+    column_name: "Weight"
+
+test_validate_schema_for_numeric_values_failure:
+  - input_df:
+      Weight: [1, "x", 3]
+    column_name: "Weight"
+    expected_message_part: "Conversion Failed: The weight column contains non-numeric values"
+
+test_validate_schema_for_node_integrity_success:
+  - edges_data:
+      - {Parent: "Total", Child: "A"}
+      - {Parent: "Total", Child: "B"}
+    elements_data:
+      - {ElementName: "Total"}
+      - {ElementName: "A"}
+      - {ElementName: "B"}
+
+test_validate_schema_for_node_integrity_failure:
+  - edges_data:
+      - {Parent: "Total", Child: "A"}
+      - {Parent: "Total", Child: "B"}
+    elements_data:
+      - {ElementName: "Total"}
+      - {ElementName: "A"}
+    expected_message_part: "node(s) in 'edges_df' not defined in 'elements_df'"
+
+test_post_validate_schema_success:
+  - edges_data:
+      - {Parent: "Total", Child: "A"}
+      - {Parent: "Total", Child: "B"}
+    elements_data:
+      - {ElementName: "Total", ElementType: "C", Dimension: "Dim1", Hierarchy: "H1"}
+      - {ElementName: "A", ElementType: "N", Dimension: "Dim1", Hierarchy: "H1"}
+      - {ElementName: "B", ElementType: "N", Dimension: "Dim1", Hierarchy: "H1"}
+
+test_pre_validate_input_schema_success:
+  - input_format: "parent_child"
+    input_df:
+      Parent: ["Total", "Total"]
+      Child: ["A", "B"]
+    level_columns: null
+  - input_format: "indented_levels"
+    input_df:
+      Level1: ["All Regions", null]
+      Level2: [null, "EMEA"]
+    level_columns: [Level1, Level2]
+
+test_validate_element_type_consistency_success:
+  - existing_elements_df:
+      - {ElementName: "A", Hierarchy: "H1", ElementType: "N"}
+      - {ElementName: "B", Hierarchy: "H1", ElementType: "C"}
+    input_elements_df:
+      - {ElementName: "A", Hierarchy: "H1", ElementType: "N"}
+      - {ElementName: "B", Hierarchy: "H1", ElementType: "C"}
+    allow_type_changes: false
+
+test_validate_element_type_consistency_failure:
+  - existing_elements_df:
+      - {ElementName: "A", Hierarchy: "H1", ElementType: "N"}
+      - {ElementName: "B", Hierarchy: "H1", ElementType: "C"}
+    input_elements_df:
+      - {ElementName: "A", Hierarchy: "H1", ElementType: "S"}
+      - {ElementName: "B", Hierarchy: "H1", ElementType: "C"}
+    allow_type_changes: false
+    expected_exception: "ElementTypeConflictError"
+    expected_message_part: "Validation Failed: Found 1 conflict(s) where 'ElementType' changed."
+
+test_validate_element_type_consistency_allow_changes:
+  - existing_elements_df:
+      - {ElementName: "A", Hierarchy: "H1", ElementType: "N"}
+      - {ElementName: "B", Hierarchy: "H1", ElementType: "C"}
+    input_elements_df:
+      - {ElementName: "A", Hierarchy: "H1", ElementType: "S"}
+      - {ElementName: "B", Hierarchy: "H1", ElementType: "C"}
+    allow_type_changes: true
+    expected_conflicts:
+      - {ElementName: "A", Hierarchy: "H1", ElementType_existing: "N", ElementType_input: "S"}
 
 test_validate_elements_df_schema_for_inconsistent_element_type_success:
   - # All elements have exactly one type
@@ -1289,55 +1659,6 @@ test_validate_graph_for_self_loop_failure:
       - {Parent: "B", Child: "B"}
     expected_exception: "GraphValidationError"
     expected_message_part: "A child is the parent of itself, self loop detected."
-
-test_validate_graph_for_cycles_with_dfs_success:
-  - # Case: Simple chain (A -> B -> C)
-    df_data:
-      - {Parent: "A", Child: "B"}
-      - {Parent: "B", Child: "C"}
-  - # Case: Diamond Shape (Valid: A points to B and C, both point to D)
-    # This is a key test for DFS to ensure it handles multiple paths correctly.
-    df_data:
-      - {Parent: "A", Child: "B"}
-      - {Parent: "A", Child: "C"}
-      - {Parent: "B", Child: "D"}
-      - {Parent: "C", Child: "D"}
-  - # Case: Multiple separate trees
-    df_data:
-      - {Parent: "A", Child: "B"}
-      - {Parent: "X", Child: "Y"}
-
-test_validate_graph_for_cycles_with_dfs_failure:
-  - # Case: Direct cycle (A -> B -> A)
-    df_data:
-      - {Parent: "A", Child: "B"}
-      - {Parent: "B", Child: "A"}
-    expected_exception: "GraphValidationError"
-    expected_message_part: "Graph contains a cycle starting from node:"
-
-  - # Case: Indirect cycle (A -> B -> C -> A)
-    df_data:
-      - {Parent: "A", Child: "B"}
-      - {Parent: "B", Child: "C"}
-      - {Parent: "C", Child: "A"}
-    expected_exception: "GraphValidationError"
-    expected_message_part: "Graph contains a cycle starting from node:"
-
-  - # Case: Self-loop (A -> A)
-    df_data:
-      - {Parent: "Self", Child: "Self"}
-    expected_exception: "GraphValidationError"
-    expected_message_part: "Graph contains a cycle starting from node: Self"
-
-  - # Case: Cycle hidden deep in a hierarchy
-    df_data:
-      - {Parent: "Root", Child: "Level1"}
-      - {Parent: "Level1", Child: "LoopA"}
-      - {Parent: "LoopA", Child: "LoopB"}
-      - {Parent: "LoopB", Child: "LoopA"}
-    expected_exception: "GraphValidationError"
-    expected_message_part: "Graph contains a cycle starting from node:"
-
 
 test_validate_graph_for_cycles_with_kahn_success:
   - # Case: Simple chain (A -> B -> C)
