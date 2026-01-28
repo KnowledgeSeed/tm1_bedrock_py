@@ -52,9 +52,11 @@ def dimension_builder(
         raw_input_elements_df: pd.DataFrame = None,
 
         allow_type_changes: bool = False,
-        attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon",
+        attribute_parser: Union[Literal["colon", "square_brackets"], Callable] = "colon",
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         **kwargs
 ) -> None:
+    utility.set_logging_level(logging_level=logging_level)
 
     input_edges_df, input_elements_df = apply.init_input_schema(
         dimension_name=dimension_name, hierarchy_name=hierarchy_name, input_format=input_format,
@@ -72,7 +74,9 @@ def dimension_builder(
         sql_table_elements_name=sql_table_elements_name, sql_elements_query=sql_elements_query,
         filter_input_elements_columns=filter_input_elements_columns,
         raw_input_elements_df=raw_input_elements_df,
-        attribute_parser=attribute_parser)
+        attribute_parser=attribute_parser,
+        **kwargs
+    )
 
     # get existing if dim exists - important for type check consistency too
     existing_edges_df, existing_elements_df = apply.init_existing_schema(tm1_service=tm1_service,
@@ -84,18 +88,27 @@ def dimension_builder(
         tm1_service=tm1_service, dimension_name=dimension_name,
         input_edges_df=input_edges_df, input_elements_df=input_elements_df,
         existing_edges_df=existing_edges_df, existing_elements_df=existing_elements_df,
-        orphant_parent_name=new_orphan_parent_name,
+        orphan_parent_name=new_orphan_parent_name,
         mode=build_strategy,
         allow_type_changes=allow_type_changes)
 
     # upload updated dim structure using tm1py dimension/hierarchy/element objects
-    apply.rebuild_dimension_structure(
-        tm1_service=tm1_service, dimension_name=dimension_name,
-        edges_df=updated_edges_df, elements_df=updated_elements_df)
+    dimension = apply.build_dimension_object(dimension_name=dimension_name, edges_df=updated_edges_df,
+                                             elements_df=updated_elements_df)
+
+    tm1_service.dimensions.update_or_create(dimension)
 
     # upload updated attribute values using bedrock load
-    apply.update_element_attributes(
-        tm1_service=tm1_service, dimension_name=dimension_name, elements_df=updated_elements_df)
+    writable_attr_df, attr_cube_name, attr_cube_dims = apply.prepare_attributes_for_load(
+        dimension_name=dimension_name, elements_df=updated_elements_df)
+
+    loader.dataframe_to_cube(
+        tm1_service=tm1_service,
+        dataframe=writable_attr_df,
+        cube_name=attr_cube_name,
+        cube_dims=attr_cube_dims,
+        use_blob=True,
+    )
 
 
 @utility.log_benchmark_metrics
@@ -143,7 +156,7 @@ def data_copy_intercube(
         increment: Optional[bool] = False,
         sum_numeric_duplicates: Optional[bool] = True,
 
-        logging_level: Optional[str] = "ERROR",
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
 
@@ -528,7 +541,7 @@ def data_copy(
         use_mixed_datatypes: Optional[bool] = False,
         increment: bool = False,
         sum_numeric_duplicates: bool = True,
-        logging_level: str = "ERROR",
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
         **kwargs
@@ -1034,7 +1047,7 @@ def load_sql_data_to_tm1_cube(
         use_blob: bool = False,
         increment: bool = False,
         sum_numeric_duplicates: bool = True,
-        logging_level: str = "ERROR",
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
         **kwargs
@@ -1330,7 +1343,7 @@ def load_tm1_cube_to_sql_table(
         dtype: Optional[dict] = None,
         decimal: Optional[str] = None,
 
-        logging_level: str = "ERROR",
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
         **kwargs
@@ -1992,7 +2005,7 @@ def load_csv_data_to_tm1_cube(
         sum_numeric_duplicates: bool = True,
         slice_size_of_dataframe: int = 50000,
         clear_target: Optional[bool] = False,
-        logging_level: str = "ERROR",
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
         **kwargs
@@ -2302,7 +2315,7 @@ def load_tm1_cube_to_csv_file(
         pre_load_args: Optional[List] = None,
         pre_load_kwargs: Optional[Dict] = None,
 
-        logging_level: str = "ERROR",
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
         **kwargs

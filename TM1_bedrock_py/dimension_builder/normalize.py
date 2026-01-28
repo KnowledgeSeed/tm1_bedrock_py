@@ -1,14 +1,15 @@
-import pandas as pd
-import numpy as np
-from typing import Optional, Tuple, Callable, Literal
-from TM1_bedrock_py.dimension_builder import utility
-from TM1_bedrock_py import utility as baseutils
+from typing import Optional, Tuple, Callable, Literal, Union
 
+import numpy as np
+import pandas as pd
+
+from TM1_bedrock_py import utility as baseutils
+from TM1_bedrock_py.dimension_builder import utility
+from TM1_bedrock_py.dimension_builder.exceptions import InvalidAttributeColumnNameError
 from TM1_bedrock_py.dimension_builder.validate import (
     validate_schema_for_type_mapping,
     validate_schema_for_numeric_values
 )
-from TM1_bedrock_py.dimension_builder.exceptions import InvalidAttributeColumnNameError, SchemaValidationError
 
 pd.set_option('future.no_silent_downcasting', True)
 
@@ -72,8 +73,7 @@ def add_attribute_type_suffixes(input_df: pd.DataFrame, attr_type_map: Optional[
 def normalize_attr_column_names(
         input_df: pd.DataFrame,
         attribute_columns: list[str] = None,
-        attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon",
-        **kwargs
+        attribute_parser: Union[Literal["colon", "square_brackets"], Callable] = "colon"
 ) -> Tuple[pd.DataFrame, list[str]]:
     if attribute_columns is None:
         attribute_columns = utility.get_attribute_columns_list(input_df=input_df)
@@ -122,7 +122,7 @@ def assign_missing_weight_column(input_df: pd.DataFrame) -> pd.DataFrame:
 
 @baseutils.log_exec_metrics
 def assign_missing_base_values(
-        input_df: pd.DataFrame, dimension_name: str, hierarchy_name: str = None, **kwargs
+        input_df: pd.DataFrame, dimension_name: str, hierarchy_name: str = None
 ) -> pd.DataFrame:
     input_df["Dimension"] = input_df["Dimension"].replace(r'^\s*$', np.nan, regex=True).fillna(dimension_name)
 
@@ -151,7 +151,7 @@ def normalize_string_values(input_df: pd.DataFrame, column_name: str) -> None:
 
 
 @baseutils.log_exec_metrics
-def validate_and_normalize_base_column_types(input_df: pd.DataFrame, **kwargs) -> None:
+def validate_and_normalize_base_column_types(input_df: pd.DataFrame) -> None:
     base_string_columns = ["Parent", "Child", "ElementType", "Dimension", "Hierarchy"]
     for column_name in base_string_columns:
         normalize_string_values(input_df=input_df, column_name=column_name)
@@ -159,7 +159,7 @@ def validate_and_normalize_base_column_types(input_df: pd.DataFrame, **kwargs) -
 
 
 @baseutils.log_exec_metrics
-def validate_and_normalize_attr_column_types(elements_df: pd.DataFrame, attr_columns: list[str], **kwargs) -> None:
+def validate_and_normalize_attr_column_types(elements_df: pd.DataFrame, attr_columns: list[str]) -> None:
     for attr_column in attr_columns:
         _, attr_type = utility.parse_attribute_string(attr_column)
         if attr_type in ("Alias", "String"):
@@ -174,7 +174,7 @@ def assign_missing_type_column(input_df: pd.DataFrame):
 
 
 @baseutils.log_exec_metrics
-def assign_missing_type_values(input_df: pd.DataFrame, **kwargs) -> None:
+def assign_missing_type_values(input_df: pd.DataFrame) -> None:
     parent_list = input_df['Parent'].unique()
     is_empty = input_df['ElementType'].isin([np.nan, None, ""])
 
@@ -183,7 +183,7 @@ def assign_missing_type_values(input_df: pd.DataFrame, **kwargs) -> None:
 
 
 @baseutils.log_exec_metrics
-def validate_and_normalize_type_values(input_df: pd.DataFrame, **kwargs) -> pd.DataFrame:
+def validate_and_normalize_type_values(input_df: pd.DataFrame) -> pd.DataFrame:
     validate_schema_for_type_mapping(input_df=input_df, type_mapping=_TYPE_MAPPING)
     input_df['ElementType'] = input_df['ElementType'].map(_TYPE_MAPPING)
     return input_df
@@ -191,7 +191,7 @@ def validate_and_normalize_type_values(input_df: pd.DataFrame, **kwargs) -> pd.D
 
 @baseutils.log_exec_metrics
 def assign_missing_attribute_values(
-        elements_df: pd.DataFrame, attribute_columns: list[str], **kwargs
+        elements_df: pd.DataFrame, attribute_columns: list[str]
 ) -> None:
     element_name_column = 'ElementName'
 
@@ -215,7 +215,7 @@ def assign_missing_attribute_values(
 
 
 @baseutils.log_exec_metrics
-def separate_edge_df_columns(input_df: pd.DataFrame, **kwargs) -> pd.DataFrame:
+def separate_edge_df_columns(input_df: pd.DataFrame) -> pd.DataFrame:
     column_list = ["Parent", "Child", "Weight", "Dimension", "Hierarchy"]
     edges_df = input_df[column_list].copy()
     return edges_df
@@ -224,8 +224,7 @@ def separate_edge_df_columns(input_df: pd.DataFrame, **kwargs) -> pd.DataFrame:
 @baseutils.log_exec_metrics
 def separate_elements_df_columns(
         input_df: pd.DataFrame,
-        attribute_columns: list[str],
-        **kwargs
+        attribute_columns: list[str]
 ) -> pd.DataFrame:
     base_columns = ["Child", "ElementType", "Dimension", "Hierarchy"]
     elements_df = input_df[base_columns + attribute_columns].copy()
@@ -265,20 +264,20 @@ def convert_levels_to_edges(input_df: pd.DataFrame, level_columns: list[str]) ->
 
 
 @baseutils.log_exec_metrics
-def drop_invalid_edges(edges_df: pd.DataFrame, **kwargs) -> pd.DataFrame:
+def drop_invalid_edges(edges_df: pd.DataFrame) -> pd.DataFrame:
     edges_df['Parent'] = edges_df['Parent'].replace("", np.nan)
     edges_df = edges_df.dropna(subset=['Parent'])
     return edges_df
 
 
 @baseutils.log_exec_metrics
-def deduplicate_edges(edges_df: pd.DataFrame, **kwargs) -> pd.DataFrame:
+def deduplicate_edges(edges_df: pd.DataFrame) -> pd.DataFrame:
     edges_df = edges_df.drop_duplicates(subset=["Parent", "Child", "Hierarchy"])
     return edges_df
 
 
 @baseutils.log_exec_metrics
-def deduplicate_elements(elements_df: pd.DataFrame, **kwargs) -> pd.DataFrame:
+def deduplicate_elements(elements_df: pd.DataFrame) -> pd.DataFrame:
     elements_df = elements_df.drop_duplicates(subset=["ElementName", "Dimension", "Hierarchy"]).reset_index(drop=True)
     return elements_df
 
@@ -294,8 +293,7 @@ def normalize_input_schema(
         attr_type_map: Optional[dict] = None,
         input_elements_df: pd.DataFrame = None,
         input_elements_df_element_column: Optional[str] = None,
-        attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon",
-        **kwargs
+        attribute_parser: Union[Literal["colon", "square_brackets"], Callable] = "colon"
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     # raw edges/combined input structure base normalization

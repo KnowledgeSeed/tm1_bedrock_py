@@ -308,7 +308,9 @@ def validate_element_type_consistency(
     )
 
     conflicts = merged_df[merged_df['ElementType_existing'] != merged_df['ElementType_input']]
-
+    print("existing: ", existing_elements_df)
+    print("input: ", input_elements_df)
+    print("conflict: ", conflicts)
     if not conflicts.empty:
         num_conflicts = len(conflicts)
         examples = conflicts.head(10).to_dict(orient='records')
@@ -318,6 +320,7 @@ def validate_element_type_consistency(
             error_msg += f"\nConflicts (First 10): {examples}"
             raise ElementTypeConflictError(error_msg)
 
-        return conflicts
+        else:
+            return conflicts
 
     return None

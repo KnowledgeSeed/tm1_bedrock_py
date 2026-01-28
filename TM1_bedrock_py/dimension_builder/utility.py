@@ -1,5 +1,5 @@
 import pandas as pd
-from typing import Tuple, Callable, Literal, Optional
+from typing import Tuple, Callable, Literal, Optional, Union
 import re
 
 
@@ -31,7 +31,7 @@ def _parse_attribute_string_square_brackets(attr_name_and_type: str) -> Tuple[st
 
 
 def parse_attribute_string(
-        attr_name_and_type: str, parser: Literal["colon", "square_brackets"] | Callable = "colon"
+        attr_name_and_type: str, parser: Union[Literal["colon", "square_brackets"], Callable] = "colon"
 ) -> Tuple[str, str]:
     strategies = {
         "square_brackets": _parse_attribute_string_square_brackets,
@@ -77,22 +77,23 @@ def unpivot_attributes_to_cube_format(elements_df: pd.DataFrame, dimension_name:
     attribute_dimension_name = "}ElementAttributes_" + dimension_name
     attribute_columns = get_attribute_columns_list(input_df=elements_df)
 
-    elements_df_copy = elements_df.copy()
-    elements_df_copy[dimension_name] = elements_df_copy['Hierarchy'] + ':' + elements_df_copy['ElementName']
-    df_to_melt = elements_df_copy.drop(columns=['ElementName', 'ElementType', 'Dimension', 'Hierarchy'])
+    elements_df[dimension_name] = elements_df['Hierarchy'] + ':' + elements_df['ElementName']
+    df_to_melt = elements_df.drop(columns=['ElementName', 'ElementType', 'Dimension', 'Hierarchy'])
     df_to_melt = df_to_melt.rename(columns={
         attr_string: parse_attribute_string(attr_string)[0]
         for attr_string in attribute_columns
     })
-    unpivoted_df = df_to_melt.melt(
+    melted_df = df_to_melt.melt(
         id_vars=[dimension_name],
         var_name=attribute_dimension_name,
         value_name='Value'
     )
-    return unpivoted_df
+    return melted_df
 
 
-def get_non_conflicting_edges(edges_df: pd.DataFrame, conflicts_df: pd.DataFrame) -> pd.DataFrame:
+def get_non_conflicting_edges(edges_df: Optional[pd.DataFrame], conflicts_df: pd.DataFrame) -> Optional[pd.DataFrame]:
+    if edges_df is None:
+        return None
     conflict_keys = pd.MultiIndex.from_frame(conflicts_df[['ElementName', 'Hierarchy']])
     parent_keys = pd.MultiIndex.from_frame(edges_df[['Parent', 'Hierarchy']])
     child_keys = pd.MultiIndex.from_frame(edges_df[['Child', 'Hierarchy']])

@@ -1,15 +1,16 @@
 from pathlib import Path
 from typing import Any, Literal, Tuple, Optional, Callable, Union
+
 import pandas as pd
 from TM1py.Objects import Dimension, Hierarchy
+
+from TM1_bedrock_py import utility as baseutils
 from TM1_bedrock_py.dimension_builder import normalize, utility, io
 from TM1_bedrock_py.dimension_builder.validate import (
     post_validate_schema,
     pre_validate_input_schema,
     validate_element_type_consistency
 )
-from TM1_bedrock_py.loader import dataframe_to_cube
-from TM1_bedrock_py import utility as baseutils
 
 
 @baseutils.log_exec_metrics
@@ -17,8 +18,7 @@ def apply_update_on_edges(
         legacy_df: Optional[pd.DataFrame],
         input_df: pd.DataFrame,
         retained_hierarchies: list[str],
-        orphan_consolidation_name: str = "OrphanParent",
-        **kwargs
+        orphan_consolidation_name: str = "OrphanParent"
 ) -> pd.DataFrame:
     if legacy_df is None:
         return input_df
@@ -44,8 +44,7 @@ def apply_update_with_unwind_on_edges(
         legacy_df: Optional[pd.DataFrame],
         input_df: pd.DataFrame,
         retained_hierarchies: list[str],
-        orphan_consolidation_name: str = "OrphanParent",
-        **kwargs
+        orphan_consolidation_name: str = "OrphanParent"
 ) -> pd.DataFrame:
     if legacy_df is None:
         return input_df
@@ -80,8 +79,7 @@ def add_orphan_consolidation_elements(
         elements_df: pd.DataFrame,
         orphan_consolidation_name: str,
         dimension_name: str,
-        retained_hierarchies: list[str],
-        **kwargs
+        retained_hierarchies: list[str]
 ) -> pd.DataFrame:
     attribute_columns = utility.get_attribute_columns_list(input_df=elements_df)
     orphan_parent_df = pd.DataFrame({
@@ -101,8 +99,7 @@ def assign_root_orphan_edges(
         edges_df: pd.DataFrame,
         orphan_consolidation_name: str,
         dimension_name: str,
-        retained_hierarchies: list[str],
-        **kwargs
+        retained_hierarchies: list[str]
 ) -> pd.DataFrame:
 
     new_rows_collection = []
@@ -136,8 +133,7 @@ def assign_root_orphan_edges(
 
 @baseutils.log_exec_metrics
 def apply_update_on_elements(
-        legacy_df: pd.DataFrame, input_df: pd.DataFrame,
-        **kwargs
+        legacy_df: pd.DataFrame, input_df: pd.DataFrame
 ) -> pd.DataFrame:
     return pd.concat([input_df, legacy_df], ignore_index=True).drop_duplicates()
 
@@ -147,9 +143,11 @@ def apply_updates(
         mode: Literal["rebuild", "update", "update_with_unwind"],
         existing_edges_df: Optional[pd.DataFrame], input_edges_df: pd.DataFrame,
         existing_elements_df: pd.DataFrame, input_elements_df: pd.DataFrame,
-        dimension_name: str, orphan_consolidation_name: str = "OrphanParent",
-        **kwargs
+        dimension_name: str, orphan_consolidation_name: str = "OrphanParent"
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    if mode == "rebuild":
+        return input_edges_df, input_elements_df
+
     legacy_elements_df = utility.get_legacy_elements(existing_elements_df, input_elements_df)
     if len(legacy_elements_df) == 0:
         return input_edges_df, input_elements_df
@@ -206,9 +204,7 @@ def init_input_schema(
         sql_elements_query: Optional[str] = None,
         filter_input_elements_columns: Optional[list[str]] = None,
         raw_input_elements_df: pd.DataFrame = None,
-
-        attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon",
-
+        attribute_parser: Union[Literal["colon", "square_brackets"], Callable] = "colon",
         **kwargs
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
@@ -261,25 +257,30 @@ def resolve_schema(
         existing_edges_df: Optional[pd.DataFrame], existing_elements_df: Optional[pd.DataFrame],
         mode: Literal["rebuild", "update", "update_with_unwind"] = "rebuild",
         allow_type_changes: bool = False,
-        orphant_parent_name: str = "OrphanParent",
-        **kwargs
+        orphan_parent_name: str = "OrphanParent",
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     if existing_elements_df is None:
         return input_edges_df, input_elements_df
 
     conflicts = validate_element_type_consistency(existing_elements_df, input_elements_df, allow_type_changes)
+    print("conflicts: ", conflicts)
 
-    if allow_type_changes and conflicts is not None:
+    if allow_type_changes and (conflicts is not None):
         non_conflicting_existing_edges_df = utility.get_non_conflicting_edges(existing_edges_df, conflicts)
         non_conflicting_existing_elements_df = utility.get_non_conflicting_elements(existing_elements_df, conflicts)
-        rebuild_dimension_structure(
-            tm1_service, dimension_name, non_conflicting_existing_edges_df, non_conflicting_existing_elements_df)
+        print("existing df: ", existing_elements_df)
+        print("conflicts: ", conflicts)
+        print("non conf ex elem: ", non_conflicting_existing_elements_df)
+        dimension = build_dimension_object(
+            dimension_name, non_conflicting_existing_edges_df, non_conflicting_existing_elements_df
+        )
+        tm1_service.dimensions.update_or_create(dimension)
 
     updated_edges_df, updated_elements_df = apply_updates(
         mode=mode,
         existing_edges_df=existing_edges_df, input_edges_df=input_edges_df,
         existing_elements_df=existing_elements_df, input_elements_df=input_elements_df,
-        dimension_name=dimension_name, orphan_consolidation_name=orphant_parent_name)
+        dimension_name=dimension_name, orphan_consolidation_name=orphan_parent_name)
 
     normalized_updated_edges_df, normalized_updated_elements_df = normalize.normalize_updated_schema(
         updated_edges_df, updated_elements_df)
@@ -290,9 +291,9 @@ def resolve_schema(
 
 
 @baseutils.log_exec_metrics
-def rebuild_dimension_structure(
-        tm1_service: Any, dimension_name: str, edges_df: pd.DataFrame, elements_df: pd.DataFrame, **kwargs
-) -> None:
+def build_dimension_object(
+        dimension_name: str, edges_df: Optional[pd.DataFrame], elements_df: pd.DataFrame
+) -> Dimension:
     hierarchy_names = utility.get_hierarchy_list(input_df=elements_df)
 
     dimension = Dimension(name=dimension_name)
@@ -315,30 +316,26 @@ def rebuild_dimension_structure(
 
         hierarchies[hierarchy_name].add_element(element_name=element_name, element_type=element_type)
 
-    for _, edges_df_row in edges_df.iterrows():
-        hierarchy_name = edges_df_row['Hierarchy']
-        parent_name = edges_df_row['Parent']
-        child_name = edges_df_row['Child']
-        weight = edges_df_row['Weight']
-        hierarchies[hierarchy_name].add_edge(parent=parent_name, component=child_name, weight=weight)
+    if edges_df is not None:
+        for _, edges_df_row in edges_df.iterrows():
+            hierarchy_name = edges_df_row['Hierarchy']
+            parent_name = edges_df_row['Parent']
+            child_name = edges_df_row['Child']
+            weight = edges_df_row['Weight']
+            hierarchies[hierarchy_name].add_edge(parent=parent_name, component=child_name, weight=weight)
 
     for hierarchy in hierarchies.values():
         dimension.add_hierarchy(hierarchy)
 
-    tm1_service.dimensions.update_or_create(dimension)
+    return dimension
 
 
 @baseutils.log_exec_metrics
-def update_element_attributes(tm1_service: Any, elements_df: pd.DataFrame, dimension_name: str, **kwargs) -> None:
-    writable_elements_df = utility.unpivot_attributes_to_cube_format(
+def prepare_attributes_for_load(elements_df: pd.DataFrame, dimension_name: str) -> Tuple[pd.DataFrame, str, list[str]]:
+    writable_attr_df = utility.unpivot_attributes_to_cube_format(
         elements_df=elements_df, dimension_name=dimension_name
     )
     element_attributes_cube_name = "}ElementAttributes_" + dimension_name
     element_attributes_cube_dims = [dimension_name, element_attributes_cube_name]
-    dataframe_to_cube(
-        tm1_service=tm1_service,
-        dataframe=writable_elements_df,
-        cube_name=element_attributes_cube_name,
-        cube_dims=element_attributes_cube_dims,
-        use_blob=True,
-    )
+
+    return writable_attr_df, element_attributes_cube_name, element_attributes_cube_dims
