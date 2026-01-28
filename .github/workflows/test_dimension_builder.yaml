@@ -1,11 +1,11 @@
 name: Dimension Builder Tests
 on:
-  push:
-    branches-ignore:
-      - main
-    paths:
-      - "TM1_bedrock_py/dimension_builder/**"
-      - "tests/tests_dimension_builder/**"
+  #push:
+  #  branches-ignore:
+  #    - main
+  #  paths:
+  #    - "TM1_bedrock_py/dimension_builder/**"
+  #    - "tests/tests_dimension_builder/**"
   workflow_dispatch: {}
 
 concurrency:

@@ -1,16 +1,13 @@
 from pathlib import Path
-import pandas as pd
+
 import numpy as np
 import parametrize_from_file
 import pytest
 from sqlalchemy import create_engine
 
-from TM1_bedrock_py.dimension_builder import validate, normalize, utility
+from TM1_bedrock_py.dimension_builder import validate, normalize
 from TM1_bedrock_py.dimension_builder.io import read_source_to_df
-from TM1_bedrock_py.dimension_builder.exceptions import (
-    SchemaValidationError,
-    GraphValidationError
-)
+from TM1_bedrock_py.dimension_builder.exceptions import SchemaValidationError
 from tests.tests_dimension_builder.test_data.test_data import *
 
 DATA_DIR = Path(__file__).resolve().parent / "test_data"
