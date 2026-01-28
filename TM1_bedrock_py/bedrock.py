@@ -15,6 +15,88 @@ from pandas import DataFrame
 
 from TM1_bedrock_py import utility, transformer, loader, extractor, basic_logger
 
+from TM1_bedrock_py.dimension_builder import apply
+import pandas as pd
+from pathlib import Path
+
+
+@utility.log_exec_metrics
+def dimension_builder(
+        dimension_name: str,
+        input_format: Literal["parent_child", "indented_levels", "filled_levels"],
+        build_strategy: Literal["rebuild", "update", "update_with_unwind"],
+        tm1_service: Any,
+        hierarchy_name: str = None,
+
+        old_orphan_parent_name: str = "OrphanParent",
+        new_orphan_parent_name: str = "OrphanParent",
+
+        input_datasource: Optional[Union[str, Path]] = None,
+        sql_engine: Optional[Any] = None,
+        sql_table_name: Optional[str] = None,
+        sql_query: Optional[str] = None,
+        filter_input_columns: Optional[list[str]] = None,
+        raw_input_df: pd.DataFrame = None,
+
+        dim_column: Optional[str] = None, hier_column: Optional[str] = None,
+        parent_column: Optional[str] = None, child_column: Optional[str] = None,
+        level_columns: Optional[list[str]] = None, type_column: Optional[str] = None,
+        weight_column: Optional[str] = None,
+
+        input_elements_datasource: Optional[Union[str, Path]] = None,
+        input_elements_df_element_column: Optional[str] = None,
+        sql_elements_engine: Optional[Any] = None,
+        sql_table_elements_name: Optional[str] = None,
+        sql_elements_query: Optional[str] = None,
+        filter_input_elements_columns: Optional[list[str]] = None,
+        raw_input_elements_df: pd.DataFrame = None,
+
+        allow_type_changes: bool = False,
+        attribute_parser: Literal["colon", "square_brackets"] | Callable = "colon",
+        **kwargs
+) -> None:
+
+    input_edges_df, input_elements_df = apply.init_input_schema(
+        dimension_name=dimension_name, hierarchy_name=hierarchy_name, input_format=input_format,
+
+        input_datasource=input_datasource,
+        sql_engine=sql_engine, sql_table_name=sql_table_name, sql_query=sql_query,
+        filter_input_columns=filter_input_columns, raw_input_df=raw_input_df,
+        dim_column=dim_column, hier_column=hier_column,
+        parent_column=parent_column, child_column=child_column, level_columns=level_columns,
+        weight_column=weight_column, type_column=type_column,
+
+        input_elements_datasource=input_elements_datasource,
+        input_elements_df_element_column=input_elements_df_element_column,
+        sql_elements_engine=sql_elements_engine,
+        sql_table_elements_name=sql_table_elements_name, sql_elements_query=sql_elements_query,
+        filter_input_elements_columns=filter_input_elements_columns,
+        raw_input_elements_df=raw_input_elements_df,
+        attribute_parser=attribute_parser)
+
+    # get existing if dim exists - important for type check consistency too
+    existing_edges_df, existing_elements_df = apply.init_existing_schema(tm1_service=tm1_service,
+                                                                         dimension_name=dimension_name,
+                                                                         old_orphan_parent_name=old_orphan_parent_name)
+
+    # clear conflicts and make updates on input using existing
+    updated_edges_df, updated_elements_df = apply.resolve_schema(
+        tm1_service=tm1_service, dimension_name=dimension_name,
+        input_edges_df=input_edges_df, input_elements_df=input_elements_df,
+        existing_edges_df=existing_edges_df, existing_elements_df=existing_elements_df,
+        orphant_parent_name=new_orphan_parent_name,
+        mode=build_strategy,
+        allow_type_changes=allow_type_changes)
+
+    # upload updated dim structure using tm1py dimension/hierarchy/element objects
+    apply.rebuild_dimension_structure(
+        tm1_service=tm1_service, dimension_name=dimension_name,
+        edges_df=updated_edges_df, elements_df=updated_elements_df)
+
+    # upload updated attribute values using bedrock load
+    apply.update_element_attributes(
+        tm1_service=tm1_service, dimension_name=dimension_name, elements_df=updated_elements_df)
+
 
 @utility.log_benchmark_metrics
 @utility.log_exec_metrics

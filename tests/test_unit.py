@@ -10,10 +10,6 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
 
 from TM1_bedrock_py import extractor, transformer, utility, loader
-from TM1_bedrock_py.dimension_builder.exceptions import (LevelColumnInvalidRowError,
-                                                         SchemaValidationError,
-                                                         GraphValidationError)
-from TM1_bedrock_py.dimension_builder import normalize, validate
 from tests.config import tm1_connection_factory, sql_engine_factory
 
 EXCEPTION_MAP = {

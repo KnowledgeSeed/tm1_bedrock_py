@@ -10,7 +10,6 @@ from TM1_bedrock_py.dimension_builder.validate import (
 )
 from TM1_bedrock_py.loader import dataframe_to_cube
 from TM1_bedrock_py import utility as baseutils
-from TM1_bedrock_py.utility import basic_logger
 
 
 @baseutils.log_exec_metrics
@@ -270,7 +269,7 @@ def resolve_schema(
 
     conflicts = validate_element_type_consistency(existing_elements_df, input_elements_df, allow_type_changes)
 
-    if allow_type_changes and not conflicts.empty:
+    if allow_type_changes and conflicts is not None:
         non_conflicting_existing_edges_df = utility.get_non_conflicting_edges(existing_edges_df, conflicts)
         non_conflicting_existing_elements_df = utility.get_non_conflicting_elements(existing_elements_df, conflicts)
         rebuild_dimension_structure(

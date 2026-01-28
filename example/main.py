@@ -211,12 +211,12 @@ def complex_transform_demo():
         tm1_service.logout()
 
 
-def run_dim_builder_v1():
+def run_dim_builder_v01():
     tm1_params = {
         "address": "localhost",
         "port": 5379,
-        "user": "testbench",
-        "password": "testbench",
+        "user": "admin",
+        "password": "admin",
         "ssl": False
     }
     tm1_service = TM1Service(**tm1_params)
@@ -288,7 +288,7 @@ def run_dim_builder_v1():
     data, level_columns = generate_hierarchy_data(
         dimension_name=dimension_name,
         hierarchy_names=hierarchy_names,
-        nodes_per_hierarchy=100000,
+        nodes_per_hierarchy=75000,
         max_depth=5,
         number_of_attributes=10,
         consistent_leaf_attributes=True
@@ -308,8 +308,6 @@ def run_dim_builder_v1():
                                                                 input_format="indented_levels",
                                                                 dimension_name=dimension_name,
                                                                 level_columns=level_columns)
-
-    return
 
     # get existing if dim exists - important for type check consistency too
     basic_logger.debug("init existing schema started")
@@ -342,22 +340,50 @@ def run_dim_builder_v1():
     print("Dimension update successful")
 
 
-def run_empty_dim_query():
+def run_dim_builder_wrapper():
     tm1_params = {
         "address": "localhost",
         "port": 5379,
-        "user": "testbench",
-        "password": "testbench",
+        "user": "admin",
+        "password": "admin",
         "ssl": False
     }
     tm1_service = TM1Service(**tm1_params)
-    df = tm1_service.elements.get_elements_dataframe("EmptyDimension")
-    print(type(df))
-    print(df)
+    set_logging_level("DEBUG")
+
+    dimension_name = "DimGenerator"
+    hierarchy_names = ["DimGenerator", "DimGeneratorAlt", "DimGeneratorAlt2"]
+    old_orphan_parent_name = "OrphanParent"
+    orphan_parent_name = "OrphanParent"
+    allow_type_changes = True
+
+    data, level_columns = generate_hierarchy_data(
+        dimension_name=dimension_name,
+        hierarchy_names=hierarchy_names,
+        nodes_per_hierarchy=69990,
+        max_depth=5,
+        number_of_attributes=10,
+        consistent_leaf_attributes=True
+    )
+    raw_input_df = pd.DataFrame(data)
+
+    bedrock.dimension_builder(
+        dimension_name=dimension_name,
+        input_format="indented_levels",
+        build_strategy="update",
+        allow_type_changes=allow_type_changes,
+        tm1_service=tm1_service,
+        old_orphan_parent_name=old_orphan_parent_name,
+        new_orphan_parent_name=orphan_parent_name,
+        level_columns=level_columns,
+        raw_input_df=raw_input_df
+    )
+
 
 
 if __name__ == '__main__':
-    run_dim_builder_v1()
+    # run_dim_builder_v01()
     # run_empty_dim_query()
+    run_dim_builder_wrapper()
 
 

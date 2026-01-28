@@ -144,6 +144,7 @@ def read_source_to_df(
         raise ValueError("Type of the input file is invalid. Please use the following: 'csv', 'xslx', 'yaml', 'sql'")
 
 
+@utility.log_exec_metrics
 def read_existing_edges_df(tm1_service: Any, dimension_name: str) -> Optional[pd.DataFrame]:
     dimension = tm1_service.dimensions.get(dimension_name)
     edge_list = [
@@ -163,6 +164,7 @@ def read_existing_edges_df(tm1_service: Any, dimension_name: str) -> Optional[pd
     return pd.DataFrame(edge_list)
 
 
+@utility.log_exec_metrics
 def read_existing_elements_df_for_hierarchy(
         tm1_service: Any, dimension_name: str, hierarchy_name: Optional[str] = None
 ) -> pd.DataFrame:
@@ -184,6 +186,7 @@ def read_existing_elements_df_for_hierarchy(
     return existing_elements_df
 
 
+@utility.log_exec_metrics
 def read_existing_elements_df(
         tm1_service: Any, dimension_name: str
 ) -> pd.DataFrame:
@@ -199,6 +202,7 @@ def read_existing_elements_df(
     return pd.concat(dfs_to_concat, ignore_index=True)
 
 
+@utility.log_exec_metrics
 def retrieve_existing_schema(tm1_service: Any, dimension_name: str) -> Tuple[Optional[pd.DataFrame], pd.DataFrame]:
     existing_edges_df = read_existing_edges_df(tm1_service, dimension_name)
     existing_elements_df = read_existing_elements_df(tm1_service, dimension_name)
