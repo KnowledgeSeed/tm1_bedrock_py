@@ -36,7 +36,7 @@ def apply_update_on_edges(
         cond_child = ~legacy_df['Child'].isin(input_children)
         legacy_df.loc[cond_hierarchy & cond_parent & cond_child, 'Parent'] = orphan_consolidation_name
 
-    return pd.concat([input_df, legacy_df], ignore_index=True).drop_duplicates()
+    return pd.concat([input_df, legacy_df], ignore_index=True).drop_duplicates().reset_index(drop=True)
 
 
 @baseutils.log_exec_metrics

@@ -1,3 +1,68 @@
+#---------------------------------- Utility -------------------------------------#
+
+test_parse_attribute_string_success:
+  - attr_name_and_type: "Color:String"
+    parser: "colon"
+    expected_name: "Color"
+    expected_type: "String"
+  - attr_name_and_type: "Size[Numeric]"
+    parser: "square_brackets"
+    expected_name: "Size"
+    expected_type: "Numeric"
+
+test_parse_attribute_string_failure:
+  - attr_name_and_type: "Bad[Type"
+    parser: "square_brackets"
+    expected_exception: "ValueError"
+    expected_message_part: "Invalid format"
+
+test_get_legacy_edges_success:
+  - existing_df:
+      Parent: ["Total", "Total"]
+      Child: ["A", "B"]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+    input_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+    expected_df:
+      Parent: ["Total"]
+      Child: ["B"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+
+test_get_legacy_elements_success:
+  - existing_df:
+      ElementName: ["A", "B"]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+    input_df:
+      ElementName: ["A"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+    expected_df:
+      ElementName: ["B"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+
+test_unpivot_attributes_to_cube_format_success:
+  - elements_df:
+      ElementName: ["A", "B"]
+      ElementType: ["N", "N"]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+      Color:String: ["Blue", "Red"]
+      Score:Numeric: [1.0, 2.0]
+    dimension_name: "Dim1"
+    expected_df:
+      Dim1: ["H1:A", "H1:A", "H1:B", "H1:B"]
+      "}ElementAttributes_Dim1": ["Color", "Score", "Color", "Score"]
+      Value: ["Blue", 1.0, "Red", 2.0]
+
+#---------------------------------- IO -------------------------------------#
+
 test_read_yaml_source_to_df:
     format: parent_child
     hierarchy_column: Hierarchy
@@ -1708,7 +1773,7 @@ test_validate_graph_for_cycles_with_kahn_failure:
     expected_exception: "GraphValidationError"
     expected_message_part: "Cycle detected! The graph contains a circular dependency."
 
-test_get_delete_dict_for_conflicting_elements:
+test_get_delete_records_for_conflicting_elements:
   -
     conflicts_input:
       - {ElementName: "element1", Hierarchy: "default", ElementType_existing: "Numeric"}
@@ -1726,3 +1791,288 @@ test_get_delete_dict_for_conflicting_elements:
       - [ "Leaves", "element1" ]
       - [ "Leaves", "element2" ]
       - [ "Leaves", "element3" ]
+
+
+#---------------------------------- Apply -------------------------------------#
+
+test_apply_update_on_edges_success:
+  - legacy_df:
+      Parent: ["Total", "Total"]
+      Child: ["A", "C"]
+      Weight: [1.0, 1.0]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+    input_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      Weight: [1.0]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+    retained_hierarchies: ["H1"]
+    orphan_consolidation_name: "OrphanParent"
+    expected_df:
+      Parent: ["Total", "OrphanParent"]
+      Child: ["A", "C"]
+      Weight: [1.0, 1.0]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+
+test_apply_update_with_unwind_on_edges_success:
+  - legacy_df:
+      Parent: ["Total", "Total"]
+      Child: ["A", "C"]
+      Weight: [1.0, 1.0]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+    input_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      Weight: [1.0]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+    retained_hierarchies: ["H1"]
+    orphan_consolidation_name: "OrphanParent"
+    expected_df:
+      Parent: ["Total", "OrphanParent"]
+      Child: ["A", "C"]
+      Weight: [1.0, 1.0]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+
+test_add_orphan_consolidation_elements_success:
+  - elements_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+      Color:String: ["Blue"]
+    orphan_consolidation_name: "OrphanParent"
+    dimension_name: "Dim1"
+    retained_hierarchies: ["H1", "H2"]
+    expected_df:
+      ElementName: ["A", "OrphanParent", "OrphanParent"]
+      ElementType: ["N", "Consolidated", "Consolidated"]
+      Dimension: ["Dim1", "Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1", "H2"]
+      Color:String: ["Blue", null, null]
+
+test_assign_root_orphan_edges_success:
+  - legacy_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      Weight: [1.0]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+    legacy_elements_df:
+      ElementName: ["Total", "A", "B"]
+      ElementType: ["C", "N", "N"]
+      Dimension: ["Dim1", "Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1", "H1"]
+    edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      Weight: [1.0]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+    orphan_consolidation_name: "OrphanParent"
+    dimension_name: "Dim1"
+    retained_hierarchies: ["H1"]
+    expected_df:
+      Parent: ["Total", "OrphanParent", "OrphanParent"]
+      Child: ["A", "Total", "B"]
+      Weight: [1.0, 1.0, 1.0]
+      Dimension: ["Dim1", "Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1", "H1"]
+
+test_apply_update_on_elements_success:
+  - legacy_df:
+      ElementName: ["B"]
+      ElementType: ["C"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+    input_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+    expected_df:
+      ElementName: ["A", "B"]
+      ElementType: ["N", "C"]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+
+test_apply_updates_success:
+  - mode: "update"
+    existing_edges_df:
+      Parent: ["Total", "Total"]
+      Child: ["A", "B"]
+      Weight: [1.0, 1.0]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+    input_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      Weight: [1.0]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+    existing_elements_df:
+      ElementName: ["A", "B"]
+      ElementType: ["N", "C"]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+    input_elements_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+    dimension_name: "Dim1"
+    orphan_consolidation_name: "OrphanParent"
+    expected_edges_df:
+      Parent: ["Total", "OrphanParent"]
+      Child: ["A", "B"]
+      Weight: [1.0, 1.0]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+    expected_elements_df:
+      ElementName: ["A", "B", "OrphanParent"]
+      ElementType: ["N", "C", "Consolidated"]
+      Dimension: ["Dim1", "Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1", "H1"]
+
+test_init_input_schema_success:
+  - input_datasource: "dummy.csv"
+    sql_engine: null
+    sql_table_name: null
+    sql_query: null
+    filter_input_columns: null
+    raw_input_df:
+      Parent: ["Total"]
+      Child: ["A"]
+    input_elements_datasource: "dummy_elements.csv"
+    input_elements_df_element_column: null
+    sql_elements_engine: null
+    sql_table_elements_name: null
+    sql_elements_query: null
+    filter_input_elements_columns: null
+    raw_input_elements_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+    dimension_name: "Dim1"
+    input_format: "parent_child"
+    hierarchy_name: "H1"
+    dim_column: null
+    hier_column: null
+    parent_column: null
+    child_column: null
+    level_columns: null
+    type_column: null
+    weight_column: null
+    attribute_parser: "colon"
+    expected_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+    expected_elements_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+
+test_init_existing_schema_success:
+  - tm1_exists: true
+    existing_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+    existing_elements_df:
+      ElementName: ["A"]
+    normalized_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+    normalized_elements_df:
+      ElementName: ["A"]
+    dimension_name: "Dim1"
+    old_orphan_parent_name: "OrphanParent"
+  - tm1_exists: false
+    existing_edges_df: null
+    existing_elements_df:
+      ElementName: ["A"]
+    normalized_edges_df: null
+    normalized_elements_df:
+      ElementName: ["A"]
+    dimension_name: "Dim1"
+    old_orphan_parent_name: "OrphanParent"
+
+test_resolve_schema_success:
+  - dimension_name: "Dim1"
+    input_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+    input_elements_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+    existing_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+    existing_elements_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+    mode: "rebuild"
+    allow_type_changes: false
+    orphan_parent_name: "OrphanParent"
+    normalized_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+    normalized_elements_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+
+test_resolve_schema_allow_type_changes_success:
+  - dimension_name: "Dim1"
+    input_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+    input_elements_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+    existing_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+    existing_elements_df:
+      ElementName: ["A"]
+      ElementType: ["S"]
+    mode: "update"
+    allow_type_changes: true
+    orphan_parent_name: "OrphanParent"
+    normalized_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+    normalized_elements_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+    conflicts_df:
+      - {ElementName: "A", Hierarchy: "H1", ElementType_existing: "String", ElementType_input: "Numeric"}
+
+test_build_dimension_object_success:
+  - dimension_name: "Dim1"
+    edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      Weight: [1.0]
+      Hierarchy: ["H1"]
+    elements_df:
+      ElementName: ["Total", "A"]
+      ElementType: ["C", "N"]
+      Hierarchy: ["H1", "H1"]
+      Color:String: ["Blue", "Red"]
+
+test_update_element_attributes_success:
+  - elements_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+      Color:String: ["Blue"]
+    dimension_name: "Dim1"
+    expected_cube_name: "}ElementAttributes_Dim1"
+    expected_cube_dims: ["Dim1", "}ElementAttributes_Dim1"]
+    expected_attr_df:
+      Dim1: ["H1:A"]
+      "}ElementAttributes_Dim1": ["Color"]
+      Value: ["Blue"]
