@@ -5,7 +5,7 @@ import parametrize_from_file
 import pytest
 from sqlalchemy import create_engine
 
-from TM1_bedrock_py.dimension_builder import validate, normalize, utility
+from TM1_bedrock_py.dimension_builder import validate, normalize, utility, apply
 from TM1_bedrock_py.dimension_builder.io import read_source_to_df
 from TM1_bedrock_py.dimension_builder.exceptions import (
     SchemaValidationError,
@@ -780,3 +780,303 @@ def test_get_delete_records_for_conflicting_elements(conflicts_input, expected_t
     expected_output = [tuple(x) for x in expected_tuples]
     assert output_tuples == expected_output
 
+
+# ------------------------------------------------------------------------------------------------------------
+# Main: tests for dimension builder apply module
+# ------------------------------------------------------------------------------------------------------------
+
+@parametrize_from_file
+def test_apply_update_on_edges_success(legacy_df, input_df, retained_hierarchies, orphan_consolidation_name, expected_df):
+    legacy_df = None if legacy_df is None else pd.DataFrame(legacy_df)
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+    output_df = apply.apply_update_on_edges(
+        legacy_df=legacy_df,
+        input_df=input_df,
+        retained_hierarchies=retained_hierarchies,
+        orphan_consolidation_name=orphan_consolidation_name
+    )
+    pd.testing.assert_frame_equal(output_df, expected_df)
+
+
+@parametrize_from_file
+def test_apply_update_with_unwind_on_edges_success(
+        legacy_df, input_df, retained_hierarchies, orphan_consolidation_name, expected_df
+):
+    legacy_df = None if legacy_df is None else pd.DataFrame(legacy_df)
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+    output_df = apply.apply_update_with_unwind_on_edges(
+        legacy_df=legacy_df,
+        input_df=input_df,
+        retained_hierarchies=retained_hierarchies,
+        orphan_consolidation_name=orphan_consolidation_name
+    )
+    pd.testing.assert_frame_equal(output_df, expected_df)
+
+
+@parametrize_from_file
+def test_add_orphan_consolidation_elements_success(
+        elements_df, orphan_consolidation_name, dimension_name, retained_hierarchies, expected_df
+):
+    elements_df = pd.DataFrame(elements_df)
+    expected_df = pd.DataFrame(expected_df)
+    output_df = apply.add_orphan_consolidation_elements(
+        elements_df=elements_df,
+        orphan_consolidation_name=orphan_consolidation_name,
+        dimension_name=dimension_name,
+        retained_hierarchies=retained_hierarchies
+    )
+    pd.testing.assert_frame_equal(output_df, expected_df)
+
+
+@parametrize_from_file
+def test_assign_root_orphan_edges_success(
+        legacy_edges_df, legacy_elements_df, edges_df, orphan_consolidation_name,
+        dimension_name, retained_hierarchies, expected_df
+):
+    legacy_edges_df = None if legacy_edges_df is None else pd.DataFrame(legacy_edges_df)
+    legacy_elements_df = pd.DataFrame(legacy_elements_df)
+    edges_df = pd.DataFrame(edges_df)
+    expected_df = pd.DataFrame(expected_df)
+    output_df = apply.assign_root_orphan_edges(
+        legacy_edges_df=legacy_edges_df,
+        legacy_elements_df=legacy_elements_df,
+        edges_df=edges_df,
+        orphan_consolidation_name=orphan_consolidation_name,
+        dimension_name=dimension_name,
+        retained_hierarchies=retained_hierarchies
+    )
+    output_df = output_df.sort_values(by=["Parent", "Child"]).reset_index(drop=True)
+    expected_df = expected_df.sort_values(by=["Parent", "Child"]).reset_index(drop=True)
+    pd.testing.assert_frame_equal(output_df, expected_df)
+
+
+@parametrize_from_file
+def test_apply_update_on_elements_success(legacy_df, input_df, expected_df):
+    legacy_df = pd.DataFrame(legacy_df)
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+    output_df = apply.apply_update_on_elements(legacy_df=legacy_df, input_df=input_df)
+    pd.testing.assert_frame_equal(output_df, expected_df)
+
+
+@parametrize_from_file
+def test_apply_updates_success(
+        mode, existing_edges_df, input_edges_df, existing_elements_df,
+        input_elements_df, dimension_name, orphan_consolidation_name,
+        expected_edges_df, expected_elements_df
+):
+    existing_edges_df = None if existing_edges_df is None else pd.DataFrame(existing_edges_df)
+    input_edges_df = pd.DataFrame(input_edges_df)
+    existing_elements_df = pd.DataFrame(existing_elements_df)
+    input_elements_df = pd.DataFrame(input_elements_df)
+    expected_edges_df = pd.DataFrame(expected_edges_df)
+    expected_elements_df = pd.DataFrame(expected_elements_df)
+    output_edges_df, output_elements_df = apply.apply_updates(
+        mode=mode,
+        existing_edges_df=existing_edges_df,
+        input_edges_df=input_edges_df,
+        existing_elements_df=existing_elements_df,
+        input_elements_df=input_elements_df,
+        dimension_name=dimension_name,
+        orphan_consolidation_name=orphan_consolidation_name
+    )
+    pd.testing.assert_frame_equal(output_edges_df, expected_edges_df)
+    pd.testing.assert_frame_equal(output_elements_df, expected_elements_df)
+
+
+@parametrize_from_file
+def test_init_input_schema_success(
+        monkeypatch, input_datasource, sql_engine, sql_table_name, sql_query, filter_input_columns,
+        raw_input_df, input_elements_datasource, input_elements_df_element_column, sql_elements_engine,
+        sql_table_elements_name, sql_elements_query, filter_input_elements_columns, raw_input_elements_df,
+        dimension_name, input_format, hierarchy_name, dim_column, hier_column, parent_column, child_column,
+        level_columns, type_column, weight_column, attribute_parser, expected_edges_df, expected_elements_df
+):
+    raw_input_df = pd.DataFrame(raw_input_df)
+    raw_input_elements_df = pd.DataFrame(raw_input_elements_df)
+    expected_edges_df = pd.DataFrame(expected_edges_df)
+    expected_elements_df = pd.DataFrame(expected_elements_df)
+
+    call_count = {"n": 0}
+
+    def fake_read_source_to_df(**_kwargs):
+        call_count["n"] += 1
+        return raw_input_df if call_count["n"] == 1 else raw_input_elements_df
+
+    def fake_normalize_input_schema(**_kwargs):
+        return expected_edges_df, expected_elements_df
+
+    monkeypatch.setattr(apply.io, "read_source_to_df", fake_read_source_to_df)
+    monkeypatch.setattr(apply.normalize, "normalize_input_schema", fake_normalize_input_schema)
+    monkeypatch.setattr(apply, "pre_validate_input_schema", lambda **_kwargs: None)
+    monkeypatch.setattr(apply, "post_validate_schema", lambda *_args, **_kwargs: None)
+
+    edges_df, elements_df = apply.init_input_schema(
+        dimension_name=dimension_name,
+        input_format=input_format,
+        input_datasource=input_datasource,
+        sql_engine=sql_engine,
+        sql_table_name=sql_table_name,
+        sql_query=sql_query,
+        filter_input_columns=filter_input_columns,
+        raw_input_df=raw_input_df,
+        hierarchy_name=hierarchy_name,
+        dim_column=dim_column,
+        hier_column=hier_column,
+        parent_column=parent_column,
+        child_column=child_column,
+        level_columns=level_columns,
+        type_column=type_column,
+        weight_column=weight_column,
+        input_elements_datasource=input_elements_datasource,
+        input_elements_df_element_column=input_elements_df_element_column,
+        sql_elements_engine=sql_elements_engine,
+        sql_table_elements_name=sql_table_elements_name,
+        sql_elements_query=sql_elements_query,
+        filter_input_elements_columns=filter_input_elements_columns,
+        raw_input_elements_df=raw_input_elements_df,
+        attribute_parser=attribute_parser
+    )
+    pd.testing.assert_frame_equal(edges_df, expected_edges_df)
+    pd.testing.assert_frame_equal(elements_df, expected_elements_df)
+
+
+@parametrize_from_file
+def test_init_existing_schema_success(
+        monkeypatch, tm1_exists, existing_edges_df, existing_elements_df,
+        normalized_edges_df, normalized_elements_df, dimension_name, old_orphan_parent_name
+):
+    existing_edges_df = None if existing_edges_df is None else pd.DataFrame(existing_edges_df)
+    existing_elements_df = pd.DataFrame(existing_elements_df)
+    normalized_edges_df = None if normalized_edges_df is None else pd.DataFrame(normalized_edges_df)
+    normalized_elements_df = pd.DataFrame(normalized_elements_df)
+
+    class DummyDimensions:
+        def __init__(self, exists_value):
+            self._exists = exists_value
+
+        def exists(self, _name):
+            return self._exists
+
+    class DummyTM1:
+        def __init__(self, exists_value):
+            self.dimensions = DummyDimensions(exists_value)
+
+    tm1_service = DummyTM1(tm1_exists)
+
+    def fake_retrieve_existing_schema(_tm1, _dim):
+        return existing_edges_df, existing_elements_df
+
+    def fake_normalize_existing_schema(_edges, _elements, _old_name):
+        return normalized_edges_df, normalized_elements_df
+
+    monkeypatch.setattr(apply.io, "retrieve_existing_schema", fake_retrieve_existing_schema)
+    monkeypatch.setattr(apply.normalize, "normalize_existing_schema", fake_normalize_existing_schema)
+
+    edges_df, elements_df = apply.init_existing_schema(
+        tm1_service=tm1_service,
+        dimension_name=dimension_name,
+        old_orphan_parent_name=old_orphan_parent_name
+    )
+    if tm1_exists:
+        if normalized_edges_df is None:
+            assert edges_df is None
+        else:
+            pd.testing.assert_frame_equal(edges_df, normalized_edges_df)
+        pd.testing.assert_frame_equal(elements_df, normalized_elements_df)
+    else:
+        assert edges_df is None
+        assert elements_df is None
+
+
+@parametrize_from_file
+def test_resolve_schema_success(
+        monkeypatch, dimension_name, input_edges_df, input_elements_df, existing_edges_df,
+        existing_elements_df, mode, allow_type_changes, orphan_parent_name,
+        normalized_edges_df, normalized_elements_df
+):
+    input_edges_df = pd.DataFrame(input_edges_df)
+    input_elements_df = pd.DataFrame(input_elements_df)
+    existing_edges_df = pd.DataFrame(existing_edges_df)
+    existing_elements_df = pd.DataFrame(existing_elements_df)
+    normalized_edges_df = pd.DataFrame(normalized_edges_df)
+    normalized_elements_df = pd.DataFrame(normalized_elements_df)
+
+    monkeypatch.setattr(apply, "validate_element_type_consistency", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(apply, "apply_updates", lambda **_kwargs: (normalized_edges_df, normalized_elements_df))
+    monkeypatch.setattr(apply.normalize, "normalize_updated_schema", lambda *_args, **_kwargs: (normalized_edges_df, normalized_elements_df))
+    monkeypatch.setattr(apply, "post_validate_schema", lambda *_args, **_kwargs: None)
+
+    edges_df, elements_df = apply.resolve_schema(
+        dimension_name=dimension_name,
+        tm1_service=None,
+        input_edges_df=input_edges_df,
+        input_elements_df=input_elements_df,
+        existing_edges_df=existing_edges_df,
+        existing_elements_df=existing_elements_df,
+        mode=mode,
+        allow_type_changes=allow_type_changes,
+        orphan_parent_name=orphan_parent_name
+    )
+    pd.testing.assert_frame_equal(edges_df, normalized_edges_df)
+    pd.testing.assert_frame_equal(elements_df, normalized_elements_df)
+
+
+@parametrize_from_file
+def test_build_dimension_object_success(monkeypatch, dimension_name, edges_df, elements_df):
+    edges_df = pd.DataFrame(edges_df)
+    elements_df = pd.DataFrame(elements_df)
+
+    class DummyHierarchy:
+        def __init__(self, name, dimension_name):
+            self.name = name
+            self.dimension_name = dimension_name
+            self.element_attrs = []
+            self.elements = []
+            self.edges = []
+
+        def add_element_attribute(self, name, attr_type):
+            self.element_attrs.append((name, attr_type))
+
+        def add_element(self, element_name, element_type):
+            self.elements.append((element_name, element_type))
+
+        def add_edge(self, parent, component, weight):
+            self.edges.append((parent, component, weight))
+
+    class DummyDimension:
+        def __init__(self, name):
+            self.name = name
+            self.hierarchies = {}
+
+        def add_hierarchy(self, hierarchy):
+            self.hierarchies[hierarchy.name] = hierarchy
+
+    monkeypatch.setattr(apply, "Hierarchy", DummyHierarchy)
+    monkeypatch.setattr(apply, "Dimension", DummyDimension)
+
+    dimension = apply.build_dimension_object(
+        dimension_name=dimension_name,
+        edges_df=edges_df,
+        elements_df=elements_df
+    )
+    assert dimension.name == dimension_name
+    assert set(dimension.hierarchies.keys()) == set(elements_df["Hierarchy"].unique())
+
+
+@parametrize_from_file
+def test_update_element_attributes_success(
+        elements_df, dimension_name, expected_cube_name, expected_cube_dims, expected_attr_df
+):
+    elements_df = pd.DataFrame(elements_df)
+    expected_attr_df = pd.DataFrame(expected_attr_df)
+
+    attr_df, cube_name, cube_dims = apply.prepare_attributes_for_load(
+        elements_df=elements_df,
+        dimension_name=dimension_name
+    )
+    pd.testing.assert_frame_equal(attr_df, expected_attr_df)
+    assert cube_name == expected_cube_name
+    assert cube_dims == expected_cube_dims
