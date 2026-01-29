@@ -1,3 +1,68 @@
+#---------------------------------- Utility -------------------------------------#
+
+test_parse_attribute_string_success:
+  - attr_name_and_type: "Color:String"
+    parser: "colon"
+    expected_name: "Color"
+    expected_type: "String"
+  - attr_name_and_type: "Size[Numeric]"
+    parser: "square_brackets"
+    expected_name: "Size"
+    expected_type: "Numeric"
+
+test_parse_attribute_string_failure:
+  - attr_name_and_type: "Bad[Type"
+    parser: "square_brackets"
+    expected_exception: "ValueError"
+    expected_message_part: "Invalid format"
+
+test_get_legacy_edges_success:
+  - existing_df:
+      Parent: ["Total", "Total"]
+      Child: ["A", "B"]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+    input_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+    expected_df:
+      Parent: ["Total"]
+      Child: ["B"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+
+test_get_legacy_elements_success:
+  - existing_df:
+      ElementName: ["A", "B"]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+    input_df:
+      ElementName: ["A"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+    expected_df:
+      ElementName: ["B"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+
+test_unpivot_attributes_to_cube_format_success:
+  - elements_df:
+      ElementName: ["A", "B"]
+      ElementType: ["N", "N"]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+      Color:String: ["Blue", "Red"]
+      Score:Numeric: [1.0, 2.0]
+    dimension_name: "Dim1"
+    expected_df:
+      Dim1: ["H1:A", "H1:A", "H1:B", "H1:B"]
+      "}ElementAttributes_Dim1": ["Color", "Score", "Color", "Score"]
+      Value: ["Blue", 1.0, "Red", 2.0]
+
+#---------------------------------- IO -------------------------------------#
+
 test_read_yaml_source_to_df:
     format: parent_child
     hierarchy_column: Hierarchy
@@ -1957,6 +2022,32 @@ test_resolve_schema_success:
     normalized_elements_df:
       ElementName: ["A"]
       ElementType: ["N"]
+
+test_resolve_schema_allow_type_changes_success:
+  - dimension_name: "Dim1"
+    input_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+    input_elements_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+    existing_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+    existing_elements_df:
+      ElementName: ["A"]
+      ElementType: ["S"]
+    mode: "update"
+    allow_type_changes: true
+    orphan_parent_name: "OrphanParent"
+    normalized_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+    normalized_elements_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+    conflicts_df:
+      - {ElementName: "A", Hierarchy: "H1", ElementType_existing: "String", ElementType_input: "Numeric"}
 
 test_build_dimension_object_success:
   - dimension_name: "Dim1"

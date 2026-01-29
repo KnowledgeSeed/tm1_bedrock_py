@@ -19,6 +19,64 @@ from tests.tests_dimension_builder.test_data.test_data import *
 DATA_DIR = Path(__file__).resolve().parent / "test_data"
 
 
+# ------------------------------------------------------------------------------------------------------------
+# Main: tests for dimension builder utility module
+# ------------------------------------------------------------------------------------------------------------
+
+@parametrize_from_file
+def test_parse_attribute_string_success(attr_name_and_type, parser, expected_name, expected_type):
+    name, attr_type = utility.parse_attribute_string(attr_name_and_type, parser)
+    assert name == expected_name
+    assert attr_type == expected_type
+
+
+@parametrize_from_file
+def test_parse_attribute_string_failure(attr_name_and_type, parser, expected_exception, expected_message_part):
+    exception_type = eval(expected_exception)
+    with pytest.raises(exception_type) as excinfo:
+        utility.parse_attribute_string(attr_name_and_type, parser)
+    assert expected_message_part in str(excinfo.value)
+
+
+@parametrize_from_file
+def test_get_legacy_edges_success(existing_df, input_df, expected_df):
+    existing_df = pd.DataFrame(existing_df)
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+    output_df = utility.get_legacy_edges(existing_df, input_df)
+    pd.testing.assert_frame_equal(
+        output_df.sort_index(axis=1).reset_index(drop=True),
+        expected_df.sort_index(axis=1).reset_index(drop=True)
+    )
+
+
+@parametrize_from_file
+def test_get_legacy_elements_success(existing_df, input_df, expected_df):
+    existing_df = pd.DataFrame(existing_df)
+    input_df = pd.DataFrame(input_df)
+    expected_df = pd.DataFrame(expected_df)
+    output_df = utility.get_legacy_elements(existing_df, input_df)
+    pd.testing.assert_frame_equal(
+        output_df.sort_index(axis=1).reset_index(drop=True),
+        expected_df.sort_index(axis=1).reset_index(drop=True)
+    )
+
+
+@parametrize_from_file
+def test_unpivot_attributes_to_cube_format_success(elements_df, dimension_name, expected_df):
+    elements_df = pd.DataFrame(elements_df)
+    expected_df = pd.DataFrame(expected_df)
+    output_df = utility.unpivot_attributes_to_cube_format(elements_df, dimension_name)
+    pd.testing.assert_frame_equal(
+        output_df.sort_values(by=expected_df.columns.tolist()).reset_index(drop=True),
+        expected_df.sort_values(by=expected_df.columns.tolist()).reset_index(drop=True)
+    )
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Main: tests for dimension builder io module
+# ------------------------------------------------------------------------------------------------------------
+
 def test_read_source_to_df_empty_parameters():
     input_datasource = None
     filter_input_columns = None
@@ -1020,6 +1078,44 @@ def test_resolve_schema_success(
         allow_type_changes=allow_type_changes,
         orphan_parent_name=orphan_parent_name
     )
+    pd.testing.assert_frame_equal(edges_df, normalized_edges_df)
+    pd.testing.assert_frame_equal(elements_df, normalized_elements_df)
+
+
+@parametrize_from_file
+def test_resolve_schema_allow_type_changes_success(
+        monkeypatch, dimension_name, input_edges_df, input_elements_df, existing_edges_df,
+        existing_elements_df, mode, allow_type_changes, orphan_parent_name,
+        normalized_edges_df, normalized_elements_df, conflicts_df
+):
+    input_edges_df = pd.DataFrame(input_edges_df)
+    input_elements_df = pd.DataFrame(input_elements_df)
+    existing_edges_df = pd.DataFrame(existing_edges_df)
+    existing_elements_df = pd.DataFrame(existing_elements_df)
+    normalized_edges_df = pd.DataFrame(normalized_edges_df)
+    normalized_elements_df = pd.DataFrame(normalized_elements_df)
+    conflicts_df = pd.DataFrame(conflicts_df)
+
+    delete_calls = {"count": 0}
+
+    monkeypatch.setattr(apply, "validate_element_type_consistency", lambda *_args, **_kwargs: conflicts_df)
+    monkeypatch.setattr(apply, "delete_conflicting_elements", lambda *_args, **_kwargs: delete_calls.update(count=delete_calls["count"] + 1))
+    monkeypatch.setattr(apply, "apply_updates", lambda **_kwargs: (normalized_edges_df, normalized_elements_df))
+    monkeypatch.setattr(apply.normalize, "normalize_updated_schema", lambda *_args, **_kwargs: (normalized_edges_df, normalized_elements_df))
+    monkeypatch.setattr(apply, "post_validate_schema", lambda *_args, **_kwargs: None)
+
+    edges_df, elements_df = apply.resolve_schema(
+        dimension_name=dimension_name,
+        tm1_service=None,
+        input_edges_df=input_edges_df,
+        input_elements_df=input_elements_df,
+        existing_edges_df=existing_edges_df,
+        existing_elements_df=existing_elements_df,
+        mode=mode,
+        allow_type_changes=allow_type_changes,
+        orphan_parent_name=orphan_parent_name
+    )
+    assert delete_calls["count"] == 1
     pd.testing.assert_frame_equal(edges_df, normalized_edges_df)
     pd.testing.assert_frame_equal(elements_df, normalized_elements_df)
 
