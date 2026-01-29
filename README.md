@@ -164,6 +164,7 @@ The toolkit includes a robust logging framework to help you debug your data inte
 * sqlalchemy >=2.0.0, <3.0.0
 * pyodbc >=5.2.0, <6.0.0
 * pyyaml >=6.0, <7.0
+* openpyxl >=3.1.0
 
 ## Installation
 ### Install without airflow
