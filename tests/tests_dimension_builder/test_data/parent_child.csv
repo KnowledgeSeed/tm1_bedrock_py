@@ -1,0 +1,6 @@
+Parent,Child,ElementType,Weight,Hierarchy
+Total Products,Product A,N,1,Default
+Total Products,Product B,N,1,Default
+All Regions,EMEA,C,1,Default
+EMEA,Hungary,N,1,Default
+EMEA,Germany,N,1,Default

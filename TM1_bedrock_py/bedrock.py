@@ -15,6 +15,101 @@ from pandas import DataFrame
 
 from TM1_bedrock_py import utility, transformer, loader, extractor, basic_logger
 
+from TM1_bedrock_py.dimension_builder import apply
+import pandas as pd
+from pathlib import Path
+
+
+@utility.log_exec_metrics
+def dimension_builder(
+        dimension_name: str,
+        input_format: Literal["parent_child", "indented_levels", "filled_levels"],
+        build_strategy: Literal["rebuild", "update", "update_with_unwind"],
+        tm1_service: Any,
+        hierarchy_name: str = None,
+
+        old_orphan_parent_name: str = "OrphanParent",
+        new_orphan_parent_name: str = "OrphanParent",
+
+        input_datasource: Optional[Union[str, Path]] = None,
+        sql_engine: Optional[Any] = None,
+        sql_table_name: Optional[str] = None,
+        sql_query: Optional[str] = None,
+        filter_input_columns: Optional[list[str]] = None,
+        raw_input_df: pd.DataFrame = None,
+
+        dim_column: Optional[str] = None, hier_column: Optional[str] = None,
+        parent_column: Optional[str] = None, child_column: Optional[str] = None,
+        level_columns: Optional[list[str]] = None, type_column: Optional[str] = None,
+        weight_column: Optional[str] = None,
+
+        input_elements_datasource: Optional[Union[str, Path]] = None,
+        input_elements_df_element_column: Optional[str] = None,
+        sql_elements_engine: Optional[Any] = None,
+        sql_table_elements_name: Optional[str] = None,
+        sql_elements_query: Optional[str] = None,
+        filter_input_elements_columns: Optional[list[str]] = None,
+        raw_input_elements_df: pd.DataFrame = None,
+
+        allow_type_changes: bool = False,
+        attribute_parser: Union[Literal["colon", "square_brackets"], Callable] = "colon",
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
+        **kwargs
+) -> None:
+    utility.set_logging_level(logging_level=logging_level)
+
+    input_edges_df, input_elements_df = apply.init_input_schema(
+        dimension_name=dimension_name, hierarchy_name=hierarchy_name, input_format=input_format,
+
+        input_datasource=input_datasource,
+        sql_engine=sql_engine, sql_table_name=sql_table_name, sql_query=sql_query,
+        filter_input_columns=filter_input_columns, raw_input_df=raw_input_df,
+        dim_column=dim_column, hier_column=hier_column,
+        parent_column=parent_column, child_column=child_column, level_columns=level_columns,
+        weight_column=weight_column, type_column=type_column,
+
+        input_elements_datasource=input_elements_datasource,
+        input_elements_df_element_column=input_elements_df_element_column,
+        sql_elements_engine=sql_elements_engine,
+        sql_table_elements_name=sql_table_elements_name, sql_elements_query=sql_elements_query,
+        filter_input_elements_columns=filter_input_elements_columns,
+        raw_input_elements_df=raw_input_elements_df,
+        attribute_parser=attribute_parser,
+        **kwargs
+    )
+
+    # get existing if dim exists - important for type check consistency too
+    existing_edges_df, existing_elements_df = apply.init_existing_schema(tm1_service=tm1_service,
+                                                                         dimension_name=dimension_name,
+                                                                         old_orphan_parent_name=old_orphan_parent_name)
+
+    # clear conflicts and make updates on input using existing
+    updated_edges_df, updated_elements_df = apply.resolve_schema(
+        tm1_service=tm1_service, dimension_name=dimension_name,
+        input_edges_df=input_edges_df, input_elements_df=input_elements_df,
+        existing_edges_df=existing_edges_df, existing_elements_df=existing_elements_df,
+        orphan_parent_name=new_orphan_parent_name,
+        mode=build_strategy,
+        allow_type_changes=allow_type_changes)
+
+    # upload updated dim structure using tm1py dimension/hierarchy/element objects
+    dimension = apply.build_dimension_object(dimension_name=dimension_name, edges_df=updated_edges_df,
+                                             elements_df=updated_elements_df)
+
+    tm1_service.dimensions.update_or_create(dimension)
+
+    # upload updated attribute values using bedrock load
+    writable_attr_df, attr_cube_name, attr_cube_dims = apply.prepare_attributes_for_load(
+        dimension_name=dimension_name, elements_df=updated_elements_df)
+
+    loader.dataframe_to_cube(
+        tm1_service=tm1_service,
+        dataframe=writable_attr_df,
+        cube_name=attr_cube_name,
+        cube_dims=attr_cube_dims,
+        use_blob=True,
+    )
+
 
 @utility.log_benchmark_metrics
 @utility.log_exec_metrics
@@ -61,7 +156,7 @@ def data_copy_intercube(
         increment: Optional[bool] = False,
         sum_numeric_duplicates: Optional[bool] = True,
 
-        logging_level: Optional[str] = "ERROR",
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
 
@@ -366,7 +461,7 @@ def data_copy_intercube(
             case_and_space_insensitive_inputs=case_and_space_insensitive_inputs
         )
 
-    transformer.dataframe_reorder_dimensions(
+    dataframe = transformer.dataframe_reorder_dimensions(
         dataframe=dataframe, cube_dimensions=target_cube_dims,
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, **kwargs
     )
@@ -446,7 +541,7 @@ def data_copy(
         use_mixed_datatypes: Optional[bool] = False,
         increment: bool = False,
         sum_numeric_duplicates: bool = True,
-        logging_level: str = "ERROR",
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
         **kwargs
@@ -698,7 +793,7 @@ def data_copy(
         transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function,
                                           case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
 
-    transformer.dataframe_reorder_dimensions(
+    dataframe = transformer.dataframe_reorder_dimensions(
         dataframe=dataframe, cube_dimensions=cube_dims,
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, **kwargs
     )
@@ -952,7 +1047,7 @@ def load_sql_data_to_tm1_cube(
         use_blob: bool = False,
         increment: bool = False,
         sum_numeric_duplicates: bool = True,
-        logging_level: str = "ERROR",
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
         **kwargs
@@ -1161,7 +1256,7 @@ def load_sql_data_to_tm1_cube(
         transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function,
                                           case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
 
-    transformer.dataframe_reorder_dimensions(
+    dataframe = transformer.dataframe_reorder_dimensions(
         dataframe=dataframe, cube_dimensions=cube_dims,
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs
     )
@@ -1248,7 +1343,7 @@ def load_tm1_cube_to_sql_table(
         dtype: Optional[dict] = None,
         decimal: Optional[str] = None,
 
-        logging_level: str = "ERROR",
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
         **kwargs
@@ -1910,7 +2005,7 @@ def load_csv_data_to_tm1_cube(
         sum_numeric_duplicates: bool = True,
         slice_size_of_dataframe: int = 50000,
         clear_target: Optional[bool] = False,
-        logging_level: str = "ERROR",
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
         **kwargs
@@ -2127,7 +2222,7 @@ def load_csv_data_to_tm1_cube(
         transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function,
                                           case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
 
-    transformer.dataframe_reorder_dimensions(
+    dataframe = transformer.dataframe_reorder_dimensions(
         dataframe=dataframe, cube_dimensions=cube_dims,
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs
     )
@@ -2220,7 +2315,7 @@ def load_tm1_cube_to_csv_file(
         pre_load_args: Optional[List] = None,
         pre_load_kwargs: Optional[Dict] = None,
 
-        logging_level: str = "ERROR",
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
         **kwargs

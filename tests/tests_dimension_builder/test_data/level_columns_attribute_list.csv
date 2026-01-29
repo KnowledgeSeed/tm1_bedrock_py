@@ -1,0 +1,13 @@
+Hierarchy,Level1,Level2,Level3,Level4,Weight,Element,Color,CountryCode,IsActive
+Default,All Regions,,,,1,Hungary,Red,HU,1
+Default,,EMEA,,,1,Germany,Black,DE,1
+Default,,,Hungary,,1,USA,Blue,US,1
+Default,,,Germany,,1,,,,1
+Default,,AMER,,,1,,,,1
+Default,,,USA,,1,,,,1
+Default,,,,California,1,,,,1
+Default,,,,New York,1,,,,1
+Alt,All Regions,,,,1,,,,1
+Alt,,EU,,,1,,,,1
+Alt,,,Hungary,,1,,,,1
+Alt,,,Germany,,1,,,,1

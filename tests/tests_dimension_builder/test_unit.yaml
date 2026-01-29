@@ -1,0 +1,2078 @@
+#---------------------------------- Utility -------------------------------------#
+
+test_parse_attribute_string_success:
+  - attr_name_and_type: "Color:String"
+    parser: "colon"
+    expected_name: "Color"
+    expected_type: "String"
+  - attr_name_and_type: "Size[Numeric]"
+    parser: "square_brackets"
+    expected_name: "Size"
+    expected_type: "Numeric"
+
+test_parse_attribute_string_failure:
+  - attr_name_and_type: "Bad[Type"
+    parser: "square_brackets"
+    expected_exception: "ValueError"
+    expected_message_part: "Invalid format"
+
+test_get_legacy_edges_success:
+  - existing_df:
+      Parent: ["Total", "Total"]
+      Child: ["A", "B"]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+    input_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+    expected_df:
+      Parent: ["Total"]
+      Child: ["B"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+
+test_get_legacy_elements_success:
+  - existing_df:
+      ElementName: ["A", "B"]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+    input_df:
+      ElementName: ["A"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+    expected_df:
+      ElementName: ["B"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+
+test_unpivot_attributes_to_cube_format_success:
+  - elements_df:
+      ElementName: ["A", "B"]
+      ElementType: ["N", "N"]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+      Color:String: ["Blue", "Red"]
+      Score:Numeric: [1.0, 2.0]
+    dimension_name: "Dim1"
+    expected_df:
+      Dim1: ["H1:A", "H1:A", "H1:B", "H1:B"]
+      "}ElementAttributes_Dim1": ["Color", "Score", "Color", "Score"]
+      Value: ["Blue", 1.0, "Red", 2.0]
+
+#---------------------------------- IO -------------------------------------#
+
+test_read_yaml_source_to_df:
+    format: parent_child
+    hierarchy_column: Hierarchy
+    rows:
+      - { Parent: "Total Products", Child: "Product A", ElementType: "N", Weight: 1, Hierarchy:
+      "Default" }
+      - { Parent: "Total Products", Child: "Product B", ElementType: "N", Weight: 1, Hierarchy:
+      "Default" }
+      - { Parent: "All Regions", Child: "EMEA", ElementType: "C", Weight: 1, Hierarchy:
+      "Default" }
+      - { Parent: "EMEA", Child: "Hungary", ElementType: "N", Weight: 1, Hierarchy:
+      "Default" }
+      - { Parent: "EMEA", Child: "Germany", ElementType: "N", Weight: 1, Hierarchy:
+        "Default" }
+
+
+test_read_yaml_source_to_df_aliases:
+    format: parent_child
+    hierarchy_column: Hierarchy
+    rows:
+      - { Forbearer: "Total Products", Offspring: "Product A", Type: "N", W: 1, Hier:
+      "Default" }
+      - { Forbearer: "Total Products", Offspring: "Product B", Type: "N", W: 1, Hier:
+      "Default" }
+      - { Forbearer: "All Regions", Offspring: "EMEA", Type: "C", W: 1, Hier:
+      "Default" }
+      - { Forbearer: "EMEA", Offspring: "Hungary", Type: "N", W: 1, Hier:
+      "Default" }
+      - { Forbearer: "EMEA", Offspring: "Germany", Type: "N", W: 1, Hier:
+        "Default" }
+
+
+test_read_yaml_source_to_df_attr_list:
+    format: parent_child
+    hierarchy_column: Hierarchy
+    rows:
+      - { Parent: "Total Products", Child: "Product A", ElementType: "N", Weight: 1, Hierarchy: "Default",
+          Element: "Hungary", Color: "Red", CountryCode: "HU", IsActive: 1 }
+      - { Parent: "Total Products", Child: "Product B", ElementType: "N", Weight: 1, Hierarchy: "Default",
+          Element: "Germany", Color: "Black", CountryCode: "DE", IsActive: 1 }
+      - { Parent: "All Regions", Child: "EMEA", ElementType: "C", Weight: 1, Hierarchy: "Default",
+          Element: "USA", Color: "Blue", CountryCode: "US", IsActive: 1 }
+      - { Parent: "EMEA", Child: "Hungary", ElementType: "N", Weight: 1, Hierarchy: "Default",
+          Element: "", Color: "", CountryCode: "", IsActive: 1 }
+      - { Parent: "EMEA", Child: "Germany", ElementType: "N", Weight: 1, Hierarchy: "Default",
+          Element: "", Color: "", CountryCode: "", IsActive: 1 }
+
+
+test_read_yaml_source_to_df_indented_levels:
+  -
+    format: level_columns
+    hierarchy_column: Hierarchy
+    level_columns: [ Level1, Level2, Level3, Level4 ]
+    rows:
+      - { Level1: "All Regions", Weight: 1, Hierarchy: "Default" }
+      - { Level2: "EMEA", Weight: 1, Hierarchy: "Default" }
+      - { Level3: "Hungary", Weight: 1, Hierarchy: "Default" }
+      - { Level3: "Germany", Weight: 1, Hierarchy: "Default" }
+      - { Level2: "AMER", Weight: 1, Hierarchy: "Default" }
+      - { Level3: "USA", Weight: 1, Hierarchy: "Default" }
+      - { Level4: "California", Weight: 1, Hierarchy: "Default" }
+      - { Level4: "New York", Weight: 1, Hierarchy: "Default" }
+      - { Level1: "All Regions", Weight: 1, Hierarchy: "Alt" }
+      - { Level2: "EU", Weight: 1, Hierarchy: "Alt" }
+      - { Level3: "Hungary", Weight: 1, Hierarchy: "Alt" }
+      - { Level3: "Germany", Weight: 1, Hierarchy: "Alt" }
+
+
+test_read_yaml_source_to_df_indented_levels_attr_list:
+  -
+    format: level_columns
+    hierarchy_column: Hierarchy
+    level_columns: [ Level1, Level2, Level3, Level4 ]
+    rows:
+      - { Level1: "All Regions", Weight: 1, Hierarchy: "Default",
+          Element: "Hungary", Color: "Red", CountryCode: "HU", IsActive: 1 }
+      - { Level2: "EMEA", Weight: 1, Hierarchy: "Default",
+          Element: "Germany", Color: "Black", CountryCode: "DE", IsActive: 1 }
+      - { Level3: "Hungary", Weight: 1, Hierarchy: "Default",
+          Element: "USA", Color: "Blue", CountryCode: "US", IsActive: 1 }
+      - { Level3: "Germany", Weight: 1, Hierarchy: "Default",
+          Element: "", Color: "", CountryCode: "", IsActive: 1 }
+      - { Level2: "AMER", Weight: 1, Hierarchy: "Default",
+          Element: "", Color: "", CountryCode: "", IsActive: 1 }
+      - { Level3: "USA", Weight: 1, Hierarchy: "Default",
+          Element: "", Color: "", CountryCode: "", IsActive: 1 }
+      - { Level4: "California", Weight: 1, Hierarchy: "Default",
+          Element: "", Color: "", CountryCode: "", IsActive: 1 }
+      - { Level4: "New York", Weight: 1, Hierarchy: "Default",
+          Element: "", Color: "", CountryCode: "", IsActive: 1 }
+      - { Level1: "All Regions", Weight: 1, Hierarchy: "Alt",
+          Element: "", Color: "", CountryCode: "", IsActive: 1 }
+      - { Level2: "EU", Weight: 1, Hierarchy: "Alt",
+          Element: "", Color: "", CountryCode: "", IsActive: 1 }
+      - { Level3: "Hungary", Weight: 1, Hierarchy: "Alt",
+          Element: "", Color: "", CountryCode: "", IsActive: 1 }
+      - { Level3: "Germany", Weight: 1, Hierarchy: "Alt",
+          Element: "", Color: "", CountryCode: "", IsActive: 1 }
+
+
+#--------------------------------- Normalization -----------------------------------#
+
+test_normalize_all_column_names:
+  - # Scenario 1: Normalize all possible columns
+    input_df: {
+      "d_name": ["Product", "Product"],
+      "h_name": ["Standard", "Standard"],
+      "p_name": ["Total", "Total"],
+      "c_name": ["Bike", "Car"],
+      "t_name": ["Consol", "Consol"],
+      "w_name": [1, 1]
+    }
+    dim_column: "d_name"
+    hier_column: "h_name"
+    parent_column: "p_name"
+    child_column: "c_name"
+    element_column: null
+    type_column: "t_name"
+    weight_column: "w_name"
+    expected_df: {
+      "Dimension": ["Product", "Product"],
+      "Hierarchy": ["Standard", "Standard"],
+      "Parent": ["Total", "Total"],
+      "Child": ["Bike", "Car"],
+      "ElementType": ["Consol", "Consol"],
+      "Weight": [1, 1]
+    }
+
+  - # Scenario 2: Using element_column instead of child_column
+    input_df: {
+      "el": ["Item1", "Item2"],
+      "other": [1, 2]
+    }
+    dim_column: null
+    hier_column: null
+    parent_column: null
+    child_column: null
+    element_column: "el"
+    type_column: null
+    weight_column: null
+    expected_df: {
+      "Child": ["Item1", "Item2"],
+      "other": [1, 2]
+    }
+
+  - # Scenario 3: Column name provided but does not exist in DF (should do nothing)
+    input_df: {
+      "RealColumn": [10, 20]
+    }
+    dim_column: "FakeColumn"
+    hier_column: null
+    parent_column: null
+    child_column: null
+    element_column: null
+    type_column: null
+    weight_column: null
+    expected_df: {
+      "RealColumn": [10, 20]
+    }
+
+test_assign_missing_edge_columns:
+  - # Scenario 1: All edge columns missing (Hierarchy defaults to Dimension)
+    input_df: {
+      "Parent": ["Total", "Total"],
+      "Child": ["A", "B"]
+    }
+    dimension_name: "Product"
+    hierarchy_name: null
+    expected_df: {
+      "Parent": ["Total", "Total"],
+      "Child": ["A", "B"],
+      "Dimension": ["Product", "Product"],
+      "Hierarchy": ["Product", "Product"]
+    }
+
+  - # Scenario 2: All edge columns missing (Hierarchy provided)
+    input_df: {
+      "Parent": ["Region"],
+      "Child": ["North"],
+      "Hierarchy": ["SalesTerritory"]
+    }
+    dimension_name: "Geography"
+    hierarchy_name: "SalesTerritory"
+    expected_df: {
+      "Parent": ["Region"],
+      "Child": ["North"],
+      "Hierarchy": ["SalesTerritory"],
+      "Dimension": ["Geography"]
+    }
+
+  - # Scenario 3: Some columns already exist (Should NOT be overwritten)
+    input_df: {
+      "Parent": ["All"],
+      "Child": ["Item"],
+      "Weight": [2.5],
+      "Dimension": ["ExistingDim"]
+    }
+    dimension_name: "NewDim"
+    hierarchy_name: "NewHier"
+    expected_df: {
+      "Parent": ["All"],
+      "Child": ["Item"],
+      "Weight": [2.5],
+      "Dimension": ["ExistingDim"],
+      "Hierarchy": ["NewHier"]
+    }
+
+  - # Scenario 4: All columns exist (Function should return DF unchanged)
+    input_df: {
+      "Dimension": ["D1"],
+      "Hierarchy": ["H1"],
+      "Weight": [5.0]
+    }
+    dimension_name: "IgnoreMe"
+    hierarchy_name: "IgnoreMe"
+    expected_df: {
+      "Dimension": ["D1"],
+      "Hierarchy": ["H1"],
+      "Weight": [5.0]
+    }
+
+test_assign_parent_child_to_level_columns:
+  - # Scenario 1: Both Parent and Child are missing
+    input_df: {
+      "Dimension": ["Product", "Product"],
+      "Weight": [1.0, 1.0]
+    }
+    expected_df: {
+      "Dimension": ["Product", "Product"],
+      "Weight": [1.0, 1.0],
+      "Parent": ["", ""],
+      "Child": ["", ""]
+    }
+
+  - # Scenario 2: Parent exists, but Child is missing
+    input_df: {
+      "Parent": ["Total", "Total"],
+      "Other": [1, 2]
+    }
+    expected_df: {
+      "Parent": ["Total", "Total"],
+      "Other": [1, 2],
+      "Child": ["", ""]
+    }
+
+  - # Scenario 3: Child exists, but Parent is missing
+    input_df: {
+      "Child": ["ElementA"],
+      "Value": [100]
+    }
+    expected_df: {
+      "Child": ["ElementA"],
+      "Value": [100],
+      "Parent": [""]
+    }
+
+  - # Scenario 4: Both already exist (Should remain unchanged)
+    input_df: {
+      "Parent": ["P1"],
+      "Child": ["C1"]
+    }
+    expected_df: {
+      "Parent": ["P1"],
+      "Child": ["C1"]
+    }
+
+test_fill_column_empty_values_with_defaults:
+  - # Scenario 1: Fill empty and whitespace strings with a string default
+    input_df: {
+      "Hierarchy": ["Actuals", "", "  ", "Budget"]
+    }
+    column_name: "Hierarchy"
+    default_value: "General"
+    expected_df: {
+      "Hierarchy": ["Actuals", "General", "General", "Budget"]
+    }
+
+  - # Scenario 2: Fill actual NaN/None values with a numeric default
+    input_df: {
+      "Weight": [1.0, null, 2.5]
+    }
+    column_name: "Weight"
+    default_value: 0.0
+    expected_df: {
+      "Weight": [1.0, 0.0, 2.5]
+    }
+
+  - # Scenario 3: Mixed content in other columns (should remain untouched)
+    input_df: {
+      "ID": [1, 2],
+      "Comment": ["", "Valid"]
+    }
+    column_name: "Comment"
+    default_value: "N/A"
+    expected_df: {
+      "ID": [1, 2],
+      "Comment": ["N/A", "Valid"]
+    }
+
+  - # Scenario 4: Column with no empty values (should remain unchanged)
+    input_df: {
+      "Status": ["Active", "Inactive"]
+    }
+    column_name: "Status"
+    default_value: "Unknown"
+    expected_df: {
+      "Status": ["Active", "Inactive"]
+    }
+
+test_assign_missing_edge_values:
+  - # Scenario 1: Fill empty strings and nulls (Hierarchy provided)
+    input_df: {
+      "Dimension": ["", null],
+      "Hierarchy": ["", " "]
+    }
+    dimension_name: "Product"
+    hierarchy_name: "Standard"
+    expected_df: {
+      "Dimension": ["Product", "Product"],
+      "Hierarchy": ["Standard", "Standard"]
+    }
+
+  - # Scenario 2: Hierarchy name is None (should default to Dimension name)
+    input_df: {
+      "Dimension": [null],
+      "Hierarchy": [""]
+    }
+    dimension_name: "Geography"
+    hierarchy_name: null
+    expected_df: {
+      "Dimension": ["Geography"],
+      "Hierarchy": ["Geography"]
+    }
+
+  - # Scenario 3: Mixed values (Partial fill)
+    input_df: {
+      "Dimension": ["ExistingDim", ""],
+      "Hierarchy": ["ExistingHier", null],
+      "Other": ["Keep", "Me"]
+    }
+    dimension_name: "NewDim"
+    hierarchy_name: "NewHier"
+    expected_df: {
+      "Dimension": ["ExistingDim", "NewDim"],
+      "Hierarchy": ["ExistingHier", "NewHier"],
+      "Other": ["Keep", "Me"]
+    }
+
+  - # Scenario 4: All values already valid (No changes)
+    input_df: {
+      "Dimension": ["A"],
+      "Hierarchy": ["B"]
+    }
+    dimension_name: "X"
+    hierarchy_name: "Y"
+    expected_df: {
+      "Dimension": ["A"],
+      "Hierarchy": ["B"]
+    }
+
+test_assign_missing_type_column:
+  - # Scenario 1: Column is missing
+    input_df: {
+      "Child": ["Item1", "Item2"],
+      "Weight": [1.0, 1.0]
+    }
+    expected_df: {
+      "Child": ["Item1", "Item2"],
+      "Weight": [1.0, 1.0],
+      "ElementType": ["", ""]
+    }
+
+  - # Scenario 2: Column already exists (Should NOT be overwritten)
+    input_df: {
+      "Child": ["Item1"],
+      "ElementType": ["Numeric"]
+    }
+    expected_df: {
+      "Child": ["Item1"],
+      "ElementType": ["Numeric"]
+    }
+
+  - # Scenario 3: Column exists but is empty/null (Should NOT be overwritten)
+    # The function only checks if the column name exists, not its content.
+    input_df: {
+      "Child": ["Item1", "Item2"],
+      "ElementType": [null, "Consolidated"]
+    }
+    expected_df: {
+      "Child": ["Item1", "Item2"],
+      "ElementType": [null, "Consolidated"]
+    }
+
+test_assign_missing_type_values:
+  - # Scenario 1: Fill empty values based on parent/child relationships
+    # "SubTotal" is a Child but also appears in the Parent list -> gets 'N'
+    # "LeafA" is a Child but never appears in the Parent list -> gets 'C'
+    input_df: {
+      "Parent": ["Total", "SubTotal"],
+      "Child": ["SubTotal", "LeafA"],
+      "ElementType": ["", null]
+    }
+    expected_df: {
+      "Parent": ["Total", "SubTotal"],
+      "Child": ["SubTotal", "LeafA"],
+      "ElementType": ["Numeric", "Consolidated"]
+    }
+
+  - # Scenario 2: Preservation of existing values
+    # Existing values like 'Existing' should not be overwritten even if empty-check would trigger
+    input_df: {
+      "Parent": ["Total"],
+      "Child": ["SubTotal"],
+      "ElementType": ["String"]
+    }
+    expected_df: {
+      "Parent": ["Total"],
+      "Child": ["SubTotal"],
+      "ElementType": ["String"]
+    }
+
+  - # Scenario 3: Mixed empty types (None, NaN, "")
+    input_df: {
+      "Parent": ["A", "A", "B"],
+      "Child": ["B", "C", "D"],
+      "ElementType": [null, "", null]
+    }
+    expected_df: {
+      "Parent": ["A", "A", "B"],
+      "Child": ["B", "C", "D"],
+      "ElementType": ["Numeric", "Consolidated", "Consolidated"]
+    }
+
+
+test_separate_edge_df_columns:
+  - # Scenario 1: Filter out extra columns
+    input_df: {
+      "Parent": ["Total", "Total"],
+      "Child": ["A", "B"],
+      "Weight": [1.0, 1.0],
+      "Dimension": ["Product", "Product"],
+      "Hierarchy": ["Standard", "Standard"],
+      "Extra_Data": [100, 200],
+      "Calculation_Flag": [true, false]
+    }
+    expected_df: {
+      "Parent": ["Total", "Total"],
+      "Child": ["A", "B"],
+      "Weight": [1.0, 1.0],
+      "Dimension": ["Product", "Product"],
+      "Hierarchy": ["Standard", "Standard"]
+    }
+
+  - # Scenario 2: Reorder columns to the standard sequence
+    # The input has all required columns but in a random order
+    input_df: {
+      "Dimension": ["Geo"],
+      "Hierarchy": ["Default"],
+      "Parent": ["World"],
+      "Weight": [1.0],
+      "Child": ["Europe"]
+    }
+    expected_df: {
+      "Parent": ["World"],
+      "Child": ["Europe"],
+      "Weight": [1.0],
+      "Dimension": ["Geo"],
+      "Hierarchy": ["Default"]
+    }
+
+  - # Scenario 3: Mixed types and data integrity
+    input_df: {
+      "Parent": ["P1"],
+      "Child": ["C1"],
+      "Weight": [0.5],
+      "Dimension": ["D1"],
+      "Hierarchy": ["H1"],
+      "Unwanted": [null]
+    }
+    expected_df: {
+      "Parent": ["P1"],
+      "Child": ["C1"],
+      "Weight": [0.5],
+      "Dimension": ["D1"],
+      "Hierarchy": ["H1"]
+    }
+
+test_separate_elements_df_columns:
+  - # Scenario 1: only base columns, remove parent, rename child
+    input_df: {
+      "Parent": ["Total"],
+      "Child": ["Item1"],
+      "ElementType": ["N"],
+      "Dimension": ["Product"],
+      "Hierarchy": ["Standard"]
+    }
+    attribute_columns: []
+    expected_df: {
+      "ElementName": ["Item1"],
+      "ElementType": ["N"],
+      "Dimension": ["Product"],
+      "Hierarchy": ["Standard"]
+    }
+
+  - # Scenario 2: Base columns plus specific attribute columns
+    input_df: {
+      "Child": ["Item1", "Item2"],
+      "ElementType": ["N", "C"],
+      "Dimension": ["Product", "Product"],
+      "Hierarchy": ["Standard", "Standard"],
+      "Color": ["Red", "Blue"],
+      "Size": [10, 20],
+      "Weight": [1.0, 1.0]
+    }
+    attribute_columns: ["Color", "Size"]
+    expected_df: {
+      "ElementName": ["Item1", "Item2"],
+      "ElementType": ["N", "C"],
+      "Dimension": ["Product", "Product"],
+      "Hierarchy": ["Standard", "Standard"],
+      "Color": ["Red", "Blue"],
+      "Size": [10, 20]
+    }
+
+  - # Scenario 3: Verify Column Renaming and Subset
+    # Input has columns in different order; output should follow base + attr order
+    input_df: {
+      "Dimension": ["D1"],
+      "Hierarchy": ["H1"],
+      "Child": ["C1"],
+      "ElementType": ["T1"],
+      "Price": [100]
+    }
+    attribute_columns: ["Price"]
+    expected_df: {
+      "ElementName": ["C1"],
+      "ElementType": ["T1"],
+      "Dimension": ["D1"],
+      "Hierarchy": ["H1"],
+      "Price": [100]
+    }
+  - # Scenario 4: Verify level column, parent removal, and reordering
+
+    input_df: {
+      "Level1": [ "P1" ],
+      "Level2": [ "C1" ],
+      "Dimension": [ "D1" ],
+      "Hierarchy": [ "H1" ],
+      "Parent": [ "P1" ],
+      "Child": [ "C1" ],
+      "ElementType": [ "T1" ],
+      "Price": [ 100 ]
+    }
+    attribute_columns: [ "Price" ]
+    expected_df: {
+      "ElementName": [ "C1" ],
+      "ElementType": [ "T1" ],
+      "Dimension": [ "D1" ],
+      "Hierarchy": [ "H1" ],
+      "Price": [ 100 ]
+    }
+
+test_create_stack:
+  - # Scenario 1: Multiple unique hierarchies
+    input_df: {
+      "Hierarchy": ["Standard", "Management", "Standard"],
+      "Child": ["A", "B", "C"]
+    }
+    expected_stack: {
+      "Standard": {},
+      "Management": {}
+    }
+
+  - # Scenario 2: Single hierarchy with multiple rows
+    input_df: {
+      "Hierarchy": ["Actuals", "Actuals", "Actuals"],
+      "Value": [10, 20, 30]
+    }
+    expected_stack: {
+      "Actuals": {}
+    }
+
+  - # Scenario 3: Hierarchies with special characters or spaces
+    input_df: {
+      "Hierarchy": ["Sales 2024", "Profit & Loss"]
+    }
+    expected_stack: {
+      "Sales 2024": {},
+      "Profit & Loss": {}
+    }
+
+test_update_stack:
+  - # Scenario 1: Add a new level to an empty hierarchy
+    stack: {
+      "Standard": {}
+    }
+    hierarchy: "Standard"
+    element_level: 0
+    element_name: "Total Product"
+    expected_stack: {
+      "Standard": {0: "Total Product"}
+    }
+
+  - # Scenario 2: Add a deeper level (no deletion required)
+    stack: {
+      "Standard": {0: "Total Product"}
+    }
+    hierarchy: "Standard"
+    element_level: 1
+    element_name: "Electronics"
+    expected_stack: {
+      "Standard": {0: "Total Product", 1: "Electronics"}
+    }
+
+  - # Scenario 3: Update an existing level and prune higher levels
+    # Since element_level is 1, level 2 should be deleted
+    stack: {
+      "Standard": {0: "Total Product", 1: "Electronics", 2: "Phones"}
+    }
+    hierarchy: "Standard"
+    element_level: 1
+    element_name: "Furniture"
+    expected_stack: {
+      "Standard": {0: "Total Product", 1: "Furniture"}
+    }
+
+  - # Scenario 4: Update level 0 (prune all subsequent levels)
+    stack: {
+      "Standard": {0: "Total Product", 1: "Electronics", 2: "Phones"}
+    }
+    hierarchy: "Standard"
+    element_level: 0
+    element_name: "New Root"
+    expected_stack: {
+      "Standard": {0: "New Root"}
+    }
+
+  - # Scenario 5: Multiple hierarchies (ensure only the target is modified)
+    stack: {
+      "H1": {0: "Root1", 1: "Child1"},
+      "H2": {0: "Root2", 1: "Child2"}
+    }
+    hierarchy: "H1"
+    element_level: 0
+    element_name: "Changed"
+    expected_stack: {
+      "H1": { 0: "Changed" },
+      "H2": { 0: "Root2", 1: "Child2" }
+    }
+
+test_parse_indented_level_columns:
+  - # Scenario 1: Element at the first level (level 0)
+    input_row: {
+      "Level0": "Total Company",
+      "Level1": "",
+      "Level2": ""
+    }
+    row_index: 0
+    level_columns: ["Level0", "Level1", "Level2"]
+    expected_name: "Total Company"
+    expected_level: 0
+
+  - # Scenario 2: Element at a deeper level (level 2)
+    input_row: {
+      "Level0": "",
+      "Level1": null,
+      "Level2": "Marketing Department"
+    }
+    row_index: 10
+    level_columns: ["Level0", "Level1", "Level2"]
+    expected_name: "Marketing Department"
+    expected_level: 2
+
+  - # Scenario 3: Mixed empty strings and None values
+    input_row: {
+      "L1": null,
+      "L2": "Product A",
+      "L3": ""
+    }
+    row_index: "row_5"
+    level_columns: ["L1", "L2", "L3"]
+    expected_name: "Product A"
+    expected_level: 1
+
+  - # Scenario 4: Row with values in columns not specified in level_columns
+    input_row: {
+      "Level0": "",
+      "Level1": "Sales",
+      "OtherColumn": "IgnoreMe"
+    }
+    row_index: 1
+    level_columns: ["Level0", "Level1"]
+    expected_name: "Sales"
+    expected_level: 1
+
+test_parse_indented_level_columns_failure:
+  - # Scenario: Multiple elements in a single row
+    input_row: {
+      "Level0": "Total Company",
+      "Level1": "Marketing",
+      "Level2": ""
+    }
+    row_index: 5
+    level_columns: ["Level0", "Level1", "Level2"]
+    expected_exception: "LevelColumnInvalidRowError"
+    expected_message: "Multiple elements found. Exactly one is expected."
+
+  - # Scenario: No elements in the row
+    input_row: {
+      "Level0": "",
+      "Level1": null,
+      "Level2": ""
+    }
+    row_index: 10
+    level_columns: ["Level0", "Level1", "Level2"]
+    expected_exception: "LevelColumnInvalidRowError"
+    expected_message: "Empty row, no element found. Exactly one is expected."
+
+test_parse_filled_level_columns:
+  - # Scenario 1: Fully filled row
+    input_row: { "L0": "Total", "L1": "Region", "L2": "Store" }
+    row_index: 0
+    level_columns: ["L0", "L1", "L2"]
+    expected_name: "Store"
+    expected_level: 2
+
+  - # Scenario 2: Partially filled (continuous from start)
+    input_row: { "L0": "Total", "L1": "Electronics", "L2": "" }
+    row_index: 1
+    level_columns: ["L0", "L1", "L2"]
+    expected_name: "Electronics"
+    expected_level: 1
+
+  - # Scenario 3: Only first level filled
+    input_row: { "L0": "Company", "L1": null }
+    row_index: 2
+    level_columns: ["L0", "L1"]
+    expected_name: "Company"
+    expected_level: 0
+
+test_parse_filled_level_columns_failure:
+  - # Scenario 1: Completely empty row (triggers count validation)
+    input_row: {
+      "L0": "",
+      "L1": null,
+      "L2": ""
+    }
+    row_index: 101
+    level_columns: ["L0", "L1", "L2"]
+    expected_exception: "LevelColumnInvalidRowError"
+    expected_message: "Empty row, no element found. Exactly one is expected."
+
+  - # Scenario 2: Gap at the start (triggers fill validation)
+    input_row: {
+      "L0": "",
+      "L1": "Product A",
+      "L2": ""
+    }
+    row_index: 102
+    level_columns: ["L0", "L1", "L2"]
+    expected_exception: "LevelColumnInvalidRowError"
+    expected_message: "Row has a gap: level is filled but a previous level was empty."
+
+  - # Scenario 3: Gap in the middle (triggers fill validation)
+    input_row: {
+      "L0": "Total Company",
+      "L1": "",
+      "L2": "Finance Department"
+    }
+    row_index: 111
+    level_columns: ["L0", "L1", "L2"]
+    expected_exception: "LevelColumnInvalidRowError"
+    expected_message: "Row has a gap: level is filled but a previous level was empty."
+
+test_parse_indented_levels_into_parent_child:
+  - # Scenario: Standard indented levels with multiple hierarchies
+    input_df: {
+      "Hierarchy": ["Standard", "Standard", "Standard", "Regional", "Regional"],
+      "L0": ["Total", "", "", "World", ""],
+      "L1": ["", "Hardware", "Software", "", "Europe"],
+      "Child": [null, null, null, null, null],
+      "Parent": [null, null, null, null, null]
+    }
+    level_columns: ["L0", "L1"]
+    expected_df: {
+      "Hierarchy": ["Standard", "Standard", "Standard", "Regional", "Regional"],
+      "L0": ["Total", "", "", "World", ""],
+      "L1": ["", "Hardware", "Software", "", "Europe"],
+      "Child": ["Total", "Hardware", "Software", "World", "Europe"],
+      "Parent": [null, "Total", "Total", null, "World"]
+    }
+
+  - # Scenario: Deeply nested hierarchy
+    input_df: {
+      "Hierarchy": ["H1", "H1", "H1"],
+      "Level 0": ["Grandparent", "", ""],
+      "Level 1": ["", "Parent", ""],
+      "Level 2": ["", "", "Child"],
+      "Child": ["", "", ""],
+      "Parent": ["", "", ""]
+    }
+    level_columns: ["Level 0", "Level 1", "Level 2"]
+    expected_df: {
+      "Hierarchy": ["H1", "H1", "H1"],
+      "Level 0": ["Grandparent", "", ""],
+      "Level 1": ["", "Parent", ""],
+      "Level 2": ["", "", "Child"],
+      "Child": ["Grandparent", "Parent", "Child"],
+      "Parent": [null, "Grandparent", "Parent"]
+    }
+
+test_parse_indented_levels_into_parent_child_failure:
+  - # Scenario 1: First row starts at Level 1 (Missing Level 0 parent)
+    input_df: {
+      "Hierarchy": ["Standard"],
+      "L0": [""],
+      "L1": ["Child Without Parent"],
+      "Child": [null],
+      "Parent": [null]
+    }
+    level_columns: ["L0", "L1"]
+    expected_exception: "LevelColumnInvalidRowError"
+    expected_message: "Missing parent of child element"
+
+  - # Scenario 2: Jumping levels (Level 0 exists, but row 2 jumps to Level 2)
+    input_df: {
+      "Hierarchy": ["Standard", "Standard"],
+      "L0": ["Root", ""],
+      "L1": ["", ""],
+      "L2": ["", "Jumping Level"],
+      "Child": [null, null],
+      "Parent": [null, null]
+    }
+    level_columns: ["L0", "L1", "L2"]
+    expected_exception: "LevelColumnInvalidRowError"
+    expected_message: "Missing parent of child element"
+
+  - # Scenario 3: Missing parent in a second hierarchy
+    input_df: {
+      "Hierarchy": ["H1", "H1", "H2"],
+      "L0": ["Root1", "", ""],
+      "L1": ["", "Child1", "Child2"],
+      "Child": [null, null, null],
+      "Parent": [null, null, null]
+    }
+    level_columns: ["L0", "L1"]
+    expected_exception: "LevelColumnInvalidRowError"
+    expected_message: "Missing parent of child element"
+  - # Scenario 4: Missing level columns
+    input_df: {
+      "Hierarchy": [ "H1", "H1", "H2" ],
+      "L0": [ "Root1", "", "" ],
+      "L1": [ "", "Child1", "Child2" ],
+      "Child": [ null, null, null ],
+      "Parent": [ null, null, null ]
+    }
+    level_columns: [ "Level0", "L1" ]
+    expected_exception: "SchemaValidationError"
+    expected_message: "Level column Level0 is missing."
+
+test_parse_filled_levels_into_parent_child:
+  - # Scenario 1: Standard filled hierarchy with varying depths
+    input_df: {
+      "L0": ["Total", "Total", "Total"],
+      "L1": ["", "Hardware", "Hardware"],
+      "L2": ["", "", "CPU"],
+      "Child": [null, null, null],
+      "Parent": [null, null, null]
+    }
+    level_columns: ["L0", "L1", "L2"]
+    expected_df: {
+      "L0": ["Total", "Total", "Total"],
+      "L1": ["", "Hardware", "Hardware"],
+      "L2": ["", "", "CPU"],
+      "Child": ["Total", "Hardware", "CPU"],
+      "Parent": ["", "Total", "Hardware"]
+    }
+
+  - # Scenario 2: Multiple branches in the same table
+    input_df: {
+      "L0": ["Company", "Company", "Company", "Company"],
+      "L1": ["", "Sales", "Sales", "HR"],
+      "L2": ["", "", "West", ""],
+      "Child": ["", "", "", ""],
+      "Parent": ["", "", "", ""]
+    }
+    level_columns: ["L0", "L1", "L2"]
+    expected_df: {
+      "L0": ["Company", "Company", "Company", "Company"],
+      "L1": ["", "Sales", "Sales", "HR"],
+      "L2": ["", "", "West", ""],
+      "Child": ["Company", "Sales", "West", "HR"],
+      "Parent": ["", "Company", "Sales", "Company"]
+    }
+
+  - # Scenario 3: Single level only
+    input_df: {
+      "Level_0": ["Root1", "Root2"],
+      "Child": [null, null],
+      "Parent": [null, null]
+    }
+    level_columns: ["Level_0"]
+    expected_df: {
+      "Level_0": ["Root1", "Root2"],
+      "Child": ["Root1", "Root2"],
+      "Parent": ["", ""]
+    }
+
+test_parse_filled_levels_into_parent_child_failure:
+  - # missing level columns
+    input_df: {
+      "Hierarchy": [ "H1", "H1", "H2" ],
+      "L0": [ "Root1", "Root1", "Root2" ],
+      "L1": [ "", "Child1", "Child2" ],
+      "Child": [ null, null, null ],
+      "Parent": [ null, null, null ]
+    }
+    level_columns: [ "Level0", "L1" ]
+    expected_exception: "SchemaValidationError"
+    expected_message: "Level column Level0 is missing."
+
+test_convert_levels_to_edges:
+  - # Scenario for indented levels: Standard indented levels with multiple hierarchies
+    input_df: {
+      "Hierarchy": ["Standard", "Standard", "Standard", "Regional", "Regional"],
+      "L0": ["Total", "", "", "World", ""],
+      "L1": ["", "Hardware", "Software", "", "Europe"]
+    }
+    level_columns: ["L0", "L1"]
+    expected_df: {
+      "Hierarchy": ["Standard", "Standard", "Standard", "Regional", "Regional"],
+      "Parent": [null, "Total", "Total", null, "World"],
+      "Child": ["Total", "Hardware", "Software", "World", "Europe"],
+    }
+  - # Scenario for indented levels: Deeply nested hierarchy
+    input_df: {
+      "Hierarchy": [ "H1", "H1", "H1" ],
+      "Level 0": [ "Grandparent", "", "" ],
+      "Level 1": [ "", "Parent", "" ],
+      "Level 2": [ "", "", "Child" ],
+    }
+    level_columns: [ "Level 0", "Level 1", "Level 2" ]
+    expected_df: {
+      "Hierarchy": [ "H1", "H1", "H1" ],
+      "Parent": [ null, "Grandparent", "Parent" ],
+      "Child": [ "Grandparent", "Parent", "Child" ]
+    }
+  - # Scenario for filled levels: Standard filled hierarchy with varying depths
+    input_df: {
+      "Hierarchy":["default", "default", "default"],
+      "L0": [ "Total", "Total", "Total" ],
+      "L1": [ "", "Hardware", "Hardware" ],
+      "L2": [ "", "", "CPU" ]
+    }
+    level_columns: [ "L0", "L1", "L2" ]
+    expected_df: {
+      "Hierarchy":["default", "default", "default"],
+      "Parent": [ null, "Total", "Hardware" ],
+      "Child": [ "Total", "Hardware", "CPU" ]
+
+    }
+
+  - # Scenario for filled levels: Multiple branches in the same table
+    input_df: {
+      "Hierarchy":["default", "default", "default", "default"],
+      "L0": [ "Company", "Company", "Company", "Company" ],
+      "L1": [ "", "Sales", "Sales", "HR" ],
+      "L2": [ "", "", "West", "" ]
+    }
+    level_columns: [ "L0", "L1", "L2" ]
+    expected_df: {
+      "Hierarchy":["default", "default", "default", "default"],
+      "Parent": [ null, "Company", "Sales", "Company" ],
+      "Child": [ "Company", "Sales", "West", "HR" ]
+    }
+
+  - # Scenario for filled levels: Single level only
+    input_df: {
+      "Hierarchy": ["default", "default"],
+      "Level_0": [ "Root1", "Root2" ],
+    }
+    level_columns: [ "Level_0" ]
+    expected_df: {
+      "Hierarchy": ["default", "default"],
+      "Parent": [ null, null ],
+      "Child": [ "Root1", "Root2" ],
+    }
+
+
+test_drop_invalid_edges:
+  - # Scenario 1: Mixed valid and invalid parents
+    # Row 0: Valid -> Kept
+    # Row 1: Empty string -> Dropped
+    # Row 2: null (NaN) -> Dropped
+    input_df: {
+      "Parent": ["Total", "", null],
+      "Child": ["Hardware", "Software", "Services"],
+      "Hierarchy": ["Default", "Default", "Default"],
+      "Weight": [1.0, 1.0, 1.0]
+    }
+    expected_df: {
+      "Parent": ["Total"],
+      "Child": ["Hardware"],
+      "Hierarchy": ["Default"],
+      "Weight": [1.0]
+    }
+
+  - # Scenario 2: Multiple valid rows
+    input_df: {
+      "Parent": ["P1", "P1", ""],
+      "Child": ["C1", "C2", "C3"],
+      "Hierarchy": ["Default", "Default", "Default"],
+    }
+    expected_df: {
+      "Parent": ["P1", "P1"],
+      "Child": ["C1", "C2"],
+      "Hierarchy": ["Default", "Default"],
+    }
+
+  - # Scenario 3: All rows are invalid (Result should be empty)
+    input_df: {
+      "Parent": ["", ""],
+      "Child": ["A", "B"],
+      "Hierarchy": ["Default", "Default"],
+    }
+    expected_df: {
+      "Parent": [],
+      "Child": [],
+      "Hierarchy": []
+    }
+  - # Scenario 4: drop duplicates
+    input_df: {
+      "Parent": [ "P1", "P1", "P1" ],
+      "Child": [ "C1", "C1", "C1" ],
+      "Hierarchy": [ "Default", "Default", "Alt" ],
+    }
+    expected_df: {
+      "Parent": [ "P1", "P1" ],
+      "Child": [ "C1", "C1" ],
+      "Hierarchy": [ "Default", "Alt" ],
+    }
+
+test_deduplicate_elements:
+  - # Scenario 1: Exact duplicates across all columns
+    input_df: {
+      "ElementName": ["Item1", "Item1", "Item2"],
+      "Dimension": ["Product", "Product", "Product"],
+      "Hierarchy": ["Standard", "Standard", "Standard"],
+      "Attribute_Val": ["Red", "Red", "Blue"]
+    }
+    expected_df: {
+      "ElementName": ["Item1", "Item2"],
+      "Dimension": ["Product", "Product"],
+      "Hierarchy": ["Standard", "Standard"],
+      "Attribute_Val": ["Red", "Blue"]
+    }
+
+  - # Scenario 2: Subset duplicate (Keep first)
+    # The keys (ElementName, Dimension, Hierarchy) are identical,
+    # but Attribute_Val is different. The function should keep the first row.
+    input_df: {
+      "ElementName": ["Item1", "Item1"],
+      "Dimension": ["Dim1", "Dim1"],
+      "Hierarchy": ["Hier1", "Hier1"],
+      "Attribute_Val": ["First", "Second"]
+    }
+    expected_df: {
+      "ElementName": ["Item1"],
+      "Dimension": ["Dim1"],
+      "Hierarchy": ["Hier1"],
+      "Attribute_Val": ["First"]
+    }
+
+  - # Scenario 3: Differentiating by Dimension or Hierarchy
+    # Even if ElementName is the same, different Dimension/Hierarchy means they stay.
+    input_df: {
+      "ElementName": ["Item1", "Item1", "Item1"],
+      "Dimension": ["Dim1", "Dim2", "Dim1"],
+      "Hierarchy": ["H1", "H1", "H2"]
+    }
+    expected_df: {
+      "ElementName": ["Item1", "Item1", "Item1"],
+      "Dimension": ["Dim1", "Dim2", "Dim1"],
+      "Hierarchy": ["H1", "H1", "H2"]
+    }
+
+test_add_attribute_type_suffixes_success:
+  - input_df:
+      Attr1: ["A", "B"]
+      Attr2: [1, 2]
+    attr_type_map:
+      Attr1: "String"
+      Attr2: "Numeric"
+    expected_df:
+      Attr1:String: ["A", "B"]
+      Attr2:Numeric: [1, 2]
+
+test_add_attribute_type_suffixes_failure:
+  - input_df:
+      Attr1: ["A"]
+    attr_type_map:
+      Attr1: "String"
+      MissingAttr: "Numeric"
+    expected_exception: "InvalidAttributeColumnNameError"
+    expected_message_part: "missing in the DataFrame"
+
+test_normalize_attr_column_names_success:
+  - input_df:
+      Child: ["A", "B"]
+      Color:alias: ["Red", "Blue"]
+      Size:numeric: ["1", "2"]
+    attribute_columns: ["Color:alias", "Size:numeric"]
+    attribute_parser: "colon"
+    expected_df:
+      Child: ["A", "B"]
+      Color:Alias: ["Red", "Blue"]
+      Size:Numeric: ["1", "2"]
+    expected_columns: ["Color:Alias", "Size:Numeric"]
+
+test_normalize_attr_column_names_failure:
+  - input_df:
+      Bad:foo: ["X"]
+    attribute_columns: ["Bad:foo"]
+    attribute_parser: "colon"
+    expected_exception: "InvalidAttributeColumnNameError"
+    expected_message_part: "Unknown attribute type"
+
+test_assign_missing_weight_column_success:
+  - input_df:
+      Parent: ["Total"]
+      Child: ["A"]
+    expected_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      Weight: [1.0]
+  - input_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      Weight: [ 2.0 ]
+    expected_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      Weight: [2.0]
+
+test_assign_missing_weight_values_success:
+  - input_df:
+      Weight: [null, "", 2]
+    expected_df:
+      Weight: [1.0, 1.0, 2.0]
+
+test_validate_and_normalize_numeric_values_success:
+  - input_df:
+      Weight: ["1", "2.5", null]
+    column_name: "Weight"
+    expected_df:
+      Weight: [1.0, 2.5, null]
+
+test_validate_and_normalize_numeric_values_failure:
+  - input_df:
+      Weight: ["1", "bad"]
+    column_name: "Weight"
+    expected_exception: "SchemaValidationError"
+    expected_message_part: "non-numeric values"
+
+test_normalize_string_values_success:
+  - input_df:
+      Parent: [" A ", null, ""]
+    column_name: "Parent"
+    expected_df:
+      Parent: ["A", "", ""]
+
+test_validate_and_normalize_base_column_types_success:
+  - input_df:
+      Parent: [" Total "]
+      Child: [" A "]
+      ElementType: [" N "]
+      Dimension: [" Dim1 "]
+      Hierarchy: [" H1 "]
+      Weight: ["1"]
+    expected_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      ElementType: ["N"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+      Weight: [1.0]
+  - input_df:
+      Parent: [12345]
+      Child: [" A "]
+      ElementType: [" N "]
+      Dimension: [" Dim1 "]
+      Hierarchy: [" H1 "]
+      Weight: ["1"]
+    expected_df:
+      Parent: ["12345"]
+      Child: ["A"]
+      ElementType: ["N"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+      Weight: [1.0]
+
+test_validate_and_normalize_base_column_types_failure:
+  - input_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      ElementType: ["N"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+      Weight: ["bad"]
+    expected_exception: "SchemaValidationError"
+    expected_message_part: "non-numeric values"
+
+test_validate_and_normalize_attr_column_types_success:
+  - elements_df:
+      Color:String: [" Blue ", null]
+      Score:Numeric: ["1", "2.5"]
+    attr_columns: ["Color:String", "Score:Numeric"]
+    expected_df:
+      Color:String: ["Blue", ""]
+      Score:Numeric: [1.0, 2.5]
+
+test_validate_and_normalize_attr_column_types_failure:
+  - elements_df:
+      Score:Numeric: ["bad"]
+    attr_columns: ["Score:Numeric"]
+    expected_exception: "SchemaValidationError"
+    expected_message_part: "non-numeric values"
+
+test_validate_and_normalize_type_values_success:
+  - input_df:
+      ElementType: ["N", "s", "Consolidated"]
+    expected_df:
+      ElementType: ["Numeric", "String", "Consolidated"]
+
+test_validate_and_normalize_type_values_failure:
+  - input_df:
+      ElementType: ["X"]
+    expected_exception: "SchemaValidationError"
+    expected_message_part: "unknown 'ElementType' values"
+
+test_assign_missing_attribute_values_success:
+  - elements_df:
+      ElementName: ["A", "B"]
+      Attr1:String: [null, "Text"]
+      Attr2:Numeric: [null, 2.5]
+      Attr3:Alias: ["", null]
+    attribute_columns: ["Attr1:String", "Attr2:Numeric", "Attr3:Alias"]
+    expected_df:
+      ElementName: ["A", "B"]
+      Attr1:String: ["", "Text"]
+      Attr2:Numeric: [0.0, 2.5]
+      Attr3:Alias: ["A", "B"]
+
+test_normalize_input_schema_success:
+  - input_df:
+      Parent: ["Total", "Total", ""]
+      Child: ["A", "B", "Total"]
+      ElementType: ["N", "C", "C"]
+      Weight: [1, 2, 0]
+    dimension_name: "Dim1"
+    hierarchy_name: "H1"
+    dim_column: null
+    hier_column: null
+    level_columns: null
+    parent_column: null
+    child_column: null
+    type_column: null
+    weight_column: null
+    attr_type_map: null
+    input_elements_df: null
+    input_elements_df_element_column: null
+    attribute_parser: "colon"
+    expected_edges_df:
+      Parent: ["Total", "Total"]
+      Child: ["A", "B"]
+      Weight: [1.0, 2.0]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+    expected_elements_df:
+      ElementName: ["A", "B", "Total"]
+      ElementType: ["Numeric", "Consolidated", "Consolidated"]
+      Dimension: ["Dim1", "Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1", "H1"]
+
+test_clear_orphan_parent_edges_success:
+  - edges_df:
+      Parent: ["OrphanParent", "Total"]
+      Child: ["A", "B"]
+    orphan_consolidation_name: "OrphanParent"
+    expected_df:
+      Parent: ["Total"]
+      Child: ["B"]
+  - edges_df:
+      Parent: ["Total"]
+      Child: ["B"]
+    orphan_consolidation_name: "OrphanParent"
+    expected_df:
+      Parent: ["Total"]
+      Child: ["B"]
+
+test_clear_orphan_parent_elements_success:
+  - elements_df:
+      ElementName: ["OrphanParent", "Total"]
+      ElementType: ["C", "C"]
+    orphan_consolidation_name: "OrphanParent"
+    expected_df:
+      ElementName: ["Total"]
+      ElementType: ["C"]
+
+test_normalize_existing_schema_success:
+  - existing_edges_df:
+      Parent: ["OrphanParent", "Total"]
+      Child: ["A", "B"]
+      Hierarchy: ["H1", "H1"]
+    existing_elements_df:
+      ElementName: ["OrphanParent", "Total", "A", "B"]
+      ElementType: ["C", "C", "N", "N"]
+      Hierarchy: ["H1", "H1", "H1", "H1"]
+      Color:alias: ["", "Red", "Blue", "Green"]
+    old_orphan_parent_name: "OrphanParent"
+    expected_edges_df:
+      Parent: ["Total"]
+      Child: ["B"]
+      Hierarchy: ["H1"]
+    expected_elements_df:
+      ElementName: ["Total", "A", "B"]
+      ElementType: ["C", "N", "N"]
+      Hierarchy: ["H1", "H1", "H1"]
+      Color:Alias: ["Red", "Blue", "Green"]
+
+test_normalize_updated_schema_success:
+  - updated_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      Hierarchy: ["H1"]
+    updated_elements_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+      Color:String: [null]
+      Score:Numeric: [null]
+      Alias:Alias: [""]
+    expected_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      Hierarchy: ["H1"]
+    expected_elements_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+      Color:String: [""]
+      Score:Numeric: [0.0]
+      Alias:Alias: ["A"]
+
+#---------------------------------- Validation -------------------------------------#
+
+test_validate_filled_structure_success:
+  - input_df:
+      Level1: ["All Regions", "All Regions", "All Regions", "APAC"]
+      Level2: ["EMEA", "EMEA", "AMER", null]
+      Level3: ["Hungary", "Germany", null, null]
+    level_columns: [Level1, Level2, Level3]
+
+test_validate_filled_structure_failure:
+  - # Not left aligned: Level1 empty but Level2 has data
+    input_df:
+      Level1: [null, "All Regions"]
+      Level2: ["EMEA", "AMER"]
+      Level3: [null, null]
+    level_columns: [Level1, Level2, Level3]
+    expected_message_part: "Rows must start at Level 1"
+
+  - # Gap in the row: Level2 missing between Level1 and Level3
+    input_df:
+      Level1: ["All Regions"]
+      Level2: [null]
+      Level3: ["Hungary"]
+    level_columns: [Level1, Level2, Level3]
+    expected_message_part: "Rows cannot contain gaps"
+
+test_validate_indented_structure_success:
+  - input_df:
+      Level1: ["All Regions", null, null, "All Regions", null]
+      Level2: [null, "EMEA", "AMER", null, "APAC"]
+      Level3: [null, null, null, null, null]
+    level_columns: [Level1, Level2, Level3]
+
+test_validate_indented_structure_failure:
+  - # Multiple values in a single row
+    input_df:
+      Level1: ["All Regions"]
+      Level2: ["EMEA"]
+      Level3: [null]
+    level_columns: [Level1, Level2, Level3]
+    expected_message_part: "Rows must contain exactly ONE value"
+
+  - # Orphan row: indented too far without prior parent context
+    input_df:
+      Level1: ["All Regions", null]
+      Level2: [null, null]
+      Level3: [null, "Hungary"]
+    level_columns: [Level1, Level2, Level3]
+    expected_message_part: "Rows are indented too far"
+
+test_validate_schema_for_parent_child_columns_success:
+  - input_df:
+      Parent: ["Total", "Total"]
+      Child: ["A", "B"]
+
+test_validate_schema_for_parent_child_columns_failure:
+  - # Missing Parent column
+    input_df:
+      Child: ["A", "B"]
+    expected_message_part: "Parent column is missing."
+  - # Missing Child column
+    input_df:
+      Parent: ["Total", "Total"]
+    expected_message_part: "Child column is missing."
+
+test_validate_schema_for_level_columns_success:
+  - input_df:
+      Level1: ["All Regions", "All Regions"]
+      Level2: ["EMEA", "AMER"]
+      Level3: ["Hungary", "USA"]
+    level_columns: [Level1, Level2, Level3]
+
+test_validate_schema_for_level_columns_failure:
+  - # Missing level_columns parameter
+    input_df:
+      Level1: ["All Regions"]
+    level_columns: null
+    expected_exception: "InvalidInputParameterError"
+    expected_message_part: "Missing required parameter 'level_columns'."
+  - # Missing one column listed in level_columns
+    input_df:
+      Level1: ["All Regions"]
+      Level2: ["EMEA"]
+    level_columns: [Level1, Level2, Level3]
+    expected_exception: "SchemaValidationError"
+    expected_message_part: "Level column Level3 is missing."
+
+test_validate_schema_for_type_mapping_success:
+  - input_df:
+      ElementType: ["N", "S", "C"]
+    type_mapping:
+      N: "Numeric"
+      S: "String"
+      C: "Consolidated"
+
+test_validate_schema_for_type_mapping_failure:
+  - input_df:
+      ElementType: ["N", "X"]
+    type_mapping:
+      N: "Numeric"
+      S: "String"
+      C: "Consolidated"
+    expected_message_part: "Type normalization failed: Found unknown 'ElementType' values: ['X']"
+
+test_validate_schema_for_numeric_values_success:
+  - input_df:
+      Weight: [1, 2.5, "3", null]
+    column_name: "Weight"
+
+test_validate_schema_for_numeric_values_failure:
+  - input_df:
+      Weight: [1, "x", 3]
+    column_name: "Weight"
+    expected_message_part: "Conversion Failed: The weight column contains non-numeric values"
+
+test_validate_schema_for_node_integrity_success:
+  - edges_data:
+      - {Parent: "Total", Child: "A"}
+      - {Parent: "Total", Child: "B"}
+    elements_data:
+      - {ElementName: "Total"}
+      - {ElementName: "A"}
+      - {ElementName: "B"}
+
+test_validate_schema_for_node_integrity_failure:
+  - edges_data:
+      - {Parent: "Total", Child: "A"}
+      - {Parent: "Total", Child: "B"}
+    elements_data:
+      - {ElementName: "Total"}
+      - {ElementName: "A"}
+    expected_message_part: "node(s) in 'edges_df' not defined in 'elements_df'"
+
+test_post_validate_schema_success:
+  - edges_data:
+      - {Parent: "Total", Child: "A"}
+      - {Parent: "Total", Child: "B"}
+    elements_data:
+      - {ElementName: "Total", ElementType: "C", Dimension: "Dim1", Hierarchy: "H1"}
+      - {ElementName: "A", ElementType: "N", Dimension: "Dim1", Hierarchy: "H1"}
+      - {ElementName: "B", ElementType: "N", Dimension: "Dim1", Hierarchy: "H1"}
+
+test_pre_validate_input_schema_success:
+  - input_format: "parent_child"
+    input_df:
+      Parent: ["Total", "Total"]
+      Child: ["A", "B"]
+    level_columns: null
+  - input_format: "indented_levels"
+    input_df:
+      Level1: ["All Regions", null]
+      Level2: [null, "EMEA"]
+    level_columns: [Level1, Level2]
+
+test_validate_element_type_consistency_success:
+  - existing_elements_df:
+      - {ElementName: "A", Hierarchy: "H1", ElementType: "N"}
+      - {ElementName: "B", Hierarchy: "H1", ElementType: "C"}
+    input_elements_df:
+      - {ElementName: "A", Hierarchy: "H1", ElementType: "N"}
+      - {ElementName: "B", Hierarchy: "H1", ElementType: "C"}
+    allow_type_changes: false
+
+test_validate_element_type_consistency_failure:
+  - existing_elements_df:
+      - {ElementName: "A", Hierarchy: "H1", ElementType: "N"}
+      - {ElementName: "B", Hierarchy: "H1", ElementType: "C"}
+    input_elements_df:
+      - {ElementName: "A", Hierarchy: "H1", ElementType: "S"}
+      - {ElementName: "B", Hierarchy: "H1", ElementType: "C"}
+    allow_type_changes: false
+    expected_exception: "ElementTypeConflictError"
+    expected_message_part: "Validation Failed: Found 1 conflict(s) where 'ElementType' changed."
+
+test_validate_element_type_consistency_allow_changes:
+  - existing_elements_df:
+      - {ElementName: "A", Hierarchy: "H1", ElementType: "N"}
+      - {ElementName: "B", Hierarchy: "H1", ElementType: "C"}
+    input_elements_df:
+      - {ElementName: "A", Hierarchy: "H1", ElementType: "S"}
+      - {ElementName: "B", Hierarchy: "H1", ElementType: "C"}
+    allow_type_changes: true
+    expected_conflicts:
+      - {ElementName: "A", Hierarchy: "H1", ElementType_existing: "N", ElementType_input: "S"}
+
+test_validate_elements_df_schema_for_inconsistent_element_type_success:
+  - # All elements have exactly one type
+    df_data:
+      - {ElementName: "Elem1", ElementType: "N"}
+      - {ElementName: "Elem2", ElementType: "C"}
+      - {ElementName: "Elem1", ElementType: "N"} # Duplicate entry is consistent
+
+test_validate_elements_df_schema_for_inconsistent_element_type_failure:
+  - # Case: Single inconsistent element
+    df_data:
+      - {ElementName: "Elem1", ElementType: "N"}
+      - {ElementName: "Elem1", ElementType: "S"}
+    expected_exception: "SchemaValidationError"
+    expected_message_part: "Inconsistency found! These ElementNames have multiple types: ['Elem1']"
+
+  - # Case: Multiple inconsistent elements (alphabetical order check)
+    df_data:
+      - {ElementName: "Alpha", ElementType: "N"}
+      - {ElementName: "Alpha", ElementType: "S"}
+      - {ElementName: "Beta", ElementType: "C"}
+      - {ElementName: "Beta", ElementType: "N"}
+    expected_exception: "SchemaValidationError"
+    expected_message_part: "Inconsistency found! These ElementNames have multiple types: ['Alpha', 'Beta']"
+
+test_validate_elements_df_schema_for_inconsistent_leaf_attributes_success:
+  - # Case: N elements differ ONLY in Hierarchy or Dimension (Allowed)
+    df_data:
+      - {ElementName: "Elem1", ElementType: "N", AttributeX: "Val1", Hierarchy: "H1", Dimension: "D1"}
+      - {ElementName: "Elem1", ElementType: "N", AttributeX: "Val1", Hierarchy: "H2", Dimension: "D2"}
+  - # Case: Non-N/S elements (like 'C') are ignored even if attributes differ
+    df_data:
+      - {ElementName: "Consol1", ElementType: "C", AttributeX: "Val1", Hierarchy: "H1", Dimension: "D1"}
+      - {ElementName: "Consol1", ElementType: "C", AttributeX: "Val2", Hierarchy: "H1", Dimension: "D1"}
+
+test_validate_elements_df_schema_for_inconsistent_leaf_attributes_failure:
+  - # Case: Element 'N' has different AttributeX values
+    df_data:
+      - {ElementName: "LeafA", ElementType: "Numeric", AttributeX: "Red", Hierarchy: "H1"}
+      - {ElementName: "LeafA", ElementType: "Numeric", AttributeX: "Blue", Hierarchy: "H2"}
+    expected_exception: "SchemaValidationError"
+    expected_message_part: "Inconsistency Error: The following"
+
+  - # Case: Element 'S' has different AttributeX values
+    df_data:
+      - {ElementName: "StringB", ElementType: "String", AttributeX: "Alpha", Hierarchy: "H1"}
+      - {ElementName: "StringB", ElementType: "String", AttributeX: "Beta", Hierarchy: "H2"}
+    expected_exception: "SchemaValidationError"
+    expected_message_part: "Inconsistency Error: The following"
+
+
+test_validate_graph_for_leaves_as_parents_success:
+  - # Case: 'C' (Consolidated) is a parent, 'N' is a child (Valid)
+    edges_data:
+      - {Parent: "Consol_A", Child: "Leaf_1"}
+    attr_data:
+      - {ElementName: "Consol_A", ElementType: "C"}
+      - {ElementName: "Leaf_1", ElementType: "N"}
+  - # Case: N/S elements exist in attributes but are not parents in edges
+    edges_data:
+      - {Parent: "Total_Sales", Child: "Region_West"}
+    attr_data:
+      - {ElementName: "Total_Sales", ElementType: "C"}
+      - {ElementName: "Unrelated_Leaf", ElementType: "N"}
+
+test_validate_graph_for_leaves_as_parents_failure:
+  - # Case: An 'N' type element is used as a Parent
+    edges_data:
+      - {Parent: "Invalid_Parent", Child: "Some_Child"}
+    attr_data:
+      - {ElementName: "Invalid_Parent", ElementType: "N"}
+      - {ElementName: "Some_Child", ElementType: "N"}
+    expected_exception: "GraphValidationError"
+    expected_message_part: "The following N/S elements were found as Parents: ['Invalid_Parent']"
+
+  - # Case: An 'S' type element is used as a Parent
+    edges_data:
+      - {Parent: "String_Node", Child: "Leaf_X"}
+    attr_data:
+      - {ElementName: "String_Node", ElementType: "S"}
+      - {ElementName: "Leaf_X", ElementType: "N"}
+    expected_exception: "GraphValidationError"
+    expected_message_part: "The following N/S elements were found as Parents: ['String_Node']"
+
+  - # Case: Multiple invalid elements (check list formatting in message)
+    edges_data:
+      - {Parent: "Bad_N", Child: "Child1"}
+      - {Parent: "Bad_S", Child: "Child2"}
+    attr_data:
+      - {ElementName: "Bad_N", ElementType: "N"}
+      - {ElementName: "Bad_S", ElementType: "S"}
+    expected_exception: "GraphValidationError"
+    expected_message_part: "The following N/S elements were found as Parents: ['Bad_N', 'Bad_S']"
+
+test_validate_graph_for_self_loop_success:
+  - # Case: Standard hierarchy
+    df_data:
+      - {Parent: "A", Child: "B"}
+      - {Parent: "B", Child: "C"}
+
+test_validate_graph_for_self_loop_failure:
+  - # Case: Single row self-loop
+    df_data:
+      - {Parent: "Node_A", Child: "Node_A"}
+    expected_exception: "GraphValidationError"
+    expected_message_part: "A child is the parent of itself, self loop detected."
+
+  - # Case: Self-loop hidden among valid rows
+    df_data:
+      - {Parent: "Total", Child: "Region"}
+      - {Parent: "Region", Child: "Region"} # The loop
+      - {Parent: "Region", Child: "Store"}
+    expected_exception: "GraphValidationError"
+    expected_message_part: "A child is the parent of itself, self loop detected."
+
+  - # Case: Multiple self-loops
+    df_data:
+      - {Parent: "A", Child: "A"}
+      - {Parent: "B", Child: "B"}
+    expected_exception: "GraphValidationError"
+    expected_message_part: "A child is the parent of itself, self loop detected."
+
+test_validate_graph_for_cycles_with_kahn_success:
+  - # Case: Simple chain (A -> B -> C)
+    df_data:
+      - {Parent: "A", Child: "B"}
+      - {Parent: "B", Child: "C"}
+  - # Case: Diamond Shape (Valid: A points to B and C, both point to D)
+    # This is a key test for DFS to ensure it handles multiple paths correctly.
+    df_data:
+      - {Parent: "A", Child: "B"}
+      - {Parent: "A", Child: "C"}
+      - {Parent: "B", Child: "D"}
+      - {Parent: "C", Child: "D"}
+  - # Case: Multiple separate trees
+    df_data:
+      - {Parent: "A", Child: "B"}
+      - {Parent: "X", Child: "Y"}
+
+test_validate_graph_for_cycles_with_kahn_failure:
+  - # Case: Direct cycle (A -> B -> A)
+    df_data:
+      - {Parent: "A", Child: "B"}
+      - {Parent: "B", Child: "A"}
+    expected_exception: "GraphValidationError"
+    expected_message_part: "Cycle detected! The graph contains a circular dependency."
+
+  - # Case: Indirect cycle (A -> B -> C -> A)
+    df_data:
+      - {Parent: "A", Child: "B"}
+      - {Parent: "B", Child: "C"}
+      - {Parent: "C", Child: "A"}
+    expected_exception: "GraphValidationError"
+    expected_message_part: "Cycle detected! The graph contains a circular dependency."
+
+  - # Case: Self-loop (A -> A)
+    df_data:
+      - {Parent: "Self", Child: "Self"}
+    expected_exception: "GraphValidationError"
+    expected_message_part: "Cycle detected! The graph contains a circular dependency."
+
+  - # Case: Cycle hidden deep in a hierarchy
+    df_data:
+      - {Parent: "Root", Child: "Level1"}
+      - {Parent: "Level1", Child: "LoopA"}
+      - {Parent: "LoopA", Child: "LoopB"}
+      - {Parent: "LoopB", Child: "LoopA"}
+    expected_exception: "GraphValidationError"
+    expected_message_part: "Cycle detected! The graph contains a circular dependency."
+
+test_get_delete_records_for_conflicting_elements:
+  -
+    conflicts_input:
+      - {ElementName: "element1", Hierarchy: "default", ElementType_existing: "Numeric"}
+      - { ElementName: "element1", Hierarchy: "alt", ElementType_existing: "Numeric" }
+      - { ElementName: "element2", Hierarchy: "default", ElementType_existing: "Numeric" }
+      - { ElementName: "element3", Hierarchy: "default", ElementType_existing: "String" }
+      - { ElementName: "element4", Hierarchy: "default", ElementType_existing: "Consolidated" }
+
+    expected_tuples:
+      - [ "default", "element1" ]
+      - [ "default", "element2" ]
+      - [ "default", "element3" ]
+      - [ "default", "element4" ]
+      - [ "alt", "element1" ]
+      - [ "Leaves", "element1" ]
+      - [ "Leaves", "element2" ]
+      - [ "Leaves", "element3" ]
+
+
+#---------------------------------- Apply -------------------------------------#
+
+test_apply_update_on_edges_success:
+  - legacy_df:
+      Parent: ["Total", "Total"]
+      Child: ["A", "C"]
+      Weight: [1.0, 1.0]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+    input_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      Weight: [1.0]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+    retained_hierarchies: ["H1"]
+    orphan_consolidation_name: "OrphanParent"
+    expected_df:
+      Parent: ["Total", "OrphanParent"]
+      Child: ["A", "C"]
+      Weight: [1.0, 1.0]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+
+test_apply_update_with_unwind_on_edges_success:
+  - legacy_df:
+      Parent: ["Total", "Total"]
+      Child: ["A", "C"]
+      Weight: [1.0, 1.0]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+    input_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      Weight: [1.0]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+    retained_hierarchies: ["H1"]
+    orphan_consolidation_name: "OrphanParent"
+    expected_df:
+      Parent: ["Total", "OrphanParent"]
+      Child: ["A", "C"]
+      Weight: [1.0, 1.0]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+
+test_add_orphan_consolidation_elements_success:
+  - elements_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+      Color:String: ["Blue"]
+    orphan_consolidation_name: "OrphanParent"
+    dimension_name: "Dim1"
+    retained_hierarchies: ["H1", "H2"]
+    expected_df:
+      ElementName: ["A", "OrphanParent", "OrphanParent"]
+      ElementType: ["N", "Consolidated", "Consolidated"]
+      Dimension: ["Dim1", "Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1", "H2"]
+      Color:String: ["Blue", null, null]
+
+test_assign_root_orphan_edges_success:
+  - legacy_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      Weight: [1.0]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+    legacy_elements_df:
+      ElementName: ["Total", "A", "B"]
+      ElementType: ["C", "N", "N"]
+      Dimension: ["Dim1", "Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1", "H1"]
+    edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      Weight: [1.0]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+    orphan_consolidation_name: "OrphanParent"
+    dimension_name: "Dim1"
+    retained_hierarchies: ["H1"]
+    expected_df:
+      Parent: ["Total", "OrphanParent", "OrphanParent"]
+      Child: ["A", "Total", "B"]
+      Weight: [1.0, 1.0, 1.0]
+      Dimension: ["Dim1", "Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1", "H1"]
+
+test_apply_update_on_elements_success:
+  - legacy_df:
+      ElementName: ["B"]
+      ElementType: ["C"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+    input_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+    expected_df:
+      ElementName: ["A", "B"]
+      ElementType: ["N", "C"]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+
+test_apply_updates_success:
+  - mode: "update"
+    existing_edges_df:
+      Parent: ["Total", "Total"]
+      Child: ["A", "B"]
+      Weight: [1.0, 1.0]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+    input_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      Weight: [1.0]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+    existing_elements_df:
+      ElementName: ["A", "B"]
+      ElementType: ["N", "C"]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+    input_elements_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+    dimension_name: "Dim1"
+    orphan_consolidation_name: "OrphanParent"
+    expected_edges_df:
+      Parent: ["Total", "OrphanParent"]
+      Child: ["A", "B"]
+      Weight: [1.0, 1.0]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+    expected_elements_df:
+      ElementName: ["A", "B", "OrphanParent"]
+      ElementType: ["N", "C", "Consolidated"]
+      Dimension: ["Dim1", "Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1", "H1"]
+
+test_init_input_schema_success:
+  - input_datasource: "dummy.csv"
+    sql_engine: null
+    sql_table_name: null
+    sql_query: null
+    filter_input_columns: null
+    raw_input_df:
+      Parent: ["Total"]
+      Child: ["A"]
+    input_elements_datasource: "dummy_elements.csv"
+    input_elements_df_element_column: null
+    sql_elements_engine: null
+    sql_table_elements_name: null
+    sql_elements_query: null
+    filter_input_elements_columns: null
+    raw_input_elements_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+    dimension_name: "Dim1"
+    input_format: "parent_child"
+    hierarchy_name: "H1"
+    dim_column: null
+    hier_column: null
+    parent_column: null
+    child_column: null
+    level_columns: null
+    type_column: null
+    weight_column: null
+    attribute_parser: "colon"
+    expected_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+    expected_elements_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+
+test_init_existing_schema_success:
+  - tm1_exists: true
+    existing_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+    existing_elements_df:
+      ElementName: ["A"]
+    normalized_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+    normalized_elements_df:
+      ElementName: ["A"]
+    dimension_name: "Dim1"
+    old_orphan_parent_name: "OrphanParent"
+  - tm1_exists: false
+    existing_edges_df: null
+    existing_elements_df:
+      ElementName: ["A"]
+    normalized_edges_df: null
+    normalized_elements_df:
+      ElementName: ["A"]
+    dimension_name: "Dim1"
+    old_orphan_parent_name: "OrphanParent"
+
+test_resolve_schema_success:
+  - dimension_name: "Dim1"
+    input_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+    input_elements_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+    existing_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+    existing_elements_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+    mode: "rebuild"
+    allow_type_changes: false
+    orphan_parent_name: "OrphanParent"
+    normalized_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+    normalized_elements_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+
+test_resolve_schema_allow_type_changes_success:
+  - dimension_name: "Dim1"
+    input_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+    input_elements_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+    existing_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+    existing_elements_df:
+      ElementName: ["A"]
+      ElementType: ["S"]
+    mode: "update"
+    allow_type_changes: true
+    orphan_parent_name: "OrphanParent"
+    normalized_edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+    normalized_elements_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+    conflicts_df:
+      - {ElementName: "A", Hierarchy: "H1", ElementType_existing: "String", ElementType_input: "Numeric"}
+
+test_build_dimension_object_success:
+  - dimension_name: "Dim1"
+    edges_df:
+      Parent: ["Total"]
+      Child: ["A"]
+      Weight: [1.0]
+      Hierarchy: ["H1"]
+    elements_df:
+      ElementName: ["Total", "A"]
+      ElementType: ["C", "N"]
+      Hierarchy: ["H1", "H1"]
+      Color:String: ["Blue", "Red"]
+
+test_update_element_attributes_success:
+  - elements_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["H1"]
+      Color:String: ["Blue"]
+    dimension_name: "Dim1"
+    expected_cube_name: "}ElementAttributes_Dim1"
+    expected_cube_dims: ["Dim1", "}ElementAttributes_Dim1"]
+    expected_attr_df:
+      Dim1: ["H1:A"]
+      "}ElementAttributes_Dim1": ["Color"]
+      Value: ["Blue"]

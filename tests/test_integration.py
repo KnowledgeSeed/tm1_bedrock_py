@@ -27,7 +27,7 @@ def test_data_copy_for_single_literal_remap(
 ):
     with tm1_connection_factory("tm1srv") as conn:
         base_df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=base_data_mdx)
-        transformer.normalize_dataframe_for_testing(dataframe=base_df, tm1_service=conn, mdx=base_data_mdx)
+        base_df = transformer.normalize_dataframe_for_testing(dataframe=base_df, tm1_service=conn, mdx=base_data_mdx)
         transformer.dataframe_find_and_replace(dataframe=base_df, mapping=literal_mapping)
 
         data_metadata = utility.TM1CubeObjectMetadata.collect(
@@ -47,7 +47,7 @@ def test_data_copy_for_single_literal_remap(
         )
 
         copy_test_df = extractor.tm1_mdx_to_dataframe(tm1_service=conn, data_mdx=output_data_mdx)
-        transformer.normalize_dataframe_for_testing(dataframe=copy_test_df, tm1_service=conn, mdx=output_data_mdx)
+        copy_test_df = transformer.normalize_dataframe_for_testing(dataframe=copy_test_df, tm1_service=conn, mdx=output_data_mdx)
 
         pd.testing.assert_frame_equal(base_df, copy_test_df)
 
