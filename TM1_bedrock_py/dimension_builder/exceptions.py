@@ -31,3 +31,23 @@ class InvalidInputParameterError(Exception):
 class InvalidLevelColumnRecordError(Exception):
     def __init__(self, message: str):
         super().__init__(message)
+
+
+class MissingDimensionError(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
+class MissingHierarchyError(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
+class DimensionAlreadyExistsError(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
+class HierarchyAlreadyExistsError(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)

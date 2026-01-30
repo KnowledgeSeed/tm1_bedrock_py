@@ -1,13 +1,17 @@
 import pandas as pd
 import numpy as np
 from collections import defaultdict
-from typing import Literal, Optional
+from typing import Literal, Optional, Any
 from TM1_bedrock_py.dimension_builder.exceptions import (
     SchemaValidationError,
     GraphValidationError,
     ElementTypeConflictError,
     InvalidInputParameterError,
-    InvalidLevelColumnRecordError
+    InvalidLevelColumnRecordError,
+    MissingDimensionError,
+    MissingHierarchyError,
+    DimensionAlreadyExistsError,
+    HierarchyAlreadyExistsError
 )
 from TM1_bedrock_py import utility as baseutils
 
@@ -321,3 +325,56 @@ def validate_element_type_consistency(
             return conflicts
 
     return None
+
+
+@baseutils.log_exec_metrics
+def validate_dimension_clonability(
+        tm1_service: Any,
+        source_dimension_name: str, source_hierarchies_actual: list[str], target_dimension_name: str,
+        hierarchy_rename_map: dict, source_hierarchy_filter: Optional[list[str]] = None
+) -> None:
+    # 1. Validate Source Dimension Existence
+    if not tm1_service.dimensions.exists(source_dimension_name):
+        raise MissingDimensionError(f"Specified source dimension '{source_dimension_name}' does not exist.")
+
+    # 2. Validate Target Dimension Non-existence
+    if tm1_service.dimensions.exists(target_dimension_name):
+        raise DimensionAlreadyExistsError(f"Cannot clone to an existing target dimension '{target_dimension_name}'.")
+
+    actual_hierarchies = set(source_hierarchies_actual)
+
+    # 3. Validation: Ensure all requested hierarchies actually exist in TM1
+    if source_hierarchy_filter:
+        scope = set(source_hierarchy_filter)
+        missing_hierarchies = scope - actual_hierarchies
+        if missing_hierarchies:
+            formatted_missing = ", ".join(missing_hierarchies)
+            raise MissingHierarchyError(f"The following source hierarchies do not exist: {formatted_missing}")
+    else:
+        scope = actual_hierarchies
+
+    # 5. Validate Rename Map for scope
+    renames_not_in_scope = set(hierarchy_rename_map.keys()) - scope
+
+    if renames_not_in_scope:
+        formatted_invalid = ", ".join(renames_not_in_scope)
+        raise InvalidInputParameterError(
+            f"The following hierarchies in the rename map are not part of the clone scope: {formatted_invalid}"
+        )
+
+
+@baseutils.log_exec_metrics
+def validate_hierarchy_clonability(
+        tm1_service: Any,
+        dimension_name: str,
+        source_hierarchy_name: str,
+        target_hierarchy_name: str
+) -> None:
+    if not tm1_service.dimensions.exists(dimension_name):
+        raise MissingDimensionError(f"Specified source dimension '{dimension_name}' does not exist.")
+
+    if not tm1_service.hierarchies.exists(dimension_name, source_hierarchy_name):
+        raise MissingHierarchyError(f"Specified source hierarchy '{source_hierarchy_name}' does not exist.")
+
+    if tm1_service.hierarchies.exists(dimension_name, target_hierarchy_name):
+        raise HierarchyAlreadyExistsError(f"Cannot clone to an existing target hierarchy '{target_hierarchy_name}'.")

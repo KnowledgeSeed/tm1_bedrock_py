@@ -165,6 +165,30 @@ def read_existing_edges_df(tm1_service: Any, dimension_name: str) -> Optional[pd
 
 
 @utility.log_exec_metrics
+def read_existing_edges_df_filtered(
+        tm1_service: Any, dimension_name: str, hierarchy_names: list[str]
+) -> Optional[pd.DataFrame]:
+    hierarchies = [
+        tm1_service.hierarchies.get(dimension_name=dimension_name, hierarchy_name=hier)
+        for hier in hierarchy_names
+    ]
+    edge_list = [
+        {
+            "Parent": parent,
+            "Child": child,
+            "Weight": weight,
+            "Dimension": dimension_name,
+            "Hierarchy": hierarchy.name
+        }
+        for hierarchy in hierarchies
+        for (parent, child), weight in hierarchy.edges.items()
+    ]
+    if len(edge_list) == 0:
+        return None
+    return pd.DataFrame(edge_list)
+
+
+@utility.log_exec_metrics
 def read_existing_elements_df_for_hierarchy(
         tm1_service: Any, dimension_name: str, hierarchy_name: Optional[str] = None
 ) -> pd.DataFrame:
@@ -194,6 +218,18 @@ def read_existing_elements_df(
     hierarchy_names = tm1_service.hierarchies.get_all_names(dimension_name)
     hierarchy_names = list(set(hierarchy_names) - set(leaves))
 
+    dfs_to_concat = []
+    for hierarchy_name in hierarchy_names:
+        current_elements_df = read_existing_elements_df_for_hierarchy(tm1_service, dimension_name, hierarchy_name)
+        dfs_to_concat.append(current_elements_df)
+
+    return pd.concat(dfs_to_concat, ignore_index=True)
+
+
+@utility.log_exec_metrics
+def read_existing_elements_df_filtered(
+        tm1_service: Any, dimension_name: str, hierarchy_names: list[str]
+) -> pd.DataFrame:
     dfs_to_concat = []
     for hierarchy_name in hierarchy_names:
         current_elements_df = read_existing_elements_df_for_hierarchy(tm1_service, dimension_name, hierarchy_name)

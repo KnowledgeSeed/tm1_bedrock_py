@@ -251,6 +251,19 @@ def init_existing_schema(
 
 
 @baseutils.log_exec_metrics
+def init_existing_schema_for_cloning(
+        tm1_service: Any, dimension_name: str, hierarchy_names: list[str]
+) -> Tuple[Optional[pd.DataFrame], Optional[pd.DataFrame]]:
+
+    existing_edges_df_filtered = io.read_existing_edges_df_filtered(tm1_service, dimension_name, hierarchy_names)
+    existing_elements_df_filtered = io.read_existing_elements_df_filtered(tm1_service, dimension_name, hierarchy_names)
+
+    normalized_edges_df, normalized_elements_df = normalize.normalize_existing_schema_for_cloning(
+        existing_edges_df_filtered, existing_elements_df_filtered)
+    return normalized_edges_df, normalized_elements_df
+
+
+@baseutils.log_exec_metrics
 def delete_conflicting_elements(tm1_service: Any, conflicts: pd.DataFrame, dimension_name: str):
     delete_records = utility.get_delete_records_for_conflicting_elements(conflicts)
     for hierarchy_name, element_name in delete_records:
@@ -327,6 +340,35 @@ def build_dimension_object(
         dimension.add_hierarchy(hierarchy)
 
     return dimension
+
+
+@baseutils.log_exec_metrics
+def build_hierarchy_object(
+        dimension_name: str, hierarchy_name: str, edges_df: Optional[pd.DataFrame], elements_df: pd.DataFrame
+) -> Hierarchy:
+
+    hierarchy = Hierarchy(name=hierarchy_name, dimension_name=dimension_name)
+
+    attribute_strings = utility.get_attribute_columns_list(input_df=elements_df)
+
+    for attr_string in attribute_strings:
+        attr_name, attr_type = utility.parse_attribute_string(attr_string)
+        hierarchy.add_element_attribute(attr_name, attr_type)
+
+    for _, elements_df_row in elements_df.iterrows():
+        element_name = elements_df_row['ElementName']
+        element_type = elements_df_row['ElementType']
+
+        hierarchy.add_element(element_name=element_name, element_type=element_type)
+
+    if edges_df is not None:
+        for _, edges_df_row in edges_df.iterrows():
+            parent_name = edges_df_row['Parent']
+            child_name = edges_df_row['Child']
+            weight = edges_df_row['Weight']
+            hierarchy.add_edge(parent=parent_name, component=child_name, weight=weight)
+
+    return hierarchy
 
 
 @baseutils.log_exec_metrics

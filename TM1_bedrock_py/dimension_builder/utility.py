@@ -1,5 +1,5 @@
 import pandas as pd
-from typing import Tuple, Callable, Literal, Optional, Union
+from typing import Tuple, Callable, Literal, Optional, Union, Any
 import re
 
 
@@ -113,3 +113,24 @@ def get_delete_records_for_conflicting_elements(conflicts: pd.DataFrame) -> list
     ]
 
     return targets
+
+
+def init_hierarchy_rename_map_for_cloning(
+        source_dimension_name: str,
+        source_dimension_hierarchies: list[str],
+        target_dimension_name: str = None,
+        hierarchy_rename_map: dict = None,
+        rename_default_hierarchy: bool = True
+) -> dict:
+    if hierarchy_rename_map is None:
+        hierarchy_rename_map = {}
+
+    dimension_has_default_hierarchy = source_dimension_name in source_dimension_hierarchies
+    can_add_default_rename_to_rename_map = (dimension_has_default_hierarchy
+                                            and source_dimension_name not in hierarchy_rename_map.keys()
+                                            and rename_default_hierarchy)
+
+    if can_add_default_rename_to_rename_map:
+        hierarchy_rename_map[source_dimension_name] = target_dimension_name
+
+    return hierarchy_rename_map

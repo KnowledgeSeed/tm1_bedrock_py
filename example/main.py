@@ -132,8 +132,8 @@ def run_dim_builder_wrapper():
     data, level_columns = generate_hierarchy_data(
         dimension_name=dimension_name,
         hierarchy_names=hierarchy_names,
-        nodes_per_hierarchy=200,
-        max_depth=2,
+        nodes_per_hierarchy=10,
+        max_depth=1,
         number_of_attributes=10,
         consistent_leaf_attributes=True
     )

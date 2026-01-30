@@ -16,8 +16,11 @@ from pandas import DataFrame
 from TM1_bedrock_py import utility, transformer, loader, extractor, basic_logger
 
 from TM1_bedrock_py.dimension_builder import apply
+from TM1_bedrock_py.dimension_builder.utility import init_hierarchy_rename_map_for_cloning
 import pandas as pd
 from pathlib import Path
+from TM1_bedrock_py.dimension_builder.validate import validate_dimension_clonability, validate_hierarchy_clonability
+from TM1_bedrock_py.dimension_builder.normalize import normalize_updated_schema
 
 
 @utility.log_exec_metrics
@@ -101,6 +104,100 @@ def dimension_builder(
     # upload updated attribute values using bedrock load
     writable_attr_df, attr_cube_name, attr_cube_dims = apply.prepare_attributes_for_load(
         dimension_name=dimension_name, elements_df=updated_elements_df)
+
+    loader.dataframe_to_cube(
+        tm1_service=tm1_service,
+        dataframe=writable_attr_df,
+        cube_name=attr_cube_name,
+        cube_dims=attr_cube_dims,
+        use_blob=True,
+    )
+
+
+@utility.log_exec_metrics
+def dimension_builder_clone_dimension(
+        tm1_service: Any,
+        source_dimension_name: str,
+        target_dimension_name: str,
+        source_hierarchy_filter: list[str] = None,
+        hierarchy_rename_map: dict = None,
+        rename_default_hierarchy: bool = True,
+):
+    source_hierarchies_actual = tm1_service.hierarchies.get_all_names(source_dimension_name)
+
+    hierarchy_rename_map = init_hierarchy_rename_map_for_cloning(
+        source_dimension_name, source_hierarchies_actual, target_dimension_name,
+        hierarchy_rename_map, rename_default_hierarchy
+    )
+
+    validate_dimension_clonability(
+        tm1_service,
+        source_dimension_name, source_hierarchies_actual, target_dimension_name,
+        hierarchy_rename_map, source_hierarchy_filter
+    )
+
+    hierarchy_scope = source_hierarchy_filter if source_hierarchy_filter is not None else source_hierarchies_actual
+
+    edges_df, elements_df = apply.init_existing_schema_for_cloning(
+        tm1_service, source_dimension_name, hierarchy_scope
+    )
+
+    find_and_replace_mapping = {"Hierarchy": hierarchy_rename_map}
+    edges_df["Dimension"] = target_dimension_name
+    edges_df = transformer.dataframe_find_and_replace(
+        dataframe=edges_df,
+        mapping=find_and_replace_mapping)
+
+    elements_df["Dimension"] = target_dimension_name
+    elements_df = transformer.dataframe_find_and_replace(
+        dataframe=elements_df,
+        mapping=find_and_replace_mapping)
+
+    dimension = apply.build_dimension_object(dimension_name=target_dimension_name, edges_df=edges_df,
+                                             elements_df=elements_df)
+
+    tm1_service.dimensions.update_or_create(dimension)
+
+    writable_attr_df, attr_cube_name, attr_cube_dims = apply.prepare_attributes_for_load(
+        dimension_name=target_dimension_name, elements_df=elements_df)
+
+    loader.dataframe_to_cube(
+        tm1_service=tm1_service,
+        dataframe=writable_attr_df,
+        cube_name=attr_cube_name,
+        cube_dims=attr_cube_dims,
+        use_blob=True,
+    )
+
+
+@utility.log_exec_metrics
+def dimension_builder_clone_hierarchy(
+        tm1_service: Any,
+        dimension_name: str,
+        source_hierarchy_name: str,
+        target_hierarchy_name: str
+):
+    validate_hierarchy_clonability(tm1_service, dimension_name, source_hierarchy_name, target_hierarchy_name)
+
+    edges_df, elements_df = apply.init_existing_schema_for_cloning(
+        tm1_service, dimension_name, [source_hierarchy_name]
+    )
+
+    find_and_replace_mapping = {"Hierarchy": {source_hierarchy_name: target_hierarchy_name}}
+    edges_df = transformer.dataframe_find_and_replace(
+        dataframe=edges_df,
+        mapping=find_and_replace_mapping)
+    elements_df = transformer.dataframe_find_and_replace(
+        dataframe=elements_df,
+        mapping=find_and_replace_mapping)
+
+    hierarchy = apply.build_hierarchy_object(
+        dimension_name, target_hierarchy_name, edges_df, elements_df)
+
+    tm1_service.hierarchies.update_or_create(hierarchy)
+
+    writable_attr_df, attr_cube_name, attr_cube_dims = apply.prepare_attributes_for_load(
+        dimension_name=dimension_name, elements_df=elements_df)
 
     loader.dataframe_to_cube(
         tm1_service=tm1_service,

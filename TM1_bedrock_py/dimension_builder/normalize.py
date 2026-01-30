@@ -380,6 +380,20 @@ def normalize_existing_schema(
     return existing_edges_df, existing_elements_df
 
 
+def normalize_existing_schema_for_cloning(
+        existing_edges_df: Optional[pd.DataFrame], existing_elements_df: pd.DataFrame,
+) -> Tuple[Optional[pd.DataFrame], pd.DataFrame]:
+    existing_elements_df, attribute_columns = normalize_attr_column_names(existing_elements_df)
+    assign_missing_attribute_values(elements_df=existing_elements_df, attribute_columns=attribute_columns)
+    validate_and_normalize_attr_column_types(elements_df=existing_elements_df, attr_columns=attribute_columns)
+    existing_elements_df.reset_index(drop=True, inplace=True)
+
+    if existing_edges_df is None:
+        return None, existing_elements_df
+    existing_edges_df.reset_index(drop=True, inplace=True)
+    return existing_edges_df, existing_elements_df
+
+
 def normalize_updated_schema(
     updated_edges_df: pd.DataFrame, updated_elements_df: pd.DataFrame
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
