@@ -11,7 +11,7 @@ from TM1_bedrock_py.dimension_builder.exceptions import (
     MissingDimensionError,
     MissingHierarchyError,
     DimensionAlreadyExistsError,
-    HierarchyAlreadyExistsError
+    HierarchyAlreadyExistsError, InvalidAttributeColumnNameError
 )
 from TM1_bedrock_py import utility as baseutils
 
@@ -331,7 +331,7 @@ def validate_element_type_consistency(
 
 
 @baseutils.log_exec_metrics
-def validate_dimension_clonability(
+def validate_dimension_for_copy(
         tm1_service: Any,
         source_dimension_name: str, source_hierarchies_actual: list[str],
         hierarchy_rename_map: dict, source_hierarchy_filter: Optional[list[str]] = None
@@ -363,7 +363,7 @@ def validate_dimension_clonability(
 
 
 @baseutils.log_exec_metrics
-def validate_hierarchy_clonability(
+def validate_hierarchy_for_copy(
         tm1_service: Any,
         dimension_name: str,
         source_hierarchy_name: str
@@ -373,3 +373,14 @@ def validate_hierarchy_clonability(
 
     if not tm1_service.hierarchies.exists(dimension_name, source_hierarchy_name):
         raise MissingHierarchyError(f"Specified source hierarchy '{source_hierarchy_name}' does not exist.")
+
+
+def validate_attribute_name_for_dimension(
+        tm1_service: Any,
+        dimension_name: str,
+        attributes: list[str]
+) -> None:
+    existing_attrs = {attr.name for attr in tm1_service.dimensions.attributes.get_all(dimension_name=dimension_name)}
+    invalid_attrs = [a for a in attributes if a not in existing_attrs]
+    if invalid_attrs:
+        raise InvalidAttributeColumnNameError("Following attributes dont exist in dimension: "+','.join(invalid_attrs))

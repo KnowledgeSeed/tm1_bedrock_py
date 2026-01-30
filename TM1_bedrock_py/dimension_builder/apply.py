@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Any, Literal, Tuple, Optional, Callable, Union
 
 import pandas as pd
+import numpy as np
 from TM1py.Objects import Dimension, Hierarchy
 
 from TM1_bedrock_py import utility as baseutils
@@ -382,3 +383,57 @@ def prepare_attributes_for_load(elements_df: pd.DataFrame, dimension_name: str) 
     element_attributes_cube_dims = [dimension_name, element_attributes_cube_name]
 
     return writable_attr_df, element_attributes_cube_name, element_attributes_cube_dims
+
+
+def generate_schema_from_attributes(
+        elements_df: pd.DataFrame, attribute_columns: list[str]
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    mask_invalid = elements_df[attribute_columns].isna().any(axis=1)
+    unassigned_edges = elements_df.loc[mask_invalid, ["ElementName"]].copy()
+    unassigned_edges['Parent'] = 'Unassigned'
+    unassigned_edges = unassigned_edges.rename(columns={"ElementName": 'Child'})
+
+    df_valid = elements_df[~mask_invalid].copy()
+    edge_frames = []
+
+    df_working = df_valid.copy()
+    current_parent_col = attribute_columns[0]
+
+    for i in range(len(attribute_columns) - 1):
+        next_attr_col = attribute_columns[i + 1]
+        unique_edges = df_working[[current_parent_col, next_attr_col]].drop_duplicates()
+        collision_mask = unique_edges.duplicated(subset=[next_attr_col], keep='first')
+
+        unique_edges['Child_ID'] = np.where(
+            collision_mask,
+            unique_edges[current_parent_col].astype(str) + '_' + unique_edges[next_attr_col].astype(str),
+            unique_edges[next_attr_col].astype(str)
+        )
+
+        level_edges = unique_edges[[current_parent_col, 'Child_ID']].rename(
+            columns={current_parent_col: 'Parent', 'Child_ID': 'Child'}
+        )
+        edge_frames.append(level_edges)
+
+        df_working = df_working.merge(
+            unique_edges[[current_parent_col, next_attr_col, 'Child_ID']],
+            on=[current_parent_col, next_attr_col],
+            how='left'
+        )
+
+        # Update the column name pointer for the next iteration
+        current_parent_col = 'Child_ID'
+
+    element_edges = df_working[[current_parent_col, "ElementName"]].drop_duplicates()
+    element_edges.columns = ['Parent', 'Child']
+    edge_frames.append(element_edges)
+    attr_hier_edges_df = pd.concat(edge_frames + [unassigned_edges], ignore_index=True)
+    attr_hier_edges_df["Weight"] = 1.0
+
+    new_elements_list = attr_hier_edges_df['Parent'].drop_duplicates().tolist()
+    new_elements_df = pd.DataFrame
+    new_elements_df["ElementName"] = new_elements_list
+    new_elements_df["ElementType"] = "Consolidated"
+    attr_hier_elements_df = pd.concat([elements_df, new_elements_df])
+
+    return attr_hier_edges_df, attr_hier_elements_df

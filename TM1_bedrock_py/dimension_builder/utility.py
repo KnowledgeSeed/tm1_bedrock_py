@@ -134,3 +134,9 @@ def init_hierarchy_rename_map_for_cloning(
         hierarchy_rename_map[source_dimension_name] = target_dimension_name
 
     return hierarchy_rename_map
+
+
+def attr_column_names_from_attr_names(attr_names: list[str], df: pd.DataFrame) -> list[str]:
+    col_mapping = {c.split(':')[0]: c for c in df.columns if ':' in c}
+    attr_columns = [col_mapping[name] for name in attr_names if name in col_mapping]
+    return attr_columns
