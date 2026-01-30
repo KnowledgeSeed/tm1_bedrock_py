@@ -254,6 +254,8 @@ def init_existing_schema(
 def init_existing_schema_for_cloning(
         tm1_service: Any, dimension_name: str, hierarchy_names: list[str]
 ) -> Tuple[Optional[pd.DataFrame], Optional[pd.DataFrame]]:
+    if not hierarchy_names:
+        return None, None
 
     existing_edges_df_filtered = io.read_existing_edges_df_filtered(tm1_service, dimension_name, hierarchy_names)
     existing_elements_df_filtered = io.read_existing_elements_df_filtered(tm1_service, dimension_name, hierarchy_names)

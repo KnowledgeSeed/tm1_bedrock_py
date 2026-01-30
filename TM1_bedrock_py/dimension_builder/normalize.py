@@ -382,7 +382,10 @@ def normalize_existing_schema(
 
 def normalize_existing_schema_for_cloning(
         existing_edges_df: Optional[pd.DataFrame], existing_elements_df: pd.DataFrame,
-) -> Tuple[Optional[pd.DataFrame], pd.DataFrame]:
+) -> Tuple[Optional[pd.DataFrame], Optional[pd.DataFrame]]:
+    if existing_elements_df is None:
+        return None, None
+
     existing_elements_df, attribute_columns = normalize_attr_column_names(existing_elements_df)
     assign_missing_attribute_values(elements_df=existing_elements_df, attribute_columns=attribute_columns)
     validate_and_normalize_attr_column_types(elements_df=existing_elements_df, attr_columns=attribute_columns)

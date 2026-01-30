@@ -299,6 +299,9 @@ def pre_validate_input_schema(
 def validate_element_type_consistency(
         existing_elements_df: pd.DataFrame, input_elements_df: pd.DataFrame, allow_type_changes: bool
 ) -> Optional[pd.DataFrame]:
+    if existing_elements_df is None:
+        return None
+
     cols_needed = ['ElementName', 'Hierarchy', 'ElementType']
     df_existing_sub = existing_elements_df[cols_needed]
     df_input_sub = input_elements_df[cols_needed]
@@ -330,16 +333,12 @@ def validate_element_type_consistency(
 @baseutils.log_exec_metrics
 def validate_dimension_clonability(
         tm1_service: Any,
-        source_dimension_name: str, source_hierarchies_actual: list[str], target_dimension_name: str,
+        source_dimension_name: str, source_hierarchies_actual: list[str],
         hierarchy_rename_map: dict, source_hierarchy_filter: Optional[list[str]] = None
 ) -> None:
     # 1. Validate Source Dimension Existence
     if not tm1_service.dimensions.exists(source_dimension_name):
         raise MissingDimensionError(f"Specified source dimension '{source_dimension_name}' does not exist.")
-
-    # 2. Validate Target Dimension Non-existence
-    if tm1_service.dimensions.exists(target_dimension_name):
-        raise DimensionAlreadyExistsError(f"Cannot clone to an existing target dimension '{target_dimension_name}'.")
 
     actual_hierarchies = set(source_hierarchies_actual)
 
@@ -367,14 +366,10 @@ def validate_dimension_clonability(
 def validate_hierarchy_clonability(
         tm1_service: Any,
         dimension_name: str,
-        source_hierarchy_name: str,
-        target_hierarchy_name: str
+        source_hierarchy_name: str
 ) -> None:
     if not tm1_service.dimensions.exists(dimension_name):
         raise MissingDimensionError(f"Specified source dimension '{dimension_name}' does not exist.")
 
     if not tm1_service.hierarchies.exists(dimension_name, source_hierarchy_name):
         raise MissingHierarchyError(f"Specified source hierarchy '{source_hierarchy_name}' does not exist.")
-
-    if tm1_service.hierarchies.exists(dimension_name, target_hierarchy_name):
-        raise HierarchyAlreadyExistsError(f"Cannot clone to an existing target hierarchy '{target_hierarchy_name}'.")

@@ -19,8 +19,11 @@ from TM1_bedrock_py.dimension_builder import apply
 from TM1_bedrock_py.dimension_builder.utility import init_hierarchy_rename_map_for_cloning
 import pandas as pd
 from pathlib import Path
-from TM1_bedrock_py.dimension_builder.validate import validate_dimension_clonability, validate_hierarchy_clonability
-from TM1_bedrock_py.dimension_builder.normalize import normalize_updated_schema
+from TM1_bedrock_py.dimension_builder.validate import (
+    validate_dimension_clonability,
+    validate_hierarchy_clonability,
+    validate_element_type_consistency
+)
 
 
 @utility.log_exec_metrics
@@ -115,14 +118,20 @@ def dimension_builder(
 
 
 @utility.log_exec_metrics
-def dimension_builder_clone_dimension(
+def dimension_copy(
         tm1_service: Any,
         source_dimension_name: str,
         target_dimension_name: str,
         source_hierarchy_filter: list[str] = None,
         hierarchy_rename_map: dict = None,
         rename_default_hierarchy: bool = True,
-):
+        allow_type_changes: bool = False,
+        target_tm1_service: Any = None
+) -> None:
+    # prepare steps
+    if target_tm1_service is None:
+        target_tm1_service = tm1_service
+
     source_hierarchies_actual = tm1_service.hierarchies.get_all_names(source_dimension_name)
 
     hierarchy_rename_map = init_hierarchy_rename_map_for_cloning(
@@ -132,37 +141,63 @@ def dimension_builder_clone_dimension(
 
     validate_dimension_clonability(
         tm1_service,
-        source_dimension_name, source_hierarchies_actual, target_dimension_name,
+        source_dimension_name, source_hierarchies_actual,
         hierarchy_rename_map, source_hierarchy_filter
     )
 
     hierarchy_scope = source_hierarchy_filter if source_hierarchy_filter is not None else source_hierarchies_actual
 
+    # get source data and normalize it
     edges_df, elements_df = apply.init_existing_schema_for_cloning(
         tm1_service, source_dimension_name, hierarchy_scope
     )
 
+    # transforms
     find_and_replace_mapping = {"Hierarchy": hierarchy_rename_map}
-    edges_df["Dimension"] = target_dimension_name
-    edges_df = transformer.dataframe_find_and_replace(
-        dataframe=edges_df,
-        mapping=find_and_replace_mapping)
+    if edges_df is not None:
+        edges_df["Dimension"] = target_dimension_name
+        edges_df = transformer.dataframe_find_and_replace(
+            dataframe=edges_df,
+            mapping=find_and_replace_mapping)
 
     elements_df["Dimension"] = target_dimension_name
     elements_df = transformer.dataframe_find_and_replace(
         dataframe=elements_df,
         mapping=find_and_replace_mapping)
+    hierarchy_scope = [
+        hier if hier not in hierarchy_rename_map.keys() else hierarchy_rename_map[hier]
+        for hier in hierarchy_scope
+    ]
 
-    dimension = apply.build_dimension_object(dimension_name=target_dimension_name, edges_df=edges_df,
-                                             elements_df=elements_df)
+    # check type consistency, and build new hiers in existing dim
+    if target_tm1_service.dimensions.exists(target_dimension_name):
+        target_hierarchies_actual = target_tm1_service.hierarchies.get_all_names(target_dimension_name)
+        retained_hierarchy_scope = list(set(target_hierarchies_actual) - set(hierarchy_scope))
+        retained_edges_df, retained_elements_df = apply.init_existing_schema_for_cloning(
+            target_tm1_service, target_dimension_name, retained_hierarchy_scope
+        )
+        conflicts = validate_element_type_consistency(retained_elements_df, elements_df, allow_type_changes)
 
-    tm1_service.dimensions.update_or_create(dimension)
+        if allow_type_changes and conflicts is not None:
+            apply.delete_conflicting_elements(
+                tm1_service=target_tm1_service, conflicts=conflicts, dimension_name=target_dimension_name)
 
+        for hierarchy_name in hierarchy_scope:
+            hierarchy = apply.build_hierarchy_object(target_dimension_name, hierarchy_name, edges_df, elements_df)
+            target_tm1_service.hierarchies.update_or_create(hierarchy)
+
+    # build new dim
+    else:
+        dimension = apply.build_dimension_object(dimension_name=target_dimension_name, edges_df=edges_df,
+                                                 elements_df=elements_df)
+        target_tm1_service.dimensions.update_or_create(dimension)
+
+    # manage attributes
     writable_attr_df, attr_cube_name, attr_cube_dims = apply.prepare_attributes_for_load(
         dimension_name=target_dimension_name, elements_df=elements_df)
 
     loader.dataframe_to_cube(
-        tm1_service=tm1_service,
+        tm1_service=target_tm1_service,
         dataframe=writable_attr_df,
         cube_name=attr_cube_name,
         cube_dims=attr_cube_dims,
@@ -171,18 +206,25 @@ def dimension_builder_clone_dimension(
 
 
 @utility.log_exec_metrics
-def dimension_builder_clone_hierarchy(
+def hierarchy_copy(
         tm1_service: Any,
         dimension_name: str,
         source_hierarchy_name: str,
-        target_hierarchy_name: str
-):
-    validate_hierarchy_clonability(tm1_service, dimension_name, source_hierarchy_name, target_hierarchy_name)
+        target_hierarchy_name: str,
+        target_tm1_service: Any = None
+) -> None:
+    # prepare steps
+    if target_tm1_service is None:
+        target_tm1_service = tm1_service
 
+    validate_hierarchy_clonability(tm1_service, dimension_name, source_hierarchy_name)
+
+    # get source data
     edges_df, elements_df = apply.init_existing_schema_for_cloning(
         tm1_service, dimension_name, [source_hierarchy_name]
     )
 
+    # transform steps
     find_and_replace_mapping = {"Hierarchy": {source_hierarchy_name: target_hierarchy_name}}
     edges_df = transformer.dataframe_find_and_replace(
         dataframe=edges_df,
@@ -191,16 +233,18 @@ def dimension_builder_clone_hierarchy(
         dataframe=elements_df,
         mapping=find_and_replace_mapping)
 
+    # build hierarchy in dim
     hierarchy = apply.build_hierarchy_object(
         dimension_name, target_hierarchy_name, edges_df, elements_df)
 
-    tm1_service.hierarchies.update_or_create(hierarchy)
+    target_tm1_service.hierarchies.update_or_create(hierarchy)
 
+    # manage attributes
     writable_attr_df, attr_cube_name, attr_cube_dims = apply.prepare_attributes_for_load(
         dimension_name=dimension_name, elements_df=elements_df)
 
     loader.dataframe_to_cube(
-        tm1_service=tm1_service,
+        tm1_service=target_tm1_service,
         dataframe=writable_attr_df,
         cube_name=attr_cube_name,
         cube_dims=attr_cube_dims,
