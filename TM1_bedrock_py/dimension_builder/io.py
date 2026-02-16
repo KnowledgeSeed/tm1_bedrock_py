@@ -9,7 +9,6 @@ import yaml
 from TM1_bedrock_py import utility
 
 
-
 def read_csv_source_to_df(
         source: Union[str, Path, PathLike[str]],
         column_names: Optional[List[str]] = None,
@@ -107,7 +106,7 @@ def read_yaml_source_to_df(
 
     if rows:
         if column_names:
-            return  pd.DataFrame(data=rows, columns=column_names).fillna("")
+            return pd.DataFrame(data=rows, columns=column_names).fillna("")
         return pd.DataFrame(data=rows).fillna("")
     else:
         raise ValueError(f"YAML template must contain mapping of input data under the key 'rows'.")

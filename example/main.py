@@ -1,7 +1,9 @@
 import pandas as pd
+import os
 from TM1py import TM1Service
 
 from TM1_bedrock_py import bedrock
+from TM1_bedrock_py.dimension_builder.io import read_source_to_df
 from TM1_bedrock_py.utility import set_logging_level
 from tests.tests_dimension_builder.test_data.test_data import generate_hierarchy_data
 
@@ -153,5 +155,48 @@ def run_dim_builder_wrapper():
     )
 
 
+def dimension_builder_basic_demo():
+    tm1_params = {
+        "address": "dev.knowledgeseed.local",
+        "port": 5379,
+        "user": "admin",
+        "password": "admin",
+        "ssl": False
+    }
+    tm1_service = TM1Service(**tm1_params)
+
+    dimension_name = "DimBuilderDemo"
+    file_path = os.path.join(os.path.dirname(__file__), "dimension_builder_init.xlsx")
+    sheet_name = "Sheet1"
+    input_format = 'indented_levels'
+    build_strategy = 'rebuild'
+    level_columns = ["Level1", "Level2", "Level3", "Level4"]
+
+    pd.set_option('display.max_rows', None)  # None means show all rows
+    pd.set_option('display.max_columns', None)  # None means show all columns
+    pd.set_option('display.width', 1000)  # Prevents line-wrapping
+    pd.set_option('display.max_colwidth', None)  # Shows full text inside cells
+
+    input_df = read_source_to_df(source=file_path, sheet_name=sheet_name)
+    print(type(input_df))
+    print(input_df)
+
+
+
+    try:
+        bedrock.dimension_builder(
+            tm1_service=tm1_service,
+            dimension_name=dimension_name,
+            input_datasource=file_path,
+            input_format=input_format,
+            build_strategy=build_strategy,
+            level_columns=level_columns,
+            sheet_name=sheet_name
+        )
+    finally:
+        tm1_service.logout()
+
+
+
 if __name__ == '__main__':
-    run_dim_builder_wrapper()
+    dimension_builder_basic_demo()
