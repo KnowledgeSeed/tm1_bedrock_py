@@ -10,8 +10,7 @@ from TM1_bedrock_py.dimension_builder.exceptions import (
     InvalidLevelColumnRecordError,
     MissingDimensionError,
     MissingHierarchyError,
-    DimensionAlreadyExistsError,
-    HierarchyAlreadyExistsError, InvalidAttributeColumnNameError
+    InvalidAttributeColumnNameError
 )
 from TM1_bedrock_py import utility as baseutils
 
@@ -384,3 +383,50 @@ def validate_attribute_name_for_dimension(
     invalid_attrs = [a for a in attributes if a not in existing_attrs]
     if invalid_attrs:
         raise InvalidAttributeColumnNameError("Following attributes dont exist in dimension: "+','.join(invalid_attrs))
+
+
+def validate_dimension_for_modify(
+        tm1_service: Any,
+        dimension_name: str,
+        hierarchy_name: str = None
+) -> None:
+    if not tm1_service.dimensions.exists(dimension_name):
+        raise MissingDimensionError(f"Specified dimension '{dimension_name}' does not exist, cannot modify.")
+
+    if hierarchy_name is None:
+        return
+
+    if not tm1_service.hierarchies.exists(dimension_name, hierarchy_name):
+        raise MissingHierarchyError(f"Specified hierarchy '{hierarchy_name}' does not exist, cannot modify.")
+
+
+def validate_sort_order_config(sort_config: dict[str, str]) -> None:
+    valid_options = {
+        "CompSortType": {"ByInput", "ByName"},
+        "CompSortSense": {"Ascending", "Descending"},
+        "ElSortType": {"ByInput", "ByName", "ByLevel", "ByHierarchy"},
+        "ElSortSense": {"Ascending", "Descending"}
+    }
+
+    for key in valid_options.keys():
+        if key not in sort_config:
+            raise KeyError(f"Missing required sort_config key: '{key}'")
+
+    for key, allowed_values in valid_options.items():
+        user_value = sort_config[key]
+        if user_value not in allowed_values:
+            raise ValueError(
+                f"Invalid value '{user_value}' for '{key}'. "
+                f"Allowed values are: {allowed_values}"
+            )
+
+    if len(sort_config) > 4:
+        extra_keys = set(sort_config.keys()) - set(valid_options.keys())
+        raise ValueError(f"Unexpected keys in sort_config: {extra_keys}")
+
+
+def validate_hierarchy_sort_order_config(hierarchy_list: list[str], hier_sort_config: dict[str, dict]) -> None:
+    for hierarchy in hier_sort_config.keys():
+        if hierarchy not in hierarchy_list:
+            raise KeyError(f"Specified hierarchy {hierarchy} in sort order config does not exist.")
+        validate_sort_order_config(hier_sort_config[hierarchy])

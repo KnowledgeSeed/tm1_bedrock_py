@@ -25,7 +25,10 @@ from pathlib import Path
 from TM1_bedrock_py.dimension_builder.validate import (
     validate_dimension_for_copy,
     validate_hierarchy_for_copy,
-    validate_element_type_consistency, validate_attribute_name_for_dimension
+    validate_element_type_consistency,
+    validate_attribute_name_for_dimension,
+    post_validate_schema,
+    validate_dimension_for_modify
 )
 
 
@@ -61,6 +64,11 @@ def dimension_builder(
         raw_input_elements_df: pd.DataFrame = None,
 
         allow_type_changes: bool = False,
+        remove_empty_subtrees: bool = False,
+
+        dimension_sort_order_config: dict[str, str] = None,
+        hierarchy_sort_order_config: dict[str, dict[str, str]] = None,
+
         attribute_parser: Union[Literal["colon", "square_brackets"], Callable] = "colon",
         logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         **kwargs
@@ -88,9 +96,8 @@ def dimension_builder(
     )
 
     # get existing if dim exists - important for type check consistency too
-    existing_edges_df, existing_elements_df = apply.init_existing_schema(tm1_service=tm1_service,
-                                                                         dimension_name=dimension_name,
-                                                                         old_orphan_parent_name=old_orphan_parent_name)
+    existing_edges_df, existing_elements_df = apply.init_existing_schema_for_builder(
+        tm1_service=tm1_service, dimension_name=dimension_name, old_orphan_parent_name=old_orphan_parent_name)
 
     # clear conflicts and make updates on input using existing
     updated_edges_df, updated_elements_df = apply.resolve_schema(
@@ -101,11 +108,17 @@ def dimension_builder(
         mode=build_strategy,
         allow_type_changes=allow_type_changes)
 
+    if remove_empty_subtrees:
+        updated_edges_df, updated_elements_df = apply.remove_empty_subtrees(updated_edges_df, updated_elements_df)
+
     # upload updated dim structure using tm1py dimension/hierarchy/element objects
     dimension = apply.build_dimension_object(dimension_name=dimension_name, edges_df=updated_edges_df,
                                              elements_df=updated_elements_df)
 
     tm1_service.dimensions.update_or_create(dimension)
+
+    apply.apply_hierarchy_sort_order_attributes(tm1_service, dimension_name,
+                                                dimension_sort_order_config, hierarchy_sort_order_config)
 
     # upload updated attribute values using bedrock load
     writable_attr_df, attr_cube_name, attr_cube_dims = apply.prepare_attributes_for_load(
@@ -148,9 +161,7 @@ def dimension_copy(
     hierarchy_scope = source_hierarchy_filter if source_hierarchy_filter is not None else source_hierarchies_actual
 
     # get source data and normalize it
-    edges_df, elements_df = apply.init_existing_schema_for_cloning(
-        tm1_service, source_dimension_name, hierarchy_scope
-    )
+    edges_df, elements_df = apply.init_existing_schema_filtered(tm1_service, source_dimension_name, hierarchy_scope)
 
     # transforms
     find_and_replace_mapping = {"Hierarchy": hierarchy_rename_map}
@@ -173,9 +184,9 @@ def dimension_copy(
     if target_tm1_service.dimensions.exists(target_dimension_name):
         target_hierarchies_actual = target_tm1_service.hierarchies.get_all_names(target_dimension_name)
         retained_hierarchy_scope = list(set(target_hierarchies_actual) - set(hierarchy_scope))
-        retained_edges_df, retained_elements_df = apply.init_existing_schema_for_cloning(
-            target_tm1_service, target_dimension_name, retained_hierarchy_scope
-        )
+        retained_edges_df, retained_elements_df = apply.init_existing_schema_filtered(target_tm1_service,
+                                                                                      target_dimension_name,
+                                                                                      retained_hierarchy_scope)
         conflicts = validate_element_type_consistency(retained_elements_df, elements_df, allow_type_changes)
 
         if allow_type_changes and conflicts is not None:
@@ -220,9 +231,7 @@ def hierarchy_copy(
     validate_hierarchy_for_copy(tm1_service, dimension_name, source_hierarchy_name)
 
     # get source data
-    edges_df, elements_df = apply.init_existing_schema_for_cloning(
-        tm1_service, dimension_name, [source_hierarchy_name]
-    )
+    edges_df, elements_df = apply.init_existing_schema_filtered(tm1_service, dimension_name, [source_hierarchy_name])
 
     # transform steps
     find_and_replace_mapping = {"Hierarchy": {source_hierarchy_name: target_hierarchy_name}}
@@ -252,7 +261,94 @@ def hierarchy_copy(
     )
 
 
-def hierarchy_from_attributes(
+def dimension_modify(
+        tm1_service: Any,
+        dimension_name: str,
+        modify_function: Callable,
+        modify_function_args: List = None,
+        modify_function_kwargs: Dict = None,
+        run_post_validations_and_normalize: bool = False
+) -> None:
+    validate_dimension_for_modify(tm1_service, dimension_name)
+
+    # retrieve and normalize existing schema that is ready for back upload
+    edges_df, elements_df = apply.init_existing_schema_full(tm1_service=tm1_service, dimension_name=dimension_name)
+
+    # call custom modify function:
+    #     expects edges_df, elements_df as first two parameters
+    #     other parameters can be passed through args and kwargs
+    #     expected to output edges_df, elements_df in this exact order
+
+    modified_edges_df, modified_elements_df = modify_function(edges_df, elements_df,
+                                                              *(modify_function_args or []),
+                                                              **(modify_function_kwargs or {}))
+
+    if run_post_validations_and_normalize:
+        post_validate_schema(modified_edges_df, modified_elements_df)
+        modified_edges_df, modified_elements_df = normalize.normalize_existing_schema_full(
+            modified_edges_df, modified_elements_df)
+
+    dimension = apply.build_dimension_object(dimension_name=dimension_name,
+                                             edges_df=modified_edges_df, elements_df=modified_elements_df)
+    tm1_service.dimensions.update_or_create(dimension)
+
+    writable_attr_df, attr_cube_name, attr_cube_dims = apply.prepare_attributes_for_load(
+        dimension_name=dimension_name, elements_df=elements_df)
+    loader.dataframe_to_cube(
+        tm1_service=tm1_service,
+        dataframe=writable_attr_df,
+        cube_name=attr_cube_name,
+        cube_dims=attr_cube_dims,
+        use_blob=True,
+    )
+
+
+def hierarchy_modify(
+        tm1_service: Any,
+        dimension_name: str,
+        hierarchy_name: str,
+        modify_function: Callable,
+        modify_function_args: List = None,
+        modify_function_kwargs: Dict = None,
+        run_post_validations_and_normalize: bool = False
+) -> None:
+    validate_dimension_for_modify(tm1_service, dimension_name)
+
+    # retrieve and normalize existing schema that is ready for back upload
+    edges_df, elements_df = apply.init_existing_schema_filtered(tm1_service=tm1_service,
+                                                                dimension_name=dimension_name,
+                                                                hierarchy_names=[hierarchy_name])
+
+    # call custom modify function:
+    #     expects edges_df, elements_df as first two parameters
+    #     other parameters can be passed through args and kwargs
+    #     expected to output edges_df, elements_df in this exact order
+
+    modified_edges_df, modified_elements_df = modify_function(edges_df, elements_df,
+                                                              *(modify_function_args or []),
+                                                              **(modify_function_kwargs or {}))
+
+    if run_post_validations_and_normalize:
+        post_validate_schema(modified_edges_df, modified_elements_df)
+        modified_edges_df, modified_elements_df = normalize.normalize_existing_schema_full(
+            modified_edges_df, modified_elements_df)
+
+    hierarchy = apply.build_hierarchy_object(
+        dimension_name, hierarchy_name, modified_edges_df, modified_elements_df)
+    tm1_service.hierarchies.update_or_create(hierarchy)
+
+    writable_attr_df, attr_cube_name, attr_cube_dims = apply.prepare_attributes_for_load(
+        dimension_name=dimension_name, elements_df=elements_df)
+    loader.dataframe_to_cube(
+        tm1_service=tm1_service,
+        dataframe=writable_attr_df,
+        cube_name=attr_cube_name,
+        cube_dims=attr_cube_dims,
+        use_blob=True,
+    )
+
+
+def hierarchy_build_from_attributes(
         tm1_service: Any,
         dimension_name: str,
         attributes: list[str],
@@ -270,17 +366,15 @@ def hierarchy_from_attributes(
     if new_hierarchy_name is None:
         new_hierarchy_name = '_'.join(attributes)
 
-    _, existing_elements_df = apply.init_existing_schema_for_cloning(
-        tm1_service, dimension_name, [source_hierarchy_name]
-    )
+    _, existing_elements_df = apply.init_existing_schema_filtered(tm1_service, dimension_name, [source_hierarchy_name])
 
     attr_columns = attr_column_names_from_attr_names(attributes, existing_elements_df)
 
     attr_hier_edges_df, attr_hier_elements_df = apply.generate_schema_from_attributes(
         existing_elements_df, attr_columns
     )
-    attr_hier_edges_df, attr_hier_elements_df = normalize.normalize_existing_schema_for_cloning(
-        attr_hier_edges_df, attr_hier_elements_df)
+    attr_hier_edges_df, attr_hier_elements_df = normalize.normalize_existing_schema_full(attr_hier_edges_df,
+                                                                                         attr_hier_elements_df)
 
     hierarchy = apply.build_hierarchy_object(
         dimension_name, new_hierarchy_name, attr_hier_edges_df, attr_hier_elements_df)

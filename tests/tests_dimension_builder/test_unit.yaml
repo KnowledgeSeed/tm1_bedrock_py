@@ -2076,3 +2076,51 @@ test_update_element_attributes_success:
       Dim1: ["H1:A"]
       "}ElementAttributes_Dim1": ["Color"]
       Value: ["Blue"]
+
+test_remove_empty_subtrees:
+  - # Scenario 1: Standard Removal
+    # "BadBranch" -> "DeadEnd" (C) has no children, so it should be removed.
+    # "GoodBranch" -> "Leaf" (N) is valid, so it keeps "Total" alive.
+    input_edges:
+      Parent: ["Total", "Total", "GoodBranch", "BadBranch", "BadBranch"]
+      Child:  ["GoodBranch", "BadBranch", "Leaf1", "DeadEnd1", "DeadEnd2"]
+    input_elements:
+      ElementName: ["Total", "GoodBranch", "BadBranch", "Leaf1", "DeadEnd1", "DeadEnd2"]
+      ElementType: ["Consolidated", "Consolidated", "Consolidated", "Numeric", "Consolidated", "Consolidated"]
+    expected_edges:
+      Parent: ["Total", "GoodBranch"]
+      Child:  ["GoodBranch", "Leaf1"]
+    expected_elements:
+      ElementName: ["Total", "GoodBranch", "Leaf1"]
+      ElementType: ["Consolidated", "Consolidated", "Numeric"]
+
+  - # Scenario 2: Diamond Structure (Shared Leaf)
+    # Both PathA and PathB lead to the same Leaf. Both should be preserved.
+    input_edges:
+      Parent: ["Root", "Root", "PathA", "PathB"]
+      Child:  ["PathA", "PathB", "Leaf", "Leaf"]
+    input_elements:
+      ElementName: ["Root", "PathA", "PathB", "Leaf"]
+      ElementType: ["Consolidated", "Consolidated", "Consolidated", "Numeric"]
+    expected_edges:
+      Parent: ["Root", "Root", "PathA", "PathB"]
+      Child:  ["PathA", "PathB", "Leaf", "Leaf"]
+    expected_elements:
+      ElementName: ["Root", "PathA", "PathB", "Leaf"]
+      ElementType: ["Consolidated", "Consolidated", "Consolidated", "Numeric"]
+
+  - # Scenario 3: Support for 'S' (String) type leaves
+    # Ensures 'S' is treated as a valid leaf just like 'N'.
+    input_edges:
+      Parent: ["Root", "Root", "TextBranch", "EmptyBranch"]
+      Child:  ["TextBranch", "EmptyBranch", "Comment", "Void"]
+    input_elements:
+      ElementName: ["Root", "TextBranch", "EmptyBranch", "Comment", "Void"]
+      ElementType: ["Consolidated", "Consolidated", "Consolidated", "String", "Consolidated"]
+    expected_edges:
+      Parent: ["Root", "TextBranch"]
+      Child:  ["TextBranch", "Comment"]
+    expected_elements:
+      ElementName: ["Root", "TextBranch", "Comment"]
+      ElementType: ["Consolidated", "Consolidated", "String"]
+

@@ -10,7 +10,8 @@ from TM1_bedrock_py.dimension_builder import normalize, utility, io
 from TM1_bedrock_py.dimension_builder.validate import (
     post_validate_schema,
     pre_validate_input_schema,
-    validate_element_type_consistency
+    validate_element_type_consistency,
+    validate_sort_order_config, validate_hierarchy_sort_order_config
 )
 
 
@@ -238,21 +239,36 @@ def init_input_schema(
     return input_edges_df, input_elements_df
 
 
-def init_existing_schema(
+@baseutils.log_exec_metrics
+def init_existing_schema_for_builder(
         tm1_service: Any, dimension_name: str,
-        old_orphan_parent_name: str = "OrphanParent"
+        old_orphan_parent_name: str = "OrphanParent",
+        clear_orphan_parents: bool = True
 ) -> Tuple[Optional[pd.DataFrame], Optional[pd.DataFrame]]:
     if not tm1_service.dimensions.exists(dimension_name):
         return None, None
 
     existing_edges_df, existing_elements_df = io.retrieve_existing_schema(tm1_service, dimension_name)
-    existing_edges_df, existing_elements_df = normalize.normalize_existing_schema(
-        existing_edges_df, existing_elements_df, old_orphan_parent_name)
+    existing_edges_df, existing_elements_df = normalize.normalize_existing_schema_for_builder(existing_edges_df,
+                                                                                              existing_elements_df,
+                                                                                              old_orphan_parent_name,
+                                                                                              clear_orphan_parents)
     return existing_edges_df, existing_elements_df
 
 
 @baseutils.log_exec_metrics
-def init_existing_schema_for_cloning(
+def init_existing_schema_full(
+        tm1_service: Any, dimension_name: str
+) -> Tuple[Optional[pd.DataFrame], Optional[pd.DataFrame]]:
+    existing_edges_df, existing_elements_df = io.retrieve_existing_schema(tm1_service, dimension_name)
+    existing_edges_df, existing_elements_df = normalize.normalize_existing_schema_full(existing_edges_df,
+                                                                                       existing_elements_df)
+
+    return existing_edges_df, existing_elements_df
+
+
+@baseutils.log_exec_metrics
+def init_existing_schema_filtered(
         tm1_service: Any, dimension_name: str, hierarchy_names: list[str]
 ) -> Tuple[Optional[pd.DataFrame], Optional[pd.DataFrame]]:
     if not hierarchy_names:
@@ -261,8 +277,9 @@ def init_existing_schema_for_cloning(
     existing_edges_df_filtered = io.read_existing_edges_df_filtered(tm1_service, dimension_name, hierarchy_names)
     existing_elements_df_filtered = io.read_existing_elements_df_filtered(tm1_service, dimension_name, hierarchy_names)
 
-    normalized_edges_df, normalized_elements_df = normalize.normalize_existing_schema_for_cloning(
+    normalized_edges_df, normalized_elements_df = normalize.normalize_existing_schema_full(
         existing_edges_df_filtered, existing_elements_df_filtered)
+
     return normalized_edges_df, normalized_elements_df
 
 
@@ -297,7 +314,7 @@ def resolve_schema(
         existing_elements_df=existing_elements_df, input_elements_df=input_elements_df,
         dimension_name=dimension_name, orphan_consolidation_name=orphan_parent_name)
 
-    normalized_updated_edges_df, normalized_updated_elements_df = normalize.normalize_updated_schema(
+    normalized_updated_edges_df, normalized_updated_elements_df = normalize.normalize_updated_schema_for_builder(
         updated_edges_df, updated_elements_df)
 
     post_validate_schema(normalized_updated_edges_df, normalized_updated_elements_df)
@@ -437,3 +454,53 @@ def generate_schema_from_attributes(
     attr_hier_elements_df = pd.concat([elements_df, new_elements_df])
 
     return attr_hier_edges_df, attr_hier_elements_df
+
+
+@baseutils.log_exec_metrics
+def remove_empty_subtrees(edges_df, elements_df):
+    leaf_types = ['Numeric', 'String']
+    leaf_elements = set(elements_df.loc[elements_df['ElementType'].isin(leaf_types), 'ElementName'])
+    valid_nodes = set(edges_df.loc[edges_df['Child'].isin(leaf_elements), 'Child'])
+
+    while True:
+        valid_parents = set(edges_df.loc[edges_df['Child'].isin(valid_nodes), 'Parent'])
+        new_nodes = valid_parents - valid_nodes
+
+        if not new_nodes:
+            break
+
+        valid_nodes.update(new_nodes)
+
+    clean_edges_df = edges_df[edges_df['Child'].isin(valid_nodes)].copy()
+    active_elements = set(clean_edges_df['Parent']).union(set(clean_edges_df['Child']))
+    clean_elements_df = elements_df[elements_df['ElementName'].isin(active_elements)].copy()
+
+    return clean_edges_df, clean_elements_df
+
+
+def apply_hierarchy_sort_order_attributes(
+        tm1_service: Any, dimension_name: str,
+        dimension_sort_order_config: dict = None,
+        hierarchy_sort_order_config: dict[str, dict] = None
+) -> None:
+    all_hierarchies = tm1_service.hierarchies.get_all_names(dimension_name)
+
+    if dimension_sort_order_config:
+        validate_sort_order_config(dimension_sort_order_config)
+    if hierarchy_sort_order_config:
+        validate_hierarchy_sort_order_config(all_hierarchies, hierarchy_sort_order_config)
+
+    def to_sort_tuple(cfg: dict) -> tuple:
+        return cfg["CompSortType"], cfg["CompSortSense"], cfg["ElSortType"], cfg["ElSortSense"]
+
+    for h_name in all_hierarchies:
+        active_config = hierarchy_sort_order_config.get(h_name) if hierarchy_sort_order_config else None
+        if not active_config:
+            active_config = dimension_sort_order_config
+
+        if active_config:
+            tm1_service.hierarchies._implement_hierarchy_sort_order(
+                dimension_name=dimension_name,
+                hierarchy_name=h_name,
+                hierarchy_sort_order=to_sort_tuple(active_config)
+            )
