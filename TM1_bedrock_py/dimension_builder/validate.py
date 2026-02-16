@@ -52,7 +52,10 @@ def validate_filled_structure(input_df: pd.DataFrame, level_columns: list[str]) 
 
 @baseutils.log_exec_metrics
 def validate_indented_structure(input_df: pd.DataFrame, level_columns: list[str]) -> None:
-    mask = input_df[level_columns].notna().to_numpy()
+    cleaned_levels = input_df[level_columns].replace(r'^\s*$', np.nan, regex=True)
+
+    mask = cleaned_levels.notna().to_numpy()
+
     rows_count = len(input_df)
     row_indices = np.arange(rows_count)
 
