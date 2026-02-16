@@ -172,17 +172,6 @@ def dimension_builder_basic_demo():
     build_strategy = 'rebuild'
     level_columns = ["Level1", "Level2", "Level3", "Level4"]
 
-    pd.set_option('display.max_rows', None)  # None means show all rows
-    pd.set_option('display.max_columns', None)  # None means show all columns
-    pd.set_option('display.width', 1000)  # Prevents line-wrapping
-    pd.set_option('display.max_colwidth', None)  # Shows full text inside cells
-
-    input_df = read_source_to_df(source=file_path, sheet_name=sheet_name)
-    print(type(input_df))
-    print(input_df)
-
-
-
     try:
         bedrock.dimension_builder(
             tm1_service=tm1_service,
@@ -196,6 +185,64 @@ def dimension_builder_basic_demo():
     finally:
         tm1_service.logout()
 
+
+def dimension_builder_complex_demo():
+    tm1_params = {
+        "address": "dev.knowledgeseed.local",
+        "port": 5379,
+        "user": "admin",
+        "password": "admin",
+        "ssl": False
+    }
+    tm1_service = TM1Service(**tm1_params)
+
+    dimension_name = "DimBuilderDemo"
+    file_path = os.path.join(os.path.dirname(__file__), "dimension_builder_update.xlsx")
+    sheet_name = "Sheet1"
+    input_format = 'indented_levels'
+    attribute_parser = "square_brackets"
+    build_strategy = 'update'
+    level_columns = ["Level1", "Level2", "Level3", "Level4"]
+    weight_column = "ElementWeight"
+    allow_type_changes = True
+    old_orphan_parent_name = "OrphanParent"
+    new_orphan_parent_name = "NewOrphanParent"
+
+    """
+    what we expect:
+        type column added, values inferred
+        weight column renamed to standard
+        square bracket attr columns parsed
+        
+        new elements and edges added (subtotalX, elementX, elementY, element11 under element6)
+        existing elements kept (total, subtotal1, etc.)
+        
+        orphan parent name changed from OrphanParent to NewOrphanParent
+        old orphans kept (element7, oldsubtotal2 and its children)
+        new orphans added (subtotal3 and children, element4, element5)
+        
+        element type of element6 changed from N to C
+        
+        hierarchy not specified (AltHier) left as is, no modification, no delete
+    """
+
+    try:
+        bedrock.dimension_builder(
+            tm1_service=tm1_service,
+            dimension_name=dimension_name,
+            input_datasource=file_path,
+            input_format=input_format,
+            build_strategy=build_strategy,
+            level_columns=level_columns,
+            sheet_name=sheet_name,
+            weight_column=weight_column,
+            allow_type_changes=allow_type_changes,
+            old_orphan_parent_name=old_orphan_parent_name,
+            new_orphan_parent_name=new_orphan_parent_name,
+            attribute_parser=attribute_parser
+        )
+    finally:
+        tm1_service.logout()
 
 
 if __name__ == '__main__':
