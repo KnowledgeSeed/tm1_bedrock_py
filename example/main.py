@@ -207,10 +207,11 @@ def dimension_builder_complex_demo():
     allow_type_changes = True
     old_orphan_parent_name = "OrphanParent"
     new_orphan_parent_name = "NewOrphanParent"
+    logging_level = "DEBUG"
 
     """
     what we expect:
-        type column added, values inferred
+        type column added, values inferred (leaf elements are considered N type by default)
         weight column renamed to standard
         square bracket attr columns parsed
         
@@ -224,6 +225,8 @@ def dimension_builder_complex_demo():
         element type of element6 changed from N to C
         
         hierarchy not specified (AltHier) left as is, no modification, no delete
+        
+        detailed logging enabled
     """
 
     try:
@@ -239,10 +242,24 @@ def dimension_builder_complex_demo():
             allow_type_changes=allow_type_changes,
             old_orphan_parent_name=old_orphan_parent_name,
             new_orphan_parent_name=new_orphan_parent_name,
-            attribute_parser=attribute_parser
+            attribute_parser=attribute_parser,
+            logging_level=logging_level
         )
     finally:
         tm1_service.logout()
+
+    """
+    expected features (work in progress):
+        dimension, hierarchy copy
+        hierarchy from attributes
+        dimension, hierarchy modify (with custom modify function call)
+        remove empty subtrees parameter
+        dimension sort order parameters, hierarchy sort order parameters
+        enhanced error handling and validations
+        input source type of json
+        updated dimension structure load to other sources (sql, csv, excel)
+            output format converters (parent-child to level types)
+    """
 
 
 if __name__ == '__main__':
