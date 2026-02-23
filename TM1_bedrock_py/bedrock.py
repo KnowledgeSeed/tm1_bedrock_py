@@ -7,7 +7,7 @@ import math
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 from string import Template
-from typing import Callable, List, Dict, Optional, Any, Sequence, Hashable, Mapping, Iterable, Literal, Union
+from typing import Callable, List, Dict, Optional, Any, Sequence, Hashable, Mapping, Iterable, Literal, Union, Tuple
 
 from TM1py.Exceptions import TM1pyRestException
 from requests.cookies import CookieConflictError
@@ -65,6 +65,7 @@ def dimension_builder(
 
         allow_type_changes: bool = False,
         remove_empty_subtrees: bool = False,
+        output_mode: Literal["build", "build_and_output", "output"] = "build",
 
         dimension_sort_order_config: dict[str, str] = None,
         hierarchy_sort_order_config: dict[str, dict[str, str]] = None,
@@ -72,7 +73,7 @@ def dimension_builder(
         attribute_parser: Union[Literal["colon", "square_brackets"], Callable] = "colon",
         logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         **kwargs
-) -> None:
+) -> Optional[Tuple[pd.DataFrame, pd.DataFrame]]:
     utility.set_logging_level(logging_level=logging_level)
 
     input_edges_df, input_elements_df = apply.init_input_schema(
@@ -115,22 +116,26 @@ def dimension_builder(
     dimension = apply.build_dimension_object(dimension_name=dimension_name, edges_df=updated_edges_df,
                                              elements_df=updated_elements_df)
 
-    tm1_service.dimensions.update_or_create(dimension)
+    if output_mode in ("build", "build_and_output"):
+        tm1_service.dimensions.update_or_create(dimension)
 
-    apply.apply_hierarchy_sort_order_attributes(tm1_service, dimension_name,
-                                                dimension_sort_order_config, hierarchy_sort_order_config)
+        apply.apply_hierarchy_sort_order_attributes(tm1_service, dimension_name,
+                                                    dimension_sort_order_config, hierarchy_sort_order_config)
 
-    # upload updated attribute values using bedrock load
-    writable_attr_df, attr_cube_name, attr_cube_dims = apply.prepare_attributes_for_load(
-        dimension_name=dimension_name, elements_df=updated_elements_df)
+        # upload updated attribute values using bedrock load
+        writable_attr_df, attr_cube_name, attr_cube_dims = apply.prepare_attributes_for_load(
+            dimension_name=dimension_name, elements_df=updated_elements_df)
 
-    loader.dataframe_to_cube(
-        tm1_service=tm1_service,
-        dataframe=writable_attr_df,
-        cube_name=attr_cube_name,
-        cube_dims=attr_cube_dims,
-        use_blob=True,
-    )
+        loader.dataframe_to_cube(
+            tm1_service=tm1_service,
+            dataframe=writable_attr_df,
+            cube_name=attr_cube_name,
+            cube_dims=attr_cube_dims,
+            use_blob=True,
+        )
+
+    if output_mode in ("output", "build_and_output"):
+        return updated_edges_df, updated_elements_df
 
 
 @utility.log_exec_metrics
