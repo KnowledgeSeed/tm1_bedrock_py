@@ -354,7 +354,7 @@ def write_dataframe_to_json(
     )
 
 
-def execute_dataframe_writers(
+def execute_dimension_dataframe_writers(
         dataframe: pd.DataFrame,
         target_destinations: List[Literal["sql", "csv", "xlsx", "yaml", "json"]],
         *,

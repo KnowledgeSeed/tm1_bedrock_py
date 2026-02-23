@@ -16,6 +16,7 @@ from pandas import DataFrame
 from TM1_bedrock_py import utility, transformer, loader, extractor, basic_logger
 
 from TM1_bedrock_py.dimension_builder import apply, normalize
+from TM1_bedrock_py.dimension_builder.io import execute_dimension_dataframe_writers
 from TM1_bedrock_py.dimension_builder.utility import (
     init_hierarchy_rename_map_for_cloning,
     attr_column_names_from_attr_names
@@ -395,6 +396,65 @@ def hierarchy_build_from_attributes(
         cube_name=attr_cube_name,
         cube_dims=attr_cube_dims,
         use_blob=True,
+    )
+
+
+@utility.log_exec_metrics
+def dimension_export(
+        dimension_name: str,
+        output_format: Literal["parent_child", "indented_levels", "filled_levels"],
+        target_destinations: List[Literal["sql", "csv", "xlsx", "yaml", "json"]],
+        tm1_service: Any = None,
+        edges_df: Optional[pd.DataFrame] = None,
+        elements_df: pd.DataFrame = None,
+        column_rename_mapping: Dict = None,
+        *,
+        file_path_destination: Optional[str] = None,
+        table_name: Optional[str] = None,
+        sql_engine: Optional[Any] = None,
+        if_exists_strategy: Literal["fail", "replace", "append"] = "append",
+        database_schema: Optional[str] = None,
+        csv_separator: str = None,
+        decimal_separator: str = None,
+        excel_sheet_name: str = "Sheet1",
+        include_index: bool = False,
+        yaml_default_flow_style: bool = False,
+        json_orientation: Literal["split", "records", "index", "columns", "values", "table"] = "records",
+        maximum_levels_depth: int = None,
+        orphan_parent_name: str = "OrphanParent",
+        **kwargs
+) -> None:
+    if tm1_service is None and elements_df is None:
+        raise ValueError("Must provide at least one source of local/server")
+
+    if elements_df is None:
+        edges_df, elements_df = apply.init_existing_schema_for_builder(
+            tm1_service=tm1_service, dimension_name=dimension_name, old_orphan_parent_name=orphan_parent_name)
+
+    if column_rename_mapping is None:
+        column_rename_mapping = {}
+
+    combined_schema = apply.combine_schema_for_export(
+        elements_df=elements_df, edges_df=edges_df, orphan_parent_name=orphan_parent_name,
+        column_rename_mapping=column_rename_mapping, format_selector=output_format,
+        maximum_levels_depth=maximum_levels_depth
+    )
+
+    execute_dimension_dataframe_writers(
+        dataframe=combined_schema,
+        target_destinations=target_destinations,
+        file_path_destination=file_path_destination,
+        table_name=table_name,
+        sql_engine=sql_engine,
+        if_exists_strategy=if_exists_strategy,
+        database_schema=database_schema,
+        csv_separator=csv_separator,
+        decimal_separator=decimal_separator,
+        excel_sheet_name=excel_sheet_name,
+        include_index=include_index,
+        yaml_default_flow_style=yaml_default_flow_style,
+        json_orientation=json_orientation,
+        **kwargs
     )
 
 
