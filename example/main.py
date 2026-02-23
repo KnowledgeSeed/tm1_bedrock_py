@@ -21,9 +21,10 @@ def complex_transform_demo():
         "password": "testbench",
         "ssl": False
     }
-    tm1_service = TM1Service(**tm1_params)
+    tm1_service = TM1Service(**tm1_params)  # tm1 szerver választó lista
 
-    target_cube_name = "Sales"
+    target_cube_name = "Sales"  # kocka választó lista / automatikusan kitöltve (jobbklikk a kockára)
+
     data_mdx = """
         SELECT
         NON EMPTY
@@ -95,9 +96,8 @@ def complex_transform_demo():
         return x * 1.0912
 
     try:
-        #bedrock.data_copy_intercube(
-        bedrock.data_copy(
-            #target_cube_name=target_cube_name,
+        bedrock.data_copy_intercube(
+            target_cube_name=target_cube_name,
             tm1_service=tm1_service,
             data_mdx=data_mdx,
             mapping_steps=mapping_steps,
@@ -106,12 +106,20 @@ def complex_transform_demo():
             target_clear_set_mdx_list=target_clear_set_mdx_list,
             use_blob=use_blob,
             logging_level=logging_level,
-            #use_mixed_datatypes=use_mixed_datatypes,
-            #ignore_missing_elements=ignore_missing_elements,
+            use_mixed_datatypes=use_mixed_datatypes,
+            ignore_missing_elements=ignore_missing_elements,
             verbose_logging_mode="print_console"
         )
     finally:
         tm1_service.logout()
+
+
+
+    """
+    
+    
+    
+    """
 
 
 def run_dim_builder_wrapper():
@@ -211,7 +219,7 @@ def dimension_builder_complex_demo():
 
     """
     what we expect:
-        type column added, values inferred (leaf elements are considered N type by default)
+        type added, values inferred (leaf elements are considered N type by default)
         weight column renamed to standard
         square bracket attr columns parsed
         
@@ -248,19 +256,8 @@ def dimension_builder_complex_demo():
     finally:
         tm1_service.logout()
 
-    """
-    expected features (work in progress):
-        dimension, hierarchy copy
-        hierarchy from attributes
-        dimension, hierarchy modify (with custom modify function call)
-        remove empty subtrees parameter
-        dimension sort order parameters, hierarchy sort order parameters
-        enhanced error handling and validations
-        input source type of json
-        updated dimension structure load to other sources (sql, csv, excel)
-            output format converters (parent-child to level types)
-    """
 
 
 if __name__ == '__main__':
-    dimension_builder_basic_demo()
+    # dimension_builder_basic_demo()
+    dimension_builder_complex_demo()

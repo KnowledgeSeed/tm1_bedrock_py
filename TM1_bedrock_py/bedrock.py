@@ -231,7 +231,8 @@ def hierarchy_copy(
     validate_hierarchy_for_copy(tm1_service, dimension_name, source_hierarchy_name)
 
     # get source data
-    edges_df, elements_df = apply.init_existing_schema_filtered(tm1_service, dimension_name, [source_hierarchy_name])
+    edges_df, elements_df = apply.init_existing_schema_filtered(
+        tm1_service, dimension_name, [source_hierarchy_name])
 
     # transform steps
     find_and_replace_mapping = {"Hierarchy": {source_hierarchy_name: target_hierarchy_name}}

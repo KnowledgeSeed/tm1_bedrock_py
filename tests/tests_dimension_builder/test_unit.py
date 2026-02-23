@@ -1193,3 +1193,52 @@ def test_remove_empty_subtrees(input_edges, input_elements, expected_edges, expe
 
     pd.testing.assert_frame_equal(result_edges, expected_edges_df)
     pd.testing.assert_frame_equal(result_elements, expected_elements_df)
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Main: tests for new dimension builder export functionality
+# ------------------------------------------------------------------------------------------------------------
+
+
+@parametrize_from_file
+def test_process_parent_child_format(
+    elements_dataframe_input,
+    edges_dataframe_input,
+    expected_dataframe,
+) -> None:
+    elements_dataframe: pd.DataFrame = pd.DataFrame(elements_dataframe_input)
+    edges_dataframe: pd.DataFrame = pd.DataFrame(edges_dataframe_input)
+    expected_result_dataframe: pd.DataFrame = pd.DataFrame(expected_dataframe)
+
+    actual_result_dataframe: pd.DataFrame = normalize.process_parent_child_format(elements_df=elements_dataframe,
+                                                                                  edges_df=edges_dataframe,
+                                                                                  format_selector="parent-child")
+
+    pd.testing.assert_frame_equal(
+        actual_result_dataframe,
+        expected_result_dataframe,
+        check_like=True,
+        check_dtype=False
+    )
+
+
+@parametrize_from_file
+def test_process_hierarchical_levels_format(
+    elements_dataframe_input, edges_dataframe_input,
+    format_selector, maximum_levels_depth,
+    expected_dataframe
+) -> None:
+    elements_dataframe = pd.DataFrame(elements_dataframe_input)
+    edges_dataframe = pd.DataFrame(edges_dataframe_input)
+    expected_result_dataframe: pd.DataFrame = pd.DataFrame(expected_dataframe)
+
+    actual_result_dataframe: pd.DataFrame = normalize.process_hierarchical_levels_format(
+        elements_df=elements_dataframe, edges_df=edges_dataframe,
+        format_selector=format_selector, maximum_levels_depth=maximum_levels_depth)
+
+    pd.testing.assert_frame_equal(
+        actual_result_dataframe,
+        expected_result_dataframe,
+        check_like=True,
+        check_dtype=False
+    )

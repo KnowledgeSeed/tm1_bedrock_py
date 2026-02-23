@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Literal, Tuple, Optional, Callable, Union
+from typing import Any, Literal, Tuple, Optional, Callable, Union, Dict
 
 import pandas as pd
 import numpy as np
@@ -504,3 +504,44 @@ def apply_hierarchy_sort_order_attributes(
                 hierarchy_name=h_name,
                 hierarchy_sort_order=to_sort_tuple(active_config)
             )
+
+
+def combine_schema_for_export(
+        elements_df: pd.DataFrame,
+        edges_df: pd.DataFrame,
+        orphan_parent_name: str,
+        column_rename_mapping: Dict[str, str],
+        format_selector: Literal["parent_child", "indented_levels", "filled_levels"],
+        maximum_levels_depth: Optional[int] = None
+) -> pd.DataFrame:
+    cleaned_edges_dataframe: pd.DataFrame = normalize.clear_orphan_parent_edges(
+        edges_df=edges_df.copy(),
+        orphan_consolidation_name=orphan_parent_name
+    )
+
+    cleaned_elements_dataframe: pd.DataFrame = normalize.clear_orphan_parent_elements(
+        elements_df=elements_df.copy(),
+        orphan_consolidation_name=orphan_parent_name
+    )
+
+    format_dispatch_mapping: Dict[str, Callable[[pd.DataFrame, pd.DataFrame, str, Optional[int]], pd.DataFrame]] = {
+        "parent_child": normalize.process_parent_child_format,
+        "indented_levels": normalize.process_hierarchical_levels_format,
+        "filled_levels": normalize.process_hierarchical_levels_format
+    }
+
+    selected_processing_function: Optional[Callable] = format_dispatch_mapping.get(format_selector)
+
+    if selected_processing_function is None:
+        raise ValueError(f"Unsupported format_selector provided: {format_selector}")
+
+    structured_dataframe: pd.DataFrame = selected_processing_function(
+        elements_dataframe=cleaned_elements_dataframe,
+        edges_dataframe=cleaned_edges_dataframe,
+        format_selector=format_selector,
+        maximum_levels_depth=maximum_levels_depth
+    )
+
+    renamed_dataframe: pd.DataFrame = structured_dataframe.rename(columns=column_rename_mapping)
+
+    return renamed_dataframe
