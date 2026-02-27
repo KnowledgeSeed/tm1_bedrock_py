@@ -2004,48 +2004,60 @@ test_resolve_schema_success:
     input_edges_df:
       Parent: ["Total"]
       Child: ["A"]
+      Hierarchy: ["X"]
     input_elements_df:
       ElementName: ["A"]
       ElementType: ["N"]
+      Hierarchy: ["X"]
     existing_edges_df:
       Parent: ["Total"]
       Child: ["A"]
+      Hierarchy: ["X"]
     existing_elements_df:
       ElementName: ["A"]
       ElementType: ["N"]
+      Hierarchy: ["X"]
     mode: "rebuild"
     allow_type_changes: false
     orphan_parent_name: "OrphanParent"
     normalized_edges_df:
       Parent: ["Total"]
       Child: ["A"]
+      Hierarchy: ["X"]
     normalized_elements_df:
       ElementName: ["A"]
       ElementType: ["N"]
+      Hierarchy: ["X"]
 
 test_resolve_schema_allow_type_changes_success:
   - dimension_name: "Dim1"
     input_edges_df:
       Parent: ["Total"]
       Child: ["A"]
+      Hierarchy: ["X"]
     input_elements_df:
       ElementName: ["A"]
       ElementType: ["N"]
+      Hierarchy: ["X"]
     existing_edges_df:
       Parent: ["Total"]
       Child: ["A"]
+      Hierarchy: ["X"]
     existing_elements_df:
       ElementName: ["A"]
       ElementType: ["S"]
+      Hierarchy: ["X"]
     mode: "update"
     allow_type_changes: true
     orphan_parent_name: "OrphanParent"
     normalized_edges_df:
       Parent: ["Total"]
       Child: ["A"]
+      Hierarchy: ["X"]
     normalized_elements_df:
       ElementName: ["A"]
       ElementType: ["N"]
+      Hierarchy: ["X"]
     conflicts_df:
       - {ElementName: "A", Hierarchy: "H1", ElementType_existing: "String", ElementType_input: "Numeric"}
 
@@ -2076,3 +2088,280 @@ test_update_element_attributes_success:
       Dim1: ["H1:A"]
       "}ElementAttributes_Dim1": ["Color"]
       Value: ["Blue"]
+
+test_remove_empty_subtrees:
+  - # Scenario 1: Standard Removal
+    # "BadBranch" -> "DeadEnd" (C) has no children, so it should be removed.
+    # "GoodBranch" -> "Leaf" (N) is valid, so it keeps "Total" alive.
+    input_edges:
+      Parent: ["Total", "Total", "GoodBranch", "BadBranch", "BadBranch"]
+      Child:  ["GoodBranch", "BadBranch", "Leaf1", "DeadEnd1", "DeadEnd2"]
+    input_elements:
+      ElementName: ["Total", "GoodBranch", "BadBranch", "Leaf1", "DeadEnd1", "DeadEnd2"]
+      ElementType: ["Consolidated", "Consolidated", "Consolidated", "Numeric", "Consolidated", "Consolidated"]
+    expected_edges:
+      Parent: ["Total", "GoodBranch"]
+      Child:  ["GoodBranch", "Leaf1"]
+    expected_elements:
+      ElementName: ["Total", "GoodBranch", "Leaf1"]
+      ElementType: ["Consolidated", "Consolidated", "Numeric"]
+
+  - # Scenario 2: Diamond Structure (Shared Leaf)
+    # Both PathA and PathB lead to the same Leaf. Both should be preserved.
+    input_edges:
+      Parent: ["Root", "Root", "PathA", "PathB"]
+      Child:  ["PathA", "PathB", "Leaf", "Leaf"]
+    input_elements:
+      ElementName: ["Root", "PathA", "PathB", "Leaf"]
+      ElementType: ["Consolidated", "Consolidated", "Consolidated", "Numeric"]
+    expected_edges:
+      Parent: ["Root", "Root", "PathA", "PathB"]
+      Child:  ["PathA", "PathB", "Leaf", "Leaf"]
+    expected_elements:
+      ElementName: ["Root", "PathA", "PathB", "Leaf"]
+      ElementType: ["Consolidated", "Consolidated", "Consolidated", "Numeric"]
+
+  - # Scenario 3: Support for 'S' (String) type leaves
+    # Ensures 'S' is treated as a valid leaf just like 'N'.
+    input_edges:
+      Parent: ["Root", "Root", "TextBranch", "EmptyBranch"]
+      Child:  ["TextBranch", "EmptyBranch", "Comment", "Void"]
+    input_elements:
+      ElementName: ["Root", "TextBranch", "EmptyBranch", "Comment", "Void"]
+      ElementType: ["Consolidated", "Consolidated", "Consolidated", "String", "Consolidated"]
+    expected_edges:
+      Parent: ["Root", "TextBranch"]
+      Child:  ["TextBranch", "Comment"]
+    expected_elements:
+      ElementName: ["Root", "TextBranch", "Comment"]
+      ElementType: ["Consolidated", "Consolidated", "String"]
+
+test_process_parent_child_format:
+  - # Scenario 1: Standard edge merge and single isolated element
+    elements_dataframe_input: {
+      "Dimension": ["Account", "Account", "Account"],
+      "Hierarchy": ["Primary", "Primary", "Primary"],
+      "ElementName": ["Total", "SubTotal", "IsolatedMetric"],
+      "ElementType": ["C", "C", "N"]
+    }
+    edges_dataframe_input: {
+      "Dimension": ["Account"],
+      "Hierarchy": ["Primary"],
+      "Parent": ["Total"],
+      "Child": ["SubTotal"],
+      "Weight": [1.0]
+    }
+    expected_dataframe: {
+      "Dimension": ["Account", "Account", "Account"],
+      "Hierarchy": ["Primary", "Primary", "Primary"],
+      "Parent": [null, "Total", null],
+      "Child": ["Total", "SubTotal", "IsolatedMetric"],
+      "Weight": [null, 1.0, null],
+      "ElementType": ["C", "C", "N"]
+    }
+  - # Scenario 1: Complex shared node and multiple roots (Testing precise order)
+    elements_dataframe_input: {
+      "Dimension": [ "Account", "Account", "Account", "Account", "Account", "Account", "Account" ],
+      "Hierarchy": [ "Primary", "Primary", "Primary", "Primary", "Primary", "Primary", "Primary" ],
+      "ElementName": [ "TotalA", "TotalB", "SharedSub", "LeafX", "LeafY", "IsolatedX", "IsolatedY" ],
+      "ElementType": [ "C", "C", "C", "N", "N", "N", "N" ]
+    }
+    edges_dataframe_input: {
+      "Dimension": [ "Account", "Account", "Account", "Account" ],
+      "Hierarchy": [ "Primary", "Primary", "Primary", "Primary" ],
+      "Parent": [ "TotalA", "TotalB", "SharedSub", "TotalA" ],
+      "Child": [ "SharedSub", "SharedSub", "LeafX", "LeafY" ],
+      "Weight": [ 1.0, 0.5, 1.0, -1.0 ]
+    }
+    expected_dataframe: {
+      "Dimension": [ "Account", "Account", "Account", "Account", "Account", "Account", "Account", "Account" ],
+      "Hierarchy": [ "Primary", "Primary", "Primary", "Primary", "Primary", "Primary", "Primary", "Primary" ],
+      "Parent": [ null, null, "SharedSub", "TotalA", "TotalA", "TotalB", null, null ],
+      "Child": [ "TotalA", "TotalB", "LeafX", "LeafY", "SharedSub", "SharedSub", "IsolatedX", "IsolatedY" ],
+      "Weight": [ null, null, 1.0, -1.0, 1.0, 0.5, null, null ],
+      "ElementType": [ "C", "C", "N", "N", "C", "C", "N", "N" ]
+    }
+
+  - # Scenario 2: Multiple Dimensions and Hierarchies evaluated simultaneously
+    # Dim1 has a standard tree + isolated node. Dim2 has a root + isolated node.
+    elements_dataframe_input: {
+      "Dimension": [ "Dim1", "Dim1", "Dim1", "Dim2", "Dim2", "Dim2" ],
+      "Hierarchy": [ "Hier1", "Hier1", "Hier1", "HierA", "HierA", "HierA" ],
+      "ElementName": [ "D1_Root", "D1_Leaf", "D1_Iso", "D2_Root", "D2_Leaf", "D2_Iso" ],
+      "ElementType": [ "C", "N", "N", "C", "N", "N" ],
+      "CustomAttr": [ "A1", "A2", "A3", "B1", "B2", "B3" ]
+    }
+    edges_dataframe_input: {
+      "Dimension": [ "Dim1", "Dim2" ],
+      "Hierarchy": [ "Hier1", "HierA" ],
+      "Parent": [ "D1_Root", "D2_Root" ],
+      "Child": [ "D1_Leaf", "D2_Leaf" ],
+      "Weight": [ 1.0, 1.0 ]
+    }
+    expected_dataframe: {
+      "Dimension": [ "Dim1", "Dim2", "Dim1", "Dim2", "Dim1", "Dim2" ],
+      "Hierarchy": [ "Hier1", "HierA", "Hier1", "HierA", "Hier1", "HierA" ],
+      "Parent": [ null, null, "D1_Root", "D2_Root", null, null ],
+      "Child": [ "D1_Root", "D2_Root", "D1_Leaf", "D2_Leaf", "D1_Iso", "D2_Iso" ],
+      "Weight": [ null, null, 1.0, 1.0, null, null ],
+      "ElementType": [ "C", "C", "N", "N", "N", "N" ],
+      "CustomAttr": [ "A1", "B1", "A2", "B2", "A3", "B3" ]
+    }
+
+  - # Scenario 3: Complete Isolation (No valid edges exist)
+    # Testing how the masks behave when the edges DataFrame is structurally sound but empty of relations.
+    elements_dataframe_input: {
+      "Dimension": [ "Version", "Version" ],
+      "Hierarchy": [ "Main", "Main" ],
+      "ElementName": [ "Actual", "Budget" ],
+      "ElementType": [ "N", "N" ]
+    }
+    edges_dataframe_input: {
+      "Dimension": [ ],
+      "Hierarchy": [ ],
+      "Parent": [ ],
+      "Child": [ ],
+      "Weight": [ ]
+    }
+    expected_dataframe: {
+      "Dimension": [ "Version", "Version" ],
+      "Hierarchy": [ "Main", "Main" ],
+      "Parent": [ null, null ],
+      "Child": [ "Actual", "Budget" ],
+      "Weight": [ null, null ],
+      "ElementType": [ "N", "N" ]
+    }
+
+test_process_hierarchical_levels_format:
+  - # Scenario 1: Indented levels format with standard tree
+    elements_dataframe_input: {
+      "Dimension": ["Region", "Region"],
+      "Hierarchy": ["Geo", "Geo"],
+      "ElementName": ["Europe", "France"],
+      "ElementType": ["C", "N"]
+    }
+    edges_dataframe_input: {
+      "Dimension": ["Region"],
+      "Hierarchy": ["Geo"],
+      "Parent": ["Europe"],
+      "Child": ["France"],
+      "Weight": [1.0]
+    }
+    format_selector: "indented-levels"
+    maximum_levels_depth: null
+    expected_dataframe: {
+      "Dimension": ["Region", "Region"],
+      "Hierarchy": ["Geo", "Geo"],
+      "Level1": ["Europe", null],
+      "Level2": [null, "France"],
+      "Weight": [null, 1.0],
+      "ElementType": ["C", "N"]
+    }
+
+  - # Scenario 2: Filled levels format with forced padding via maximum_levels_depth
+    elements_dataframe_input: {
+      "Dimension": ["Region", "Region"],
+      "Hierarchy": ["Geo", "Geo"],
+      "ElementName": ["Europe", "France"],
+      "ElementType": ["C", "N"]
+    }
+    edges_dataframe_input: {
+      "Dimension": ["Region"],
+      "Hierarchy": ["Geo"],
+      "Parent": ["Europe"],
+      "Child": ["France"],
+      "Weight": [1.0]
+    }
+    format_selector: "filled-levels"
+    maximum_levels_depth: 3
+    expected_dataframe: {
+      "Dimension": ["Region", "Region"],
+      "Hierarchy": ["Geo", "Geo"],
+      "Level1": ["Europe", "Europe"],
+      "Level2": [null, "France"],
+      "Level3": [null, null],
+      "Weight": [null, 1.0],
+      "ElementType": ["C", "N"]
+    }
+  - # Scenario 1: Complex Ragged Hierarchy with Shared Node Truncation (indented-levels)
+    # RootA and RootB both share SubA.
+    # SubA should fully expand under RootA, but truncate under RootB.
+    elements_dataframe_input: {
+      "Dimension": ["Account", "Account", "Account", "Account", "Account", "Account"],
+      "Hierarchy": ["Primary", "Primary", "Primary", "Primary", "Primary", "Primary"],
+      "ElementName": ["RootA", "RootB", "SubA", "Leaf1", "Leaf2", "Iso1"],
+      "ElementType": ["C", "C", "C", "N", "N", "N"]
+    }
+    edges_dataframe_input: {
+      "Dimension": ["Account", "Account", "Account", "Account"],
+      "Hierarchy": ["Primary", "Primary", "Primary", "Primary"],
+      "Parent": ["RootA", "RootA", "SubA", "RootB"],
+      "Child": ["SubA", "Leaf2", "Leaf1", "SubA"],
+      "Weight": [1.0, 1.0, 1.0, 0.5]
+    }
+    format_selector: "indented-levels"
+    maximum_levels_depth: null
+    expected_dataframe: {
+      "Dimension": ["Account", "Account", "Account", "Account", "Account", "Account", "Account"],
+      "Hierarchy": ["Primary", "Primary", "Primary", "Primary", "Primary", "Primary", "Primary"],
+      "Level1": ["RootA", null, null, null, "RootB", null, "Iso1"],
+      "Level2": [null, "SubA", null, "Leaf2", null, "SubA", null],
+      "Level3": [null, null, "Leaf1", null, null, null, null],
+      "Weight": [null, 1.0, 1.0, 1.0, null, 0.5, null],
+      "ElementType": ["C", "C", "N", "N", "C", "C", "N"]
+    }
+
+  - # Scenario 2: Deep Padding and Path Retention (filled-levels)
+    # A single, deep path forced to pad out to 5 levels to test dynamic column generation.
+    elements_dataframe_input: {
+      "Dimension": ["Region", "Region", "Region", "Region"],
+      "Hierarchy": ["Geo", "Geo", "Geo", "Geo"],
+      "ElementName": ["World", "Europe", "France", "Paris"],
+      "ElementType": ["C", "C", "C", "N"]
+    }
+    edges_dataframe_input: {
+      "Dimension": ["Region", "Region", "Region"],
+      "Hierarchy": ["Geo", "Geo", "Geo"],
+      "Parent": ["World", "Europe", "France"],
+      "Child": ["Europe", "France", "Paris"],
+      "Weight": [1.0, 1.0, 1.0]
+    }
+    format_selector: "filled-levels"
+    maximum_levels_depth: 5
+    expected_dataframe: {
+      "Dimension": ["Region", "Region", "Region", "Region"],
+      "Hierarchy": ["Geo", "Geo", "Geo", "Geo"],
+      "Level1": ["World", "World", "World", "World"],
+      "Level2": [null, "Europe", "Europe", "Europe"],
+      "Level3": [null, null, "France", "France"],
+      "Level4": [null, null, null, "Paris"],
+      "Level5": [null, null, null, null],
+      "Weight": [null, 1.0, 1.0, 1.0],
+      "ElementType": ["C", "C", "C", "N"]
+    }
+
+  - # Scenario 3: Multiple Hierarchies Interleaved
+    # Ensures the dictionary grouping cleanly segregates paths across different hierarchies
+    elements_dataframe_input: {
+      "Dimension": ["Dim1", "Dim1", "Dim1", "Dim1"],
+      "Hierarchy": ["HierA", "HierA", "HierB", "HierB"],
+      "ElementName": ["RootA", "LeafA", "RootB", "LeafB"],
+      "ElementType": ["C", "N", "C", "N"]
+    }
+    edges_dataframe_input: {
+      "Dimension": ["Dim1", "Dim1"],
+      "Hierarchy": ["HierA", "HierB"],
+      "Parent": ["RootA", "RootB"],
+      "Child": ["LeafA", "LeafB"],
+      "Weight": [1.0, -1.0]
+    }
+    format_selector: "indented-levels"
+    maximum_levels_depth: null
+    expected_dataframe: {
+      "Dimension": ["Dim1", "Dim1", "Dim1", "Dim1"],
+      "Hierarchy": ["HierA", "HierA", "HierB", "HierB"],
+      "Level1": ["RootA", null, "RootB", null],
+      "Level2": [null, "LeafA", null, "LeafB"],
+      "Weight": [null, 1.0, null, -1.0],
+      "ElementType": ["C", "N", "C", "N"]
+    }

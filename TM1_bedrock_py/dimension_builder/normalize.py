@@ -1,4 +1,4 @@
-from typing import Optional, Tuple, Callable, Literal, Union
+from typing import Optional, Tuple, Callable, Literal, Union, Dict, List, Any, Set
 
 import numpy as np
 import pandas as pd
@@ -361,27 +361,46 @@ def clear_orphan_parent_elements(
     return elements_df.reset_index(drop=True)
 
 
-def normalize_existing_schema(
+def normalize_existing_schema_for_builder(
         existing_edges_df: Optional[pd.DataFrame], existing_elements_df: pd.DataFrame,
-        old_orphan_parent_name: str = "OrphanParent"
+        old_orphan_parent_name: str = "OrphanParent", clear_orphan_parents: bool = True
 ) -> Tuple[Optional[pd.DataFrame], pd.DataFrame]:
     # further enhance if necessary, currently this seems enough
-    existing_elements_df = clear_orphan_parent_elements(existing_elements_df, old_orphan_parent_name)
+    if clear_orphan_parents:
+        existing_elements_df = clear_orphan_parent_elements(existing_elements_df, old_orphan_parent_name)
     existing_elements_df, attribute_columns = normalize_attr_column_names(existing_elements_df)
-
-    existing_elements_df.reset_index(drop=True, inplace=True)
 
     if existing_edges_df is None:
         return None, existing_elements_df
 
-    existing_edges_df = clear_orphan_parent_edges(existing_edges_df, old_orphan_parent_name)
+    if clear_orphan_parents:
+        existing_edges_df = clear_orphan_parent_edges(existing_edges_df, old_orphan_parent_name)
+
+    existing_elements_df.reset_index(drop=True, inplace=True)
     existing_edges_df.reset_index(drop=True, inplace=True)
 
     return existing_edges_df, existing_elements_df
 
 
-def normalize_updated_schema(
-    updated_edges_df: pd.DataFrame, updated_elements_df: pd.DataFrame
+def normalize_existing_schema_full(
+        existing_edges_df: Optional[pd.DataFrame], existing_elements_df: pd.DataFrame,
+) -> Tuple[Optional[pd.DataFrame], Optional[pd.DataFrame]]:
+    if existing_elements_df is None:
+        return None, None
+
+    existing_elements_df, attribute_columns = normalize_attr_column_names(existing_elements_df)
+    assign_missing_attribute_values(elements_df=existing_elements_df, attribute_columns=attribute_columns)
+    validate_and_normalize_attr_column_types(elements_df=existing_elements_df, attr_columns=attribute_columns)
+    existing_elements_df.reset_index(drop=True, inplace=True)
+
+    if existing_edges_df is None:
+        return None, existing_elements_df
+    existing_edges_df.reset_index(drop=True, inplace=True)
+    return existing_edges_df, existing_elements_df
+
+
+def normalize_updated_schema_for_builder(
+        updated_edges_df: pd.DataFrame, updated_elements_df: pd.DataFrame
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     attribute_columns = utility.get_attribute_columns_list(input_df=updated_elements_df)
 
@@ -389,3 +408,202 @@ def normalize_updated_schema(
     assign_missing_attribute_values(elements_df=updated_elements_df, attribute_columns=attribute_columns)
     validate_and_normalize_attr_column_types(elements_df=updated_elements_df, attr_columns=attribute_columns)
     return updated_edges_df, updated_elements_df
+
+
+def process_parent_child_format(
+        elements_df: pd.DataFrame,
+        edges_df: pd.DataFrame,
+        **_kwargs: Any
+) -> pd.DataFrame:
+    merged_dataframe: pd.DataFrame = pd.merge(
+        edges_df,
+        elements_df,
+        left_on=["Dimension", "Hierarchy", "Child"],
+        right_on=["Dimension", "Hierarchy", "ElementName"],
+        how="outer"
+    )
+
+    missing_parent_mask: pd.Series = merged_dataframe["Child"].isna()
+    merged_dataframe.loc[missing_parent_mask, "Child"] = merged_dataframe.loc[missing_parent_mask, "ElementName"]
+
+    columns_to_drop: List[str] = ["ElementName"]
+    merged_dataframe = merged_dataframe.drop(columns=columns_to_drop)
+
+    roots_mask: pd.Series = merged_dataframe["Parent"].isna() & merged_dataframe["Child"].isin(edges_df["Parent"])
+    isolated_mask: pd.Series = merged_dataframe["Parent"].isna() & ~merged_dataframe["Child"].isin(edges_df["Parent"])
+    edges_mask: pd.Series = merged_dataframe["Parent"].notna()
+
+    # Applied explicit sorting to guarantee deterministic outputs for testing and downstream systems
+    roots_dataframe: pd.DataFrame = merged_dataframe[roots_mask].sort_values(
+        by=["Dimension", "Hierarchy", "Child"]
+    )
+    edges_dataframe_part: pd.DataFrame = merged_dataframe[edges_mask].sort_values(
+        by=["Dimension", "Hierarchy", "Parent", "Child"]
+    )
+    isolated_dataframe: pd.DataFrame = merged_dataframe[isolated_mask].sort_values(
+        by=["Dimension", "Hierarchy", "Child"]
+    )
+
+    ordered_merged_dataframe: pd.DataFrame = pd.concat(
+        [roots_dataframe, edges_dataframe_part, isolated_dataframe],
+        ignore_index=True
+    )
+
+    # Converts all pandas NaN (float64) values to Python None (object) to align dtypes
+    ordered_merged_dataframe = ordered_merged_dataframe.where(pd.notnull(ordered_merged_dataframe), None)
+
+    base_columns: List[str] = ["Dimension", "Hierarchy", "Parent", "Child", "Weight"]
+    attribute_columns: List[str] = [
+        column for column in ordered_merged_dataframe.columns
+        if column not in base_columns
+    ]
+
+    ordered_columns: List[str] = base_columns + attribute_columns
+
+    return ordered_merged_dataframe[ordered_columns]
+
+
+def process_hierarchical_levels_format(
+        elements_df: pd.DataFrame,
+        edges_df: pd.DataFrame,
+        format_selector: str,
+        maximum_levels_depth: Optional[int] = None,
+        **_kwargs: Any
+) -> pd.DataFrame:
+    elements_records: List[Dict[str, Any]] = elements_df.to_dict(orient="records")
+    edges_records: List[Dict[str, Any]] = edges_df.to_dict(orient="records")
+
+    hierarchy_elements_mapping: Dict[Tuple[str, str], Dict[str, Dict[str, Any]]] = {}
+
+    for element_record in elements_records:
+        grouping_key: Tuple[str, str] = (element_record["Dimension"], element_record["Hierarchy"])
+        element_name: str = element_record["ElementName"]
+
+        if grouping_key not in hierarchy_elements_mapping:
+            hierarchy_elements_mapping[grouping_key] = {}
+
+        attribute_dictionary: Dict[str, Any] = {
+            key: value for key, value in element_record.items()
+            if key not in ["Dimension", "Hierarchy", "ElementName"]
+        }
+        hierarchy_elements_mapping[grouping_key][element_name] = attribute_dictionary
+
+    hierarchy_edges_mapping: Dict[Tuple[str, str], Dict[str, List[Dict[str, Any]]]] = {}
+    hierarchy_children_sets: Dict[Tuple[str, str], Set[str]] = {}
+
+    for edge_record in edges_records:
+        grouping_key = (edge_record["Dimension"], edge_record["Hierarchy"])
+        parent_name: str = edge_record["Parent"]
+        child_name: str = edge_record["Child"]
+
+        if grouping_key not in hierarchy_edges_mapping:
+            hierarchy_edges_mapping[grouping_key] = {}
+        if grouping_key not in hierarchy_children_sets:
+            hierarchy_children_sets[grouping_key] = set()
+
+        if parent_name not in hierarchy_edges_mapping[grouping_key]:
+            hierarchy_edges_mapping[grouping_key][parent_name] = []
+
+        hierarchy_edges_mapping[grouping_key][parent_name].append({
+            "child_name": child_name,
+            "edge_weight": edge_record["Weight"]
+        })
+        hierarchy_children_sets[grouping_key].add(child_name)
+
+    generated_hierarchical_rows: List[Dict[str, Any]] = []
+    absolute_maximum_depth: int = 0
+
+    for grouping_key in sorted(hierarchy_elements_mapping.keys()):
+        elements_mapping = hierarchy_elements_mapping[grouping_key]
+        dimension_name: str = grouping_key[0]
+        hierarchy_name: str = grouping_key[1]
+
+        all_element_names: Set[str] = set(elements_mapping.keys())
+        child_element_names: Set[str] = hierarchy_children_sets.get(grouping_key, set())
+        root_element_names: Set[str] = all_element_names - child_element_names
+
+        # Alphabetical sorting guarantees deterministic tree traversal entry points
+        actual_roots: List[str] = sorted([
+            root for root in root_element_names
+            if root in hierarchy_edges_mapping.get(grouping_key, {})
+        ])
+        isolated_elements: List[str] = sorted([
+            root for root in root_element_names
+            if root not in hierarchy_edges_mapping.get(grouping_key, {})
+        ])
+
+        ordered_traversal_roots: List[str] = actual_roots + isolated_elements
+        expanded_nodes_tracker: Set[str] = set()
+
+        for root_element in ordered_traversal_roots:
+            traversal_stack: List[Tuple[str, Optional[float], int, List[str]]] = [
+                (root_element, None, 1, [root_element])
+            ]
+
+            while traversal_stack:
+                current_node, current_weight, current_level, current_path = traversal_stack.pop()
+
+                absolute_maximum_depth = max(absolute_maximum_depth, current_level)
+
+                row_dictionary: Dict[str, Any] = {
+                    "Dimension": dimension_name,
+                    "Hierarchy": hierarchy_name,
+                    "Weight": current_weight
+                }
+
+                if format_selector == "indented-levels":
+                    row_dictionary[f"Level{current_level}"] = current_node
+                elif format_selector == "filled-levels":
+                    for level_index, path_node in enumerate(current_path):
+                        row_dictionary[f"Level{level_index + 1}"] = path_node
+
+                element_attributes: Dict[str, Any] = elements_mapping.get(current_node, {})
+                row_dictionary.update(element_attributes)
+
+                generated_hierarchical_rows.append(row_dictionary)
+
+                if current_node not in expanded_nodes_tracker:
+                    expanded_nodes_tracker.add(current_node)
+
+                    children_list: List[Dict[str, Any]] = hierarchy_edges_mapping.get(grouping_key, {}).get(
+                        current_node, [])
+                    for child_data in reversed(children_list):
+                        child_node_name: str = child_data["child_name"]
+                        child_edge_weight: float = child_data["edge_weight"]
+                        new_traversal_path: List[str] = current_path + [child_node_name]
+                        traversal_stack.append(
+                            (child_node_name, child_edge_weight, current_level + 1, new_traversal_path)
+                        )
+
+    hierarchical_dataframe: pd.DataFrame = pd.DataFrame(generated_hierarchical_rows)
+
+    target_maximum_depth: int = absolute_maximum_depth
+    if maximum_levels_depth is not None and maximum_levels_depth > absolute_maximum_depth:
+        target_maximum_depth = maximum_levels_depth
+
+    level_column_names: List[str] = [f"Level{level_index}" for level_index in range(1, target_maximum_depth + 1)]
+
+    for level_column in level_column_names:
+        if level_column not in hierarchical_dataframe.columns:
+            hierarchical_dataframe[level_column] = None
+
+    base_columns = ["Dimension", "Hierarchy"]
+    metric_columns: List[str] = ["Weight"]
+    attribute_columns = [
+        column for column in hierarchical_dataframe.columns
+        if column not in base_columns and column not in level_column_names and column not in metric_columns
+    ]
+
+    ordered_columns = base_columns + level_column_names + metric_columns + attribute_columns
+
+    return hierarchical_dataframe[ordered_columns]
+
+
+def delete_leaves_hierarchy_from_schema(
+        edges_df: pd.DataFrame, elements_df: pd.DataFrame
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    return (
+        edges_df[edges_df["Hierarchy"] != "Leaves"].reset_index(drop=True),
+        elements_df[elements_df["Hierarchy"] != "Leaves"].reset_index(drop=True)
+    )
+

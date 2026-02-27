@@ -1,7 +1,9 @@
 import pandas as pd
+import os
 from TM1py import TM1Service
 
 from TM1_bedrock_py import bedrock
+from TM1_bedrock_py.dimension_builder.io import read_source_to_df
 from TM1_bedrock_py.utility import set_logging_level
 from tests.tests_dimension_builder.test_data.test_data import generate_hierarchy_data
 
@@ -19,9 +21,10 @@ def complex_transform_demo():
         "password": "testbench",
         "ssl": False
     }
-    tm1_service = TM1Service(**tm1_params)
+    tm1_service = TM1Service(**tm1_params)  # tm1 szerver választó lista
 
-    target_cube_name = "Sales"
+    target_cube_name = "Sales"  # kocka választó lista / automatikusan kitöltve (jobbklikk a kockára)
+
     data_mdx = """
         SELECT
         NON EMPTY
@@ -93,9 +96,8 @@ def complex_transform_demo():
         return x * 1.0912
 
     try:
-        #bedrock.data_copy_intercube(
-        bedrock.data_copy(
-            #target_cube_name=target_cube_name,
+        bedrock.data_copy_intercube(
+            target_cube_name=target_cube_name,
             tm1_service=tm1_service,
             data_mdx=data_mdx,
             mapping_steps=mapping_steps,
@@ -104,12 +106,20 @@ def complex_transform_demo():
             target_clear_set_mdx_list=target_clear_set_mdx_list,
             use_blob=use_blob,
             logging_level=logging_level,
-            #use_mixed_datatypes=use_mixed_datatypes,
-            #ignore_missing_elements=ignore_missing_elements,
+            use_mixed_datatypes=use_mixed_datatypes,
+            ignore_missing_elements=ignore_missing_elements,
             verbose_logging_mode="print_console"
         )
     finally:
         tm1_service.logout()
+
+
+
+    """
+    
+    
+    
+    """
 
 
 def run_dim_builder_wrapper():
@@ -132,8 +142,8 @@ def run_dim_builder_wrapper():
     data, level_columns = generate_hierarchy_data(
         dimension_name=dimension_name,
         hierarchy_names=hierarchy_names,
-        nodes_per_hierarchy=200,
-        max_depth=2,
+        nodes_per_hierarchy=10,
+        max_depth=1,
         number_of_attributes=10,
         consistent_leaf_attributes=True
     )
@@ -153,5 +163,101 @@ def run_dim_builder_wrapper():
     )
 
 
+def dimension_builder_basic_demo():
+    tm1_params = {
+        "address": "dev.knowledgeseed.local",
+        "port": 5379,
+        "user": "admin",
+        "password": "admin",
+        "ssl": False
+    }
+    tm1_service = TM1Service(**tm1_params)
+
+    dimension_name = "DimBuilderDemo"
+    file_path = os.path.join(os.path.dirname(__file__), "dimension_builder_init.xlsx")
+    sheet_name = "Sheet1"
+    input_format = 'indented_levels'
+    build_strategy = 'rebuild'
+    level_columns = ["Level1", "Level2", "Level3", "Level4"]
+
+    try:
+        bedrock.dimension_builder(
+            tm1_service=tm1_service,
+            dimension_name=dimension_name,
+            input_datasource=file_path,
+            input_format=input_format,
+            build_strategy=build_strategy,
+            level_columns=level_columns,
+            sheet_name=sheet_name
+        )
+    finally:
+        tm1_service.logout()
+
+
+def dimension_builder_complex_demo():
+    tm1_params = {
+        "address": "dev.knowledgeseed.local",
+        "port": 5379,
+        "user": "admin",
+        "password": "admin",
+        "ssl": False
+    }
+    tm1_service = TM1Service(**tm1_params)
+
+    dimension_name = "DimBuilderDemo"
+    file_path = os.path.join(os.path.dirname(__file__), "dimension_builder_update.xlsx")
+    sheet_name = "Sheet1"
+    input_format = 'indented_levels'
+    attribute_parser = "square_brackets"
+    build_strategy = 'update'
+    level_columns = ["Level1", "Level2", "Level3", "Level4"]
+    weight_column = "ElementWeight"
+    allow_type_changes = True
+    old_orphan_parent_name = "OrphanParent"
+    new_orphan_parent_name = "NewOrphanParent"
+    logging_level = "DEBUG"
+
+    """
+    what we expect:
+        type added, values inferred (leaf elements are considered N type by default)
+        weight column renamed to standard
+        square bracket attr columns parsed
+        
+        new elements and edges added (subtotalX, elementX, elementY, element11 under element6)
+        existing elements kept (total, subtotal1, etc.)
+        
+        orphan parent name changed from OrphanParent to NewOrphanParent
+        old orphans kept (element7, oldsubtotal2 and its children)
+        new orphans added (subtotal3 and children, element4, element5)
+        
+        element type of element6 changed from N to C
+        
+        hierarchy not specified (AltHier) left as is, no modification, no delete
+        
+        detailed logging enabled
+    """
+
+    try:
+        bedrock.dimension_builder(
+            tm1_service=tm1_service,
+            dimension_name=dimension_name,
+            input_datasource=file_path,
+            input_format=input_format,
+            build_strategy=build_strategy,
+            level_columns=level_columns,
+            sheet_name=sheet_name,
+            weight_column=weight_column,
+            allow_type_changes=allow_type_changes,
+            old_orphan_parent_name=old_orphan_parent_name,
+            new_orphan_parent_name=new_orphan_parent_name,
+            attribute_parser=attribute_parser,
+            logging_level=logging_level
+        )
+    finally:
+        tm1_service.logout()
+
+
+
 if __name__ == '__main__':
-    run_dim_builder_wrapper()
+    # dimension_builder_basic_demo()
+    dimension_builder_complex_demo()

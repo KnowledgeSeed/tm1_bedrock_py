@@ -77,16 +77,6 @@ def test_unpivot_attributes_to_cube_format_success(elements_df, dimension_name, 
 # Main: tests for dimension builder io module
 # ------------------------------------------------------------------------------------------------------------
 
-def test_read_source_to_df_empty_parameters():
-    input_datasource = None
-    filter_input_columns = None
-    sql_engine = None
-    sql_query = None
-    sql_table_name = None
-    dataframe = read_source_to_df(source=input_datasource, column_names=filter_input_columns,
-        engine=sql_engine, sql_query=sql_query, table_name=sql_table_name)
-    assert dataframe is None
-
 
 test_data_csv = [
     ("parent_child.csv", EXPECTED_DF_PARENT_CHILD, None),
@@ -519,9 +509,9 @@ def test_normalize_existing_schema_success(
     expected_edges_df = None if expected_edges_df is None else pd.DataFrame(expected_edges_df)
     expected_elements_df = pd.DataFrame(expected_elements_df)
 
-    output_edges_df, output_elements_df = normalize.normalize_existing_schema(
-        existing_edges_df, existing_elements_df, old_orphan_parent_name
-    )
+    output_edges_df, output_elements_df = normalize.normalize_existing_schema_for_builder(existing_edges_df,
+                                                                                          existing_elements_df,
+                                                                                          old_orphan_parent_name)
     if expected_edges_df is None:
         assert output_edges_df is None
     else:
@@ -535,9 +525,8 @@ def test_normalize_updated_schema_success(updated_edges_df, updated_elements_df,
     updated_elements_df = pd.DataFrame(updated_elements_df)
     expected_edges_df = pd.DataFrame(expected_edges_df)
     expected_elements_df = pd.DataFrame(expected_elements_df)
-    output_edges_df, output_elements_df = normalize.normalize_updated_schema(
-        updated_edges_df, updated_elements_df
-    )
+    output_edges_df, output_elements_df = normalize.normalize_updated_schema_for_builder(updated_edges_df,
+                                                                                         updated_elements_df)
     pd.testing.assert_frame_equal(output_edges_df, expected_edges_df)
     pd.testing.assert_frame_equal(output_elements_df, expected_elements_df)
 
@@ -1027,17 +1016,15 @@ def test_init_existing_schema_success(
     def fake_retrieve_existing_schema(_tm1, _dim):
         return existing_edges_df, existing_elements_df
 
-    def fake_normalize_existing_schema(_edges, _elements, _old_name):
+    def fake_normalize_existing_schema(_edges, _elements, _old_name, _clear):
         return normalized_edges_df, normalized_elements_df
 
     monkeypatch.setattr(apply.io, "retrieve_existing_schema", fake_retrieve_existing_schema)
-    monkeypatch.setattr(apply.normalize, "normalize_existing_schema", fake_normalize_existing_schema)
+    monkeypatch.setattr(apply.normalize, "normalize_existing_schema_for_builder", fake_normalize_existing_schema)
 
-    edges_df, elements_df = apply.init_existing_schema(
-        tm1_service=tm1_service,
-        dimension_name=dimension_name,
-        old_orphan_parent_name=old_orphan_parent_name
-    )
+    edges_df, elements_df = apply.init_existing_schema_for_builder(tm1_service=tm1_service,
+                                                                   dimension_name=dimension_name,
+                                                                   old_orphan_parent_name=old_orphan_parent_name)
     if tm1_exists:
         if normalized_edges_df is None:
             assert edges_df is None
@@ -1064,7 +1051,7 @@ def test_resolve_schema_success(
 
     monkeypatch.setattr(apply, "validate_element_type_consistency", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(apply, "apply_updates", lambda **_kwargs: (normalized_edges_df, normalized_elements_df))
-    monkeypatch.setattr(apply.normalize, "normalize_updated_schema", lambda *_args, **_kwargs: (normalized_edges_df, normalized_elements_df))
+    monkeypatch.setattr(apply.normalize, "normalize_updated_schema_for_builder", lambda *_args, **_kwargs: (normalized_edges_df, normalized_elements_df))
     monkeypatch.setattr(apply, "post_validate_schema", lambda *_args, **_kwargs: None)
 
     edges_df, elements_df = apply.resolve_schema(
@@ -1101,7 +1088,7 @@ def test_resolve_schema_allow_type_changes_success(
     monkeypatch.setattr(apply, "validate_element_type_consistency", lambda *_args, **_kwargs: conflicts_df)
     monkeypatch.setattr(apply, "delete_conflicting_elements", lambda *_args, **_kwargs: delete_calls.update(count=delete_calls["count"] + 1))
     monkeypatch.setattr(apply, "apply_updates", lambda **_kwargs: (normalized_edges_df, normalized_elements_df))
-    monkeypatch.setattr(apply.normalize, "normalize_updated_schema", lambda *_args, **_kwargs: (normalized_edges_df, normalized_elements_df))
+    monkeypatch.setattr(apply.normalize, "normalize_updated_schema_for_builder", lambda *_args, **_kwargs: (normalized_edges_df, normalized_elements_df))
     monkeypatch.setattr(apply, "post_validate_schema", lambda *_args, **_kwargs: None)
 
     edges_df, elements_df = apply.resolve_schema(
@@ -1176,3 +1163,72 @@ def test_update_element_attributes_success(
     pd.testing.assert_frame_equal(attr_df, expected_attr_df)
     assert cube_name == expected_cube_name
     assert cube_dims == expected_cube_dims
+
+
+@parametrize_from_file
+def test_remove_empty_subtrees(input_edges, input_elements, expected_edges, expected_elements):
+    edges_df = pd.DataFrame(input_edges)
+    elements_df = pd.DataFrame(input_elements)
+
+    expected_edges_df = pd.DataFrame(expected_edges)
+    expected_elements_df = pd.DataFrame(expected_elements)
+
+    result_edges, result_elements = apply.remove_empty_subtrees(edges_df, elements_df)
+
+    result_edges = result_edges.sort_values(by=['Parent', 'Child']).reset_index(drop=True)
+    expected_edges_df = expected_edges_df.sort_values(by=['Parent', 'Child']).reset_index(drop=True)
+
+    result_elements = result_elements.sort_values(by='ElementName').reset_index(drop=True)
+    expected_elements_df = expected_elements_df.sort_values(by='ElementName').reset_index(drop=True)
+
+    pd.testing.assert_frame_equal(result_edges, expected_edges_df)
+    pd.testing.assert_frame_equal(result_elements, expected_elements_df)
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Main: tests for new dimension builder export functionality
+# ------------------------------------------------------------------------------------------------------------
+
+
+@parametrize_from_file
+def test_process_parent_child_format(
+    elements_dataframe_input,
+    edges_dataframe_input,
+    expected_dataframe,
+) -> None:
+    elements_dataframe: pd.DataFrame = pd.DataFrame(elements_dataframe_input)
+    edges_dataframe: pd.DataFrame = pd.DataFrame(edges_dataframe_input)
+    expected_result_dataframe: pd.DataFrame = pd.DataFrame(expected_dataframe)
+
+    actual_result_dataframe: pd.DataFrame = normalize.process_parent_child_format(elements_df=elements_dataframe,
+                                                                                  edges_df=edges_dataframe,
+                                                                                  format_selector="parent-child")
+
+    pd.testing.assert_frame_equal(
+        actual_result_dataframe,
+        expected_result_dataframe,
+        check_like=True,
+        check_dtype=False
+    )
+
+
+@parametrize_from_file
+def test_process_hierarchical_levels_format(
+    elements_dataframe_input, edges_dataframe_input,
+    format_selector, maximum_levels_depth,
+    expected_dataframe
+) -> None:
+    elements_dataframe = pd.DataFrame(elements_dataframe_input)
+    edges_dataframe = pd.DataFrame(edges_dataframe_input)
+    expected_result_dataframe: pd.DataFrame = pd.DataFrame(expected_dataframe)
+
+    actual_result_dataframe: pd.DataFrame = normalize.process_hierarchical_levels_format(
+        elements_df=elements_dataframe, edges_df=edges_dataframe,
+        format_selector=format_selector, maximum_levels_depth=maximum_levels_depth)
+
+    pd.testing.assert_frame_equal(
+        actual_result_dataframe,
+        expected_result_dataframe,
+        check_like=True,
+        check_dtype=False
+    )

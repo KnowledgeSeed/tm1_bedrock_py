@@ -1,7 +1,8 @@
 from pathlib import Path
-from typing import Any, Literal, Tuple, Optional, Callable, Union
+from typing import Any, Literal, Tuple, Optional, Callable, Union, Dict
 
 import pandas as pd
+import numpy as np
 from TM1py.Objects import Dimension, Hierarchy
 
 from TM1_bedrock_py import utility as baseutils
@@ -9,7 +10,8 @@ from TM1_bedrock_py.dimension_builder import normalize, utility, io
 from TM1_bedrock_py.dimension_builder.validate import (
     post_validate_schema,
     pre_validate_input_schema,
-    validate_element_type_consistency
+    validate_element_type_consistency,
+    validate_sort_order_config, validate_hierarchy_sort_order_config
 )
 
 
@@ -237,17 +239,48 @@ def init_input_schema(
     return input_edges_df, input_elements_df
 
 
-def init_existing_schema(
+@baseutils.log_exec_metrics
+def init_existing_schema_for_builder(
         tm1_service: Any, dimension_name: str,
-        old_orphan_parent_name: str = "OrphanParent"
+        old_orphan_parent_name: str = "OrphanParent",
+        clear_orphan_parents: bool = True
 ) -> Tuple[Optional[pd.DataFrame], Optional[pd.DataFrame]]:
     if not tm1_service.dimensions.exists(dimension_name):
         return None, None
 
     existing_edges_df, existing_elements_df = io.retrieve_existing_schema(tm1_service, dimension_name)
-    existing_edges_df, existing_elements_df = normalize.normalize_existing_schema(
-        existing_edges_df, existing_elements_df, old_orphan_parent_name)
+    existing_edges_df, existing_elements_df = normalize.normalize_existing_schema_for_builder(existing_edges_df,
+                                                                                              existing_elements_df,
+                                                                                              old_orphan_parent_name,
+                                                                                              clear_orphan_parents)
     return existing_edges_df, existing_elements_df
+
+
+@baseutils.log_exec_metrics
+def init_existing_schema_full(
+        tm1_service: Any, dimension_name: str
+) -> Tuple[Optional[pd.DataFrame], Optional[pd.DataFrame]]:
+    existing_edges_df, existing_elements_df = io.retrieve_existing_schema(tm1_service, dimension_name)
+    existing_edges_df, existing_elements_df = normalize.normalize_existing_schema_full(existing_edges_df,
+                                                                                       existing_elements_df)
+
+    return existing_edges_df, existing_elements_df
+
+
+@baseutils.log_exec_metrics
+def init_existing_schema_filtered(
+        tm1_service: Any, dimension_name: str, hierarchy_names: list[str]
+) -> Tuple[Optional[pd.DataFrame], Optional[pd.DataFrame]]:
+    if not hierarchy_names:
+        return None, None
+
+    existing_edges_df_filtered = io.read_existing_edges_df_filtered(tm1_service, dimension_name, hierarchy_names)
+    existing_elements_df_filtered = io.read_existing_elements_df_filtered(tm1_service, dimension_name, hierarchy_names)
+
+    normalized_edges_df, normalized_elements_df = normalize.normalize_existing_schema_full(
+        existing_edges_df_filtered, existing_elements_df_filtered)
+
+    return normalized_edges_df, normalized_elements_df
 
 
 @baseutils.log_exec_metrics
@@ -275,13 +308,16 @@ def resolve_schema(
     if allow_type_changes and (conflicts is not None):
         delete_conflicting_elements(tm1_service=tm1_service, conflicts=conflicts, dimension_name=dimension_name)
 
+    existing_edges_df, existing_elements_df = (
+        normalize.delete_leaves_hierarchy_from_schema(existing_edges_df, existing_elements_df))
+
     updated_edges_df, updated_elements_df = apply_updates(
         mode=mode,
         existing_edges_df=existing_edges_df, input_edges_df=input_edges_df,
         existing_elements_df=existing_elements_df, input_elements_df=input_elements_df,
         dimension_name=dimension_name, orphan_consolidation_name=orphan_parent_name)
 
-    normalized_updated_edges_df, normalized_updated_elements_df = normalize.normalize_updated_schema(
+    normalized_updated_edges_df, normalized_updated_elements_df = normalize.normalize_updated_schema_for_builder(
         updated_edges_df, updated_elements_df)
 
     post_validate_schema(normalized_updated_edges_df, normalized_updated_elements_df)
@@ -330,6 +366,35 @@ def build_dimension_object(
 
 
 @baseutils.log_exec_metrics
+def build_hierarchy_object(
+        dimension_name: str, hierarchy_name: str, edges_df: Optional[pd.DataFrame], elements_df: pd.DataFrame
+) -> Hierarchy:
+
+    hierarchy = Hierarchy(name=hierarchy_name, dimension_name=dimension_name)
+
+    attribute_strings = utility.get_attribute_columns_list(input_df=elements_df)
+
+    for attr_string in attribute_strings:
+        attr_name, attr_type = utility.parse_attribute_string(attr_string)
+        hierarchy.add_element_attribute(attr_name, attr_type)
+
+    for _, elements_df_row in elements_df.iterrows():
+        element_name = elements_df_row['ElementName']
+        element_type = elements_df_row['ElementType']
+
+        hierarchy.add_element(element_name=element_name, element_type=element_type)
+
+    if edges_df is not None:
+        for _, edges_df_row in edges_df.iterrows():
+            parent_name = edges_df_row['Parent']
+            child_name = edges_df_row['Child']
+            weight = edges_df_row['Weight']
+            hierarchy.add_edge(parent=parent_name, component=child_name, weight=weight)
+
+    return hierarchy
+
+
+@baseutils.log_exec_metrics
 def prepare_attributes_for_load(elements_df: pd.DataFrame, dimension_name: str) -> Tuple[pd.DataFrame, str, list[str]]:
     writable_attr_df = utility.unpivot_attributes_to_cube_format(
         elements_df=elements_df, dimension_name=dimension_name
@@ -338,3 +403,148 @@ def prepare_attributes_for_load(elements_df: pd.DataFrame, dimension_name: str) 
     element_attributes_cube_dims = [dimension_name, element_attributes_cube_name]
 
     return writable_attr_df, element_attributes_cube_name, element_attributes_cube_dims
+
+
+def generate_schema_from_attributes(
+        elements_df: pd.DataFrame, attribute_columns: list[str]
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    mask_invalid = elements_df[attribute_columns].isna().any(axis=1)
+    unassigned_edges = elements_df.loc[mask_invalid, ["ElementName"]].copy()
+    unassigned_edges['Parent'] = 'Unassigned'
+    unassigned_edges = unassigned_edges.rename(columns={"ElementName": 'Child'})
+
+    df_valid = elements_df[~mask_invalid].copy()
+    edge_frames = []
+
+    df_working = df_valid.copy()
+    current_parent_col = attribute_columns[0]
+
+    for i in range(len(attribute_columns) - 1):
+        next_attr_col = attribute_columns[i + 1]
+        unique_edges = df_working[[current_parent_col, next_attr_col]].drop_duplicates()
+        collision_mask = unique_edges.duplicated(subset=[next_attr_col], keep='first')
+
+        unique_edges['Child_ID'] = np.where(
+            collision_mask,
+            unique_edges[current_parent_col].astype(str) + '_' + unique_edges[next_attr_col].astype(str),
+            unique_edges[next_attr_col].astype(str)
+        )
+
+        level_edges = unique_edges[[current_parent_col, 'Child_ID']].rename(
+            columns={current_parent_col: 'Parent', 'Child_ID': 'Child'}
+        )
+        edge_frames.append(level_edges)
+
+        df_working = df_working.merge(
+            unique_edges[[current_parent_col, next_attr_col, 'Child_ID']],
+            on=[current_parent_col, next_attr_col],
+            how='left'
+        )
+
+        # Update the column name pointer for the next iteration
+        current_parent_col = 'Child_ID'
+
+    element_edges = df_working[[current_parent_col, "ElementName"]].drop_duplicates()
+    element_edges.columns = ['Parent', 'Child']
+    edge_frames.append(element_edges)
+    attr_hier_edges_df = pd.concat(edge_frames + [unassigned_edges], ignore_index=True)
+    attr_hier_edges_df["Weight"] = 1.0
+
+    new_elements_list = attr_hier_edges_df['Parent'].drop_duplicates().tolist()
+    new_elements_df = pd.DataFrame
+    new_elements_df["ElementName"] = new_elements_list
+    new_elements_df["ElementType"] = "Consolidated"
+    attr_hier_elements_df = pd.concat([elements_df, new_elements_df])
+
+    return attr_hier_edges_df, attr_hier_elements_df
+
+
+@baseutils.log_exec_metrics
+def remove_empty_subtrees(edges_df, elements_df):
+    leaf_types = ['Numeric', 'String']
+    leaf_elements = set(elements_df.loc[elements_df['ElementType'].isin(leaf_types), 'ElementName'])
+    valid_nodes = set(edges_df.loc[edges_df['Child'].isin(leaf_elements), 'Child'])
+
+    while True:
+        valid_parents = set(edges_df.loc[edges_df['Child'].isin(valid_nodes), 'Parent'])
+        new_nodes = valid_parents - valid_nodes
+
+        if not new_nodes:
+            break
+
+        valid_nodes.update(new_nodes)
+
+    clean_edges_df = edges_df[edges_df['Child'].isin(valid_nodes)].copy()
+    active_elements = set(clean_edges_df['Parent']).union(set(clean_edges_df['Child']))
+    clean_elements_df = elements_df[elements_df['ElementName'].isin(active_elements)].copy()
+
+    return clean_edges_df, clean_elements_df
+
+
+def apply_hierarchy_sort_order_attributes(
+        tm1_service: Any, dimension_name: str,
+        dimension_sort_order_config: dict = None,
+        hierarchy_sort_order_config: dict[str, dict] = None
+) -> None:
+    all_hierarchies = tm1_service.hierarchies.get_all_names(dimension_name)
+
+    if dimension_sort_order_config:
+        validate_sort_order_config(dimension_sort_order_config)
+    if hierarchy_sort_order_config:
+        validate_hierarchy_sort_order_config(all_hierarchies, hierarchy_sort_order_config)
+
+    def to_sort_tuple(cfg: dict) -> tuple:
+        return cfg["CompSortType"], cfg["CompSortSense"], cfg["ElSortType"], cfg["ElSortSense"]
+
+    for h_name in all_hierarchies:
+        active_config = hierarchy_sort_order_config.get(h_name) if hierarchy_sort_order_config else None
+        if not active_config:
+            active_config = dimension_sort_order_config
+
+        if active_config:
+            tm1_service.hierarchies._implement_hierarchy_sort_order(
+                dimension_name=dimension_name,
+                hierarchy_name=h_name,
+                hierarchy_sort_order=to_sort_tuple(active_config)
+            )
+
+
+def combine_schema_for_export(
+        elements_df: pd.DataFrame,
+        edges_df: pd.DataFrame,
+        orphan_parent_name: str,
+        column_rename_mapping: Dict[str, str],
+        format_selector: Literal["parent_child", "indented_levels", "filled_levels"],
+        maximum_levels_depth: Optional[int] = None
+) -> pd.DataFrame:
+    cleaned_edges_dataframe: pd.DataFrame = normalize.clear_orphan_parent_edges(
+        edges_df=edges_df.copy(),
+        orphan_consolidation_name=orphan_parent_name
+    )
+
+    cleaned_elements_dataframe: pd.DataFrame = normalize.clear_orphan_parent_elements(
+        elements_df=elements_df.copy(),
+        orphan_consolidation_name=orphan_parent_name
+    )
+
+    format_dispatch_mapping: Dict[str, Callable[[pd.DataFrame, pd.DataFrame, str, Optional[int]], pd.DataFrame]] = {
+        "parent_child": normalize.process_parent_child_format,
+        "indented_levels": normalize.process_hierarchical_levels_format,
+        "filled_levels": normalize.process_hierarchical_levels_format
+    }
+
+    selected_processing_function: Optional[Callable] = format_dispatch_mapping.get(format_selector)
+
+    if selected_processing_function is None:
+        raise ValueError(f"Unsupported format_selector provided: {format_selector}")
+
+    structured_dataframe: pd.DataFrame = selected_processing_function(
+        elements_dataframe=cleaned_elements_dataframe,
+        edges_dataframe=cleaned_edges_dataframe,
+        format_selector=format_selector,
+        maximum_levels_depth=maximum_levels_depth
+    )
+
+    renamed_dataframe: pd.DataFrame = structured_dataframe.rename(columns=column_rename_mapping)
+
+    return renamed_dataframe
