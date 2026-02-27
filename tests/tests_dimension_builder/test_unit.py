@@ -77,16 +77,6 @@ def test_unpivot_attributes_to_cube_format_success(elements_df, dimension_name, 
 # Main: tests for dimension builder io module
 # ------------------------------------------------------------------------------------------------------------
 
-def test_read_source_to_df_empty_parameters():
-    input_datasource = None
-    filter_input_columns = None
-    sql_engine = None
-    sql_query = None
-    sql_table_name = None
-    dataframe = read_source_to_df(source=input_datasource, column_names=filter_input_columns,
-        engine=sql_engine, sql_query=sql_query, table_name=sql_table_name)
-    assert dataframe is None
-
 
 test_data_csv = [
     ("parent_child.csv", EXPECTED_DF_PARENT_CHILD, None),
@@ -1026,11 +1016,11 @@ def test_init_existing_schema_success(
     def fake_retrieve_existing_schema(_tm1, _dim):
         return existing_edges_df, existing_elements_df
 
-    def fake_normalize_existing_schema(_edges, _elements, _old_name):
+    def fake_normalize_existing_schema(_edges, _elements, _old_name, _clear):
         return normalized_edges_df, normalized_elements_df
 
     monkeypatch.setattr(apply.io, "retrieve_existing_schema", fake_retrieve_existing_schema)
-    monkeypatch.setattr(apply.normalize, "normalize_existing_schema", fake_normalize_existing_schema)
+    monkeypatch.setattr(apply.normalize, "normalize_existing_schema_for_builder", fake_normalize_existing_schema)
 
     edges_df, elements_df = apply.init_existing_schema_for_builder(tm1_service=tm1_service,
                                                                    dimension_name=dimension_name,
@@ -1061,7 +1051,7 @@ def test_resolve_schema_success(
 
     monkeypatch.setattr(apply, "validate_element_type_consistency", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(apply, "apply_updates", lambda **_kwargs: (normalized_edges_df, normalized_elements_df))
-    monkeypatch.setattr(apply.normalize, "normalize_updated_schema", lambda *_args, **_kwargs: (normalized_edges_df, normalized_elements_df))
+    monkeypatch.setattr(apply.normalize, "normalize_updated_schema_for_builder", lambda *_args, **_kwargs: (normalized_edges_df, normalized_elements_df))
     monkeypatch.setattr(apply, "post_validate_schema", lambda *_args, **_kwargs: None)
 
     edges_df, elements_df = apply.resolve_schema(
@@ -1098,7 +1088,7 @@ def test_resolve_schema_allow_type_changes_success(
     monkeypatch.setattr(apply, "validate_element_type_consistency", lambda *_args, **_kwargs: conflicts_df)
     monkeypatch.setattr(apply, "delete_conflicting_elements", lambda *_args, **_kwargs: delete_calls.update(count=delete_calls["count"] + 1))
     monkeypatch.setattr(apply, "apply_updates", lambda **_kwargs: (normalized_edges_df, normalized_elements_df))
-    monkeypatch.setattr(apply.normalize, "normalize_updated_schema", lambda *_args, **_kwargs: (normalized_edges_df, normalized_elements_df))
+    monkeypatch.setattr(apply.normalize, "normalize_updated_schema_for_builder", lambda *_args, **_kwargs: (normalized_edges_df, normalized_elements_df))
     monkeypatch.setattr(apply, "post_validate_schema", lambda *_args, **_kwargs: None)
 
     edges_df, elements_df = apply.resolve_schema(

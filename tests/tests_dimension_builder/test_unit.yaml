@@ -2004,48 +2004,60 @@ test_resolve_schema_success:
     input_edges_df:
       Parent: ["Total"]
       Child: ["A"]
+      Hierarchy: ["X"]
     input_elements_df:
       ElementName: ["A"]
       ElementType: ["N"]
+      Hierarchy: ["X"]
     existing_edges_df:
       Parent: ["Total"]
       Child: ["A"]
+      Hierarchy: ["X"]
     existing_elements_df:
       ElementName: ["A"]
       ElementType: ["N"]
+      Hierarchy: ["X"]
     mode: "rebuild"
     allow_type_changes: false
     orphan_parent_name: "OrphanParent"
     normalized_edges_df:
       Parent: ["Total"]
       Child: ["A"]
+      Hierarchy: ["X"]
     normalized_elements_df:
       ElementName: ["A"]
       ElementType: ["N"]
+      Hierarchy: ["X"]
 
 test_resolve_schema_allow_type_changes_success:
   - dimension_name: "Dim1"
     input_edges_df:
       Parent: ["Total"]
       Child: ["A"]
+      Hierarchy: ["X"]
     input_elements_df:
       ElementName: ["A"]
       ElementType: ["N"]
+      Hierarchy: ["X"]
     existing_edges_df:
       Parent: ["Total"]
       Child: ["A"]
+      Hierarchy: ["X"]
     existing_elements_df:
       ElementName: ["A"]
       ElementType: ["S"]
+      Hierarchy: ["X"]
     mode: "update"
     allow_type_changes: true
     orphan_parent_name: "OrphanParent"
     normalized_edges_df:
       Parent: ["Total"]
       Child: ["A"]
+      Hierarchy: ["X"]
     normalized_elements_df:
       ElementName: ["A"]
       ElementType: ["N"]
+      Hierarchy: ["X"]
     conflicts_df:
       - {ElementName: "A", Hierarchy: "H1", ElementType_existing: "String", ElementType_input: "Numeric"}
 
