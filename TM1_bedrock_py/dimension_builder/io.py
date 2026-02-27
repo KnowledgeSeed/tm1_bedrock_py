@@ -192,7 +192,7 @@ def read_existing_edges_df(tm1_service: Any, dimension_name: str) -> Optional[pd
             "Hierarchy": hierarchy.name
         }
         for hierarchy in dimension.hierarchies
-        if hierarchy.name != "Leaves"
+        # if hierarchy.name != "Leaves"
         for (parent, child), weight in hierarchy.edges.items()
     ]
     if len(edge_list) == 0:
@@ -250,9 +250,9 @@ def read_existing_elements_df_for_hierarchy(
 def read_existing_elements_df(
         tm1_service: Any, dimension_name: str
 ) -> pd.DataFrame:
-    leaves = ["Leaves"]
+    # leaves = ["Leaves"]
     hierarchy_names = tm1_service.hierarchies.get_all_names(dimension_name)
-    hierarchy_names = list(set(hierarchy_names) - set(leaves))
+    # hierarchy_names = list(set(hierarchy_names) - set(leaves))
 
     dfs_to_concat = []
     for hierarchy_name in hierarchy_names:

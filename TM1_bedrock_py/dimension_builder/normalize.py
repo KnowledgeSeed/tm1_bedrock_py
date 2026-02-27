@@ -599,5 +599,11 @@ def process_hierarchical_levels_format(
     return hierarchical_dataframe[ordered_columns]
 
 
-
+def delete_leaves_hierarchy_from_schema(
+        edges_df: pd.DataFrame, elements_df: pd.DataFrame
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    return (
+        edges_df[edges_df["Hierarchy"] != "Leaves"].reset_index(drop=True),
+        elements_df[elements_df["Hierarchy"] != "Leaves"].reset_index(drop=True)
+    )
 

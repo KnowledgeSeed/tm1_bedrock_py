@@ -308,6 +308,9 @@ def resolve_schema(
     if allow_type_changes and (conflicts is not None):
         delete_conflicting_elements(tm1_service=tm1_service, conflicts=conflicts, dimension_name=dimension_name)
 
+    existing_edges_df, existing_elements_df = (
+        normalize.delete_leaves_hierarchy_from_schema(existing_edges_df, existing_elements_df))
+
     updated_edges_df, updated_elements_df = apply_updates(
         mode=mode,
         existing_edges_df=existing_edges_df, input_edges_df=input_edges_df,
