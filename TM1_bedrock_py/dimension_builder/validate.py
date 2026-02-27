@@ -304,19 +304,31 @@ def validate_element_type_consistency(
     if existing_elements_df is None:
         return None
 
-    cols_needed = ['ElementName', 'Hierarchy', 'ElementType']
-    df_existing_sub = existing_elements_df[cols_needed]
-    df_input_sub = input_elements_df[cols_needed]
+    cols_needed_for_check = ['ElementName', 'ElementType']
+    existing_dim_elements = existing_elements_df[cols_needed_for_check].drop_duplicates()
+    input_dim_elements = input_elements_df[cols_needed_for_check].drop_duplicates()
 
     merged_df = pd.merge(
-        df_existing_sub,
-        df_input_sub,
-        on=['ElementName', 'Hierarchy'],
+        existing_dim_elements,
+        input_dim_elements,
+        on=['ElementName'],
         how='inner',
         suffixes=('_existing', '_input')
     )
 
     conflicts = merged_df[merged_df['ElementType_existing'] != merged_df['ElementType_input']]
+
+    cols_needed_for_id = ['ElementName', 'Hierarchy']
+    existing_hier_elements = existing_elements_df[cols_needed_for_id]
+    conflicts_hier = pd.merge(
+        existing_hier_elements,
+        conflicts,
+        how='inner',
+        on=['ElementName']
+    )
+    all_columns = ['ElementName', 'Hierarchy', 'ElementType_existing', 'ElementType_input']
+    conflicts_hier = conflicts_hier[all_columns]
+
     if not conflicts.empty:
         num_conflicts = len(conflicts)
         examples = conflicts.head(10).to_dict(orient='records')
@@ -327,7 +339,7 @@ def validate_element_type_consistency(
             raise ElementTypeConflictError(error_msg)
 
         else:
-            return conflicts
+            return conflicts_hier
 
     return None
 

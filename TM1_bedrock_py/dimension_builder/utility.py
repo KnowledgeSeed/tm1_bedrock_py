@@ -92,18 +92,14 @@ def unpivot_attributes_to_cube_format(elements_df: pd.DataFrame, dimension_name:
 
 
 def get_delete_records_for_conflicting_elements(conflicts: pd.DataFrame) -> list[tuple]:
-    conflicting_hierarchies = conflicts["Hierarchy"].unique().tolist() + ["Leaves"]
+    conflicting_hierarchies = conflicts["Hierarchy"].unique().tolist()
     delete_dict = {
         hier: []
         for hier in conflicting_hierarchies
     }
     for _, conflicts_row in conflicts.iterrows():
         element_name = conflicts_row["ElementName"]
-        element_type = conflicts_row["ElementType_existing"]
         hierarchy_name = conflicts_row["Hierarchy"]
-
-        if element_type in ("String", "Numeric") and element_name not in delete_dict["Leaves"]:
-            delete_dict["Leaves"].append(element_name)
         delete_dict[hierarchy_name].append(element_name)
 
     targets = [

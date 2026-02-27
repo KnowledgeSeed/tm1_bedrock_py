@@ -1603,6 +1603,20 @@ test_validate_element_type_consistency_allow_changes:
     allow_type_changes: true
     expected_conflicts:
       - {ElementName: "A", Hierarchy: "H1", ElementType_existing: "N", ElementType_input: "S"}
+  - existing_elements_df:
+      - { ElementName: "A", Hierarchy: "H1", ElementType: "N" }
+      - { ElementName: "A", Hierarchy: "H2", ElementType: "N" }
+      - { ElementName: "B", Hierarchy: "H1", ElementType: "C" }
+      - { ElementName: "C", Hierarchy: "Leaves", ElementType: "N" }
+    input_elements_df:
+      - { ElementName: "A", Hierarchy: "H1", ElementType: "S" }
+      - { ElementName: "B", Hierarchy: "H1", ElementType: "C" }
+      - { ElementName: "C", Hierarchy: "H1", ElementType: "C" }
+    allow_type_changes: true
+    expected_conflicts:
+      - { ElementName: "A", Hierarchy: "H1", ElementType_existing: "N", ElementType_input: "S" }
+      - { ElementName: "A", Hierarchy: "H2", ElementType_existing: "N", ElementType_input: "S" }
+      - { ElementName: "C", Hierarchy: "Leaves", ElementType_existing: "N", ElementType_input: "C" }
 
 test_validate_elements_df_schema_for_inconsistent_element_type_success:
   - # All elements have exactly one type
@@ -1781,6 +1795,9 @@ test_get_delete_records_for_conflicting_elements:
       - { ElementName: "element2", Hierarchy: "default", ElementType_existing: "Numeric" }
       - { ElementName: "element3", Hierarchy: "default", ElementType_existing: "String" }
       - { ElementName: "element4", Hierarchy: "default", ElementType_existing: "Consolidated" }
+      - { ElementName: "element1", Hierarchy: "Leaves", ElementType_existing: "Numeric" }
+      - { ElementName: "element2", Hierarchy: "Leaves", ElementType_existing: "Numeric" }
+      - { ElementName: "element3", Hierarchy: "Leaves", ElementType_existing: "String" }
 
     expected_tuples:
       - [ "default", "element1" ]
