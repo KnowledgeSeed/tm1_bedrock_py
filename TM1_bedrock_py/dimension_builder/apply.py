@@ -216,8 +216,10 @@ def init_input_schema(
             engine=sql_engine, sql_query=sql_query, table_name=sql_table_name, **kwargs
         )
 
-    if raw_input_elements_df is None:
-        if not sql_elements_engine and (sql_elements_query or sql_table_elements_name):
+    raw_input_elements_initiated = input_elements_datasource or sql_table_elements_name or sql_elements_query
+    raw_input_elements_is_sql = sql_table_elements_name or sql_elements_query
+    if raw_input_elements_df is None and raw_input_elements_initiated:
+        if not sql_elements_engine and raw_input_elements_is_sql:
             sql_elements_engine = sql_engine
         raw_input_elements_df = io.read_source_to_df(
             source=input_elements_datasource, column_names=filter_input_elements_columns,
