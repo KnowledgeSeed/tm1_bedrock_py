@@ -143,7 +143,7 @@ def read_json_source_to_df(
     return pd.DataFrame(**dataframe_construction_arguments).fillna("")
 
 
-def read_source_to_dataframe(
+def read_source_to_df(
         source: Optional[Union[str, Path, os.PathLike[str]]] = None,
         *,
         engine: Optional[Any] = None,
