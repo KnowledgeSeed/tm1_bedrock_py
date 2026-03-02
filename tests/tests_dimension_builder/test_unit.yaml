@@ -468,7 +468,7 @@ test_assign_missing_type_values:
     expected_df: {
       "Parent": ["Total", "SubTotal"],
       "Child": ["SubTotal", "LeafA"],
-      "ElementType": ["Numeric", "Consolidated"]
+      "ElementType": ["Consolidated", "Numeric"]
     }
 
   - # Scenario 2: Preservation of existing values
@@ -486,14 +486,14 @@ test_assign_missing_type_values:
 
   - # Scenario 3: Mixed empty types (None, NaN, "")
     input_df: {
-      "Parent": ["A", "A", "B"],
-      "Child": ["B", "C", "D"],
-      "ElementType": [null, "", null]
+      "Parent": [null, "A", "A", "B"],
+      "Child": ["A", "B", "C", "D"],
+      "ElementType": [null, "", null, ""]
     }
     expected_df: {
-      "Parent": ["A", "A", "B"],
-      "Child": ["B", "C", "D"],
-      "ElementType": ["Numeric", "Consolidated", "Consolidated"]
+      "Parent": [null, "A", "A", "B"],
+      "Child": ["A", "B", "C", "D"],
+      "ElementType": ["Consolidated", "Consolidated", "Numeric", "Numeric"]
     }
 
 

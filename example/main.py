@@ -209,7 +209,7 @@ def dimension_builder_complex_demo():
     sheet_name = "Sheet1"
     input_format = 'indented_levels'
     attribute_parser = "square_brackets"
-    build_strategy = 'update'
+    build_strategy = 'rebuild'
     level_columns = ["Level1", "Level2", "Level3", "Level4"]
     weight_column = "ElementWeight"
     allow_type_changes = True
@@ -236,6 +236,11 @@ def dimension_builder_complex_demo():
         
         detailed logging enabled
     """
+
+    pd.set_option("display.max_rows", None)
+    pd.set_option("display.max_columns", None)
+    pd.set_option("display.width", None)
+    pd.set_option("display.max_colwidth", None)
 
     try:
         bedrock.dimension_builder(

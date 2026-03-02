@@ -178,8 +178,8 @@ def assign_missing_type_values(input_df: pd.DataFrame) -> None:
     parent_list = input_df['Parent'].unique()
     is_empty = input_df['ElementType'].isin([np.nan, None, ""])
 
-    input_df.loc[is_empty & input_df['Child'].isin(parent_list), 'ElementType'] = 'Numeric'
-    input_df.loc[is_empty & ~input_df['Child'].isin(parent_list), 'ElementType'] = 'Consolidated'
+    input_df.loc[is_empty & input_df['Child'].isin(parent_list), 'ElementType'] = 'Consolidated'
+    input_df.loc[is_empty & ~input_df['Child'].isin(parent_list), 'ElementType'] = 'Numeric'
 
 
 @baseutils.log_exec_metrics
@@ -324,10 +324,10 @@ def normalize_input_schema(
     # combined input structure base normalization final steps
     input_df = assign_missing_weight_column(input_df)
     input_df = assign_missing_weight_values(input_df)
-    validate_and_normalize_base_column_types(input_df)
     assign_missing_type_column(input_df=input_df)
     assign_missing_type_values(input_df=input_df)
     validate_and_normalize_type_values(input_df=input_df)
+    validate_and_normalize_base_column_types(input_df)
     input_df = add_attribute_type_suffixes(input_df, attr_type_map)
 
     # attribute normalization steps
