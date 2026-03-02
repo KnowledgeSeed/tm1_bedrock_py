@@ -607,3 +607,13 @@ def delete_leaves_hierarchy_from_schema(
         elements_df[elements_df["Hierarchy"] != "Leaves"].reset_index(drop=True)
     )
 
+
+def delete_check_hierarchies_from_schema(
+       edges_df: pd.DataFrame, elements_df: pd.DataFrame, hierarchy_name: str
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    all_hierarchies = elements_df["Hierarchy"].unique()
+    excluded_hierarchies = list(set(all_hierarchies)-set(hierarchy_name))
+    return (
+        edges_df[~edges_df["Hierarchy"].isin(excluded_hierarchies)].reset_index(drop=True),
+        elements_df[~elements_df["Hierarchy"].isin(excluded_hierarchies)].reset_index(drop=True)
+    )

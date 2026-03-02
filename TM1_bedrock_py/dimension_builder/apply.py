@@ -301,6 +301,8 @@ def resolve_schema(
         mode: Literal["rebuild", "update", "update_with_unwind"] = "rebuild",
         allow_type_changes: bool = False,
         orphan_parent_name: str = "OrphanParent",
+        hierarchy_build_mode: bool = False,
+        hierarchy_name: str = None
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     if existing_elements_df is None:
         return input_edges_df, input_elements_df
@@ -312,6 +314,10 @@ def resolve_schema(
 
     existing_edges_df, existing_elements_df = (
         normalize.delete_leaves_hierarchy_from_schema(existing_edges_df, existing_elements_df))
+
+    if hierarchy_build_mode:
+        existing_edges_df, existing_elements_df = (
+            normalize.delete_check_hierarchies_from_schema(existing_edges_df, existing_elements_df, hierarchy_name))
 
     updated_edges_df, updated_elements_df = apply_updates(
         mode=mode,

@@ -418,9 +418,9 @@ def validate_dimension_for_modify(
 def validate_sort_order_config(sort_config: dict[str, str]) -> None:
     valid_options = {
         "CompSortType": {"ByInput", "ByName"},
-        "CompSortSense": {"Ascending", "Descending"},
+        "CompSortSense": {"Ascending", "Descending", ""},
         "ElSortType": {"ByInput", "ByName", "ByLevel", "ByHierarchy"},
-        "ElSortSense": {"Ascending", "Descending"}
+        "ElSortSense": {"Ascending", "Descending", ""}
     }
 
     for key in valid_options.keys():
@@ -445,3 +445,8 @@ def validate_hierarchy_sort_order_config(hierarchy_list: list[str], hier_sort_co
         if hierarchy not in hierarchy_list:
             raise KeyError(f"Specified hierarchy {hierarchy} in sort order config does not exist.")
         validate_sort_order_config(hier_sort_config[hierarchy])
+
+
+def validate_schema_for_single_hierarchy(elements_df: pd.DataFrame) -> None:
+    if elements_df["Hierarchy"].nunique() > 1:
+        raise SchemaValidationError("Input has more than one hierarchies. For hierarchy builder, one is allowed")
