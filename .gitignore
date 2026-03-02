@@ -34,5 +34,3 @@ tests_integration_airflow/.db
 
 # testbench and benchpy
 schema/
-/example/dimension_builder_init.xlsx
-/example/dimension_builder_update.xlsx

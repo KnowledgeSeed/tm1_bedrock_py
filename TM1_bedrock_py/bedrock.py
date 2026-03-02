@@ -29,7 +29,8 @@ from TM1_bedrock_py.dimension_builder.validate import (
     validate_element_type_consistency,
     validate_attribute_name_for_dimension,
     post_validate_schema,
-    validate_dimension_for_modify
+    validate_dimension_for_modify,
+    validate_schema_for_single_hierarchy
 )
 
 
@@ -122,6 +123,115 @@ def dimension_builder(
 
         apply.apply_hierarchy_sort_order_attributes(tm1_service, dimension_name,
                                                     dimension_sort_order_config, hierarchy_sort_order_config)
+
+        # upload updated attribute values using bedrock load
+        writable_attr_df, attr_cube_name, attr_cube_dims = apply.prepare_attributes_for_load(
+            dimension_name=dimension_name, elements_df=updated_elements_df)
+
+        loader.dataframe_to_cube(
+            tm1_service=tm1_service,
+            dataframe=writable_attr_df,
+            cube_name=attr_cube_name,
+            cube_dims=attr_cube_dims,
+            use_blob=True,
+        )
+
+    if output_mode in ("output", "build_and_output"):
+        return updated_edges_df, updated_elements_df
+
+
+@utility.log_exec_metrics
+def hierarchy_builder(
+        dimension_name: str,
+        hierarchy_name: str,
+        input_format: Literal["parent_child", "indented_levels", "filled_levels"],
+        build_strategy: Literal["rebuild", "update", "update_with_unwind"],
+        tm1_service: Any,
+
+        old_orphan_parent_name: str = "OrphanParent",
+        new_orphan_parent_name: str = "OrphanParent",
+
+        input_datasource: Optional[Union[str, Path]] = None,
+        sql_engine: Optional[Any] = None,
+        sql_table_name: Optional[str] = None,
+        sql_query: Optional[str] = None,
+        filter_input_columns: Optional[list[str]] = None,
+        raw_input_df: pd.DataFrame = None,
+
+        dim_column: Optional[str] = None, hier_column: Optional[str] = None,
+        parent_column: Optional[str] = None, child_column: Optional[str] = None,
+        level_columns: Optional[list[str]] = None, type_column: Optional[str] = None,
+        weight_column: Optional[str] = None,
+
+        input_elements_datasource: Optional[Union[str, Path]] = None,
+        input_elements_df_element_column: Optional[str] = None,
+        sql_elements_engine: Optional[Any] = None,
+        sql_table_elements_name: Optional[str] = None,
+        sql_elements_query: Optional[str] = None,
+        filter_input_elements_columns: Optional[list[str]] = None,
+        raw_input_elements_df: pd.DataFrame = None,
+
+        remove_empty_subtrees: bool = False,
+        output_mode: Literal["build", "build_and_output", "output"] = "build",
+
+        hierarchy_sort_order_config: dict[str, str] = None,
+
+        attribute_parser: Union[Literal["colon", "square_brackets"], Callable] = "colon",
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
+        **kwargs
+) -> Optional[Tuple[pd.DataFrame, pd.DataFrame]]:
+    utility.set_logging_level(logging_level=logging_level)
+
+    input_edges_df, input_elements_df = apply.init_input_schema(
+        dimension_name=dimension_name, hierarchy_name=hierarchy_name, input_format=input_format,
+
+        input_datasource=input_datasource,
+        sql_engine=sql_engine, sql_table_name=sql_table_name, sql_query=sql_query,
+        filter_input_columns=filter_input_columns, raw_input_df=raw_input_df,
+        dim_column=dim_column, hier_column=hier_column,
+        parent_column=parent_column, child_column=child_column, level_columns=level_columns,
+        weight_column=weight_column, type_column=type_column,
+
+        input_elements_datasource=input_elements_datasource,
+        input_elements_df_element_column=input_elements_df_element_column,
+        sql_elements_engine=sql_elements_engine,
+        sql_table_elements_name=sql_table_elements_name, sql_elements_query=sql_elements_query,
+        filter_input_elements_columns=filter_input_elements_columns,
+        raw_input_elements_df=raw_input_elements_df,
+        attribute_parser=attribute_parser,
+        **kwargs
+    )
+
+    validate_schema_for_single_hierarchy(input_elements_df)
+
+    # get existing if dim exists - important for type check consistency too
+    existing_edges_df, existing_elements_df = apply.init_existing_schema_for_builder(
+        tm1_service, dimension_name, old_orphan_parent_name)
+
+    # clear conflicts and make updates on input using existing
+    updated_edges_df, updated_elements_df = apply.resolve_schema(
+        tm1_service=tm1_service, dimension_name=dimension_name,
+        input_edges_df=input_edges_df, input_elements_df=input_elements_df,
+        existing_edges_df=existing_edges_df, existing_elements_df=existing_elements_df,
+        orphan_parent_name=new_orphan_parent_name,
+        mode=build_strategy,
+        hierarchy_build_mode=True,
+        hierarchy_name=hierarchy_name)
+
+    if remove_empty_subtrees:
+        updated_edges_df, updated_elements_df = apply.remove_empty_subtrees(updated_edges_df, updated_elements_df)
+
+    # upload updated dim structure using tm1py dimension/hierarchy/element objects
+    hierarchy = apply.build_hierarchy_object(dimension_name=dimension_name, hierarchy_name=hierarchy_name,
+                                             edges_df=updated_edges_df, elements_df=updated_elements_df)
+
+    if output_mode in ("build", "build_and_output"):
+        tm1_service.hierarchies.update_or_create(hierarchy)
+
+        if hierarchy_sort_order_config is not None:
+            apply.apply_hierarchy_sort_order_attributes(
+                tm1_service=tm1_service, dimension_name=dimension_name,
+                hierarchy_sort_order_config={hierarchy_name: hierarchy_sort_order_config})
 
         # upload updated attribute values using bedrock load
         writable_attr_df, attr_cube_name, attr_cube_dims = apply.prepare_attributes_for_load(

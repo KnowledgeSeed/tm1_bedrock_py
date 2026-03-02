@@ -209,7 +209,7 @@ def dimension_builder_complex_demo():
     sheet_name = "Sheet1"
     input_format = 'indented_levels'
     attribute_parser = "square_brackets"
-    build_strategy = 'rebuild'
+    build_strategy = 'update'
     level_columns = ["Level1", "Level2", "Level3", "Level4"]
     weight_column = "ElementWeight"
     allow_type_changes = True
@@ -237,11 +237,6 @@ def dimension_builder_complex_demo():
         detailed logging enabled
     """
 
-    pd.set_option("display.max_rows", None)
-    pd.set_option("display.max_columns", None)
-    pd.set_option("display.width", None)
-    pd.set_option("display.max_colwidth", None)
-
     try:
         bedrock.dimension_builder(
             tm1_service=tm1_service,
@@ -262,7 +257,48 @@ def dimension_builder_complex_demo():
         tm1_service.logout()
 
 
+def hierarchy_builder_demo():
+    tm1_params = {
+        "address": "dev.knowledgeseed.local",
+        "port": 5379,
+        "user": "admin",
+        "password": "admin",
+        "ssl": False
+    }
+    tm1_service = TM1Service(**tm1_params)
+
+    dimension_name = "DimBuilderDemo"
+    hierarchy_name = "AltHier"
+    file_path = os.path.join(os.path.dirname(__file__), "hierarchy_builder_rebuild.xlsx")
+    input_format = 'indented_levels'
+    attribute_parser = "square_brackets"
+    build_strategy = 'rebuild'
+    level_columns = ["Level1", "Level2", "Level3", "Level4"]
+    weight_column = "ElementWeight"
+    old_orphan_parent_name = "OrphanParent"
+    new_orphan_parent_name = "NewOrphanParent"
+    logging_level = "DEBUG"
+
+    try:
+        bedrock.hierarchy_builder(
+            tm1_service=tm1_service,
+            dimension_name=dimension_name,
+            hierarchy_name=hierarchy_name,
+            input_datasource=file_path,
+            input_format=input_format,
+            build_strategy=build_strategy,
+            level_columns=level_columns,
+            weight_column=weight_column,
+            old_orphan_parent_name=old_orphan_parent_name,
+            new_orphan_parent_name=new_orphan_parent_name,
+            attribute_parser=attribute_parser,
+            logging_level=logging_level
+        )
+    finally:
+        tm1_service.logout()
+
 
 if __name__ == '__main__':
     # dimension_builder_basic_demo()
-    dimension_builder_complex_demo()
+    # dimension_builder_complex_demo()
+    hierarchy_builder_demo()
