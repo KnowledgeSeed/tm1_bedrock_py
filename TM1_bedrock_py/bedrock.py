@@ -1778,7 +1778,8 @@ def load_tm1_cube_to_sql_table(
         data_metadata_function: Optional[Callable[..., Any]] = None,
 
         sql_engine: Optional[Any] = None,
-        sql_function: Optional[Callable[..., DataFrame]] = None,
+        sql_connection: Optional[Any] = None,
+        sql_function: Optional[Union[Callable[..., DataFrame], Literal["sqlalchemy", "pyodbc"]]] = None,
         csv_function: Optional[Callable[..., DataFrame]] = None,
         sql_schema: Optional[str] = None,
 
@@ -1789,6 +1790,7 @@ def load_tm1_cube_to_sql_table(
 
         clear_target: Optional[bool] = False,
         sql_delete_statement: Optional[str] = None,
+        clear_function: Optional[Union[Callable[..., Any], Literal["sqlalchemy", "pyodbc"]]] = None,
         clear_source: Optional[bool] = False,
         source_clear_set_mdx_list: Optional[List[str]] = None,
 
@@ -1898,6 +1900,8 @@ def load_tm1_cube_to_sql_table(
     utility.set_logging_level(logging_level=logging_level)
     basic_logger.info("Execution started.")
 
+    sql_engine_or_connection = sql_connection if sql_connection is not None else sql_engine
+
     native_view_correction_enabled = (
             mdx_function == "native_view_extractor" and not case_and_space_insensitive_inputs)
 
@@ -1915,7 +1919,9 @@ def load_tm1_cube_to_sql_table(
 
     if dataframe.empty:
         if clear_target:
-            loader.clear_table(engine=sql_engine,
+            loader.clear_table(clear_function=clear_function,
+                               engine=sql_engine,
+                               connection=sql_connection,
                                table_name=target_table_name,
                                delete_statement=sql_delete_statement)
         return
@@ -1957,7 +1963,7 @@ def load_tm1_cube_to_sql_table(
             mapping_info=shared_mapping,
             tm1_service=tm1_service,
             mdx_function=mdx_function,
-            sql_engine=sql_engine,
+            sql_engine=sql_engine_or_connection,
             sql_function=sql_function,
             csv_function=csv_function,
             verbose_logging_mode=verbose_logging_mode,
@@ -1968,7 +1974,7 @@ def load_tm1_cube_to_sql_table(
         mapping_steps=mapping_steps,
         tm1_service=tm1_service,
         mdx_function=mdx_function,
-        sql_engine=sql_engine,
+        sql_engine=sql_engine_or_connection,
         sql_function=sql_function,
         csv_function=csv_function
     )
@@ -1991,7 +1997,9 @@ def load_tm1_cube_to_sql_table(
                                           case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
 
     if clear_target:
-        loader.clear_table(engine=sql_engine,
+        loader.clear_table(clear_function=clear_function,
+                           engine=sql_engine,
+                           connection=sql_connection,
                            table_name=target_table_name,
                            delete_statement=sql_delete_statement)
 
@@ -2015,6 +2023,7 @@ def load_tm1_cube_to_sql_table(
         dataframe=dataframe,
         table_name=target_table_name,
         engine=sql_engine,
+        sql_engine_or_connection=sql_engine_or_connection,
         schema=sql_schema,
         chunksize=chunksize,
         dtype=dtype,

@@ -139,14 +139,14 @@ def __dataframe_to_cube_default(
 
 @utility.log_exec_metrics
 def dataframe_to_sql(
-        sql_write_function: Optional[Union[Callable[..., DataFrame], Literal["sqlalchemy", "pyodbc"]]] = None,
+        sql_function: Optional[Union[Callable[..., DataFrame], Literal["sqlalchemy", "pyodbc"]]] = None,
         **kwargs: Any
 ) -> None:
     """
     Retrieves a DataFrame by executing the provided SQL function
 
     Args:
-        sql_write_function (Optional[Callable]):
+        sql_function (Optional[Callable]):
             A function to write a dataframe into SQL
             If None, the default function is used.
         **kwargs (Any): Additional keyword arguments passed to the MDX function.
@@ -154,11 +154,11 @@ def dataframe_to_sql(
     Returns:
         DataFrame: The DataFrame resulting from the SQL query.
     """
-    writer_function = sql_write_function if isinstance(sql_write_function, Callable) else {
+    writer_function = sql_function if isinstance(sql_function, Callable) else {
         None: __dataframe_to_sql_default,
         "sqlalchemy": __dataframe_to_sql_default,
         "pyodbc": __dataframe_to_sql_pyodbc
-    }.get(sql_write_function)
+    }.get(sql_function)
 
     dataframe = kwargs.get("dataframe")
     writer_function(**kwargs)
@@ -274,13 +274,34 @@ def __dataframe_to_sql_pyodbc(
                             f"VALUES (\n    {value_placeholders_string}\n)")
 
     dataframe_sanitized = dataframe_ordered.astype(object).where(dataframe_ordered.notnull(), None)
-    processing_chunk_size = chunksize if chunksize is not None else 10000
+
+    use_fast_executemany: bool = False
+    if hasattr(database_cursor, "fast_executemany"):
+        try:
+            database_cursor.fast_executemany = True
+            use_fast_executemany = True
+        except (AttributeError, Exception):
+            use_fast_executemany = False
+
+    # 2. Optimized Insertion Loop
+    columns_count: int = len(dataframe_ordered.columns)
+    sql_base: str = f"INSERT INTO {full_table_name} ({target_columns_formatted_string}) VALUES "
+
+    # SQL Server limit is 2100 parameters; calculate rows per batch to stay under limit
+    mvi_batch_size: int = 2100 // columns_count
+    processing_chunk_size: int = chunksize if chunksize is not None else (
+        10000 if use_fast_executemany else mvi_batch_size)
 
     for chunk_start_index in range(0, len(dataframe_sanitized), processing_chunk_size):
-        database_cursor.executemany(
-            sql_insert_statement,
-            dataframe_sanitized.iloc[chunk_start_index: chunk_start_index + processing_chunk_size].to_numpy().tolist()
-        )
+        chunk: DataFrame = dataframe_sanitized.iloc[chunk_start_index: chunk_start_index + processing_chunk_size]
+
+        if use_fast_executemany:
+            database_cursor.executemany(sql_insert_statement, chunk.to_numpy().tolist())
+        else:
+            # Fallback to Multi-Value Insert (MVI)
+            placeholders: str = ", ".join([f"({', '.join(['?'] * columns_count)})"] * len(chunk))
+            values_flattened: list[Any] = chunk.to_numpy().flatten().tolist()
+            database_cursor.execute(f"{sql_base} {placeholders}", values_flattened)
 
     database_connection.commit()
     database_cursor.close()
@@ -288,7 +309,7 @@ def __dataframe_to_sql_pyodbc(
 
 @utility.log_exec_metrics
 def clear_table(
-        clear_function: Optional[Callable[..., Any]] = None,
+        clear_function: Optional[Union[Callable[..., Any], Literal["sqlalchemy", "pyodbc"]]] = None,
         **kwargs: Any
 ) -> None:
     """
@@ -302,8 +323,12 @@ def clear_table(
                         - cube_name (str): The name of the cube to clear.
                         - clear_set_mdx_list (List[str]): A list of valid MDX set expressions defining the clear space.
     """
-    if clear_function is None:
-        clear_function = __clear_table_default
+    clear_function = clear_function if isinstance(clear_function, Callable) else {
+        None: __clear_table_default,
+        "sqlalchemy": __clear_table_default,
+        "pyodbc": __clear_table_pyodbc
+    }.get(clear_function)
+
     clear_function(**kwargs)
 
 
@@ -319,6 +344,18 @@ def __clear_table_default(
         elif table_name:
             connection.execute(text("TRUNCATE TABLE [" + table_name + "]"))
         transaction.commit()
+
+
+def __clear_table_pyodbc(
+        connection: Any,
+        table_name: Optional[str],
+        delete_statement: Optional[str]
+) -> None:
+    statement: str = delete_statement or f"TRUNCATE TABLE [{table_name}]"
+
+    with connection.cursor() as cursor:
+        cursor.execute(statement)
+        connection.commit()
 
 
 # ------------------------------------------------------------------------------------------------------------
