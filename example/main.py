@@ -3,10 +3,9 @@ import os
 from TM1py import TM1Service
 
 from TM1_bedrock_py import bedrock
-from TM1_bedrock_py.dimension_builder.io import read_source_to_df
 from TM1_bedrock_py.utility import set_logging_level
 from tests.tests_dimension_builder.test_data.test_data import generate_hierarchy_data
-
+import pyodbc
 
 def complex_transform_demo():
     # letárolás másik verzióra
@@ -298,7 +297,61 @@ def hierarchy_builder_demo():
         tm1_service.logout()
 
 
+def run_pyodbc_writer():
+    server_address = 'localhost,5835'
+    user_name = 'admin'
+    password = 'apple'
+    database = 'HRDEMO'
+    driver_name = 'ODBC Driver 17 for SQL Server'
+    connection_string: str = (
+        f"DRIVER={{{driver_name}}};"
+        f"SERVER={server_address};"
+        f"DATABASE={database};"
+        f"UID={user_name};"
+        f"PWD={password};"
+        "Encrypt=yes;"
+        "TrustServerCertificate=yes;"
+        "Connection Timeout=30;"
+    )
+    sql_connection = pyodbc.connect(connection_string)
+
+    tm1_params = {
+        "address": "localhost",
+        "port": 5365,
+        "user": "admin",
+        "password": "",
+        "ssl": False
+    }
+    tm1_service = TM1Service(**tm1_params)
+
+    data_mdx = """
+        SELECT
+        NON EMPTY
+            [}ElementAttributes_Periods].[}ElementAttributes_Periods].Members
+        ON COLUMNS,
+        NON EMPTY
+            {TM1FILTERBYLEVEL([Periods].[Periods].Members, 0)}
+        ON ROWS
+        FROM [}ElementAttributes_Periods]
+    """
+    target_table_name = "PeriodAttributes"
+    try:
+        bedrock.load_tm1_cube_to_sql_table(
+            tm1_service=tm1_service,
+            target_table_name=target_table_name,
+            data_mdx=data_mdx,
+            sql_connection=sql_connection,
+            sql_function='pyodbc',
+            sql_schema='dbo',
+            if_table_exists='replace_data',
+            table_column_order=['Periods', '}ElementAttributes_Periods', 'Value']
+        )
+    finally:
+        tm1_service.logout()
+
+
 if __name__ == '__main__':
     # dimension_builder_basic_demo()
     # dimension_builder_complex_demo()
-    hierarchy_builder_demo()
+    # hierarchy_builder_demo()
+    run_pyodbc_writer()
