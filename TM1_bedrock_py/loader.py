@@ -172,13 +172,18 @@ def __dataframe_to_sql_default(
         chunksize: Optional[int] = None,
         dtype: Optional[dict] = None,
         method: Optional[Union[str, Callable]] = None,
+        table_column_order: list[str] = None,
         **kwargs
 ) -> None:
     if not engine:
         engine = utility.create_sql_engine(**kwargs)
 
-    table_columns = utility.inspect_table(engine, table_name=table_name, schema=schema)
-    column_order = [col.get('name') for col in table_columns]
+    if table_column_order is None:
+        table_column_order = utility.inspect_table(engine, table_name=table_name, schema=schema)
+        column_order = [col.get('name') for col in table_column_order]
+    else:
+        column_order = table_column_order
+
     df_cols = list(dataframe.columns)
     column_order = [c for c in column_order if c in df_cols]
 
