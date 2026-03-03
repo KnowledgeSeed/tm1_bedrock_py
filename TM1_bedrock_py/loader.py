@@ -218,7 +218,6 @@ def __dataframe_to_sql_pyodbc(
         database_engine_or_connection.raw_connection()) if hasattr(database_engine_or_connection, "raw_connection") \
         else database_engine_or_connection
     database_cursor = database_connection.cursor()
-    database_cursor.fast_executemany = True
 
     column_order = table_column_order if table_column_order is not None else list(dataframe.columns)
     dataframe_ordered = dataframe[column_order]
