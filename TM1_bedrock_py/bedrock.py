@@ -1782,6 +1782,7 @@ def load_tm1_cube_to_sql_table(
         sql_function: Optional[Union[Callable[..., DataFrame], Literal["sqlalchemy", "pyodbc"]]] = None,
         csv_function: Optional[Callable[..., DataFrame]] = None,
         sql_schema: Optional[str] = None,
+        if_table_exists: Literal["fail", "replace_data","replace_table", "append"] = "append",
 
         case_and_space_insensitive_inputs: Optional[bool] = False,
 
@@ -2023,10 +2024,12 @@ def load_tm1_cube_to_sql_table(
         dataframe=dataframe,
         table_name=target_table_name,
         engine=sql_engine,
-        sql_engine_or_connection=sql_engine_or_connection,
+        database_engine_or_connection=sql_engine_or_connection,
+        sql_function=sql_function,
         schema=sql_schema,
         chunksize=chunksize,
         dtype=dtype,
+        if_exists=if_table_exists,
         **kwargs
     )
 
