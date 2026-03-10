@@ -361,6 +361,9 @@ def execute_dimension_dataframe_writers(
         file_path_destination: Optional[str] = None,
         table_name: Optional[str] = None,
         sql_engine: Optional[Any] = None,
+        sql_connection: Optional[Any] = None,
+        sql_function: Optional[Union[Callable[..., pd.DataFrame], Literal["sqlalchemy", "pyodbc"]]] = None,
+        table_column_order: Optional[list[str]] = None,
         if_exists_strategy: Literal["fail", "replace", "append"] = "append",
         database_schema: Optional[str] = None,
         csv_separator: str = None,
@@ -375,9 +378,12 @@ def execute_dimension_dataframe_writers(
         "sql": {
             "table_name": table_name,
             "engine": sql_engine,
+            "database_engine_or_connection": sql_connection if sql_connection is not None else sql_engine,
+            "sql_function": sql_function,
             "if_exists": if_exists_strategy,
             "schema": database_schema,
-            "index": include_index
+            "index": include_index,
+            "table_column_order": table_column_order
         },
         "csv": {
             "file_path_destination": file_path_destination,
