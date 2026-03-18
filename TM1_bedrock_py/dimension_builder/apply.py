@@ -135,6 +135,39 @@ def apply_dataframe_union(
     return pd.concat([input_df, legacy_df], ignore_index=True).drop_duplicates()
 
 
+def refresh_legacy_attributes(
+        input_df: pd.DataFrame,
+        legacy_df: pd.DataFrame
+) -> pd.DataFrame:
+    base_columns = ['Dimension', 'Hierarchy', 'ElementName', 'ElementType']
+    attribute_columns = [column for column in input_df.columns if column not in base_columns]
+
+    valid_element_types = ['String', 'Numeric']
+    filtered_input_dataframe = input_df[input_df['ElementType'].isin(valid_element_types)]
+
+    unique_input_dataframe = filtered_input_dataframe.drop_duplicates(subset=['ElementName'])
+
+    columns_to_keep = ['ElementName'] + attribute_columns
+    attributes_only_dataframe = unique_input_dataframe[columns_to_keep]
+
+    updated_legacy_df = legacy_df.merge(
+        attributes_only_dataframe,
+        on='ElementName',
+        how='left',
+        suffixes=('', '_new_value')
+    )
+
+    for column in attribute_columns:
+        updated_legacy_df[column] = np.where(
+            updated_legacy_df[f"{column}_new_value"].notna(),
+            updated_legacy_df[f"{column}_new_value"],
+            updated_legacy_df[column]
+        )
+        updated_legacy_df = updated_legacy_df.drop(columns=[f"{column}_new_value"])
+
+    return updated_legacy_df
+
+
 _UPDATE_STRATEGIES = {
     "safe_rebuild": apply_safe_rebuild_on_edges,
     "safe_rebuild_unwind": apply_safe_rebuild_unwind_on_edges,
@@ -156,6 +189,8 @@ def apply_updates(
     if len(legacy_elements_df) == 0:
         return input_edges_df, input_elements_df
     legacy_edges_df = utility.get_legacy_edges(existing_edges_df, input_edges_df)
+
+    legacy_elements_df = refresh_legacy_attributes(input_elements_df, legacy_elements_df)
 
     input_element_hierarchies = utility.get_hierarchy_list(input_elements_df)
     legacy_element_hierarchies = utility.get_hierarchy_list(legacy_elements_df)

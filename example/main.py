@@ -193,6 +193,37 @@ def dimension_builder_basic_demo():
         tm1_service.logout()
 
 
+def dimension_builder_append_demo():
+    tm1_params = {
+        "address": "dev.knowledgeseed.local",
+        "port": 5379,
+        "user": "admin",
+        "password": "admin",
+        "ssl": False
+    }
+    tm1_service = TM1Service(**tm1_params)
+
+    dimension_name = "DimBuilderDemo"
+    file_path = os.path.join(os.path.dirname(__file__), "dimension_builder_append.xlsx")
+    sheet_name = "Sheet1"
+    input_format = 'indented_levels'
+    build_strategy = 'update'
+    level_columns = ["Level1", "Level2", "Level3", "Level4"]
+
+    try:
+        bedrock.dimension_builder(
+            tm1_service=tm1_service,
+            dimension_name=dimension_name,
+            input_datasource=file_path,
+            input_format=input_format,
+            build_strategy=build_strategy,
+            level_columns=level_columns,
+            sheet_name=sheet_name
+        )
+    finally:
+        tm1_service.logout()
+
+
 def dimension_builder_complex_demo():
     tm1_params = {
         "address": "dev.knowledgeseed.local",
@@ -208,7 +239,7 @@ def dimension_builder_complex_demo():
     sheet_name = "Sheet1"
     input_format = 'indented_levels'
     attribute_parser = "square_brackets"
-    build_strategy = 'update'
+    build_strategy = 'safe_rebuild'
     level_columns = ["Level1", "Level2", "Level3", "Level4"]
     weight_column = "ElementWeight"
     allow_type_changes = True
@@ -352,6 +383,7 @@ def run_pyodbc_writer():
 
 if __name__ == '__main__':
     # dimension_builder_basic_demo()
+    dimension_builder_append_demo()
     # dimension_builder_complex_demo()
     # hierarchy_builder_demo()
-    run_pyodbc_writer()
+    # run_pyodbc_writer()
