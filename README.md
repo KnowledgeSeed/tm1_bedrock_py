@@ -99,14 +99,8 @@ mapping_steps = [
 ]
 
 # --- 3. Execute the Data Copy ---
-data_copy_intercube(
-    tm1_service=tm1,
-    data_mdx=source_mdx,
-    target_cube_name="Sales Target",
-    mapping_steps=mapping_steps,
-    clear_target=True,
-    logging_level="INFO"
-)
+data_copy_intercube(tm1_service=tm1, target_cube_name="Sales Target", data_mdx=source_mdx, mapping_steps=mapping_steps,
+                    clear_target=True, logging_level="INFO")
 ```
 ### Configuration of Mapping Steps
 The `mapping_steps` parameter is a powerful feature that allows you to define a pipeline of transformations. Each step is a dictionary that specifies the transformation method and its parameters.

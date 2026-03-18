@@ -759,6 +759,7 @@ class TM1CubeObjectMetadata:
             collect_dim_element_identifiers: Optional[bool] = False,
             collect_measure_types: Optional[bool] = False,
             collect_source_cube_metadata: Optional[bool] = False,
+            dimension_check_filter: Optional[list] = None,
             **_kwargs
     ) -> "TM1CubeObjectMetadata":
         """
@@ -794,8 +795,9 @@ class TM1CubeObjectMetadata:
             cls._expand_base_cube_metadata(tm1_service=tm1_service, cube_name=cube_name, metadata=metadata)
 
         if collect_dim_element_identifiers:
+            check_dimensions = dimension_check_filter or metadata.get_cube_dims()
             cls.__collect_element_check_dataframes(
-                tm1_service=tm1_service, cube_dimensions=metadata.get_cube_dims(), metadata=metadata
+                tm1_service=tm1_service, cube_dimensions=check_dimensions, metadata=metadata
             )
 
         if collect_measure_types:
@@ -837,8 +839,8 @@ class TM1CubeObjectMetadata:
             cube_dimensions: List[str],
             metadata: "TM1CubeObjectMetadata"
     ) -> None:
-        metadata[cls._DIM_CHECK_DFS] = []
+        metadata[cls._DIM_CHECK_DFS] = {}
         for dimension in cube_dimensions:
-            metadata[cls._DIM_CHECK_DFS].append(
-                all_leaves_identifiers_to_dataframe(tm1_service=tm1_service, dimension_name=dimension)
-            )
+            metadata[cls._DIM_CHECK_DFS][dimension] = all_leaves_identifiers_to_dataframe(
+                tm1_service=tm1_service, dimension_name=dimension)
+

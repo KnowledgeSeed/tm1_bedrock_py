@@ -234,17 +234,9 @@ def execute_slice_tm1_task(
 
     basic_logger.info(f"Executing slice for expand_kwargs: {expand_kwargs}")
 
-    data_copy_intercube(
-        tm1_service=tm1_service,
-        data_mdx=data_mdx,
-        target_metadata_function=target_metadata_function,
-        logging_level=logging_level,
-        use_blob=True,
-        clear_target=False,
-        mapping_steps=slice_mapping_steps,
-        shared_mapping=slice_shared_mapping,
-        **kwargs
-    )
+    data_copy_intercube(tm1_service=tm1_service, target_metadata_function=target_metadata_function, data_mdx=data_mdx,
+                        mapping_steps=slice_mapping_steps, shared_mapping=slice_shared_mapping, clear_target=False,
+                        use_blob=True, logging_level=logging_level, **kwargs)
 
     return 0
 

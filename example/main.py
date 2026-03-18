@@ -95,20 +95,12 @@ def complex_transform_demo():
         return x * 1.0912
 
     try:
-        bedrock.data_copy_intercube(
-            target_cube_name=target_cube_name,
-            tm1_service=tm1_service,
-            data_mdx=data_mdx,
-            mapping_steps=mapping_steps,
-            value_function=inflation_value_scale,
-            clear_target=clear_target,
-            target_clear_set_mdx_list=target_clear_set_mdx_list,
-            use_blob=use_blob,
-            logging_level=logging_level,
-            use_mixed_datatypes=use_mixed_datatypes,
-            ignore_missing_elements=ignore_missing_elements,
-            verbose_logging_mode="print_console"
-        )
+        bedrock.data_copy_intercube(tm1_service=tm1_service, target_cube_name=target_cube_name, data_mdx=data_mdx,
+                                    check_missing_elements=ignore_missing_elements, mapping_steps=mapping_steps,
+                                    clear_target=clear_target, target_clear_set_mdx_list=target_clear_set_mdx_list,
+                                    value_function=inflation_value_scale, use_blob=use_blob,
+                                    use_mixed_datatypes=use_mixed_datatypes, logging_level=logging_level,
+                                    verbose_logging_mode="print_console")
     finally:
         tm1_service.logout()
 
