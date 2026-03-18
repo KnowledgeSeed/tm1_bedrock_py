@@ -198,7 +198,7 @@ def get_kwargs_dict_from_set_mdx_list(mdx_expressions: List[str]) -> Dict[str, s
     if len(mdx_expressions) == 0:
         raise ValueError("Set mdx list cannot be empty")
 
-    regex = r".*?(?<!\.)\[\s*([\w\s]+?)\s*\].*?"
+    regex = r"(?<!\.)\[\s*([^\]]+?)\s*\]"
     kwargs_dict = {}
     for mdx in mdx_expressions:
         match = re.search(regex, mdx)

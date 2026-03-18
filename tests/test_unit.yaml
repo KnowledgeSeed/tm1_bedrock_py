@@ -67,6 +67,20 @@ test_get_kwargs_dict_from_set_mdx_list_success:
       "periods": "Tm1FilterByLevel(Tm1SubsetAll([Periods]), 0)",
       "versions": "Tm1FilterByLevel(Tm1DrillDownmember([Versions].[Versions].[All Versions], ALL, RECURSIVE), 0)"
     }
+  -
+    set_mdx_list: [
+      "{[Line Item BC P&L].[Line Item BC P&L].[Cash Flow], [Line Item BC P&L].[Line Item BC P&L].[Cash Flow w/o sunk cost]}"
+    ]
+    expected_kwargs: {
+      "lineitembcp&l": "{[Line Item BC P&L].[Line Item BC P&L].[Cash Flow], [Line Item BC P&L].[Line Item BC P&L].[Cash Flow w/o sunk cost]}"
+    }
+  -
+    set_mdx_list: [
+      "{[Line Item BC P&L].[Line Item BC P&L].[IRR], [Line Item BC P&L].[Line Item BC P&L].[IRR (reported)]}"
+    ]
+    expected_kwargs: {
+      "lineitembcp&l": "{[Line Item BC P&L].[Line Item BC P&L].[IRR], [Line Item BC P&L].[Line Item BC P&L].[IRR (reported)]}"
+    }
 
 test__get_kwargs_dict_from_set_mdx_list_fail:
   -
