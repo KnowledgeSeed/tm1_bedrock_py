@@ -38,7 +38,7 @@ from TM1_bedrock_py.dimension_builder.validate import (
 def dimension_builder(
         dimension_name: str,
         input_format: Literal["parent_child", "indented_levels", "filled_levels"],
-        build_strategy: Literal["rebuild", "update", "update_with_unwind"],
+        build_strategy: Literal["rebuild", "safe_rebuild", "safe_rebuild_unwind", "update"],
         tm1_service: Any,
         hierarchy_name: str = None,
 
@@ -77,6 +77,10 @@ def dimension_builder(
         **kwargs
 ) -> Optional[Tuple[pd.DataFrame, pd.DataFrame]]:
     utility.set_logging_level(logging_level=logging_level)
+
+    if build_strategy == 'update' and allow_type_changes:
+        basic_logger.warning("Update mode doesnt allow type change, parameter was set to false")
+        allow_type_changes = False
 
     input_edges_df, input_elements_df = apply.init_input_schema(
         dimension_name=dimension_name, hierarchy_name=hierarchy_name, input_format=input_format,
@@ -145,7 +149,7 @@ def hierarchy_builder(
         dimension_name: str,
         hierarchy_name: str,
         input_format: Literal["parent_child", "indented_levels", "filled_levels"],
-        build_strategy: Literal["rebuild", "update", "update_with_unwind"],
+        build_strategy: Literal["rebuild", "safe_rebuild", "safe_rebuild_unwind", "update"],
         tm1_service: Any,
 
         old_orphan_parent_name: str = "OrphanParent",
