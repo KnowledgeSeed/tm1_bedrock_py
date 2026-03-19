@@ -468,42 +468,47 @@ def dataframe_itemskip_elements(
         )
 
     for dimension_name in check_dimensions:
-        if query_mode == 'bulk':
-            validation_dataframe = check_dfs[dimension_name]
-            element_validity_map = set(validation_dataframe[dimension_name])
-        else:
-            unique_element_list = dataframe[dimension_name].astype(str).unique().tolist()
-            element_validity_map = {
-                element_name: tm1_service.elements.exists(
-                    tm1_service=tm1_service,
-                    dimension_name=dimension_name,
-                    hierarchy_name=check_hierarchies[dimension_name],
-                    element_name=element_name
-                )
-                for element_name in unique_element_list
-            }
-
-        current_column_validity_mask = dataframe[dimension_name].map(element_validity_map).to_numpy()
-        if not current_column_validity_mask.all():
-            fallback_value = fallback_elements.get(dimension_name)
-            if fallback_value is not None:
-                if logging_enabled:
-                    invalid_records_dataframe = dataframe.loc[~current_column_validity_mask, [dimension_name]]
-                    basic_logger.debug(
-                        f"Records of dimension {dimension_name} that will be changed to default '{fallback_value}'")
-                    basic_logger.debug(invalid_records_dataframe)
-
-                dataframe.loc[~current_column_validity_mask, dimension_name] = fallback_value
+        matching_dataframe_columns: List[str] = [
+            column_name for column_name in dataframe.columns
+            if column_name.partition("@")[0] == dimension_name
+        ]
+        for dataframe_column in matching_dataframe_columns:
+            if query_mode == 'bulk':
+                validation_dataframe = check_dfs[dimension_name]
+                element_validity_map = set(validation_dataframe[dimension_name])
             else:
-                if logging_enabled:
-                    invalid_records_dataframe = dataframe.loc[~current_column_validity_mask, [dimension_name]]
-                    basic_logger.debug(f"Invalid records for dimension {dimension_name}")
-                    basic_logger.debug(invalid_records_dataframe)
+                unique_element_list = dataframe[dataframe_column].astype(str).unique().tolist()
+                element_validity_map = {
+                    element_name: tm1_service.elements.exists(
+                        tm1_service=tm1_service,
+                        dimension_name=dimension_name,
+                        hierarchy_name=check_hierarchies[dimension_name],
+                        element_name=element_name
+                    )
+                    for element_name in unique_element_list
+                }
 
-                if raise_error_if_missing_found:
-                    exit_with_error = True
+            current_column_validity_mask = dataframe[dataframe_column].map(element_validity_map).to_numpy()
+            if not current_column_validity_mask.all():
+                fallback_value = fallback_elements.get(dimension_name)
+                if fallback_value is not None and dataframe_column == dimension_name:
+                    if logging_enabled:
+                        invalid_records_dataframe = dataframe.loc[~current_column_validity_mask, [dataframe_column]]
+                        basic_logger.debug(
+                            f"Records of dimension {dimension_name} that will be changed to default '{fallback_value}'")
+                        basic_logger.debug(invalid_records_dataframe)
 
-                global_validity_mask &= current_column_validity_mask
+                    dataframe.loc[~current_column_validity_mask, dataframe_column] = fallback_value
+                else:
+                    if logging_enabled:
+                        invalid_records_dataframe = dataframe.loc[~current_column_validity_mask, [dataframe_column]]
+                        basic_logger.debug(f"Invalid records for dimension {dimension_name}")
+                        basic_logger.debug(invalid_records_dataframe)
+
+                    if raise_error_if_missing_found:
+                        exit_with_error = True
+
+                    global_validity_mask &= current_column_validity_mask
 
     invalid_record_count = np.count_nonzero(~global_validity_mask)
     basic_logger.debug(f"Total invalid records: {invalid_record_count}")
@@ -513,44 +518,6 @@ def dataframe_itemskip_elements(
 
     dataframe.drop(index=dataframe.index[~global_validity_mask], inplace=True)
     dataframe.reset_index(drop=True, inplace=True)
-
-
-def dataframe_itemskip_elements_on_demand(
-        tm1_service: Any,
-        dataframe: pd.DataFrame,
-        fallback_elements: Optional[Dict[str, str]] = None,
-        logging_enabled: Optional[bool] = False,
-        raise_error_if_missing_found: Optional[bool] = False,
-        case_and_space_insensitive_inputs: Optional[bool] = False,
-        check_dimensions: list[str] = None,
-        **_kwargs: Any
-):
-    fallback_elements = fallback_elements or {}
-    check_dimensions = check_dimensions or dataframe.columns
-
-    if case_and_space_insensitive_inputs:
-        utility.normalize_dataframe_strings(dataframe)
-        fallback_elements = utility.normalize_structure_strings(fallback_elements)
-
-    global_validity_mask = np.ones(len(dataframe), dtype=bool)
-    exit_with_error = False
-
-    for dimension_name in check_dimensions:
-        unique_element_list = dataframe[dimension_name].astype(str).unique().tolist()
-        sorted_hierarchies = utility.get_sorted_hierarchy_list_for_check(tm1_service, dimension_name)
-        element_validity_map = {
-            element_name: utility.check_dimension_element_exists(
-                tm1_service=tm1_service,
-                dimension_name=dimension_name,
-                sorted_hierarchies=sorted_hierarchies,
-                element_name=element_name
-            )
-            for element_name in unique_element_list
-        }
-        current_column_validity_mask = dataframe[dimension_name].map(element_validity_map).to_numpy()
-
-
-
 
 
 # ------------------------------------------------------------------------------------------------------------
