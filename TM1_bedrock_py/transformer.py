@@ -1,4 +1,4 @@
-from typing import Callable, List, Dict, Optional, Any
+from typing import Callable, List, Dict, Optional, Any, Literal
 
 import pandas as pd
 import numpy as np
@@ -429,59 +429,81 @@ def normalize_table_source_dataframe(
 @utility.log_exec_metrics
 def dataframe_itemskip_elements(
         dataframe: pd.DataFrame,
-        check_dfs: Dict[str, pd.DataFrame],
+        tm1_service: Any = None,
+        check_hierarchies: dict[str] = None,
+        check_dfs: Optional[Dict[str, pd.DataFrame]] = None,
         fallback_elements: Optional[Dict[str, str]] = None,
         logging_enabled: Optional[bool] = False,
         raise_error_if_missing_found: Optional[bool] = False,
         case_and_space_insensitive_inputs: Optional[bool] = False,
+        query_mode: Literal['bulk', 'on_demand'] = 'bulk',
         **_kwargs: Any
 ) -> None:
+    if query_mode == 'on_demand' and tm1_service is None:
+        raise ValueError("TM1Service object is mandatory for on_demand mode.")
+
+    if query_mode == 'bulk' and check_dfs is None:
+        raise ValueError("The parameter 'check_dfs' is mandatory for bulk query mode.")
+
+    if query_mode == 'on_demand' and check_hierarchies is None:
+        raise ValueError("The parameter 'check_dimensions' is mandatory for on_demand query mode.")
+
+    check_dimensions = check_hierarchies.keys() or check_dfs.keys()
     fallback_elements = fallback_elements or {}
 
     if case_and_space_insensitive_inputs:
         utility.normalize_dataframe_strings(dataframe)
         check_dfs = utility.normalize_structure_strings(check_dfs)
         fallback_elements = utility.normalize_structure_strings(fallback_elements)
+        check_dimensions = utility.normalize_structure_strings(check_dimensions)
 
     global_validity_mask = np.ones(len(dataframe), dtype=bool)
     exit_with_error = False
-    validation_dimension_names = list(check_dfs.keys())
 
-    for stray_dimension_name in set(fallback_elements) - set(check_dfs):
+    for stray_dimension_name in set(fallback_elements) - set(check_dimensions):
         basic_logger.warning(
             f"Specified dimension name {stray_dimension_name} in fallback elements "
             f"is not present in the list of dimensions to check. "
-            f"Checked dimensions: {validation_dimension_names}"
+            f"Checked dimensions: {check_dimensions}"
         )
 
-    for dimension_name, validation_dataframe in check_dfs.items():
-        target_column_name = validation_dataframe.columns[0]
-        valid_elements_set = set(validation_dataframe[target_column_name])
-        current_column_validity_mask = dataframe[target_column_name].isin(valid_elements_set).to_numpy()
+    for dimension_name in check_dimensions:
+        if query_mode == 'bulk':
+            validation_dataframe = check_dfs[dimension_name]
+            element_validity_map = set(validation_dataframe[dimension_name])
+        else:
+            unique_element_list = dataframe[dimension_name].astype(str).unique().tolist()
+            element_validity_map = {
+                element_name: tm1_service.elements.exists(
+                    tm1_service=tm1_service,
+                    dimension_name=dimension_name,
+                    hierarchy_name=check_hierarchies[dimension_name],
+                    element_name=element_name
+                )
+                for element_name in unique_element_list
+            }
 
+        current_column_validity_mask = dataframe[dimension_name].map(element_validity_map).to_numpy()
         if not current_column_validity_mask.all():
             fallback_value = fallback_elements.get(dimension_name)
-
             if fallback_value is not None:
                 if logging_enabled:
-                    invalid_records_dataframe = dataframe.loc[~current_column_validity_mask, [target_column_name]]
+                    invalid_records_dataframe = dataframe.loc[~current_column_validity_mask, [dimension_name]]
                     basic_logger.debug(
                         f"Records of dimension {dimension_name} that will be changed to default '{fallback_value}'")
                     basic_logger.debug(invalid_records_dataframe)
 
-                dataframe.loc[~current_column_validity_mask, target_column_name] = fallback_value
-                current_column_validity_mask = dataframe[target_column_name].isin(valid_elements_set).to_numpy()
-
-            if not current_column_validity_mask.all():
+                dataframe.loc[~current_column_validity_mask, dimension_name] = fallback_value
+            else:
                 if logging_enabled:
-                    invalid_records_dataframe = dataframe.loc[~current_column_validity_mask, [target_column_name]]
+                    invalid_records_dataframe = dataframe.loc[~current_column_validity_mask, [dimension_name]]
                     basic_logger.debug(f"Invalid records for dimension {dimension_name}")
                     basic_logger.debug(invalid_records_dataframe)
 
                 if raise_error_if_missing_found:
                     exit_with_error = True
 
-        global_validity_mask &= current_column_validity_mask
+                global_validity_mask &= current_column_validity_mask
 
     invalid_record_count = np.count_nonzero(~global_validity_mask)
     basic_logger.debug(f"Total invalid records: {invalid_record_count}")
@@ -494,15 +516,17 @@ def dataframe_itemskip_elements(
 
 
 def dataframe_itemskip_elements_on_demand(
-        tm1service: Any,
+        tm1_service: Any,
         dataframe: pd.DataFrame,
         fallback_elements: Optional[Dict[str, str]] = None,
         logging_enabled: Optional[bool] = False,
         raise_error_if_missing_found: Optional[bool] = False,
         case_and_space_insensitive_inputs: Optional[bool] = False,
+        check_dimensions: list[str] = None,
         **_kwargs: Any
 ):
     fallback_elements = fallback_elements or {}
+    check_dimensions = check_dimensions or dataframe.columns
 
     if case_and_space_insensitive_inputs:
         utility.normalize_dataframe_strings(dataframe)
@@ -511,10 +535,20 @@ def dataframe_itemskip_elements_on_demand(
     global_validity_mask = np.ones(len(dataframe), dtype=bool)
     exit_with_error = False
 
-    for dimension_name in dataframe.columns:
+    for dimension_name in check_dimensions:
         unique_element_list = dataframe[dimension_name].astype(str).unique().tolist()
-        for element in unique_element_list:
-            pass
+        sorted_hierarchies = utility.get_sorted_hierarchy_list_for_check(tm1_service, dimension_name)
+        element_validity_map = {
+            element_name: utility.check_dimension_element_exists(
+                tm1_service=tm1_service,
+                dimension_name=dimension_name,
+                sorted_hierarchies=sorted_hierarchies,
+                element_name=element_name
+            )
+            for element_name in unique_element_list
+        }
+        current_column_validity_mask = dataframe[dimension_name].map(element_validity_map).to_numpy()
+
 
 
 

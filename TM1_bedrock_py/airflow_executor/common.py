@@ -43,7 +43,7 @@ def gather_target_metadata(
     metadata_obj = TM1CubeObjectMetadata.collect(
         tm1_service=tm1_service,
         cube_name=target_cube_name,
-        collect_dim_element_identifiers=ignore_missing_elements,
+        collect_itemskip_info=ignore_missing_elements,
         collect_measure_types=collect_measure_types
     )
     return metadata_obj

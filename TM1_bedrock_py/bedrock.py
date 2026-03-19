@@ -604,6 +604,7 @@ def data_copy_intercube(tm1_service: Optional[Any],
                         output_missing_elements: Optional[bool] = False,
                         fallback_elements: Optional[Dict] = None,
                         raise_error_if_missing_found: Optional[bool] = False,
+                        check_query_mode: Literal['bulk', 'on_demand'] = 'bulk',
 
                         mapping_steps: Optional[List[Dict]] = None,
                         shared_mapping: Optional[Dict] = None,
@@ -820,9 +821,10 @@ def data_copy_intercube(tm1_service: Optional[Any],
         tm1_service=target_tm1_service,
         cube_name=target_cube_name,
         metadata_function=target_metadata_function,
-        collect_dim_element_identifiers=check_missing_elements,
+        collect_itemskip_info=check_missing_elements,
         collect_measure_types=use_mixed_datatypes,
         dimension_check_filter=dimensions_to_check,
+        itemskip_query_mode=check_query_mode,
         **kwargs
     )
 
@@ -905,9 +907,9 @@ def data_copy_intercube(tm1_service: Optional[Any],
         return
 
     if check_missing_elements:
-        dimension_check_dfs = target_metadata.get_dimension_check_dfs()
-
-        transformer.dataframe_itemskip_elements(dataframe=dataframe, check_dfs=dimension_check_dfs,
+        transformer.dataframe_itemskip_elements(dataframe=dataframe,
+                                                check_dfs=target_metadata.get_dimension_check_dfs(),
+                                                check_hierarchies=target_metadata.get_dimension_check_hiers(),
                                                 logging_enabled=output_missing_elements,
                                                 case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
                                                 fallback_elements=fallback_elements,
@@ -1172,7 +1174,7 @@ def data_copy(
     data_metadata = utility.TM1CubeObjectMetadata.collect(
         tm1_service=target_tm1_service, cube_name=cube_name,
         metadata_function=target_metadata_function,
-        collect_dim_element_identifiers=False,
+        collect_itemskip_info=False,
         collect_measure_types=use_mixed_datatypes,
         **kwargs)
     cube_dims = data_metadata.get_cube_dims()
@@ -1392,7 +1394,7 @@ async def async_executor_tm1(
         tm1_service=target_tm1_service,
         cube_name=target_cube_name,
         metadata_function=kwargs.get("target_metadata_function"),
-        collect_dim_element_identifiers=dim_identifier,
+        collect_itemskip_info=dim_identifier,
         **kwargs
     )
     def get_target_metadata(**_kwargs): return target_metadata
@@ -1635,7 +1637,7 @@ def load_sql_data_to_tm1_cube(
         tm1_service=tm1_service,
         cube_name=target_cube_name,
         metadata_function=target_metadata_function,
-        collect_dim_element_identifiers=ignore_missing_elements,
+        collect_itemskip_info=ignore_missing_elements,
         **kwargs
     )
 
@@ -2163,7 +2165,7 @@ async def async_executor_tm1_to_sql(
                 tm1_service=tm1_service,
                 cube_name=source_cube_name,
                 metadata_function=kwargs.get("data_metadata_function"),
-                collect_dim_element_identifiers=kwargs.get("ignore_missing_elements", False),
+                collect_itemskip_info=kwargs.get("ignore_missing_elements", False),
                 **kwargs
             )
             def get_data_metadata(**_kwargs): return data_metadata
@@ -2347,7 +2349,7 @@ async def async_executor_sql_to_tm1(
                 tm1_service=target_tm1_service,
                 cube_name=target_cube_name,
                 metadata_function=kwargs.get("target_metadata_function"),
-                collect_dim_element_identifiers=kwargs.get("ignore_missing_elements", False),
+                collect_itemskip_info=kwargs.get("ignore_missing_elements", False),
                 **kwargs
             )
 
@@ -2625,7 +2627,7 @@ def load_csv_data_to_tm1_cube(
         tm1_service=tm1_service,
         cube_name=target_cube_name,
         metadata_function=target_metadata_function,
-        collect_dim_element_identifiers=ignore_missing_elements,
+        collect_itemskip_info=ignore_missing_elements,
         collect_measure_types=use_mixed_datatypes,
         **kwargs
     )
@@ -3093,7 +3095,7 @@ async def async_executor_csv_to_tm1(
                 tm1_service=tm1_service,
                 cube_name=source_cube_name,
                 metadata_function=kwargs.get("data_metadata_function"),
-                collect_dim_element_identifiers=kwargs.get("ignore_missing_elements", False),
+                collect_itemskip_info=kwargs.get("ignore_missing_elements", False),
                 **kwargs
             )
             def get_data_metadata(**_kwargs): return data_metadata

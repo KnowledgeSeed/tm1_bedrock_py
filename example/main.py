@@ -375,7 +375,8 @@ def run_pyodbc_writer():
 
 if __name__ == '__main__':
     # dimension_builder_basic_demo()
-    dimension_builder_append_demo()
+    # dimension_builder_append_demo()
     # dimension_builder_complex_demo()
     # hierarchy_builder_demo()
     # run_pyodbc_writer()
+    complex_transform_demo()
