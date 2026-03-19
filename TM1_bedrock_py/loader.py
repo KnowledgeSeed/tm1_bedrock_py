@@ -115,6 +115,7 @@ def __dataframe_to_cube_default(
             increment=increment,
             sum_numeric_duplicates=sum_numeric_duplicates,
             slice_size_of_dataframe=slice_size_of_dataframe,
+            allow_spread=False
         )
     else:
         tm1_service.cells.write_dataframe(
@@ -128,7 +129,8 @@ def __dataframe_to_cube_default(
             use_blob=use_blob,
             remove_blob=remove_blob,
             increment=increment,
-            sum_numeric_duplicates=sum_numeric_duplicates
+            sum_numeric_duplicates=sum_numeric_duplicates,
+            allow_spread=False
         )
 
 

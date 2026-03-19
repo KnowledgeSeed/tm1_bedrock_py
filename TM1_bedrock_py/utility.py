@@ -595,7 +595,8 @@ def all_leaves_identifiers_to_dataframe(
 ) -> DataFrame:
     # caseandspaceinsensitiveset datastruct to dataframe
     if not hierarchy_name:
-        hierarchy_name = dimension_name
+        hierarchy_name = 'Leaves'
+
     dataset = tm1_service.elements.get_all_leaf_element_identifiers(
         dimension_name=dimension_name, hierarchy_name=hierarchy_name
     )

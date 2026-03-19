@@ -493,6 +493,32 @@ def dataframe_itemskip_elements(
     dataframe.reset_index(drop=True, inplace=True)
 
 
+def dataframe_itemskip_elements_on_demand(
+        tm1service: Any,
+        dataframe: pd.DataFrame,
+        fallback_elements: Optional[Dict[str, str]] = None,
+        logging_enabled: Optional[bool] = False,
+        raise_error_if_missing_found: Optional[bool] = False,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
+        **_kwargs: Any
+):
+    fallback_elements = fallback_elements or {}
+
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+        fallback_elements = utility.normalize_structure_strings(fallback_elements)
+
+    global_validity_mask = np.ones(len(dataframe), dtype=bool)
+    exit_with_error = False
+
+    for dimension_name in dataframe.columns:
+        unique_element_list = dataframe[dimension_name].astype(str).unique().tolist()
+        for element in unique_element_list:
+            pass
+
+
+
+
 # ------------------------------------------------------------------------------------------------------------
 # Main: dataframe remapping and copy functions
 # ------------------------------------------------------------------------------------------------------------
