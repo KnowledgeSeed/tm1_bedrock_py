@@ -604,7 +604,9 @@ def data_copy_intercube(tm1_service: Optional[Any],
                         output_missing_elements: Optional[bool] = False,
                         fallback_elements: Optional[Dict] = None,
                         raise_error_if_missing_found: Optional[bool] = False,
-                        check_query_mode: Literal['bulk', 'on_demand'] = 'bulk',
+                        existance_query_mode: Literal['bulk', 'on_demand'] = 'bulk',
+                        audit_mode: bool = False,
+                        check_missing_elements_audit: Optional[bool] = False,
 
                         mapping_steps: Optional[List[Dict]] = None,
                         shared_mapping: Optional[Dict] = None,
@@ -693,7 +695,7 @@ def data_copy_intercube(tm1_service: Optional[Any],
     source_clear_set_mdx_list: Optional[List[str]]
         List of MDX queries to clear specific data areas in the source cube.
     fallback_elements : Optional[Dict]
-        Per-dimension fallback elements applied when ``ignore_missing_elements`` is True.
+        Per-dimension fallback elements applied when ``check_missing_elements`` is True.
     async_write : bool, default=False
         Whether to write data asynchronously. Currently, divides the data into 250.000 row chunks.
     slice_size_of_dataframe : Optional[int], default=50000
@@ -824,7 +826,7 @@ def data_copy_intercube(tm1_service: Optional[Any],
         collect_itemskip_info=check_missing_elements,
         collect_measure_types=use_mixed_datatypes,
         dimension_check_filter=dimensions_to_check,
-        itemskip_query_mode=check_query_mode,
+        itemskip_query_mode=existance_query_mode,
         **kwargs
     )
 
@@ -889,7 +891,9 @@ def data_copy_intercube(tm1_service: Optional[Any],
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
         verbose_logging_mode=verbose_logging_mode,
-        case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, **kwargs)
+        case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, 
+        audit_mode=audit_mode,
+        **kwargs)
 
     final_row_count = len(dataframe)
     basic_logger.debug(f"initial row count was: {initial_row_count}, Final row count was: {final_row_count}")
@@ -914,6 +918,8 @@ def data_copy_intercube(tm1_service: Optional[Any],
                                                 case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
                                                 fallback_elements=fallback_elements,
                                                 raise_error_if_missing_found=raise_error_if_missing_found,
+                                                query_mode=existance_query_mode,
+                                                check_missing_elements_audit=check_missing_elements_audit,
                                                 **kwargs)
 
     if dataframe.empty:
@@ -990,6 +996,16 @@ def data_copy(
         sql_function: Optional[Callable[..., DataFrame]] = None,
         csv_function: Optional[Callable[..., DataFrame]] = None,
         data_mdx_list: Optional[List[str]] = None,
+
+        check_missing_elements: Optional[bool] = False,
+        dimensions_to_check: Optional[list[str]] = None,
+        output_missing_elements: Optional[bool] = False,
+        fallback_elements: Optional[Dict] = None,
+        raise_error_if_missing_found: Optional[bool] = False,
+        existance_query_mode: Literal['bulk', 'on_demand'] = 'bulk',
+        audit_mode: bool = False,
+        check_missing_elements_audit: Optional[bool] = False,
+        
         case_and_space_insensitive_inputs: Optional[bool] = False,
         skip_zeros: Optional[bool] = False,
         skip_consolidated_cells: Optional[bool] = False,
@@ -1162,6 +1178,16 @@ def data_copy(
         tm1_service=tm1_service
     )
     cube_name = data_metadata_queryspecific.get_cube_name()
+    target_metadata = utility.TM1CubeObjectMetadata.collect(
+        tm1_service=target_tm1_service,
+        cube_name=cube_name,
+        metadata_function=target_metadata_function,
+        collect_itemskip_info=check_missing_elements,
+        collect_measure_types=use_mixed_datatypes,
+        dimension_check_filter=dimensions_to_check,
+        itemskip_query_mode=existance_query_mode,
+        **kwargs
+    )
 
     if dataframe.empty:
         if clear_target:
@@ -1240,7 +1266,9 @@ def data_copy(
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
         verbose_logging_mode=verbose_logging_mode,
-        case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, **kwargs
+        case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, 
+        audit_mode=audit_mode,
+        **kwargs
     )
 
     final_row_count = len(dataframe)
@@ -1249,6 +1277,26 @@ def data_copy(
         msg = f"Initial row count: {initial_row_count} does not match Final row count: {final_row_count}"
         basic_logger.error(msg)
         raise ValueError(msg)
+
+    if dataframe.empty:
+        if clear_target:
+            loader.clear_cube(tm1_service=target_tm1_service,
+                              cube_name=cube_name,
+                              clear_set_mdx_list=target_clear_set_mdx_list,
+                              **kwargs)
+        return
+
+    if check_missing_elements:
+        transformer.dataframe_itemskip_elements(dataframe=dataframe,
+                                                check_dfs=target_metadata.get_dimension_check_dfs(),
+                                                check_hierarchies=target_metadata.get_dimension_check_hiers(),
+                                                logging_enabled=output_missing_elements,
+                                                case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
+                                                fallback_elements=fallback_elements,
+                                                raise_error_if_missing_found=raise_error_if_missing_found,
+                                                query_mode=existance_query_mode,
+                                                check_missing_elements_audit=check_missing_elements_audit,
+                                                **kwargs)
 
     if dataframe.empty:
         if clear_target:
@@ -1384,7 +1432,7 @@ async def async_executor_tm1(
     basic_logger.info(f"Parameter tuples ready. Count: {len(param_tuples)}")
 
     target_cube_name = kwargs.get("target_cube_name")
-    dim_identifier = kwargs.get("ignore_missing_elements", False)
+    dim_identifier = kwargs.get("check_missing_elements", False)
 
     if data_copy_function is data_copy:
         target_cube_name = utility.get_cube_name_from_mdx(data_mdx_template)
@@ -1497,12 +1545,23 @@ def load_sql_data_to_tm1_cube(
         chunksize: Optional[int] = None,
         sql_engine: Optional[Any] = None,
         sql_function: Optional[Callable[..., DataFrame]] = None,
+
+        check_missing_elements: Optional[bool] = False,
+        dimensions_to_check: Optional[list[str]] = None,
+        output_missing_elements: Optional[bool] = False,
+        fallback_elements: Optional[Dict] = None,
+        raise_error_if_missing_found: Optional[bool] = False,
+        existance_query_mode: Literal['bulk', 'on_demand'] = 'bulk',
+        audit_mode: bool = False,
+        check_missing_elements_audit: Optional[bool] = False,
+
+        use_mixed_datatypes: bool = False,
+        
         case_and_space_insensitive_inputs: Optional[bool] = False,
         mapping_steps: Optional[List[Dict]] = None,
         shared_mapping: Optional[Dict] = None,
         value_function: Optional[Callable[..., Any]] = None,
-        ignore_missing_elements: Optional[bool] = False,
-        fallback_elements: Optional[Dict] = None,
+        
         target_clear_set_mdx_list: Optional[List[str]] = None,
         clear_target: Optional[bool] = False,
         clear_source: Optional[bool] = False,
@@ -1565,7 +1624,7 @@ def load_sql_data_to_tm1_cube(
             be used by multiple mapping steps.
         value_function: A custom function to apply transformations to the 'Value'
             column.
-        ignore_missing_elements: If True, rows with elements that do not exist
+        check_missing_elements: If True, rows with elements that do not exist
             in the target TM1 dimensions will be silently dropped.
         fallback_elements: Per-dimension fallback definitions when ignoring missing elements.
         target_clear_set_mdx_list: A list of MDX set expressions defining the
@@ -1637,7 +1696,10 @@ def load_sql_data_to_tm1_cube(
         tm1_service=tm1_service,
         cube_name=target_cube_name,
         metadata_function=target_metadata_function,
-        collect_itemskip_info=ignore_missing_elements,
+        collect_itemskip_info=check_missing_elements,
+        collect_measure_types=use_mixed_datatypes,
+        dimension_check_filter=dimensions_to_check,
+        itemskip_query_mode=existance_query_mode,
         **kwargs
     )
 
@@ -1661,22 +1723,6 @@ def load_sql_data_to_tm1_cube(
     cube_dims = target_metadata.get_cube_dims()
 
     transformer.cast_coordinates_to_str(cube_dims, dataframe)
-
-    if ignore_missing_elements:
-        transformer.dataframe_itemskip_elements(dataframe=dataframe,
-                                                check_dfs=target_metadata.get_dimension_check_dfs(),
-                                                logging_enabled=verbose_logging_mode is not None,
-                                                case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
-                                                fallback_elements=fallback_elements,
-                                                **kwargs)
-
-    if dataframe.empty:
-        if clear_target:
-            loader.clear_cube(tm1_service=tm1_service,
-                              cube_name=target_cube_name,
-                              clear_set_mdx_list=target_clear_set_mdx_list,
-                              **kwargs)
-        return
 
     utility.dataframe_verbose_logger(
         dataframe=dataframe,
@@ -1713,8 +1759,38 @@ def load_sql_data_to_tm1_cube(
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
         verbose_logging_mode=verbose_logging_mode,
-        case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, **kwargs
+        case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, 
+        audit_mode=audit_mode,
+        **kwargs
     )
+    
+    if dataframe.empty:
+        if clear_target:
+            loader.clear_cube(tm1_service=tm1_service,
+                              cube_name=target_cube_name,
+                              clear_set_mdx_list=target_clear_set_mdx_list,
+                              **kwargs)
+        return
+    
+    if check_missing_elements:
+        transformer.dataframe_itemskip_elements(dataframe=dataframe,
+                                                check_dfs=target_metadata.get_dimension_check_dfs(),
+                                                check_hierarchies=target_metadata.get_dimension_check_hiers(),
+                                                logging_enabled=output_missing_elements,
+                                                case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
+                                                fallback_elements=fallback_elements,
+                                                raise_error_if_missing_found=raise_error_if_missing_found,
+                                                query_mode=existance_query_mode,
+                                                check_missing_elements_audit=check_missing_elements_audit,
+                                                **kwargs)
+
+    if dataframe.empty:
+        if clear_target:
+            loader.clear_cube(tm1_service=tm1_service,
+                              cube_name=target_cube_name,
+                              clear_set_mdx_list=target_clear_set_mdx_list,
+                              **kwargs)
+        return
 
     final_row_count = len(dataframe)
     if initial_row_count != final_row_count:
@@ -2165,7 +2241,7 @@ async def async_executor_tm1_to_sql(
                 tm1_service=tm1_service,
                 cube_name=source_cube_name,
                 metadata_function=kwargs.get("data_metadata_function"),
-                collect_itemskip_info=kwargs.get("ignore_missing_elements", False),
+                collect_itemskip_info=kwargs.get("check_missing_elements", False),
                 **kwargs
             )
             def get_data_metadata(**_kwargs): return data_metadata
@@ -2349,7 +2425,7 @@ async def async_executor_sql_to_tm1(
                 tm1_service=target_tm1_service,
                 cube_name=target_cube_name,
                 metadata_function=kwargs.get("target_metadata_function"),
-                collect_itemskip_info=kwargs.get("ignore_missing_elements", False),
+                collect_itemskip_info=kwargs.get("check_missing_elements", False),
                 **kwargs
             )
 
@@ -2473,8 +2549,16 @@ def load_csv_data_to_tm1_cube(
         mapping_steps: Optional[List[Dict]] = None,
         shared_mapping: Optional[Dict] = None,
         value_function: Optional[Callable[..., Any]] = None,
-        ignore_missing_elements: Optional[bool] = False,
+
+        check_missing_elements: Optional[bool] = False,
+        dimensions_to_check: Optional[list[str]] = None,
+        output_missing_elements: Optional[bool] = False,
         fallback_elements: Optional[Dict] = None,
+        raise_error_if_missing_found: Optional[bool] = False,
+        existance_query_mode: Literal['bulk', 'on_demand'] = 'bulk',
+        audit_mode: bool = False,
+        check_missing_elements_audit: Optional[bool] = False,
+        
         target_clear_set_mdx_list: Optional[List[str]] = None,
         pre_load_function: Optional[Callable] = None,
         pre_load_args: Optional[List] = None,
@@ -2554,10 +2638,10 @@ def load_csv_data_to_tm1_cube(
             be used by multiple mapping steps.
         value_function: A custom function to apply transformations to the 'Value'
             column.
-        ignore_missing_elements: If True, rows with elements that do not exist
+        check_missing_elements: If True, rows with elements that do not exist
             in the target TM1 dimensions will be silently dropped.
         fallback_elements: Dictionary of fallback dimension elements applied when
-            `ignore_missing_elements` is True.
+            `check_missing_elements` is True.
         target_clear_set_mdx_list: A list of MDX set expressions defining the
             slice to be cleared in the target TM1 cube before loading.
         clear_target: If True, the target slice in the TM1 cube will be cleared.
@@ -2627,10 +2711,13 @@ def load_csv_data_to_tm1_cube(
         tm1_service=tm1_service,
         cube_name=target_cube_name,
         metadata_function=target_metadata_function,
-        collect_itemskip_info=ignore_missing_elements,
+        collect_itemskip_info=check_missing_elements,
         collect_measure_types=use_mixed_datatypes,
+        dimension_check_filter=dimensions_to_check,
+        itemskip_query_mode=existance_query_mode,
         **kwargs
     )
+    
 
     transformer.normalize_table_source_dataframe(
         dataframe=dataframe,
@@ -2649,22 +2736,6 @@ def load_csv_data_to_tm1_cube(
     cube_dims = target_metadata.get_cube_dims()
 
     transformer.cast_coordinates_to_str(cube_dims, dataframe)
-
-    if ignore_missing_elements:
-        transformer.dataframe_itemskip_elements(dataframe=dataframe,
-                                                check_dfs=target_metadata.get_dimension_check_dfs(),
-                                                logging_enabled=verbose_logging_mode is not None,
-                                                case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
-                                                fallback_elements=fallback_elements,
-                                                **kwargs)
-
-    if dataframe.empty:
-        if clear_target:
-            loader.clear_cube(tm1_service=tm1_service,
-                              cube_name=target_cube_name,
-                              clear_set_mdx_list=target_clear_set_mdx_list,
-                              **kwargs)
-        return
 
     shared_mapping_df = None
     if shared_mapping:
@@ -2691,8 +2762,28 @@ def load_csv_data_to_tm1_cube(
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
         verbose_logging_mode=verbose_logging_mode,
-        case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, **kwargs
+        case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, 
+        audit_mode=audit_mode, **kwargs
     )
+
+    if check_missing_elements:
+        transformer.dataframe_itemskip_elements(dataframe=dataframe,
+                                                check_dfs=target_metadata.get_dimension_check_dfs(),
+                                                check_hierarchies=target_metadata.get_dimension_check_hiers(),
+                                                logging_enabled=output_missing_elements,
+                                                case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
+                                                fallback_elements=fallback_elements,
+                                                raise_error_if_missing_found=raise_error_if_missing_found,
+                                                query_mode=existance_query_mode,
+                                                check_missing_elements_audit=check_missing_elements_audit,
+                                                **kwargs)
+    if dataframe.empty:
+        if clear_target:
+            loader.clear_cube(tm1_service=tm1_service,
+                              cube_name=target_cube_name,
+                              clear_set_mdx_list=target_clear_set_mdx_list,
+                              **kwargs)
+        return
 
     final_row_count = len(dataframe)
     if initial_row_count != final_row_count:
@@ -3095,7 +3186,7 @@ async def async_executor_csv_to_tm1(
                 tm1_service=tm1_service,
                 cube_name=source_cube_name,
                 metadata_function=kwargs.get("data_metadata_function"),
-                collect_itemskip_info=kwargs.get("ignore_missing_elements", False),
+                collect_itemskip_info=kwargs.get("check_missing_elements", False),
                 **kwargs
             )
             def get_data_metadata(**_kwargs): return data_metadata

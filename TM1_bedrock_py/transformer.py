@@ -5,6 +5,7 @@ import numpy as np
 from pandas import DataFrame
 
 from TM1_bedrock_py import utility, basic_logger
+from TM1_bedrock_py.utility import create_audit_columns_for_step
 
 
 def normalize_dataframe_for_testing(
@@ -437,6 +438,7 @@ def dataframe_itemskip_elements(
         raise_error_if_missing_found: Optional[bool] = False,
         case_and_space_insensitive_inputs: Optional[bool] = False,
         query_mode: Literal['bulk', 'on_demand'] = 'bulk',
+        check_missing_elements_audit: bool = False,
         **_kwargs: Any
 ) -> None:
     if query_mode == 'on_demand' and tm1_service is None:
@@ -468,10 +470,16 @@ def dataframe_itemskip_elements(
         )
 
     for dimension_name in check_dimensions:
-        matching_dataframe_columns: List[str] = [
+        matching_dataframe_columns = [
             column_name for column_name in dataframe.columns
-            if column_name.partition("@")[0] == dimension_name
+            if column_name == dimension_name
         ]
+        if check_missing_elements_audit:
+            matching_dataframe_columns = [
+                column_name for column_name in dataframe.columns
+                if column_name.partition("@")[0] == dimension_name
+            ]
+
         for dataframe_column in matching_dataframe_columns:
             if query_mode == 'bulk':
                 validation_dataframe = check_dfs[dimension_name]
@@ -693,6 +701,8 @@ def __apply_replace(
         mapping_step: Dict[str, Any],
         shared_mapping_df,
         case_and_space_insensitive_inputs: Optional[bool] = False,
+        audit_mode: bool = False,
+        step_number: int = 1,
 ) -> DataFrame:
     """
     Handle the 'replace' mapping step.
@@ -712,8 +722,17 @@ def __apply_replace(
         The modified DataFrame after applying the literal remap.
     """
     _ = shared_mapping_df
+    mapping = mapping_step["mapping"]
+    if audit_mode:
+        postfix = f"@step{str(step_number)}"
+        for change_column in mapping.keys():
+            saved_column = change_column + postfix
+            basic_logger.debug(f"Column was saved to {saved_column}")
+            utility.duplicate_column_in_place(dataframe=data_df,
+                                              source_name=change_column,
+                                              target_name=saved_column)
     return dataframe_find_and_replace(
-        dataframe=data_df, mapping=mapping_step["mapping"],
+        dataframe=data_df, mapping=mapping,
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
 
 
@@ -722,6 +741,8 @@ def __apply_map_and_replace(
         mapping_step: Dict[str, Any],
         shared_mapping_df: Optional[DataFrame] = None,
         case_and_space_insensitive_inputs: Optional[bool] = False,
+        audit_mode: bool = False,
+        step_number: int = 1,
 ) -> DataFrame:
     """
     Handle the 'map_and_replace' mapping step.
@@ -741,6 +762,11 @@ def __apply_map_and_replace(
     None
         Modifies the dataframe in place
     """
+    if audit_mode:
+        create_audit_columns_for_step(data_df=data_df,
+                                      mapping=mapping_step["mapping_dimensions"],
+                                      step_number=step_number)
+
     step_uses_independent_mapping = (
         "mapping_df" in mapping_step and mapping_step["mapping_df"] is not None
     )
@@ -778,6 +804,8 @@ def __apply_map_and_join(
         mapping_step: Dict[str, Any],
         shared_mapping_df: Optional[DataFrame] = None,
         case_and_space_insensitive_inputs: Optional[bool] = False,
+        audit_mode: bool = False,
+        step_number: int = 1,
 ) -> DataFrame:
     """
     Handle the 'map_and_join' mapping step.
@@ -797,6 +825,10 @@ def __apply_map_and_join(
     None
         Modifies the dataframe in place
     """
+    if audit_mode and "dropped_columns" in mapping_step:
+        create_audit_columns_for_step(data_df=data_df,
+                                      mapping=mapping_step["dropped_columns"],
+                                      step_number=step_number)
 
     step_uses_independent_mapping = (
         "mapping_df" in mapping_step and mapping_step["mapping_df"] is not None
@@ -834,6 +866,8 @@ def __apply_cartesian_product(
         mapping_step: Dict[str, Any],
         shared_mapping_df: Optional[DataFrame] = None,
         case_and_space_insensitive_inputs: Optional[bool] = False,
+        audit_mode: bool = False,
+        step_number: int = 1,
 ) -> DataFrame:
     """
     Handle the 'map_and_join' mapping step.
@@ -853,6 +887,7 @@ def __apply_cartesian_product(
     None
         Modifies the dataframe in place
     """
+    _, _ = audit_mode, step_number
 
     step_uses_independent_mapping = (
         "mapping_df" in mapping_step and mapping_step["mapping_df"] is not None
@@ -886,7 +921,10 @@ def __apply_pivot(
         mapping_step: Dict[str, Any],
         shared_mapping_df: Optional[DataFrame] = None,
         case_and_space_insensitive_inputs: Optional[bool] = False,
+        audit_mode: bool = False,
+        step_number: int = 1,
 ):
+    _, _, _ = audit_mode, step_number, shared_mapping_df
     if case_and_space_insensitive_inputs:
         utility.normalize_dataframe_strings(data_df)
         utility.normalize_structure_strings(mapping_step)
@@ -909,7 +947,10 @@ def __apply_unpivot(
         mapping_step: Dict[str, Any],
         shared_mapping_df: Optional[DataFrame] = None,
         case_and_space_insensitive_inputs: Optional[bool] = False,
+        audit_mode: bool = False,
+        step_number: int = 1,
 ):
+    _, _, _ = audit_mode, step_number, shared_mapping_df
     if case_and_space_insensitive_inputs:
         utility.normalize_dataframe_strings(data_df)
         utility.normalize_structure_strings(mapping_step)
@@ -932,10 +973,25 @@ def __apply_basic_dimension_reshaping(
         mapping_step: Dict[str, Any],
         shared_mapping_df: Optional[DataFrame] = None,
         case_and_space_insensitive_inputs: Optional[bool] = False,
+        audit_mode: bool = False,
+        step_number: int = 1,
 ):
     # either or: literal row filter, literal column drop, literal column add with value assign, literal relabel
     # can be used in any combination.
     # tip: for more complex reshaping, call this method in sequence
+    _ = shared_mapping_df
+    existing_filter_columns = [col for col in mapping_step["filter_condition"].keys() if col in data_df.columns]
+    columns_to_save = {}
+    for save_column in existing_filter_columns:
+        columns_to_save[save_column] = None
+    existing_drop_columns = [col for col in mapping_step["columns_to_drop"].keys() if col in data_df.columns]
+    for save_column in existing_drop_columns:
+        columns_to_save[save_column] = None
+
+    if audit_mode:
+        create_audit_columns_for_step(data_df=data_df,
+                                      mapping=columns_to_save,
+                                      step_number=step_number)
 
     if "filter_condition" in mapping_step:
         dataframe_filter_inplace(data_df, mapping_step["filter_condition"],
@@ -971,6 +1027,7 @@ def dataframe_execute_mappings(
         mapping_steps: List[Dict],
         shared_mapping_df: Optional[DataFrame] = None,
         case_and_space_insensitive_inputs: Optional[bool] = False,
+        audit_mode: bool = False,
         **kwargs
 ) -> DataFrame:
     """
@@ -1036,14 +1093,17 @@ def dataframe_execute_mappings(
         return data_df
 
     for i, step in enumerate(mapping_steps):
+        step_number = str(i+1)
         method = step["method"]
         if method in method_handlers:
             data_df = method_handlers[method](
                 data_df, step, shared_mapping_df,
-                case_and_space_insensitive_inputs)
+                case_and_space_insensitive_inputs,
+                audit_mode, step_number
+            )
             utility.dataframe_verbose_logger(
                 dataframe=data_df,
-                step_number=f"mapping_step_{i+1}_result",
+                step_number=f"mapping_step_{step_number}_result",
                 **kwargs
             )
         else:

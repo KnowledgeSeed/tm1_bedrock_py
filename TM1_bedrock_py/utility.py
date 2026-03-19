@@ -585,6 +585,24 @@ def inspect_table(engine: Any, table_name: str, schema: Optional[str]=None) -> d
 
 
 # ------------------------------------------------------------------------------------------------------------
+# Utility: dataframe save mode (audit) helpers
+# ------------------------------------------------------------------------------------------------------------
+
+def duplicate_column_in_place(dataframe: DataFrame, source_name: str, target_name: str) -> None:
+    dataframe[target_name] = dataframe[source_name].copy()
+
+
+def create_audit_columns_for_step(data_df: DataFrame, mapping: Union[dict, list], step_number: int = 1):
+    postfix = f"@step{str(step_number)}"
+    change_columns = mapping.keys() if isinstance(mapping, dict) else mapping
+    for change_column in change_columns:
+        saved_column = change_column + postfix
+        basic_logger.debug(f"Column was saved to {saved_column}")
+        duplicate_column_in_place(dataframe=data_df,
+                                  source_name=change_column,
+                                  target_name=saved_column)
+
+# ------------------------------------------------------------------------------------------------------------
 # Utility: ignore missing elements related helpers
 # ------------------------------------------------------------------------------------------------------------
 
