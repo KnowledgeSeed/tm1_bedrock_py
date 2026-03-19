@@ -837,12 +837,9 @@ def test_apply_update_on_edges_success(legacy_df, input_df, retained_hierarchies
     legacy_df = None if legacy_df is None else pd.DataFrame(legacy_df)
     input_df = pd.DataFrame(input_df)
     expected_df = pd.DataFrame(expected_df)
-    output_df = apply.apply_update_on_edges(
-        legacy_df=legacy_df,
-        input_df=input_df,
-        retained_hierarchies=retained_hierarchies,
-        orphan_consolidation_name=orphan_consolidation_name
-    )
+    output_df = apply.apply_safe_rebuild_on_edges(legacy_df=legacy_df, input_df=input_df,
+                                                  retained_hierarchies=retained_hierarchies,
+                                                  orphan_consolidation_name=orphan_consolidation_name)
     pd.testing.assert_frame_equal(output_df, expected_df)
 
 
@@ -853,12 +850,9 @@ def test_apply_update_with_unwind_on_edges_success(
     legacy_df = None if legacy_df is None else pd.DataFrame(legacy_df)
     input_df = pd.DataFrame(input_df)
     expected_df = pd.DataFrame(expected_df)
-    output_df = apply.apply_update_with_unwind_on_edges(
-        legacy_df=legacy_df,
-        input_df=input_df,
-        retained_hierarchies=retained_hierarchies,
-        orphan_consolidation_name=orphan_consolidation_name
-    )
+    output_df = apply.apply_safe_rebuild_unwind_on_edges(legacy_df=legacy_df, input_df=input_df,
+                                                         retained_hierarchies=retained_hierarchies,
+                                                         orphan_consolidation_name=orphan_consolidation_name)
     pd.testing.assert_frame_equal(output_df, expected_df)
 
 
@@ -904,7 +898,7 @@ def test_apply_update_on_elements_success(legacy_df, input_df, expected_df):
     legacy_df = pd.DataFrame(legacy_df)
     input_df = pd.DataFrame(input_df)
     expected_df = pd.DataFrame(expected_df)
-    output_df = apply.apply_update_on_elements(legacy_df=legacy_df, input_df=input_df)
+    output_df = apply.apply_dataframe_union(legacy_df=legacy_df, input_df=input_df)
     pd.testing.assert_frame_equal(output_df, expected_df)
 
 

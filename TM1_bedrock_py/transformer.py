@@ -429,69 +429,69 @@ def normalize_table_source_dataframe(
 @utility.log_exec_metrics
 def dataframe_itemskip_elements(
         dataframe: pd.DataFrame,
-        check_dfs: List[pd.DataFrame],
-        fallback_elements: Optional[Dict] = None,
+        check_dfs: Dict[str, pd.DataFrame],
+        fallback_elements: Optional[Dict[str, str]] = None,
         logging_enabled: Optional[bool] = False,
+        raise_error_if_missing_found: Optional[bool] = False,
         case_and_space_insensitive_inputs: Optional[bool] = False,
-        **_kwargs
+        **_kwargs: Any
 ) -> None:
-    """
-    Filters the given dataframe *in place* to keep only rows whose coordinate
-    values exist in TM1 dimension check dataframes.
-
-    Each dataframe in `check_dfs` corresponds to one coordinate column
-    in `dataframe`, and must be a single-column DataFrame containing all valid
-    element names and aliases for that dimension.
-
-    Performance optimized using pandas hash-based set membership instead of np.isin.
-
-    Parameters
-    ----------
-    dataframe : pd.DataFrame
-        The main DataFrame containing N coordinate columns and a 'Value' column.
-    check_dfs : list[pd.DataFrame]
-        List of N single-column DataFrames containing valid element names or aliases.
-        Order of these check_dfs must match the order of coordinate columns in `dataframe`.
-    logging_enabled : bool, optional
-        If on, logs the number and content of dropped invalid rows per dimension.
-
-    Notes
-    -----
-    - Operates in place (modifies `dataframe` directly).
-    - Uses fast hash lookups (O(n + m) complexity per dimension).
-    """
-    if fallback_elements is None:
-        fallback_elements = {}
+    fallback_elements = fallback_elements or {}
 
     if case_and_space_insensitive_inputs:
         utility.normalize_dataframe_strings(dataframe)
         check_dfs = utility.normalize_structure_strings(check_dfs)
         fallback_elements = utility.normalize_structure_strings(fallback_elements)
 
-    mask = np.ones(len(dataframe), dtype=bool)
+    global_validity_mask = np.ones(len(dataframe), dtype=bool)
+    exit_with_error = False
+    validation_dimension_names = list(check_dfs.keys())
 
-    for df_check in check_dfs:
-        col = df_check.columns[0]
-        valid_set = set(df_check[col])
+    for stray_dimension_name in set(fallback_elements) - set(check_dfs):
+        basic_logger.warning(
+            f"Specified dimension name {stray_dimension_name} in fallback elements "
+            f"is not present in the list of dimensions to check. "
+            f"Checked dimensions: {validation_dimension_names}"
+        )
 
-        current_col_mask = dataframe[col].isin(valid_set).to_numpy()
+    for dimension_name, validation_dataframe in check_dfs.items():
+        target_column_name = validation_dataframe.columns[0]
+        valid_elements_set = set(validation_dataframe[target_column_name])
+        current_column_validity_mask = dataframe[target_column_name].isin(valid_elements_set).to_numpy()
 
-        if logging_enabled:
-            invalid_rows = dataframe.loc[~current_col_mask, [col]].copy()
-            basic_logger.debug(invalid_rows)
+        if not current_column_validity_mask.all():
+            fallback_value = fallback_elements.get(dimension_name)
 
-        if col in fallback_elements:
-            default_element = fallback_elements[col]
-            dataframe.loc[~current_col_mask, [col]] = default_element
-            basic_logger.debug("Invalid elements in dimension " + col + " changed to " + default_element)
-        else:
-            mask &= current_col_mask
+            if fallback_value is not None:
+                if logging_enabled:
+                    invalid_records_dataframe = dataframe.loc[~current_column_validity_mask, [target_column_name]]
+                    basic_logger.debug(
+                        f"Records of dimension {dimension_name} that will be changed to default '{fallback_value}'")
+                    basic_logger.debug(invalid_records_dataframe)
 
-    invalid_total = np.count_nonzero(~mask)
-    basic_logger.debug(f"Total dropped rows: {invalid_total}")
+                dataframe.loc[~current_column_validity_mask, target_column_name] = fallback_value
+                current_column_validity_mask = dataframe[target_column_name].isin(valid_elements_set).to_numpy()
 
-    dataframe.drop(index=dataframe.index[~mask], inplace=True)
+            if not current_column_validity_mask.all():
+                if logging_enabled:
+                    invalid_records_dataframe = dataframe.loc[~current_column_validity_mask, [target_column_name]]
+                    basic_logger.debug(f"Invalid records for dimension {dimension_name}")
+                    basic_logger.debug(invalid_records_dataframe)
+
+                if raise_error_if_missing_found:
+                    exit_with_error = True
+
+        global_validity_mask &= current_column_validity_mask
+
+    invalid_record_count = np.count_nonzero(~global_validity_mask)
+    basic_logger.debug(f"Total invalid records: {invalid_record_count}")
+
+    if exit_with_error:
+        raise ValueError("Invalid records found with raise error mode enabled, exiting...")
+
+    dataframe.drop(index=dataframe.index[~global_validity_mask], inplace=True)
     dataframe.reset_index(drop=True, inplace=True)
+
 
 # ------------------------------------------------------------------------------------------------------------
 # Main: dataframe remapping and copy functions

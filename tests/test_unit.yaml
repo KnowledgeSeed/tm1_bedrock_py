@@ -1294,7 +1294,7 @@ test_dataframe_itemskip_elements:
       "B": [ "x", "y", "z", "w" ],
       "Value": [ 10, 20, 30, 40 ]
     }
-    check1: { "A": [ "apple", "cherry" ] }
+    check1: { "A": [ "apple", "cherry", "default_elem" ] }
     check2: { "B": [ "x", "y" ] }
     defaults: {"A": "default_elem"}
     expected: {

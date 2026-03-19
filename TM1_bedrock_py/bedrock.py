@@ -38,7 +38,7 @@ from TM1_bedrock_py.dimension_builder.validate import (
 def dimension_builder(
         dimension_name: str,
         input_format: Literal["parent_child", "indented_levels", "filled_levels"],
-        build_strategy: Literal["rebuild", "update", "update_with_unwind"],
+        build_strategy: Literal["rebuild", "safe_rebuild", "safe_rebuild_unwind", "update"],
         tm1_service: Any,
         hierarchy_name: str = None,
 
@@ -77,6 +77,10 @@ def dimension_builder(
         **kwargs
 ) -> Optional[Tuple[pd.DataFrame, pd.DataFrame]]:
     utility.set_logging_level(logging_level=logging_level)
+
+    if build_strategy == 'update' and allow_type_changes:
+        basic_logger.warning("Update mode doesnt allow type change, parameter was set to false")
+        allow_type_changes = False
 
     input_edges_df, input_elements_df = apply.init_input_schema(
         dimension_name=dimension_name, hierarchy_name=hierarchy_name, input_format=input_format,
@@ -145,7 +149,7 @@ def hierarchy_builder(
         dimension_name: str,
         hierarchy_name: str,
         input_format: Literal["parent_child", "indented_levels", "filled_levels"],
-        build_strategy: Literal["rebuild", "update", "update_with_unwind"],
+        build_strategy: Literal["rebuild", "safe_rebuild", "safe_rebuild_unwind", "update"],
         tm1_service: Any,
 
         old_orphan_parent_name: str = "OrphanParent",
@@ -576,55 +580,56 @@ def dimension_export(
 
 @utility.log_benchmark_metrics
 @utility.log_exec_metrics
-def data_copy_intercube(
-        tm1_service: Optional[Any],
+def data_copy_intercube(tm1_service: Optional[Any],
+                        target_cube_name: str,
+                        target_tm1_service: Optional[Any] = None,
+                        target_metadata_function: Optional[Callable[..., Any]] = None,
+                        data_mdx: Optional[str] = None,
+                        mdx_function: Optional[
+                            Union[Callable[..., DataFrame], Literal["native_view_extractor"]]] = None,
+                        data_mdx_list: Optional[list[str]] = None,
 
-        target_cube_name: str,
-        target_tm1_service: Optional[Any] = None,
-        target_metadata_function: Optional[Callable[..., Any]] = None,
+                        skip_zeros: Optional[bool] = False,
+                        skip_consolidated_cells: Optional[bool] = False,
+                        skip_rule_derived_cells: Optional[bool] = False,
 
-        data_mdx: Optional[str] = None,
-        mdx_function: Optional[Union[Callable[..., DataFrame], Literal["native_view_extractor"]]] = None,
-        data_mdx_list: Optional[list[str]] = None,
-        skip_zeros: Optional[bool] = False,
-        skip_consolidated_cells: Optional[bool] = False,
-        skip_rule_derived_cells: Optional[bool] = False,
+                        sql_engine: Optional[Any] = None,
+                        sql_function: Optional[Callable[..., DataFrame]] = None,
+                        csv_function: Optional[Callable[..., DataFrame]] = None,
 
-        sql_engine: Optional[Any] = None,
-        sql_function: Optional[Callable[..., DataFrame]] = None,
-        csv_function: Optional[Callable[..., DataFrame]] = None,
+                        case_and_space_insensitive_inputs: Optional[bool] = False,
 
-        case_and_space_insensitive_inputs: Optional[bool] = False,
-        ignore_missing_elements: Optional[bool] = False,
-        fallback_elements: Optional[Dict] = None,
+                        check_missing_elements: Optional[bool] = False,
+                        dimensions_to_check: Optional[list[str]] = None,
+                        output_missing_elements: Optional[bool] = False,
+                        fallback_elements: Optional[Dict] = None,
+                        raise_error_if_missing_found: Optional[bool] = False,
 
-        mapping_steps: Optional[List[Dict]] = None,
-        shared_mapping: Optional[Dict] = None,
+                        mapping_steps: Optional[List[Dict]] = None,
+                        shared_mapping: Optional[Dict] = None,
 
-        clear_target: Optional[bool] = False,
-        target_clear_set_mdx_list: Optional[List[str]] = None,
-        clear_source: Optional[bool] = False,
-        source_clear_set_mdx_list: Optional[List[str]] = None,
+                        clear_target: Optional[bool] = False,
+                        target_clear_set_mdx_list: Optional[List[str]] = None,
+                        clear_source: Optional[bool] = False,
+                        source_clear_set_mdx_list: Optional[List[str]] = None,
 
-        value_function: Optional[Callable[..., Any]] = None,
-        pre_load_function: Optional[Callable] = None,
-        pre_load_args: Optional[List] = None,
-        pre_load_kwargs: Optional[Dict] = None,
+                        value_function: Optional[Callable[..., Any]] = None,
+                        pre_load_function: Optional[Callable] = None,
+                        pre_load_args: Optional[List] = None,
+                        pre_load_kwargs: Optional[Dict] = None,
 
-        async_write: Optional[bool] = False,
-        slice_size_of_dataframe: Optional[int] = 50000,
-        use_ti: Optional[bool] = False,
-        use_blob: Optional[bool] = False,
-        use_mixed_datatypes: Optional[bool] = False,
-        increment: Optional[bool] = False,
-        sum_numeric_duplicates: Optional[bool] = True,
+                        async_write: Optional[bool] = False,
+                        slice_size_of_dataframe: Optional[int] = 50000,
+                        use_ti: Optional[bool] = False,
+                        use_blob: Optional[bool] = False,
+                        use_mixed_datatypes: Optional[bool] = False,
 
-        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
-        verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
-        verbose_logging_output_dir: Optional[str] = None,
+                        increment: Optional[bool] = False,
+                        sum_numeric_duplicates: Optional[bool] = True,
 
-        **kwargs
-) -> None:
+                        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
+                        verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
+                        verbose_logging_output_dir: Optional[str] = None, **kwargs) -> None:
     """
     Copies data from a source cube to a target cube in TM1, with optional transformations, mappings,
     and basic value scale.
@@ -775,9 +780,6 @@ def data_copy_intercube(
             }
         ]
     """
-
-    input_parameters = locals()
-
     if not target_tm1_service:
         target_tm1_service = tm1_service
 
@@ -818,8 +820,9 @@ def data_copy_intercube(
         tm1_service=target_tm1_service,
         cube_name=target_cube_name,
         metadata_function=target_metadata_function,
-        collect_dim_element_identifiers=ignore_missing_elements,
+        collect_dim_element_identifiers=check_missing_elements,
         collect_measure_types=use_mixed_datatypes,
+        dimension_check_filter=dimensions_to_check,
         **kwargs
     )
 
@@ -901,13 +904,14 @@ def data_copy_intercube(
                               **kwargs)
         return
 
-    if ignore_missing_elements:
+    if check_missing_elements:
         dimension_check_dfs = target_metadata.get_dimension_check_dfs()
 
         transformer.dataframe_itemskip_elements(dataframe=dataframe, check_dfs=dimension_check_dfs,
-                                                logging_enabled=verbose_logging_mode is not None,
+                                                logging_enabled=output_missing_elements,
                                                 case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
                                                 fallback_elements=fallback_elements,
+                                                raise_error_if_missing_found=raise_error_if_missing_found,
                                                 **kwargs)
 
     if dataframe.empty:

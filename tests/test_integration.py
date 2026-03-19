@@ -96,21 +96,11 @@ def test_data_copy_intercube_for_multiple_steps_with_lazy_input(
 ):
     utility.set_logging_level("DEBUG")
     with tm1_connection_factory("tm1srv") as conn:
-        bedrock.data_copy_intercube(
-            tm1_service=conn,
-            shared_mapping=shared_mapping,
-            target_cube_name=target_cube_name,
-            data_mdx=base_data_mdx,
-            mapping_steps=mapping_steps,
-            clear_target=True,
-            target_clear_set_mdx_list=["{[Versions].[Versions].[DataCopy Integration Test]}"],
-            skip_zeros=True,
-            async_write=True,
-            slice_size_of_dataframe=2,
-            use_blob=True,
-            logging_level="DEBUG",
-            case_and_space_insensitive_inputs=True
-        )
+        bedrock.data_copy_intercube(tm1_service=conn, target_cube_name=target_cube_name, data_mdx=base_data_mdx,
+                                    skip_zeros=True, case_and_space_insensitive_inputs=True,
+                                    mapping_steps=mapping_steps, shared_mapping=shared_mapping, clear_target=True,
+                                    target_clear_set_mdx_list=["{[Versions].[Versions].[DataCopy Integration Test]}"],
+                                    async_write=True, slice_size_of_dataframe=2, use_blob=True, logging_level="DEBUG")
 
 
 @parametrize_from_file
@@ -118,20 +108,11 @@ def test_data_copy_intercube_for_multiple_steps(
         tm1_connection_factory, base_data_mdx, shared_mapping, mapping_steps, target_cube_name
 ):
     with tm1_connection_factory("tm1srv") as conn:
-        bedrock.data_copy_intercube(
-            tm1_service=conn,
-            shared_mapping=shared_mapping,
-            target_cube_name=target_cube_name,
-            data_mdx=base_data_mdx,
-            mapping_steps=mapping_steps,
-            clear_target=True,
-            target_clear_set_mdx_list=["{[Versions].[Versions].[DataCopy Integration Test]}"],
-            skip_zeros=True,
-            async_write=True,
-            slice_size_of_dataframe=2,
-            use_blob=True,
-            logging_level="DEBUG"
-        )
+        bedrock.data_copy_intercube(tm1_service=conn, target_cube_name=target_cube_name, data_mdx=base_data_mdx,
+                                    skip_zeros=True, mapping_steps=mapping_steps, shared_mapping=shared_mapping,
+                                    clear_target=True,
+                                    target_clear_set_mdx_list=["{[Versions].[Versions].[DataCopy Integration Test]}"],
+                                    async_write=True, slice_size_of_dataframe=2, use_blob=True, logging_level="DEBUG")
 
 
 @parametrize_from_file
@@ -147,24 +128,13 @@ def test_data_copy_intercube_for_multiple_steps_with_custom_function(
     do_nothing_kwargs = {"kwarg1": 3, "kwarg2": 4}
 
     with tm1_connection_factory("tm1srv") as conn:
-        bedrock.data_copy_intercube(
-            tm1_service=conn,
-            shared_mapping=shared_mapping,
-            target_cube_name=target_cube_name,
-            data_mdx=base_data_mdx,
-            mapping_steps=mapping_steps,
-            clear_target=True,
-            target_clear_set_mdx_list=["{[Versions].[Versions].[DataCopy Integration Test]}"],
-            skip_zeros=True,
-            pre_load_function=do_nothing,
-            pre_load_args=do_nothing_args,
-            pre_load_kwargs=do_nothing_kwargs,
-            async_write=True,
-            slice_size_of_dataframe=2,
-            use_blob=True,
-            logging_level="DEBUG",
-
-        )
+        bedrock.data_copy_intercube(tm1_service=conn, target_cube_name=target_cube_name, data_mdx=base_data_mdx,
+                                    skip_zeros=True, mapping_steps=mapping_steps, shared_mapping=shared_mapping,
+                                    clear_target=True,
+                                    target_clear_set_mdx_list=["{[Versions].[Versions].[DataCopy Integration Test]}"],
+                                    pre_load_function=do_nothing, pre_load_args=do_nothing_args,
+                                    pre_load_kwargs=do_nothing_kwargs, async_write=True, slice_size_of_dataframe=2,
+                                    use_blob=True, logging_level="DEBUG")
 
 
 @parametrize_from_file
@@ -172,23 +142,12 @@ def test_data_copy_intercube_for_multiple_steps_with_itemskip_fallback(
         tm1_connection_factory, base_data_mdx, shared_mapping, mapping_steps, target_cube_name
 ):
     with tm1_connection_factory("tm1srv") as conn:
-        bedrock.data_copy_intercube(
-            tm1_service=conn,
-            shared_mapping=shared_mapping,
-            target_cube_name=target_cube_name,
-            data_mdx=base_data_mdx,
-            mapping_steps=mapping_steps,
-            clear_target=True,
-            target_clear_set_mdx_list=["{[Versions].[Versions].[DataCopy Integration Test]}"],
-            skip_zeros=True,
-            ignore_missing_elements=True,
-            fallback_elements={"Versions": "DataCopy Integration Test"},
-            async_write=True,
-            slice_size_of_dataframe=2,
-            use_blob=True,
-            logging_level="DEBUG",
-            #verbose_logging_mode="print_console"
-        )
+        bedrock.data_copy_intercube(tm1_service=conn, target_cube_name=target_cube_name, data_mdx=base_data_mdx,
+                                    skip_zeros=True, check_missing_elements=True,
+                                    fallback_elements={"Versions": "DataCopy Integration Test"},
+                                    mapping_steps=mapping_steps, shared_mapping=shared_mapping, clear_target=True,
+                                    target_clear_set_mdx_list=["{[Versions].[Versions].[DataCopy Integration Test]}"],
+                                    async_write=True, slice_size_of_dataframe=2, use_blob=True, logging_level="DEBUG")
 
 
 @parametrize_from_file
