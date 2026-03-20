@@ -439,8 +439,9 @@ def dataframe_itemskip_elements(
         case_and_space_insensitive_inputs: Optional[bool] = False,
         query_mode: Literal['bulk', 'on_demand'] = 'bulk',
         check_missing_elements_audit: bool = False,
+        return_dropped_rows: bool = False,
         **_kwargs: Any
-) -> None:
+) -> Optional[DataFrame]:
     if query_mode == 'on_demand' and tm1_service is None:
         raise ValueError("TM1Service object is mandatory for on_demand mode.")
 
@@ -458,6 +459,12 @@ def dataframe_itemskip_elements(
         check_dfs = utility.normalize_structure_strings(check_dfs)
         fallback_elements = utility.normalize_structure_strings(fallback_elements)
         check_dimensions = utility.normalize_structure_strings(check_dimensions)
+
+    missing_values_mask = dataframe.isna().any(axis=1).to_numpy()
+    nan_dropped_dataframe = dataframe.loc[missing_values_mask].copy() if return_dropped_rows else None
+
+    dataframe.drop(index=dataframe.index[missing_values_mask], inplace=True)
+    dataframe.reset_index(drop=True, inplace=True)
 
     global_validity_mask = np.ones(len(dataframe), dtype=bool)
     exit_with_error = False
@@ -519,11 +526,19 @@ def dataframe_itemskip_elements(
     invalid_record_count = np.count_nonzero(~global_validity_mask)
     basic_logger.debug(f"Total invalid records: {invalid_record_count}")
 
+    invalid_elements_dropped_dataframe = dataframe.loc[
+        ~global_validity_mask].copy() if return_dropped_rows else None
+
     if exit_with_error:
         raise ValueError("Invalid records found with raise error mode enabled, exiting...")
 
     dataframe.drop(index=dataframe.index[~global_validity_mask], inplace=True)
     dataframe.reset_index(drop=True, inplace=True)
+
+    if return_dropped_rows:
+        return pd.concat([nan_dropped_dataframe, invalid_elements_dropped_dataframe], ignore_index=True)
+
+    return None
 
 
 # ------------------------------------------------------------------------------------------------------------

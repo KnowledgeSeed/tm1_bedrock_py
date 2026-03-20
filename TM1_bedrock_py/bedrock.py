@@ -601,6 +601,7 @@ def data_copy_intercube(tm1_service: Optional[Any],
 
                         check_missing_elements: Optional[bool] = False,
                         dimensions_to_check: Optional[list[str]] = None,
+                        log_missing_elements: Optional[bool] = False,
                         output_missing_elements: Optional[bool] = False,
                         fallback_elements: Optional[Dict] = None,
                         raise_error_if_missing_found: Optional[bool] = False,
@@ -632,7 +633,7 @@ def data_copy_intercube(tm1_service: Optional[Any],
 
                         logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
                         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
-                        verbose_logging_output_dir: Optional[str] = None, **kwargs) -> None:
+                        verbose_logging_output_dir: Optional[str] = None, **kwargs) -> Optional[DataFrame]:
     """
     Copies data from a source cube to a target cube in TM1, with optional transformations, mappings,
     and basic value scale.
@@ -910,17 +911,20 @@ def data_copy_intercube(tm1_service: Optional[Any],
                               **kwargs)
         return
 
+    missing_elements_dataframe = None
     if check_missing_elements:
-        transformer.dataframe_itemskip_elements(dataframe=dataframe,
-                                                check_dfs=target_metadata.get_dimension_check_dfs(),
-                                                check_hierarchies=target_metadata.get_dimension_check_hiers(),
-                                                logging_enabled=output_missing_elements,
-                                                case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
-                                                fallback_elements=fallback_elements,
-                                                raise_error_if_missing_found=raise_error_if_missing_found,
-                                                query_mode=existance_query_mode,
-                                                check_missing_elements_audit=check_missing_elements_audit,
-                                                **kwargs)
+        missing_elements_dataframe = transformer.dataframe_itemskip_elements(
+            dataframe=dataframe,
+            check_dfs=target_metadata.get_dimension_check_dfs(),
+            check_hierarchies=target_metadata.get_dimension_check_hiers(),
+            logging_enabled=log_missing_elements,
+            case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
+            fallback_elements=fallback_elements,
+            raise_error_if_missing_found=raise_error_if_missing_found,
+            query_mode=existance_query_mode,
+            check_missing_elements_audit=check_missing_elements_audit,
+            return_dropped_rows=output_missing_elements,
+            **kwargs)
 
     if dataframe.empty:
         if clear_target:
@@ -983,6 +987,8 @@ def data_copy_intercube(tm1_service: Optional[Any],
                           **kwargs)
 
     basic_logger.info("Execution ended.")
+    if output_missing_elements:
+        return missing_elements_dataframe
 
 
 @utility.log_benchmark_metrics
@@ -999,6 +1005,7 @@ def data_copy(
 
         check_missing_elements: Optional[bool] = False,
         dimensions_to_check: Optional[list[str]] = None,
+        log_missing_elements: Optional[bool] = False,
         output_missing_elements: Optional[bool] = False,
         fallback_elements: Optional[Dict] = None,
         raise_error_if_missing_found: Optional[bool] = False,
@@ -1030,7 +1037,7 @@ def data_copy(
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
         **kwargs
-) -> None:
+) -> Optional[DataFrame]:
     """
     Copies data within cube in TM1, with optional transformations, mappings, and basic value scale.
 
@@ -1286,17 +1293,20 @@ def data_copy(
                               **kwargs)
         return
 
+    missing_elements_dataframe = None
     if check_missing_elements:
-        transformer.dataframe_itemskip_elements(dataframe=dataframe,
-                                                check_dfs=target_metadata.get_dimension_check_dfs(),
-                                                check_hierarchies=target_metadata.get_dimension_check_hiers(),
-                                                logging_enabled=output_missing_elements,
-                                                case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
-                                                fallback_elements=fallback_elements,
-                                                raise_error_if_missing_found=raise_error_if_missing_found,
-                                                query_mode=existance_query_mode,
-                                                check_missing_elements_audit=check_missing_elements_audit,
-                                                **kwargs)
+        missing_elements_dataframe = transformer.dataframe_itemskip_elements(
+            dataframe=dataframe,
+            check_dfs=target_metadata.get_dimension_check_dfs(),
+            check_hierarchies=target_metadata.get_dimension_check_hiers(),
+            logging_enabled=log_missing_elements,
+            case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
+            fallback_elements=fallback_elements,
+            raise_error_if_missing_found=raise_error_if_missing_found,
+            query_mode=existance_query_mode,
+            check_missing_elements_audit=check_missing_elements_audit,
+            return_dropped_rows=output_missing_elements,
+            **kwargs)
 
     if dataframe.empty:
         if clear_target:
@@ -1351,6 +1361,8 @@ def data_copy(
     )
 
     basic_logger.info("Execution ended.")
+    if output_missing_elements:
+        return missing_elements_dataframe
 
 
 @utility.log_async_benchmark_metrics
@@ -1548,6 +1560,7 @@ def load_sql_data_to_tm1_cube(
 
         check_missing_elements: Optional[bool] = False,
         dimensions_to_check: Optional[list[str]] = None,
+        log_missing_elements: Optional[bool] = False,
         output_missing_elements: Optional[bool] = False,
         fallback_elements: Optional[Dict] = None,
         raise_error_if_missing_found: Optional[bool] = False,
@@ -1579,7 +1592,7 @@ def load_sql_data_to_tm1_cube(
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
         **kwargs
-) -> None:
+) -> Optional[DataFrame]:
     """
     Extracts data from a SQL database, transforms it, and loads it into a TM1 cube.
 
@@ -1771,18 +1784,21 @@ def load_sql_data_to_tm1_cube(
                               clear_set_mdx_list=target_clear_set_mdx_list,
                               **kwargs)
         return
-    
+
+    missing_elements_dataframe = None
     if check_missing_elements:
-        transformer.dataframe_itemskip_elements(dataframe=dataframe,
-                                                check_dfs=target_metadata.get_dimension_check_dfs(),
-                                                check_hierarchies=target_metadata.get_dimension_check_hiers(),
-                                                logging_enabled=output_missing_elements,
-                                                case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
-                                                fallback_elements=fallback_elements,
-                                                raise_error_if_missing_found=raise_error_if_missing_found,
-                                                query_mode=existance_query_mode,
-                                                check_missing_elements_audit=check_missing_elements_audit,
-                                                **kwargs)
+        missing_elements_dataframe = transformer.dataframe_itemskip_elements(
+            dataframe=dataframe,
+            check_dfs=target_metadata.get_dimension_check_dfs(),
+            check_hierarchies=target_metadata.get_dimension_check_hiers(),
+            logging_enabled=log_missing_elements,
+            case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
+            fallback_elements=fallback_elements,
+            raise_error_if_missing_found=raise_error_if_missing_found,
+            query_mode=existance_query_mode,
+            check_missing_elements_audit=check_missing_elements_audit,
+            return_dropped_rows=output_missing_elements,
+            **kwargs)
 
     if dataframe.empty:
         if clear_target:
@@ -1847,6 +1863,8 @@ def load_sql_data_to_tm1_cube(
                            delete_statement=sql_delete_statement)
 
     basic_logger.info("Execution ended.")
+    if output_missing_elements:
+        return missing_elements_dataframe
 
 
 @utility.log_benchmark_metrics
@@ -2552,6 +2570,7 @@ def load_csv_data_to_tm1_cube(
 
         check_missing_elements: Optional[bool] = False,
         dimensions_to_check: Optional[list[str]] = None,
+        log_missing_elements: Optional[bool] = False,
         output_missing_elements: Optional[bool] = False,
         fallback_elements: Optional[Dict] = None,
         raise_error_if_missing_found: Optional[bool] = False,
@@ -2574,7 +2593,7 @@ def load_csv_data_to_tm1_cube(
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
         **kwargs
-) -> None:
+) -> Optional[DataFrame]:
     """
     Extracts data from a CSV file, transforms it, and loads it into a TM1 cube.
 
@@ -2766,17 +2785,21 @@ def load_csv_data_to_tm1_cube(
         audit_mode=audit_mode, **kwargs
     )
 
+    missing_elements_dataframe = None
     if check_missing_elements:
-        transformer.dataframe_itemskip_elements(dataframe=dataframe,
-                                                check_dfs=target_metadata.get_dimension_check_dfs(),
-                                                check_hierarchies=target_metadata.get_dimension_check_hiers(),
-                                                logging_enabled=output_missing_elements,
-                                                case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
-                                                fallback_elements=fallback_elements,
-                                                raise_error_if_missing_found=raise_error_if_missing_found,
-                                                query_mode=existance_query_mode,
-                                                check_missing_elements_audit=check_missing_elements_audit,
-                                                **kwargs)
+        missing_elements_dataframe = transformer.dataframe_itemskip_elements(
+            dataframe=dataframe,
+            check_dfs=target_metadata.get_dimension_check_dfs(),
+            check_hierarchies=target_metadata.get_dimension_check_hiers(),
+            logging_enabled=log_missing_elements,
+            case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
+            fallback_elements=fallback_elements,
+            raise_error_if_missing_found=raise_error_if_missing_found,
+            query_mode=existance_query_mode,
+            check_missing_elements_audit=check_missing_elements_audit,
+            return_dropped_rows=output_missing_elements,
+            **kwargs)
+
     if dataframe.empty:
         if clear_target:
             loader.clear_cube(tm1_service=tm1_service,
@@ -2847,6 +2870,8 @@ def load_csv_data_to_tm1_cube(
     )
 
     basic_logger.info("Execution ended.")
+    if output_missing_elements:
+        return missing_elements_dataframe
 
 
 @utility.log_benchmark_metrics
