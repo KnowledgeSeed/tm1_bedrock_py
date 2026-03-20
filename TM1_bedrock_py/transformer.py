@@ -470,20 +470,18 @@ def dataframe_itemskip_elements(
         )
 
     for dimension_name in check_dimensions:
+        dimension_prefix = f"{dimension_name}@"
         matching_dataframe_columns = [
             column_name for column_name in dataframe.columns
-            if column_name == dimension_name
+            if
+            column_name == dimension_name or (check_missing_elements_audit and column_name.startswith(dimension_prefix))
         ]
-        if check_missing_elements_audit:
-            matching_dataframe_columns = [
-                column_name for column_name in dataframe.columns
-                if column_name.partition("@")[0] == dimension_name
-            ]
 
         for dataframe_column in matching_dataframe_columns:
             if query_mode == 'bulk':
                 validation_dataframe = check_dfs[dimension_name]
-                element_validity_map = set(validation_dataframe[dimension_name])
+                valid_elements_set = set(validation_dataframe[dimension_name])
+                current_column_validity_mask = dataframe[dataframe_column].isin(valid_elements_set).to_numpy()
             else:
                 unique_element_list = dataframe[dataframe_column].astype(str).unique().tolist()
                 element_validity_map = {
@@ -495,8 +493,8 @@ def dataframe_itemskip_elements(
                     )
                     for element_name in unique_element_list
                 }
+                current_column_validity_mask = dataframe[dataframe_column].map(element_validity_map).to_numpy()
 
-            current_column_validity_mask = dataframe[dataframe_column].map(element_validity_map).to_numpy()
             if not current_column_validity_mask.all():
                 fallback_value = fallback_elements.get(dimension_name)
                 if fallback_value is not None and dataframe_column == dimension_name:
@@ -603,7 +601,7 @@ def dataframe_map_and_replace(
     original_columns = data_df.columns
 
     merged_df = data_df.merge(mapping_df[shared_dimensions + list(mapped_dimensions.values())],
-                              how='inner',
+                              how='left',
                               on=shared_dimensions,
                               suffixes=('', '_mapped'))
 
@@ -660,7 +658,7 @@ def dataframe_map_and_join(
     shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - {value_column_name})
 
     merged_df = data_df.merge(mapping_df[shared_dimensions + joined_columns],
-                              how='inner',
+                              how='left',
                               on=shared_dimensions)
 
     if case_and_space_insensitive_inputs:
@@ -724,13 +722,10 @@ def __apply_replace(
     _ = shared_mapping_df
     mapping = mapping_step["mapping"]
     if audit_mode:
-        postfix = f"@step{str(step_number)}"
-        for change_column in mapping.keys():
-            saved_column = change_column + postfix
-            basic_logger.debug(f"Column was saved to {saved_column}")
-            utility.duplicate_column_in_place(dataframe=data_df,
-                                              source_name=change_column,
-                                              target_name=saved_column)
+        create_audit_columns_for_step(data_df=data_df,
+                                      mapping=mapping_step["mapping"],
+                                      step_number=step_number)
+
     return dataframe_find_and_replace(
         dataframe=data_df, mapping=mapping,
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)

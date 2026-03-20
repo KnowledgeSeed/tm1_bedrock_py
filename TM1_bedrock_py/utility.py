@@ -12,7 +12,7 @@ from pandas import DataFrame
 from sqlalchemy import create_engine, inspect
 
 from TM1_bedrock_py import exec_metrics_logger, basic_logger, benchmark_metrics_logger
-
+from TM1py.Objects import Cube
 
 # ------------------------------------------------------------------------------------------------------------
 # Utility: Logging helper functions
@@ -601,6 +601,18 @@ def create_audit_columns_for_step(data_df: DataFrame, mapping: Union[dict, list]
         duplicate_column_in_place(dataframe=data_df,
                                   source_name=change_column,
                                   target_name=saved_column)
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Utility: cube create related helpers
+# ------------------------------------------------------------------------------------------------------------
+
+
+def create_cubes(tm1_service: Any, cube_dimensions: dict[str, list]) -> None:
+    for cube_name, cube_dims in cube_dimensions.items():
+        cube_obj = Cube(name=cube_name, dimensions=cube_dims)
+        tm1_service.cubes.create(cube_obj)
+
 
 # ------------------------------------------------------------------------------------------------------------
 # Utility: ignore missing elements related helpers
