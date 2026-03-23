@@ -451,7 +451,14 @@ def dataframe_itemskip_elements(
     if query_mode == 'on_demand' and check_hierarchies is None:
         raise ValueError("The parameter 'check_dimensions' is mandatory for on_demand query mode.")
 
-    check_dimensions = check_hierarchies.keys() or check_dfs.keys()
+    check_dimensions = (
+        check_hierarchies.keys() if check_hierarchies is not None
+        else check_dfs.keys() if check_dfs is not None
+        else None
+    )
+    if check_dimensions is None:
+        raise ValueError("Either check hierarchies or check dataframes must be passed")
+
     fallback_elements = fallback_elements or {}
 
     if case_and_space_insensitive_inputs:
