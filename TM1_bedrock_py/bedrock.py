@@ -116,6 +116,8 @@ def dimension_builder(
             **kwargs
         )
 
+    print(input_elements_df)
+
     # get existing if dim exists - important for type check consistency too
     existing_edges_df, existing_elements_df = apply.init_existing_schema_for_builder(
         tm1_service=tm1_service, dimension_name=dimension_name, old_orphan_parent_name=old_orphan_parent_name)
