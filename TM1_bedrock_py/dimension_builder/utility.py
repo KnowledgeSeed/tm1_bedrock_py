@@ -41,11 +41,28 @@ def _parse_attribute_string_square_brackets(attr_name_and_type: str) -> Tuple[st
     return name_part, type_part
 
 
+def _parse_attribute_string_square_brackets_start(attr_name_and_type: str) -> tuple[str, str]:
+    """
+    Parses a string in the format '[type]name' and returns a (name, type) tuple.
+    """
+    # Regex breakdown:
+    # \[([^\]]+)\] : Matches '[' then captures everything until ']' into group 1
+    # (.+)         : Captures everything after the brackets into group 2
+    match = re.match(r"\[([^\]]+)\](.+)", attr_name_and_type)
+
+    if not match:
+        raise ValueError(f"String '{attr_name_and_type}' does not match format '[type]name'")
+
+    type_part, name_part = match.groups()
+    return name_part, type_part
+
+
 def parse_attribute_string(
-        attr_name_and_type: str, parser: Union[Literal["colon", "square_brackets"], Callable] = "colon"
+        attr_name_and_type: str, parser: Union[Literal["colon", "square_brackets", "square_brackets_start"], Callable] = "colon"
 ) -> Tuple[str, str]:
     strategies = {
         "square_brackets": _parse_attribute_string_square_brackets,
+        "square_brackets_start": _parse_attribute_string_square_brackets_start,
         "colon": _parse_attribute_string_colon
     }
     func = parser

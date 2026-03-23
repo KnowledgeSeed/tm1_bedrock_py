@@ -243,7 +243,7 @@ def init_input_schema(
         sql_elements_query: Optional[str] = None,
         filter_input_elements_columns: Optional[list[str]] = None,
         raw_input_elements_df: pd.DataFrame = None,
-        attribute_parser: Union[Literal["colon", "square_brackets"], Callable] = "colon",
+        attribute_parser: Union[Literal["colon", "square_brackets", "square_brackets_start"], Callable] = "colon",
         **kwargs
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
 

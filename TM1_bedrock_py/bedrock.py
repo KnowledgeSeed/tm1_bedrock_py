@@ -82,7 +82,7 @@ def dimension_builder(
         dimension_sort_order_config: dict[str, str] = None,
         hierarchy_sort_order_config: dict[str, dict[str, str]] = None,
 
-        attribute_parser: Union[Literal["colon", "square_brackets"], Callable] = "colon",
+        attribute_parser: Union[Literal["colon", "square_brackets", "square_brackets_start"], Callable] = "colon",
         logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         **kwargs
 ) -> Optional[Tuple[pd.DataFrame, pd.DataFrame]]:
@@ -197,7 +197,7 @@ def hierarchy_builder(
 
         hierarchy_sort_order_config: dict[str, str] = None,
 
-        attribute_parser: Union[Literal["colon", "square_brackets"], Callable] = "colon",
+        attribute_parser: Union[Literal["colon", "square_brackets", "square_brackets_start"], Callable] = "colon",
         logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         **kwargs
 ) -> Optional[Tuple[pd.DataFrame, pd.DataFrame]]:
