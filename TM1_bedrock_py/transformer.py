@@ -1,10 +1,11 @@
-from typing import Callable, List, Dict, Optional, Any
+from typing import Callable, List, Dict, Optional, Any, Literal
 
 import pandas as pd
 import numpy as np
 from pandas import DataFrame
 
 from TM1_bedrock_py import utility, basic_logger
+from TM1_bedrock_py.utility import create_audit_columns_for_step
 
 
 def normalize_dataframe_for_testing(
@@ -429,59 +430,124 @@ def normalize_table_source_dataframe(
 @utility.log_exec_metrics
 def dataframe_itemskip_elements(
         dataframe: pd.DataFrame,
-        check_dfs: Dict[str, pd.DataFrame],
+        tm1_service: Any = None,
+        check_hierarchies: dict[str] = None,
+        check_dfs: Optional[Dict[str, pd.DataFrame]] = None,
         fallback_elements: Optional[Dict[str, str]] = None,
         logging_enabled: Optional[bool] = False,
         raise_error_if_missing_found: Optional[bool] = False,
         case_and_space_insensitive_inputs: Optional[bool] = False,
+        query_mode: Literal['bulk', 'on_demand'] = 'bulk',
+        check_missing_elements_audit: bool = False,
+        return_dropped_rows: bool = False,
         **_kwargs: Any
-) -> None:
+) -> Optional[DataFrame]:
+    if query_mode == 'on_demand' and tm1_service is None:
+        raise ValueError("TM1Service object is mandatory for on_demand mode.")
+
+    if query_mode == 'bulk' and check_dfs is None:
+        raise ValueError("The parameter 'check_dfs' is mandatory for bulk query mode.")
+
+    if query_mode == 'on_demand' and check_hierarchies is None:
+        raise ValueError("The parameter 'check_dimensions' is mandatory for on_demand query mode.")
+
+    check_dimensions = (
+        check_hierarchies.keys() if check_hierarchies is not None
+        else check_dfs.keys() if check_dfs is not None
+        else None
+    )
+    if check_dimensions is None:
+        raise ValueError("Either check hierarchies or check dataframes must be passed")
+
     fallback_elements = fallback_elements or {}
 
     if case_and_space_insensitive_inputs:
         utility.normalize_dataframe_strings(dataframe)
         check_dfs = utility.normalize_structure_strings(check_dfs)
         fallback_elements = utility.normalize_structure_strings(fallback_elements)
+        check_dimensions = utility.normalize_structure_strings(check_dimensions)
+
+    global_nan_mask = np.ones(len(dataframe), dtype=bool)
+    nan_dropped_dataframe = pd.DataFrame()
+    for column in dataframe.columns:
+        current_nan_mask = dataframe[column].isna()
+        current_dropped = dataframe[current_nan_mask].copy()
+
+        if not current_dropped.empty:
+            current_dropped[f"Itemskip:NaN:{column}"] = 1
+            nan_dropped_dataframe = pd.concat([nan_dropped_dataframe, current_dropped])
+
+        global_nan_mask &= current_nan_mask
+
+    dataframe.drop(index=dataframe.index[global_nan_mask], inplace=True)
+    dataframe.reset_index(drop=True, inplace=True)
 
     global_validity_mask = np.ones(len(dataframe), dtype=bool)
+    invalid_records_dataframe = pd.DataFrame()
     exit_with_error = False
-    validation_dimension_names = list(check_dfs.keys())
 
-    for stray_dimension_name in set(fallback_elements) - set(check_dfs):
+    for stray_dimension_name in set(fallback_elements) - set(check_dimensions):
         basic_logger.warning(
             f"Specified dimension name {stray_dimension_name} in fallback elements "
             f"is not present in the list of dimensions to check. "
-            f"Checked dimensions: {validation_dimension_names}"
+            f"Checked dimensions: {check_dimensions}"
         )
 
-    for dimension_name, validation_dataframe in check_dfs.items():
-        target_column_name = validation_dataframe.columns[0]
-        valid_elements_set = set(validation_dataframe[target_column_name])
-        current_column_validity_mask = dataframe[target_column_name].isin(valid_elements_set).to_numpy()
+    for dimension_name in check_dimensions:
+        dimension_prefix = f"{dimension_name}@"
+        matching_dataframe_columns = [
+            column_name for column_name in dataframe.columns
+            if
+            column_name == dimension_name or (check_missing_elements_audit and column_name.startswith(dimension_prefix))
+        ]
 
-        if not current_column_validity_mask.all():
-            fallback_value = fallback_elements.get(dimension_name)
-
-            if fallback_value is not None:
-                if logging_enabled:
-                    invalid_records_dataframe = dataframe.loc[~current_column_validity_mask, [target_column_name]]
-                    basic_logger.debug(
-                        f"Records of dimension {dimension_name} that will be changed to default '{fallback_value}'")
-                    basic_logger.debug(invalid_records_dataframe)
-
-                dataframe.loc[~current_column_validity_mask, target_column_name] = fallback_value
-                current_column_validity_mask = dataframe[target_column_name].isin(valid_elements_set).to_numpy()
+        for dataframe_column in matching_dataframe_columns:
+            if query_mode == 'bulk':
+                validation_dataframe = check_dfs[dimension_name]
+                valid_elements_set = set(validation_dataframe[dimension_name])
+                current_column_validity_mask = dataframe[dataframe_column].isin(valid_elements_set).to_numpy()
+            else:
+                unique_element_list = dataframe[dataframe_column].astype(str).unique().tolist()
+                element_validity_map = {
+                    element_name: tm1_service.elements.exists(
+                        tm1_service=tm1_service,
+                        dimension_name=dimension_name,
+                        hierarchy_name=check_hierarchies[dimension_name],
+                        element_name=element_name
+                    )
+                    for element_name in unique_element_list
+                }
+                current_column_validity_mask = dataframe[dataframe_column].map(element_validity_map).to_numpy()
 
             if not current_column_validity_mask.all():
-                if logging_enabled:
-                    invalid_records_dataframe = dataframe.loc[~current_column_validity_mask, [target_column_name]]
-                    basic_logger.debug(f"Invalid records for dimension {dimension_name}")
-                    basic_logger.debug(invalid_records_dataframe)
+                fallback_value = fallback_elements.get(dimension_name)
+                if fallback_value is not None and dataframe_column == dimension_name:
+                    if logging_enabled:
+                        invalid_records_dataframe = dataframe.loc[~current_column_validity_mask, [dataframe_column]]
+                        basic_logger.debug(
+                            f"Records of dimension {dimension_name} that will be changed to default '{fallback_value}'")
+                        basic_logger.debug(invalid_records_dataframe)
 
-                if raise_error_if_missing_found:
-                    exit_with_error = True
+                    dataframe.loc[~current_column_validity_mask, dataframe_column] = fallback_value
+                else:
+                    if logging_enabled:
+                        invalid_records_dataframe_log = dataframe.loc[~current_column_validity_mask, [dataframe_column]]
+                        basic_logger.debug(f"Invalid records for dimension {dimension_name}")
+                        basic_logger.debug(invalid_records_dataframe_log)
 
-        global_validity_mask &= current_column_validity_mask
+                    if return_dropped_rows:
+                        invalid_records_dataframe_current = dataframe[~current_column_validity_mask].copy()
+
+                        if not invalid_records_dataframe_current.empty:
+                            invalid_records_dataframe_current[f"Itemskip:Missing:{dataframe_column}"] = 1
+                            invalid_records_dataframe = pd.concat(
+                                [invalid_records_dataframe, invalid_records_dataframe_current]
+                            )
+
+                    if raise_error_if_missing_found:
+                        exit_with_error = True
+
+                    global_validity_mask &= current_column_validity_mask
 
     invalid_record_count = np.count_nonzero(~global_validity_mask)
     basic_logger.debug(f"Total invalid records: {invalid_record_count}")
@@ -491,6 +557,11 @@ def dataframe_itemskip_elements(
 
     dataframe.drop(index=dataframe.index[~global_validity_mask], inplace=True)
     dataframe.reset_index(drop=True, inplace=True)
+
+    if return_dropped_rows:
+        return pd.concat([nan_dropped_dataframe, invalid_records_dataframe], ignore_index=True)
+
+    return None
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -568,7 +639,7 @@ def dataframe_map_and_replace(
     original_columns = data_df.columns
 
     merged_df = data_df.merge(mapping_df[shared_dimensions + list(mapped_dimensions.values())],
-                              how='inner',
+                              how='left',
                               on=shared_dimensions,
                               suffixes=('', '_mapped'))
 
@@ -625,7 +696,7 @@ def dataframe_map_and_join(
     shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - {value_column_name})
 
     merged_df = data_df.merge(mapping_df[shared_dimensions + joined_columns],
-                              how='inner',
+                              how='left',
                               on=shared_dimensions)
 
     if case_and_space_insensitive_inputs:
@@ -666,6 +737,8 @@ def __apply_replace(
         mapping_step: Dict[str, Any],
         shared_mapping_df,
         case_and_space_insensitive_inputs: Optional[bool] = False,
+        audit_mode: bool = False,
+        step_number: int = 1,
 ) -> DataFrame:
     """
     Handle the 'replace' mapping step.
@@ -685,8 +758,14 @@ def __apply_replace(
         The modified DataFrame after applying the literal remap.
     """
     _ = shared_mapping_df
+    mapping = mapping_step["mapping"]
+    if audit_mode:
+        create_audit_columns_for_step(data_df=data_df,
+                                      mapping=mapping_step["mapping"],
+                                      step_number=step_number)
+
     return dataframe_find_and_replace(
-        dataframe=data_df, mapping=mapping_step["mapping"],
+        dataframe=data_df, mapping=mapping,
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
 
 
@@ -695,6 +774,8 @@ def __apply_map_and_replace(
         mapping_step: Dict[str, Any],
         shared_mapping_df: Optional[DataFrame] = None,
         case_and_space_insensitive_inputs: Optional[bool] = False,
+        audit_mode: bool = False,
+        step_number: int = 1,
 ) -> DataFrame:
     """
     Handle the 'map_and_replace' mapping step.
@@ -714,6 +795,11 @@ def __apply_map_and_replace(
     None
         Modifies the dataframe in place
     """
+    if audit_mode:
+        create_audit_columns_for_step(data_df=data_df,
+                                      mapping=mapping_step["mapping_dimensions"],
+                                      step_number=step_number)
+
     step_uses_independent_mapping = (
         "mapping_df" in mapping_step and mapping_step["mapping_df"] is not None
     )
@@ -751,6 +837,8 @@ def __apply_map_and_join(
         mapping_step: Dict[str, Any],
         shared_mapping_df: Optional[DataFrame] = None,
         case_and_space_insensitive_inputs: Optional[bool] = False,
+        audit_mode: bool = False,
+        step_number: int = 1,
 ) -> DataFrame:
     """
     Handle the 'map_and_join' mapping step.
@@ -770,6 +858,10 @@ def __apply_map_and_join(
     None
         Modifies the dataframe in place
     """
+    if audit_mode and "dropped_columns" in mapping_step:
+        create_audit_columns_for_step(data_df=data_df,
+                                      mapping=mapping_step["dropped_columns"],
+                                      step_number=step_number)
 
     step_uses_independent_mapping = (
         "mapping_df" in mapping_step and mapping_step["mapping_df"] is not None
@@ -807,6 +899,8 @@ def __apply_cartesian_product(
         mapping_step: Dict[str, Any],
         shared_mapping_df: Optional[DataFrame] = None,
         case_and_space_insensitive_inputs: Optional[bool] = False,
+        audit_mode: bool = False,
+        step_number: int = 1,
 ) -> DataFrame:
     """
     Handle the 'map_and_join' mapping step.
@@ -826,6 +920,7 @@ def __apply_cartesian_product(
     None
         Modifies the dataframe in place
     """
+    _, _ = audit_mode, step_number
 
     step_uses_independent_mapping = (
         "mapping_df" in mapping_step and mapping_step["mapping_df"] is not None
@@ -859,7 +954,10 @@ def __apply_pivot(
         mapping_step: Dict[str, Any],
         shared_mapping_df: Optional[DataFrame] = None,
         case_and_space_insensitive_inputs: Optional[bool] = False,
+        audit_mode: bool = False,
+        step_number: int = 1,
 ):
+    _, _, _ = audit_mode, step_number, shared_mapping_df
     if case_and_space_insensitive_inputs:
         utility.normalize_dataframe_strings(data_df)
         utility.normalize_structure_strings(mapping_step)
@@ -882,7 +980,10 @@ def __apply_unpivot(
         mapping_step: Dict[str, Any],
         shared_mapping_df: Optional[DataFrame] = None,
         case_and_space_insensitive_inputs: Optional[bool] = False,
+        audit_mode: bool = False,
+        step_number: int = 1,
 ):
+    _, _, _ = audit_mode, step_number, shared_mapping_df
     if case_and_space_insensitive_inputs:
         utility.normalize_dataframe_strings(data_df)
         utility.normalize_structure_strings(mapping_step)
@@ -905,10 +1006,27 @@ def __apply_basic_dimension_reshaping(
         mapping_step: Dict[str, Any],
         shared_mapping_df: Optional[DataFrame] = None,
         case_and_space_insensitive_inputs: Optional[bool] = False,
+        audit_mode: bool = False,
+        step_number: int = 1,
 ):
     # either or: literal row filter, literal column drop, literal column add with value assign, literal relabel
     # can be used in any combination.
     # tip: for more complex reshaping, call this method in sequence
+    _ = shared_mapping_df
+
+    columns_to_save = {}
+    if "filter_condition" in mapping_step:
+        existing_filter_columns = [col for col in mapping_step["filter_condition"].keys() if col in data_df.columns]
+        columns_to_save.update(dict.fromkeys(existing_filter_columns))
+
+    if "columns_to_drop" in mapping_step:
+        existing_drop_columns = [col for col in mapping_step["columns_to_drop"].keys() if col in data_df.columns]
+        columns_to_save.update(dict.fromkeys(existing_drop_columns))
+
+    if audit_mode:
+        create_audit_columns_for_step(data_df=data_df,
+                                      mapping=columns_to_save,
+                                      step_number=step_number)
 
     if "filter_condition" in mapping_step:
         dataframe_filter_inplace(data_df, mapping_step["filter_condition"],
@@ -925,6 +1043,8 @@ def __apply_basic_dimension_reshaping(
     if "column_relabel_map" in mapping_step:
         dataframe_relabel(data_df, mapping_step["column_relabel_map"],
                           case_and_space_insensitive_inputs)
+
+    return data_df
 
 
 method_handlers = {
@@ -944,6 +1064,7 @@ def dataframe_execute_mappings(
         mapping_steps: List[Dict],
         shared_mapping_df: Optional[DataFrame] = None,
         case_and_space_insensitive_inputs: Optional[bool] = False,
+        audit_mode: bool = False,
         **kwargs
 ) -> DataFrame:
     """
@@ -1009,14 +1130,17 @@ def dataframe_execute_mappings(
         return data_df
 
     for i, step in enumerate(mapping_steps):
+        step_number = str(i+1)
         method = step["method"]
         if method in method_handlers:
             data_df = method_handlers[method](
                 data_df, step, shared_mapping_df,
-                case_and_space_insensitive_inputs)
+                case_and_space_insensitive_inputs,
+                audit_mode, step_number
+            )
             utility.dataframe_verbose_logger(
                 dataframe=data_df,
-                step_number=f"mapping_step_{i+1}_result",
+                step_number=f"mapping_step_{step_number}_result",
                 **kwargs
             )
         else:

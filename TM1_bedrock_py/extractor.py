@@ -37,6 +37,7 @@ def tm1_mdx_to_dataframe(
 
     dataframe = mdx_function(**kwargs)
     basic_logger.info("Extracted " + str(len(dataframe)) + " rows from tm1 datasource")
+    utility.dataframe_verbose_logger(dataframe, **kwargs)
     dataframe.normalized = False
     return dataframe
 

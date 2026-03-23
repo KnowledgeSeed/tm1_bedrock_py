@@ -1,17 +1,17 @@
-"""
-This file is a collection of upgraded TM1 bedrock functionality, ported to python / pandas with the help of TM1py.
-"""
-import asyncio
+from string import Template
 import glob
 import math
+from pathlib import Path
 from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor
-from string import Template
 from typing import Callable, List, Dict, Optional, Any, Sequence, Hashable, Mapping, Iterable, Literal, Union, Tuple
 
+import pandas as pd
+from pandas import DataFrame
+
+from concurrent.futures import ThreadPoolExecutor
+import asyncio
 from TM1py.Exceptions import TM1pyRestException
 from requests.cookies import CookieConflictError
-from pandas import DataFrame
 
 from TM1_bedrock_py import utility, transformer, loader, extractor, basic_logger
 
@@ -21,17 +21,24 @@ from TM1_bedrock_py.dimension_builder.utility import (
     init_hierarchy_rename_map_for_cloning,
     attr_column_names_from_attr_names
 )
-import pandas as pd
-from pathlib import Path
+
 from TM1_bedrock_py.dimension_builder.validate import (
     validate_dimension_for_copy,
     validate_hierarchy_for_copy,
-    validate_element_type_consistency,
     validate_attribute_name_for_dimension,
-    post_validate_schema,
     validate_dimension_for_modify,
     validate_schema_for_single_hierarchy
 )
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Bedrock: Dimension Builder Module functions
+#     - dimension builder, hierarchy builder (imports)
+#     - dimension copy, hierarchy copy
+#     - dimension modify, hierarchy modify
+#     - hierarchy from attributes
+#     - dimension export
+# ------------------------------------------------------------------------------------------------------------
 
 
 @utility.log_exec_metrics
@@ -65,6 +72,9 @@ def dimension_builder(
         filter_input_elements_columns: Optional[list[str]] = None,
         raw_input_elements_df: pd.DataFrame = None,
 
+        override_input_edges_df: pd.DataFrame = None,
+        override_input_elements_df: pd.DataFrame = None,
+
         allow_type_changes: bool = False,
         remove_empty_subtrees: bool = False,
         output_mode: Literal["build", "build_and_output", "output"] = "build",
@@ -82,25 +92,29 @@ def dimension_builder(
         basic_logger.warning("Update mode doesnt allow type change, parameter was set to false")
         allow_type_changes = False
 
-    input_edges_df, input_elements_df = apply.init_input_schema(
-        dimension_name=dimension_name, hierarchy_name=hierarchy_name, input_format=input_format,
+    if override_input_edges_df is not None and override_input_elements_df is not None:
+        input_edges_df = override_input_edges_df
+        input_elements_df = override_input_elements_df
+    else:
+        input_edges_df, input_elements_df = apply.init_input_schema(
+            dimension_name=dimension_name, hierarchy_name=hierarchy_name, input_format=input_format,
 
-        input_datasource=input_datasource,
-        sql_engine=sql_engine, sql_table_name=sql_table_name, sql_query=sql_query,
-        filter_input_columns=filter_input_columns, raw_input_df=raw_input_df,
-        dim_column=dim_column, hier_column=hier_column,
-        parent_column=parent_column, child_column=child_column, level_columns=level_columns,
-        weight_column=weight_column, type_column=type_column,
+            input_datasource=input_datasource,
+            sql_engine=sql_engine, sql_table_name=sql_table_name, sql_query=sql_query,
+            filter_input_columns=filter_input_columns, raw_input_df=raw_input_df,
+            dim_column=dim_column, hier_column=hier_column,
+            parent_column=parent_column, child_column=child_column, level_columns=level_columns,
+            weight_column=weight_column, type_column=type_column,
 
-        input_elements_datasource=input_elements_datasource,
-        input_elements_df_element_column=input_elements_df_element_column,
-        sql_elements_engine=sql_elements_engine,
-        sql_table_elements_name=sql_table_elements_name, sql_elements_query=sql_elements_query,
-        filter_input_elements_columns=filter_input_elements_columns,
-        raw_input_elements_df=raw_input_elements_df,
-        attribute_parser=attribute_parser,
-        **kwargs
-    )
+            input_elements_datasource=input_elements_datasource,
+            input_elements_df_element_column=input_elements_df_element_column,
+            sql_elements_engine=sql_elements_engine,
+            sql_table_elements_name=sql_table_elements_name, sql_elements_query=sql_elements_query,
+            filter_input_elements_columns=filter_input_elements_columns,
+            raw_input_elements_df=raw_input_elements_df,
+            attribute_parser=attribute_parser,
+            **kwargs
+        )
 
     # get existing if dim exists - important for type check consistency too
     existing_edges_df, existing_elements_df = apply.init_existing_schema_for_builder(
@@ -175,6 +189,9 @@ def hierarchy_builder(
         filter_input_elements_columns: Optional[list[str]] = None,
         raw_input_elements_df: pd.DataFrame = None,
 
+        override_input_edges_df: pd.DataFrame = None,
+        override_input_elements_df: pd.DataFrame = None,
+
         remove_empty_subtrees: bool = False,
         output_mode: Literal["build", "build_and_output", "output"] = "build",
 
@@ -186,25 +203,29 @@ def hierarchy_builder(
 ) -> Optional[Tuple[pd.DataFrame, pd.DataFrame]]:
     utility.set_logging_level(logging_level=logging_level)
 
-    input_edges_df, input_elements_df = apply.init_input_schema(
-        dimension_name=dimension_name, hierarchy_name=hierarchy_name, input_format=input_format,
+    if override_input_edges_df is not None and override_input_elements_df is not None:
+        input_edges_df = override_input_edges_df
+        input_elements_df = override_input_elements_df
+    else:
+        input_edges_df, input_elements_df = apply.init_input_schema(
+            dimension_name=dimension_name, hierarchy_name=hierarchy_name, input_format=input_format,
 
-        input_datasource=input_datasource,
-        sql_engine=sql_engine, sql_table_name=sql_table_name, sql_query=sql_query,
-        filter_input_columns=filter_input_columns, raw_input_df=raw_input_df,
-        dim_column=dim_column, hier_column=hier_column,
-        parent_column=parent_column, child_column=child_column, level_columns=level_columns,
-        weight_column=weight_column, type_column=type_column,
+            input_datasource=input_datasource,
+            sql_engine=sql_engine, sql_table_name=sql_table_name, sql_query=sql_query,
+            filter_input_columns=filter_input_columns, raw_input_df=raw_input_df,
+            dim_column=dim_column, hier_column=hier_column,
+            parent_column=parent_column, child_column=child_column, level_columns=level_columns,
+            weight_column=weight_column, type_column=type_column,
 
-        input_elements_datasource=input_elements_datasource,
-        input_elements_df_element_column=input_elements_df_element_column,
-        sql_elements_engine=sql_elements_engine,
-        sql_table_elements_name=sql_table_elements_name, sql_elements_query=sql_elements_query,
-        filter_input_elements_columns=filter_input_elements_columns,
-        raw_input_elements_df=raw_input_elements_df,
-        attribute_parser=attribute_parser,
-        **kwargs
-    )
+            input_elements_datasource=input_elements_datasource,
+            input_elements_df_element_column=input_elements_df_element_column,
+            sql_elements_engine=sql_elements_engine,
+            sql_table_elements_name=sql_table_elements_name, sql_elements_query=sql_elements_query,
+            filter_input_elements_columns=filter_input_elements_columns,
+            raw_input_elements_df=raw_input_elements_df,
+            attribute_parser=attribute_parser,
+            **kwargs
+        )
 
     validate_schema_for_single_hierarchy(input_elements_df)
 
@@ -258,127 +279,94 @@ def dimension_copy(
         tm1_service: Any,
         source_dimension_name: str,
         target_dimension_name: str,
+        build_strategy: Literal["rebuild", "safe_rebuild", "safe_rebuild_unwind", "update"] = "rebuild",
         source_hierarchy_filter: list[str] = None,
         hierarchy_rename_map: dict = None,
         rename_default_hierarchy: bool = True,
         allow_type_changes: bool = False,
-        target_tm1_service: Any = None
+        target_tm1_service: Any = None,
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
+        **builder_kwargs
 ) -> None:
-    # prepare steps
-    if target_tm1_service is None:
-        target_tm1_service = tm1_service
+    utility.set_logging_level(logging_level=logging_level)
 
-    source_hierarchies_actual = tm1_service.hierarchies.get_all_names(source_dimension_name)
+    # prepare steps for target
+    target_tm1_service = target_tm1_service or tm1_service
 
+    # manage source hierarchies and renaming
+    source_hierarchies_actual = list(
+        set(tm1_service.hierarchies.get_all_names(source_dimension_name)) - set(['Leaves']))
+    hierarchy_scope = source_hierarchy_filter if source_hierarchy_filter is not None else source_hierarchies_actual
     hierarchy_rename_map = init_hierarchy_rename_map_for_cloning(
         source_dimension_name, source_hierarchies_actual, target_dimension_name,
         hierarchy_rename_map, rename_default_hierarchy
     )
 
+    # validate for copy
     validate_dimension_for_copy(tm1_service, source_dimension_name, source_hierarchies_actual, hierarchy_rename_map,
                                 source_hierarchy_filter)
-
-    hierarchy_scope = source_hierarchy_filter if source_hierarchy_filter is not None else source_hierarchies_actual
 
     # get source data and normalize it
     edges_df, elements_df = apply.init_existing_schema_filtered(tm1_service, source_dimension_name, hierarchy_scope)
 
     # transforms
-    find_and_replace_mapping = {"Hierarchy": hierarchy_rename_map}
-    if edges_df is not None:
-        edges_df["Dimension"] = target_dimension_name
-        edges_df = transformer.dataframe_find_and_replace(
-            dataframe=edges_df,
-            mapping=find_and_replace_mapping)
+    edges_df, elements_df = normalize.transform_hierarchy_structure_for_copy(
+        edges_df, elements_df, hierarchy_rename_map, target_dimension_name)
 
-    elements_df["Dimension"] = target_dimension_name
-    elements_df = transformer.dataframe_find_and_replace(
-        dataframe=elements_df,
-        mapping=find_and_replace_mapping)
-    hierarchy_scope = [
-        hier if hier not in hierarchy_rename_map.keys() else hierarchy_rename_map[hier]
-        for hier in hierarchy_scope
-    ]
-
-    # check type consistency, and build new hiers in existing dim
-    if target_tm1_service.dimensions.exists(target_dimension_name):
-        target_hierarchies_actual = target_tm1_service.hierarchies.get_all_names(target_dimension_name)
-        retained_hierarchy_scope = list(set(target_hierarchies_actual) - set(hierarchy_scope))
-        retained_edges_df, retained_elements_df = apply.init_existing_schema_filtered(target_tm1_service,
-                                                                                      target_dimension_name,
-                                                                                      retained_hierarchy_scope)
-        conflicts = validate_element_type_consistency(retained_elements_df, elements_df, allow_type_changes)
-
-        if allow_type_changes and conflicts is not None:
-            apply.delete_conflicting_elements(
-                tm1_service=target_tm1_service, conflicts=conflicts, dimension_name=target_dimension_name)
-
-        for hierarchy_name in hierarchy_scope:
-            hierarchy = apply.build_hierarchy_object(target_dimension_name, hierarchy_name, edges_df, elements_df)
-            target_tm1_service.hierarchies.update_or_create(hierarchy)
-
-    # build new dim
-    else:
-        dimension = apply.build_dimension_object(dimension_name=target_dimension_name, edges_df=edges_df,
-                                                 elements_df=elements_df)
-        target_tm1_service.dimensions.update_or_create(dimension)
-
-    # manage attributes
-    writable_attr_df, attr_cube_name, attr_cube_dims = apply.prepare_attributes_for_load(
-        dimension_name=target_dimension_name, elements_df=elements_df)
-
-    loader.dataframe_to_cube(
+    dimension_builder(
+        dimension_name=target_dimension_name,
+        input_format='parent_child',
         tm1_service=target_tm1_service,
-        dataframe=writable_attr_df,
-        cube_name=attr_cube_name,
-        cube_dims=attr_cube_dims,
-        use_blob=True,
+        build_strategy=build_strategy,
+        override_input_edges_df=edges_df,
+        override_input_elements_df=elements_df,
+        allow_type_changes=allow_type_changes,
+        logging_level=logging_level,
+        **builder_kwargs
     )
 
 
 @utility.log_exec_metrics
 def hierarchy_copy(
         tm1_service: Any,
-        dimension_name: str,
+        source_dimension_name: str,
         source_hierarchy_name: str,
-        target_hierarchy_name: str,
-        target_tm1_service: Any = None
+        target_tm1_service: Any = None,
+        target_dimension_name: str = None,
+        target_hierarchy_name: str = None,
+        build_strategy: Literal["rebuild", "safe_rebuild", "safe_rebuild_unwind", "update"] = "rebuild",
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
+        **builder_kwargs
 ) -> None:
-    # prepare steps
-    if target_tm1_service is None:
-        target_tm1_service = tm1_service
+    utility.set_logging_level(logging_level=logging_level)
 
-    validate_hierarchy_for_copy(tm1_service, dimension_name, source_hierarchy_name)
+    # prepare steps
+    target_tm1_service = target_tm1_service or tm1_service
+    target_hierarchy_name = target_hierarchy_name or source_hierarchy_name
+    target_dimension_name = target_dimension_name or source_dimension_name
+
+    validate_hierarchy_for_copy(tm1_service, source_dimension_name, source_hierarchy_name)
 
     # get source data
     edges_df, elements_df = apply.init_existing_schema_filtered(
-        tm1_service, dimension_name, [source_hierarchy_name])
+        tm1_service, source_dimension_name, [source_hierarchy_name])
 
     # transform steps
-    find_and_replace_mapping = {"Hierarchy": {source_hierarchy_name: target_hierarchy_name}}
-    edges_df = transformer.dataframe_find_and_replace(
-        dataframe=edges_df,
-        mapping=find_and_replace_mapping)
-    elements_df = transformer.dataframe_find_and_replace(
-        dataframe=elements_df,
-        mapping=find_and_replace_mapping)
+    edges_df, elements_df = normalize.transform_hierarchy_structure_for_copy(
+        edges_df, elements_df, hierarchy_rename_map={source_hierarchy_name: target_hierarchy_name},
+        target_dimension_name=target_dimension_name
+    )
 
-    # build hierarchy in dim
-    hierarchy = apply.build_hierarchy_object(
-        dimension_name, target_hierarchy_name, edges_df, elements_df)
-
-    target_tm1_service.hierarchies.update_or_create(hierarchy)
-
-    # manage attributes
-    writable_attr_df, attr_cube_name, attr_cube_dims = apply.prepare_attributes_for_load(
-        dimension_name=dimension_name, elements_df=elements_df)
-
-    loader.dataframe_to_cube(
+    hierarchy_builder(
+        dimension_name=target_dimension_name,
+        hierarchy_name=target_hierarchy_name,
+        input_format='parent_child',
         tm1_service=target_tm1_service,
-        dataframe=writable_attr_df,
-        cube_name=attr_cube_name,
-        cube_dims=attr_cube_dims,
-        use_blob=True,
+        build_strategy=build_strategy,
+        override_input_edges_df=edges_df,
+        override_input_elements_df=elements_df,
+        logging_level=logging_level,
+        **builder_kwargs
     )
 
 
@@ -388,8 +376,9 @@ def dimension_modify(
         modify_function: Callable,
         modify_function_args: List = None,
         modify_function_kwargs: Dict = None,
-        run_post_validations_and_normalize: bool = False
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
 ) -> None:
+    utility.set_logging_level(logging_level=logging_level)
     validate_dimension_for_modify(tm1_service, dimension_name)
 
     # retrieve and normalize existing schema that is ready for back upload
@@ -403,24 +392,14 @@ def dimension_modify(
     modified_edges_df, modified_elements_df = modify_function(edges_df, elements_df,
                                                               *(modify_function_args or []),
                                                               **(modify_function_kwargs or {}))
-
-    if run_post_validations_and_normalize:
-        post_validate_schema(modified_edges_df, modified_elements_df)
-        modified_edges_df, modified_elements_df = normalize.normalize_existing_schema_full(
-            modified_edges_df, modified_elements_df)
-
-    dimension = apply.build_dimension_object(dimension_name=dimension_name,
-                                             edges_df=modified_edges_df, elements_df=modified_elements_df)
-    tm1_service.dimensions.update_or_create(dimension)
-
-    writable_attr_df, attr_cube_name, attr_cube_dims = apply.prepare_attributes_for_load(
-        dimension_name=dimension_name, elements_df=elements_df)
-    loader.dataframe_to_cube(
+    dimension_builder(
+        dimension_name=dimension_name,
+        input_format='parent_child',
         tm1_service=tm1_service,
-        dataframe=writable_attr_df,
-        cube_name=attr_cube_name,
-        cube_dims=attr_cube_dims,
-        use_blob=True,
+        build_strategy='rebuild',
+        override_input_edges_df=modified_edges_df,
+        override_input_elements_df=modified_elements_df,
+        logging_level=logging_level
     )
 
 
@@ -431,8 +410,9 @@ def hierarchy_modify(
         modify_function: Callable,
         modify_function_args: List = None,
         modify_function_kwargs: Dict = None,
-        run_post_validations_and_normalize: bool = False
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
 ) -> None:
+    utility.set_logging_level(logging_level=logging_level)
     validate_dimension_for_modify(tm1_service, dimension_name)
 
     # retrieve and normalize existing schema that is ready for back upload
@@ -448,24 +428,15 @@ def hierarchy_modify(
     modified_edges_df, modified_elements_df = modify_function(edges_df, elements_df,
                                                               *(modify_function_args or []),
                                                               **(modify_function_kwargs or {}))
-
-    if run_post_validations_and_normalize:
-        post_validate_schema(modified_edges_df, modified_elements_df)
-        modified_edges_df, modified_elements_df = normalize.normalize_existing_schema_full(
-            modified_edges_df, modified_elements_df)
-
-    hierarchy = apply.build_hierarchy_object(
-        dimension_name, hierarchy_name, modified_edges_df, modified_elements_df)
-    tm1_service.hierarchies.update_or_create(hierarchy)
-
-    writable_attr_df, attr_cube_name, attr_cube_dims = apply.prepare_attributes_for_load(
-        dimension_name=dimension_name, elements_df=elements_df)
-    loader.dataframe_to_cube(
+    hierarchy_builder(
+        dimension_name=dimension_name,
+        hierarchy_name=hierarchy_name,
+        input_format='parent_child',
         tm1_service=tm1_service,
-        dataframe=writable_attr_df,
-        cube_name=attr_cube_name,
-        cube_dims=attr_cube_dims,
-        use_blob=True,
+        build_strategy='rebuild',
+        override_input_edges_df=modified_edges_df,
+        override_input_elements_df=modified_elements_df,
+        logging_level=logging_level
     )
 
 
@@ -474,20 +445,24 @@ def hierarchy_build_from_attributes(
         dimension_name: str,
         attributes: list[str],
         new_hierarchy_name: str = None,
-        target_tm1_service: Any = None
+        target_tm1_service: Any = None,
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
 ) -> None:
-    if target_tm1_service is None:
-        target_tm1_service = tm1_service
+    utility.set_logging_level(logging_level=logging_level)
 
-    source_hierarchy_name = "Leaves"
+    target_tm1_service = target_tm1_service or tm1_service
+
+    source_hierarchy_name = utility.get_default_hierarchy(tm1_service, dimension_name)
 
     validate_hierarchy_for_copy(tm1_service, dimension_name, source_hierarchy_name)
     validate_attribute_name_for_dimension(tm1_service, dimension_name, attributes)
 
-    if new_hierarchy_name is None:
-        new_hierarchy_name = '_'.join(attributes)
+    new_hierarchy_name = new_hierarchy_name or '_'.join(attributes)
 
-    _, existing_elements_df = apply.init_existing_schema_filtered(tm1_service, dimension_name, [source_hierarchy_name])
+    _, existing_elements_df = apply.init_existing_schema_filtered(
+        tm1_service, dimension_name, hierarchy_names=[source_hierarchy_name])
+    existing_elements_df = existing_elements_df.loc[
+        existing_elements_df["ElementType"].isin(["Numeric", "String"])].copy()
 
     attr_columns = attr_column_names_from_attr_names(attributes, existing_elements_df)
 
@@ -496,20 +471,15 @@ def hierarchy_build_from_attributes(
     )
     attr_hier_edges_df, attr_hier_elements_df = normalize.normalize_existing_schema_full(attr_hier_edges_df,
                                                                                          attr_hier_elements_df)
-
-    hierarchy = apply.build_hierarchy_object(
-        dimension_name, new_hierarchy_name, attr_hier_edges_df, attr_hier_elements_df)
-    target_tm1_service.hierarchies.update_or_create(hierarchy)
-
-    writable_attr_df, attr_cube_name, attr_cube_dims = apply.prepare_attributes_for_load(
-        dimension_name=dimension_name, elements_df=attr_hier_elements_df)
-
-    loader.dataframe_to_cube(
+    hierarchy_builder(
+        dimension_name=dimension_name,
+        hierarchy_name=new_hierarchy_name,
+        input_format='parent_child',
         tm1_service=target_tm1_service,
-        dataframe=writable_attr_df,
-        cube_name=attr_cube_name,
-        cube_dims=attr_cube_dims,
-        use_blob=True,
+        build_strategy='rebuild',
+        override_input_edges_df=attr_hier_edges_df,
+        override_input_elements_df=attr_hier_elements_df,
+        logging_level=logging_level
     )
 
 
@@ -539,8 +509,11 @@ def dimension_export(
         json_orientation: Literal["split", "records", "index", "columns", "values", "table"] = "records",
         maximum_levels_depth: int = None,
         orphan_parent_name: str = "OrphanParent",
-        **kwargs
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
+        **writer_kwargs
 ) -> None:
+    utility.set_logging_level(logging_level=logging_level)
+
     if tm1_service is None and elements_df is None:
         raise ValueError("Must provide at least one source of local/server")
 
@@ -548,8 +521,7 @@ def dimension_export(
         edges_df, elements_df = apply.init_existing_schema_for_builder(
             tm1_service=tm1_service, dimension_name=dimension_name, old_orphan_parent_name=orphan_parent_name)
 
-    if column_rename_mapping is None:
-        column_rename_mapping = {}
+    column_rename_mapping = column_rename_mapping or {}
 
     combined_schema = apply.combine_schema_for_export(
         elements_df=elements_df, edges_df=edges_df, orphan_parent_name=orphan_parent_name,
@@ -574,8 +546,17 @@ def dimension_export(
         include_index=include_index,
         yaml_default_flow_style=yaml_default_flow_style,
         json_orientation=json_orientation,
-        **kwargs
+        **writer_kwargs
     )
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Bedrock: ETL Module functions
+#     - data copy, data copy intercube
+#     - sql to tm1, tm1 to sql
+#     - csv to tm1, tm1 to csv
+#     - async executors
+# ------------------------------------------------------------------------------------------------------------
 
 
 @utility.log_benchmark_metrics
@@ -601,9 +582,13 @@ def data_copy_intercube(tm1_service: Optional[Any],
 
                         check_missing_elements: Optional[bool] = False,
                         dimensions_to_check: Optional[list[str]] = None,
+                        log_missing_elements: Optional[bool] = False,
                         output_missing_elements: Optional[bool] = False,
                         fallback_elements: Optional[Dict] = None,
                         raise_error_if_missing_found: Optional[bool] = False,
+                        element_query_mode: Literal['bulk', 'on_demand'] = 'bulk',
+                        audit_mode: bool = False,
+                        check_missing_elements_audit: Optional[bool] = False,
 
                         mapping_steps: Optional[List[Dict]] = None,
                         shared_mapping: Optional[Dict] = None,
@@ -625,11 +610,11 @@ def data_copy_intercube(tm1_service: Optional[Any],
                         use_mixed_datatypes: Optional[bool] = False,
 
                         increment: Optional[bool] = False,
-                        sum_numeric_duplicates: Optional[bool] = True,
+                        sum_numeric_duplicates: Optional[bool] = False,
 
                         logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
                         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
-                        verbose_logging_output_dir: Optional[str] = None, **kwargs) -> None:
+                        verbose_logging_output_dir: Optional[str] = None, **kwargs) -> Optional[DataFrame]:
     """
     Copies data from a source cube to a target cube in TM1, with optional transformations, mappings,
     and basic value scale.
@@ -692,7 +677,7 @@ def data_copy_intercube(tm1_service: Optional[Any],
     source_clear_set_mdx_list: Optional[List[str]]
         List of MDX queries to clear specific data areas in the source cube.
     fallback_elements : Optional[Dict]
-        Per-dimension fallback elements applied when ``ignore_missing_elements`` is True.
+        Per-dimension fallback elements applied when ``check_missing_elements`` is True.
     async_write : bool, default=False
         Whether to write data asynchronously. Currently, divides the data into 250.000 row chunks.
     slice_size_of_dataframe : Optional[int], default=50000
@@ -797,6 +782,8 @@ def data_copy_intercube(tm1_service: Optional[Any],
         skip_consolidated_cells=skip_consolidated_cells,
         skip_rule_derived_cells=skip_rule_derived_cells,
         mdx_function=mdx_function,
+        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -820,9 +807,10 @@ def data_copy_intercube(tm1_service: Optional[Any],
         tm1_service=target_tm1_service,
         cube_name=target_cube_name,
         metadata_function=target_metadata_function,
-        collect_dim_element_identifiers=check_missing_elements,
+        collect_itemskip_info=check_missing_elements,
         collect_measure_types=use_mixed_datatypes,
         dimension_check_filter=dimensions_to_check,
+        itemskip_query_mode=element_query_mode,
         **kwargs
     )
 
@@ -868,6 +856,7 @@ def data_copy_intercube(tm1_service: Optional[Any],
             sql_function=sql_function,
             csv_function=csv_function,
             verbose_logging_mode=verbose_logging_mode,
+            verbose_logging_output_dir=verbose_logging_output_dir,
             **kwargs
         )
         shared_mapping_df = shared_mapping["mapping_df"]
@@ -879,6 +868,8 @@ def data_copy_intercube(tm1_service: Optional[Any],
         sql_engine=sql_engine,
         sql_function=sql_function,
         csv_function=csv_function,
+        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -886,8 +877,10 @@ def data_copy_intercube(tm1_service: Optional[Any],
 
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
-        verbose_logging_mode=verbose_logging_mode,
-        case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, **kwargs)
+        verbose_logging_mode=verbose_logging_mode, verbose_logging_output_dir=verbose_logging_output_dir,
+        case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, 
+        audit_mode=audit_mode,
+        **kwargs)
 
     final_row_count = len(dataframe)
     basic_logger.debug(f"initial row count was: {initial_row_count}, Final row count was: {final_row_count}")
@@ -904,15 +897,20 @@ def data_copy_intercube(tm1_service: Optional[Any],
                               **kwargs)
         return
 
+    missing_elements_dataframe = None
     if check_missing_elements:
-        dimension_check_dfs = target_metadata.get_dimension_check_dfs()
-
-        transformer.dataframe_itemskip_elements(dataframe=dataframe, check_dfs=dimension_check_dfs,
-                                                logging_enabled=output_missing_elements,
-                                                case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
-                                                fallback_elements=fallback_elements,
-                                                raise_error_if_missing_found=raise_error_if_missing_found,
-                                                **kwargs)
+        missing_elements_dataframe = transformer.dataframe_itemskip_elements(
+            dataframe=dataframe,
+            check_dfs=target_metadata.get_dimension_check_dfs(),
+            check_hierarchies=target_metadata.get_dimension_check_hiers(),
+            logging_enabled=log_missing_elements,
+            case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
+            fallback_elements=fallback_elements,
+            raise_error_if_missing_found=raise_error_if_missing_found,
+            query_mode=element_query_mode,
+            check_missing_elements_audit=check_missing_elements_audit,
+            return_dropped_rows=output_missing_elements,
+            **kwargs)
 
     if dataframe.empty:
         if clear_target:
@@ -975,6 +973,8 @@ def data_copy_intercube(tm1_service: Optional[Any],
                           **kwargs)
 
     basic_logger.info("Execution ended.")
+    if output_missing_elements:
+        return missing_elements_dataframe
 
 
 @utility.log_benchmark_metrics
@@ -988,6 +988,17 @@ def data_copy(
         sql_function: Optional[Callable[..., DataFrame]] = None,
         csv_function: Optional[Callable[..., DataFrame]] = None,
         data_mdx_list: Optional[List[str]] = None,
+
+        check_missing_elements: Optional[bool] = False,
+        dimensions_to_check: Optional[list[str]] = None,
+        log_missing_elements: Optional[bool] = False,
+        output_missing_elements: Optional[bool] = False,
+        fallback_elements: Optional[Dict] = None,
+        raise_error_if_missing_found: Optional[bool] = False,
+        element_query_mode: Literal['bulk', 'on_demand'] = 'bulk',
+        audit_mode: bool = False,
+        check_missing_elements_audit: Optional[bool] = False,
+        
         case_and_space_insensitive_inputs: Optional[bool] = False,
         skip_zeros: Optional[bool] = False,
         skip_consolidated_cells: Optional[bool] = False,
@@ -1007,12 +1018,12 @@ def data_copy(
         use_blob: bool = False,
         use_mixed_datatypes: Optional[bool] = False,
         increment: bool = False,
-        sum_numeric_duplicates: bool = True,
+        sum_numeric_duplicates: bool = False,
         logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
         **kwargs
-) -> None:
+) -> Optional[DataFrame]:
     """
     Copies data within cube in TM1, with optional transformations, mappings, and basic value scale.
 
@@ -1150,6 +1161,8 @@ def data_copy(
         skip_consolidated_cells=skip_consolidated_cells,
         skip_rule_derived_cells=skip_rule_derived_cells,
         mdx_function=mdx_function,
+        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -1160,6 +1173,16 @@ def data_copy(
         tm1_service=tm1_service
     )
     cube_name = data_metadata_queryspecific.get_cube_name()
+    target_metadata = utility.TM1CubeObjectMetadata.collect(
+        tm1_service=target_tm1_service,
+        cube_name=cube_name,
+        metadata_function=target_metadata_function,
+        collect_itemskip_info=check_missing_elements,
+        collect_measure_types=use_mixed_datatypes,
+        dimension_check_filter=dimensions_to_check,
+        itemskip_query_mode=element_query_mode,
+        **kwargs
+    )
 
     if dataframe.empty:
         if clear_target:
@@ -1172,7 +1195,7 @@ def data_copy(
     data_metadata = utility.TM1CubeObjectMetadata.collect(
         tm1_service=target_tm1_service, cube_name=cube_name,
         metadata_function=target_metadata_function,
-        collect_dim_element_identifiers=False,
+        collect_itemskip_info=False,
         collect_measure_types=use_mixed_datatypes,
         **kwargs)
     cube_dims = data_metadata.get_cube_dims()
@@ -1219,6 +1242,7 @@ def data_copy(
             sql_function=sql_function,
             csv_function=csv_function,
             verbose_logging_mode=verbose_logging_mode,
+            verbose_logging_output_dir=verbose_logging_output_dir,
             **kwargs
         )
         shared_mapping_df = shared_mapping["mapping_df"]
@@ -1230,6 +1254,8 @@ def data_copy(
         sql_engine=sql_engine,
         sql_function=sql_function,
         csv_function=csv_function,
+        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -1237,8 +1263,10 @@ def data_copy(
 
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
-        verbose_logging_mode=verbose_logging_mode,
-        case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, **kwargs
+        verbose_logging_mode=verbose_logging_mode, verbose_logging_output_dir=verbose_logging_output_dir,
+        case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, 
+        audit_mode=audit_mode,
+        **kwargs
     )
 
     final_row_count = len(dataframe)
@@ -1247,6 +1275,29 @@ def data_copy(
         msg = f"Initial row count: {initial_row_count} does not match Final row count: {final_row_count}"
         basic_logger.error(msg)
         raise ValueError(msg)
+
+    if dataframe.empty:
+        if clear_target:
+            loader.clear_cube(tm1_service=target_tm1_service,
+                              cube_name=cube_name,
+                              clear_set_mdx_list=target_clear_set_mdx_list,
+                              **kwargs)
+        return
+
+    missing_elements_dataframe = None
+    if check_missing_elements:
+        missing_elements_dataframe = transformer.dataframe_itemskip_elements(
+            dataframe=dataframe,
+            check_dfs=target_metadata.get_dimension_check_dfs(),
+            check_hierarchies=target_metadata.get_dimension_check_hiers(),
+            logging_enabled=log_missing_elements,
+            case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
+            fallback_elements=fallback_elements,
+            raise_error_if_missing_found=raise_error_if_missing_found,
+            query_mode=element_query_mode,
+            check_missing_elements_audit=check_missing_elements_audit,
+            return_dropped_rows=output_missing_elements,
+            **kwargs)
 
     if dataframe.empty:
         if clear_target:
@@ -1301,6 +1352,8 @@ def data_copy(
     )
 
     basic_logger.info("Execution ended.")
+    if output_missing_elements:
+        return missing_elements_dataframe
 
 
 @utility.log_async_benchmark_metrics
@@ -1382,7 +1435,7 @@ async def async_executor_tm1(
     basic_logger.info(f"Parameter tuples ready. Count: {len(param_tuples)}")
 
     target_cube_name = kwargs.get("target_cube_name")
-    dim_identifier = kwargs.get("ignore_missing_elements", False)
+    dim_identifier = kwargs.get("check_missing_elements", False)
 
     if data_copy_function is data_copy:
         target_cube_name = utility.get_cube_name_from_mdx(data_mdx_template)
@@ -1392,7 +1445,7 @@ async def async_executor_tm1(
         tm1_service=target_tm1_service,
         cube_name=target_cube_name,
         metadata_function=kwargs.get("target_metadata_function"),
-        collect_dim_element_identifiers=dim_identifier,
+        collect_itemskip_info=dim_identifier,
         **kwargs
     )
     def get_target_metadata(**_kwargs): return target_metadata
@@ -1495,12 +1548,24 @@ def load_sql_data_to_tm1_cube(
         chunksize: Optional[int] = None,
         sql_engine: Optional[Any] = None,
         sql_function: Optional[Callable[..., DataFrame]] = None,
+
+        check_missing_elements: Optional[bool] = False,
+        dimensions_to_check: Optional[list[str]] = None,
+        log_missing_elements: Optional[bool] = False,
+        output_missing_elements: Optional[bool] = False,
+        fallback_elements: Optional[Dict] = None,
+        raise_error_if_missing_found: Optional[bool] = False,
+        element_query_mode: Literal['bulk', 'on_demand'] = 'bulk',
+        audit_mode: bool = False,
+        check_missing_elements_audit: Optional[bool] = False,
+
+        use_mixed_datatypes: bool = False,
+        
         case_and_space_insensitive_inputs: Optional[bool] = False,
         mapping_steps: Optional[List[Dict]] = None,
         shared_mapping: Optional[Dict] = None,
         value_function: Optional[Callable[..., Any]] = None,
-        ignore_missing_elements: Optional[bool] = False,
-        fallback_elements: Optional[Dict] = None,
+        
         target_clear_set_mdx_list: Optional[List[str]] = None,
         clear_target: Optional[bool] = False,
         clear_source: Optional[bool] = False,
@@ -1513,12 +1578,12 @@ def load_sql_data_to_tm1_cube(
         use_ti: bool = False,
         use_blob: bool = False,
         increment: bool = False,
-        sum_numeric_duplicates: bool = True,
+        sum_numeric_duplicates: bool = False,
         logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
         **kwargs
-) -> None:
+) -> Optional[DataFrame]:
     """
     Extracts data from a SQL database, transforms it, and loads it into a TM1 cube.
 
@@ -1563,7 +1628,7 @@ def load_sql_data_to_tm1_cube(
             be used by multiple mapping steps.
         value_function: A custom function to apply transformations to the 'Value'
             column.
-        ignore_missing_elements: If True, rows with elements that do not exist
+        check_missing_elements: If True, rows with elements that do not exist
             in the target TM1 dimensions will be silently dropped.
         fallback_elements: Per-dimension fallback definitions when ignoring missing elements.
         target_clear_set_mdx_list: A list of MDX set expressions defining the
@@ -1620,7 +1685,9 @@ def load_sql_data_to_tm1_cube(
         table_name=sql_table_name,
         table_columns=sql_table_columns,
         schema=sql_schema,
-        chunksize=chunksize
+        chunksize=chunksize,
+        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
     )
 
     if dataframe.empty:
@@ -1635,7 +1702,10 @@ def load_sql_data_to_tm1_cube(
         tm1_service=tm1_service,
         cube_name=target_cube_name,
         metadata_function=target_metadata_function,
-        collect_dim_element_identifiers=ignore_missing_elements,
+        collect_itemskip_info=check_missing_elements,
+        collect_measure_types=use_mixed_datatypes,
+        dimension_check_filter=dimensions_to_check,
+        itemskip_query_mode=element_query_mode,
         **kwargs
     )
 
@@ -1660,22 +1730,6 @@ def load_sql_data_to_tm1_cube(
 
     transformer.cast_coordinates_to_str(cube_dims, dataframe)
 
-    if ignore_missing_elements:
-        transformer.dataframe_itemskip_elements(dataframe=dataframe,
-                                                check_dfs=target_metadata.get_dimension_check_dfs(),
-                                                logging_enabled=verbose_logging_mode is not None,
-                                                case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
-                                                fallback_elements=fallback_elements,
-                                                **kwargs)
-
-    if dataframe.empty:
-        if clear_target:
-            loader.clear_cube(tm1_service=tm1_service,
-                              cube_name=target_cube_name,
-                              clear_set_mdx_list=target_clear_set_mdx_list,
-                              **kwargs)
-        return
-
     utility.dataframe_verbose_logger(
         dataframe=dataframe,
         step_number="start_load_sql_data_to_tm1_cube",
@@ -1694,6 +1748,7 @@ def load_sql_data_to_tm1_cube(
             sql_function=sql_function,
             csv_function=csv_function,
             verbose_logging_mode=verbose_logging_mode,
+            verbose_logging_output_dir=verbose_logging_output_dir,
         )
         shared_mapping_df = shared_mapping["mapping_df"]
 
@@ -1703,16 +1758,51 @@ def load_sql_data_to_tm1_cube(
         mdx_function=mdx_function,
         sql_engine=sql_engine,
         sql_function=sql_function,
-        csv_function=csv_function
+        csv_function=csv_function,
+        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
     )
 
     initial_row_count = len(dataframe)
 
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
-        verbose_logging_mode=verbose_logging_mode,
-        case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, **kwargs
+        verbose_logging_mode=verbose_logging_mode, verbose_logging_output_dir=verbose_logging_output_dir,
+        case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, 
+        audit_mode=audit_mode,
+        **kwargs
     )
+    
+    if dataframe.empty:
+        if clear_target:
+            loader.clear_cube(tm1_service=tm1_service,
+                              cube_name=target_cube_name,
+                              clear_set_mdx_list=target_clear_set_mdx_list,
+                              **kwargs)
+        return
+
+    missing_elements_dataframe = None
+    if check_missing_elements:
+        missing_elements_dataframe = transformer.dataframe_itemskip_elements(
+            dataframe=dataframe,
+            check_dfs=target_metadata.get_dimension_check_dfs(),
+            check_hierarchies=target_metadata.get_dimension_check_hiers(),
+            logging_enabled=log_missing_elements,
+            case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
+            fallback_elements=fallback_elements,
+            raise_error_if_missing_found=raise_error_if_missing_found,
+            query_mode=element_query_mode,
+            check_missing_elements_audit=check_missing_elements_audit,
+            return_dropped_rows=output_missing_elements,
+            **kwargs)
+
+    if dataframe.empty:
+        if clear_target:
+            loader.clear_cube(tm1_service=tm1_service,
+                              cube_name=target_cube_name,
+                              clear_set_mdx_list=target_clear_set_mdx_list,
+                              **kwargs)
+        return
 
     final_row_count = len(dataframe)
     if initial_row_count != final_row_count:
@@ -1769,6 +1859,8 @@ def load_sql_data_to_tm1_cube(
                            delete_statement=sql_delete_statement)
 
     basic_logger.info("Execution ended.")
+    if output_missing_elements:
+        return missing_elements_dataframe
 
 
 @utility.log_benchmark_metrics
@@ -1925,6 +2017,8 @@ def load_tm1_cube_to_sql_table(
         skip_rule_derived_cells=skip_rule_derived_cells,
         mdx_function=mdx_function,
         decimal=decimal,
+        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -1978,6 +2072,7 @@ def load_tm1_cube_to_sql_table(
             sql_function=sql_function,
             csv_function=csv_function,
             verbose_logging_mode=verbose_logging_mode,
+            verbose_logging_output_dir=verbose_logging_output_dir,
         )
         shared_mapping_df = shared_mapping["mapping_df"]
 
@@ -1987,14 +2082,16 @@ def load_tm1_cube_to_sql_table(
         mdx_function=mdx_function,
         sql_engine=sql_engine_or_connection,
         sql_function=sql_function,
-        csv_function=csv_function
+        csv_function=csv_function,
+        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
     )
 
     initial_row_count = len(dataframe)
 
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
-        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_mode=verbose_logging_mode, verbose_logging_output_dir=verbose_logging_output_dir,
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, **kwargs
     )
 
@@ -2163,7 +2260,7 @@ async def async_executor_tm1_to_sql(
                 tm1_service=tm1_service,
                 cube_name=source_cube_name,
                 metadata_function=kwargs.get("data_metadata_function"),
-                collect_dim_element_identifiers=kwargs.get("ignore_missing_elements", False),
+                collect_itemskip_info=kwargs.get("check_missing_elements", False),
                 **kwargs
             )
             def get_data_metadata(**_kwargs): return data_metadata
@@ -2347,7 +2444,7 @@ async def async_executor_sql_to_tm1(
                 tm1_service=target_tm1_service,
                 cube_name=target_cube_name,
                 metadata_function=kwargs.get("target_metadata_function"),
-                collect_dim_element_identifiers=kwargs.get("ignore_missing_elements", False),
+                collect_itemskip_info=kwargs.get("check_missing_elements", False),
                 **kwargs
             )
 
@@ -2471,8 +2568,17 @@ def load_csv_data_to_tm1_cube(
         mapping_steps: Optional[List[Dict]] = None,
         shared_mapping: Optional[Dict] = None,
         value_function: Optional[Callable[..., Any]] = None,
-        ignore_missing_elements: Optional[bool] = False,
+
+        check_missing_elements: Optional[bool] = False,
+        dimensions_to_check: Optional[list[str]] = None,
+        log_missing_elements: Optional[bool] = False,
+        output_missing_elements: Optional[bool] = False,
         fallback_elements: Optional[Dict] = None,
+        raise_error_if_missing_found: Optional[bool] = False,
+        element_query_mode: Literal['bulk', 'on_demand'] = 'bulk',
+        audit_mode: bool = False,
+        check_missing_elements_audit: Optional[bool] = False,
+        
         target_clear_set_mdx_list: Optional[List[str]] = None,
         pre_load_function: Optional[Callable] = None,
         pre_load_args: Optional[List] = None,
@@ -2481,14 +2587,14 @@ def load_csv_data_to_tm1_cube(
         use_ti: bool = False,
         increment: bool = False,
         use_blob: bool = False,
-        sum_numeric_duplicates: bool = True,
+        sum_numeric_duplicates: bool = False,
         slice_size_of_dataframe: int = 50000,
         clear_target: Optional[bool] = False,
         logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
         **kwargs
-) -> None:
+) -> Optional[DataFrame]:
     """
     Extracts data from a CSV file, transforms it, and loads it into a TM1 cube.
 
@@ -2552,10 +2658,10 @@ def load_csv_data_to_tm1_cube(
             be used by multiple mapping steps.
         value_function: A custom function to apply transformations to the 'Value'
             column.
-        ignore_missing_elements: If True, rows with elements that do not exist
+        check_missing_elements: If True, rows with elements that do not exist
             in the target TM1 dimensions will be silently dropped.
         fallback_elements: Dictionary of fallback dimension elements applied when
-            `ignore_missing_elements` is True.
+            `check_missing_elements` is True.
         target_clear_set_mdx_list: A list of MDX set expressions defining the
             slice to be cleared in the target TM1 cube before loading.
         clear_target: If True, the target slice in the TM1 cube will be cleared.
@@ -2625,10 +2731,13 @@ def load_csv_data_to_tm1_cube(
         tm1_service=tm1_service,
         cube_name=target_cube_name,
         metadata_function=target_metadata_function,
-        collect_dim_element_identifiers=ignore_missing_elements,
+        collect_itemskip_info=check_missing_elements,
         collect_measure_types=use_mixed_datatypes,
+        dimension_check_filter=dimensions_to_check,
+        itemskip_query_mode=element_query_mode,
         **kwargs
     )
+    
 
     transformer.normalize_table_source_dataframe(
         dataframe=dataframe,
@@ -2648,22 +2757,6 @@ def load_csv_data_to_tm1_cube(
 
     transformer.cast_coordinates_to_str(cube_dims, dataframe)
 
-    if ignore_missing_elements:
-        transformer.dataframe_itemskip_elements(dataframe=dataframe,
-                                                check_dfs=target_metadata.get_dimension_check_dfs(),
-                                                logging_enabled=verbose_logging_mode is not None,
-                                                case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
-                                                fallback_elements=fallback_elements,
-                                                **kwargs)
-
-    if dataframe.empty:
-        if clear_target:
-            loader.clear_cube(tm1_service=tm1_service,
-                              cube_name=target_cube_name,
-                              clear_set_mdx_list=target_clear_set_mdx_list,
-                              **kwargs)
-        return
-
     shared_mapping_df = None
     if shared_mapping:
         extractor.generate_dataframe_for_mapping_info(
@@ -2672,6 +2765,7 @@ def load_csv_data_to_tm1_cube(
             mdx_function=mdx_function,
             csv_function=csv_function,
             verbose_logging_mode=verbose_logging_mode,
+            verbose_logging_output_dir=verbose_logging_output_dir,
             **kwargs
         )
         shared_mapping_df = shared_mapping["mapping_df"]
@@ -2681,6 +2775,8 @@ def load_csv_data_to_tm1_cube(
         tm1_service=tm1_service,
         mdx_function=mdx_function,
         csv_function=csv_function,
+        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -2688,9 +2784,33 @@ def load_csv_data_to_tm1_cube(
 
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
-        verbose_logging_mode=verbose_logging_mode,
-        case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, **kwargs
+        verbose_logging_mode=verbose_logging_mode, verbose_logging_output_dir=verbose_logging_output_dir,
+        case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, 
+        audit_mode=audit_mode, **kwargs
     )
+
+    missing_elements_dataframe = None
+    if check_missing_elements:
+        missing_elements_dataframe = transformer.dataframe_itemskip_elements(
+            dataframe=dataframe,
+            check_dfs=target_metadata.get_dimension_check_dfs(),
+            check_hierarchies=target_metadata.get_dimension_check_hiers(),
+            logging_enabled=log_missing_elements,
+            case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
+            fallback_elements=fallback_elements,
+            raise_error_if_missing_found=raise_error_if_missing_found,
+            query_mode=element_query_mode,
+            check_missing_elements_audit=check_missing_elements_audit,
+            return_dropped_rows=output_missing_elements,
+            **kwargs)
+
+    if dataframe.empty:
+        if clear_target:
+            loader.clear_cube(tm1_service=tm1_service,
+                              cube_name=target_cube_name,
+                              clear_set_mdx_list=target_clear_set_mdx_list,
+                              **kwargs)
+        return
 
     final_row_count = len(dataframe)
     if initial_row_count != final_row_count:
@@ -2754,6 +2874,8 @@ def load_csv_data_to_tm1_cube(
     )
 
     basic_logger.info("Execution ended.")
+    if output_missing_elements:
+        return missing_elements_dataframe
 
 
 @utility.log_benchmark_metrics
@@ -2897,6 +3019,8 @@ def load_tm1_cube_to_csv_file(
         skip_rule_derived_cells=skip_rule_derived_cells,
         mdx_function=mdx_function,
         decimal=decimal,
+        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -2941,7 +3065,8 @@ def load_tm1_cube_to_csv_file(
             tm1_service=tm1_service,
             mdx_function=mdx_function,
             csv_function=csv_function,
-            verbose_logging_mode=verbose_logging_mode
+            verbose_logging_mode=verbose_logging_mode,
+            verbose_logging_output_dir=verbose_logging_output_dir,
         )
         shared_mapping_df = shared_mapping["mapping_df"]
 
@@ -2949,14 +3074,16 @@ def load_tm1_cube_to_csv_file(
         mapping_steps=mapping_steps,
         tm1_service=tm1_service,
         mdx_function=mdx_function,
-        csv_function=csv_function
+        csv_function=csv_function,
+        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
     )
 
     initial_row_count = len(dataframe)
 
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
-        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_mode=verbose_logging_mode, verbose_logging_output_dir=verbose_logging_output_dir,
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, **kwargs
     )
 
@@ -3093,7 +3220,7 @@ async def async_executor_csv_to_tm1(
                 tm1_service=tm1_service,
                 cube_name=source_cube_name,
                 metadata_function=kwargs.get("data_metadata_function"),
-                collect_dim_element_identifiers=kwargs.get("ignore_missing_elements", False),
+                collect_itemskip_info=kwargs.get("check_missing_elements", False),
                 **kwargs
             )
             def get_data_metadata(**_kwargs): return data_metadata

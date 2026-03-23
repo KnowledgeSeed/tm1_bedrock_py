@@ -2,7 +2,7 @@ import pandas as pd
 import os
 from TM1py import TM1Service
 
-from TM1_bedrock_py import bedrock
+from TM1_bedrock_py import bedrock, utility
 from TM1_bedrock_py.utility import set_logging_level
 from tests.tests_dimension_builder.test_data.test_data import generate_hierarchy_data
 import pyodbc
@@ -100,7 +100,8 @@ def complex_transform_demo():
                                     clear_target=clear_target, target_clear_set_mdx_list=target_clear_set_mdx_list,
                                     value_function=inflation_value_scale, use_blob=use_blob,
                                     use_mixed_datatypes=use_mixed_datatypes, logging_level=logging_level,
-                                    verbose_logging_mode="print_console")
+                                    verbose_logging_mode="print_console",
+                                    audit_mode=True)
     finally:
         tm1_service.logout()
 
@@ -164,25 +165,39 @@ def dimension_builder_basic_demo():
     }
     tm1_service = TM1Service(**tm1_params)
 
-    dimension_name = "DimBuilderDemo"
+    dimension_name = "DimBuilderDemo2"
     file_path = os.path.join(os.path.dirname(__file__), "dimension_builder_init.xlsx")
-    sheet_name = "Sheet1"
-    input_format = 'indented_levels'
-    build_strategy = 'rebuild'
-    level_columns = ["Level1", "Level2", "Level3", "Level4"]
 
     try:
         bedrock.dimension_builder(
             tm1_service=tm1_service,
             dimension_name=dimension_name,
             input_datasource=file_path,
-            input_format=input_format,
-            build_strategy=build_strategy,
-            level_columns=level_columns,
-            sheet_name=sheet_name
+            input_format='indented_levels',
+            build_strategy='rebuild',
+            level_columns=["Level1", "Level2", "Level3", "Level4"]
         )
     finally:
         tm1_service.logout()
+
+
+def build_cube_demo():
+    tm1_params = {
+        "address": "dev.knowledgeseed.local",
+        "port": 5379,
+        "user": "admin",
+        "password": "admin",
+        "ssl": False
+    }
+    tm1_service = TM1Service(**tm1_params)
+
+    cube_dimensions = {
+        "TestCube1": ["DimBuilderDemo", "DimBuilderDemo2"],
+        "TestCube2": ["DimBuilderDemo", "DimBuilderDemo2"],
+        "TestCube3": ["DimBuilderDemo", "DimBuilderDemo2"]
+    }
+
+    utility.create_cubes(tm1_service, cube_dimensions)
 
 
 def dimension_builder_append_demo():
@@ -373,9 +388,105 @@ def run_pyodbc_writer():
         tm1_service.logout()
 
 
+def copy_dim_between_servers_demo():
+    tm1params_hrdemo = {
+        "address": "localhost",
+        "port": 5365,
+        "user": "admin",
+        "password": "",
+        "ssl": False
+    }
+    tm1srv_hrdemo = TM1Service(**tm1params_hrdemo)
+
+    tm1params_ksacademy = {
+        "address": "dev.knowledgeseed.local",
+        "port": 5379,
+        "user": "admin",
+        "password": "admin",
+        "ssl": False
+    }
+    tm1srv_ksacademy = TM1Service(**tm1params_ksacademy)
+
+    utility.configure_pandas_display(pd)
+
+    try:
+        bedrock.dimension_copy(
+            tm1_service=tm1srv_ksacademy,
+            target_tm1_service=tm1srv_hrdemo,
+            source_dimension_name="DimBuilderDemo2",
+            target_dimension_name="DimBuilderDemoCopy2",
+            hierarchy_rename_map={"DimBuilderDemo": "DimBuilderDemoCopy2"},
+            logging_level="DEBUG"
+        )
+    finally:
+        tm1srv_ksacademy.logout()
+        tm1srv_hrdemo.logout()
+
+
+def copy_data_between_servers_demo():
+    tm1params_hrdemo = {
+        "address": "localhost",
+        "port": 5365,
+        "user": "admin",
+        "password": "",
+        "ssl": False
+    }
+    tm1srv_hrdemo = TM1Service(**tm1params_hrdemo)
+
+    tm1params_ksacademy = {
+        "address": "dev.knowledgeseed.local",
+        "port": 5379,
+        "user": "admin",
+        "password": "admin",
+        "ssl": False
+    }
+    tm1srv_ksacademy = TM1Service(**tm1params_ksacademy)
+
+    utility.configure_pandas_display(pd)
+
+    mdx = """
+        SELECT
+        NON EMPTY
+        {Tm1FilterByLevel({Tm1SubsetAll([DimBuilderDemo].[DimBuilderDemo])}, 0)}
+        * {Tm1FilterByLevel({Tm1SubsetAll([DimBuilderDemo2].[DimBuilderDemo])}, 0)}
+        ON 0
+        FROM [TestCube1]
+    """
+    relabel_step = {
+        "method": "basic_reshaping",
+        "column_relabel_map": {"DimBuilderDemo": "DimBuilderDemoCopy", "DimBuilderDemo2": "DimBuilderDemoCopy2"}
+    }
+
+    try:
+        missing_df = bedrock.data_copy_intercube(
+            tm1_service=tm1srv_ksacademy,
+            target_tm1_service=tm1srv_hrdemo,
+            target_cube_name="DimBuilderDemoCopyCube",
+            data_mdx=mdx,
+            mapping_steps=[relabel_step],
+            check_missing_elements=True,
+            audit_mode=True,
+            skip_zeros=False,
+            logging_level='DEBUG',
+            verbose_logging_mode='print_console',
+            log_missing_elements=True,
+            output_missing_elements=True
+        )
+
+        print("missing df")
+        print(missing_df)
+    finally:
+        tm1srv_ksacademy.logout()
+        tm1srv_hrdemo.logout()
+
+
 if __name__ == '__main__':
     # dimension_builder_basic_demo()
-    dimension_builder_append_demo()
+    # dimension_builder_append_demo()
     # dimension_builder_complex_demo()
     # hierarchy_builder_demo()
     # run_pyodbc_writer()
+    # complex_transform_demo()
+    # build_cube_demo()
+    # copy_dim_between_servers_demo()
+    copy_data_between_servers_demo()

@@ -46,7 +46,9 @@ def __clear_cube_default(
         clear_set_mdx_list (List[str]): A list of valid MDX set expressions defining the clear space.
         **_kwargs (Any): Additional keyword arguments.
     """
-    clearing_kwargs = utility.get_kwargs_dict_from_set_mdx_list(clear_set_mdx_list)
+    clearing_kwargs = utility.get_kwargs_dict_from_set_mdx_list(clear_set_mdx_list) \
+        if clear_set_mdx_list is not None else {}
+
     tm1_service.cells.clear(cube_name, **clearing_kwargs)
 
 
@@ -115,6 +117,7 @@ def __dataframe_to_cube_default(
             increment=increment,
             sum_numeric_duplicates=sum_numeric_duplicates,
             slice_size_of_dataframe=slice_size_of_dataframe,
+            allow_spread=False
         )
     else:
         tm1_service.cells.write_dataframe(
@@ -128,7 +131,8 @@ def __dataframe_to_cube_default(
             use_blob=use_blob,
             remove_blob=remove_blob,
             increment=increment,
-            sum_numeric_duplicates=sum_numeric_duplicates
+            sum_numeric_duplicates=sum_numeric_duplicates,
+            allow_spread=False
         )
 
 

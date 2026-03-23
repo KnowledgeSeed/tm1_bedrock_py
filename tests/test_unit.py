@@ -166,7 +166,7 @@ def test_add_nonempty_to_mdx_all_modes(input_mdx, expected_mdx):
 def test_all_leaves_identifiers_to_dataframe(tm1_connection_factory, dimname, expected):
     with tm1_connection_factory("tm1srv") as conn:
         expected_df = pd.DataFrame(expected)
-        df = utility.all_leaves_identifiers_to_dataframe(conn, dimname)
+        df = utility.all_leaves_identifiers_to_dataframe(conn, dimname, dimname)
         pd.testing.assert_frame_equal(df, expected_df)
 
 
