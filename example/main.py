@@ -165,8 +165,10 @@ def dimension_builder_basic_demo():
     }
     tm1_service = TM1Service(**tm1_params)
 
-    dimension_name = "DimBuilderDemo2"
-    file_path = os.path.join(os.path.dirname(__file__), "dimension_builder_init.xlsx")
+    dimension_name = "DimBuilderDemo3"
+    file_path = os.path.join(os.path.dirname(__file__), "dimension_builder_build_test.xlsx")
+
+
 
     try:
         bedrock.dimension_builder(
@@ -481,7 +483,7 @@ def copy_data_between_servers_demo():
 
 
 if __name__ == '__main__':
-    # dimension_builder_basic_demo()
+    dimension_builder_basic_demo()
     # dimension_builder_append_demo()
     # dimension_builder_complex_demo()
     # hierarchy_builder_demo()
@@ -489,4 +491,4 @@ if __name__ == '__main__':
     # complex_transform_demo()
     # build_cube_demo()
     # copy_dim_between_servers_demo()
-    copy_data_between_servers_demo()
+    # copy_data_between_servers_demo()

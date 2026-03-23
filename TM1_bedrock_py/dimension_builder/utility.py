@@ -41,11 +41,28 @@ def _parse_attribute_string_square_brackets(attr_name_and_type: str) -> Tuple[st
     return name_part, type_part
 
 
+def _parse_attribute_string_square_brackets_start(attr_name_and_type: str) -> tuple[str, str]:
+    """
+    Parses a string in the format '[type]name' and returns a (name, type) tuple.
+    """
+    # Regex breakdown:
+    # \[([^\]]+)\] : Matches '[' then captures everything until ']' into group 1
+    # (.+)         : Captures everything after the brackets into group 2
+    match = re.match(r"\[([^\]]+)\](.+)", attr_name_and_type)
+
+    if not match:
+        raise ValueError(f"String '{attr_name_and_type}' does not match format '[type]name'")
+
+    type_part, name_part = match.groups()
+    return name_part, type_part
+
+
 def parse_attribute_string(
-        attr_name_and_type: str, parser: Union[Literal["colon", "square_brackets"], Callable] = "colon"
+        attr_name_and_type: str, parser: Union[Literal["colon", "square_brackets", "square_brackets_start"], Callable] = "colon"
 ) -> Tuple[str, str]:
     strategies = {
         "square_brackets": _parse_attribute_string_square_brackets,
+        "square_brackets_start": _parse_attribute_string_square_brackets_start,
         "colon": _parse_attribute_string_colon
     }
     func = parser
@@ -88,7 +105,10 @@ def unpivot_attributes_to_cube_format(elements_df: pd.DataFrame, dimension_name:
     attribute_dimension_name = "}ElementAttributes_" + dimension_name
     attribute_columns = get_attribute_columns_list(input_df=elements_df)
 
-    elements_df[dimension_name] = elements_df['Hierarchy'] + ':' + elements_df['ElementName']
+    elements_df[dimension_name] = (elements_df['Hierarchy'] + ':' + elements_df['ElementName']) \
+        if elements_df['Hierarchy'].nunique() > 1 \
+        else elements_df['ElementName']
+
     df_to_melt = elements_df.drop(columns=['ElementName', 'ElementType', 'Dimension', 'Hierarchy'])
     df_to_melt = df_to_melt.rename(columns={
         attr_string: parse_attribute_string(attr_string)[0]

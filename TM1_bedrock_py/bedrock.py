@@ -82,7 +82,7 @@ def dimension_builder(
         dimension_sort_order_config: dict[str, str] = None,
         hierarchy_sort_order_config: dict[str, dict[str, str]] = None,
 
-        attribute_parser: Union[Literal["colon", "square_brackets"], Callable] = "colon",
+        attribute_parser: Union[Literal["colon", "square_brackets", "square_brackets_start"], Callable] = "colon",
         logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         **kwargs
 ) -> Optional[Tuple[pd.DataFrame, pd.DataFrame]]:
@@ -115,6 +115,8 @@ def dimension_builder(
             attribute_parser=attribute_parser,
             **kwargs
         )
+
+    print(input_elements_df)
 
     # get existing if dim exists - important for type check consistency too
     existing_edges_df, existing_elements_df = apply.init_existing_schema_for_builder(
@@ -197,7 +199,7 @@ def hierarchy_builder(
 
         hierarchy_sort_order_config: dict[str, str] = None,
 
-        attribute_parser: Union[Literal["colon", "square_brackets"], Callable] = "colon",
+        attribute_parser: Union[Literal["colon", "square_brackets", "square_brackets_start"], Callable] = "colon",
         logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         **kwargs
 ) -> Optional[Tuple[pd.DataFrame, pd.DataFrame]]:

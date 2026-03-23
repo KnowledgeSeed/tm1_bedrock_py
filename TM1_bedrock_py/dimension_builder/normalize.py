@@ -74,7 +74,7 @@ def add_attribute_type_suffixes(input_df: pd.DataFrame, attr_type_map: Optional[
 def normalize_attr_column_names(
         input_df: pd.DataFrame,
         attribute_columns: list[str] = None,
-        attribute_parser: Union[Literal["colon", "square_brackets"], Callable] = "colon"
+        attribute_parser: Union[Literal["colon", "square_brackets", "square_brackets_start"], Callable] = "colon"
 ) -> Tuple[pd.DataFrame, list[str]]:
     if attribute_columns is None:
         attribute_columns = utility.get_attribute_columns_list(input_df=input_df)
@@ -294,7 +294,7 @@ def normalize_input_schema(
         attr_type_map: Optional[dict] = None,
         input_elements_df: pd.DataFrame = None,
         input_elements_df_element_column: Optional[str] = None,
-        attribute_parser: Union[Literal["colon", "square_brackets"], Callable] = "colon"
+        attribute_parser: Union[Literal["colon", "square_brackets", "square_brackets_start"], Callable] = "colon"
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     # raw edges/combined input structure base normalization
