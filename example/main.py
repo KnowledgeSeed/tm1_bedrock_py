@@ -168,8 +168,6 @@ def dimension_builder_basic_demo():
     dimension_name = "DimBuilderDemo3"
     file_path = os.path.join(os.path.dirname(__file__), "dimension_builder_build_test.xlsx")
 
-
-
     try:
         bedrock.dimension_builder(
             tm1_service=tm1_service,
@@ -482,8 +480,41 @@ def copy_data_between_servers_demo():
         tm1srv_hrdemo.logout()
 
 
+def dimension_builder_no_edges_old_format():
+    tm1params_ksacademy = {
+        "address": "dev.knowledgeseed.local",
+        "port": 5379,
+        "user": "admin",
+        "password": "admin",
+        "ssl": False
+    }
+    tm1_service = TM1Service(**tm1params_ksacademy)
+    dimension_name = "DimBuilderDemo4"
+    file_path = os.path.join(os.path.dirname(__file__), "sys_group_nucleus_content.csv")
+
+    try:
+        bedrock.dimension_builder(
+            tm1_service=tm1_service,
+            dimension_name=dimension_name,
+            input_datasource=file_path,
+            input_format='indented_levels',
+            build_strategy='rebuild',
+            level_columns=[
+                'vL1', 'vL2', 'vL3', 'vL4', 'vL5',
+                'vL6', 'vL7', 'vL8', 'vL9', 'vL10',
+                'vL11', 'vL12', 'vL13', 'vL14', 'vL15'
+            ],
+            weight_column="vWeight",
+            type_column="vType",
+            attribute_parser="square_brackets_start"
+        )
+    finally:
+        tm1_service.logout()
+
+
 if __name__ == '__main__':
-    dimension_builder_basic_demo()
+    # dimension_builder_basic_demo()
+    dimension_builder_no_edges_old_format()
     # dimension_builder_append_demo()
     # dimension_builder_complex_demo()
     # hierarchy_builder_demo()

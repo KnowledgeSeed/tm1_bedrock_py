@@ -601,12 +601,11 @@ def process_hierarchical_levels_format(
 
 
 def delete_leaves_hierarchy_from_schema(
-        edges_df: pd.DataFrame, elements_df: pd.DataFrame
+        edges_df: Optional[pd.DataFrame], elements_df: pd.DataFrame
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    return (
-        edges_df[edges_df["Hierarchy"] != "Leaves"].reset_index(drop=True),
-        elements_df[elements_df["Hierarchy"] != "Leaves"].reset_index(drop=True)
-    )
+    edges_df = edges_df[edges_df["Hierarchy"] != "Leaves"].reset_index(drop=True) if edges_df is not None else None
+    elements_df = elements_df[elements_df["Hierarchy"] != "Leaves"].reset_index(drop=True)
+    return edges_df, elements_df
 
 
 def delete_check_hierarchies_from_schema(
