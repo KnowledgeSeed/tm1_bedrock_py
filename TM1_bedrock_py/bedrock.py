@@ -586,7 +586,7 @@ def data_copy_intercube(tm1_service: Optional[Any],
                         output_missing_elements: Optional[bool] = False,
                         fallback_elements: Optional[Dict] = None,
                         raise_error_if_missing_found: Optional[bool] = False,
-                        existance_query_mode: Literal['bulk', 'on_demand'] = 'bulk',
+                        element_query_mode: Literal['bulk', 'on_demand'] = 'bulk',
                         audit_mode: bool = False,
                         check_missing_elements_audit: Optional[bool] = False,
 
@@ -810,7 +810,7 @@ def data_copy_intercube(tm1_service: Optional[Any],
         collect_itemskip_info=check_missing_elements,
         collect_measure_types=use_mixed_datatypes,
         dimension_check_filter=dimensions_to_check,
-        itemskip_query_mode=existance_query_mode,
+        itemskip_query_mode=element_query_mode,
         **kwargs
     )
 
@@ -907,7 +907,7 @@ def data_copy_intercube(tm1_service: Optional[Any],
             case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
             fallback_elements=fallback_elements,
             raise_error_if_missing_found=raise_error_if_missing_found,
-            query_mode=existance_query_mode,
+            query_mode=element_query_mode,
             check_missing_elements_audit=check_missing_elements_audit,
             return_dropped_rows=output_missing_elements,
             **kwargs)
@@ -995,7 +995,7 @@ def data_copy(
         output_missing_elements: Optional[bool] = False,
         fallback_elements: Optional[Dict] = None,
         raise_error_if_missing_found: Optional[bool] = False,
-        existance_query_mode: Literal['bulk', 'on_demand'] = 'bulk',
+        element_query_mode: Literal['bulk', 'on_demand'] = 'bulk',
         audit_mode: bool = False,
         check_missing_elements_audit: Optional[bool] = False,
         
@@ -1180,7 +1180,7 @@ def data_copy(
         collect_itemskip_info=check_missing_elements,
         collect_measure_types=use_mixed_datatypes,
         dimension_check_filter=dimensions_to_check,
-        itemskip_query_mode=existance_query_mode,
+        itemskip_query_mode=element_query_mode,
         **kwargs
     )
 
@@ -1294,7 +1294,7 @@ def data_copy(
             case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
             fallback_elements=fallback_elements,
             raise_error_if_missing_found=raise_error_if_missing_found,
-            query_mode=existance_query_mode,
+            query_mode=element_query_mode,
             check_missing_elements_audit=check_missing_elements_audit,
             return_dropped_rows=output_missing_elements,
             **kwargs)
@@ -1555,7 +1555,7 @@ def load_sql_data_to_tm1_cube(
         output_missing_elements: Optional[bool] = False,
         fallback_elements: Optional[Dict] = None,
         raise_error_if_missing_found: Optional[bool] = False,
-        existance_query_mode: Literal['bulk', 'on_demand'] = 'bulk',
+        element_query_mode: Literal['bulk', 'on_demand'] = 'bulk',
         audit_mode: bool = False,
         check_missing_elements_audit: Optional[bool] = False,
 
@@ -1705,7 +1705,7 @@ def load_sql_data_to_tm1_cube(
         collect_itemskip_info=check_missing_elements,
         collect_measure_types=use_mixed_datatypes,
         dimension_check_filter=dimensions_to_check,
-        itemskip_query_mode=existance_query_mode,
+        itemskip_query_mode=element_query_mode,
         **kwargs
     )
 
@@ -1791,7 +1791,7 @@ def load_sql_data_to_tm1_cube(
             case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
             fallback_elements=fallback_elements,
             raise_error_if_missing_found=raise_error_if_missing_found,
-            query_mode=existance_query_mode,
+            query_mode=element_query_mode,
             check_missing_elements_audit=check_missing_elements_audit,
             return_dropped_rows=output_missing_elements,
             **kwargs)
@@ -2575,7 +2575,7 @@ def load_csv_data_to_tm1_cube(
         output_missing_elements: Optional[bool] = False,
         fallback_elements: Optional[Dict] = None,
         raise_error_if_missing_found: Optional[bool] = False,
-        existance_query_mode: Literal['bulk', 'on_demand'] = 'bulk',
+        element_query_mode: Literal['bulk', 'on_demand'] = 'bulk',
         audit_mode: bool = False,
         check_missing_elements_audit: Optional[bool] = False,
         
@@ -2734,7 +2734,7 @@ def load_csv_data_to_tm1_cube(
         collect_itemskip_info=check_missing_elements,
         collect_measure_types=use_mixed_datatypes,
         dimension_check_filter=dimensions_to_check,
-        itemskip_query_mode=existance_query_mode,
+        itemskip_query_mode=element_query_mode,
         **kwargs
     )
     
@@ -2799,7 +2799,7 @@ def load_csv_data_to_tm1_cube(
             case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
             fallback_elements=fallback_elements,
             raise_error_if_missing_found=raise_error_if_missing_found,
-            query_mode=existance_query_mode,
+            query_mode=element_query_mode,
             check_missing_elements_audit=check_missing_elements_audit,
             return_dropped_rows=output_missing_elements,
             **kwargs)

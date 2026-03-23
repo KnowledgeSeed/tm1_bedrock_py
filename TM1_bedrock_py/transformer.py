@@ -460,13 +460,23 @@ def dataframe_itemskip_elements(
         fallback_elements = utility.normalize_structure_strings(fallback_elements)
         check_dimensions = utility.normalize_structure_strings(check_dimensions)
 
-    missing_values_mask = dataframe.isna().any(axis=1).to_numpy()
-    nan_dropped_dataframe = dataframe.loc[missing_values_mask].copy() if return_dropped_rows else None
+    global_nan_mask = np.ones(len(dataframe), dtype=bool)
+    nan_dropped_dataframe = pd.DataFrame()
+    for column in dataframe.columns:
+        current_nan_mask = dataframe[column].isna()
+        current_dropped = dataframe[current_nan_mask].copy()
 
-    dataframe.drop(index=dataframe.index[missing_values_mask], inplace=True)
+        if not current_dropped.empty:
+            current_dropped[f"Itemskip:NaN:{column}"] = 1
+            nan_dropped_dataframe = pd.concat([nan_dropped_dataframe, current_dropped])
+
+        global_nan_mask &= current_nan_mask
+
+    dataframe.drop(index=dataframe.index[global_nan_mask], inplace=True)
     dataframe.reset_index(drop=True, inplace=True)
 
     global_validity_mask = np.ones(len(dataframe), dtype=bool)
+    invalid_records_dataframe = pd.DataFrame()
     exit_with_error = False
 
     for stray_dimension_name in set(fallback_elements) - set(check_dimensions):
@@ -514,9 +524,18 @@ def dataframe_itemskip_elements(
                     dataframe.loc[~current_column_validity_mask, dataframe_column] = fallback_value
                 else:
                     if logging_enabled:
-                        invalid_records_dataframe = dataframe.loc[~current_column_validity_mask, [dataframe_column]]
+                        invalid_records_dataframe_log = dataframe.loc[~current_column_validity_mask, [dataframe_column]]
                         basic_logger.debug(f"Invalid records for dimension {dimension_name}")
-                        basic_logger.debug(invalid_records_dataframe)
+                        basic_logger.debug(invalid_records_dataframe_log)
+
+                    if return_dropped_rows:
+                        invalid_records_dataframe_current = dataframe[~current_column_validity_mask].copy()
+
+                        if not invalid_records_dataframe_current.empty:
+                            invalid_records_dataframe_current[f"Itemskip:Missing:{dataframe_column}"] = 1
+                            invalid_records_dataframe = pd.concat(
+                                [invalid_records_dataframe, invalid_records_dataframe_current]
+                            )
 
                     if raise_error_if_missing_found:
                         exit_with_error = True
@@ -526,9 +545,6 @@ def dataframe_itemskip_elements(
     invalid_record_count = np.count_nonzero(~global_validity_mask)
     basic_logger.debug(f"Total invalid records: {invalid_record_count}")
 
-    invalid_elements_dropped_dataframe = dataframe.loc[
-        ~global_validity_mask].copy() if return_dropped_rows else None
-
     if exit_with_error:
         raise ValueError("Invalid records found with raise error mode enabled, exiting...")
 
@@ -536,7 +552,7 @@ def dataframe_itemskip_elements(
     dataframe.reset_index(drop=True, inplace=True)
 
     if return_dropped_rows:
-        return pd.concat([nan_dropped_dataframe, invalid_elements_dropped_dataframe], ignore_index=True)
+        return pd.concat([nan_dropped_dataframe, invalid_records_dataframe], ignore_index=True)
 
     return None
 

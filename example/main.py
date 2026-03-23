@@ -458,7 +458,7 @@ def copy_data_between_servers_demo():
     }
 
     try:
-        bedrock.data_copy_intercube(
+        missing_df = bedrock.data_copy_intercube(
             tm1_service=tm1srv_ksacademy,
             target_tm1_service=tm1srv_hrdemo,
             target_cube_name="DimBuilderDemoCopyCube",
@@ -468,8 +468,13 @@ def copy_data_between_servers_demo():
             audit_mode=True,
             skip_zeros=False,
             logging_level='DEBUG',
-            verbose_logging_mode='print_console'
+            verbose_logging_mode='print_console',
+            log_missing_elements=True,
+            output_missing_elements=True
         )
+
+        print("missing df")
+        print(missing_df)
     finally:
         tm1srv_ksacademy.logout()
         tm1srv_hrdemo.logout()
