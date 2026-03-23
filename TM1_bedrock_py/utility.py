@@ -864,7 +864,6 @@ class TM1CubeObjectMetadata:
                     tm1_service=tm1_service, cube_dimensions=check_dimensions, metadata=metadata
                 )
 
-
         if collect_measure_types:
             cube_dims = metadata.get_cube_dims()
             if cube_dims:
