@@ -610,7 +610,7 @@ def data_copy_intercube(tm1_service: Optional[Any],
                         use_mixed_datatypes: Optional[bool] = False,
 
                         increment: Optional[bool] = False,
-                        sum_numeric_duplicates: Optional[bool] = True,
+                        sum_numeric_duplicates: Optional[bool] = False,
 
                         logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
                         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
@@ -782,6 +782,8 @@ def data_copy_intercube(tm1_service: Optional[Any],
         skip_consolidated_cells=skip_consolidated_cells,
         skip_rule_derived_cells=skip_rule_derived_cells,
         mdx_function=mdx_function,
+        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -854,6 +856,7 @@ def data_copy_intercube(tm1_service: Optional[Any],
             sql_function=sql_function,
             csv_function=csv_function,
             verbose_logging_mode=verbose_logging_mode,
+            verbose_logging_output_dir=verbose_logging_output_dir,
             **kwargs
         )
         shared_mapping_df = shared_mapping["mapping_df"]
@@ -865,6 +868,8 @@ def data_copy_intercube(tm1_service: Optional[Any],
         sql_engine=sql_engine,
         sql_function=sql_function,
         csv_function=csv_function,
+        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -872,7 +877,7 @@ def data_copy_intercube(tm1_service: Optional[Any],
 
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
-        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_mode=verbose_logging_mode, verbose_logging_output_dir=verbose_logging_output_dir,
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, 
         audit_mode=audit_mode,
         **kwargs)
@@ -1013,7 +1018,7 @@ def data_copy(
         use_blob: bool = False,
         use_mixed_datatypes: Optional[bool] = False,
         increment: bool = False,
-        sum_numeric_duplicates: bool = True,
+        sum_numeric_duplicates: bool = False,
         logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
@@ -1156,6 +1161,8 @@ def data_copy(
         skip_consolidated_cells=skip_consolidated_cells,
         skip_rule_derived_cells=skip_rule_derived_cells,
         mdx_function=mdx_function,
+        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -1235,6 +1242,7 @@ def data_copy(
             sql_function=sql_function,
             csv_function=csv_function,
             verbose_logging_mode=verbose_logging_mode,
+            verbose_logging_output_dir=verbose_logging_output_dir,
             **kwargs
         )
         shared_mapping_df = shared_mapping["mapping_df"]
@@ -1246,6 +1254,8 @@ def data_copy(
         sql_engine=sql_engine,
         sql_function=sql_function,
         csv_function=csv_function,
+        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -1253,7 +1263,7 @@ def data_copy(
 
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
-        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_mode=verbose_logging_mode, verbose_logging_output_dir=verbose_logging_output_dir,
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, 
         audit_mode=audit_mode,
         **kwargs
@@ -1568,7 +1578,7 @@ def load_sql_data_to_tm1_cube(
         use_ti: bool = False,
         use_blob: bool = False,
         increment: bool = False,
-        sum_numeric_duplicates: bool = True,
+        sum_numeric_duplicates: bool = False,
         logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
         verbose_logging_output_dir: Optional[str] = None,
@@ -1675,7 +1685,9 @@ def load_sql_data_to_tm1_cube(
         table_name=sql_table_name,
         table_columns=sql_table_columns,
         schema=sql_schema,
-        chunksize=chunksize
+        chunksize=chunksize,
+        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
     )
 
     if dataframe.empty:
@@ -1736,6 +1748,7 @@ def load_sql_data_to_tm1_cube(
             sql_function=sql_function,
             csv_function=csv_function,
             verbose_logging_mode=verbose_logging_mode,
+            verbose_logging_output_dir=verbose_logging_output_dir,
         )
         shared_mapping_df = shared_mapping["mapping_df"]
 
@@ -1745,14 +1758,16 @@ def load_sql_data_to_tm1_cube(
         mdx_function=mdx_function,
         sql_engine=sql_engine,
         sql_function=sql_function,
-        csv_function=csv_function
+        csv_function=csv_function,
+        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
     )
 
     initial_row_count = len(dataframe)
 
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
-        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_mode=verbose_logging_mode, verbose_logging_output_dir=verbose_logging_output_dir,
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, 
         audit_mode=audit_mode,
         **kwargs
@@ -2002,6 +2017,8 @@ def load_tm1_cube_to_sql_table(
         skip_rule_derived_cells=skip_rule_derived_cells,
         mdx_function=mdx_function,
         decimal=decimal,
+        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -2055,6 +2072,7 @@ def load_tm1_cube_to_sql_table(
             sql_function=sql_function,
             csv_function=csv_function,
             verbose_logging_mode=verbose_logging_mode,
+            verbose_logging_output_dir=verbose_logging_output_dir,
         )
         shared_mapping_df = shared_mapping["mapping_df"]
 
@@ -2064,14 +2082,16 @@ def load_tm1_cube_to_sql_table(
         mdx_function=mdx_function,
         sql_engine=sql_engine_or_connection,
         sql_function=sql_function,
-        csv_function=csv_function
+        csv_function=csv_function,
+        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
     )
 
     initial_row_count = len(dataframe)
 
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
-        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_mode=verbose_logging_mode, verbose_logging_output_dir=verbose_logging_output_dir,
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, **kwargs
     )
 
@@ -2567,7 +2587,7 @@ def load_csv_data_to_tm1_cube(
         use_ti: bool = False,
         increment: bool = False,
         use_blob: bool = False,
-        sum_numeric_duplicates: bool = True,
+        sum_numeric_duplicates: bool = False,
         slice_size_of_dataframe: int = 50000,
         clear_target: Optional[bool] = False,
         logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
@@ -2745,6 +2765,7 @@ def load_csv_data_to_tm1_cube(
             mdx_function=mdx_function,
             csv_function=csv_function,
             verbose_logging_mode=verbose_logging_mode,
+            verbose_logging_output_dir=verbose_logging_output_dir,
             **kwargs
         )
         shared_mapping_df = shared_mapping["mapping_df"]
@@ -2754,6 +2775,8 @@ def load_csv_data_to_tm1_cube(
         tm1_service=tm1_service,
         mdx_function=mdx_function,
         csv_function=csv_function,
+        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -2761,7 +2784,7 @@ def load_csv_data_to_tm1_cube(
 
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
-        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_mode=verbose_logging_mode, verbose_logging_output_dir=verbose_logging_output_dir,
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, 
         audit_mode=audit_mode, **kwargs
     )
@@ -2996,6 +3019,8 @@ def load_tm1_cube_to_csv_file(
         skip_rule_derived_cells=skip_rule_derived_cells,
         mdx_function=mdx_function,
         decimal=decimal,
+        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
         **kwargs
     )
 
@@ -3040,7 +3065,8 @@ def load_tm1_cube_to_csv_file(
             tm1_service=tm1_service,
             mdx_function=mdx_function,
             csv_function=csv_function,
-            verbose_logging_mode=verbose_logging_mode
+            verbose_logging_mode=verbose_logging_mode,
+            verbose_logging_output_dir=verbose_logging_output_dir,
         )
         shared_mapping_df = shared_mapping["mapping_df"]
 
@@ -3048,14 +3074,16 @@ def load_tm1_cube_to_csv_file(
         mapping_steps=mapping_steps,
         tm1_service=tm1_service,
         mdx_function=mdx_function,
-        csv_function=csv_function
+        csv_function=csv_function,
+        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
     )
 
     initial_row_count = len(dataframe)
 
     dataframe = transformer.dataframe_execute_mappings(
         data_df=dataframe, mapping_steps=mapping_steps, shared_mapping_df=shared_mapping_df,
-        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_mode=verbose_logging_mode, verbose_logging_output_dir=verbose_logging_output_dir,
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, **kwargs
     )
 

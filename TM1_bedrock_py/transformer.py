@@ -990,13 +990,15 @@ def __apply_basic_dimension_reshaping(
     # can be used in any combination.
     # tip: for more complex reshaping, call this method in sequence
     _ = shared_mapping_df
-    existing_filter_columns = [col for col in mapping_step["filter_condition"].keys() if col in data_df.columns]
+
     columns_to_save = {}
-    for save_column in existing_filter_columns:
-        columns_to_save[save_column] = None
-    existing_drop_columns = [col for col in mapping_step["columns_to_drop"].keys() if col in data_df.columns]
-    for save_column in existing_drop_columns:
-        columns_to_save[save_column] = None
+    if "filter_condition" in mapping_step:
+        existing_filter_columns = [col for col in mapping_step["filter_condition"].keys() if col in data_df.columns]
+        columns_to_save.update(dict.fromkeys(existing_filter_columns))
+
+    if "columns_to_drop" in mapping_step:
+        existing_drop_columns = [col for col in mapping_step["columns_to_drop"].keys() if col in data_df.columns]
+        columns_to_save.update(dict.fromkeys(existing_drop_columns))
 
     if audit_mode:
         create_audit_columns_for_step(data_df=data_df,
@@ -1018,6 +1020,8 @@ def __apply_basic_dimension_reshaping(
     if "column_relabel_map" in mapping_step:
         dataframe_relabel(data_df, mapping_step["column_relabel_map"],
                           case_and_space_insensitive_inputs)
+
+    return data_df
 
 
 method_handlers = {

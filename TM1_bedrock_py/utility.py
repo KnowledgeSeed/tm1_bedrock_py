@@ -30,6 +30,7 @@ def dataframe_verbose_logger(
         step_number: str = None,
         verbose_logging_output_dir="logs/dataframe_logs",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
+        log_row_count: int = 10,
         **_kwargs
 ):
     if verbose_logging_mode and dataframe is not None:
@@ -44,9 +45,9 @@ def dataframe_verbose_logger(
             basic_logger.debug(f"DataFrame logged to {filepath}")
 
         elif verbose_logging_mode == "print_console":
-            rows = 5
+
             basic_logger.debug(
-                f"First {rows} rows of DataFrame:\n\n{dataframe.head(rows).to_string(line_width=1000)}\n"
+                f"First {log_row_count} rows of DataFrame:\n\n{dataframe.head(log_row_count).to_string(line_width=1000)}\n"
             )
 
 

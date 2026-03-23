@@ -413,8 +413,9 @@ def copy_dim_between_servers_demo():
         bedrock.dimension_copy(
             tm1_service=tm1srv_ksacademy,
             target_tm1_service=tm1srv_hrdemo,
-            source_dimension_name="DimBuilderDemo",
-            target_dimension_name="DimBuilderDemoCopy",
+            source_dimension_name="DimBuilderDemo2",
+            target_dimension_name="DimBuilderDemoCopy2",
+            hierarchy_rename_map={"DimBuilderDemo": "DimBuilderDemoCopy2"},
             logging_level="DEBUG"
         )
     finally:
@@ -422,7 +423,7 @@ def copy_dim_between_servers_demo():
         tm1srv_hrdemo.logout()
 
 
-def copy_cube_structure_between_servers_demo():
+def copy_data_between_servers_demo():
     tm1params_hrdemo = {
         "address": "localhost",
         "port": 5365,
@@ -443,13 +444,31 @@ def copy_cube_structure_between_servers_demo():
 
     utility.configure_pandas_display(pd)
 
+    mdx = """
+        SELECT
+        NON EMPTY
+        {Tm1FilterByLevel({Tm1SubsetAll([DimBuilderDemo].[DimBuilderDemo])}, 0)}
+        * {Tm1FilterByLevel({Tm1SubsetAll([DimBuilderDemo2].[DimBuilderDemo])}, 0)}
+        ON 0
+        FROM [TestCube1]
+    """
+    relabel_step = {
+        "method": "basic_reshaping",
+        "column_relabel_map": {"DimBuilderDemo": "DimBuilderDemoCopy", "DimBuilderDemo2": "DimBuilderDemoCopy2"}
+    }
+
     try:
-        bedrock.dimension_copy(
+        bedrock.data_copy_intercube(
             tm1_service=tm1srv_ksacademy,
             target_tm1_service=tm1srv_hrdemo,
-            source_dimension_name="DimBuilderDemo",
-            target_dimension_name="DimBuilderDemoCopy",
-            logging_level="DEBUG"
+            target_cube_name="DimBuilderDemoCopyCube",
+            data_mdx=mdx,
+            mapping_steps=[relabel_step],
+            check_missing_elements=True,
+            audit_mode=True,
+            skip_zeros=False,
+            logging_level='DEBUG',
+            verbose_logging_mode='print_console'
         )
     finally:
         tm1srv_ksacademy.logout()
@@ -464,4 +483,5 @@ if __name__ == '__main__':
     # run_pyodbc_writer()
     # complex_transform_demo()
     # build_cube_demo()
-    copy_dim_between_servers_demo()
+    # copy_dim_between_servers_demo()
+    copy_data_between_servers_demo()
