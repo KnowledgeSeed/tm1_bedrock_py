@@ -388,11 +388,80 @@ def run_pyodbc_writer():
         tm1_service.logout()
 
 
+def copy_dim_between_servers_demo():
+    tm1params_hrdemo = {
+        "address": "localhost",
+        "port": 5365,
+        "user": "admin",
+        "password": "",
+        "ssl": False
+    }
+    tm1srv_hrdemo = TM1Service(**tm1params_hrdemo)
+
+    tm1params_ksacademy = {
+        "address": "dev.knowledgeseed.local",
+        "port": 5379,
+        "user": "admin",
+        "password": "admin",
+        "ssl": False
+    }
+    tm1srv_ksacademy = TM1Service(**tm1params_ksacademy)
+
+    utility.configure_pandas_display(pd)
+
+    try:
+        bedrock.dimension_copy(
+            tm1_service=tm1srv_ksacademy,
+            target_tm1_service=tm1srv_hrdemo,
+            source_dimension_name="DimBuilderDemo",
+            target_dimension_name="DimBuilderDemoCopy",
+            logging_level="DEBUG"
+        )
+    finally:
+        tm1srv_ksacademy.logout()
+        tm1srv_hrdemo.logout()
+
+
+def copy_cube_structure_between_servers_demo():
+    tm1params_hrdemo = {
+        "address": "localhost",
+        "port": 5365,
+        "user": "admin",
+        "password": "",
+        "ssl": False
+    }
+    tm1srv_hrdemo = TM1Service(**tm1params_hrdemo)
+
+    tm1params_ksacademy = {
+        "address": "dev.knowledgeseed.local",
+        "port": 5379,
+        "user": "admin",
+        "password": "admin",
+        "ssl": False
+    }
+    tm1srv_ksacademy = TM1Service(**tm1params_ksacademy)
+
+    utility.configure_pandas_display(pd)
+
+    try:
+        bedrock.dimension_copy(
+            tm1_service=tm1srv_ksacademy,
+            target_tm1_service=tm1srv_hrdemo,
+            source_dimension_name="DimBuilderDemo",
+            target_dimension_name="DimBuilderDemoCopy",
+            logging_level="DEBUG"
+        )
+    finally:
+        tm1srv_ksacademy.logout()
+        tm1srv_hrdemo.logout()
+
+
 if __name__ == '__main__':
     # dimension_builder_basic_demo()
     # dimension_builder_append_demo()
     # dimension_builder_complex_demo()
     # hierarchy_builder_demo()
     # run_pyodbc_writer()
-    complex_transform_demo()
+    # complex_transform_demo()
     # build_cube_demo()
+    copy_dim_between_servers_demo()

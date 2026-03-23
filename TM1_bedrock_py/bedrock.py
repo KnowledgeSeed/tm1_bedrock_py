@@ -19,7 +19,8 @@ from TM1_bedrock_py.dimension_builder import apply, normalize
 from TM1_bedrock_py.dimension_builder.io import execute_dimension_dataframe_writers
 from TM1_bedrock_py.dimension_builder.utility import (
     init_hierarchy_rename_map_for_cloning,
-    attr_column_names_from_attr_names
+    attr_column_names_from_attr_names,
+    map_list_values
 )
 import pandas as pd
 from pathlib import Path
@@ -262,57 +263,51 @@ def dimension_copy(
         hierarchy_rename_map: dict = None,
         rename_default_hierarchy: bool = True,
         allow_type_changes: bool = False,
-        target_tm1_service: Any = None
+        target_tm1_service: Any = None,
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
 ) -> None:
-    # prepare steps
+    utility.set_logging_level(logging_level=logging_level)
+
+    # prepare steps for target
     if target_tm1_service is None:
         target_tm1_service = tm1_service
+    target_dim_exists = target_tm1_service.dimensions.exists(target_dimension_name)
 
-    source_hierarchies_actual = tm1_service.hierarchies.get_all_names(source_dimension_name)
-
+    # manage source hierarchies and renaming
+    source_hierarchies_actual = list(
+        set(tm1_service.hierarchies.get_all_names(source_dimension_name)) - set(['Leaves']))
+    hierarchy_scope = source_hierarchy_filter if source_hierarchy_filter is not None else source_hierarchies_actual
     hierarchy_rename_map = init_hierarchy_rename_map_for_cloning(
         source_dimension_name, source_hierarchies_actual, target_dimension_name,
         hierarchy_rename_map, rename_default_hierarchy
     )
 
+    # validate for copy
     validate_dimension_for_copy(tm1_service, source_dimension_name, source_hierarchies_actual, hierarchy_rename_map,
                                 source_hierarchy_filter)
-
-    hierarchy_scope = source_hierarchy_filter if source_hierarchy_filter is not None else source_hierarchies_actual
 
     # get source data and normalize it
     edges_df, elements_df = apply.init_existing_schema_filtered(tm1_service, source_dimension_name, hierarchy_scope)
 
-    # transforms
-    find_and_replace_mapping = {"Hierarchy": hierarchy_rename_map}
-    if edges_df is not None:
-        edges_df["Dimension"] = target_dimension_name
-        edges_df = transformer.dataframe_find_and_replace(
-            dataframe=edges_df,
-            mapping=find_and_replace_mapping)
-
-    elements_df["Dimension"] = target_dimension_name
-    elements_df = transformer.dataframe_find_and_replace(
-        dataframe=elements_df,
-        mapping=find_and_replace_mapping)
-    hierarchy_scope = [
-        hier if hier not in hierarchy_rename_map.keys() else hierarchy_rename_map[hier]
-        for hier in hierarchy_scope
-    ]
-
-    # check type consistency, and build new hiers in existing dim
-    if target_tm1_service.dimensions.exists(target_dimension_name):
-        target_hierarchies_actual = target_tm1_service.hierarchies.get_all_names(target_dimension_name)
-        retained_hierarchy_scope = list(set(target_hierarchies_actual) - set(hierarchy_scope))
-        retained_edges_df, retained_elements_df = apply.init_existing_schema_filtered(target_tm1_service,
-                                                                                      target_dimension_name,
-                                                                                      retained_hierarchy_scope)
+    # pre-check before transform, manage conflicts
+    if target_dim_exists:
+        retained_edges_df, retained_elements_df = apply.init_existing_schema_for_builder(
+            tm1_service=tm1_service,
+            dimension_name=target_dimension_name,
+            clear_orphan_parents=False
+        )
         conflicts = validate_element_type_consistency(retained_elements_df, elements_df, allow_type_changes)
-
         if allow_type_changes and conflicts is not None:
             apply.delete_conflicting_elements(
                 tm1_service=target_tm1_service, conflicts=conflicts, dimension_name=target_dimension_name)
 
+    # transforms
+    edges_df, elements_df = normalize.transform_hierarchy_structure_for_copy(
+        edges_df, elements_df, hierarchy_rename_map, target_dimension_name)
+    hierarchy_scope = map_list_values(hierarchy_scope, hierarchy_rename_map)
+
+    # check type consistency, and build new hiers in existing dim
+    if target_dim_exists:
         for hierarchy_name in hierarchy_scope:
             hierarchy = apply.build_hierarchy_object(target_dimension_name, hierarchy_name, edges_df, elements_df)
             target_tm1_service.hierarchies.update_or_create(hierarchy)
@@ -342,8 +337,11 @@ def hierarchy_copy(
         dimension_name: str,
         source_hierarchy_name: str,
         target_hierarchy_name: str,
-        target_tm1_service: Any = None
+        target_tm1_service: Any = None,
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
 ) -> None:
+    utility.set_logging_level(logging_level=logging_level)
+
     # prepare steps
     if target_tm1_service is None:
         target_tm1_service = tm1_service
@@ -354,14 +352,21 @@ def hierarchy_copy(
     edges_df, elements_df = apply.init_existing_schema_filtered(
         tm1_service, dimension_name, [source_hierarchy_name])
 
+    # pre-check before transform, manage conflicts
+    if target_tm1_service.dimensions.exists(dimension_name):
+        retained_edges_df, retained_elements_df = apply.init_existing_schema_for_builder(
+            tm1_service=tm1_service,
+            dimension_name=dimension_name,
+            clear_orphan_parents=False
+        )
+        validate_element_type_consistency(retained_elements_df, elements_df,
+                                          allow_type_changes=False)
+
     # transform steps
-    find_and_replace_mapping = {"Hierarchy": {source_hierarchy_name: target_hierarchy_name}}
-    edges_df = transformer.dataframe_find_and_replace(
-        dataframe=edges_df,
-        mapping=find_and_replace_mapping)
-    elements_df = transformer.dataframe_find_and_replace(
-        dataframe=elements_df,
-        mapping=find_and_replace_mapping)
+    edges_df, elements_df = normalize.transform_hierarchy_structure_for_copy(
+        edges_df, elements_df, hierarchy_rename_map={source_hierarchy_name: target_hierarchy_name},
+        target_dimension_name=dimension_name
+    )
 
     # build hierarchy in dim
     hierarchy = apply.build_hierarchy_object(
@@ -388,8 +393,10 @@ def dimension_modify(
         modify_function: Callable,
         modify_function_args: List = None,
         modify_function_kwargs: Dict = None,
-        run_post_validations_and_normalize: bool = False
+        run_post_validations_and_normalize: bool = False,
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
 ) -> None:
+    utility.set_logging_level(logging_level=logging_level)
     validate_dimension_for_modify(tm1_service, dimension_name)
 
     # retrieve and normalize existing schema that is ready for back upload
@@ -431,8 +438,10 @@ def hierarchy_modify(
         modify_function: Callable,
         modify_function_args: List = None,
         modify_function_kwargs: Dict = None,
-        run_post_validations_and_normalize: bool = False
+        run_post_validations_and_normalize: bool = False,
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
 ) -> None:
+    utility.set_logging_level(logging_level=logging_level)
     validate_dimension_for_modify(tm1_service, dimension_name)
 
     # retrieve and normalize existing schema that is ready for back upload
@@ -474,8 +483,11 @@ def hierarchy_build_from_attributes(
         dimension_name: str,
         attributes: list[str],
         new_hierarchy_name: str = None,
-        target_tm1_service: Any = None
+        target_tm1_service: Any = None,
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
 ) -> None:
+    utility.set_logging_level(logging_level=logging_level)
+
     if target_tm1_service is None:
         target_tm1_service = tm1_service
 
@@ -539,8 +551,11 @@ def dimension_export(
         json_orientation: Literal["split", "records", "index", "columns", "values", "table"] = "records",
         maximum_levels_depth: int = None,
         orphan_parent_name: str = "OrphanParent",
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         **kwargs
 ) -> None:
+    utility.set_logging_level(logging_level=logging_level)
+
     if tm1_service is None and elements_df is None:
         raise ValueError("Must provide at least one source of local/server")
 

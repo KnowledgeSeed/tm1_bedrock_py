@@ -412,8 +412,19 @@ def build_dimension_object(
 
 @baseutils.log_exec_metrics
 def build_hierarchy_object(
-        dimension_name: str, hierarchy_name: str, edges_df: Optional[pd.DataFrame], elements_df: pd.DataFrame
+        dimension_name: str = None, hierarchy_name: str = None,
+        edges_df: Optional[pd.DataFrame] = None, elements_df: pd.DataFrame = None,
 ) -> Hierarchy:
+    if elements_df is None:
+        return
+
+    edges_df = edges_df.loc[edges_df['Hierarchy'] == hierarchy_name].copy()
+    elements_df = elements_df.loc[elements_df['Hierarchy'] == hierarchy_name].copy()
+
+    if dimension_name is None:
+        dimension_name = utility.get_first_row_value(elements_df, "Dimension")
+    if hierarchy_name is None:
+        hierarchy_name = utility.get_first_row_value(elements_df, "Dimension")
 
     hierarchy = Hierarchy(name=hierarchy_name, dimension_name=dimension_name)
 

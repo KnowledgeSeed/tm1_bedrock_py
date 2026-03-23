@@ -136,3 +136,15 @@ def attr_column_names_from_attr_names(attr_names: list[str], df: pd.DataFrame) -
     col_mapping = {c.split(':')[0]: c for c in df.columns if ':' in c}
     attr_columns = [col_mapping[name] for name in attr_names if name in col_mapping]
     return attr_columns
+
+
+def get_first_row_value(dataframe: pd.DataFrame, column_name: str) -> Any:
+    # .get_loc finds the integer index of the column name
+    # .iat[0, col_index] retrieves the first row scalar directly
+    column_index: int = dataframe.columns.get_loc(column_name)
+    return dataframe.iat[0, column_index]
+
+
+def map_list_values(source_list: list[Any], mapping_dict: dict[Any, Any]) -> list[Any]:
+    # .get(item, item) looks up the item; if not found, it returns the item itself
+    return [mapping_dict.get(item, item) for item in source_list]

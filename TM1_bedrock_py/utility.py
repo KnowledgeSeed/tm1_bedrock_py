@@ -615,6 +615,23 @@ def create_cubes(tm1_service: Any, cube_dimensions: dict[str, list]) -> None:
 
 
 # ------------------------------------------------------------------------------------------------------------
+# Utility: debug technicals
+# ------------------------------------------------------------------------------------------------------------
+
+
+def configure_pandas_display(pd) -> None:
+    display_settings: dict[str, None | int | bool] = {
+        "display.max_rows": None,
+        "display.max_columns": None,
+        "display.width": None,
+        "display.max_colwidth": None,
+        "display.expand_frame_repr": False
+    }
+
+    [pd.set_option(key, value) for key, value in display_settings.items()]
+
+
+# ------------------------------------------------------------------------------------------------------------
 # Utility: ignore missing elements related helpers
 # ------------------------------------------------------------------------------------------------------------
 
