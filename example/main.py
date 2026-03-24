@@ -490,7 +490,7 @@ def dimension_builder_no_edges_old_format():
     }
     tm1_service = TM1Service(**tm1params_ksacademy)
     dimension_name = "DimBuilderDemo6"
-    file_path = os.path.join(os.path.dirname(__file__), "sys_group_nucleus_content_detail_mapping_check_line.csv")
+    file_path = os.path.join(os.path.dirname(__file__), "sys_group_nucleus_content.csv")
 
     try:
         bedrock.dimension_builder(

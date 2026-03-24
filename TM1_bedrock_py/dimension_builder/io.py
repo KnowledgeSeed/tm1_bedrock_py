@@ -235,16 +235,31 @@ def read_existing_elements_df_for_hierarchy(
 ) -> pd.DataFrame:
     if hierarchy_name is None:
         hierarchy_name = dimension_name
-    existing_elements_df = tm1_service.elements.get_elements_dataframe(
-        dimension_name=dimension_name,
-        hierarchy_name=hierarchy_name,
-        skip_consolidations=False,
-        attribute_suffix=True,
-        skip_parents=True,
-        skip_weights=True,
-        element_type_column="ElementType"
+
+    has_attributes_cube = tm1_service.cubes.exists(f"}}ElementAttributes_{dimension_name}")
+
+    existing_elements_df = (
+        tm1_service.elements.get_elements_dataframe(
+            dimension_name=dimension_name,
+            hierarchy_name=hierarchy_name,
+            skip_consolidations=False,
+            attribute_suffix=True,
+            skip_parents=True,
+            skip_weights=True,
+            element_type_column="ElementType"
+        ).rename(columns={dimension_name: "ElementName"})
+        if has_attributes_cube
+        else pd.DataFrame([
+            {
+                "ElementName": dimension_element.name,
+                "ElementType": dimension_element.element_type.name.capitalize()
+            }
+            for dimension_element in tm1_service.elements.get_elements(
+                dimension_name=dimension_name,
+                hierarchy_name=hierarchy_name
+            )
+        ])
     )
-    existing_elements_df.rename(columns={dimension_name: "ElementName"}, inplace=True)
 
     existing_elements_df.insert(2, "Dimension", dimension_name)
     existing_elements_df.insert(3, "Hierarchy", hierarchy_name)
