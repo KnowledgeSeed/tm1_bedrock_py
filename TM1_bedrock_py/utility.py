@@ -12,7 +12,7 @@ from pandas import DataFrame
 from sqlalchemy import create_engine, inspect
 
 from TM1_bedrock_py import exec_metrics_logger, basic_logger, benchmark_metrics_logger
-
+from TM1py.Objects import Cube
 
 # ------------------------------------------------------------------------------------------------------------
 # Utility: Logging helper functions
@@ -30,6 +30,7 @@ def dataframe_verbose_logger(
         step_number: str = None,
         verbose_logging_output_dir="logs/dataframe_logs",
         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
+        log_row_count: int = 10,
         **_kwargs
 ):
     if verbose_logging_mode and dataframe is not None:
@@ -44,9 +45,9 @@ def dataframe_verbose_logger(
             basic_logger.debug(f"DataFrame logged to {filepath}")
 
         elif verbose_logging_mode == "print_console":
-            rows = 5
+
             basic_logger.debug(
-                f"First {rows} rows of DataFrame:\n\n{dataframe.head(rows).to_string(line_width=1000)}\n"
+                f"First {log_row_count} rows of DataFrame:\n\n{dataframe.head(log_row_count).to_string(line_width=1000)}\n"
             )
 
 
@@ -604,21 +605,80 @@ def _get_sql_api_connection(database_engine_or_connection: Any) -> tuple[Any, bo
 
 
 # ------------------------------------------------------------------------------------------------------------
+# Utility: dataframe save mode (audit) helpers
+# ------------------------------------------------------------------------------------------------------------
+
+def duplicate_column_in_place(dataframe: DataFrame, source_name: str, target_name: str) -> None:
+    dataframe[target_name] = dataframe[source_name].copy()
+
+
+def create_audit_columns_for_step(data_df: DataFrame, mapping: Union[dict, list], step_number: int = 1):
+    postfix = f"@step{str(step_number)}"
+    change_columns = mapping.keys() if isinstance(mapping, dict) else mapping
+    for change_column in change_columns:
+        saved_column = change_column + postfix
+        basic_logger.debug(f"Column was saved to {saved_column}")
+        duplicate_column_in_place(dataframe=data_df,
+                                  source_name=change_column,
+                                  target_name=saved_column)
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Utility: cube create related helpers
+# ------------------------------------------------------------------------------------------------------------
+
+
+def create_cubes(tm1_service: Any, cube_dimensions: dict[str, list]) -> None:
+    for cube_name, cube_dims in cube_dimensions.items():
+        cube_obj = Cube(name=cube_name, dimensions=cube_dims)
+        tm1_service.cubes.create(cube_obj)
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Utility: debug technicals
+# ------------------------------------------------------------------------------------------------------------
+
+
+def configure_pandas_display(pd) -> None:
+    display_settings: dict[str, None | int | bool] = {
+        "display.max_rows": None,
+        "display.max_columns": None,
+        "display.width": None,
+        "display.max_colwidth": None,
+        "display.expand_frame_repr": False
+    }
+
+    [pd.set_option(key, value) for key, value in display_settings.items()]
+
+
+# ------------------------------------------------------------------------------------------------------------
 # Utility: ignore missing elements related helpers
 # ------------------------------------------------------------------------------------------------------------
 
 
 @log_exec_metrics
 def all_leaves_identifiers_to_dataframe(
-        tm1_service: Any, dimension_name: [str], hierarchy_name: Optional[str] = None
+        tm1_service: Any, dimension_name: str, hierarchy_name: str
 ) -> DataFrame:
     # caseandspaceinsensitiveset datastruct to dataframe
-    if not hierarchy_name:
-        hierarchy_name = dimension_name
     dataset = tm1_service.elements.get_all_leaf_element_identifiers(
         dimension_name=dimension_name, hierarchy_name=hierarchy_name
     )
     return DataFrame({dimension_name: list(dataset)})
+
+
+def get_default_hierarchy(tm1_service: Any, dimension_name: str) -> str:
+    if tm1_service.hierarchies.exists(dimension_name, 'Leaves'):
+        hierarchy_name = 'Leaves'
+        basic_logger.info("Leaves hierarchy was found and selected for element existance check query")
+    elif tm1_service.hierarchies.exists(dimension_name, dimension_name):
+        hierarchy_name = dimension_name
+        basic_logger.info(f"Leaves hierarchy doesnt exist, selecting default hier (name: {hierarchy_name})")
+    else:
+        hierarchy_name = tm1_service.hierarchies.get_all_names(dimension_name)[0]
+        basic_logger.warning(
+            f"Leaves and default hierarchy dont exist, defaulting to first found (name: {hierarchy_name})")
+    return hierarchy_name
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -634,7 +694,9 @@ def normalize_string(input_string: str) -> str:
 def normalize_structure_strings(d: Any) -> Any:
     """Normalize a dictionary for comparison (case- and space-insensitive).
     Converts all strings, leaves everything else untouched"""
-    if isinstance(d, dict):
+    if d is None:
+        return None
+    elif isinstance(d, dict):
         return {normalize_string(k): normalize_structure_strings(v) for k, v in d.items()}
     elif isinstance(d, list):
         return [normalize_structure_strings(i) for i in d]
@@ -696,6 +758,7 @@ class TM1CubeObjectMetadata:
     _DEFAULT_NAME = "default member name"
     _DEFAULT_TYPE = "default member type"
     _DIM_CHECK_DFS = "dimension check dataframes"
+    _DIM_CHECK_HIERS = "dimension check default hierarchies"
     _MEASURE_ELEMENT_TYPES = "measure element types"
     _SOURCE_CUBE_DIMS_LIST = "source dimension list"
 
@@ -735,7 +798,10 @@ class TM1CubeObjectMetadata:
         return self[self._QUERY_FILTER_DICT]
 
     def get_dimension_check_dfs(self):
-        return self[self._DIM_CHECK_DFS]
+        return self._data.get(self._DIM_CHECK_DFS)
+
+    def get_dimension_check_hiers(self):
+        return self._data.get(self._DIM_CHECK_HIERS)
 
     def get_measure_element_types(self) -> Dict[str, str]:
         return self[self._MEASURE_ELEMENT_TYPES]
@@ -769,18 +835,13 @@ class TM1CubeObjectMetadata:
         metadata[cls._SOURCE_CUBE_DIMS_LIST] = tm1_service.cubes.get_dimension_names(cube_name)
 
     @classmethod
-    def __collect_default(
-            cls,
-            tm1_service: Optional[Any] = None,
-            mdx: Optional[str] = None,
-            cube_name: Optional[str] = None,
-            collect_base_cube_metadata: Optional[bool] = True,
-            collect_dim_element_identifiers: Optional[bool] = False,
-            collect_measure_types: Optional[bool] = False,
-            collect_source_cube_metadata: Optional[bool] = False,
-            dimension_check_filter: Optional[list] = None,
-            **_kwargs
-    ) -> "TM1CubeObjectMetadata":
+    def __collect_default(cls, tm1_service: Optional[Any] = None, mdx: Optional[str] = None,
+                          cube_name: Optional[str] = None, collect_base_cube_metadata: Optional[bool] = True,
+                          collect_itemskip_info: Optional[bool] = False, collect_measure_types: Optional[bool] = False,
+                          collect_source_cube_metadata: Optional[bool] = False,
+                          dimension_check_filter: Optional[list] = None,
+                          itemskip_query_mode: Optional[Literal['bulk', 'on_demand']] = 'bulk',
+                          **_kwargs) -> "TM1CubeObjectMetadata":
         """
         Collects important data about the mdx query and/or it's cube based on either an MDX query or a cube name.
 
@@ -813,11 +874,15 @@ class TM1CubeObjectMetadata:
         if collect_base_cube_metadata:
             cls._expand_base_cube_metadata(tm1_service=tm1_service, cube_name=cube_name, metadata=metadata)
 
-        if collect_dim_element_identifiers:
+        if collect_itemskip_info:
             check_dimensions = dimension_check_filter or metadata.get_cube_dims()
-            cls.__collect_element_check_dataframes(
+            cls.__collect_element_check_hierarchies(
                 tm1_service=tm1_service, cube_dimensions=check_dimensions, metadata=metadata
             )
+            if itemskip_query_mode == 'bulk':
+                cls.__collect_element_check_dataframes(
+                    tm1_service=tm1_service, cube_dimensions=check_dimensions, metadata=metadata
+                )
 
         if collect_measure_types:
             cube_dims = metadata.get_cube_dims()
@@ -861,5 +926,18 @@ class TM1CubeObjectMetadata:
         metadata[cls._DIM_CHECK_DFS] = {}
         for dimension in cube_dimensions:
             metadata[cls._DIM_CHECK_DFS][dimension] = all_leaves_identifiers_to_dataframe(
-                tm1_service=tm1_service, dimension_name=dimension)
+                tm1_service=tm1_service, dimension_name=dimension,
+                hierarchy_name=metadata[cls._DIM_CHECK_HIERS][dimension]
+            )
+
+    @classmethod
+    def __collect_element_check_hierarchies(
+            cls,
+            tm1_service: Any,
+            cube_dimensions: List[str],
+            metadata: "TM1CubeObjectMetadata"
+    ) -> None:
+        metadata[cls._DIM_CHECK_HIERS] = {}
+        for dimension in cube_dimensions:
+            metadata[cls._DIM_CHECK_HIERS][dimension] = get_default_hierarchy(tm1_service, dimension)
 

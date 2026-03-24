@@ -8,6 +8,7 @@ import yaml, json
 
 from TM1_bedrock_py import utility
 
+EXCLUDED_COLUMN_NAMES = ["[]", ":"]
 
 def read_csv_source_to_df(
         source: Union[str, Path, PathLike[str]],
@@ -21,7 +22,9 @@ def read_csv_source_to_df(
         decimal = utility.get_local_decimal_separator()
     if sep is None:
         sep = utility.get_local_regex_separator()
-    keyword_arguments = kwargs | {"usecols": column_names} if column_names else kwargs
+
+    usecols = column_names if column_names is not None else lambda col: col.split('.')[0] not in EXCLUDED_COLUMN_NAMES
+    keyword_arguments = kwargs | {"usecols": usecols}
 
     df = pd.read_csv(
         filepath_or_buffer=source,
@@ -40,14 +43,16 @@ def read_xlsx_source_to_df(
         **kwargs
 ) -> pd.DataFrame:
     sheet_identifier = sheet_name if sheet_name is not None else 0
-    keyword_arguments = kwargs | {"usecols": column_names} if column_names else kwargs
+
+    usecols = column_names if column_names is not None else lambda col: col.split('.')[0] not in EXCLUDED_COLUMN_NAMES
+    keyword_arguments = kwargs | {"usecols": usecols}
 
     excel_dataframe = pd.read_excel(
         io=source,
         sheet_name=sheet_identifier,
         **keyword_arguments
     )
-
+    print(excel_dataframe)
     return excel_dataframe.fillna("")
 
 
