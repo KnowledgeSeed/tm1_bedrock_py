@@ -426,16 +426,22 @@ test_load_tm1_cube_to_sql_table:
          (
           [testbenchVersion].[testbenchVersion].[Actual]
          )"
-    mapping_steps: []
-    related_dimensions: {
-      "testbenchProduct": "testbench_product",
-      "testbenchKeyAccountManager": "testbench_key_account_manager",
-      "testbenchCustomer": "testbench_customer",
-      "testbenchMeasureSales": "testbench_measure_sales",
-      "testbenchPeriod": "testbench_period",
-      "testbenchVersion": "testbench_version",
-      "Value": "testbench_value"
-    }
+    mapping_steps: [
+      {
+        "method": "basic_reshaping",
+        "column_relabel_map":
+          {
+            "testbenchProduct": "testbench_product",
+            "testbenchKeyAccountManager": "testbench_key_account_manager",
+            "testbenchCustomer": "testbench_customer",
+            "testbenchMeasureSales": "testbench_measure_sales",
+            "testbenchPeriod": "testbench_period",
+            "testbenchVersion": "testbench_version",
+            "Value": "testbench_value"
+          }
+      }
+    ]
+
 
 test_load_sql_data_to_tm1_cube:
   -

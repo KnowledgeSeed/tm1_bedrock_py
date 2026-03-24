@@ -12,10 +12,13 @@ underlying TM1 operations stay unchanged.
 """
 
 import glob
+from typing import Optional, Union, Callable, Literal
 
 from airflow_provider_tm1.hooks.tm1 import TM1Hook
 from airflow.hooks.base import BaseHook
 from airflow.decorators import task_group
+from pandas import DataFrame
+
 from TM1_bedrock_py import utility
 from TM1_bedrock_py.airflow_executor import common
 import inspect
@@ -30,7 +33,7 @@ def tm1_dynamic_executor_task_group(
         tm1_connection: str,
         bedrock_params: dict,
         dry_run: bool = False,
-        logging_level: str = "INFO",
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO",
 ):
     tm1_hook = TM1Hook(tm1_conn_id=tm1_connection)
     tm1_service = tm1_hook.get_conn()
@@ -93,7 +96,7 @@ def sql_to_tm1_dynamic_executor_task_group(
         sql_connection: str,
         bedrock_params: dict,
         dry_run: bool = False,
-        logging_level: str = "INFO",
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO",
 ):
     tm1_hook = TM1Hook(tm1_conn_id=tm1_connection)
     tm1_service = tm1_hook.get_conn()
@@ -128,6 +131,7 @@ def sql_to_tm1_dynamic_executor_task_group(
             sql_engine=sql_engine,
             logging_level=logging_level,
             sql_query_template=bedrock_params.get('sql_query_template'),
+            sql_function=bedrock_params.get('sql_function'),
             target_metadata_function=_target_metadata_function,
             mapping_steps=bedrock_params.get('mapping_steps'),
             shared_mapping=bedrock_params.get('shared_mapping'),
@@ -154,7 +158,7 @@ def tm1_to_sql_dynamic_executor_task_group(
         sql_connection: str,
         bedrock_params: dict,
         dry_run: bool = False,
-        logging_level: str = "INFO"
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO",
 ):
     tm1_hook = TM1Hook(tm1_conn_id=tm1_connection)
     tm1_service = tm1_hook.get_conn()
@@ -189,7 +193,7 @@ def tm1_to_sql_dynamic_executor_task_group(
             data_mdx_template=bedrock_params.get('data_mdx_template'),
             target_table_name= bedrock_params.get('target_table_name'),
             sql_schema=bedrock_params.get('sql_schema'),
-            related_dimensions=bedrock_params.get('related_dimensions'),
+            sql_function=bedrock_params.get('sql_function'),
             decimal=bedrock_params.get('decimal'),
             target_metadata_function=_target_metadata_function,
             mapping_steps=bedrock_params.get('mapping_steps'),
@@ -217,7 +221,7 @@ def csv_to_tm1_dynamic_executor_task_group(
         tm1_connection: str,
         bedrock_params: dict,
         dry_run: bool = False,
-        logging_level: str = "INFO"
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO",
 ):
     tm1_hook = TM1Hook(tm1_conn_id=tm1_connection)
     tm1_service = tm1_hook.get_conn()
@@ -268,7 +272,7 @@ def tm1_to_csv_dynamic_executor_task_group(
         tm1_connection: str,
         bedrock_params: dict,
         dry_run: bool = False,
-        logging_level: str = "INFO"
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO",
 ):
     tm1_hook = TM1Hook(tm1_conn_id=tm1_connection)
     tm1_service = tm1_hook.get_conn()
@@ -312,7 +316,7 @@ def copy_cube_data_on_elements(
         tm1_connection: str,
         cube_names: list[str],
         unified_bedrock_params: dict,
-        logging_level: str = "INFO",
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO",
 ):
     bedrock_params_list = common.build_bedrock_params_list(
         tm1_connection=tm1_connection,

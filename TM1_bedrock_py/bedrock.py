@@ -1886,6 +1886,7 @@ def load_tm1_cube_to_sql_table(
 
         sql_engine: Optional[Any] = None,
         sql_connection: Optional[Any] = None,
+        sql_column_mapping: Optional[dict] = None,
         sql_function: Optional[Union[Callable[..., DataFrame], Literal["sqlalchemy", "pyodbc"]]] = None,
         csv_function: Optional[Callable[..., DataFrame]] = None,
         sql_schema: Optional[str] = None,
@@ -1935,6 +1936,9 @@ def load_tm1_cube_to_sql_table(
         sql_engine: A pre-configured SQLAlchemy Engine object for the target
             database connection.
         sql_function: A function to execute SQL queries, used by mapping steps.
+        sql_column_mapping: A dictionary to rename columns from the SQL source to
+            match the dimension names in the target TM1 cube.
+            Example: `{'PRODUCT_CODE': 'Product', 'SALES_AMT': 'Value'}`.
         csv_function: A function to read CSV files, used by mapping steps.
         sql_schema: The schema of the target table in the SQL database (e.g., 'dbo').
         case_and_space_insensitive_inputs: When False (default) then the user has to pay attention to the
@@ -2030,8 +2034,7 @@ def load_tm1_cube_to_sql_table(
     if dataframe.empty:
         if clear_target:
             loader.clear_table(clear_function=clear_function,
-                               engine=sql_engine,
-                               connection=sql_connection,
+                               database_engine_or_connection=sql_engine_or_connection,
                                table_name=target_table_name,
                                delete_statement=sql_delete_statement)
         return
@@ -2111,9 +2114,9 @@ def load_tm1_cube_to_sql_table(
 
     if clear_target:
         loader.clear_table(clear_function=clear_function,
-                           engine=sql_engine,
-                           connection=sql_connection,
+                           database_engine_or_connection=sql_engine_or_connection,
                            table_name=target_table_name,
+                           schema_name=sql_schema,
                            delete_statement=sql_delete_statement)
 
     utility.dataframe_verbose_logger(

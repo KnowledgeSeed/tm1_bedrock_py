@@ -1008,7 +1008,7 @@ def __apply_basic_dimension_reshaping(
         case_and_space_insensitive_inputs: Optional[bool] = False,
         audit_mode: bool = False,
         step_number: int = 1,
-):
+) -> DataFrame:
     # either or: literal row filter, literal column drop, literal column add with value assign, literal relabel
     # can be used in any combination.
     # tip: for more complex reshaping, call this method in sequence

@@ -16,15 +16,23 @@ load_tm1_to_sql:
       )
     {% endraw %}
   sql_delete_statement: "TRUNCATE TABLE tm1_bedrock.testbench_sales"
-  related_dimensions: {
-    "testbenchProduct": "testbench_product",
-    "testbenchKeyAccountManager": "testbench_key_account_manager",
-    "testbenchCustomer": "testbench_customer",
-    "testbenchMeasureSales": "testbench_measure_sales",
-    "testbenchPeriod": "testbench_period",
-    "testbenchVersion": "testbench_version",
-    "Value": "testbench_value"
-  }
+  sql_function: "psycopg2"
+  clear_function: "psycopg2"
+  mapping_steps: [
+    {
+      "method": "basic_reshaping",
+      "column_relabel_map":
+        {
+          "testbenchProduct": "testbench_product",
+          "testbenchKeyAccountManager": "testbench_key_account_manager",
+          "testbenchCustomer": "testbench_customer",
+          "testbenchMeasureSales": "testbench_measure_sales",
+          "testbenchPeriod": "testbench_period",
+          "testbenchVersion": "testbench_version",
+          "Value": "testbench_value"
+        }
+    }
+  ]
   target_table_name: "testbench_sales"
   sql_schema: "tm1_bedrock"
   decimal: ","
