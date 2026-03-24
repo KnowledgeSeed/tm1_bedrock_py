@@ -383,16 +383,18 @@ def __sql_to_dataframe_default(
         return (concat(list(func(**fetch_kwargs)), ignore_index=True)
                 if chunksize else func(**fetch_kwargs))
 
+    connection, owns_connection = utility._get_sql_api_connection(engine)
+
     if table_name:
         return fetch(read_sql_table,
-                     con=engine,
+                     con=connection,
                      table_name=table_name,
                      columns=table_columns,
                      schema=schema,
                      chunksize=chunksize)
 
     if sql_query:
-        return fetch(read_sql_query, sql=sql_query, con=engine, chunksize=chunksize)
+        return fetch(read_sql_query, sql=sql_query, con=connection, chunksize=chunksize)
 
     msg = "Either 'table_name' or 'sql_query' must be provided."
     basic_logger.error(msg)

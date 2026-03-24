@@ -218,7 +218,7 @@ def test_async_data_copy_intercube_multi_parameter(
 
 @parametrize_from_file
 def test_load_tm1_cube_to_sql_table(
-        tm1_connection_factory, sql_engine_factory, base_data_mdx, mapping_steps, related_dimensions
+        tm1_connection_factory, sql_engine_factory, base_data_mdx, mapping_steps
 ):
     with tm1_connection_factory("testbench") as conn:
         with sql_engine_factory("testbench_postgres") as sql_engine:
@@ -246,11 +246,10 @@ def test_load_tm1_cube_to_sql_table(
                     skip_zeros=True,
                     logging_level="DEBUG",
                     index=False,
-                    related_dimensions=related_dimensions,
+                    sql_function="psycopg2",
+                    clear_function="psycopg2",
                     method=None,
                 )
-                cnt = sql_engine.execute(text("SELECT count(*) FROM tm1_bedrock.testbench_sales")).scalar()
-                print("rows:", cnt)
             finally:
                 print("Execution ended.")
                 tm1_bench.destroy_model(tm1=conn, schema=schema)
@@ -317,6 +316,7 @@ def test_async_load_tm1_cube_to_sql_table(
                     clear_target=True,
                     skip_zeros=True,
                     logging_level="DEBUG",
+                    sql_function="psycopg2",
                     index=False,
                     decimal=",",
                     max_workers=8,

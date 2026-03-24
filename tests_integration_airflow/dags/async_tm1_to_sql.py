@@ -5,6 +5,7 @@ import yaml
 from airflow import DAG
 from airflow.utils.dates import days_ago
 from TM1_bedrock_py.airflow_executor.async_executor import tm1_to_sql_dynamic_executor_task_group
+from TM1_bedrock_py.loader import __dataframe_to_sql_pyodbc
 
 tm1_connection = 'tm1_conn_win1'
 sql_connection = 'test_postgres'
@@ -40,5 +41,5 @@ with (DAG(
         sql_connection=sql_connection,
         bedrock_params=BEDROCK_PARAMS['load_tm1_to_sql'],
         dry_run=False,
-        logging_level=logging_level,
+        logging_level=logging_level
     )

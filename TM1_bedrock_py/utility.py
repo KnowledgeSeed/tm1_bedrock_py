@@ -584,6 +584,25 @@ def inspect_table(engine: Any, table_name: str, schema: Optional[str]=None) -> d
     return inspect(engine).get_columns(table_name=table_name, schema=schema)
 
 
+def _get_sql_api_connection(database_engine_or_connection: Any) -> tuple[Any, bool]:
+    if hasattr(database_engine_or_connection, "cursor"):
+        return database_engine_or_connection, False
+
+    if hasattr(database_engine_or_connection, "raw_connection"):
+        return database_engine_or_connection.raw_connection(), True
+
+    if hasattr(database_engine_or_connection, "connection") and hasattr(database_engine_or_connection.connection, "cursor"):
+        return database_engine_or_connection.connection, False
+
+    if hasattr(database_engine_or_connection, "connect"):
+        sql_connection = database_engine_or_connection.connect()
+        if hasattr(sql_connection, "connection") and hasattr(sql_connection.connection, "cursor"):
+            return sql_connection.connection, True
+        return sql_connection, True
+
+    return database_engine_or_connection, False
+
+
 # ------------------------------------------------------------------------------------------------------------
 # Utility: ignore missing elements related helpers
 # ------------------------------------------------------------------------------------------------------------

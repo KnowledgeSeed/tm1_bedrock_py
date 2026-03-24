@@ -139,7 +139,7 @@ def __dataframe_to_cube_default(
 
 @utility.log_exec_metrics
 def dataframe_to_sql(
-        sql_function: Optional[Union[Callable[..., DataFrame], Literal["sqlalchemy", "pyodbc"]]] = None,
+        sql_function: Optional[Union[Callable[..., DataFrame], Literal["sqlalchemy", "pyodbc", "psycopg2", "snowflake"]]] = None,
         **kwargs: Any
 ) -> None:
     """
@@ -157,7 +157,9 @@ def dataframe_to_sql(
     writer_function = sql_function if isinstance(sql_function, Callable) else {
         None: __dataframe_to_sql_default,
         "sqlalchemy": __dataframe_to_sql_default,
-        "pyodbc": __dataframe_to_sql_pyodbc
+        "pyodbc": __dataframe_to_sql_pyodbc,
+        "psycopg2": __dataframe_to_sql_psycopg2,
+        "snowflake": __dataframe_to_sql_snowflake
     }.get(sql_function)
 
     dataframe = kwargs.get("dataframe")
@@ -203,49 +205,31 @@ def __dataframe_to_sql_default(
     )
 
 
-def __dataframe_to_sql_pyodbc(
-        dataframe: DataFrame,
-        table_name: str,
-        database_engine_or_connection: Any,
-        if_exists: Literal["fail", "replace_data","replace_table", "append"] = "append",
-        schema: Optional[str] = None,
-        chunksize: Optional[int] = None,
-        dtype: Optional[dict[str, str]] = None,
-        table_column_order: Optional[list[str]] = None,
-        **_kwargs
-) -> None:
-    database_connection = (
-        database_engine_or_connection.raw_connection()) if hasattr(database_engine_or_connection, "raw_connection") \
-        else database_engine_or_connection
-    database_cursor = database_connection.cursor()
-
-    column_order = table_column_order if table_column_order is not None else list(dataframe.columns)
-    dataframe_ordered = dataframe[column_order]
-
-    pandas_to_sql_type_map = {
-        "int64": "BIGINT",
-        "int32": "INT",
-        "float64": "FLOAT",
-        "float32": "REAL",
-        "bool": "BIT",
-        "datetime64[ns]": "DATETIME2",
-        "object": "NVARCHAR(MAX)",
-        "string": "NVARCHAR(MAX)"
-    }
-
-    target_schema = schema if schema is not None else "dbo"
-    full_table_name = f"{target_schema}.{table_name}"
-
-    table_exists_query = "SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?"
-    table_exists = bool(database_cursor.execute(table_exists_query, (target_schema, table_name)).fetchone())
-
+def __build_sql_create_table_statement(
+        dataframe_ordered: DataFrame,
+        full_table_name: str,
+        quote_identifier: Callable[[str], str],
+        pandas_to_sql_type_map: dict[str, str],
+        default_sql_type: str,
+        dtype: Optional[dict[str, str]]
+) -> str:
     column_definitions_list = [
-        f"[{column_name}] {dtype.get(column_name) if dtype and column_name in dtype else pandas_to_sql_type_map.get(str(dataframe_ordered.dtypes[column_name]), 'NVARCHAR(MAX)')}"
+        f"{quote_identifier(column_name)} "
+        f"{dtype.get(column_name) if dtype and column_name in dtype else pandas_to_sql_type_map.get(str(dataframe_ordered.dtypes[column_name]), default_sql_type)}"
         for column_name in dataframe_ordered.columns
     ]
     column_definitions_string = ",\n    ".join(column_definitions_list)
-    create_table_statement = f"CREATE TABLE {full_table_name} (\n    {column_definitions_string}\n)"
+    return f"CREATE TABLE {full_table_name} (\n    {column_definitions_string}\n)"
 
+
+def __initialize_sql_table_if_needed(
+        database_cursor: Any,
+        database_connection: Any,
+        table_exists: bool,
+        if_exists: str,
+        full_table_name: str,
+        create_table_statement: str
+) -> None:
     execution_routing_map: dict[tuple[bool, str], Optional[str]] = {
         (True, "replace_data"): f"TRUNCATE TABLE {full_table_name}",
         (True, "replace_table"): f"DROP TABLE {full_table_name}; {create_table_statement}",
@@ -261,54 +245,236 @@ def __dataframe_to_sql_pyodbc(
         raise ValueError(f"Table '{full_table_name}' already exists.")
 
     initialization_sql_statement = execution_routing_map.get((table_exists, if_exists))
-
     if initialization_sql_statement is not None:
         database_cursor.execute(initialization_sql_statement)
         database_connection.commit()
 
-    target_columns_formatted_string = ",\n    ".join([f"[{column_name}]" for column_name in dataframe_ordered.columns])
-    value_placeholders_string = ",\n    ".join(["?"] * len(dataframe_ordered.columns))
-    sql_insert_statement = (f"INSERT INTO {full_table_name} (\n    "
-                            f"{target_columns_formatted_string}\n) "
-                            f"VALUES (\n    {value_placeholders_string}\n)")
 
-    dataframe_sanitized = dataframe_ordered.astype(object).where(dataframe_ordered.notnull(), None)
+def __write_dataframe_sql_api(
+        dataframe: DataFrame,
+        table_name: str,
+        database_engine_or_connection: Any,
+        if_exists: Literal["fail", "replace_data", "replace_table", "append"] = "append",
+        schema: Optional[str] = None,
+        chunksize: Optional[int] = None,
+        dtype: Optional[dict[str, str]] = None,
+        table_column_order: Optional[list[str]] = None,
+        default_schema: str = "",
+        quote_identifier: Optional[Callable[[str], str]] = None,
+        pandas_to_sql_type_map: Optional[dict[str, str]] = None,
+        default_sql_type: str = "TEXT",
+        table_exists_query: str = "",
+        table_exists_params: Optional[Callable[[str, str], tuple[Any, ...]]] = None,
+        insert_placeholder: str = "%s",
+        use_fast_executemany: bool = False,
+        use_multi_value_insert: bool = False,
+        max_statement_parameters: Optional[int] = None
+) -> None:
+    database_connection, owns_connection = utility._get_sql_api_connection(database_engine_or_connection)
+    database_cursor = database_connection.cursor()
 
-    use_fast_executemany: bool = False
-    if hasattr(database_cursor, "fast_executemany"):
-        try:
-            database_cursor.fast_executemany = True
-            use_fast_executemany = True
-        except (AttributeError, Exception):
-            use_fast_executemany = False
+    try:
+        column_order = table_column_order if table_column_order is not None else list(dataframe.columns)
+        dataframe_ordered = dataframe[column_order]
 
-    # 2. Optimized Insertion Loop
-    columns_count: int = len(dataframe_ordered.columns)
-    sql_base: str = f"INSERT INTO {full_table_name} ({target_columns_formatted_string}) VALUES "
+        target_schema = schema if schema is not None else default_schema
+        quote_identifier = quote_identifier or (lambda identifier: identifier)
+        pandas_to_sql_type_map = pandas_to_sql_type_map or {}
+        table_exists_params = table_exists_params or (lambda current_schema, current_table: (current_schema, current_table))
 
-    # SQL Server limit is 2100 parameters; calculate rows per batch to stay under limit
-    mvi_batch_size: int = 2100 // columns_count
-    processing_chunk_size: int = chunksize if chunksize is not None else (
-        10000 if use_fast_executemany else mvi_batch_size)
+        full_table_name = f"{quote_identifier(target_schema)}.{quote_identifier(table_name)}"
 
-    for chunk_start_index in range(0, len(dataframe_sanitized), processing_chunk_size):
-        chunk: DataFrame = dataframe_sanitized.iloc[chunk_start_index: chunk_start_index + processing_chunk_size]
+        database_cursor.execute(table_exists_query, table_exists_params(target_schema, table_name))
+        table_exists = bool(database_cursor.fetchone())
 
-        if use_fast_executemany:
-            database_cursor.executemany(sql_insert_statement, chunk.to_numpy().tolist())
+        create_table_statement = __build_sql_create_table_statement(
+            dataframe_ordered=dataframe_ordered,
+            full_table_name=full_table_name,
+            quote_identifier=quote_identifier,
+            pandas_to_sql_type_map=pandas_to_sql_type_map,
+            default_sql_type=default_sql_type,
+            dtype=dtype
+        )
+
+        __initialize_sql_table_if_needed(
+            database_cursor=database_cursor,
+            database_connection=database_connection,
+            table_exists=table_exists,
+            if_exists=if_exists,
+            full_table_name=full_table_name,
+            create_table_statement=create_table_statement
+        )
+
+        target_columns_formatted_string = ", ".join(
+            [quote_identifier(column_name) for column_name in dataframe_ordered.columns]
+        )
+        value_placeholders_string = ", ".join([insert_placeholder] * len(dataframe_ordered.columns))
+        sql_insert_statement = (
+            f"INSERT INTO {full_table_name} ({target_columns_formatted_string}) "
+            f"VALUES ({value_placeholders_string})"
+        )
+
+        dataframe_sanitized = dataframe_ordered.astype(object).where(dataframe_ordered.notnull(), None)
+        columns_count = len(dataframe_ordered.columns)
+
+        cursor_supports_fast_executemany = False
+        if use_fast_executemany and hasattr(database_cursor, "fast_executemany"):
+            try:
+                database_cursor.fast_executemany = True
+                cursor_supports_fast_executemany = True
+            except (AttributeError, Exception):
+                cursor_supports_fast_executemany = False
+
+        if use_multi_value_insert and not cursor_supports_fast_executemany and max_statement_parameters:
+            chunk_size_default = max(1, max_statement_parameters // max(columns_count, 1))
+        elif cursor_supports_fast_executemany:
+            chunk_size_default = 10000
         else:
-            # Fallback to Multi-Value Insert (MVI)
-            placeholders: str = ", ".join([f"({', '.join(['?'] * columns_count)})"] * len(chunk))
-            values_flattened: list[Any] = chunk.to_numpy().flatten().tolist()
-            database_cursor.execute(f"{sql_base} {placeholders}", values_flattened)
+            chunk_size_default = 10000
 
-    database_connection.commit()
-    database_cursor.close()
+        processing_chunk_size = chunksize if chunksize is not None else chunk_size_default
+
+        sql_base = f"INSERT INTO {full_table_name} ({target_columns_formatted_string}) VALUES "
+        for chunk_start_index in range(0, len(dataframe_sanitized), processing_chunk_size):
+            chunk: DataFrame = dataframe_sanitized.iloc[chunk_start_index: chunk_start_index + processing_chunk_size]
+
+            if use_multi_value_insert and not cursor_supports_fast_executemany:
+                placeholders = ", ".join(
+                    [f"({', '.join([insert_placeholder] * columns_count)})"] * len(chunk)
+                )
+                values_flattened: list[Any] = chunk.to_numpy().flatten().tolist()
+                database_cursor.execute(f"{sql_base}{placeholders}", values_flattened)
+            else:
+                database_cursor.executemany(sql_insert_statement, chunk.to_numpy().tolist())
+
+        database_connection.commit()
+    finally:
+        database_cursor.close()
+        if owns_connection and hasattr(database_connection, "close"):
+            database_connection.close()
+
+
+def __dataframe_to_sql_pyodbc(
+        dataframe: DataFrame,
+        table_name: str,
+        database_engine_or_connection: Any,
+        if_exists: Literal["fail", "replace_data","replace_table", "append"] = "append",
+        schema: Optional[str] = None,
+        chunksize: Optional[int] = None,
+        dtype: Optional[dict[str, str]] = None,
+        table_column_order: Optional[list[str]] = None,
+        **_kwargs
+) -> None:
+    __write_dataframe_sql_api(
+        dataframe=dataframe,
+        table_name=table_name,
+        database_engine_or_connection=database_engine_or_connection,
+        if_exists=if_exists,
+        schema=schema,
+        chunksize=chunksize,
+        dtype=dtype,
+        table_column_order=table_column_order,
+        default_schema="dbo",
+        quote_identifier=lambda identifier: f"[{identifier}]",
+        pandas_to_sql_type_map={
+            "int64": "BIGINT",
+            "int32": "INT",
+            "float64": "FLOAT",
+            "float32": "REAL",
+            "bool": "BIT",
+            "datetime64[ns]": "DATETIME2",
+            "object": "NVARCHAR(MAX)",
+            "string": "NVARCHAR(MAX)"
+        },
+        default_sql_type="NVARCHAR(MAX)",
+        table_exists_query="SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?",
+        insert_placeholder="?",
+        use_fast_executemany=True,
+        use_multi_value_insert=True,
+        max_statement_parameters=2100
+    )
+
+
+def __dataframe_to_sql_psycopg2(
+        dataframe: DataFrame,
+        table_name: str,
+        database_engine_or_connection: Any,
+        if_exists: Literal["fail", "replace_data", "replace_table", "append"] = "append",
+        schema: Optional[str] = None,
+        chunksize: Optional[int] = None,
+        dtype: Optional[dict[str, str]] = None,
+        table_column_order: Optional[list[str]] = None,
+        **_kwargs
+) -> None:
+    __write_dataframe_sql_api(
+        dataframe=dataframe,
+        table_name=table_name,
+        database_engine_or_connection=database_engine_or_connection,
+        if_exists=if_exists,
+        schema=schema,
+        chunksize=chunksize,
+        dtype=dtype,
+        table_column_order=table_column_order,
+        default_schema="public",
+        quote_identifier=lambda identifier: '"' + identifier.replace('"', '""') + '"',
+        pandas_to_sql_type_map={
+            "int64": "BIGINT",
+            "int32": "INTEGER",
+            "float64": "DOUBLE PRECISION",
+            "float32": "REAL",
+            "bool": "BOOLEAN",
+            "datetime64[ns]": "TIMESTAMP",
+            "object": "TEXT",
+            "string": "TEXT"
+        },
+        default_sql_type="TEXT",
+        table_exists_query="SELECT 1 FROM information_schema.tables WHERE table_schema = %s AND table_name = %s",
+        insert_placeholder="%s"
+    )
+
+
+def __dataframe_to_sql_snowflake(
+        dataframe: DataFrame,
+        table_name: str,
+        database_engine_or_connection: Any,
+        if_exists: Literal["fail", "replace_data", "replace_table", "append"] = "append",
+        schema: Optional[str] = None,
+        chunksize: Optional[int] = None,
+        dtype: Optional[dict[str, str]] = None,
+        table_column_order: Optional[list[str]] = None,
+        **_kwargs
+) -> None:
+    __write_dataframe_sql_api(
+        dataframe=dataframe,
+        table_name=table_name,
+        database_engine_or_connection=database_engine_or_connection,
+        if_exists=if_exists,
+        schema=schema,
+        chunksize=chunksize,
+        dtype=dtype,
+        table_column_order=table_column_order,
+        default_schema="PUBLIC",
+        quote_identifier=lambda identifier: '"' + identifier.replace('"', '""') + '"',
+        pandas_to_sql_type_map={
+            "int64": "NUMBER",
+            "int32": "NUMBER",
+            "float64": "FLOAT",
+            "float32": "FLOAT",
+            "bool": "BOOLEAN",
+            "datetime64[ns]": "TIMESTAMP_NTZ",
+            "object": "VARCHAR",
+            "string": "VARCHAR"
+        },
+        default_sql_type="VARCHAR",
+        table_exists_query="SELECT 1 FROM information_schema.tables WHERE table_schema = %s AND table_name = %s",
+        table_exists_params=lambda current_schema, current_table: (current_schema.upper(), current_table.upper()),
+        insert_placeholder="%s"
+    )
 
 
 @utility.log_exec_metrics
 def clear_table(
-        clear_function: Optional[Union[Callable[..., Any], Literal["sqlalchemy", "pyodbc"]]] = None,
+        clear_function: Optional[Union[Callable[..., Any], Literal["sqlalchemy", "pyodbc", "psycopg2", "snowflake"]]] = None,
         **kwargs: Any
 ) -> None:
     """
@@ -325,37 +491,96 @@ def clear_table(
     clear_function = clear_function if isinstance(clear_function, Callable) else {
         None: __clear_table_default,
         "sqlalchemy": __clear_table_default,
-        "pyodbc": __clear_table_pyodbc
+        "pyodbc": __clear_table_pyodbc,
+        "psycopg2": __clear_table_psycopg2,
+        "snowflake": __clear_table_snowflake
     }.get(clear_function)
 
     clear_function(**kwargs)
 
 
 def __clear_table_default(
-        engine: Any,
+        database_engine_or_connection: Any,
         table_name: Optional[str],
-        delete_statement: Optional[str]
+        delete_statement: Optional[str],
+        **_kwargs
 ) -> None:
-    with engine.connect() as connection:
-        transaction = connection.begin()
-        if delete_statement:
-            connection.execute(text(delete_statement))
-        elif table_name:
-            connection.execute(text("TRUNCATE TABLE [" + table_name + "]"))
-        transaction.commit()
+    connection, owns_connection = utility._get_sql_api_connection(database_engine_or_connection)
+
+    try:
+        if hasattr(connection, "begin") and hasattr(connection, "execute"):
+            transaction = connection.begin()
+            if delete_statement:
+                connection.execute(text(delete_statement))
+            elif table_name:
+                connection.execute(text("TRUNCATE TABLE [" + table_name + "]"))
+            transaction.commit()
+        else:
+            with connection.cursor() as cursor:
+                if delete_statement:
+                    cursor.execute(delete_statement)
+                elif table_name:
+                    cursor.execute("TRUNCATE TABLE [" + table_name + "]")
+                connection.commit()
+    finally:
+        if owns_connection and hasattr(connection, "close"):
+            connection.close()
 
 
 def __clear_table_pyodbc(
-        connection: Any,
+        database_engine_or_connection: Any,
         table_name: Optional[str],
-        delete_statement: Optional[str]
+        delete_statement: Optional[str],
+        **_kwargs
 ) -> None:
+    connection, owns_connection = utility._get_sql_api_connection(database_engine_or_connection)
     statement: str = delete_statement or f"TRUNCATE TABLE [{table_name}]"
 
-    with connection.cursor() as cursor:
-        cursor.execute(statement)
-        connection.commit()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(statement)
+            connection.commit()
+    finally:
+        if owns_connection and hasattr(connection, "close"):
+            connection.close()
 
+
+def __clear_table_psycopg2(
+        database_engine_or_connection: Any,
+        table_name: Optional[str],
+        schema_name: Optional[str],
+        delete_statement: Optional[str],
+        **_kwargs
+) -> None:
+    connection, owns_connection = utility._get_sql_api_connection(database_engine_or_connection)
+    statement: str = delete_statement or f"TRUNCATE TABLE {schema_name}.{table_name}"
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(statement)
+            connection.commit()
+    finally:
+        if owns_connection and hasattr(connection, "close"):
+            connection.close()
+
+
+def __clear_table_snowflake(
+        database_engine_or_connection: Any,
+        table_name: Optional[str],
+        schema_name: Optional[str],
+        delete_statement: Optional[str],
+        **_kwargs
+) -> None:
+    connection, owns_connection = utility._get_sql_api_connection(database_engine_or_connection)
+    statement: str = delete_statement or f'TRUNCATE TABLE "{schema_name or "PUBLIC"}"."{table_name}"'
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(statement)
+            connection.commit()
+    finally:
+        if owns_connection and hasattr(connection, "close"):
+            connection.close()
 
 # ------------------------------------------------------------------------------------------------------------
 # pandas dataframe into CSV functions

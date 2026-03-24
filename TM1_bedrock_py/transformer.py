@@ -905,7 +905,7 @@ def __apply_basic_dimension_reshaping(
         mapping_step: Dict[str, Any],
         shared_mapping_df: Optional[DataFrame] = None,
         case_and_space_insensitive_inputs: Optional[bool] = False,
-):
+) -> DataFrame:
     # either or: literal row filter, literal column drop, literal column add with value assign, literal relabel
     # can be used in any combination.
     # tip: for more complex reshaping, call this method in sequence
@@ -925,6 +925,7 @@ def __apply_basic_dimension_reshaping(
     if "column_relabel_map" in mapping_step:
         dataframe_relabel(data_df, mapping_step["column_relabel_map"],
                           case_and_space_insensitive_inputs)
+    return data_df
 
 
 method_handlers = {

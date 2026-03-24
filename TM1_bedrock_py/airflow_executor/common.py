@@ -1,8 +1,9 @@
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, Literal
 from itertools import product
 from string import  Template
 from airflow.decorators import task
 from airflow_provider_tm1.hooks.tm1 import TM1Hook
+from pandas import DataFrame
 
 from TM1_bedrock_py.utility import (
     basic_logger,
@@ -204,7 +205,7 @@ def clear_sql_table_task(
         table_name: Optional[str],
         sql_delete_statement: Optional[str]
 ) -> int:
-    clear_table(engine=sql_engine, table_name=table_name, delete_statement=sql_delete_statement)
+    clear_table(database_engine_or_connection=sql_engine, table_name=table_name, delete_statement=sql_delete_statement)
     return 0
 
 
@@ -219,8 +220,8 @@ def execute_slice_tm1_task(
         tm1_service: Any,
         data_mdx_template: str,
         target_metadata_function: Callable,
-        logging_level: str,
         expand_kwargs: Dict,
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         mapping_steps: Optional[List[Dict]] = None,
         shared_mapping: Optional[Dict] = None,
         **kwargs
@@ -247,8 +248,9 @@ def execute_slice_task_sql_to_tm1(
         sql_engine: Any,
         sql_query_template: str,
         target_metadata_function: Callable,
-        logging_level: str,
         expand_kwargs: Dict,
+        sql_function: Optional[Callable[..., DataFrame]] = None,
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         mapping_steps: Optional[List[Dict]] = None,
         shared_mapping: Optional[Dict] = None,
         **kwargs
@@ -266,6 +268,7 @@ def execute_slice_task_sql_to_tm1(
         tm1_service=tm1_service,
         sql_query=sql_query,
         sql_engine=sql_engine,
+        sql_function=sql_function,
         target_metadata_function=target_metadata_function,
         logging_level=logging_level,
         use_blob=True,
@@ -284,8 +287,10 @@ def execute_slice_task_tm1_to_sql(
         sql_engine: Any,
         data_mdx_template: str,
         target_metadata_function: Callable,
-        logging_level: str,
         expand_kwargs: Dict,
+        sql_function: Optional[Callable[..., DataFrame]] = None,
+        sql_column_mapping: Optional[dict] = None,
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         mapping_steps: Optional[List[Dict]] = None,
         shared_mapping: Optional[Dict] = None,
         **kwargs
@@ -302,6 +307,8 @@ def execute_slice_task_tm1_to_sql(
     load_tm1_cube_to_sql_table(
         tm1_service=tm1_service,
         sql_engine=sql_engine,
+        sql_function=sql_function,
+        sql_column_mapping=sql_column_mapping,
         data_mdx=data_mdx,
         target_metadata_function=target_metadata_function,
         logging_level=logging_level,
@@ -321,7 +328,7 @@ def execute_slice_task_csv_to_tm1(
         target_cube_name: str,
         source_csv_file_path: str,
         target_metadata_function: Callable,
-        logging_level: str,
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         **kwargs
 ) -> int:
 
@@ -346,8 +353,8 @@ def execute_slice_task_tm1_to_csv(
         tm1_service: Any,
         data_mdx_template: str,
         target_metadata_function: Callable,
-        logging_level: str,
         expand_kwargs: Dict,
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         mapping_steps: Optional[List[Dict]] = None,
         shared_mapping: Optional[Dict] = None,
         **kwargs
