@@ -274,7 +274,7 @@ def __write_dataframe_sql_api(
         use_multi_value_insert: bool = False,
         max_statement_parameters: Optional[int] = None
 ) -> None:
-    database_connection, owns_connection = utility._get_sql_api_connection(database_engine_or_connection)
+    database_connection, owns_connection = __get_sql_api_connection(database_engine_or_connection)
     database_cursor = database_connection.cursor()
 
     try:
@@ -356,6 +356,25 @@ def __write_dataframe_sql_api(
         database_cursor.close()
         if owns_connection and hasattr(database_connection, "close"):
             database_connection.close()
+
+
+def __get_sql_api_connection(database_engine_or_connection: Any) -> tuple[Any, bool]:
+    if hasattr(database_engine_or_connection, "cursor"):
+        return database_engine_or_connection, False
+
+    if hasattr(database_engine_or_connection, "raw_connection"):
+        return database_engine_or_connection.raw_connection(), True
+
+    if hasattr(database_engine_or_connection, "connection") and hasattr(database_engine_or_connection.connection, "cursor"):
+        return database_engine_or_connection.connection, False
+
+    if hasattr(database_engine_or_connection, "connect"):
+        sql_connection = database_engine_or_connection.connect()
+        if hasattr(sql_connection, "connection") and hasattr(sql_connection.connection, "cursor"):
+            return sql_connection.connection, True
+        return sql_connection, True
+
+    return database_engine_or_connection, False
 
 
 def __dataframe_to_sql_pyodbc(
@@ -509,7 +528,7 @@ def __clear_table_default(
         delete_statement: Optional[str],
         **_kwargs
 ) -> None:
-    connection, owns_connection = utility._get_sql_api_connection(database_engine_or_connection)
+    connection, owns_connection = __get_sql_api_connection(database_engine_or_connection)
 
     try:
         if hasattr(connection, "begin") and hasattr(connection, "execute"):
@@ -537,7 +556,7 @@ def __clear_table_pyodbc(
         delete_statement: Optional[str],
         **_kwargs
 ) -> None:
-    connection, owns_connection = utility._get_sql_api_connection(database_engine_or_connection)
+    connection, owns_connection = __get_sql_api_connection(database_engine_or_connection)
     statement: str = delete_statement or f"TRUNCATE TABLE [{table_name}]"
 
     try:
@@ -556,7 +575,7 @@ def __clear_table_psycopg2(
         delete_statement: Optional[str],
         **_kwargs
 ) -> None:
-    connection, owns_connection = utility._get_sql_api_connection(database_engine_or_connection)
+    connection, owns_connection = __get_sql_api_connection(database_engine_or_connection)
     statement: str = delete_statement or f"TRUNCATE TABLE {schema_name}.{table_name}"
 
     try:
@@ -575,7 +594,7 @@ def __clear_table_snowflake(
         delete_statement: Optional[str],
         **_kwargs
 ) -> None:
-    connection, owns_connection = utility._get_sql_api_connection(database_engine_or_connection)
+    connection, owns_connection = __get_sql_api_connection(database_engine_or_connection)
     statement: str = delete_statement or f'TRUNCATE TABLE "{schema_name or "PUBLIC"}"."{table_name}"'
 
     try:
