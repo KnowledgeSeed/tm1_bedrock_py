@@ -19,7 +19,8 @@ from TM1_bedrock_py.dimension_builder import apply, normalize
 from TM1_bedrock_py.dimension_builder.io import execute_dimension_dataframe_writers
 from TM1_bedrock_py.dimension_builder.utility import (
     init_hierarchy_rename_map_for_cloning,
-    attr_column_names_from_attr_names
+    attr_column_names_from_attr_names,
+    get_attribute_columns_list
 )
 
 from TM1_bedrock_py.dimension_builder.validate import (
@@ -143,16 +144,18 @@ def dimension_builder(
                                                     dimension_sort_order_config, hierarchy_sort_order_config)
 
         # upload updated attribute values using bedrock load
-        writable_attr_df, attr_cube_name, attr_cube_dims = apply.prepare_attributes_for_load(
-            dimension_name=dimension_name, elements_df=updated_elements_df)
+        attr_columns = get_attribute_columns_list(updated_elements_df)
+        if len(attr_columns) != 0:
+            writable_attr_df, attr_cube_name, attr_cube_dims = apply.prepare_attributes_for_load(
+                dimension_name=dimension_name, elements_df=updated_elements_df)
 
-        loader.dataframe_to_cube(
-            tm1_service=tm1_service,
-            dataframe=writable_attr_df,
-            cube_name=attr_cube_name,
-            cube_dims=attr_cube_dims,
-            use_blob=True,
-        )
+            loader.dataframe_to_cube(
+                tm1_service=tm1_service,
+                dataframe=writable_attr_df,
+                cube_name=attr_cube_name,
+                cube_dims=attr_cube_dims,
+                use_blob=True,
+            )
 
     if output_mode in ("output", "build_and_output"):
         return updated_edges_df, updated_elements_df
@@ -259,16 +262,18 @@ def hierarchy_builder(
                 hierarchy_sort_order_config={hierarchy_name: hierarchy_sort_order_config})
 
         # upload updated attribute values using bedrock load
-        writable_attr_df, attr_cube_name, attr_cube_dims = apply.prepare_attributes_for_load(
-            dimension_name=dimension_name, elements_df=updated_elements_df)
+        attr_columns = get_attribute_columns_list(updated_elements_df)
+        if len(attr_columns) != 0:
+            writable_attr_df, attr_cube_name, attr_cube_dims = apply.prepare_attributes_for_load(
+                dimension_name=dimension_name, elements_df=updated_elements_df)
 
-        loader.dataframe_to_cube(
-            tm1_service=tm1_service,
-            dataframe=writable_attr_df,
-            cube_name=attr_cube_name,
-            cube_dims=attr_cube_dims,
-            use_blob=True,
-        )
+            loader.dataframe_to_cube(
+                tm1_service=tm1_service,
+                dataframe=writable_attr_df,
+                cube_name=attr_cube_name,
+                cube_dims=attr_cube_dims,
+                use_blob=True,
+            )
 
     if output_mode in ("output", "build_and_output"):
         return updated_edges_df, updated_elements_df
