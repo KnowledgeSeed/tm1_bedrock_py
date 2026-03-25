@@ -865,9 +865,8 @@ def data_copy_intercube(tm1_service: Optional[Any],
 
     data_metadata_queryspecific = utility.TM1CubeObjectMetadata.collect(
         mdx=data_mdx,
-        collect_base_cube_metadata=False,
-        collect_source_cube_metadata=native_view_correction_enabled,
-        tm1_service=tm1_service
+        tm1_service=tm1_service,
+        collect_measure_types=use_mixed_datatypes,
     )
     source_cube_name = data_metadata_queryspecific.get_cube_name()
 
@@ -876,27 +875,27 @@ def data_copy_intercube(tm1_service: Optional[Any],
         cube_name=target_cube_name,
         metadata_function=target_metadata_function,
         collect_itemskip_info=check_missing_elements,
-        collect_measure_types=use_mixed_datatypes,
         dimension_check_filter=dimensions_to_check,
         itemskip_query_mode=element_query_mode,
         **kwargs
     )
 
+    source_cube_dims = data_metadata_queryspecific.get_cube_dims()
+    target_cube_dims = target_metadata.get_cube_dims()
+
     if native_view_correction_enabled:
         dataframe = transformer.rename_columns_by_reference(
             dataframe=dataframe,
-            column_names=data_metadata_queryspecific.get_source_cube_dims()
+            column_names=source_cube_dims
         )
-
-    target_cube_dims = target_metadata.get_cube_dims()
 
     transformer.dataframe_add_column_assign_value(
         dataframe=dataframe, column_value=data_metadata_queryspecific.get_filter_dict(),
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, **kwargs)
 
     if use_mixed_datatypes:
-        measure_dim_name = target_cube_dims[-1]
-        measure_types = target_metadata.get_measure_element_types()
+        measure_dim_name = source_cube_dims[-1]
+        measure_types = data_metadata_queryspecific.get_measure_element_types()
 
         transformer.dataframe_cast_value_by_measure_type(
             dataframe=dataframe,
@@ -1236,8 +1235,7 @@ def data_copy(
 
     data_metadata_queryspecific = utility.TM1CubeObjectMetadata.collect(
         mdx=data_mdx,
-        collect_base_cube_metadata=False,
-        collect_source_cube_metadata=native_view_correction_enabled,
+        collect_measure_types=use_mixed_datatypes,
         tm1_service=tm1_service
     )
     cube_name = data_metadata_queryspecific.get_cube_name()
@@ -1246,7 +1244,6 @@ def data_copy(
         cube_name=cube_name,
         metadata_function=target_metadata_function,
         collect_itemskip_info=check_missing_elements,
-        collect_measure_types=use_mixed_datatypes,
         dimension_check_filter=dimensions_to_check,
         itemskip_query_mode=element_query_mode,
         **kwargs
@@ -1260,18 +1257,13 @@ def data_copy(
                               **kwargs)
         return
 
-    data_metadata = utility.TM1CubeObjectMetadata.collect(
-        tm1_service=target_tm1_service, cube_name=cube_name,
-        metadata_function=target_metadata_function,
-        collect_itemskip_info=False,
-        collect_measure_types=use_mixed_datatypes,
-        **kwargs)
-    cube_dims = data_metadata.get_cube_dims()
+    cube_dims = target_metadata.get_cube_dims()
+    source_cube_dims = data_metadata_queryspecific.get_cube_dims()
 
     if native_view_correction_enabled:
         dataframe = transformer.rename_columns_by_reference(
             dataframe=dataframe,
-            column_names=data_metadata_queryspecific.get_source_cube_dims()
+            column_names=data_metadata_queryspecific.get_cube_dims()
         )
 
     transformer.dataframe_add_column_assign_value(
@@ -1282,8 +1274,8 @@ def data_copy(
     )
 
     if use_mixed_datatypes:
-        measure_dim_name = data_metadata.get_cube_dims()[-1]
-        measure_types = data_metadata.get_measure_element_types()
+        measure_dim_name = source_cube_dims[-1]
+        measure_types = data_metadata_queryspecific.get_measure_element_types()
         transformer.dataframe_cast_value_by_measure_type(
             dataframe=dataframe,
             measure_dimension_name=measure_dim_name,
@@ -1876,6 +1868,17 @@ def load_sql_data_to_tm1_cube(
     if initial_row_count != final_row_count:
         filtered_count = initial_row_count - final_row_count
         basic_logger.warning(f"Number of rows filtered out through inner joins: {filtered_count}/{initial_row_count}")
+
+    if use_mixed_datatypes:
+        measure_dim_name = cube_dims[-1]
+        measure_types = target_metadata.get_measure_element_types()
+        transformer.dataframe_cast_value_by_measure_type(
+            dataframe=dataframe,
+            measure_dimension_name=measure_dim_name,
+            measure_element_types=measure_types,
+            case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
+            **kwargs
+        )
 
     if value_function is not None:
         transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function,
@@ -2898,7 +2901,7 @@ def load_csv_data_to_tm1_cube(
     )
 
     if use_mixed_datatypes:
-        measure_dim_name = target_metadata.get_cube_dims()[-1]
+        measure_dim_name = cube_dims[-1]
         measure_types = target_metadata.get_measure_element_types()
         transformer.dataframe_cast_value_by_measure_type(
             dataframe=dataframe,

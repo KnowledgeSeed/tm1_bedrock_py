@@ -906,7 +906,6 @@ class TM1CubeObjectMetadata:
     _DIM_CHECK_DFS = "dimension check dataframes"
     _DIM_CHECK_HIERS = "dimension check default hierarchies"
     _MEASURE_ELEMENT_TYPES = "measure element types"
-    _SOURCE_CUBE_DIMS_LIST = "source dimension list"
 
     def __init__(self) -> None:
         self._data: Dict[str, Union['TM1CubeObjectMetadata', Any]] = {}
@@ -952,9 +951,6 @@ class TM1CubeObjectMetadata:
     def get_measure_element_types(self) -> Dict[str, str]:
         return self[self._MEASURE_ELEMENT_TYPES]
 
-    def get_source_cube_dims(self) -> List[str]:
-        return self[self._SOURCE_CUBE_DIMS_LIST]
-
     @classmethod
     def _expand_query_metadata(cls, mdx: str, metadata: "TM1CubeObjectMetadata") -> None:
         """
@@ -977,14 +973,9 @@ class TM1CubeObjectMetadata:
         metadata[cls._CUBE_DIMS_LIST] = tm1_service.cubes.get_dimension_names(cube_name)
 
     @classmethod
-    def _expand_source_cube_metadata(cls, tm1_service: Any, cube_name: str, metadata: "TM1CubeObjectMetadata") -> None:
-        metadata[cls._SOURCE_CUBE_DIMS_LIST] = tm1_service.cubes.get_dimension_names(cube_name)
-
-    @classmethod
     def __collect_default(cls, tm1_service: Optional[Any] = None, mdx: Optional[str] = None,
                           cube_name: Optional[str] = None, collect_base_cube_metadata: Optional[bool] = True,
                           collect_itemskip_info: Optional[bool] = False, collect_measure_types: Optional[bool] = False,
-                          collect_source_cube_metadata: Optional[bool] = False,
                           dimension_check_filter: Optional[list] = None,
                           itemskip_query_mode: Optional[Literal['bulk', 'on_demand']] = 'bulk',
                           **_kwargs) -> "TM1CubeObjectMetadata":
@@ -1013,9 +1004,6 @@ class TM1CubeObjectMetadata:
 
         if not cube_name:
             basic_logger.error("You need to have either an MDX or a cube name specified.")
-
-        if collect_source_cube_metadata:
-            cls._expand_source_cube_metadata(tm1_service=tm1_service, cube_name=cube_name, metadata=metadata)
 
         if collect_base_cube_metadata:
             cls._expand_base_cube_metadata(tm1_service=tm1_service, cube_name=cube_name, metadata=metadata)

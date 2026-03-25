@@ -1,0 +1,6 @@
+key:
+  key2: |
+    SELECT
+    {{current_year}}
+    FROM
+    AKÁRMI

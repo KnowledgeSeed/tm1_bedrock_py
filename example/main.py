@@ -2,10 +2,12 @@ import pandas as pd
 import os
 from TM1py import TM1Service
 
-from TM1_bedrock_py import bedrock, utility
+from TM1_bedrock_py import bedrock, utility, extractor
 from TM1_bedrock_py.utility import set_logging_level
+from TM1_bedrock_py.context_metadata import ContextMetadata
 from tests.tests_dimension_builder.test_data.test_data import generate_hierarchy_data
 import pyodbc
+
 
 def complex_transform_demo():
     # letárolás másik verzióra
@@ -519,9 +521,59 @@ def dimension_builder_no_edges_old_format():
         tm1_service.logout()
 
 
+def context_metadata_demo():
+    tm1params_ksacademy = {
+        "address": "dev.knowledgeseed.local",
+        "port": 5379,
+        "user": "admin",
+        "password": "admin",
+        "ssl": False
+    }
+    tm1_service = TM1Service(**tm1params_ksacademy)
+    context_metadata = ContextMetadata(tm1_service=tm1_service)
+
+    mdx = """
+    SELECT
+        {[}ElementAttributes_Period].[}ElementAttributes_Period].[year]}
+    ON COLUMNS,
+        {[Period].[Period].[202401]}
+    ON ROWS
+    FROM [}ElementAttributes_Period]
+    """
+    context_metadata.add_parameter_from_tm1(param_name="current_year",
+                                            mdx_query=mdx)
+
+    file_path = os.path.join(os.path.dirname(__file__), "context_metadata_test.yaml")
+    yaml_contents = context_metadata.render_template_yaml(yaml_path=file_path)
+    print(yaml_contents)
+
+
+def extractor_numeric_string_handling_test():
+    tm1params_ksacademy = {
+        "address": "dev.knowledgeseed.local",
+        "port": 5379,
+        "user": "admin",
+        "password": "admin",
+        "ssl": False
+    }
+    tm1_service = TM1Service(**tm1params_ksacademy)
+
+    mdx = """
+        SELECT
+            {[}ElementAttributes_Period].[}ElementAttributes_Period].[year]}
+        ON COLUMNS,
+            {[Period].[Period].[202401], [Period].[Period].[202403]}
+        ON ROWS
+        FROM [}ElementAttributes_Period]
+        """
+
+    df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_service, data_mdx=mdx)
+    print(df)
+
+
 if __name__ == '__main__':
     # dimension_builder_basic_demo()
-    dimension_builder_no_edges_old_format()
+    # dimension_builder_no_edges_old_format()
     # dimension_builder_append_demo()
     # dimension_builder_complex_demo()
     # hierarchy_builder_demo()
@@ -530,3 +582,5 @@ if __name__ == '__main__':
     # build_cube_demo()
     # copy_dim_between_servers_demo()
     # copy_data_between_servers_demo()
+    # context_metadata_demo()
+    extractor_numeric_string_handling_test()
