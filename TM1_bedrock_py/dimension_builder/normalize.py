@@ -626,7 +626,6 @@ def transform_hierarchy_structure_for_copy(edges_df: pd.DataFrame, elements_df: 
                                            hierarchy_rename_map: dict[str, str],
                                            target_dimension_name: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
     find_and_replace_mapping = {"Hierarchy": hierarchy_rename_map}
-    print(find_and_replace_mapping)
     if edges_df is not None:
         edges_df["Dimension"] = target_dimension_name
         edges_df = dataframe_find_and_replace(
@@ -637,7 +636,5 @@ def transform_hierarchy_structure_for_copy(edges_df: pd.DataFrame, elements_df: 
     elements_df = dataframe_find_and_replace(
         dataframe=elements_df,
         mapping=find_and_replace_mapping)
-    print(edges_df)
-    print(elements_df)
 
     return edges_df, elements_df

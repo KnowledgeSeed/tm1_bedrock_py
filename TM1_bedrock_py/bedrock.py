@@ -46,7 +46,7 @@ def cube_builder(
         cube_dimension_create_map: dict[str, list[str]] = None,
 
         copy_source_tm1_service: Any = None,
-        copy_source_cubes: list[str] = None,
+        copy_source_cubes: Union[list[str], str] = None,
         copy_cube_rename_map: dict[str, str] = None,
         copy_dimension_rename_map: dict[str, str] = None,
         missing_dimension_strategy: Literal["copy_from_source", "raise_error"] = "raise_error",
@@ -62,11 +62,15 @@ def cube_builder(
         copy_source_cubes=copy_source_cubes,
         copy_cube_rename_map=copy_cube_rename_map,
         copy_dimension_rename_map=copy_dimension_rename_map,
-        input_error_mode=input_error_mode
+        input_error_mode=input_error_mode,
+        missing_dimension_strategy=missing_dimension_strategy,
+        tm1_service=tm1_service, copy_source_tm1_service=copy_source_tm1_service
     )
 
     copy_source_tm1_service = copy_source_tm1_service or tm1_service
-    copy_source_cubes = copy_source_cubes or []
+    copy_source_cubes = [copy_source_cubes] if isinstance(copy_source_cubes, str) \
+        else copy_source_cubes if isinstance(copy_source_cubes, list) \
+        else []
     copy_cube_rename_map = copy_cube_rename_map or {}
     copy_dimension_rename_map = copy_dimension_rename_map or {}
     cube_dimension_create_map = cube_dimension_create_map or {}
@@ -81,7 +85,9 @@ def cube_builder(
     if missing_dimension_strategy == "copy_from_source" and len(missing_dimensions) > 0:
         missing_dimensions_rename_map = utility.get_dimension_copy_map_for_missing(
             missing_dimensions, copy_dimension_rename_map)
-        for source, target in missing_dimensions_rename_map:
+        print(missing_dimensions_rename_map)
+        for source, target in missing_dimensions_rename_map.items():
+            basic_logger.debug(f"Copying missing dimension from source to target")
             dimension_copy(
                 tm1_service=copy_source_tm1_service,
                 target_tm1_service=tm1_service,

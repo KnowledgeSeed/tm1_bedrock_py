@@ -694,13 +694,18 @@ def validate_cube_create_inputs(
         copy_cube_rename_map: dict[str, str] = None,
         copy_dimension_rename_map: dict[str, str] = None,
 
-        input_error_mode: Literal["strict", "loose"] = "strict"
+        input_error_mode: Literal["strict", "loose"] = "strict",
+        tm1_service: Any = None, copy_source_tm1_service: Any = None,
+        missing_dimension_strategy: Literal["copy_from_source", "raise_error"] = "raise_error",
 ) -> None:
     if build_mode == "create_from_map" and cube_dimension_create_map is None and input_error_mode == "strict":
         raise ValueError("Strict error handling: cube_dimension_create_map is mandatory for 'create from map' mode.")
 
     if build_mode == "copy_from_source" and copy_source_cubes is None and input_error_mode == "strict":
         raise ValueError("Strict error handling: copy_source_cubes is mandatory for 'copy from source' mode.")
+
+    if missing_dimension_strategy == 'copy_from_source' and tm1_service == copy_source_tm1_service:
+        raise ValueError("Missing dimension copy can be only done for different source and target.")
 
     if cube_dimension_create_map is not None:
         for cube, dim_list in cube_dimension_create_map.items():
