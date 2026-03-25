@@ -33,6 +33,68 @@ from TM1_bedrock_py.dimension_builder.validate import (
 
 
 # ------------------------------------------------------------------------------------------------------------
+# Bedrock: Cube Builder Module functions
+#     - cube_builder: build cube from manual input data or copy structure from source server
+# ------------------------------------------------------------------------------------------------------------
+
+
+def cube_builder(
+        tm1_service: Any,
+        build_mode: Literal["create_from_map", "copy_from_source"] = "create_from_map",
+        if_cube_exist_strategy: Literal["rebuild", "skip", "raise_error"] = "skip",
+
+        cube_dimension_create_map: dict[str, list[str]] = None,
+
+        copy_source_tm1_service: Any = None,
+        copy_source_cubes: list[str] = None,
+        copy_cube_rename_map: dict[str, str] = None,
+        copy_dimension_rename_map: dict[str, str] = None,
+        missing_dimension_strategy: Literal["copy_from_source", "raise_error"] = "raise_error",
+
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
+        input_error_mode: Literal["strict", "loose"] = "strict",
+        **dim_builder_kwargs
+) -> None:
+    utility.set_logging_level(logging_level=logging_level)
+    utility.validate_cube_create_inputs(
+        build_mode=build_mode,
+        cube_dimension_create_map=cube_dimension_create_map,
+        copy_source_cubes=copy_source_cubes,
+        copy_cube_rename_map=copy_cube_rename_map,
+        copy_dimension_rename_map=copy_dimension_rename_map,
+        input_error_mode=input_error_mode
+    )
+
+    copy_source_tm1_service = copy_source_tm1_service or tm1_service
+    copy_source_cubes = copy_source_cubes or []
+    copy_cube_rename_map = copy_cube_rename_map or {}
+    copy_dimension_rename_map = copy_dimension_rename_map or {}
+    cube_dimension_create_map = cube_dimension_create_map or {}
+
+    if build_mode == "copy_from_source":
+        utility.fetch_cube_structure_data(copy_source_tm1_service, cube_dimension_create_map,
+                                          copy_source_cubes, copy_cube_rename_map, copy_dimension_rename_map)
+
+    unique_dimensions_list = utility.create_unique_dim_list_from_cube_dim_map(cube_dimension_create_map)
+    missing_dimensions = utility.check_dimensions_existance(tm1_service, unique_dimensions_list)
+
+    if missing_dimension_strategy == "copy_from_source" and len(missing_dimensions) > 0:
+        missing_dimensions_rename_map = utility.get_dimension_copy_map_for_missing(
+            missing_dimensions, copy_dimension_rename_map)
+        for source, target in missing_dimensions_rename_map:
+            dimension_copy(
+                tm1_service=copy_source_tm1_service,
+                target_tm1_service=tm1_service,
+                source_dimension_name=source,
+                target_dimension_name=target,
+                logging_level=logging_level,
+                **dim_builder_kwargs
+            )
+
+    utility.create_cubes(tm1_service, cube_dimension_create_map, if_cube_exist_strategy)
+
+
+# ------------------------------------------------------------------------------------------------------------
 # Bedrock: Dimension Builder Module functions
 #     - dimension builder, hierarchy builder (imports)
 #     - dimension copy, hierarchy copy
@@ -283,7 +345,7 @@ def hierarchy_builder(
 def dimension_copy(
         tm1_service: Any,
         source_dimension_name: str,
-        target_dimension_name: str,
+        target_dimension_name: str = None,
         build_strategy: Literal["rebuild", "safe_rebuild", "safe_rebuild_unwind", "update"] = "rebuild",
         source_hierarchy_filter: list[str] = None,
         hierarchy_rename_map: dict = None,
@@ -297,6 +359,7 @@ def dimension_copy(
 
     # prepare steps for target
     target_tm1_service = target_tm1_service or tm1_service
+    target_dimension_name = target_dimension_name or source_dimension_name
 
     # manage source hierarchies and renaming
     source_hierarchies_actual = list(

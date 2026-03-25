@@ -609,11 +609,176 @@ def create_audit_columns_for_step(data_df: DataFrame, mapping: Union[dict, list]
 # ------------------------------------------------------------------------------------------------------------
 
 
-def create_cubes(tm1_service: Any, cube_dimensions: dict[str, list]) -> None:
-    for cube_name, cube_dims in cube_dimensions.items():
+def create_cubes(
+        tm1_service: Any,
+        cube_dimension_create_map: dict[str, list],
+        if_exist_strategy: Literal["rebuild", "skip", "raise_error"] = "skip"
+) -> None:
+    for cube_name, cube_dims in cube_dimension_create_map.items():
+        target_cube_exists = tm1_service.cubes.exists(cube_name)
+
+        if target_cube_exists:
+            if if_exist_strategy == "skip":
+                basic_logger.debug(f"Cube {cube_name} already exists, skipping")
+                continue
+            elif if_exist_strategy == "raise_error":
+                raise ValueError(f"Target cube {cube_name} already exists, raise error is activated")
+            else:
+                basic_logger.debug(f"Cube {cube_name} already exists, deleting")
+                tm1_service.cubes.delete(cube_name)
+
         cube_obj = Cube(name=cube_name, dimensions=cube_dims)
         tm1_service.cubes.create(cube_obj)
+        basic_logger.debug(f"Cube {cube_name} was successfully created")
 
+
+def check_dimensions_existance(
+        tm1_service: Any,
+        unique_dimensions_list: Optional[list[str]] = None,
+        missing_dimension_strategy: Literal["copy_from_source", "raise_error"] = "copy_from_source",
+) -> Optional[list[str]]:
+    if unique_dimensions_list is None:
+        return
+
+    missing_dimensions = []
+    for dimension in unique_dimensions_list:
+        if not tm1_service.dimensions.exists(dimension):
+            missing_dimensions.append(dimension)
+
+    if len(missing_dimensions) > 0 and missing_dimension_strategy == "raise_error":
+        raise ValueError(f"Dimensions '{','.join(dimension)}' does not exist. "
+                         f"Please create or copy dimension from source")
+
+    return missing_dimensions
+
+
+def create_unique_dim_list_from_cube_dim_map(cube_dimension_create_map: Optional[dict] = None) -> list[str]:
+    return list({
+        dim
+        for cube_dimensions in cube_dimension_create_map.values()
+        for dim in cube_dimensions
+    }) if cube_dimension_create_map is not None else []
+
+
+def fetch_cube_structure_data(
+        copy_source_tm1_service: Any,
+        cube_dimension_create_map: dict,
+        copy_source_cubes: Optional[list] = None,
+        copy_cube_rename_map: dict[str, str] = None,
+        copy_dimension_rename_map: dict[str, str] = None,
+) -> None:
+    if copy_source_cubes is None:
+        return
+
+    basic_logger.debug("Copy mode activated, fetching build data from source server...")
+    for cube_name in copy_source_cubes:
+        if not copy_source_tm1_service.cubes.exists(cube_name):
+            raise ValueError(f"Source cube {cube_name} does not exist, cannot copy")
+
+        cube_dimension_create_map[copy_cube_rename_map.get(cube_name, cube_name)] = [
+            copy_dimension_rename_map.get(dim, dim)
+            for dim in copy_source_tm1_service.cubes.get_dimension_names(cube_name)
+        ]
+
+
+def list_is_unique(input_list: list) -> bool:
+    return len(input_list) == len(set(input_list))
+
+
+def validate_cube_create_inputs(
+        build_mode: Literal["create_from_map", "copy_from_source"] = "create_from_map",
+
+        cube_dimension_create_map: dict[str, list[str]] = None,
+
+        copy_source_cubes: list[str] = None,
+        copy_cube_rename_map: dict[str, str] = None,
+        copy_dimension_rename_map: dict[str, str] = None,
+
+        input_error_mode: Literal["strict", "loose"] = "strict"
+) -> None:
+    if build_mode == "create_from_map" and cube_dimension_create_map is None and input_error_mode == "strict":
+        raise ValueError("Strict error handling: cube_dimension_create_map is mandatory for 'create from map' mode.")
+
+    if build_mode == "copy_from_source" and copy_source_cubes is None and input_error_mode == "strict":
+        raise ValueError("Strict error handling: copy_source_cubes is mandatory for 'copy from source' mode.")
+
+    if cube_dimension_create_map is not None:
+        for cube, dim_list in cube_dimension_create_map.items():
+            if not list_is_unique(dim_list):
+                raise ValueError(f"A dimension was duplicated for the cube {cube}. Please check input")
+
+    if copy_dimension_rename_map is not None:
+        if not list_is_unique(list(copy_dimension_rename_map.values())):
+            raise ValueError(f"A dimension name was duplicated for renaming. "
+                             f"Dimension names must be unique. "
+                             f"Please check input.")
+
+    if copy_cube_rename_map is not None:
+        if not list_is_unique(list(copy_cube_rename_map.values())):
+            raise ValueError(f"A cube name was duplicated for renaming. "
+                             f"Cube names must be unique. "
+                             f"Please check input.")
+
+
+def get_dimension_copy_map_for_missing(
+        missing_dimensions: list[str],
+        dimension_rename_map: dict[str, str] = None,
+) -> Optional[dict[str, str]]:
+    target_to_source: Dict[str, str] = {
+        target: source
+        for source, target in dimension_rename_map.items()
+    }
+
+    return {
+        target_to_source.get(target, target): target
+        for target in missing_dimensions
+    }
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Utility: mdx
+# ------------------------------------------------------------------------------------------------------------
+
+def generate_dynamic_mdx_query_string(
+        tm1_service: Any,
+        target_cube_name: str,
+        dimension_filter_mapping: dict[str, list[str]] = None,
+        parallel_dimensions_for_template: list[str] = None,
+        dimension_hierarchy_mapping: dict[str, str] = None,
+        skip_zeros: bool = False
+) -> str:
+    cube_dimensions_list = tm1_service.cubes.get_dimension_names(cube_name=target_cube_name)
+
+    dimension_filter_mapping = dimension_filter_mapping or {}
+    dimension_hierarchy_mapping = dimension_hierarchy_mapping or {}
+
+    if parallel_dimensions_for_template is not None:
+        for dimension_name in parallel_dimensions_for_template:
+            dimension_filter_mapping[dimension_name] = [f"${dimension_name}"]
+
+    dimension_mdx_sets = []
+    for dimension_name in cube_dimensions_list:
+        active_hierarchy = dimension_hierarchy_mapping.get(dimension_name, dimension_name)
+
+        if dimension_name in dimension_filter_mapping:
+            formatted_elements = ", ".join(
+                f"[{dimension_name}].[{active_hierarchy}].[{element_name}]"
+                for element_name in dimension_filter_mapping[dimension_name]
+            )
+            dimension_mdx_sets.append(f"{{ {formatted_elements} }}")
+        else:
+            dimension_mdx_sets.append(
+                f"TM1FILTERBYLEVEL(TM1SUBSETALL([{dimension_name}].[{active_hierarchy}]), 0)"
+            )
+
+    non_empty_prefix = "NON EMPTY " if skip_zeros else ""
+
+    if not dimension_mdx_sets:
+        return f"SELECT FROM [{target_cube_name}]"
+
+    axis_zero_set_expression = " * ".join(dimension_mdx_sets)
+
+    return f"SELECT {non_empty_prefix}{axis_zero_set_expression} ON 0 FROM [{target_cube_name}]"
 
 # ------------------------------------------------------------------------------------------------------------
 # Utility: debug technicals
