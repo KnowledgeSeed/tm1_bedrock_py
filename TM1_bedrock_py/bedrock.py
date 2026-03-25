@@ -675,7 +675,7 @@ def data_copy_intercube(tm1_service: Optional[Any],
                         slice_size_of_dataframe: Optional[int] = 50000,
                         use_ti: Optional[bool] = False,
                         use_blob: Optional[bool] = False,
-                        use_mixed_datatypes: Optional[bool] = False,
+                        cast_cell_type_mapping_on_values: Optional[bool] = False,
 
                         increment: Optional[bool] = False,
                         sum_numeric_duplicates: Optional[bool] = False,
@@ -754,7 +754,7 @@ def data_copy_intercube(tm1_service: Optional[Any],
         Whether to use TurboIntegrator (TI) for writing data.
     use_blob : bool, default=False
         Whether to use BLOB storage for data transfer.
-    use_mixed_datatypes : Optional[bool], default=False
+    cast_cell_type_mapping_on_values : Optional[bool], default=False
         Whether to cast values based on measure element data types.
     increment : bool, default=False
         Whether to increment existing values instead of replacing them in the cube.
@@ -866,7 +866,7 @@ def data_copy_intercube(tm1_service: Optional[Any],
     data_metadata_queryspecific = utility.TM1CubeObjectMetadata.collect(
         mdx=data_mdx,
         tm1_service=tm1_service,
-        collect_measure_types=use_mixed_datatypes,
+        collect_measure_types=cast_cell_type_mapping_on_values,
     )
     source_cube_name = data_metadata_queryspecific.get_cube_name()
 
@@ -893,7 +893,7 @@ def data_copy_intercube(tm1_service: Optional[Any],
         dataframe=dataframe, column_value=data_metadata_queryspecific.get_filter_dict(),
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, **kwargs)
 
-    if use_mixed_datatypes:
+    if cast_cell_type_mapping_on_values:
         measure_dim_name = source_cube_dims[-1]
         measure_types = data_metadata_queryspecific.get_measure_element_types()
 
@@ -1083,7 +1083,7 @@ def data_copy(
         slice_size_of_dataframe: int = 50000,
         use_ti: bool = False,
         use_blob: bool = False,
-        use_mixed_datatypes: Optional[bool] = False,
+        cast_cell_type_mapping_on_values: Optional[bool] = False,
         increment: bool = False,
         sum_numeric_duplicates: bool = False,
         logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
@@ -1148,7 +1148,7 @@ def data_copy(
         Whether to use TurboIntegrator (TI) for writing data.
     use_blob : bool, default=False
         Whether to use BLOB storage for data transfer.
-    use_mixed_datatypes : Optional[bool], default=False
+    cast_cell_type_mapping_on_values : Optional[bool], default=False
         Whether to cast values based on target measure element data types.
     increment : bool, default=False
         Whether to increment existing values instead of replacing them in the cube.
@@ -1235,7 +1235,7 @@ def data_copy(
 
     data_metadata_queryspecific = utility.TM1CubeObjectMetadata.collect(
         mdx=data_mdx,
-        collect_measure_types=use_mixed_datatypes,
+        collect_measure_types=cast_cell_type_mapping_on_values,
         tm1_service=tm1_service
     )
     cube_name = data_metadata_queryspecific.get_cube_name()
@@ -1273,7 +1273,7 @@ def data_copy(
         **kwargs
     )
 
-    if use_mixed_datatypes:
+    if cast_cell_type_mapping_on_values:
         measure_dim_name = source_cube_dims[-1]
         measure_types = data_metadata_queryspecific.get_measure_element_types()
         transformer.dataframe_cast_value_by_measure_type(
@@ -1619,7 +1619,7 @@ def load_sql_data_to_tm1_cube(
         audit_mode: bool = False,
         check_missing_elements_audit: Optional[bool] = False,
 
-        use_mixed_datatypes: bool = False,
+        cast_cell_type_mapping_on_values: bool = False,
         
         case_and_space_insensitive_inputs: Optional[bool] = False,
         mapping_steps: Optional[List[Dict]] = None,
@@ -1763,7 +1763,7 @@ def load_sql_data_to_tm1_cube(
         cube_name=target_cube_name,
         metadata_function=target_metadata_function,
         collect_itemskip_info=check_missing_elements,
-        collect_measure_types=use_mixed_datatypes,
+        collect_measure_types=cast_cell_type_mapping_on_values,
         dimension_check_filter=dimensions_to_check,
         itemskip_query_mode=element_query_mode,
         **kwargs
@@ -1869,7 +1869,7 @@ def load_sql_data_to_tm1_cube(
         filtered_count = initial_row_count - final_row_count
         basic_logger.warning(f"Number of rows filtered out through inner joins: {filtered_count}/{initial_row_count}")
 
-    if use_mixed_datatypes:
+    if cast_cell_type_mapping_on_values:
         measure_dim_name = cube_dims[-1]
         measure_types = target_metadata.get_measure_element_types()
         transformer.dataframe_cast_value_by_measure_type(
@@ -2620,7 +2620,7 @@ def load_csv_data_to_tm1_cube(
         delimiter: Optional[str] = None,
         decimal: Optional[str] = None,
         dtype: Optional[dict] = None,
-        use_mixed_datatypes: Optional[bool] = False,
+        cast_cell_type_mapping_on_values: Optional[bool] = False,
         nrows: Optional[int] = None,
         chunksize: Optional[int] = None,
         parse_dates: Optional[Union[bool, Sequence[Hashable]]] = None,
@@ -2697,7 +2697,7 @@ def load_csv_data_to_tm1_cube(
             directly to `pandas.read_csv`.
         dtype: A dictionary mapping column names to specific data types for
             `pandas.read_csv` to use during parsing.
-        use_mixed_datatypes: If True, the function will validate that the 'Value'
+        cast_cell_type_mapping_on_values: If True, the function will validate that the 'Value'
             column's data type matches the type (Numeric or String) of the
             corresponding measure element in the TM1 cube. It will also ensure
             all numeric values are cast to `float` to meet TM1 API requirements.
@@ -2753,7 +2753,7 @@ def load_csv_data_to_tm1_cube(
 
     Raises:
         ValueError: If the configuration is invalid or a mapping step fails.
-        TypeError: If `use_mixed_datatypes` is True and a value for a numeric
+        TypeError: If `cast_cell_type_mapping_on_values` is True and a value for a numeric
             measure cannot be converted to a number.
         TM1py.Exceptions.TM1pyRestException: If the final write to TM1 fails.
 
@@ -2761,7 +2761,7 @@ def load_csv_data_to_tm1_cube(
         - Data Integrity: The function automatically enforces two best practices:
             1. All columns in the DataFrame that correspond to a TM1 dimension
                are converted to the `string` data type to ensure consistency.
-            2. If `use_mixed_datatypes` is True, the 'Value' column is rigorously
+            2. If `cast_cell_type_mapping_on_values` is True, the 'Value' column is rigorously
                cleaned to match the TM1 cube's measure types (Numeric vs. String),
                ensuring that numbers are loaded as `float` and strings as `str`.
         - Performance: For the fastest load into TM1, it is recommended to set
@@ -2799,7 +2799,7 @@ def load_csv_data_to_tm1_cube(
         cube_name=target_cube_name,
         metadata_function=target_metadata_function,
         collect_itemskip_info=check_missing_elements,
-        collect_measure_types=use_mixed_datatypes,
+        collect_measure_types=cast_cell_type_mapping_on_values,
         dimension_check_filter=dimensions_to_check,
         itemskip_query_mode=element_query_mode,
         **kwargs
@@ -2893,7 +2893,7 @@ def load_csv_data_to_tm1_cube(
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs
     )
 
-    if use_mixed_datatypes:
+    if cast_cell_type_mapping_on_values:
         measure_dim_name = cube_dims[-1]
         measure_types = target_metadata.get_measure_element_types()
         transformer.dataframe_cast_value_by_measure_type(
@@ -3097,7 +3097,6 @@ def load_tm1_cube_to_csv_file(
     data_metadata_queryspecific = utility.TM1CubeObjectMetadata.collect(
         mdx=data_mdx,
         collect_base_cube_metadata=False,
-        collect_source_cube_metadata=native_view_correction_enabled,
         tm1_service=tm1_service
     )
 

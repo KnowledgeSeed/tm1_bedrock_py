@@ -2,7 +2,7 @@ import pandas as pd
 import os
 from TM1py import TM1Service
 
-from TM1_bedrock_py import bedrock, utility, extractor
+from TM1_bedrock_py import bedrock, utility, extractor, transformer
 from TM1_bedrock_py.utility import set_logging_level
 from TM1_bedrock_py.context_metadata import ContextMetadata
 from tests.tests_dimension_builder.test_data.test_data import generate_hierarchy_data
@@ -89,7 +89,7 @@ def complex_transform_demo():
     ]
 
     logging_level = "DEBUG"
-    use_mixed_datatypes = True
+    use_mixed_datatypes = False
     ignore_missing_elements = True
     use_blob = True
 
@@ -100,7 +100,7 @@ def complex_transform_demo():
         bedrock.data_copy_intercube(tm1_service=tm1_service, target_cube_name=target_cube_name, data_mdx=data_mdx,
                                     check_missing_elements=ignore_missing_elements, mapping_steps=mapping_steps,
                                     clear_target=clear_target, target_clear_set_mdx_list=target_clear_set_mdx_list,
-                                    value_function=inflation_value_scale, use_blob=use_blob,
+                                    value_function=None, use_blob=use_blob,
                                     use_mixed_datatypes=use_mixed_datatypes, logging_level=logging_level,
                                     verbose_logging_mode="print_console",
                                     audit_mode=True)
@@ -557,7 +557,7 @@ def extractor_numeric_string_handling_test():
         "ssl": False
     }
     tm1_service = TM1Service(**tm1params_ksacademy)
-
+    utility.configure_pandas_display(pd)
     mdx = """
         SELECT
             {[}ElementAttributes_Period].[}ElementAttributes_Period].[year]}
@@ -566,9 +566,20 @@ def extractor_numeric_string_handling_test():
         ON ROWS
         FROM [}ElementAttributes_Period]
         """
-
+    """
     df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_service, data_mdx=mdx)
-    metadata = None
+    metadata = utility.TM1CubeObjectMetadata.collect(tm1_service=tm1_service, mdx=mdx, collect_measure_types=True)
+    cube_dims = metadata.get_cube_dims()
+    measure_dim_name = cube_dims[-1]
+    measure_types = metadata.get_measure_element_types()
+
+    transformer.dataframe_cast_value_by_measure_type(
+        dataframe=df,
+        measure_dimension_name=measure_dim_name,
+        measure_element_types=measure_types
+    )
+    """
+    df = tm1_service.cells.execute_mdx_dataframe(mdx=mdx, dtype={'Value': str})
     print(df)
 
 
@@ -579,9 +590,9 @@ if __name__ == '__main__':
     # dimension_builder_complex_demo()
     # hierarchy_builder_demo()
     # run_pyodbc_writer()
-    # complex_transform_demo()
+    complex_transform_demo()
     # build_cube_demo()
     # copy_dim_between_servers_demo()
     # copy_data_between_servers_demo()
     # context_metadata_demo()
-    extractor_numeric_string_handling_test()
+    # extractor_numeric_string_handling_test()

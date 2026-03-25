@@ -1,4 +1,4 @@
-from typing import Callable, List, Dict, Optional, Any, Literal, Union
+from typing import Callable, List, Dict, Optional, Any, Literal, Union, Type
 
 from TM1py import TM1Service, NativeView, Subset
 from pandas import DataFrame, read_sql_table, concat, read_csv
@@ -51,6 +51,7 @@ def __tm1_mdx_to_dataframe_default(
         skip_rule_derived_cells: bool = False,
         decimal: str = None,
         use_blob: Optional[bool] = True,
+        default_returned_value_type: Union[Type[str], Type[float], Type[int]] = str,
         **_kwargs
 ) -> DataFrame:
     """
@@ -69,6 +70,7 @@ def __tm1_mdx_to_dataframe_default(
     Returns:
         DataFrame: A DataFrame containing the result of the MDX query.
     """
+
     if decimal is None:
         decimal = utility.get_local_decimal_separator()
 
@@ -83,7 +85,8 @@ def __tm1_mdx_to_dataframe_default(
             skip_consolidated_cells=skip_consolidated_cells,
             skip_rule_derived_cells=skip_rule_derived_cells,
             use_iterative_json=True,
-            decimal=decimal
+            decimal=decimal,
+            dtype={'Value': default_returned_value_type}
         )
     elif data_mdx:
         if skip_zeros:
@@ -96,7 +99,8 @@ def __tm1_mdx_to_dataframe_default(
             skip_rule_derived_cells=skip_rule_derived_cells,
             use_iterative_json=True,
             use_blob=use_blob,
-            decimal=decimal
+            decimal=decimal,
+            dtype={'Value': default_returned_value_type}
         )
 
     msg = "Either data_mdx or data_mdx_list has to be specified."
@@ -213,7 +217,7 @@ def _handle_mapping_mdx(
     if native_view_extraction_enabled:
         dataframe = transformer.rename_columns_by_reference(
             dataframe=dataframe,
-            column_names=metadata_object.get_source_cube_dims()
+            column_names=metadata_object.get_cube_dims()
         )
     transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=filter_dict)
 
