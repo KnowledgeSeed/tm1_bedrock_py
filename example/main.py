@@ -4,8 +4,10 @@ from TM1py import TM1Service
 
 from TM1_bedrock_py import bedrock, utility
 from TM1_bedrock_py.utility import set_logging_level
+from TM1_bedrock_py.context_metadata import ContextMetadata
 from tests.tests_dimension_builder.test_data.test_data import generate_hierarchy_data
 import pyodbc
+
 
 def complex_transform_demo():
     # letárolás másik verzióra
@@ -87,7 +89,7 @@ def complex_transform_demo():
     ]
 
     logging_level = "DEBUG"
-    use_mixed_datatypes = True
+    use_mixed_datatypes = False
     ignore_missing_elements = True
     use_blob = True
 
@@ -98,20 +100,12 @@ def complex_transform_demo():
         bedrock.data_copy_intercube(tm1_service=tm1_service, target_cube_name=target_cube_name, data_mdx=data_mdx,
                                     check_missing_elements=ignore_missing_elements, mapping_steps=mapping_steps,
                                     clear_target=clear_target, target_clear_set_mdx_list=target_clear_set_mdx_list,
-                                    value_function=inflation_value_scale, use_blob=use_blob,
+                                    value_function=None, use_blob=use_blob,
                                     use_mixed_datatypes=use_mixed_datatypes, logging_level=logging_level,
                                     verbose_logging_mode="print_console",
                                     audit_mode=True)
     finally:
         tm1_service.logout()
-
-
-
-    """
-    
-    
-    
-    """
 
 
 def run_dim_builder_wrapper():
@@ -335,7 +329,7 @@ def hierarchy_builder_demo():
         tm1_service.logout()
 
 
-def run_pyodbc_writer():
+def tm1_to_sql_pyodbc_custom_writer_demo():
     server_address = 'localhost,5835'
     user_name = 'admin'
     password = 'apple'
@@ -519,14 +513,148 @@ def dimension_builder_no_edges_old_format():
         tm1_service.logout()
 
 
+def context_metadata_basic_demo():
+    tm1params_ksacademy = {
+        "address": "dev.knowledgeseed.local",
+        "port": 5379,
+        "user": "admin",
+        "password": "admin",
+        "ssl": False
+    }
+    tm1_service = TM1Service(**tm1params_ksacademy)
+    context_metadata = ContextMetadata(tm1_service=tm1_service)
+
+    mdx = """
+    SELECT
+        {[}ElementAttributes_Period].[}ElementAttributes_Period].[year]}
+    ON COLUMNS,
+        {[Period].[Period].[202401]}
+    ON ROWS
+    FROM [}ElementAttributes_Period]
+    """
+    context_metadata.add_parameter_from_tm1(param_name="current_year",
+                                            mdx_query=mdx)
+
+    file_path = os.path.join(os.path.dirname(__file__), "test_template_render_basic.yaml")
+    yaml_contents = context_metadata.render_template_yaml(yaml_path=file_path)
+    print(yaml_contents)
+
+
+def context_metadata_complete_demo():
+    tm1params_ksacademy = {
+        "address": "dev.knowledgeseed.local",
+        "port": 5379,
+        "user": "admin",
+        "password": "admin",
+        "ssl": False
+    }
+    tm1_service = TM1Service(**tm1params_ksacademy)
+
+    sqlparams_hrdemo = {
+        "host": "localhost",
+        "port": 5835,
+        "username": "admin",
+        "password": "apple",
+        "connection_type": "mssql",
+        "database": "HRDEMO"
+    }
+    sql_engine = utility.create_sql_engine(**sqlparams_hrdemo)
+
+    data_source_path = os.path.join(os.path.dirname(__file__), "test_param_inputs.yaml")
+    render_template_path = os.path.join(os.path.dirname(__file__), "test_template_render.yaml")
+
+    context_metadata = ContextMetadata(
+        tm1_service=tm1_service, sql_engine=sql_engine, path_to_init_yaml=data_source_path)
+
+    result_dict = context_metadata.render_template_yaml(yaml_path=render_template_path)
+    print(result_dict)
+
+
+def copy_cube_structure_between_servers_demo():
+    tm1params_hrdemo = {
+        "address": "localhost",
+        "port": 5365,
+        "user": "admin",
+        "password": "",
+        "ssl": False
+    }
+    tm1srv_target = TM1Service(**tm1params_hrdemo)
+
+    tm1params_ksacademy = {
+        "address": "dev.knowledgeseed.local",
+        "port": 5379,
+        "user": "admin",
+        "password": "admin",
+        "ssl": False
+    }
+    tm1srv_source = TM1Service(**tm1params_ksacademy)
+
+    utility.configure_pandas_display(pd)
+
+    dimension_name_1 = 'CubeCopyDemo1'
+    dimension_name_2 = 'CubeCopyDemo2'
+    dimension_name_3 = 'CubeCopyDemo3'
+    dimension_name_4 = 'CubeCopyDemo4'
+    file_path_1 = os.path.join(os.path.dirname(__file__), "dimension_builder_init.xlsx")
+    file_path_2 = os.path.join(os.path.dirname(__file__), "dimension_builder_init.xlsx")
+    cube_name_source = 'CubeCopyDemoSource'
+    cube_name_target = 'CubeCopyDemoTarget'
+
+    try:
+        bedrock.dimension_builder(
+            dimension_name=dimension_name_1,
+            input_format='indented_levels',
+            build_strategy='rebuild',
+            tm1_service=tm1srv_source,
+            level_columns=['Level1', 'Level2', 'Level3', 'Level4'],
+            input_datasource=file_path_1,
+            logging_level='DEBUG'
+        )
+
+        bedrock.dimension_builder(
+            dimension_name=dimension_name_2,
+            input_format='indented_levels',
+            build_strategy='rebuild',
+            tm1_service=tm1srv_source,
+            level_columns=['Level1', 'Level2', 'Level3', 'Level4'],
+            input_datasource=file_path_2,
+            logging_level='DEBUG'
+        )
+
+        bedrock.cube_builder(
+            tm1_service=tm1srv_source,
+            cube_dimension_create_map={cube_name_source: [dimension_name_1, dimension_name_2]}
+        )
+
+        bedrock.cube_builder(
+            tm1_service=tm1srv_target,
+            build_mode='copy_from_source',
+            if_cube_exist_strategy='rebuild',
+            copy_source_tm1_service=tm1srv_source,
+            copy_source_cubes=cube_name_source,
+            copy_cube_rename_map={cube_name_source: cube_name_target},
+            copy_dimension_rename_map={dimension_name_1: dimension_name_3, dimension_name_2: dimension_name_4},
+            missing_dimension_strategy='copy_from_source',
+            logging_level='DEBUG'
+        )
+    finally:
+        tm1srv_source.logout()
+        tm1srv_target.logout()
+
+
 if __name__ == '__main__':
+    # complex_transform_demo()
+    # tm1_to_sql_pyodbc_custom_writer_demo()
+    # context_metadata_basic_demo()
+    context_metadata_complete_demo()
+
     # dimension_builder_basic_demo()
-    dimension_builder_no_edges_old_format()
+    # dimension_builder_no_edges_old_format()
     # dimension_builder_append_demo()
     # dimension_builder_complex_demo()
     # hierarchy_builder_demo()
-    # run_pyodbc_writer()
-    # complex_transform_demo()
+
     # build_cube_demo()
     # copy_dim_between_servers_demo()
     # copy_data_between_servers_demo()
+    # copy_cube_structure_between_servers_demo()

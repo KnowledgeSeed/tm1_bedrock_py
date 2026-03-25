@@ -52,7 +52,6 @@ def read_xlsx_source_to_df(
         sheet_name=sheet_identifier,
         **keyword_arguments
     )
-    print(excel_dataframe)
     return excel_dataframe.fillna("")
 
 

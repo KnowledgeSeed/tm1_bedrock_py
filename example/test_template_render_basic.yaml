@@ -1,0 +1,7 @@
+TestKey:
+  InnerKey: |
+    multi
+    line
+    string
+    {{current_year}}
+    the above row should be rendered as the year string

@@ -1,5 +1,10 @@
-Testing Parameters:
-  key: "this is an mdx string: {{LiveVersions.as_set_mdx}}"
-
-Testing Another Parameter:
-  key:  "this is a member unique name: {{ActivePeriodEnd.as_member_unique_name}}"
+TestingParameters:
+  key1:
+    "this is an mdx string of live versions: {{LiveVersions.as_set_mdx}}"
+TestingAnotherParameter:
+  key2:
+    "this is a member unique name of active period end: {{ActivePeriodEnd.as_member_unique_name}}"
+TestingFinalParameter:
+  key3:
+    key4:
+      "this is a raw string of the user prefix variable: {{UserPrefix}}"

@@ -98,11 +98,11 @@ class ContextMetadata:
         extracted_df = extractor.tm1_mdx_to_dataframe(tm1_service=self._tm1_service, data_mdx=mdx_query)
 
         if parameter_type == "dimension_element":
-            value = extracted_df["Value"][0]
+            value = str(extracted_df["Value"][0])
         elif parameter_type == "dimension_element_list":
-            value = extracted_df["Value"].tolist()
+            value = [str(val) for val in extracted_df["Value"].tolist()]
         else:
-            value = extracted_df["Value"][0]
+            value = str(extracted_df["Value"][0])
 
         self.add_parameter(param_name, value, parameter_type, parameter_type_context)
 
