@@ -568,6 +568,7 @@ def extractor_numeric_string_handling_test():
         """
 
     df = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_service, data_mdx=mdx)
+    metadata = None
     print(df)
 
 

@@ -2110,21 +2110,14 @@ def load_tm1_cube_to_sql_table(
         metadata_function=data_metadata_function,
         **kwargs)
 
-    data_metadata_queryspecific = utility.TM1CubeObjectMetadata.collect(
-        mdx=data_mdx,
-        collect_base_cube_metadata=False,
-        collect_source_cube_metadata=native_view_correction_enabled,
-        tm1_service=tm1_service
-    )
-
     if native_view_correction_enabled:
         dataframe = transformer.rename_columns_by_reference(
             dataframe=dataframe,
-            column_names=data_metadata_queryspecific.get_source_cube_dims()
+            column_names=data_metadata.get_cube_dims()
         )
 
     transformer.dataframe_add_column_assign_value(
-        dataframe=dataframe, column_value=data_metadata_queryspecific.get_filter_dict(),
+        dataframe=dataframe, column_value=data_metadata.get_filter_dict(),
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs
     )
 
@@ -3116,7 +3109,7 @@ def load_tm1_cube_to_csv_file(
     if native_view_correction_enabled:
         dataframe = transformer.rename_columns_by_reference(
             dataframe=dataframe,
-            column_names=data_metadata_queryspecific.get_source_cube_dims()
+            column_names=data_metadata_queryspecific.get_cube_dims()
         )
 
     transformer.dataframe_add_column_assign_value(
