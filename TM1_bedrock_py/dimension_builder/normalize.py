@@ -203,11 +203,14 @@ def assign_missing_attribute_values(
             elements_df[attribute_info] = elements_df[attribute_info].fillna("")
 
         elif attr_type == "Numeric":
-            elements_df[attribute_info] = elements_df[attribute_info].fillna(0.0)
-
+            condition = elements_df[attribute_info].isna() | (elements_df[attribute_info] == "")
+            elements_df[attribute_info] = np.where(
+                condition,
+                0.0,
+                elements_df[attribute_info]
+            )
         elif attr_type == "Alias":
             condition = elements_df[attribute_info].isna() | (elements_df[attribute_info] == "")
-
             elements_df[attribute_info] = np.where(
                 condition,
                 elements_df[element_name_column],

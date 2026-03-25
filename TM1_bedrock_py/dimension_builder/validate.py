@@ -140,7 +140,7 @@ def validate_schema_for_numeric_values(input_df: pd.DataFrame, converted_series:
         bad_values = input_df.loc[failed_mask, col_name].unique()
 
         raise SchemaValidationError(
-            f"Conversion Failed: The weight column contains non-numeric values that cannot be converted to float.\n"
+            f"Conversion Failed: The column {col_name} contains non-numeric values that cannot be converted to float.\n"
             f"Invalid values found: {list(bad_values)}"
         )
 

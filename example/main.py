@@ -489,8 +489,15 @@ def dimension_builder_no_edges_old_format():
         "ssl": False
     }
     tm1_service = TM1Service(**tm1params_ksacademy)
-    dimension_name = "DimBuilderDemo6"
-    file_path = os.path.join(os.path.dirname(__file__), "sys_group_nucleus_content.csv")
+    dimension_name = "DimBuilderDemo7"
+    file_path = os.path.join(os.path.dirname(__file__), "company.csv")
+    utility.configure_pandas_display(pd)
+
+    """
+    'vL1', 'vL2', 'vL3', 'vL4', 'vL5',
+    'vL6', 'vL7', 'vL8', 'vL9', 'vL10',
+    'vL11', 'vL12', 'vL13', 'vL14', 'vL15'
+    """
 
     try:
         bedrock.dimension_builder(
@@ -500,9 +507,9 @@ def dimension_builder_no_edges_old_format():
             input_format='indented_levels',
             build_strategy='rebuild',
             level_columns=[
-                'vL1', 'vL2', 'vL3', 'vL4', 'vL5',
-                'vL6', 'vL7', 'vL8', 'vL9', 'vL10',
-                'vL11', 'vL12', 'vL13', 'vL14', 'vL15'
+                'L1', 'L2', 'L3', 'L4', 'L5',
+                'L6', 'L7', 'L8', 'L9', 'L10',
+                'L11', 'L12', 'L13', 'L14', 'L15'
             ],
             weight_column="vWeight",
             type_column="vType",
