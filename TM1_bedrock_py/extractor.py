@@ -397,18 +397,18 @@ def __sql_to_dataframe_default(
                      chunksize=chunksize)
 
     if sql_query:
-        if hasattr(engine, "connect"):
-            with engine.connect() as connection:
-                result = connection.execute(text(sql_query))
-                rows = result.fetchall()
-                return DataFrame(rows, columns=result.keys())
-
         if hasattr(engine, "cursor"):
             with engine.cursor() as cursor:
                 cursor.execute(sql_query)
                 rows = cursor.fetchall()
                 columns = [description[0] for description in cursor.description]
                 return DataFrame(rows, columns=columns)
+
+        if hasattr(engine, "connect"):
+            with engine.connect() as connection:
+                result = connection.execute(text(sql_query))
+                rows = result.fetchall()
+                return DataFrame(rows, columns=result.keys())
 
     msg = "Either 'table_name' or 'sql_query' must be provided."
     basic_logger.error(msg)
