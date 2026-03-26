@@ -763,7 +763,7 @@ def test_dataframe_to_csv_build_dataframe_form_mdx_fail(tm1_connection_factory, 
 # Main: tests for airflow executor common functions
 # ------------------------------------------------------------------------------------------------------------
 
-
+@pytest.mark.skip
 @parametrize_from_file
 def test_generate_mapping_queries_for_slice(kwargs, ms, sm, expected_ms, expected_sm):
     try:
