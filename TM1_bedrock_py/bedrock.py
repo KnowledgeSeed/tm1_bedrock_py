@@ -274,7 +274,7 @@ def hierarchy_builder(
 ) -> Optional[Tuple[pd.DataFrame, pd.DataFrame]]:
     utility.set_logging_level(logging_level=logging_level)
 
-    if override_input_edges_df is not None and override_input_elements_df is not None:
+    if override_input_elements_df is not None:
         input_edges_df = override_input_edges_df
         input_elements_df = override_input_elements_df
     else:
