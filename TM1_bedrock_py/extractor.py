@@ -52,6 +52,7 @@ def __tm1_mdx_to_dataframe_default(
         decimal: str = None,
         use_blob: Optional[bool] = True,
         default_returned_value_type: Union[Type[str], Type[float], Type[int]] = str,
+        cube_dimensions: list[str] = None,
         **_kwargs
 ) -> DataFrame:
     """
@@ -70,6 +71,9 @@ def __tm1_mdx_to_dataframe_default(
     Returns:
         DataFrame: A DataFrame containing the result of the MDX query.
     """
+    dtype = {'Value': default_returned_value_type}
+    if cube_dimensions is not None:
+        dtype |= {key: str for key in cube_dimensions}
 
     if decimal is None:
         decimal = utility.get_local_decimal_separator()
@@ -86,7 +90,7 @@ def __tm1_mdx_to_dataframe_default(
             skip_rule_derived_cells=skip_rule_derived_cells,
             use_iterative_json=True,
             decimal=decimal,
-            dtype={'Value': default_returned_value_type}
+            dtype=dtype
         )
     elif data_mdx:
         if skip_zeros:

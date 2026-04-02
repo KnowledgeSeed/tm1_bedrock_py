@@ -859,27 +859,6 @@ def data_copy_intercube(tm1_service: Optional[Any],
     utility.set_logging_level(logging_level=logging_level)
     basic_logger.info("Execution started.")
 
-    dataframe = extractor.tm1_mdx_to_dataframe(
-        tm1_service=tm1_service,
-        data_mdx=data_mdx,
-        data_mdx_list=data_mdx_list,
-        skip_zeros=skip_zeros,
-        skip_consolidated_cells=skip_consolidated_cells,
-        skip_rule_derived_cells=skip_rule_derived_cells,
-        mdx_function=mdx_function,
-        verbose_logging_mode=verbose_logging_mode,
-        verbose_logging_output_dir=verbose_logging_output_dir,
-        **kwargs
-    )
-
-    if dataframe.empty:
-        if clear_target:
-            loader.clear_cube(tm1_service=target_tm1_service,
-                              cube_name=target_cube_name,
-                              clear_set_mdx_list=target_clear_set_mdx_list,
-                              **kwargs)
-        return
-
     data_metadata_queryspecific = utility.TM1CubeObjectMetadata.collect(
         mdx=data_mdx,
         tm1_service=tm1_service,
@@ -899,6 +878,28 @@ def data_copy_intercube(tm1_service: Optional[Any],
 
     source_cube_dims = data_metadata_queryspecific.get_cube_dims()
     target_cube_dims = target_metadata.get_cube_dims()
+
+    dataframe = extractor.tm1_mdx_to_dataframe(
+        tm1_service=tm1_service,
+        data_mdx=data_mdx,
+        data_mdx_list=data_mdx_list,
+        skip_zeros=skip_zeros,
+        skip_consolidated_cells=skip_consolidated_cells,
+        skip_rule_derived_cells=skip_rule_derived_cells,
+        mdx_function=mdx_function,
+        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
+        cube_dimensions=source_cube_dims,
+        **kwargs
+    )
+
+    if dataframe.empty:
+        if clear_target:
+            loader.clear_cube(tm1_service=target_tm1_service,
+                              cube_name=target_cube_name,
+                              clear_set_mdx_list=target_clear_set_mdx_list,
+                              **kwargs)
+        return
 
     transformer.cast_coordinates_to_str(source_cube_dims, dataframe)
 
@@ -1239,19 +1240,6 @@ def data_copy(
     native_view_correction_enabled = (
             mdx_function == "native_view_extractor" and not case_and_space_insensitive_inputs)
 
-    dataframe = extractor.tm1_mdx_to_dataframe(
-        tm1_service=tm1_service,
-        data_mdx=data_mdx,
-        data_mdx_list=data_mdx_list,
-        skip_zeros=skip_zeros,
-        skip_consolidated_cells=skip_consolidated_cells,
-        skip_rule_derived_cells=skip_rule_derived_cells,
-        mdx_function=mdx_function,
-        verbose_logging_mode=verbose_logging_mode,
-        verbose_logging_output_dir=verbose_logging_output_dir,
-        **kwargs
-    )
-
     data_metadata_queryspecific = utility.TM1CubeObjectMetadata.collect(
         mdx=data_mdx,
         collect_measure_types=cast_cell_type_mapping_on_values,
@@ -1268,6 +1256,23 @@ def data_copy(
         **kwargs
     )
 
+    cube_dims = target_metadata.get_cube_dims()
+    source_cube_dims = data_metadata_queryspecific.get_cube_dims()
+
+    dataframe = extractor.tm1_mdx_to_dataframe(
+        tm1_service=tm1_service,
+        data_mdx=data_mdx,
+        data_mdx_list=data_mdx_list,
+        skip_zeros=skip_zeros,
+        skip_consolidated_cells=skip_consolidated_cells,
+        skip_rule_derived_cells=skip_rule_derived_cells,
+        mdx_function=mdx_function,
+        verbose_logging_mode=verbose_logging_mode,
+        verbose_logging_output_dir=verbose_logging_output_dir,
+        cube_dimensions=source_cube_dims,
+        **kwargs
+    )
+
     if dataframe.empty:
         if clear_target:
             loader.clear_cube(tm1_service=target_tm1_service,
@@ -1276,8 +1281,7 @@ def data_copy(
                               **kwargs)
         return
 
-    cube_dims = target_metadata.get_cube_dims()
-    source_cube_dims = data_metadata_queryspecific.get_cube_dims()
+
 
     transformer.cast_coordinates_to_str(source_cube_dims, dataframe)
 
