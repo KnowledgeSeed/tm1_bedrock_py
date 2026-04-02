@@ -900,6 +900,8 @@ def data_copy_intercube(tm1_service: Optional[Any],
     source_cube_dims = data_metadata_queryspecific.get_cube_dims()
     target_cube_dims = target_metadata.get_cube_dims()
 
+    transformer.cast_coordinates_to_str(source_cube_dims, dataframe)
+
     if native_view_correction_enabled:
         dataframe = transformer.rename_columns_by_reference(
             dataframe=dataframe,
@@ -1276,6 +1278,8 @@ def data_copy(
 
     cube_dims = target_metadata.get_cube_dims()
     source_cube_dims = data_metadata_queryspecific.get_cube_dims()
+
+    transformer.cast_coordinates_to_str(source_cube_dims, dataframe)
 
     if native_view_correction_enabled:
         dataframe = transformer.rename_columns_by_reference(
