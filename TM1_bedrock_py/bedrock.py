@@ -85,7 +85,6 @@ def cube_builder(
     if missing_dimension_strategy == "copy_from_source" and len(missing_dimensions) > 0:
         missing_dimensions_rename_map = utility.get_dimension_copy_map_for_missing(
             missing_dimensions, copy_dimension_rename_map)
-        print(missing_dimensions_rename_map)
         for source, target in missing_dimensions_rename_map.items():
             basic_logger.debug(f"Copying missing dimension from source to target")
             dimension_copy(
@@ -394,9 +393,6 @@ def dimension_copy(
     # transforms
     edges_df, elements_df = normalize.transform_hierarchy_structure_for_copy(
         edges_df, elements_df, hierarchy_rename_map, target_dimension_name)
-
-    print(edges_df)
-    print(elements_df)
 
     dimension_builder(
         dimension_name=target_dimension_name,
