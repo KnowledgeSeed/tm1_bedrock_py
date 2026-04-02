@@ -7,6 +7,7 @@ from TM1_bedrock_py.utility import set_logging_level
 from TM1_bedrock_py.context_metadata import ContextMetadata
 from tests.tests_dimension_builder.test_data.test_data import generate_hierarchy_data
 import pyodbc
+from TM1_bedrock_py.dimension_builder.apply import create_attribute_structure
 
 
 def complex_transform_demo():
@@ -701,8 +702,30 @@ def mdx_gen_demo():
     }
     tm1srv_target = TM1Service(**tm1params_hrdemo)
     mdx = utility.generate_dynamic_mdx_query_string(
-            tm1_service=tm1srv_target, target_cube_name='Group Employee', dimension_filter_mapping={"Groups": ['SingleGroup']})
+        tm1_service=tm1srv_target, target_cube_name='Group Employee',
+        dimension_filter_mapping={"Groups": ['SingleGroup']})
     print(mdx)
+
+
+def attribute_structure_creation_demo():
+    tm1params_hrdemo = {
+        "address": "localhost",
+        "port": 5365,
+        "user": "admin",
+        "password": "",
+        "ssl": False
+    }
+    tm1srv_target = TM1Service(**tm1params_hrdemo)
+
+    attr_cols = ["testAttr1:String", "TestAttr2:Numeric"]
+    attr_cube_name = "}ElementAttributes_attributeTest"
+    dimension_name = "attributeTest"
+    create_attribute_structure(
+        tm1_service=tm1srv_target,
+        attr_cols=attr_cols,
+        attr_cube_name=attr_cube_name,
+        dimension_name=dimension_name
+    )
 
 
 if __name__ == '__main__':
@@ -718,7 +741,9 @@ if __name__ == '__main__':
     # hierarchy_builder_demo()
 
     # build_cube_demo()
-    copy_dim_between_servers_demo()
+    # copy_dim_between_servers_demo()
     # copy_data_between_servers_demo()
     # copy_cube_structure_between_servers_demo()
     # mdx_gen_demo()
+
+    attribute_structure_creation_demo()

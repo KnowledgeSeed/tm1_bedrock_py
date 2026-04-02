@@ -217,6 +217,10 @@ def dimension_builder(
             writable_attr_df, attr_cube_name, attr_cube_dims = apply.prepare_attributes_for_load(
                 dimension_name=dimension_name, elements_df=updated_elements_df)
 
+            apply.create_attribute_structure(
+                tm1_service=tm1_service, attr_cols=attr_columns,
+                attr_cube_name=attr_cube_name, dimension_name=dimension_name, attribute_parser=attribute_parser)
+
             loader.dataframe_to_cube(
                 tm1_service=tm1_service,
                 dataframe=writable_attr_df,
@@ -334,6 +338,10 @@ def hierarchy_builder(
         if len(attr_columns) != 0:
             writable_attr_df, attr_cube_name, attr_cube_dims = apply.prepare_attributes_for_load(
                 dimension_name=dimension_name, elements_df=updated_elements_df)
+
+            apply.create_attribute_structure(
+                tm1_service=tm1_service, attr_cols=attr_columns,
+                attr_cube_name=attr_cube_name, dimension_name=dimension_name, attribute_parser=attribute_parser)
 
             loader.dataframe_to_cube(
                 tm1_service=tm1_service,
