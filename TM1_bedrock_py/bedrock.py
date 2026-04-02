@@ -161,7 +161,7 @@ def dimension_builder(
         basic_logger.warning("Update mode doesnt allow type change, parameter was set to false")
         allow_type_changes = False
 
-    if override_input_edges_df is not None and override_input_elements_df is not None:
+    if override_input_elements_df is not None:
         input_edges_df = override_input_edges_df
         input_elements_df = override_input_elements_df
     else:
@@ -274,7 +274,7 @@ def hierarchy_builder(
 ) -> Optional[Tuple[pd.DataFrame, pd.DataFrame]]:
     utility.set_logging_level(logging_level=logging_level)
 
-    if override_input_edges_df is not None and override_input_elements_df is not None:
+    if override_input_elements_df is not None:
         input_edges_df = override_input_edges_df
         input_elements_df = override_input_elements_df
     else:
@@ -386,6 +386,9 @@ def dimension_copy(
     # transforms
     edges_df, elements_df = normalize.transform_hierarchy_structure_for_copy(
         edges_df, elements_df, hierarchy_rename_map, target_dimension_name)
+
+    print(edges_df)
+    print(elements_df)
 
     dimension_builder(
         dimension_name=target_dimension_name,

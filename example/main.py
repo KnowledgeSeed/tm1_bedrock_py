@@ -159,8 +159,8 @@ def dimension_builder_basic_demo():
     }
     tm1_service = TM1Service(**tm1_params)
 
-    dimension_name = "DimBuilderDemo3"
-    file_path = os.path.join(os.path.dirname(__file__), "dimension_builder_build_test.xlsx")
+    dimension_name = "DimBuilderDemo9"
+    file_path = os.path.join(os.path.dirname(__file__), "dimension_builder_init2.xlsx")
 
     try:
         bedrock.dimension_builder(
@@ -407,9 +407,7 @@ def copy_dim_between_servers_demo():
         bedrock.dimension_copy(
             tm1_service=tm1srv_ksacademy,
             target_tm1_service=tm1srv_hrdemo,
-            source_dimension_name="DimBuilderDemo2",
-            target_dimension_name="DimBuilderDemoCopy2",
-            hierarchy_rename_map={"DimBuilderDemo": "DimBuilderDemoCopy2"},
+            source_dimension_name="sys_group_nucleus_content_mapping_check_measure",
             logging_level="DEBUG"
         )
     finally:
@@ -642,19 +640,85 @@ def copy_cube_structure_between_servers_demo():
         tm1srv_target.logout()
 
 
+def mvm_demo(tm1srv_source, tm1srv_target, cube_list):
+    # cube_list = ["TestCube1", "TestCube2", "TestCube3"]
+
+    dim_list_unique = list(set([
+        dim
+        for cube_name in cube_list
+        for dim in tm1srv_source.cubes.get_dimension_names(cube_name)
+    ]))
+
+    try:
+        for dim in dim_list_unique:
+            bedrock.dimension_copy(
+                tm1_service=tm1srv_source,
+                target_tm1_service=tm1srv_target,
+                source_dimension_name=dim,
+                allow_type_changes=True,
+                logging_level='DEBUG'
+            )
+
+        for cube in cube_list:
+            bedrock.cube_builder(
+                tm1_service=tm1srv_target,
+                build_mode='copy_from_source',
+                if_cube_exist_strategy='rebuild',
+                copy_source_tm1_service=tm1srv_source,
+                copy_source_cubes=cube,
+                logging_level='DEBUG'
+            )
+
+        for cube in cube_list:
+            cube_mdx = utility.generate_dynamic_mdx_query_string(
+                tm1_service=tm1srv_source, target_cube_name=cube)
+
+            bedrock.data_copy_intercube(
+                tm1_service=tm1srv_source,
+                target_tm1_service=tm1srv_target,
+                target_cube_name=cube,
+                data_mdx=cube_mdx,
+                skip_zeros=True,
+                clear_target=True,
+                target_clear_set_mdx_list=[],
+                check_missing_elements=True,
+                use_blob=True,
+                logging_level='DEBUG'
+            )
+
+    finally:
+        tm1srv_source.logout()
+        tm1srv_target.logout()
+
+
+def mdx_gen_demo():
+    tm1params_hrdemo = {
+        "address": "localhost",
+        "port": 5365,
+        "user": "admin",
+        "password": "",
+        "ssl": False
+    }
+    tm1srv_target = TM1Service(**tm1params_hrdemo)
+    mdx = utility.generate_dynamic_mdx_query_string(
+            tm1_service=tm1srv_target, target_cube_name='Group Employee', dimension_filter_mapping={"Groups": ['SingleGroup']})
+    print(mdx)
+
+
 if __name__ == '__main__':
     # complex_transform_demo()
     # tm1_to_sql_pyodbc_custom_writer_demo()
     # context_metadata_basic_demo()
-    context_metadata_complete_demo()
+    # context_metadata_complete_demo()
 
-    # dimension_builder_basic_demo()
+    #  dimension_builder_basic_demo()
     # dimension_builder_no_edges_old_format()
     # dimension_builder_append_demo()
     # dimension_builder_complex_demo()
     # hierarchy_builder_demo()
 
     # build_cube_demo()
-    # copy_dim_between_servers_demo()
+    copy_dim_between_servers_demo()
     # copy_data_between_servers_demo()
     # copy_cube_structure_between_servers_demo()
+    # mdx_gen_demo()
