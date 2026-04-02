@@ -19,6 +19,9 @@ from TM1_bedrock_py import utility as baseutils
 
 @baseutils.log_exec_metrics
 def validate_filled_structure(input_df: pd.DataFrame, level_columns: list[str]) -> None:
+    if input_df is None:
+        return
+
     mask = input_df[level_columns].notna().to_numpy()
     rows_count = len(input_df)
     row_indices = np.arange(rows_count)
@@ -55,6 +58,9 @@ def validate_filled_structure(input_df: pd.DataFrame, level_columns: list[str]) 
 
 @baseutils.log_exec_metrics
 def validate_indented_structure(input_df: pd.DataFrame, level_columns: list[str]) -> None:
+    if input_df is None:
+        return
+
     cleaned_levels = input_df[level_columns].replace(r'^\s*$', np.nan, regex=True)
 
     mask = cleaned_levels.notna().to_numpy()
@@ -105,6 +111,9 @@ def validate_indented_structure(input_df: pd.DataFrame, level_columns: list[str]
 
 @baseutils.log_exec_metrics
 def validate_schema_for_parent_child_columns(input_df: pd.DataFrame) -> None:
+    if input_df is None:
+        return
+
     if "Parent" not in input_df.columns:
         raise SchemaValidationError("Parent column is missing.")
     if "Child" not in input_df.columns:
@@ -113,6 +122,9 @@ def validate_schema_for_parent_child_columns(input_df: pd.DataFrame) -> None:
 
 @baseutils.log_exec_metrics
 def validate_schema_for_level_columns(input_df: pd.DataFrame, level_columns: list[str]) -> None:
+    if input_df is None:
+        return
+
     if level_columns is None:
         raise InvalidInputParameterError(
             "Missing required parameter 'level_columns'."
@@ -125,6 +137,9 @@ def validate_schema_for_level_columns(input_df: pd.DataFrame, level_columns: lis
 
 @baseutils.log_exec_metrics
 def validate_schema_for_type_mapping(input_df: pd.DataFrame, type_mapping: dict) -> None:
+    if input_df is None:
+        return
+
     current_values = set(input_df['ElementType'].unique())
     valid_keys = set(type_mapping.keys())
     unknown_values = current_values - valid_keys
@@ -135,6 +150,9 @@ def validate_schema_for_type_mapping(input_df: pd.DataFrame, type_mapping: dict)
 
 @baseutils.log_exec_metrics
 def validate_schema_for_numeric_values(input_df: pd.DataFrame, converted_series: pd.Series, col_name: str) -> None:
+    if input_df is None:
+        return
+
     failed_mask = converted_series.isna() & input_df[col_name].notna()
     if failed_mask.any():
         bad_values = input_df.loc[failed_mask, col_name].unique()
@@ -149,6 +167,9 @@ def validate_schema_for_numeric_values(input_df: pd.DataFrame, converted_series:
 
 @baseutils.log_exec_metrics
 def validate_schema_for_node_integrity(edges_df: pd.DataFrame, elements_df: pd.DataFrame):
+    if edges_df is None or elements_df is None:
+        return
+
     edge_nodes = set(edges_df['Parent'].unique()) | set(edges_df['Child'].unique())
     attr_nodes = set(elements_df['ElementName'].unique())
 
@@ -161,6 +182,9 @@ def validate_schema_for_node_integrity(edges_df: pd.DataFrame, elements_df: pd.D
 
 @baseutils.log_exec_metrics
 def validate_elements_df_schema_for_inconsistent_element_type(input_df: pd.DataFrame) -> None:
+    if input_df is None:
+        return
+
     inconsistent_counts = input_df.groupby("ElementName")["ElementType"].nunique()
 
     if (inconsistent_counts > 1).any():
@@ -170,6 +194,9 @@ def validate_elements_df_schema_for_inconsistent_element_type(input_df: pd.DataF
 
 @baseutils.log_exec_metrics
 def validate_elements_df_schema_for_inconsistent_leaf_attributes(input_df: pd.DataFrame) -> None:
+    if input_df is None:
+        return
+
     n_df = input_df[input_df["ElementType"].isin(["Numeric", "String"])]
     exclude_cols = ["Hierarchy", "Dimension"]
     check_cols = [col for col in input_df.columns if col not in exclude_cols]
@@ -192,6 +219,9 @@ def validate_elements_df_schema_for_inconsistent_leaf_attributes(input_df: pd.Da
 
 @baseutils.log_exec_metrics
 def validate_graph_for_leaves_as_parents(edges_df: pd.DataFrame, elements_df: pd.DataFrame) -> None:
+    if edges_df is None or elements_df is None:
+        return
+
     unique_parents = set(edges_df["Parent"].unique())
 
     mask = elements_df["ElementType"].isin(["N", "S"])
@@ -206,12 +236,18 @@ def validate_graph_for_leaves_as_parents(edges_df: pd.DataFrame, elements_df: pd
 
 @baseutils.log_exec_metrics
 def validate_graph_for_self_loop(input_df: pd.DataFrame) -> None:
+    if input_df is None:
+        return
+
     if input_df["Parent"].eq(input_df["Child"]).any():
         raise GraphValidationError("A child is the parent of itself, self loop detected.")
 
 
 @baseutils.log_exec_metrics
 def validate_graph_for_cycles_with_kahn(edges_df: pd.DataFrame) -> None:
+    if edges_df is None:
+        return
+
     adj = defaultdict(list)
     in_degree = defaultdict(int)
     all_nodes = set()
@@ -286,6 +322,9 @@ def pre_validate_input_schema(
         input_format: Literal["parent_child", "indented_levels", "filled_levels"],
         input_df: pd.DataFrame, level_columns: Optional[list[str]] = None
 ) -> None:
+    if input_df is None:
+        return
+
     if input_format == "parent_child":
         validate_schema_for_parent_child_columns(input_df)
         return
