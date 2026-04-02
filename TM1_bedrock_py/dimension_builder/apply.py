@@ -604,3 +604,25 @@ def combine_schema_for_export(
     renamed_dataframe: pd.DataFrame = structured_dataframe.rename(columns=column_rename_mapping)
 
     return renamed_dataframe
+
+
+def create_attribute_structure(
+        tm1_service: Any, attr_cols: list[str], attr_cube_name: str, dimension_name: str,
+        attribute_parser: Union[Literal["colon", "square_brackets", "square_brackets_start"], Callable] = "colon"
+) -> None:
+    if not tm1_service.dimensions.exists(attr_cube_name):
+        dimension = Dimension(name=attr_cube_name)
+        hierarchy = Hierarchy(name=attr_cube_name, dimension_name=attr_cube_name)
+        for attr_col in attr_cols:
+            attr_name, attr_type = utility.parse_attribute_string(attr_name_and_type=attr_col, parser=attribute_parser)
+            hierarchy.add_element(element_name=attr_name, element_type=attr_type)
+        dimension.add_hierarchy(hierarchy)
+        tm1_service.dimensions.update_or_create(dimension)
+
+    if not tm1_service.cubes.exists(attr_cube_name):
+        cube_dimension_create_map = {
+            attr_cube_name: [dimension_name, attr_cube_name]
+        }
+        baseutils.create_cubes(
+            tm1_service=tm1_service, cube_dimension_create_map=cube_dimension_create_map)
+
