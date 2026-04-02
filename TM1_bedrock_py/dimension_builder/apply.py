@@ -414,7 +414,7 @@ def build_dimension_object(
 def build_hierarchy_object(
         dimension_name: str = None, hierarchy_name: str = None,
         edges_df: Optional[pd.DataFrame] = None, elements_df: pd.DataFrame = None,
-) -> Hierarchy:
+) -> Optional[Hierarchy]:
     if elements_df is None:
         return
 
