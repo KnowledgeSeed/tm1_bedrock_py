@@ -1277,8 +1277,6 @@ def data_copy(
                               **kwargs)
         return
 
-
-
     transformer.cast_coordinates_to_str(source_cube_dims, dataframe)
 
     if native_view_correction_enabled:

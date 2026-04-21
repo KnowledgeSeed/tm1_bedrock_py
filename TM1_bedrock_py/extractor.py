@@ -1,11 +1,12 @@
 from typing import Callable, List, Dict, Optional, Any, Literal, Union, Type
-
+import pandas as pd
 from TM1py import TM1Service, NativeView, Subset
 from pandas import DataFrame, read_sql_table, concat, read_csv
 from sqlalchemy import text
 from typing import Sequence, Hashable, Mapping, Iterable
 import random, string
 from TM1_bedrock_py import utility, transformer, basic_logger
+from itertools import product
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -530,3 +531,53 @@ def __csv_to_dataframe_default(
             low_memory=low_memory,
             memory_map=memory_map
         )
+
+
+# ------------------------------------------------------------------------------------------------------------
+# extractor functions for complex input
+# ------------------------------------------------------------------------------------------------------------
+
+def build_input_domain(
+        tm1_service: Any, domain_mdx: str = None, domain_coords: dict[str, str] = None, **extractor_kwargs
+) -> DataFrame:
+    if domain_mdx is None and domain_coords is None:
+        raise ValueError("Must provide at least one domain source (either mdx or coordinates).")
+
+    if domain_mdx:
+        data_metadata_queryspecific = utility.TM1CubeObjectMetadata.collect(
+            mdx=domain_mdx,
+            collect_measure_types=False,
+            tm1_service=tm1_service
+        )
+        domain = tm1_mdx_to_dataframe(
+            tm1_service=tm1_service, data_mdx=domain_mdx,
+            cube_dims=data_metadata_queryspecific.get_cube_dims(),
+            **extractor_kwargs
+        )
+        transformer.dataframe_add_column_assign_value(
+            dataframe=domain,
+            column_value=data_metadata_queryspecific.get_filter_dict()
+        )
+        domain.drop(columns=["Value"])
+        return domain
+    else:
+        # {"dim1": "elem1", "dim2": "elem2", ...}
+        # Dim1, Dim2, Dim4
+
+        dimension_names = list(domain_coords.keys())
+        leaf_elements_per_dimension = [
+            [
+                f"{raw_element.split(':', 1)[0]}:{leaf}" if ":" in raw_element else leaf
+                for leaf in tm1_service.elements.execute_set_mdx(
+                    mdx=(
+                        f"{{Tm1FilterByLevel({{Tm1DrillDownMember([{dimension_name}].[{raw_element.split(':', 1)[0]}].[{raw_element.split(':', 1)[1]}],ALL,RECURSIVE)}},0)}}"
+                        if ":" in raw_element else
+                        f"{{Tm1FilterByLevel({{Tm1DrillDownMember([{dimension_name}].[{raw_element}],ALL,RECURSIVE)}},0)}}"
+                    )
+                )
+            ]
+            for dimension_name, raw_element in domain_coords.items()
+        ]
+
+        domain = DataFrame(data=product(*leaf_elements_per_dimension), columns=pd.Index(dimension_names))
+        return domain
