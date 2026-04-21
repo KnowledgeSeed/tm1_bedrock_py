@@ -164,6 +164,12 @@ def dataframe_reorder_dimensions(
         cube_dimensions = utility.normalize_structure_strings(cube_dimensions)
         value_column_name = 'value'
 
+    columns_exist_mask = pd.Index(cube_dimensions).isin(dataframe.columns).all()
+    if not columns_exist_mask:
+        missing_columns_string = ', '.join(pd.Index(cube_dimensions)[~columns_exist_mask].tolist())
+        raise ValueError("The following columns (dimensions) are missing from the dataframe: "
+                         f"{missing_columns_string}")
+
     new_order = cube_dimensions + [value_column_name]
     reordered_dataframe = dataframe[new_order]
     return reordered_dataframe
@@ -1175,3 +1181,7 @@ def dataframe_execute_calculations(
             raise ValueError(f"Unsupported mapping method: {method}")
 
     return data_df
+
+
+def dataframe_remove_zero_records(dataframe: DataFrame) -> DataFrame:
+    return dataframe[dataframe["Value"] != 0]
