@@ -1,8 +1,11 @@
-from typing import List, Any, Literal, Dict
-from requests import Response
-from TM1py.Utils import format_url, dimension_hierarchy_element_tuple_from_unique_name, add_url_parameters
 import json
+from typing import List, Any, Literal, Dict, Optional
 
+import pandas as pd
+from TM1py.Utils import format_url, dimension_hierarchy_element_tuple_from_unique_name, add_url_parameters
+from requests import Response
+
+from TM1_bedrock_py import utility
 
 # ------------------------------------------------------------------------------------------------------------
 # tm1py implementation based RestAPI input call functions
@@ -335,3 +338,107 @@ def release_all_holds(
     return _post_against_cellset(tm1_service=tm1_service, cellset_id=cellset_id, payload=payload, delete_cellset=True,
                                  sandbox_name=sandbox_name, **kwargs)
 
+# ------------------------------------------------------------------------------------------------------------
+# Main: complex input process related functions
+# ------------------------------------------------------------------------------------------------------------
+
+def assign_constant(
+        value: float,
+        name: str,
+        dataframe: pd.DataFrame,
+        case_and_space_insensitive_inputs: Optional[bool] = False
+) -> pd.DataFrame:
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+
+    dataframe[name] = value
+    return dataframe
+
+
+def assign_constant_split(
+        value: float,
+        name: str,
+        dataframe: pd.DataFrame,
+        case_and_space_insensitive_inputs: Optional[bool] = False
+) -> pd.DataFrame:
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+
+    dataframe[name] = value / len(dataframe.index)
+    return dataframe
+
+
+def sum_cells(
+        dataframe: pd.DataFrame,
+        name: str,
+        column_to_sum: str,
+        case_and_space_insensitive_inputs: Optional[bool] = False
+) -> pd.DataFrame:
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+
+    dataframe[name] = sum(dataframe[column_to_sum].astype(float).tolist())
+    return dataframe
+
+
+def sum_if_cells(
+        dataframe: pd.DataFrame,
+        name: str,
+        column_to_sum: str,
+        group_column_list: list[str],
+        case_and_space_insensitive_inputs: Optional[bool] = False
+) -> pd.DataFrame:
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+
+    dataframe[name] = dataframe.groupby(group_column_list)[column_to_sum].transform('sum')
+    return dataframe
+
+
+def count_cells(
+        dataframe: pd.DataFrame,
+        name: str,
+        case_and_space_insensitive_inputs: Optional[bool] = False
+) -> pd.DataFrame:
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+
+    dataframe[name] = len(dataframe.index)
+    return dataframe
+
+
+def count_if_cells(
+        dataframe: pd.DataFrame,
+        name: str,
+        group_column_list: list[str],
+        case_and_space_insensitive_inputs: Optional[bool] = False
+) -> pd.DataFrame:
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+
+    dataframe[name] = dataframe.groupby(group_column_list)[group_column_list[0]].transform('count')
+
+    return dataframe
+
+
+def assign_data(
+        dataframe: pd.DataFrame,
+        assign_dataframe: pd.DataFrame,
+        case_and_space_insensitive_inputs: Optional[bool] = False
+) -> pd.DataFrame:
+    # TODO: generate_calc_steps (e.g. in extractor)
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+        utility.normalize_dataframe_strings(assign_dataframe)
+
+    shared_dimensions_set = set(dataframe.columns) & set(assign_dataframe.columns)
+    shared_dimensions = list(shared_dimensions_set)
+
+    dataframe = dataframe.merge(
+        assign_dataframe,
+        on=shared_dimensions,
+        how='left',
+        suffixes=('', '_assigned')
+    )
+
+    return dataframe

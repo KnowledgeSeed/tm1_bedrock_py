@@ -9,7 +9,7 @@ from sqlalchemy import text, create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
 
-from TM1_bedrock_py import extractor, transformer, utility, loader
+from TM1_bedrock_py import extractor, transformer, utility, loader, input as bedrock_input
 from tests.config import tm1_connection_factory, sql_engine_factory
 
 EXCEPTION_MAP = {
@@ -776,3 +776,89 @@ def test_generate_mapping_queries_for_slice(kwargs, ms, sm, expected_ms, expecte
         assert (output_ms, output_sm) == (expected_ms, expected_sm)
     except ModuleNotFoundError as e:
         print(f"Airflow executor sub-modul packages were not installed: {e}")
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Main: tests for input.py modul
+# ------------------------------------------------------------------------------------------------------------
+
+
+@parametrize_from_file
+def test_assign_constant(dataframe, value, expected, name="Value"):
+    df = pd.DataFrame(dataframe)
+    expected = pd.DataFrame(expected)
+
+    result = bedrock_input.assign_constant(value=value, name=name, dataframe=df.copy())
+
+    pd.testing.assert_frame_equal(result, expected)
+
+
+@parametrize_from_file
+def test_assign_constant_split(dataframe, value, expected, name="Value"):
+    df = pd.DataFrame(dataframe)
+    expected = pd.DataFrame(expected)
+
+    result = bedrock_input.assign_constant_split(value=value, name=name, dataframe=df.copy())
+
+    pd.testing.assert_frame_equal(result, expected)
+
+
+@parametrize_from_file
+def test_sum_cells(dataframe, name, column_to_sum, expected):
+    df = pd.DataFrame(dataframe)
+    expected = pd.DataFrame(expected)
+
+    result = bedrock_input.sum_cells(dataframe=df.copy(), name=name, column_to_sum=column_to_sum)
+
+    pd.testing.assert_frame_equal(result, expected)
+
+
+@parametrize_from_file
+def test_sum_if_cells(dataframe, name, column_to_sum, group_dimension_list, expected):
+    df = pd.DataFrame(dataframe)
+    expected = pd.DataFrame(expected)
+
+    result = bedrock_input.sum_if_cells(
+        dataframe=df.copy(),
+        name=name,
+        column_to_sum=column_to_sum,
+        group_column_list=group_dimension_list
+    )
+
+    pd.testing.assert_frame_equal(result, expected)
+
+
+@parametrize_from_file
+def test_count_cells(dataframe, name, expected):
+    df = pd.DataFrame(dataframe)
+    expected = pd.DataFrame(expected)
+
+    result = bedrock_input.count_cells(dataframe=df.copy(), name=name)
+
+    pd.testing.assert_frame_equal(result, expected)
+
+
+@parametrize_from_file
+def test_count_if_cells(dataframe, name, group_dimension_list, expected):
+    df = pd.DataFrame(dataframe)
+    expected = pd.DataFrame(expected)
+
+    result = bedrock_input.count_if_cells(
+        dataframe=df.copy(),
+        name=name,
+        group_column_list=group_dimension_list
+    )
+
+    pd.testing.assert_frame_equal(result, expected)
+
+
+@pytest.mark.skip
+@parametrize_from_file
+def test_assign_data(dataframe, assign_dataframe, expected):
+    df = pd.DataFrame(dataframe)
+    assign_df = pd.DataFrame(assign_dataframe)
+    expected = pd.DataFrame(expected)
+
+    result = bedrock_input.assign_data(dataframe=df.copy(), assign_dataframe=assign_df.copy())
+
+    pd.testing.assert_frame_equal(result, expected)
