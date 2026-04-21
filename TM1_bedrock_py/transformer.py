@@ -1147,3 +1147,31 @@ def dataframe_execute_mappings(
             raise ValueError(f"Unsupported mapping method: {method}")
 
     return data_df
+
+
+def do_nothing():
+    pass
+
+
+calc_method_handlers = {
+    "sum": do_nothing,
+    "count": do_nothing
+}
+
+
+@utility.log_exec_metrics
+def dataframe_execute_calculations(
+        data_df: DataFrame,
+        calculation_steps: List[Dict]
+) -> DataFrame:
+    if not calculation_steps:
+        return data_df
+
+    for i, step in enumerate(calculation_steps):
+        method = step["method"]
+        if method in calc_method_handlers:
+            data_df = calc_method_handlers[method](data_df, step)
+        else:
+            raise ValueError(f"Unsupported mapping method: {method}")
+
+    return data_df
