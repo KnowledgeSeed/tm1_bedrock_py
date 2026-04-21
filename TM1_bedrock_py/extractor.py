@@ -559,11 +559,7 @@ def build_input_domain(
             column_value=data_metadata_queryspecific.get_filter_dict()
         )
         domain.drop(columns=["Value"])
-        return domain
     else:
-        # {"dim1": "elem1", "dim2": "elem2", ...}
-        # Dim1, Dim2, Dim4
-
         dimension_names = list(domain_coords.keys())
         leaf_elements_per_dimension = [
             [
@@ -580,4 +576,5 @@ def build_input_domain(
         ]
 
         domain = DataFrame(data=product(*leaf_elements_per_dimension), columns=pd.Index(dimension_names))
-        return domain
+
+    return domain
