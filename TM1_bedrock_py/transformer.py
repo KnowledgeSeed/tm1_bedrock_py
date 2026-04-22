@@ -1,5 +1,5 @@
 from typing import Callable, List, Dict, Optional, Any, Literal
-
+import re
 import pandas as pd
 import numpy as np
 from pandas import DataFrame
@@ -1271,6 +1271,47 @@ def assign_data(
     )
 
 
+def apply_conditional_logic(
+        dataframe: pd.DataFrame,
+        name: str,
+        if_then: Dict[str, Any],
+        fallback: Any = None,
+) -> pd.DataFrame:
+    """
+        condition_to_result_mapping = {
+            "koord1=='valami' and koord1 in (érték1, érték2)": "eset1",
+            "koord1=='másvalami'": "eset2",
+            "koord2==oszlop3": "eset3",
+            "fiscal_year_subset.index(koord2) in (3, 4)": 1,
+
+        }
+    """
+
+    evaluated_conditions: List[pd.Series] = [
+        dataframe.eval(expression) for expression in if_then.keys()
+    ]
+
+    mapped_results: List[Any] = list(if_then.values())
+
+    dataframe[name] = np.select(
+        condlist=evaluated_conditions,
+        choicelist=mapped_results,
+        default=fallback
+    )
+
+    return dataframe
+
+
+def evaluate_and_assign_formula(
+    dataframe: pd.DataFrame,
+    name: str,
+    formula: str
+) -> pd.DataFrame:
+    parsed_mathematical_formula = re.sub(r"\{\{(.*?)\}\}", r"`\1`", formula)
+    dataframe[name] = dataframe.eval(parsed_mathematical_formula)
+    return dataframe
+
+
 calc_method_handlers = {
     "sum": sum_cells,
     "count": count_cells,
@@ -1278,7 +1319,12 @@ calc_method_handlers = {
     "countif": count_if_cells,
     "constant": assign_constant,
     "constant_split": assign_constant_split,
-    "query": assign_data
+    "equal_spread": assign_constant_split,
+    "query": assign_data,
+    "cube_data": assign_data,
+    "if": apply_conditional_logic,
+    "condition": apply_conditional_logic,
+    "formula": evaluate_and_assign_formula
 }
 
 
