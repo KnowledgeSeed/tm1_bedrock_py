@@ -46,6 +46,7 @@ def input_handler(
         domain_coordinates: dict[str, str] = None,
         domain_mdx: str = None,
         pre_calc_mapping_steps: list[dict] = None,
+        post_calc_mapping_steps: list[dict] = None,
         calculation_steps: list[dict] = None,
         input_column_name: str = None,
         remove_zero_inputs: bool = True,
@@ -88,6 +89,12 @@ def input_handler(
         dataframe = transformer.dataframe_execute_calculations(
             data_df=dataframe,
             calculation_steps=calculation_steps)
+
+    if post_calc_mapping_steps:
+        extractor.generate_step_specific_mapping_dataframes(
+            mapping_steps=post_calc_mapping_steps, tm1_service=tm1_service, **kwargs)
+        dataframe = transformer.dataframe_execute_mappings(
+            data_df=dataframe, mapping_steps=post_calc_mapping_steps, **kwargs)
 
     if output_final_state_dataframe:
         final_state_dataframe = dataframe.copy()
