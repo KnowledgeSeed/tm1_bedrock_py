@@ -563,21 +563,21 @@ def build_input_domain(
         )
         domain.drop(columns=["Value"])
     else:
-        dimension_names = list(domain_coords.keys())
-        leaf_elements_per_dimension = [
-            [
-                f"{raw_element.split(':', 1)[0]}:{leaf}" if ":" in raw_element else leaf
-                for leaf in tm1_service.elements.execute_set_mdx(
-                    mdx=(
-                        f"{{Tm1FilterByLevel({{Tm1DrillDownMember([{dimension_name}].[{raw_element.split(':', 1)[0]}].[{raw_element.split(':', 1)[1]}],ALL,RECURSIVE)}},0)}}"
-                        if ":" in raw_element else
-                        f"{{Tm1FilterByLevel({{Tm1DrillDownMember([{dimension_name}].[{raw_element}],ALL,RECURSIVE)}},0)}}"
-                    )
-                )
+        leaf_elements_per_dimension = []
+        for dimension_name, raw_element in domain_coords.items():
+            mdx = (
+                f"{{Tm1FilterByLevel({{Tm1DrillDownMember({{[{dimension_name}].[{raw_element.split(sep=':', maxsplit=1)[0]}].[{raw_element.split(sep=':', maxsplit=1)[1]}]}},ALL,RECURSIVE)}},0)}}"
+                if ":" in raw_element else
+                f"{{Tm1FilterByLevel({{Tm1DrillDownMember({{[{dimension_name}].[{raw_element}]}},ALL,RECURSIVE)}},0)}}"
+            )
+            leaves_data = tm1_service.elements.execute_set_mdx(mdx)
+            leaf_elements = [
+                f"{raw_element.split(sep=':', maxsplit=1)[0]}:{leaf_data[0]['Name']}" if ":" in raw_element else leaf_data[0]['Name']
+                for leaf_data in leaves_data
             ]
-            for dimension_name, raw_element in domain_coords.items()
-        ]
+            leaf_elements_per_dimension.append(leaf_elements)
 
+        dimension_names = list(domain_coords.keys())
         domain = DataFrame(data=product(*leaf_elements_per_dimension), columns=pd.Index(dimension_names))
 
     return domain

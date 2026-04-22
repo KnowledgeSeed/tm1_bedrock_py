@@ -66,7 +66,7 @@ def input_handler(
         tm1_service=tm1_service, domain_mdx=domain_mdx, domain_coords=domain_coordinates, **kwargs
     )
     transformer.cast_coordinates_to_str(dataframe.columns, dataframe)
-    transformer.dataframe_add_column_assign_value(column_value={"Input": input_value})
+    transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value={"Input": input_value})
 
     target_metadata = utility.TM1CubeObjectMetadata.collect(
         tm1_service=tm1_service,
@@ -111,6 +111,7 @@ def input_handler(
     transformer.dataframe_relabel(
         dataframe=dataframe,
         columns={input_column_name: "Value"})
+    dataframe["Value"] = dataframe["Value"].astype(float)
 
     if remove_zero_inputs:
         dataframe = transformer.dataframe_remove_zero_records(dataframe)

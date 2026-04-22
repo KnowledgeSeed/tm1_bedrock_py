@@ -728,22 +728,75 @@ def attribute_structure_creation_demo():
     )
 
 
+def input_handler_leaf_domain():
+    tm1params_ksacademy = {
+        "address": "dev.knowledgeseed.local",
+        "port": 5379,
+        "user": "admin",
+        "password": "admin",
+        "ssl": False
+    }
+    tm1_service = TM1Service(**tm1params_ksacademy)
+
+    cube_name = "testbenchPrice"
+
+    domain_coords = {
+        "testbenchVersion": "Actual",
+        "testbenchPeriod": "202401",
+        "testbenchMeasurePrice": "Price",
+        "testbenchProduct": "P0000001"
+    }
+
+    bedrock.input_handler(
+        tm1_service=tm1_service,
+        target_cube_name=cube_name,
+        domain_coordinates=domain_coords,
+        input_value=120
+    )
+
+
+def input_handler_repeat_on_children():
+    tm1params_ksacademy = {
+        "address": "dev.knowledgeseed.local",
+        "port": 5379,
+        "user": "admin",
+        "password": "admin",
+        "ssl": False
+    }
+    tm1_service = TM1Service(**tm1params_ksacademy)
+
+    cube_name = "testbenchPrice"
+
+    domain_coords = {
+        "testbenchProduct": "ProductSubCategory01",
+        "testbenchVersion": "Actual",
+        "testbenchPeriod": "202401",
+        "testbenchMeasurePrice": "Price",
+    }
+
+    bedrock.input_handler(
+        tm1_service=tm1_service,
+        target_cube_name=cube_name,
+        domain_coordinates=domain_coords,
+        input_value=110
+    )
+
+
 if __name__ == '__main__':
     # complex_transform_demo()
     # tm1_to_sql_pyodbc_custom_writer_demo()
     # context_metadata_basic_demo()
     # context_metadata_complete_demo()
-
-    #  dimension_builder_basic_demo()
+    # dimension_builder_basic_demo()
     # dimension_builder_no_edges_old_format()
     # dimension_builder_append_demo()
     # dimension_builder_complex_demo()
     # hierarchy_builder_demo()
-
     # build_cube_demo()
     # copy_dim_between_servers_demo()
     # copy_data_between_servers_demo()
     # copy_cube_structure_between_servers_demo()
     # mdx_gen_demo()
-
-    attribute_structure_creation_demo()
+    # attribute_structure_creation_demo()
+    # input_handler_leaf_domain()
+    input_handler_repeat_on_children()
