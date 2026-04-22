@@ -782,6 +782,95 @@ def input_handler_repeat_on_children():
     )
 
 
+def input_handler_equal_spread_children():
+    tm1params_ksacademy = {
+        "address": "dev.knowledgeseed.local",
+        "port": 5379,
+        "user": "admin",
+        "password": "admin",
+        "ssl": False
+    }
+    tm1_service = TM1Service(**tm1params_ksacademy)
+
+    cube_name = "testbenchPrice"
+
+    domain_coords = {
+        "testbenchProduct": "ProductSubCategory01",
+        "testbenchVersion": "Actual",
+        "testbenchPeriod": "202401",
+        "testbenchMeasurePrice": "Price",
+    }
+
+    calculation_steps = [
+        {
+            "name": "TotalCells",
+            "method": "count"
+        },
+        {
+            "name": "FinalValue",
+            "method": "formula",
+            "formula": "Input / TotalCells"
+        }
+    ]
+
+    bedrock.input_handler(
+        tm1_service=tm1_service,
+        target_cube_name=cube_name,
+        domain_coordinates=domain_coords,
+        input_value=100,
+        calculation_steps=calculation_steps
+    )
+
+
+def input_handler_conditional():
+    tm1params_ksacademy = {
+        "address": "dev.knowledgeseed.local",
+        "port": 5379,
+        "user": "admin",
+        "password": "admin",
+        "ssl": False
+    }
+    tm1_service = TM1Service(**tm1params_ksacademy)
+
+    cube_name = "testbenchPrice"
+
+    domain_coords = {
+        "testbenchProduct": "ProductSubCategory01",
+        "testbenchVersion": "Actual",
+        "testbenchPeriod": "202401",
+        "testbenchMeasurePrice": "Price",
+    }
+
+    calculation_steps = [
+        {
+            "name": "TotalCells",
+            "method": "count"
+        },
+        {
+            "name": "FinalValue",
+            "method": "formula",
+            "formula": "Input / TotalCells"
+        },
+        {
+            "name": "OnlyForProduct1",
+            "method": "if",
+            "if_then": {
+                "testbenchProduct == 'P0000001'": "{{FinalValue}}",
+                "testbenchProduct == 'P0000002'": 2
+            },
+            "fallback": 1
+        }
+    ]
+
+    bedrock.input_handler(
+        tm1_service=tm1_service,
+        target_cube_name=cube_name,
+        domain_coordinates=domain_coords,
+        input_value=100,
+        calculation_steps=calculation_steps
+    )
+
+
 if __name__ == '__main__':
     # complex_transform_demo()
     # tm1_to_sql_pyodbc_custom_writer_demo()
@@ -799,4 +888,6 @@ if __name__ == '__main__':
     # mdx_gen_demo()
     # attribute_structure_creation_demo()
     # input_handler_leaf_domain()
-    input_handler_repeat_on_children()
+    # input_handler_repeat_on_children()
+    # input_handler_equal_spread_children()
+    input_handler_conditional()

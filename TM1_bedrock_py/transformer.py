@@ -1276,6 +1276,7 @@ def apply_conditional_logic(
         name: str,
         if_then: Dict[str, Any],
         fallback: Any = None,
+        **_kwargs
 ) -> pd.DataFrame:
     """
         condition_to_result_mapping = {
@@ -1291,21 +1292,33 @@ def apply_conditional_logic(
         dataframe.eval(expression) for expression in if_then.keys()
     ]
 
-    mapped_results: List[Any] = list(if_then.values())
+    mapped_results: List[Any] = [
+        dataframe[match_object.group(1)]
+        if isinstance(mapped_value, str) and (match_object := re.fullmatch(r"\{\{(.*?)\}\}", mapped_value))
+        else mapped_value
+        for mapped_value in if_then.values()
+    ]
+
+    parsed_fallback_value: Any = (
+        dataframe[fallback_match_object.group(1)]
+        if isinstance(fallback, str) and (fallback_match_object := re.fullmatch(r"\{\{(.*?)\}\}", fallback))
+        else fallback
+    )
 
     dataframe[name] = np.select(
         condlist=evaluated_conditions,
         choicelist=mapped_results,
-        default=fallback
+        default=parsed_fallback_value
     )
 
     return dataframe
 
 
 def evaluate_and_assign_formula(
-    dataframe: pd.DataFrame,
-    name: str,
-    formula: str
+        dataframe: pd.DataFrame,
+        name: str,
+        formula: str,
+        **_kwargs
 ) -> pd.DataFrame:
     parsed_mathematical_formula = re.sub(r"\{\{(.*?)\}\}", r"`\1`", formula)
     dataframe[name] = dataframe.eval(parsed_mathematical_formula)
