@@ -1,6 +1,7 @@
 from typing import Callable, List, Dict, Optional, Any, Literal, Union, Type
 import pandas as pd
 from TM1py import TM1Service, NativeView, Subset
+from jinja2 import Environment, StrictUndefined, BaseLoader
 from pandas import DataFrame, read_sql_table, concat, read_csv
 from sqlalchemy import text
 from typing import Sequence, Hashable, Mapping, Iterable
@@ -578,3 +579,104 @@ def build_input_domain(
         domain = DataFrame(data=product(*leaf_elements_per_dimension), columns=pd.Index(dimension_names))
 
     return domain
+
+
+def _handle_calculation_df(
+    step: Dict[str, Any],
+    **_kwargs
+) -> DataFrame:
+    return step["calc_df"]
+
+
+def _handle_calculation_mdx(
+    step: Dict[str, Any],
+    tm1_service: Optional[Any] = None,
+    **kwargs
+) -> DataFrame:
+    """Execute MDX and augment the resulting DataFrame with metadata."""
+    mdx = step["calc_mdx"]
+
+    kwargs_copy = kwargs.copy()
+    kwargs_copy.pop("skip_zeros", None)
+    kwargs_copy.pop("skip_consolidated_cells", None)
+
+    dataframe = tm1_mdx_to_dataframe(
+        tm1_service=tm1_service,
+        data_mdx=mdx,
+        skip_zeros=True,
+        skip_consolidated_cells=True,
+        **kwargs_copy
+    )
+    metadata_object = utility.TM1CubeObjectMetadata.collect(
+        metadata_function=step.get("calc_metadata_function"),
+        tm1_service=tm1_service,
+        mdx=mdx,
+        collect_base_cube_metadata=False,
+        collect_source_cube_metadata=False,
+        **kwargs_copy
+    )
+    filter_dict = metadata_object.get_filter_dict()
+
+    transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=filter_dict)
+
+    return dataframe
+
+
+CALCULATION_HANDLERS = {
+    "calc_df": _handle_calculation_df,
+    "calc_mdx": _handle_calculation_mdx,
+}
+
+def generate_dataframe_for_calculation_info(
+        calc_info: Dict[str, Any],
+        step_specific_string: Optional[str] = "shared",
+        **kwargs
+) -> None:
+    """
+    Mutates a calculation step (calc info) by assigning 'calc_df'.
+    """
+    found_key = next((k for k in CALCULATION_HANDLERS if k in calc_info), None)
+
+    calc_info["calc_df"] = (
+        CALCULATION_HANDLERS[found_key](
+            step=calc_info,
+            **kwargs
+        )
+        if found_key
+        else None
+    )
+    utility.dataframe_verbose_logger(
+        dataframe=calc_info["calc_df"],
+        step_number=f"calc_step_{step_specific_string}",
+        **kwargs
+    )
+
+
+def __render_calc_step_mdx_template(calc_mdx_template: str, element: str) -> str:
+    env = Environment(
+        loader=BaseLoader(),
+        variable_start_string='{{',
+        variable_end_string='}}',
+        undefined=StrictUndefined)
+    template = env.from_string(calc_mdx_template)
+    return template.render({"element": element})
+
+
+def generate_step_specific_calculation_dataframes(
+    calc_steps: List[Dict[str, Any]],
+    ** kwargs
+) -> None:
+    """
+    Mutates each step in calc_steps by assigning 'calc_df'.
+    """
+    if not calc_steps:
+        return
+    for i, step in enumerate(calc_steps):
+        calc_mdx_template = step.get("calc_mdx_template") or None
+        element_list = step.get("element_list") or None
+        if calc_mdx_template and element_list:
+            for j, element in enumerate(element_list):
+                step["calc_mdx"] = __render_calc_step_mdx_template(calc_mdx_template, element)
+                generate_dataframe_for_calculation_info(calc_info=step, step_specific_string=str(element), **kwargs)
+        else:
+            generate_dataframe_for_calculation_info(calc_info=step, step_specific_string=str(i + 1), **kwargs)
