@@ -9,6 +9,8 @@ import random, string
 from TM1_bedrock_py import utility, transformer, basic_logger
 from itertools import product
 
+from TM1_bedrock_py.utility import TM1CubeObjectMetadata
+
 
 # ------------------------------------------------------------------------------------------------------------
 # Main: MDX query to normalized pandas dataframe functions
@@ -652,31 +654,31 @@ def generate_dataframe_for_calculation_info(
     )
 
 
-def __render_calc_step_mdx_template(calc_mdx_template: str, element: str) -> str:
+def __render_calc_step_mdx_template(tm1_service: Any, calc_mdx_template: str, dimension: str) -> str:
+    sep = ", "
+    dimension_elements = tm1_service.dimensions.get(dimension).elements
+    dimension_elements = "{" + sep.join([f"[{dimension}].[{element}]" for element in dimension_elements]) + "}"
     env = Environment(
         loader=BaseLoader(),
         variable_start_string='{{',
         variable_end_string='}}',
         undefined=StrictUndefined)
     template = env.from_string(calc_mdx_template)
-    return template.render({"element": element})
+    return template.render({dimension: dimension_elements})
 
 
 def generate_step_specific_calculation_dataframes(
-    calc_steps: List[Dict[str, Any]],
+    calculation_steps: List[Dict[str, Any]],
     ** kwargs
 ) -> None:
     """
-    Mutates each step in calc_steps by assigning 'calc_df'.
+    Mutates each step in calculation_steps by assigning 'calc_df'.
     """
-    if not calc_steps:
+    if not calculation_steps:
         return
-    for i, step in enumerate(calc_steps):
+    for i, step in enumerate(calculation_steps):
         calc_mdx_template = step.get("calc_mdx_template") or None
-        element_list = step.get("element_list") or None
-        if calc_mdx_template and element_list:
-            for j, element in enumerate(element_list):
-                step["calc_mdx"] = __render_calc_step_mdx_template(calc_mdx_template, element)
-                generate_dataframe_for_calculation_info(calc_info=step, step_specific_string=str(element), **kwargs)
-        else:
-            generate_dataframe_for_calculation_info(calc_info=step, step_specific_string=str(i + 1), **kwargs)
+        dimension = step.get("dimension") or None
+        if calc_mdx_template and dimension:
+            step["calc_mdx"] = __render_calc_step_mdx_template(calc_mdx_template, dimension, **kwargs)
+        generate_dataframe_for_calculation_info(calc_info=step, step_specific_string=str(i + 1), **kwargs)

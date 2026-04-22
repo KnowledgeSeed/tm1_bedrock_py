@@ -82,7 +82,11 @@ def input_handler(
 
     if calculation_steps:
 
-        # todo: add extractor.generate_step_specific_calc_dataframes
+        extractor.generate_step_specific_calculation_dataframes(
+            tm1_service=tm1_service,
+            data_df=dataframe,
+            calculation_steps=calculation_steps
+        )
 
         dataframe = transformer.dataframe_execute_calculations(
             data_df=dataframe,
