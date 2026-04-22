@@ -2475,15 +2475,16 @@ test_assign_data:
       }
     assign_dataframe:
       {
-        "Product": ["A", "C"],
+        "Product": ["A", "B"],
         "Region": ["North", "South"],
         "Comment": ["keep", "ignore"],
         "Value": [ 1.0, 2.0 ]
       }
+    name: "NewColumn"
     expected:
       {
         "Product": ["A", "B"],
         "Region": ["North", "South"],
         "Value": [10.0, 20.0],
-        "Comment": [ "keep", "ignore" ]
+        "NewColumn": [ 1.0, 2.0 ]
       }

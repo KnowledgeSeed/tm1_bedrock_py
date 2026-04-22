@@ -1155,28 +1155,150 @@ def dataframe_execute_mappings(
     return data_df
 
 
-def do_nothing():
-    pass
+# ------------------------------------------------------------------------------------------------------------
+# Main: complex input process related functions
+# ------------------------------------------------------------------------------------------------------------
+
+def assign_constant(
+        value: float,
+        name: str,
+        dataframe: pd.DataFrame,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
+        **_kwargs
+) -> pd.DataFrame:
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+
+    dataframe[name] = value
+    return dataframe
+
+
+def assign_constant_split(
+        value: float,
+        name: str,
+        dataframe: pd.DataFrame,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
+        **_kwargs
+) -> pd.DataFrame:
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+
+    dataframe[name] = value / len(dataframe.index)
+    return dataframe
+
+
+def sum_cells(
+        dataframe: pd.DataFrame,
+        name: str,
+        column_to_sum: str,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
+        **_kwargs
+) -> pd.DataFrame:
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+
+    dataframe[name] = sum(dataframe[column_to_sum].astype(float).tolist())
+    return dataframe
+
+
+def sum_if_cells(
+        dataframe: pd.DataFrame,
+        name: str,
+        column_to_sum: str,
+        group_column_list: list[str],
+        case_and_space_insensitive_inputs: Optional[bool] = False,
+        **_kwargs
+) -> pd.DataFrame:
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+
+    dataframe[name] = dataframe.groupby(group_column_list)[column_to_sum].transform('sum')
+    return dataframe
+
+
+def count_cells(
+        dataframe: pd.DataFrame,
+        name: str,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
+        **_kwargs
+) -> pd.DataFrame:
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+
+    dataframe[name] = len(dataframe.index)
+    return dataframe
+
+
+def count_if_cells(
+        dataframe: pd.DataFrame,
+        name: str,
+        group_column_list: list[str],
+        case_and_space_insensitive_inputs: Optional[bool] = False,
+        **_kwargs
+) -> pd.DataFrame:
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+
+    dataframe[name] = dataframe.groupby(group_column_list)[group_column_list[0]].transform('count')
+
+    return dataframe
+
+
+def assign_data(
+        dataframe: pd.DataFrame,
+        assign_dataframe: pd.DataFrame,
+        name: str,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
+        **_kwargs
+) -> pd.DataFrame:
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+        utility.normalize_dataframe_strings(assign_dataframe)
+
+    shared_dimensions = list(set(dataframe.columns).intersection(assign_dataframe.columns))
+
+    if 'Value' in shared_dimensions:
+        shared_dimensions.remove('Value')
+
+    filtered_assign_dataframe = assign_dataframe[shared_dimensions + ['Value']].rename(
+        columns={'Value': name}
+    )
+
+    return dataframe.merge(
+        filtered_assign_dataframe,
+        on=shared_dimensions,
+        how='left'
+    )
 
 
 calc_method_handlers = {
-    "sum": do_nothing,
-    "count": do_nothing
+    "sum": sum_cells,
+    "count": count_cells,
+    "sumif": sum_if_cells,
+    "countif": count_if_cells,
+    "constant": assign_constant,
+    "constant_split": assign_constant_split,
+    "query": assign_data
 }
 
 
 @utility.log_exec_metrics
 def dataframe_execute_calculations(
         data_df: DataFrame,
-        calculation_steps: List[Dict]
+        calculation_steps: List[Dict],
+        case_and_space_insensitive_inputs: Optional[bool] = False,
 ) -> DataFrame:
     if not calculation_steps:
         return data_df
 
-    for i, step in enumerate(calculation_steps):
+    for step in calculation_steps:
         method = step["method"]
         if method in calc_method_handlers:
-            data_df = calc_method_handlers[method](data_df, step)
+            data_df = calc_method_handlers[method](
+                dataframe=data_df,
+                case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
+                **step
+             )
         else:
             raise ValueError(f"Unsupported mapping method: {method}")
 

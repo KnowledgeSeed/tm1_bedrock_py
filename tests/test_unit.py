@@ -788,7 +788,7 @@ def test_assign_constant(dataframe, value, expected, name="Value"):
     df = pd.DataFrame(dataframe)
     expected = pd.DataFrame(expected)
 
-    result = bedrock_input.assign_constant(value=value, name=name, dataframe=df.copy())
+    result = transformer.assign_constant(value=value, name=name, dataframe=df.copy())
 
     pd.testing.assert_frame_equal(result, expected)
 
@@ -798,7 +798,7 @@ def test_assign_constant_split(dataframe, value, expected, name="Value"):
     df = pd.DataFrame(dataframe)
     expected = pd.DataFrame(expected)
 
-    result = bedrock_input.assign_constant_split(value=value, name=name, dataframe=df.copy())
+    result = transformer.assign_constant_split(value=value, name=name, dataframe=df.copy())
 
     pd.testing.assert_frame_equal(result, expected)
 
@@ -808,7 +808,7 @@ def test_sum_cells(dataframe, name, column_to_sum, expected):
     df = pd.DataFrame(dataframe)
     expected = pd.DataFrame(expected)
 
-    result = bedrock_input.sum_cells(dataframe=df.copy(), name=name, column_to_sum=column_to_sum)
+    result = transformer.sum_cells(dataframe=df.copy(), name=name, column_to_sum=column_to_sum)
 
     pd.testing.assert_frame_equal(result, expected)
 
@@ -818,7 +818,7 @@ def test_sum_if_cells(dataframe, name, column_to_sum, group_dimension_list, expe
     df = pd.DataFrame(dataframe)
     expected = pd.DataFrame(expected)
 
-    result = bedrock_input.sum_if_cells(
+    result = transformer.sum_if_cells(
         dataframe=df.copy(),
         name=name,
         column_to_sum=column_to_sum,
@@ -833,7 +833,7 @@ def test_count_cells(dataframe, name, expected):
     df = pd.DataFrame(dataframe)
     expected = pd.DataFrame(expected)
 
-    result = bedrock_input.count_cells(dataframe=df.copy(), name=name)
+    result = transformer.count_cells(dataframe=df.copy(), name=name)
 
     pd.testing.assert_frame_equal(result, expected)
 
@@ -843,7 +843,7 @@ def test_count_if_cells(dataframe, name, group_dimension_list, expected):
     df = pd.DataFrame(dataframe)
     expected = pd.DataFrame(expected)
 
-    result = bedrock_input.count_if_cells(
+    result = transformer.count_if_cells(
         dataframe=df.copy(),
         name=name,
         group_column_list=group_dimension_list
@@ -852,13 +852,12 @@ def test_count_if_cells(dataframe, name, group_dimension_list, expected):
     pd.testing.assert_frame_equal(result, expected)
 
 
-@pytest.mark.skip
 @parametrize_from_file
-def test_assign_data(dataframe, assign_dataframe, expected):
+def test_assign_data(dataframe, assign_dataframe, expected, name):
     df = pd.DataFrame(dataframe)
     assign_df = pd.DataFrame(assign_dataframe)
     expected = pd.DataFrame(expected)
 
-    result = bedrock_input.assign_data(dataframe=df.copy(), assign_dataframe=assign_df.copy())
+    result = transformer.assign_data(dataframe=df.copy(), assign_dataframe=assign_df.copy(), name=name)
 
     pd.testing.assert_frame_equal(result, expected)
