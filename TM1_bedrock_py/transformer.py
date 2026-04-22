@@ -1246,21 +1246,21 @@ def count_if_cells(
 
 def assign_data(
         dataframe: pd.DataFrame,
-        assign_dataframe: pd.DataFrame,
+        calc_df: pd.DataFrame,
         name: str,
         case_and_space_insensitive_inputs: Optional[bool] = False,
         **_kwargs
 ) -> pd.DataFrame:
     if case_and_space_insensitive_inputs:
         utility.normalize_dataframe_strings(dataframe)
-        utility.normalize_dataframe_strings(assign_dataframe)
+        utility.normalize_dataframe_strings(calc_df)
 
-    shared_dimensions = list(set(dataframe.columns).intersection(assign_dataframe.columns))
+    shared_dimensions = list(set(dataframe.columns).intersection(calc_df.columns))
 
     if 'Value' in shared_dimensions:
         shared_dimensions.remove('Value')
 
-    filtered_assign_dataframe = assign_dataframe[shared_dimensions + ['Value']].rename(
+    filtered_assign_dataframe = calc_df[shared_dimensions + ['Value']].rename(
         columns={'Value': name}
     )
 

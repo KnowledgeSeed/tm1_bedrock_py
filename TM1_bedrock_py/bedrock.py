@@ -81,17 +81,13 @@ def input_handler(
             data_df=dataframe, mapping_steps=pre_calc_mapping_steps, **kwargs)
 
     if calculation_steps:
-
         extractor.generate_step_specific_calculation_dataframes(
             tm1_service=tm1_service,
             data_df=dataframe,
-            calculation_steps=calculation_steps
-        )
-
+            calculation_steps=calculation_steps)
         dataframe = transformer.dataframe_execute_calculations(
             data_df=dataframe,
-            calculation_steps=calculation_steps
-        )
+            calculation_steps=calculation_steps)
 
     if output_final_state_dataframe:
         final_state_dataframe = dataframe.copy()

@@ -1,7 +1,7 @@
 from typing import Callable, List, Dict, Optional, Any, Literal, Union, Type
 import pandas as pd
 from TM1py import TM1Service, NativeView, Subset
-from jinja2 import Environment, StrictUndefined, BaseLoader
+
 from pandas import DataFrame, read_sql_table, concat, read_csv
 from sqlalchemy import text
 from typing import Sequence, Hashable, Mapping, Iterable
@@ -629,6 +629,7 @@ CALCULATION_HANDLERS = {
     "calc_mdx": _handle_calculation_mdx,
 }
 
+
 def generate_dataframe_for_calculation_info(
         calc_info: Dict[str, Any],
         step_specific_string: Optional[str] = "shared",
@@ -654,22 +655,9 @@ def generate_dataframe_for_calculation_info(
     )
 
 
-def __render_calc_step_mdx_template(tm1_service: Any, calc_mdx_template: str, dimension: str) -> str:
-    sep = ", "
-    dimension_elements = tm1_service.dimensions.get(dimension).elements
-    dimension_elements = "{" + sep.join([f"[{dimension}].[{element}]" for element in dimension_elements]) + "}"
-    env = Environment(
-        loader=BaseLoader(),
-        variable_start_string='{{',
-        variable_end_string='}}',
-        undefined=StrictUndefined)
-    template = env.from_string(calc_mdx_template)
-    return template.render({dimension: dimension_elements})
-
-
 def generate_step_specific_calculation_dataframes(
     calculation_steps: List[Dict[str, Any]],
-    ** kwargs
+    **kwargs
 ) -> None:
     """
     Mutates each step in calculation_steps by assigning 'calc_df'.
@@ -680,5 +668,5 @@ def generate_step_specific_calculation_dataframes(
         calc_mdx_template = step.get("calc_mdx_template") or None
         dimension = step.get("dimension") or None
         if calc_mdx_template and dimension:
-            step["calc_mdx"] = __render_calc_step_mdx_template(calc_mdx_template, dimension, **kwargs)
+            step["calc_mdx"] = utility.render_calc_step_mdx_template(calc_mdx_template, dimension, **kwargs)
         generate_dataframe_for_calculation_info(calc_info=step, step_specific_string=str(i + 1), **kwargs)

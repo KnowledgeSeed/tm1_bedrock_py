@@ -2473,7 +2473,7 @@ test_assign_data:
         "Region": ["North", "South"],
         "Value": [10.0, 20.0]
       }
-    assign_dataframe:
+    calc_df:
       {
         "Product": ["A", "B"],
         "Region": ["North", "South"],

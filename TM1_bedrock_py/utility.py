@@ -7,6 +7,7 @@ import threading
 import time
 from datetime import datetime
 from typing import Iterable, Callable, List, Dict, Optional, Any, Union, Iterator, Tuple, Literal, Match
+from jinja2 import Environment, StrictUndefined, BaseLoader
 
 from pandas import DataFrame
 from sqlalchemy import create_engine, inspect
@@ -784,6 +785,20 @@ def generate_dynamic_mdx_query_string(
     axis_zero_set_expression = " * ".join(dimension_mdx_sets)
 
     return f"SELECT {non_empty_prefix}{axis_zero_set_expression} ON 0 FROM [{target_cube_name}]"
+
+
+def render_calc_step_mdx_template(tm1_service: Any, calc_mdx_template: str, dimension: str) -> str:
+    sep = ", "
+    dimension_elements = tm1_service.dimensions.get(dimension).elements
+    dimension_elements = "{" + sep.join([f"[{dimension}].[{element}]" for element in dimension_elements]) + "}"
+    env = Environment(
+        loader=BaseLoader(),
+        variable_start_string='{{',
+        variable_end_string='}}',
+        undefined=StrictUndefined)
+    template = env.from_string(calc_mdx_template)
+    return template.render({dimension: dimension_elements})
+
 
 # ------------------------------------------------------------------------------------------------------------
 # Utility: debug technicals

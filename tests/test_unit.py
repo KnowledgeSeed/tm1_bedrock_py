@@ -853,11 +853,11 @@ def test_count_if_cells(dataframe, name, group_dimension_list, expected):
 
 
 @parametrize_from_file
-def test_assign_data(dataframe, assign_dataframe, expected, name):
+def test_assign_data(dataframe, calc_df, expected, name):
     df = pd.DataFrame(dataframe)
-    assign_df = pd.DataFrame(assign_dataframe)
+    assign_df = pd.DataFrame(calc_df)
     expected = pd.DataFrame(expected)
 
-    result = transformer.assign_data(dataframe=df.copy(), assign_dataframe=assign_df.copy(), name=name)
+    result = transformer.assign_data(dataframe=df.copy(), calc_df=assign_df.copy(), name=name)
 
     pd.testing.assert_frame_equal(result, expected)
