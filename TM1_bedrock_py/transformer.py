@@ -1273,13 +1273,17 @@ def assign_data(
         calc_df: pd.DataFrame,
         name: str,
         case_and_space_insensitive_inputs: Optional[bool] = False,
+        ignore_in_join: list[str] = None,
         **_kwargs
 ) -> pd.DataFrame:
     if case_and_space_insensitive_inputs:
         utility.normalize_dataframe_strings(dataframe)
         utility.normalize_dataframe_strings(calc_df)
 
-    shared_dimensions = list(set(dataframe.columns).intersection(calc_df.columns))
+    if ignore_in_join is None:
+        ignore_in_join = []
+
+    shared_dimensions = list(set(dataframe.columns).intersection(calc_df.columns) - set(ignore_in_join))
 
     if 'Value' in shared_dimensions:
         shared_dimensions.remove('Value')
@@ -1366,24 +1370,20 @@ calc_method_handlers = {
 
 
 @utility.log_exec_metrics
-def dataframe_execute_calculations(
+def dataframe_execute_calculation(
         data_df: DataFrame,
-        calculation_steps: List[Dict],
+        step: Dict,
         case_and_space_insensitive_inputs: Optional[bool] = False,
 ) -> DataFrame:
-    if not calculation_steps:
-        return data_df
-
-    for step in calculation_steps:
-        method = step["method"]
-        if method in calc_method_handlers:
-            data_df = calc_method_handlers[method](
-                dataframe=data_df,
-                case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
-                **step
-             )
-        else:
-            raise ValueError(f"Unsupported mapping method: {method}")
+    method = step.get("method", "missing")
+    if method in calc_method_handlers:
+        data_df = calc_method_handlers[method](
+            dataframe=data_df,
+            case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
+            **step
+        )
+    else:
+        raise ValueError(f"Unsupported mapping method: {method}")
 
     return data_df
 

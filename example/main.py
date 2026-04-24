@@ -744,7 +744,7 @@ def input_handler_with_mixed_coord_and_set():
         tm1_service=tm1_service,
         target_cube_name=cube_name,
         domain_coordinates=domain_coords,
-        input_value=240.6,
+        input_value=120,
         calculation_steps=calculation_steps
     )
 
@@ -783,10 +783,131 @@ def input_handler_with_postcalc_cartesian():
         tm1_service=tm1_service,
         target_cube_name=cube_name,
         domain_coordinates=domain_coords,
-        input_value=240.6,
+        input_value=120,
         calculation_steps=calculation_steps,
         post_calc_mapping_steps=post_calc_mapping_steps
     )
+
+
+def input_handler_proportional_spread():
+    tm1_service = create_tm1_connection('ks_academy')
+
+    cube_name = "testbenchPrice"
+
+    domain_coords = {
+        "testbenchProduct": "ProductSubCategory01",
+        "testbenchVersion": "Actual",
+        "testbenchMeasurePrice": "Price",
+        "testbenchPeriod": "202402"
+    }
+
+    calculation_steps = [
+        {
+            "name": "ratioBase",
+            "method": "cube_data",
+            "calc_mdx": """
+            
+            SELECT
+                {{testbenchVersion}}
+                * {{testbenchMeasurePrice}}
+            ON COLUMNS,
+                [testbenchProduct].[testbenchProduct].Members
+            ON ROWS
+            FROM [testbenchPrice]
+            WHERE (
+                [testbenchPeriod].[testbenchPeriod].[202401]
+                )
+            
+            """,
+
+            "omit_where_from_df": True
+        },
+        {
+            "name": "ratioTotal",
+            "method": "sum",
+            "column_to_sum": "ratioBase"
+        },
+        {
+            "name": "FinalValue",
+            "method": "formula",
+            "formula": "Input * ratioBase / ratioTotal"
+        }
+    ]
+
+    bedrock.input_handler(
+        tm1_service=tm1_service,
+        target_cube_name=cube_name,
+        domain_coordinates=domain_coords,
+        input_value=1000,
+        calculation_steps=calculation_steps
+    )
+
+
+def input_handler_proportional_spread_the_other_way():
+    tm1_service = create_tm1_connection('ks_academy')
+
+    cube_name = "testbenchPrice"
+
+    domain_coords = {
+        "testbenchProduct": "ProductSubCategory01",
+        "testbenchVersion": "Actual",
+        "testbenchMeasurePrice": "Price",
+        "testbenchPeriod": "202402"
+    }
+
+    calculation_steps = [
+        {
+            "name": "beforePeriod",
+            "method": "cube_data",
+            "calc_mdx": """
+                SELECT
+                    {[}ElementAttributes_testbenchPeriod].[}ElementAttributes_testbenchPeriod].[PREV_PERIOD]}
+                ON COLUMNS,
+                    {{testbenchPeriod}}
+                ON ROWS
+                FROM [}ElementAttributes_testbenchPeriod]
+            """,
+            "value_type": str,
+        },
+        {
+            "name": "ratioBase",
+            "method": "cube_data",
+            "calc_mdx": """
+                SELECT
+                    {{testbenchVersion}}
+                    * {{testbenchMeasurePrice}}
+                    * {{beforePeriod}}
+                ON COLUMNS,
+                    {{testbenchProduct}}
+                ON ROWS
+                FROM [testbenchPrice]
+            """,
+            "dimension_map": {"beforePeriod": "testbenchPeriod"}
+        },
+        {
+            "name": "ratioTotal",
+            "method": "sum",
+            "column_to_sum": "ratioBase"
+        },
+        {
+            "name": "FinalValue",
+            "method": "formula",
+            "formula": "Input * ratioBase / ratioTotal"
+        }
+    ]
+
+    utility.configure_pandas_display(pd)
+
+    final_state = bedrock.input_handler(
+        tm1_service=tm1_service,
+        target_cube_name=cube_name,
+        domain_coordinates=domain_coords,
+        input_value=1000,
+        calculation_steps=calculation_steps,
+        output_final_state_dataframe=True
+    )
+
+    print(final_state)
 
 
 if __name__ == '__main__':
@@ -810,4 +931,6 @@ if __name__ == '__main__':
     # input_handler_equal_spread_children()
     # input_handler_conditional()
     # input_handler_with_mixed_coord_and_set()
-    input_handler_with_postcalc_cartesian()
+    # input_handler_with_postcalc_cartesian()
+    # input_handler_proportional_spread()
+    input_handler_proportional_spread_the_other_way()

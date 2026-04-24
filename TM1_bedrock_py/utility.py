@@ -19,6 +19,7 @@ from TM1py.Objects import Cube
 # Utility: Logging helper functions
 # ------------------------------------------------------------------------------------------------------------
 
+
 def generate_valid_file_path(output_dir: str, filename: str):
     os.makedirs(output_dir, exist_ok=True)
     filepath = os.path.join(output_dir, filename)
@@ -787,17 +788,21 @@ def generate_dynamic_mdx_query_string(
     return f"SELECT {non_empty_prefix}{axis_zero_set_expression} ON 0 FROM [{target_cube_name}]"
 
 
-def render_calc_step_mdx_template(tm1_service: Any, calc_mdx_template: str, dimension: str) -> str:
-    sep = ", "
-    dimension_elements = tm1_service.dimensions.get(dimension).elements
-    dimension_elements = "{" + sep.join([f"[{dimension}].[{element}]" for element in dimension_elements]) + "}"
+def render_calc_step_mdx_template(input_dataframe: DataFrame, calc_mdx_template: str) -> str:
+    input_dataframe_unique_dict = {}
+    columns = list(set(input_dataframe.columns) - set(["Input"]))
+    for current_col in columns:
+        unique_elements = input_dataframe[current_col].unique().tolist()
+        set_mdx_string = "{" + ",".join([f"[{current_col}].[{element}]" for element in unique_elements]) + "}"
+        input_dataframe_unique_dict[current_col] = set_mdx_string
+
     env = Environment(
         loader=BaseLoader(),
         variable_start_string='{{',
         variable_end_string='}}',
         undefined=StrictUndefined)
     template = env.from_string(calc_mdx_template)
-    return template.render({dimension: dimension_elements})
+    return template.render(**input_dataframe_unique_dict)
 
 
 # ------------------------------------------------------------------------------------------------------------

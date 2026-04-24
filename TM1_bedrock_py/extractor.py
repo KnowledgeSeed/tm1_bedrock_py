@@ -7,10 +7,13 @@ from pandas import DataFrame, read_sql_table, concat, read_csv
 from sqlalchemy import text
 from typing import Sequence, Hashable, Mapping, Iterable
 import random, string
-from TM1_bedrock_py import utility, transformer, basic_logger
+from TM1_bedrock_py import utility, basic_logger
+from TM1_bedrock_py.transformer import (
+    rename_columns_by_reference,
+    dataframe_add_column_assign_value,
+    normalize_table_source_dataframe, dataframe_relabel,
+)
 from itertools import product
-
-from TM1_bedrock_py.utility import TM1CubeObjectMetadata
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -109,7 +112,7 @@ def __tm1_mdx_to_dataframe_default(
             use_iterative_json=True,
             use_blob=use_blob,
             decimal=decimal,
-            dtype={'Value': default_returned_value_type}
+            dtype=dtype
         )
 
     msg = "Either data_mdx or data_mdx_list has to be specified."
@@ -224,11 +227,11 @@ def _handle_mapping_mdx(
     )
     filter_dict = metadata_object.get_filter_dict()
     if native_view_extraction_enabled:
-        dataframe = transformer.rename_columns_by_reference(
+        dataframe = rename_columns_by_reference(
             dataframe=dataframe,
             column_names=metadata_object.get_cube_dims()
         )
-    transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=filter_dict)
+    dataframe_add_column_assign_value(dataframe=dataframe, column_value=filter_dict)
 
     return dataframe
 
@@ -268,7 +271,7 @@ def _handle_mapping_sql_query(
     column_mapping = step.get("column_mapping")
     columns_to_drop = step.get("columns_to_drop")
 
-    transformer.normalize_table_source_dataframe(
+    normalize_table_source_dataframe(
         dataframe=dataframe,
         column_mapping=column_mapping,
         columns_to_drop=columns_to_drop
@@ -304,7 +307,7 @@ def _handle_mapping_csv(
     column_mapping = step.get("column_mapping")
     columns_to_drop = step.get("columns_to_drop")
 
-    transformer.normalize_table_source_dataframe(
+    normalize_table_source_dataframe(
         dataframe=dataframe,
         column_mapping=column_mapping,
         columns_to_drop=columns_to_drop
@@ -572,19 +575,19 @@ def build_input_domain(
         raise ValueError("Must provide at least one domain source (either mdx or coordinates).")
 
     if domain_mdx:
-        data_metadata_queryspecific = utility.TM1CubeObjectMetadata.collect(
+        metadata = utility.TM1CubeObjectMetadata.collect(
             mdx=domain_mdx,
             collect_measure_types=False,
             tm1_service=tm1_service
         )
         domain = tm1_mdx_to_dataframe(
             tm1_service=tm1_service, data_mdx=domain_mdx,
-            cube_dims=data_metadata_queryspecific.get_cube_dims(),
+            cube_dims=metadata.get_cube_dims(),
             **extractor_kwargs
         )
-        transformer.dataframe_add_column_assign_value(
+        dataframe_add_column_assign_value(
             dataframe=domain,
-            column_value=data_metadata_queryspecific.get_filter_dict()
+            column_value=metadata.get_filter_dict()
         )
         domain.drop(columns=["Value"])
     else:
@@ -609,7 +612,9 @@ def build_input_domain(
             leaf_elements_per_dimension.append(leaf_elements)
 
         dimension_names = list(domain_coords.keys())
-        domain = DataFrame(data=product(*leaf_elements_per_dimension), columns=pd.Index(dimension_names))
+        domain = DataFrame(data=product(*leaf_elements_per_dimension),
+                           columns=pd.Index(dimension_names))
+        domain = domain.astype("string")
 
     return domain
 
@@ -638,29 +643,40 @@ def _handle_calculation_mdx(
 ) -> DataFrame:
     """Execute MDX and augment the resulting DataFrame with metadata."""
     mdx = step["calc_mdx"]
+    value_type = step.get("value_type", float)
+    dim_rename_map = step.get("dimension_map")
+    omit_where_clause = step.get("omit_where_from_df", False)
 
     kwargs_copy = kwargs.copy()
     kwargs_copy.pop("skip_zeros", None)
     kwargs_copy.pop("skip_consolidated_cells", None)
 
-    dataframe = tm1_mdx_to_dataframe(
-        tm1_service=tm1_service,
-        data_mdx=mdx,
-        skip_zeros=True,
-        skip_consolidated_cells=True,
-        **kwargs_copy
-    )
+    if dim_rename_map:
+        for placeholder_name, actual_dim_name in dim_rename_map.items():
+            mdx = mdx.replace(placeholder_name, actual_dim_name)
+
     metadata_object = utility.TM1CubeObjectMetadata.collect(
         metadata_function=step.get("calc_metadata_function"),
         tm1_service=tm1_service,
         mdx=mdx,
-        collect_base_cube_metadata=False,
-        collect_source_cube_metadata=False,
         **kwargs_copy
     )
-    filter_dict = metadata_object.get_filter_dict()
+    cube_dimensions = metadata_object.get_cube_dims()
+    dataframe = tm1_mdx_to_dataframe(
+        tm1_service=tm1_service,
+        data_mdx=mdx,
+        skip_zeros=False,
+        skip_consolidated_cells=False,
+        default_returned_value_type=value_type,
+        cube_dimensions=cube_dimensions,
+        **kwargs_copy
+    )
+    if not omit_where_clause:
+        filter_dict = metadata_object.get_filter_dict()
+        dataframe_add_column_assign_value(dataframe=dataframe, column_value=filter_dict)
 
-    transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=filter_dict)
+    if dim_rename_map:
+        dataframe_relabel(dataframe=dataframe, columns={value: key for key, value in dim_rename_map.items()})
 
     return dataframe
 
@@ -672,42 +688,32 @@ CALCULATION_HANDLERS = {
 
 
 def generate_dataframe_for_calculation_info(
-        calc_info: Dict[str, Any],
+        tm1_service: Any,
+        data_df: DataFrame,
+        step: Dict[str, Any],
         step_specific_string: Optional[str] = "shared",
         **kwargs
 ) -> None:
     """
     Mutates a calculation step (calc info) by assigning 'calc_df'.
     """
-    found_key = next((k for k in CALCULATION_HANDLERS if k in calc_info), None)
+    found_key = next((k for k in CALCULATION_HANDLERS if k in step), None)
 
-    calc_info["calc_df"] = (
+    if step.get("calc_mdx"):
+        step["calc_mdx"] = utility.render_calc_step_mdx_template(data_df, step["calc_mdx"])
+
+    step["calc_df"] = (
         CALCULATION_HANDLERS[found_key](
-            step=calc_info,
+            step=step,
+            tm1_service=tm1_service,
             **kwargs
         )
         if found_key
         else None
     )
     utility.dataframe_verbose_logger(
-        dataframe=calc_info["calc_df"],
+        dataframe=step["calc_df"],
         step_number=f"calc_step_{step_specific_string}",
         **kwargs
     )
 
-
-def generate_step_specific_calculation_dataframes(
-    calculation_steps: List[Dict[str, Any]],
-    **kwargs
-) -> None:
-    """
-    Mutates each step in calculation_steps by assigning 'calc_df'.
-    """
-    if not calculation_steps:
-        return
-    for i, step in enumerate(calculation_steps):
-        calc_mdx_template = step.get("calc_mdx_template") or None
-        dimension = step.get("dimension") or None
-        if calc_mdx_template and dimension:
-            step["calc_mdx"] = utility.render_calc_step_mdx_template(calc_mdx_template, dimension, **kwargs)
-        generate_dataframe_for_calculation_info(calc_info=step, step_specific_string=str(i + 1), **kwargs)
