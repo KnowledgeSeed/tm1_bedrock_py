@@ -1,11 +1,19 @@
+import re
 from typing import Callable, List, Dict, Optional, Any, Literal, Union, Type
-
+import pandas as pd
 from TM1py import TM1Service, NativeView, Subset
+
 from pandas import DataFrame, read_sql_table, concat, read_csv
 from sqlalchemy import text
 from typing import Sequence, Hashable, Mapping, Iterable
 import random, string
-from TM1_bedrock_py import utility, transformer, basic_logger
+from TM1_bedrock_py import utility, basic_logger
+from TM1_bedrock_py.transformer import (
+    rename_columns_by_reference,
+    dataframe_add_column_assign_value,
+    normalize_table_source_dataframe, dataframe_relabel,
+)
+from itertools import product
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -104,7 +112,7 @@ def __tm1_mdx_to_dataframe_default(
             use_iterative_json=True,
             use_blob=use_blob,
             decimal=decimal,
-            dtype={'Value': default_returned_value_type}
+            dtype=dtype
         )
 
     msg = "Either data_mdx or data_mdx_list has to be specified."
@@ -219,13 +227,31 @@ def _handle_mapping_mdx(
     )
     filter_dict = metadata_object.get_filter_dict()
     if native_view_extraction_enabled:
-        dataframe = transformer.rename_columns_by_reference(
+        dataframe = rename_columns_by_reference(
             dataframe=dataframe,
             column_names=metadata_object.get_cube_dims()
         )
-    transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value=filter_dict)
+    dataframe_add_column_assign_value(dataframe=dataframe, column_value=filter_dict)
 
     return dataframe
+
+
+def _handle_set_mdx(
+        step: Dict[str, Any],
+        tm1_service: Any
+) -> DataFrame:
+    set_mdx = step["set_mdx"]
+    match = re.search(pattern=r"\[(.*?)\]", string=set_mdx)
+    if match:
+        dimension_name = match.group(1)
+    else:
+        raise ValueError("Invalid set mdx, dimension name is missing (there are no square brackets).")
+
+    step_specific_tm1_service = step.get("tm1_service") or tm1_service
+
+    element_list = tm1_set_mdx_to_list(step_specific_tm1_service, set_mdx)
+    elements_df = pd.DataFrame(element_list, columns=[dimension_name], dtype=str)
+    return elements_df
 
 
 def _handle_mapping_sql_query(
@@ -245,7 +271,7 @@ def _handle_mapping_sql_query(
     column_mapping = step.get("column_mapping")
     columns_to_drop = step.get("columns_to_drop")
 
-    transformer.normalize_table_source_dataframe(
+    normalize_table_source_dataframe(
         dataframe=dataframe,
         column_mapping=column_mapping,
         columns_to_drop=columns_to_drop
@@ -257,7 +283,7 @@ def _handle_mapping_csv(
         step: Dict[str, Any],
         csv_function: Optional[Callable] = None,
         **_kwargs
-) -> None:
+) -> DataFrame:
     """
         csv_file_path: str,
         sep: Optional[str] = None,
@@ -281,11 +307,13 @@ def _handle_mapping_csv(
     column_mapping = step.get("column_mapping")
     columns_to_drop = step.get("columns_to_drop")
 
-    transformer.normalize_table_source_dataframe(
+    normalize_table_source_dataframe(
         dataframe=dataframe,
         column_mapping=column_mapping,
         columns_to_drop=columns_to_drop
     )
+
+    return dataframe
 
 
 MAPPING_HANDLERS = {
@@ -293,7 +321,8 @@ MAPPING_HANDLERS = {
     "mapping_mdx": _handle_mapping_mdx,
     "mapping_sql_query": _handle_mapping_sql_query,
     "mapping_sql_table_name": _handle_mapping_sql_query,
-    "mapping_csv_file_path": _handle_mapping_csv
+    "mapping_csv_file_path": _handle_mapping_csv,
+    "set_mdx": _handle_set_mdx
 }
 
 
@@ -530,3 +559,161 @@ def __csv_to_dataframe_default(
             low_memory=low_memory,
             memory_map=memory_map
         )
+
+
+# ------------------------------------------------------------------------------------------------------------
+# extractor functions for complex input
+# ------------------------------------------------------------------------------------------------------------
+
+def build_input_domain(
+        tm1_service: Any,
+        domain_mdx: str = None,
+        domain_coords: dict[str, str] = None,
+        **extractor_kwargs
+) -> DataFrame:
+    if domain_mdx is None and domain_coords is None:
+        raise ValueError("Must provide at least one domain source (either mdx or coordinates).")
+
+    if domain_mdx:
+        metadata = utility.TM1CubeObjectMetadata.collect(
+            mdx=domain_mdx,
+            collect_measure_types=False,
+            tm1_service=tm1_service
+        )
+        domain = tm1_mdx_to_dataframe(
+            tm1_service=tm1_service, data_mdx=domain_mdx,
+            cube_dims=metadata.get_cube_dims(),
+            **extractor_kwargs
+        )
+        dataframe_add_column_assign_value(
+            dataframe=domain,
+            column_value=metadata.get_filter_dict()
+        )
+        domain.drop(columns=["Value"])
+    else:
+        leaf_elements_per_dimension = []
+        for dimension_name, raw_element in domain_coords.items():
+            if "{" in raw_element:
+                mdx = raw_element
+            elif ":" in raw_element:
+                mdx = (f"{{Tm1FilterByLevel("
+                       f"{{Tm1DrillDownMember("
+                       f"{{[{dimension_name}].[{raw_element.split(sep=':', maxsplit=1)[0]}"
+                       f"].[{raw_element.split(sep=':', maxsplit=1)[1]}]}},ALL,RECURSIVE)}},0)}}")
+            else:
+                mdx = (f"{{Tm1FilterByLevel({{Tm1DrillDownMember("
+                       f"{{[{dimension_name}].[{raw_element}]}},ALL,RECURSIVE)}},0)}}")
+            leaves_data = tm1_service.elements.execute_set_mdx(mdx)
+            leaf_elements = [
+                f"{raw_element.split(sep=':', maxsplit=1)[0]}:{leaf_data[0]['Name']}"
+                if ":" in raw_element else leaf_data[0]['Name']
+                for leaf_data in leaves_data
+            ]
+            leaf_elements_per_dimension.append(leaf_elements)
+
+        dimension_names = list(domain_coords.keys())
+        domain = DataFrame(data=product(*leaf_elements_per_dimension),
+                           columns=pd.Index(dimension_names))
+        domain = domain.astype("string")
+
+    return domain
+
+
+def tm1_set_mdx_to_list(tm1_service: Any, set_mdx: str) -> list[str]:
+    leaves_data = tm1_service.elements.execute_set_mdx(set_mdx)
+
+    leaf_elements = [
+        leaf_data[0]['Name']
+        for leaf_data in leaves_data
+    ]
+    return leaf_elements
+
+
+def _handle_calculation_df(
+    step: Dict[str, Any],
+    **_kwargs
+) -> DataFrame:
+    return step["calc_df"]
+
+
+def _handle_calculation_mdx(
+    step: Dict[str, Any],
+    tm1_service: Optional[Any] = None,
+    **kwargs
+) -> DataFrame:
+    """Execute MDX and augment the resulting DataFrame with metadata."""
+    mdx = step["calc_mdx"]
+    value_type = step.get("value_type", float)
+    dim_rename_map = step.get("dimension_map")
+    omit_where_clause = step.get("omit_where_from_df", False)
+
+    kwargs_copy = kwargs.copy()
+    kwargs_copy.pop("skip_zeros", None)
+    kwargs_copy.pop("skip_consolidated_cells", None)
+
+    if dim_rename_map:
+        for placeholder_name, actual_dim_name in dim_rename_map.items():
+            mdx = mdx.replace(placeholder_name, actual_dim_name)
+
+    metadata_object = utility.TM1CubeObjectMetadata.collect(
+        metadata_function=step.get("calc_metadata_function"),
+        tm1_service=tm1_service,
+        mdx=mdx,
+        **kwargs_copy
+    )
+    cube_dimensions = metadata_object.get_cube_dims()
+    dataframe = tm1_mdx_to_dataframe(
+        tm1_service=tm1_service,
+        data_mdx=mdx,
+        skip_zeros=False,
+        skip_consolidated_cells=False,
+        default_returned_value_type=value_type,
+        cube_dimensions=cube_dimensions,
+        **kwargs_copy
+    )
+    if not omit_where_clause:
+        filter_dict = metadata_object.get_filter_dict()
+        dataframe_add_column_assign_value(dataframe=dataframe, column_value=filter_dict)
+
+    if dim_rename_map:
+        dataframe_relabel(dataframe=dataframe, columns={value: key for key, value in dim_rename_map.items()})
+
+    return dataframe
+
+
+CALCULATION_HANDLERS = {
+    "calc_df": _handle_calculation_df,
+    "calc_mdx": _handle_calculation_mdx,
+}
+
+
+def generate_dataframe_for_calculation_info(
+        tm1_service: Any,
+        data_df: DataFrame,
+        step: Dict[str, Any],
+        step_specific_string: Optional[str] = "shared",
+        **kwargs
+) -> None:
+    """
+    Mutates a calculation step (calc info) by assigning 'calc_df'.
+    """
+    found_key = next((k for k in CALCULATION_HANDLERS if k in step), None)
+
+    if step.get("calc_mdx"):
+        step["calc_mdx"] = utility.render_calc_step_mdx_template(data_df, step["calc_mdx"])
+
+    step["calc_df"] = (
+        CALCULATION_HANDLERS[found_key](
+            step=step,
+            tm1_service=tm1_service,
+            **kwargs
+        )
+        if found_key
+        else None
+    )
+    utility.dataframe_verbose_logger(
+        dataframe=step["calc_df"],
+        step_number=f"calc_step_{step_specific_string}",
+        **kwargs
+    )
+

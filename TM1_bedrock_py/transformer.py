@@ -1,5 +1,5 @@
 from typing import Callable, List, Dict, Optional, Any, Literal
-
+import re
 import pandas as pd
 import numpy as np
 from pandas import DataFrame
@@ -158,15 +158,22 @@ def dataframe_reorder_dimensions(
     KeyError:
         If any column in `cube_dimensions` does not exist in the DataFrame.
     """
-    value_column_name = 'Value'
+    value_column_name: str = 'value' if case_and_space_insensitive_inputs else 'Value'
+
     if case_and_space_insensitive_inputs:
         utility.normalize_dataframe_strings(dataframe)
         cube_dimensions = utility.normalize_structure_strings(cube_dimensions)
-        value_column_name = 'value'
 
-    new_order = cube_dimensions + [value_column_name]
-    reordered_dataframe = dataframe[new_order]
-    return reordered_dataframe
+    dimension_index = pd.Index(cube_dimensions)
+    existence_mask = dimension_index.isin(dataframe.columns)
+
+    if not existence_mask.all():
+        missing_columns: str = ', '.join(dimension_index[~existence_mask])
+        raise ValueError(
+            f"The following columns (dimensions) are missing from the dataframe: {missing_columns}"
+        )
+
+    return dataframe[cube_dimensions + [value_column_name]]
 
 
 def dataframe_filter_inplace(
@@ -1007,7 +1014,7 @@ def __apply_basic_dimension_reshaping(
         shared_mapping_df: Optional[DataFrame] = None,
         case_and_space_insensitive_inputs: Optional[bool] = False,
         audit_mode: bool = False,
-        step_number: int = 1,
+        step_number: int = 1
 ) -> DataFrame:
     # either or: literal row filter, literal column drop, literal column add with value assign, literal relabel
     # can be used in any combination.
@@ -1047,6 +1054,28 @@ def __apply_basic_dimension_reshaping(
     return data_df
 
 
+def __apply_cartesian_with_set(
+        data_df: DataFrame,
+        mapping_step: Dict[str, Any],
+        shared_mapping_df: Optional[DataFrame] = None,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
+        audit_mode: bool = False,
+        step_number: int = 1
+) -> DataFrame:
+    _, _, _ = shared_mapping_df, audit_mode, step_number
+
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(data_df)
+        utility.normalize_structure_strings(mapping_step)
+
+    element_df = mapping_step["mapping_df"]
+    data_df = dataframe_cartesian_product(
+        data_df=data_df, mapping_df=element_df, joined_columns=element_df.columns[0],
+        case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
+
+    return data_df
+
+
 method_handlers = {
     "replace": __apply_replace,
     "map_and_replace": __apply_map_and_replace,
@@ -1054,7 +1083,8 @@ method_handlers = {
     "cartesian": __apply_cartesian_product,
     "pivot": __apply_pivot,
     "unpivot": __apply_unpivot,
-    "basic_reshaping": __apply_basic_dimension_reshaping
+    "basic_reshaping": __apply_basic_dimension_reshaping,
+    "cartesian_with_set": __apply_cartesian_with_set
 }
 
 
@@ -1147,3 +1177,200 @@ def dataframe_execute_mappings(
             raise ValueError(f"Unsupported mapping method: {method}")
 
     return data_df
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Main: complex input process related functions
+# ------------------------------------------------------------------------------------------------------------
+
+def assign_constant(
+        value: float,
+        name: str,
+        dataframe: pd.DataFrame,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
+        **_kwargs
+) -> pd.DataFrame:
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+
+    dataframe[name] = value
+    return dataframe
+
+
+def sum_cells(
+        dataframe: pd.DataFrame,
+        name: str,
+        column_to_sum: str,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
+        **_kwargs
+) -> pd.DataFrame:
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+
+    dataframe[name] = sum(dataframe[column_to_sum].astype(float).tolist())
+    return dataframe
+
+
+def sum_if_cells(
+        dataframe: pd.DataFrame,
+        name: str,
+        column_to_sum: str,
+        group_column_list: list[str],
+        case_and_space_insensitive_inputs: Optional[bool] = False,
+        **_kwargs
+) -> pd.DataFrame:
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+
+    dataframe[name] = dataframe.groupby(group_column_list)[column_to_sum].transform('sum')
+    return dataframe
+
+
+def count_cells(
+        dataframe: pd.DataFrame,
+        name: str,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
+        **_kwargs
+) -> pd.DataFrame:
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+
+    dataframe[name] = len(dataframe.index)
+    return dataframe
+
+
+def count_if_cells(
+        dataframe: pd.DataFrame,
+        name: str,
+        group_column_list: list[str],
+        case_and_space_insensitive_inputs: Optional[bool] = False,
+        **_kwargs
+) -> pd.DataFrame:
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+
+    dataframe[name] = dataframe.groupby(group_column_list)[group_column_list[0]].transform('count')
+
+    return dataframe
+
+
+def assign_data(
+        dataframe: pd.DataFrame,
+        calc_df: pd.DataFrame,
+        name: str,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
+        ignore_in_join: list[str] = None,
+        **_kwargs
+) -> pd.DataFrame:
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+        utility.normalize_dataframe_strings(calc_df)
+
+    if ignore_in_join is None:
+        ignore_in_join = []
+
+    shared_dimensions = list(set(dataframe.columns).intersection(calc_df.columns) - set(ignore_in_join))
+
+    if 'Value' in shared_dimensions:
+        shared_dimensions.remove('Value')
+
+    filtered_assign_dataframe = calc_df[shared_dimensions + ['Value']].rename(
+        columns={'Value': name}
+    )
+
+    return dataframe.merge(
+        filtered_assign_dataframe,
+        on=shared_dimensions,
+        how='left'
+    )
+
+
+def apply_conditional_logic(
+        dataframe: pd.DataFrame,
+        name: str,
+        if_then: Dict[str, Any],
+        fallback: Any = None,
+        **_kwargs
+) -> pd.DataFrame:
+    """
+        condition_to_result_mapping = {
+            "koord1=='valami' and koord1 in (érték1, érték2)": "eset1",
+            "koord1=='másvalami'": "eset2",
+            "koord2==oszlop3": "eset3",
+            "fiscal_year_subset.index(koord2) in (3, 4)": 1,
+
+        }
+    """
+
+    evaluated_conditions: List[pd.Series] = [
+        dataframe.eval(expression) for expression in if_then.keys()
+    ]
+
+    mapped_results: List[Any] = [
+        dataframe[match_object.group(1)]
+        if isinstance(mapped_value, str) and (match_object := re.fullmatch(r"\{\{(.*?)\}\}", mapped_value))
+        else mapped_value
+        for mapped_value in if_then.values()
+    ]
+
+    parsed_fallback_value: Any = (
+        dataframe[fallback_match_object.group(1)]
+        if isinstance(fallback, str) and (fallback_match_object := re.fullmatch(r"\{\{(.*?)\}\}", fallback))
+        else fallback
+    )
+
+    dataframe[name] = np.select(
+        condlist=evaluated_conditions,
+        choicelist=mapped_results,
+        default=parsed_fallback_value
+    )
+
+    return dataframe
+
+
+def evaluate_and_assign_formula(
+        dataframe: pd.DataFrame,
+        name: str,
+        formula: str,
+        **_kwargs
+) -> pd.DataFrame:
+    parsed_mathematical_formula = re.sub(r"\{\{(.*?)\}\}", r"`\1`", formula)
+    dataframe[name] = dataframe.eval(parsed_mathematical_formula)
+    return dataframe
+
+
+calc_method_handlers = {
+    "sum": sum_cells,
+    "count": count_cells,
+    "sumif": sum_if_cells,
+    "countif": count_if_cells,
+    "constant": assign_constant,
+    "query": assign_data,
+    "cube_data": assign_data,
+    "if": apply_conditional_logic,
+    "condition": apply_conditional_logic,
+    "formula": evaluate_and_assign_formula
+}
+
+
+@utility.log_exec_metrics
+def dataframe_execute_calculation(
+        data_df: DataFrame,
+        step: Dict,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
+) -> DataFrame:
+    method = step.get("method", "missing")
+    if method in calc_method_handlers:
+        data_df = calc_method_handlers[method](
+            dataframe=data_df,
+            case_and_space_insensitive_inputs=case_and_space_insensitive_inputs,
+            **step
+        )
+    else:
+        raise ValueError(f"Unsupported mapping method: {method}")
+
+    return data_df
+
+
+def dataframe_remove_zero_records(dataframe: DataFrame) -> DataFrame:
+    return dataframe[dataframe["Value"] != 0]

@@ -1,3 +1,6 @@
+import configparser
+from pathlib import Path
+
 import pandas as pd
 import os
 from TM1py import TM1Service
@@ -10,20 +13,19 @@ import pyodbc
 from TM1_bedrock_py.dimension_builder.apply import create_attribute_structure
 
 
+def create_tm1_connection(connection_name: str = 'ks_academy'):
+    config = configparser.ConfigParser()
+    config.read(Path(__file__).parent.joinpath('config.ini'))
+    return TM1Service(**config[connection_name])  # tm1 szerver választó lista
+
+
 def complex_transform_demo():
     # letárolás másik verzióra
     # újrastruktúrálás mapping kockával (employee-orgunit) az eredeti idősíkon
     # adat áthelyezés egy évvel későbbre
     # számok felszorzása az inflációval
 
-    tm1_params = {
-        "address": "localhost",
-        "port": 5379,
-        "user": "testbench",
-        "password": "testbench",
-        "ssl": False
-    }
-    tm1_service = TM1Service(**tm1_params)  # tm1 szerver választó lista
+    tm1_service = create_tm1_connection('ks_academy')
 
     target_cube_name = "Sales"  # kocka választó lista / automatikusan kitöltve (jobbklikk a kockára)
 
@@ -110,14 +112,7 @@ def complex_transform_demo():
 
 
 def run_dim_builder_wrapper():
-    tm1_params = {
-        "address": "dev.knowledgeseed.local",
-        "port": 5379,
-        "user": "admin",
-        "password": "admin",
-        "ssl": False
-    }
-    tm1_service = TM1Service(**tm1_params)
+    tm1_service = create_tm1_connection('ks_academy')
     set_logging_level("DEBUG")
 
     dimension_name = "DimGenerator"
@@ -151,14 +146,7 @@ def run_dim_builder_wrapper():
 
 
 def dimension_builder_basic_demo():
-    tm1_params = {
-        "address": "dev.knowledgeseed.local",
-        "port": 5379,
-        "user": "admin",
-        "password": "admin",
-        "ssl": False
-    }
-    tm1_service = TM1Service(**tm1_params)
+    tm1_service = create_tm1_connection('ks_academy')
 
     dimension_name = "DimBuilderDemo9"
     file_path = os.path.join(os.path.dirname(__file__), "dimension_builder_init2.xlsx")
@@ -177,14 +165,7 @@ def dimension_builder_basic_demo():
 
 
 def build_cube_demo():
-    tm1_params = {
-        "address": "dev.knowledgeseed.local",
-        "port": 5379,
-        "user": "admin",
-        "password": "admin",
-        "ssl": False
-    }
-    tm1_service = TM1Service(**tm1_params)
+    tm1_service = create_tm1_connection('ks_academy')
 
     cube_dimensions = {
         "TestCube1": ["DimBuilderDemo", "DimBuilderDemo2"],
@@ -196,14 +177,7 @@ def build_cube_demo():
 
 
 def dimension_builder_append_demo():
-    tm1_params = {
-        "address": "dev.knowledgeseed.local",
-        "port": 5379,
-        "user": "admin",
-        "password": "admin",
-        "ssl": False
-    }
-    tm1_service = TM1Service(**tm1_params)
+    tm1_service = create_tm1_connection('ks_academy')
 
     dimension_name = "DimBuilderDemo"
     file_path = os.path.join(os.path.dirname(__file__), "dimension_builder_append.xlsx")
@@ -227,14 +201,7 @@ def dimension_builder_append_demo():
 
 
 def dimension_builder_complex_demo():
-    tm1_params = {
-        "address": "dev.knowledgeseed.local",
-        "port": 5379,
-        "user": "admin",
-        "password": "admin",
-        "ssl": False
-    }
-    tm1_service = TM1Service(**tm1_params)
+    tm1_service = create_tm1_connection('ks_academy')
 
     dimension_name = "DimBuilderDemo"
     file_path = os.path.join(os.path.dirname(__file__), "dimension_builder_update.xlsx")
@@ -290,14 +257,7 @@ def dimension_builder_complex_demo():
 
 
 def hierarchy_builder_demo():
-    tm1_params = {
-        "address": "dev.knowledgeseed.local",
-        "port": 5379,
-        "user": "admin",
-        "password": "admin",
-        "ssl": False
-    }
-    tm1_service = TM1Service(**tm1_params)
+    tm1_service = create_tm1_connection('ks_academy')
 
     dimension_name = "DimBuilderDemo"
     hierarchy_name = "AltHier"
@@ -331,10 +291,14 @@ def hierarchy_builder_demo():
 
 
 def tm1_to_sql_pyodbc_custom_writer_demo():
-    server_address = 'localhost,5835'
-    user_name = 'admin'
-    password = 'apple'
-    database = 'HRDEMO'
+    config = configparser.ConfigParser()
+    config.read(Path(__file__).parent.joinpath('config.ini'))
+    sql_config = config['sqlparams_hrdemo']
+
+    server_address = f'{sql_config["host"]},{sql_config["port"]}'
+    user_name = sql_config["username"]
+    password = sql_config["password"]
+    database = sql_config["database"]
     driver_name = 'ODBC Driver 17 for SQL Server'
     connection_string: str = (
         f"DRIVER={{{driver_name}}};"
@@ -348,14 +312,7 @@ def tm1_to_sql_pyodbc_custom_writer_demo():
     )
     sql_connection = pyodbc.connect(connection_string)
 
-    tm1_params = {
-        "address": "localhost",
-        "port": 5365,
-        "user": "admin",
-        "password": "",
-        "ssl": False
-    }
-    tm1_service = TM1Service(**tm1_params)
+    tm1_service = create_tm1_connection('hr_demo')
 
     data_mdx = """
         SELECT
@@ -384,23 +341,8 @@ def tm1_to_sql_pyodbc_custom_writer_demo():
 
 
 def copy_dim_between_servers_demo():
-    tm1params_hrdemo = {
-        "address": "localhost",
-        "port": 5365,
-        "user": "admin",
-        "password": "",
-        "ssl": False
-    }
-    tm1srv_hrdemo = TM1Service(**tm1params_hrdemo)
-
-    tm1params_ksacademy = {
-        "address": "dev.knowledgeseed.local",
-        "port": 5379,
-        "user": "admin",
-        "password": "admin",
-        "ssl": False
-    }
-    tm1srv_ksacademy = TM1Service(**tm1params_ksacademy)
+    tm1srv_hrdemo = create_tm1_connection('hr_demo')
+    tm1srv_ksacademy = create_tm1_connection('ks_academy')
 
     utility.configure_pandas_display(pd)
 
@@ -417,23 +359,8 @@ def copy_dim_between_servers_demo():
 
 
 def copy_data_between_servers_demo():
-    tm1params_hrdemo = {
-        "address": "localhost",
-        "port": 5365,
-        "user": "admin",
-        "password": "",
-        "ssl": False
-    }
-    tm1srv_hrdemo = TM1Service(**tm1params_hrdemo)
-
-    tm1params_ksacademy = {
-        "address": "dev.knowledgeseed.local",
-        "port": 5379,
-        "user": "admin",
-        "password": "admin",
-        "ssl": False
-    }
-    tm1srv_ksacademy = TM1Service(**tm1params_ksacademy)
+    tm1srv_hrdemo = create_tm1_connection('hr_demo')
+    tm1srv_ksacademy = create_tm1_connection('ks_academy')
 
     utility.configure_pandas_display(pd)
 
@@ -474,14 +401,8 @@ def copy_data_between_servers_demo():
 
 
 def dimension_builder_no_edges_old_format():
-    tm1params_ksacademy = {
-        "address": "dev.knowledgeseed.local",
-        "port": 5379,
-        "user": "admin",
-        "password": "admin",
-        "ssl": False
-    }
-    tm1_service = TM1Service(**tm1params_ksacademy)
+    tm1_service = create_tm1_connection('ks_academy')
+    
     dimension_name = "DimBuilderDemo7"
     file_path = os.path.join(os.path.dirname(__file__), "company.csv")
     utility.configure_pandas_display(pd)
@@ -513,14 +434,8 @@ def dimension_builder_no_edges_old_format():
 
 
 def context_metadata_basic_demo():
-    tm1params_ksacademy = {
-        "address": "dev.knowledgeseed.local",
-        "port": 5379,
-        "user": "admin",
-        "password": "admin",
-        "ssl": False
-    }
-    tm1_service = TM1Service(**tm1params_ksacademy)
+    tm1_service = create_tm1_connection('ks_academy')
+
     context_metadata = ContextMetadata(tm1_service=tm1_service)
 
     mdx = """
@@ -540,24 +455,10 @@ def context_metadata_basic_demo():
 
 
 def context_metadata_complete_demo():
-    tm1params_ksacademy = {
-        "address": "dev.knowledgeseed.local",
-        "port": 5379,
-        "user": "admin",
-        "password": "admin",
-        "ssl": False
-    }
-    tm1_service = TM1Service(**tm1params_ksacademy)
-
-    sqlparams_hrdemo = {
-        "host": "localhost",
-        "port": 5835,
-        "username": "admin",
-        "password": "apple",
-        "connection_type": "mssql",
-        "database": "HRDEMO"
-    }
-    sql_engine = utility.create_sql_engine(**sqlparams_hrdemo)
+    config = configparser.ConfigParser()
+    config.read(Path(__file__).parent.joinpath('config.ini'))
+    tm1_service = create_tm1_connection('ks_academy')
+    sql_engine = utility.create_sql_engine(**config['sqlparams_hrdemo'])
 
     data_source_path = os.path.join(os.path.dirname(__file__), "test_param_inputs.yaml")
     render_template_path = os.path.join(os.path.dirname(__file__), "test_template_render.yaml")
@@ -570,23 +471,8 @@ def context_metadata_complete_demo():
 
 
 def copy_cube_structure_between_servers_demo():
-    tm1params_hrdemo = {
-        "address": "localhost",
-        "port": 5365,
-        "user": "admin",
-        "password": "",
-        "ssl": False
-    }
-    tm1srv_target = TM1Service(**tm1params_hrdemo)
-
-    tm1params_ksacademy = {
-        "address": "dev.knowledgeseed.local",
-        "port": 5379,
-        "user": "admin",
-        "password": "admin",
-        "ssl": False
-    }
-    tm1srv_source = TM1Service(**tm1params_ksacademy)
+    tm1srv_target = create_tm1_connection('hr_demo')
+    tm1srv_source = create_tm1_connection('ks_academy')
 
     utility.configure_pandas_display(pd)
 
@@ -693,14 +579,8 @@ def mvm_demo(tm1srv_source, tm1srv_target, cube_list):
 
 
 def mdx_gen_demo():
-    tm1params_hrdemo = {
-        "address": "localhost",
-        "port": 5365,
-        "user": "admin",
-        "password": "",
-        "ssl": False
-    }
-    tm1srv_target = TM1Service(**tm1params_hrdemo)
+    tm1srv_target = create_tm1_connection('hr_demo')
+
     mdx = utility.generate_dynamic_mdx_query_string(
         tm1_service=tm1srv_target, target_cube_name='Group Employee',
         dimension_filter_mapping={"Groups": ['SingleGroup']})
@@ -708,14 +588,7 @@ def mdx_gen_demo():
 
 
 def attribute_structure_creation_demo():
-    tm1params_hrdemo = {
-        "address": "localhost",
-        "port": 5365,
-        "user": "admin",
-        "password": "",
-        "ssl": False
-    }
-    tm1srv_target = TM1Service(**tm1params_hrdemo)
+    tm1srv_target = create_tm1_connection('hr_demo')
 
     attr_cols = ["testAttr1:String", "TestAttr2:Numeric"]
     attr_cube_name = "}ElementAttributes_attributeTest"
@@ -728,22 +601,336 @@ def attribute_structure_creation_demo():
     )
 
 
+def input_handler_leaf_domain():
+    tm1_service = create_tm1_connection('ks_academy')
+
+    cube_name = "testbenchPrice"
+
+    domain_coords = {
+        "testbenchVersion": "Actual",
+        "testbenchPeriod": "202401",
+        "testbenchMeasurePrice": "Price",
+        "testbenchProduct": "P0000001"
+    }
+
+    bedrock.input_handler(
+        tm1_service=tm1_service,
+        target_cube_name=cube_name,
+        domain_coordinates=domain_coords,
+        input_value=120
+    )
+
+
+def input_handler_repeat_on_children():
+    tm1_service = create_tm1_connection('ks_academy')
+
+    cube_name = "testbenchPrice"
+
+    domain_coords = {
+        "testbenchProduct": "ProductSubCategory01",
+        "testbenchVersion": "Actual",
+        "testbenchPeriod": "202401",
+        "testbenchMeasurePrice": "Price",
+    }
+
+    bedrock.input_handler(
+        tm1_service=tm1_service,
+        target_cube_name=cube_name,
+        domain_coordinates=domain_coords,
+        input_value=110
+    )
+
+
+def input_handler_equal_spread_children():
+    tm1_service = create_tm1_connection('ks_academy')
+
+    cube_name = "testbenchPrice"
+
+    domain_coords = {
+        "testbenchProduct": "ProductSubCategory01",
+        "testbenchVersion": "Actual",
+        "testbenchPeriod": "202401",
+        "testbenchMeasurePrice": "Price",
+    }
+
+    calculation_steps = [
+        {
+            "name": "TotalCells",
+            "method": "count"
+        },
+        {
+            "name": "FinalValue",
+            "method": "formula",
+            "formula": "Input / TotalCells"
+        }
+    ]
+
+    bedrock.input_handler(
+        tm1_service=tm1_service,
+        target_cube_name=cube_name,
+        domain_coordinates=domain_coords,
+        input_value=100,
+        calculation_steps=calculation_steps
+    )
+
+
+def input_handler_conditional():
+    tm1_service = create_tm1_connection('ks_academy')
+
+    cube_name = "testbenchPrice"
+
+    domain_coords = {
+        "testbenchProduct": "ProductSubCategory01",
+        "testbenchVersion": "Actual",
+        "testbenchPeriod": "202401",
+        "testbenchMeasurePrice": "Price",
+    }
+
+    calculation_steps = [
+        {
+            "name": "TotalCells",
+            "method": "count"
+        },
+        {
+            "name": "FinalValue",
+            "method": "formula",
+            "formula": "Input / TotalCells"
+        },
+        {
+            "name": "OnlyForProduct1",
+            "method": "if",
+            "if_then": {
+                "testbenchProduct == 'P0000001'": "{{FinalValue}}",
+                "testbenchProduct == 'P0000002'": 2
+            },
+            "fallback": 1
+        }
+    ]
+
+    bedrock.input_handler(
+        tm1_service=tm1_service,
+        target_cube_name=cube_name,
+        domain_coordinates=domain_coords,
+        input_value=100,
+        calculation_steps=calculation_steps
+    )
+
+
+def input_handler_with_mixed_coord_and_set():
+    tm1_service = create_tm1_connection('ks_academy')
+
+    cube_name = "testbenchPrice"
+
+    domain_coords = {
+        "testbenchProduct": "ProductSubCategory01",
+        "testbenchVersion": "Actual",
+        "testbenchPeriod": "{[testbenchPeriod].[202401], [testbenchPeriod].[202402]}",
+        "testbenchMeasurePrice": "Price",
+    }
+
+    calculation_steps = [
+        {
+            "name": "TotalCells",
+            "method": "count"
+        },
+        {
+            "name": "FinalValue",
+            "method": "formula",
+            "formula": "Input / TotalCells"
+        }
+    ]
+
+    bedrock.input_handler(
+        tm1_service=tm1_service,
+        target_cube_name=cube_name,
+        domain_coordinates=domain_coords,
+        input_value=120,
+        calculation_steps=calculation_steps
+    )
+
+
+def input_handler_with_postcalc_cartesian():
+    tm1_service = create_tm1_connection('ks_academy')
+
+    cube_name = "testbenchPrice"
+
+    domain_coords = {
+        "testbenchProduct": "ProductSubCategory01",
+        "testbenchVersion": "Actual",
+        "testbenchMeasurePrice": "Price",
+    }
+
+    calculation_steps = [
+        {
+            "name": "TotalCells",
+            "method": "count"
+        },
+        {
+            "name": "FinalValue",
+            "method": "formula",
+            "formula": "Input / TotalCells"
+        }
+    ]
+
+    post_calc_mapping_steps = [
+        {
+            "method":"cartesian_with_set",
+            "set_mdx": "{[testbenchPeriod].[202401], [testbenchPeriod].[202402]}"
+        }
+    ]
+
+    bedrock.input_handler(
+        tm1_service=tm1_service,
+        target_cube_name=cube_name,
+        domain_coordinates=domain_coords,
+        input_value=120,
+        calculation_steps=calculation_steps,
+        post_calc_mapping_steps=post_calc_mapping_steps
+    )
+
+
+def input_handler_proportional_spread():
+    tm1_service = create_tm1_connection('ks_academy')
+
+    cube_name = "testbenchPrice"
+
+    domain_coords = {
+        "testbenchProduct": "ProductSubCategory01",
+        "testbenchVersion": "Actual",
+        "testbenchMeasurePrice": "Price",
+        "testbenchPeriod": "202402"
+    }
+
+    calculation_steps = [
+        {
+            "name": "ratioBase",
+            "method": "cube_data",
+            "calc_mdx": """
+            
+            SELECT
+                {{testbenchVersion}}
+                * {{testbenchMeasurePrice}}
+            ON COLUMNS,
+                [testbenchProduct].[testbenchProduct].Members
+            ON ROWS
+            FROM [testbenchPrice]
+            WHERE (
+                [testbenchPeriod].[testbenchPeriod].[202401]
+                )
+            
+            """,
+
+            "omit_where_from_df": True
+        },
+        {
+            "name": "ratioTotal",
+            "method": "sum",
+            "column_to_sum": "ratioBase"
+        },
+        {
+            "name": "FinalValue",
+            "method": "formula",
+            "formula": "Input * ratioBase / ratioTotal"
+        }
+    ]
+
+    bedrock.input_handler(
+        tm1_service=tm1_service,
+        target_cube_name=cube_name,
+        domain_coordinates=domain_coords,
+        input_value=1000,
+        calculation_steps=calculation_steps
+    )
+
+
+def input_handler_proportional_spread_the_other_way():
+    tm1_service = create_tm1_connection('ks_academy')
+
+    cube_name = "testbenchPrice"
+
+    domain_coords = {
+        "testbenchProduct": "ProductSubCategory01",
+        "testbenchVersion": "Actual",
+        "testbenchMeasurePrice": "Price",
+        "testbenchPeriod": "202402"
+    }
+
+    calculation_steps = [
+        {
+            "name": "beforePeriod",
+            "method": "cube_data",
+            "calc_mdx": """
+                SELECT
+                    {[}ElementAttributes_testbenchPeriod].[}ElementAttributes_testbenchPeriod].[PREV_PERIOD]}
+                ON COLUMNS,
+                    {{testbenchPeriod}}
+                ON ROWS
+                FROM [}ElementAttributes_testbenchPeriod]
+            """,
+            "value_type": str,
+        },
+        {
+            "name": "ratioBase",
+            "method": "cube_data",
+            "calc_mdx": """
+                SELECT
+                    {{testbenchVersion}}
+                    * {{testbenchMeasurePrice}}
+                    * {{beforePeriod}}
+                ON COLUMNS,
+                    {{testbenchProduct}}
+                ON ROWS
+                FROM [testbenchPrice]
+            """,
+            "dimension_map": {"beforePeriod": "testbenchPeriod"}
+        },
+        {
+            "name": "ratioTotal",
+            "method": "sum",
+            "column_to_sum": "ratioBase"
+        },
+        {
+            "name": "FinalValue",
+            "method": "formula",
+            "formula": "Input * ratioBase / ratioTotal"
+        }
+    ]
+
+    utility.configure_pandas_display(pd)
+
+    final_state = bedrock.input_handler(
+        tm1_service=tm1_service,
+        target_cube_name=cube_name,
+        domain_coordinates=domain_coords,
+        input_value=1000,
+        calculation_steps=calculation_steps,
+        output_final_state_dataframe=True
+    )
+
+    print(final_state)
+
+
 if __name__ == '__main__':
     # complex_transform_demo()
     # tm1_to_sql_pyodbc_custom_writer_demo()
     # context_metadata_basic_demo()
     # context_metadata_complete_demo()
-
-    #  dimension_builder_basic_demo()
+    # dimension_builder_basic_demo()
     # dimension_builder_no_edges_old_format()
     # dimension_builder_append_demo()
     # dimension_builder_complex_demo()
     # hierarchy_builder_demo()
-
     # build_cube_demo()
     # copy_dim_between_servers_demo()
     # copy_data_between_servers_demo()
     # copy_cube_structure_between_servers_demo()
     # mdx_gen_demo()
-
-    attribute_structure_creation_demo()
+    # attribute_structure_creation_demo()
+    # input_handler_leaf_domain()
+    # input_handler_repeat_on_children()
+    # input_handler_equal_spread_children()
+    # input_handler_conditional()
+    # input_handler_with_mixed_coord_and_set()
+    # input_handler_with_postcalc_cartesian()
+    # input_handler_proportional_spread()
+    input_handler_proportional_spread_the_other_way()

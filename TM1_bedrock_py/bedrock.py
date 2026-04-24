@@ -33,6 +33,113 @@ from TM1_bedrock_py.dimension_builder.validate import (
 
 
 # ------------------------------------------------------------------------------------------------------------
+# Bedrock: Complex Input Handler functions
+#     - input_handler: define a sequence of business logic calculation steps for a custom complex input process
+#                      supports functions such as "sumif", "countif", python statement based "if"
+# ------------------------------------------------------------------------------------------------------------
+
+
+def input_handler(
+        tm1_service: Any,
+        input_value: Union[float, int],
+        target_cube_name: str,
+        domain_coordinates: dict[str, str] = None,
+        domain_mdx: str = None,
+        pre_calc_mapping_steps: list[dict] = None,
+        post_calc_mapping_steps: list[dict] = None,
+        calculation_steps: list[dict] = None,
+        input_column_name: str = None,
+        remove_zero_inputs: bool = True,
+        clear_target: bool = False,
+        target_clear_set_mdx_list: List[str] = None,
+        use_ti_for_load: bool = False,
+        use_blob_for_load: bool = False,
+        increment: bool = False,
+        logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
+        output_final_state_dataframe: bool = False,
+        do_write: bool = True,
+        **kwargs
+) -> Optional[DataFrame]:
+    utility.set_logging_level(logging_level=logging_level)
+
+    dataframe = extractor.build_input_domain(
+        tm1_service=tm1_service, domain_mdx=domain_mdx, domain_coords=domain_coordinates, **kwargs
+    )
+    transformer.cast_coordinates_to_str(dataframe.columns, dataframe)
+    transformer.dataframe_add_column_assign_value(dataframe=dataframe, column_value={"Input": input_value})
+    dataframe["Input"] = dataframe["Input"].astype(float)
+
+    target_metadata = utility.TM1CubeObjectMetadata.collect(
+        tm1_service=tm1_service,
+        cube_name=target_cube_name,
+        **kwargs
+    )
+    target_cube_dims = target_metadata.get_cube_dims()
+
+    if pre_calc_mapping_steps:
+        extractor.generate_step_specific_mapping_dataframes(
+            mapping_steps=pre_calc_mapping_steps, tm1_service=tm1_service, **kwargs)
+        dataframe = transformer.dataframe_execute_mappings(
+            data_df=dataframe, mapping_steps=pre_calc_mapping_steps, **kwargs)
+
+    if calculation_steps:
+        for i, step in enumerate(calculation_steps):
+            extractor.generate_dataframe_for_calculation_info(
+                tm1_service=tm1_service, step=step, data_df=dataframe,
+                step_specific_string=str(i + 1), **kwargs)
+            dataframe = transformer.dataframe_execute_calculation(
+                data_df=dataframe, step=step, **kwargs
+            )
+
+    if post_calc_mapping_steps:
+        extractor.generate_step_specific_mapping_dataframes(
+            mapping_steps=post_calc_mapping_steps, tm1_service=tm1_service, **kwargs)
+        dataframe = transformer.dataframe_execute_mappings(
+            data_df=dataframe, mapping_steps=post_calc_mapping_steps, **kwargs)
+
+    if output_final_state_dataframe:
+        final_state_dataframe = dataframe.copy()
+
+    if clear_target:
+        loader.clear_cube(tm1_service=tm1_service,
+                          cube_name=target_cube_name,
+                          clear_set_mdx_list=target_clear_set_mdx_list,
+                          **kwargs)
+
+    input_column_name = input_column_name \
+        if input_column_name is not None \
+        else calculation_steps[-1]["name"]
+    transformer.dataframe_relabel(
+        dataframe=dataframe,
+        columns={input_column_name: "Value"})
+    dataframe["Value"] = dataframe["Value"].astype(float)
+
+    if remove_zero_inputs:
+        dataframe = transformer.dataframe_remove_zero_records(dataframe)
+
+    dataframe = transformer.dataframe_reorder_dimensions(
+        dataframe=dataframe, cube_dimensions=target_cube_dims, **kwargs
+    )
+
+    if do_write:
+        loader.dataframe_to_cube(
+            tm1_service=tm1_service,
+            dataframe=dataframe,
+            cube_name=target_cube_name,
+            cube_dims=target_cube_dims,
+            use_ti=use_ti_for_load,
+            increment=increment,
+            use_blob=use_blob_for_load,
+            sum_numeric_duplicates=False,
+            **kwargs
+        )
+
+    if output_final_state_dataframe:
+        return final_state_dataframe
+    return None
+
+
+# ------------------------------------------------------------------------------------------------------------
 # Bedrock: Cube Builder Module functions
 #     - cube_builder: build cube from manual input data or copy structure from source server
 # ------------------------------------------------------------------------------------------------------------
@@ -1276,8 +1383,6 @@ def data_copy(
                               clear_set_mdx_list=target_clear_set_mdx_list,
                               **kwargs)
         return
-
-
 
     transformer.cast_coordinates_to_str(source_cube_dims, dataframe)
 
