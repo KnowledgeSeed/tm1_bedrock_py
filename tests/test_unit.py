@@ -794,16 +794,6 @@ def test_assign_constant(dataframe, value, expected, name="Value"):
 
 
 @parametrize_from_file
-def test_assign_constant_split(dataframe, value, expected, name="Value"):
-    df = pd.DataFrame(dataframe)
-    expected = pd.DataFrame(expected)
-
-    result = transformer.assign_constant_split(value=value, name=name, dataframe=df.copy())
-
-    pd.testing.assert_frame_equal(result, expected)
-
-
-@parametrize_from_file
 def test_sum_cells(dataframe, name, column_to_sum, expected):
     df = pd.DataFrame(dataframe)
     expected = pd.DataFrame(expected)

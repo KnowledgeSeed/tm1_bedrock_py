@@ -1197,20 +1197,6 @@ def assign_constant(
     return dataframe
 
 
-def assign_constant_split(
-        value: float,
-        name: str,
-        dataframe: pd.DataFrame,
-        case_and_space_insensitive_inputs: Optional[bool] = False,
-        **_kwargs
-) -> pd.DataFrame:
-    if case_and_space_insensitive_inputs:
-        utility.normalize_dataframe_strings(dataframe)
-
-    dataframe[name] = value / len(dataframe.index)
-    return dataframe
-
-
 def sum_cells(
         dataframe: pd.DataFrame,
         name: str,
@@ -1359,8 +1345,6 @@ calc_method_handlers = {
     "sumif": sum_if_cells,
     "countif": count_if_cells,
     "constant": assign_constant,
-    "constant_split": assign_constant_split,
-    "equal_spread": assign_constant_split,
     "query": assign_data,
     "cube_data": assign_data,
     "if": apply_conditional_logic,
