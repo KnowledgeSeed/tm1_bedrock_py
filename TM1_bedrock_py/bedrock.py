@@ -107,7 +107,7 @@ def input_handler(
 
     input_column_name = input_column_name \
         if input_column_name is not None \
-        else dataframe.columns[-1]
+        else calculation_steps[-1]["name"]
     transformer.dataframe_relabel(
         dataframe=dataframe,
         columns={input_column_name: "Value"})

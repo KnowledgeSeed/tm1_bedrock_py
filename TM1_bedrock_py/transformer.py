@@ -158,21 +158,22 @@ def dataframe_reorder_dimensions(
     KeyError:
         If any column in `cube_dimensions` does not exist in the DataFrame.
     """
-    value_column_name = 'Value'
+    value_column_name: str = 'value' if case_and_space_insensitive_inputs else 'Value'
+
     if case_and_space_insensitive_inputs:
         utility.normalize_dataframe_strings(dataframe)
         cube_dimensions = utility.normalize_structure_strings(cube_dimensions)
-        value_column_name = 'value'
 
-    columns_exist_mask = pd.Index(cube_dimensions).isin(dataframe.columns).all()
-    if not columns_exist_mask:
-        missing_columns_string = ', '.join(pd.Index(cube_dimensions)[~columns_exist_mask].tolist())
-        raise ValueError("The following columns (dimensions) are missing from the dataframe: "
-                         f"{missing_columns_string}")
+    dimension_index = pd.Index(cube_dimensions)
+    existence_mask = dimension_index.isin(dataframe.columns)
 
-    new_order = cube_dimensions + [value_column_name]
-    reordered_dataframe = dataframe[new_order]
-    return reordered_dataframe
+    if not existence_mask.all():
+        missing_columns: str = ', '.join(dimension_index[~existence_mask])
+        raise ValueError(
+            f"The following columns (dimensions) are missing from the dataframe: {missing_columns}"
+        )
+
+    return dataframe[cube_dimensions + [value_column_name]]
 
 
 def dataframe_filter_inplace(
@@ -1013,7 +1014,7 @@ def __apply_basic_dimension_reshaping(
         shared_mapping_df: Optional[DataFrame] = None,
         case_and_space_insensitive_inputs: Optional[bool] = False,
         audit_mode: bool = False,
-        step_number: int = 1,
+        step_number: int = 1
 ) -> DataFrame:
     # either or: literal row filter, literal column drop, literal column add with value assign, literal relabel
     # can be used in any combination.
@@ -1053,6 +1054,28 @@ def __apply_basic_dimension_reshaping(
     return data_df
 
 
+def __apply_cartesian_with_set(
+        data_df: DataFrame,
+        mapping_step: Dict[str, Any],
+        shared_mapping_df: Optional[DataFrame] = None,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
+        audit_mode: bool = False,
+        step_number: int = 1
+) -> DataFrame:
+    _, _, _ = shared_mapping_df, audit_mode, step_number
+
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(data_df)
+        utility.normalize_structure_strings(mapping_step)
+
+    element_df = mapping_step["mapping_df"]
+    data_df = dataframe_cartesian_product(
+        data_df=data_df, mapping_df=element_df, joined_columns=element_df.columns[0],
+        case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
+
+    return data_df
+
+
 method_handlers = {
     "replace": __apply_replace,
     "map_and_replace": __apply_map_and_replace,
@@ -1060,7 +1083,8 @@ method_handlers = {
     "cartesian": __apply_cartesian_product,
     "pivot": __apply_pivot,
     "unpivot": __apply_unpivot,
-    "basic_reshaping": __apply_basic_dimension_reshaping
+    "basic_reshaping": __apply_basic_dimension_reshaping,
+    "cartesian_with_set": __apply_cartesian_with_set
 }
 
 

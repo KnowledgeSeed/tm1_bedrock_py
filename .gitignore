@@ -1,3 +1,5 @@
+example/config.ini
+
 # Byte-compiled / optimized / compiled Python files
 __pycache__/
 *.py[cod]
@@ -14,7 +16,6 @@ venv/
 
 # Other data and test files
 developer_test_files/
-example/main.py
 
 # Build artifacts
 *.egg-info/

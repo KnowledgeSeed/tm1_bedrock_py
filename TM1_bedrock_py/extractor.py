@@ -1,3 +1,4 @@
+import re
 from typing import Callable, List, Dict, Optional, Any, Literal, Union, Type
 import pandas as pd
 from TM1py import TM1Service, NativeView, Subset
@@ -232,6 +233,24 @@ def _handle_mapping_mdx(
     return dataframe
 
 
+def _handle_set_mdx(
+        step: Dict[str, Any],
+        tm1_service: Any
+) -> DataFrame:
+    set_mdx = step["set_mdx"]
+    match = re.search(pattern=r"\[(.*?)\]", string=set_mdx)
+    if match:
+        dimension_name = match.group(1)
+    else:
+        raise ValueError("Invalid set mdx, dimension name is missing (there are no square brackets).")
+
+    step_specific_tm1_service = step.get("tm1_service") or tm1_service
+
+    element_list = tm1_set_mdx_to_list(step_specific_tm1_service, set_mdx)
+    elements_df = pd.DataFrame(element_list, columns=[dimension_name], dtype=str)
+    return elements_df
+
+
 def _handle_mapping_sql_query(
         step: Dict[str, Any],
         sql_engine: Optional[Any] = None,
@@ -261,7 +280,7 @@ def _handle_mapping_csv(
         step: Dict[str, Any],
         csv_function: Optional[Callable] = None,
         **_kwargs
-) -> None:
+) -> DataFrame:
     """
         csv_file_path: str,
         sep: Optional[str] = None,
@@ -291,13 +310,16 @@ def _handle_mapping_csv(
         columns_to_drop=columns_to_drop
     )
 
+    return dataframe
+
 
 MAPPING_HANDLERS = {
     "mapping_df": _handle_mapping_df,
     "mapping_mdx": _handle_mapping_mdx,
     "mapping_sql_query": _handle_mapping_sql_query,
     "mapping_sql_table_name": _handle_mapping_sql_query,
-    "mapping_csv_file_path": _handle_mapping_csv
+    "mapping_csv_file_path": _handle_mapping_csv,
+    "set_mdx": _handle_set_mdx
 }
 
 
@@ -541,7 +563,10 @@ def __csv_to_dataframe_default(
 # ------------------------------------------------------------------------------------------------------------
 
 def build_input_domain(
-        tm1_service: Any, domain_mdx: str = None, domain_coords: dict[str, str] = None, **extractor_kwargs
+        tm1_service: Any,
+        domain_mdx: str = None,
+        domain_coords: dict[str, str] = None,
+        **extractor_kwargs
 ) -> DataFrame:
     if domain_mdx is None and domain_coords is None:
         raise ValueError("Must provide at least one domain source (either mdx or coordinates).")
@@ -565,14 +590,20 @@ def build_input_domain(
     else:
         leaf_elements_per_dimension = []
         for dimension_name, raw_element in domain_coords.items():
-            mdx = (
-                f"{{Tm1FilterByLevel({{Tm1DrillDownMember({{[{dimension_name}].[{raw_element.split(sep=':', maxsplit=1)[0]}].[{raw_element.split(sep=':', maxsplit=1)[1]}]}},ALL,RECURSIVE)}},0)}}"
-                if ":" in raw_element else
-                f"{{Tm1FilterByLevel({{Tm1DrillDownMember({{[{dimension_name}].[{raw_element}]}},ALL,RECURSIVE)}},0)}}"
-            )
+            if "{" in raw_element:
+                mdx = raw_element
+            elif ":" in raw_element:
+                mdx = (f"{{Tm1FilterByLevel("
+                       f"{{Tm1DrillDownMember("
+                       f"{{[{dimension_name}].[{raw_element.split(sep=':', maxsplit=1)[0]}"
+                       f"].[{raw_element.split(sep=':', maxsplit=1)[1]}]}},ALL,RECURSIVE)}},0)}}")
+            else:
+                mdx = (f"{{Tm1FilterByLevel({{Tm1DrillDownMember("
+                       f"{{[{dimension_name}].[{raw_element}]}},ALL,RECURSIVE)}},0)}}")
             leaves_data = tm1_service.elements.execute_set_mdx(mdx)
             leaf_elements = [
-                f"{raw_element.split(sep=':', maxsplit=1)[0]}:{leaf_data[0]['Name']}" if ":" in raw_element else leaf_data[0]['Name']
+                f"{raw_element.split(sep=':', maxsplit=1)[0]}:{leaf_data[0]['Name']}"
+                if ":" in raw_element else leaf_data[0]['Name']
                 for leaf_data in leaves_data
             ]
             leaf_elements_per_dimension.append(leaf_elements)
@@ -581,6 +612,16 @@ def build_input_domain(
         domain = DataFrame(data=product(*leaf_elements_per_dimension), columns=pd.Index(dimension_names))
 
     return domain
+
+
+def tm1_set_mdx_to_list(tm1_service: Any, set_mdx: str) -> list[str]:
+    leaves_data = tm1_service.elements.execute_set_mdx(set_mdx)
+
+    leaf_elements = [
+        leaf_data[0]['Name']
+        for leaf_data in leaves_data
+    ]
+    return leaf_elements
 
 
 def _handle_calculation_df(

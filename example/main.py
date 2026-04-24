@@ -716,6 +716,79 @@ def input_handler_conditional():
     )
 
 
+def input_handler_with_mixed_coord_and_set():
+    tm1_service = create_tm1_connection('ks_academy')
+
+    cube_name = "testbenchPrice"
+
+    domain_coords = {
+        "testbenchProduct": "ProductSubCategory01",
+        "testbenchVersion": "Actual",
+        "testbenchPeriod": "{[testbenchPeriod].[202401], [testbenchPeriod].[202402]}",
+        "testbenchMeasurePrice": "Price",
+    }
+
+    calculation_steps = [
+        {
+            "name": "TotalCells",
+            "method": "count"
+        },
+        {
+            "name": "FinalValue",
+            "method": "formula",
+            "formula": "Input / TotalCells"
+        }
+    ]
+
+    bedrock.input_handler(
+        tm1_service=tm1_service,
+        target_cube_name=cube_name,
+        domain_coordinates=domain_coords,
+        input_value=240.6,
+        calculation_steps=calculation_steps
+    )
+
+
+def input_handler_with_postcalc_cartesian():
+    tm1_service = create_tm1_connection('ks_academy')
+
+    cube_name = "testbenchPrice"
+
+    domain_coords = {
+        "testbenchProduct": "ProductSubCategory01",
+        "testbenchVersion": "Actual",
+        "testbenchMeasurePrice": "Price",
+    }
+
+    calculation_steps = [
+        {
+            "name": "TotalCells",
+            "method": "count"
+        },
+        {
+            "name": "FinalValue",
+            "method": "formula",
+            "formula": "Input / TotalCells"
+        }
+    ]
+
+    post_calc_mapping_steps = [
+        {
+            "method":"cartesian_with_set",
+            "set_mdx": "{[testbenchPeriod].[202401], [testbenchPeriod].[202402]}"
+        }
+    ]
+
+    bedrock.input_handler(
+        tm1_service=tm1_service,
+        target_cube_name=cube_name,
+        domain_coordinates=domain_coords,
+        input_value=240.6,
+        calculation_steps=calculation_steps,
+        post_calc_mapping_steps=post_calc_mapping_steps
+    )
+
+
 if __name__ == '__main__':
     # complex_transform_demo()
     # tm1_to_sql_pyodbc_custom_writer_demo()
@@ -735,4 +808,6 @@ if __name__ == '__main__':
     # input_handler_leaf_domain()
     # input_handler_repeat_on_children()
     # input_handler_equal_spread_children()
-    input_handler_conditional()
+    # input_handler_conditional()
+    # input_handler_with_mixed_coord_and_set()
+    input_handler_with_postcalc_cartesian()
