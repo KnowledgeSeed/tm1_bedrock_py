@@ -611,6 +611,7 @@ def create_audit_columns_for_step(data_df: DataFrame, mapping: Union[dict, list]
 # ------------------------------------------------------------------------------------------------------------
 
 
+@log_exec_metrics
 def create_cubes(
         tm1_service: Any,
         cube_dimension_create_map: dict[str, list],
@@ -634,6 +635,7 @@ def create_cubes(
         basic_logger.debug(f"Cube {cube_name} was successfully created")
 
 
+@log_exec_metrics
 def check_dimensions_existance(
         tm1_service: Any,
         unique_dimensions_list: Optional[list[str]] = None,
@@ -654,6 +656,7 @@ def check_dimensions_existance(
     return missing_dimensions
 
 
+@log_exec_metrics
 def create_unique_dim_list_from_cube_dim_map(cube_dimension_create_map: Optional[dict] = None) -> list[str]:
     return list({
         dim
@@ -662,6 +665,7 @@ def create_unique_dim_list_from_cube_dim_map(cube_dimension_create_map: Optional
     }) if cube_dimension_create_map is not None else []
 
 
+@log_exec_metrics
 def fetch_cube_structure_data(
         copy_source_tm1_service: Any,
         cube_dimension_create_map: dict,
@@ -727,6 +731,7 @@ def validate_cube_create_inputs(
                              f"Please check input.")
 
 
+@log_exec_metrics
 def get_dimension_copy_map_for_missing(
         missing_dimensions: list[str],
         dimension_rename_map: dict[str, str] = None,

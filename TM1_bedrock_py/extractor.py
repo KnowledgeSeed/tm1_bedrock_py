@@ -565,6 +565,8 @@ def __csv_to_dataframe_default(
 # extractor functions for complex input
 # ------------------------------------------------------------------------------------------------------------
 
+
+@utility.log_exec_metrics
 def build_input_domain(
         tm1_service: Any,
         domain_mdx: str = None,
@@ -687,6 +689,7 @@ CALCULATION_HANDLERS = {
 }
 
 
+@utility.log_exec_metrics
 def generate_dataframe_for_calculation_info(
         tm1_service: Any,
         data_df: DataFrame,
