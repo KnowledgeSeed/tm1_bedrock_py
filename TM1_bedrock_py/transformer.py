@@ -1076,6 +1076,18 @@ def __apply_cartesian_with_set(
     return data_df
 
 
+def apply_custom_mapping_step(
+        data_df: pd.DataFrame,
+        name: str,
+        custom_callable: Callable,
+        custom_args: list[Any] = None,
+        custom_kwargs: dict[str, Any] = None,
+) -> pd.DataFrame:
+    custom_args = custom_args or []
+    custom_kwargs = custom_kwargs or {}
+    return custom_callable(dataframe, name, *custom_args, **custom_kwargs)
+
+
 method_handlers = {
     "replace": __apply_replace,
     "map_and_replace": __apply_map_and_replace,
@@ -1254,6 +1266,36 @@ def count_if_cells(
     return dataframe
 
 
+def rank_over_cells(
+        dataframe: pd.DataFrame,
+        name: str,
+        group_column_list: List[str],
+        start_index: int = 1,
+        direction: Literal["asc", "desc"] = "asc",
+        case_and_space_insensitive_inputs: Optional[bool] = False,
+        **_kwargs: Any
+) -> pd.DataFrame:
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+    is_ascending: bool = direction == "asc"
+    dataframe[name] = dataframe.groupby(group_column_list).cumcount(ascending=is_ascending) + start_index
+    return dataframe
+
+
+def index_cells(
+        dataframe: pd.DataFrame,
+        name: str,
+        start_index: int = 1,
+        direction: Literal["asc", "desc"] = "asc",
+        case_and_space_insensitive_inputs: Optional[bool] = False,
+) -> pd.DataFrame:
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+    sequence_array: np.ndarray = np.arange(start_index, len(dataframe) + start_index)
+    dataframe[name] = sequence_array if direction == "asc" else sequence_array[::-1]
+    return dataframe
+
+
 def assign_data(
         dataframe: pd.DataFrame,
         calc_df: pd.DataFrame,
@@ -1339,17 +1381,33 @@ def evaluate_and_assign_formula(
     return dataframe
 
 
+def apply_custom_calculation_step(
+        dataframe: pd.DataFrame,
+        name: str,
+        custom_callable: Callable,
+        custom_args: list[Any] = None,
+        custom_kwargs: dict[str, Any] = None,
+) -> pd.DataFrame:
+    custom_args = custom_args or []
+    custom_kwargs = custom_kwargs or {}
+    return custom_callable(dataframe, name, *custom_args, **custom_kwargs)
+
+
 calc_method_handlers = {
     "sum": sum_cells,
     "count": count_cells,
     "sumif": sum_if_cells,
     "countif": count_if_cells,
+    "index": index_cells,
+    "indexif": rank_over_cells,
+    "rank_over": rank_over_cells,
     "constant": assign_constant,
     "query": assign_data,
     "cube_data": assign_data,
     "if": apply_conditional_logic,
     "condition": apply_conditional_logic,
-    "formula": evaluate_and_assign_formula
+    "formula": evaluate_and_assign_formula,
+    "custom": apply_custom_calculation_step
 }
 
 
@@ -1372,5 +1430,6 @@ def dataframe_execute_calculation(
     return data_df
 
 
+@utility.log_exec_metrics
 def dataframe_remove_zero_records(dataframe: DataFrame) -> DataFrame:
     return dataframe[dataframe["Value"] != 0]

@@ -31,6 +31,8 @@ from TM1_bedrock_py.dimension_builder.validate import (
     validate_schema_for_single_hierarchy
 )
 
+from TM1_bedrock_py import validation
+
 
 # ------------------------------------------------------------------------------------------------------------
 # Bedrock: Complex Input Handler functions
@@ -39,21 +41,27 @@ from TM1_bedrock_py.dimension_builder.validate import (
 # ------------------------------------------------------------------------------------------------------------
 
 
+@utility.log_exec_metrics
 def input_handler(
         tm1_service: Any,
         input_value: Union[float, int],
         target_cube_name: str,
+
         domain_coordinates: dict[str, str] = None,
         domain_mdx: str = None,
-        pre_calc_mapping_steps: list[dict] = None,
-        post_calc_mapping_steps: list[dict] = None,
-        calculation_steps: list[dict] = None,
+
+        pre_calc_mapping_steps: list[dict[str, Any]] = None,
+        calculation_steps: list[dict[str, Any]] = None,
+        post_calc_mapping_steps: list[dict[str, Any]] = None,
+
         input_column_name: str = None,
         remove_zero_inputs: bool = True,
         clear_target: bool = False,
         target_clear_set_mdx_list: List[str] = None,
+
         use_ti_for_load: bool = False,
         use_blob_for_load: bool = False,
+
         increment: bool = False,
         logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
         output_final_state_dataframe: bool = False,
@@ -61,6 +69,9 @@ def input_handler(
         **kwargs
 ) -> Optional[DataFrame]:
     utility.set_logging_level(logging_level=logging_level)
+
+    if calculation_steps:
+        validation.validate_calculation_pipeline_configuration(calculation_steps, basic_logger)
 
     dataframe = extractor.build_input_domain(
         tm1_service=tm1_service, domain_mdx=domain_mdx, domain_coords=domain_coordinates, **kwargs
@@ -106,9 +117,11 @@ def input_handler(
                           clear_set_mdx_list=target_clear_set_mdx_list,
                           **kwargs)
 
-    input_column_name = input_column_name \
-        if input_column_name is not None \
-        else calculation_steps[-1]["name"]
+    input_column_name = (
+        input_column_name if input_column_name is not None
+        else calculation_steps[-1]["name"] if calculation_steps
+        else "Input"
+    )
     transformer.dataframe_relabel(
         dataframe=dataframe,
         columns={input_column_name: "Value"})
@@ -145,6 +158,7 @@ def input_handler(
 # ------------------------------------------------------------------------------------------------------------
 
 
+@utility.log_exec_metrics
 def cube_builder(
         tm1_service: Any,
         build_mode: Literal["create_from_map", "copy_from_source"] = "create_from_map",
