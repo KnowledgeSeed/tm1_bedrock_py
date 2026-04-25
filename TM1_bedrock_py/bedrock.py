@@ -70,7 +70,8 @@ def input_handler(
 ) -> Optional[DataFrame]:
     utility.set_logging_level(logging_level=logging_level)
 
-    validation.validate_calculation_pipeline_configuration(calculation_steps, basic_logger)
+    if calculation_steps:
+        validation.validate_calculation_pipeline_configuration(calculation_steps, basic_logger)
 
     dataframe = extractor.build_input_domain(
         tm1_service=tm1_service, domain_mdx=domain_mdx, domain_coords=domain_coordinates, **kwargs
@@ -116,9 +117,11 @@ def input_handler(
                           clear_set_mdx_list=target_clear_set_mdx_list,
                           **kwargs)
 
-    input_column_name = input_column_name \
-        if input_column_name is not None \
-        else calculation_steps[-1]["name"]
+    input_column_name = (
+        input_column_name if input_column_name is not None
+        else calculation_steps[-1]["name"] if calculation_steps
+        else "Input"
+    )
     transformer.dataframe_relabel(
         dataframe=dataframe,
         columns={input_column_name: "Value"})
