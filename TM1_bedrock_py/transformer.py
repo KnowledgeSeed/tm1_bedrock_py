@@ -1085,7 +1085,7 @@ def apply_custom_mapping_step(
 ) -> pd.DataFrame:
     custom_args = custom_args or []
     custom_kwargs = custom_kwargs or {}
-    return custom_callable(dataframe, name, *custom_args, **custom_kwargs)
+    return custom_callable(data_df, name, *custom_args, **custom_kwargs)
 
 
 method_handlers = {
