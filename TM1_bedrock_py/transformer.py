@@ -668,6 +668,7 @@ def dataframe_map_and_join(
         data_df: DataFrame,
         mapping_df: DataFrame,
         joined_columns: List[str],
+        join_type: Literal["left", "right", "inner", "outer", "cross"] = "left",
         case_and_space_insensitive_inputs: Optional[bool] = False,
 ) -> DataFrame:
     """
@@ -703,7 +704,7 @@ def dataframe_map_and_join(
     shared_dimensions = list(set(data_df.columns) & set(mapping_df.columns) - {value_column_name})
 
     merged_df = data_df.merge(mapping_df[shared_dimensions + joined_columns],
-                              how='left',
+                              how=join_type,
                               on=shared_dimensions)
 
     if case_and_space_insensitive_inputs:
@@ -892,6 +893,7 @@ def __apply_map_and_join(
 
     data_df = dataframe_map_and_join(
         data_df=data_df, mapping_df=mapping_df, joined_columns=mapping_step["joined_columns"],
+        join_type=mapping_step.get("join_type", "left"),
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
 
     if "dropped_columns" in mapping_step:
