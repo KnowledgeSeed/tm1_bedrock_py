@@ -115,23 +115,39 @@ class SumStep(BaseCalculationStep):
     column_to_sum: str
 
 
+class SumGroupStep(BaseCalculationStep):
+    method: Literal["sum_group"]
+    column_to_sum: str
+    group_column_list: list[str]
+
+
 class SumIfStep(BaseCalculationStep):
     method: Literal["sumif"]
     column_to_sum: str
-    group_column_list: list[str]
+    statement: str
 
 
 class CountStep(BaseCalculationStep):
     method: Literal["count"]
 
 
+class CountGroupStep(BaseCalculationStep):
+    method: Literal["count_group"]
+    group_column_list: list[str]
+
+
 class CountIfStep(BaseCalculationStep):
     method: Literal["countif"]
+    statement: str
+
+
+class CountUniqueStep(BaseCalculationStep):
+    method: Literal["count_unique"]
     group_column_list: list[str]
 
 
 class RankStep(BaseCalculationStep):
-    method: Union[Literal["rank_over"], Literal["indexif"]]
+    method: Union[Literal["rank_over"], Literal["index_group"]]
     group_column_list: List[str]
     start_index: int = 1
     direction: Literal["asc", "desc"] = "asc"
@@ -175,8 +191,11 @@ CalculationStep = Union[
     ConstantStep,
     SumStep,
     SumIfStep,
+    SumGroupStep,
     CountStep,
     CountIfStep,
+    CountGroupStep,
+    CountUniqueStep,
     IndexStep,
     RankStep,
     CubeDataStep,

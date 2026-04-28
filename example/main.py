@@ -910,6 +910,160 @@ def input_handler_proportional_spread_the_other_way():
     print(final_state)
 
 
+def input_handler_countif():
+    tm1_service = create_tm1_connection('ks_academy')
+
+    cube_name = "testbenchPrice"
+
+    domain_coords = {
+        "testbenchProduct": "ProductSubCategory01",
+        "testbenchVersion": "Actual",
+        "testbenchMeasurePrice": "Price",
+        "testbenchPeriod": "202402"
+    }
+
+    calculation_steps = [
+        {
+            "name": "indexcol",
+            "method": "index"
+        },
+        {
+            "name": "countif_indexes",
+            "method": "countif",
+            "statement": "indexcol < 3"
+        }
+    ]
+
+    utility.configure_pandas_display(pd)
+
+    final_state = bedrock.input_handler(
+        tm1_service=tm1_service,
+        target_cube_name=cube_name,
+        domain_coordinates=domain_coords,
+        input_value=1000,
+        calculation_steps=calculation_steps,
+        output_final_state_dataframe=True,
+        do_write=False
+    )
+
+    print(final_state)
+
+
+def input_handler_sumif():
+    tm1_service = create_tm1_connection('ks_academy')
+
+    cube_name = "testbenchPrice"
+
+    domain_coords = {
+        "testbenchProduct": "ProductSubCategory01",
+        "testbenchVersion": "Actual",
+        "testbenchMeasurePrice": "Price",
+        "testbenchPeriod": "202402"
+    }
+
+    calculation_steps = [
+        {
+            "name": "indexcol",
+            "method": "index"
+        },
+        {
+            "name": "sumif_indexes",
+            "method": "sumif",
+            "column_to_sum": "indexcol",
+            "statement": "indexcol <= 4"
+        }
+    ]
+
+    utility.configure_pandas_display(pd)
+
+    final_state = bedrock.input_handler(
+        tm1_service=tm1_service,
+        target_cube_name=cube_name,
+        domain_coordinates=domain_coords,
+        input_value=1000,
+        calculation_steps=calculation_steps,
+        output_final_state_dataframe=True,
+        do_write=False
+    )
+
+    print(final_state)
+
+
+def input_handler_count_unique():
+    tm1_service = create_tm1_connection('ks_academy')
+
+    cube_name = "testbenchPrice"
+
+    domain_coords = {
+        "testbenchProduct": "ProductSubCategory01",
+        "testbenchVersion": "Actual",
+        "testbenchMeasurePrice": "Price",
+        "testbenchPeriod": "{[testbenchPeriod].[202402], [testbenchPeriod].[202403]}"
+    }
+
+    calculation_steps = [
+        {
+            "name": "count_unique_periods",
+            "method": "count_unique",
+            "group_column_list": ["testbenchPeriod"]
+        }
+    ]
+
+    utility.configure_pandas_display(pd)
+
+    final_state = bedrock.input_handler(
+        tm1_service=tm1_service,
+        target_cube_name=cube_name,
+        domain_coordinates=domain_coords,
+        input_value=1000,
+        calculation_steps=calculation_steps,
+        output_final_state_dataframe=True,
+        do_write=False
+    )
+
+    print(final_state)
+
+
+def input_handler_sum_group():
+    tm1_service = create_tm1_connection('ks_academy')
+
+    cube_name = "testbenchPrice"
+
+    domain_coords = {
+        "testbenchProduct": "ProductSubCategory01",
+        "testbenchVersion": "Actual",
+        "testbenchMeasurePrice": "Price",
+        "testbenchPeriod": "{[testbenchPeriod].[202402], [testbenchPeriod].[202403]}"
+    }
+
+    calculation_steps = [
+        {
+            "name":"rowindex",
+            "method": "index"
+        },
+        {
+            "name": "sum_group_indexes_on_period",
+            "method": "sum_group",
+            "group_column_list": ["testbenchPeriod"],
+            "column_to_sum": "rowindex"
+        }
+    ]
+
+    utility.configure_pandas_display(pd)
+
+    final_state = bedrock.input_handler(
+        tm1_service=tm1_service,
+        target_cube_name=cube_name,
+        domain_coordinates=domain_coords,
+        input_value=1000,
+        calculation_steps=calculation_steps,
+        output_final_state_dataframe=True,
+        do_write=False
+    )
+
+    print(final_state)
+
+
 if __name__ == '__main__':
     # complex_transform_demo()
     # tm1_to_sql_pyodbc_custom_writer_demo()
@@ -926,7 +1080,7 @@ if __name__ == '__main__':
     # copy_cube_structure_between_servers_demo()
     # mdx_gen_demo()
     # attribute_structure_creation_demo()
-    input_handler_leaf_domain()
+    # input_handler_leaf_domain()
     # input_handler_repeat_on_children()
     # input_handler_equal_spread_children()
     # input_handler_conditional()
@@ -934,3 +1088,7 @@ if __name__ == '__main__':
     # input_handler_with_postcalc_cartesian()
     # input_handler_proportional_spread()
     # input_handler_proportional_spread_the_other_way()
+    # input_handler_countif()
+    # input_handler_sumif()
+    # input_handler_count_unique()
+    input_handler_sum_group()

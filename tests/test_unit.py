@@ -808,12 +808,8 @@ def test_sum_if_cells(dataframe, name, column_to_sum, group_dimension_list, expe
     df = pd.DataFrame(dataframe)
     expected = pd.DataFrame(expected)
 
-    result = transformer.sum_if_cells(
-        dataframe=df.copy(),
-        name=name,
-        column_to_sum=column_to_sum,
-        group_column_list=group_dimension_list
-    )
+    result = transformer.sum_group_cells(dataframe=df.copy(), name=name, column_to_sum=column_to_sum,
+                                         group_column_list=group_dimension_list)
 
     pd.testing.assert_frame_equal(result, expected)
 
@@ -833,11 +829,7 @@ def test_count_if_cells(dataframe, name, group_dimension_list, expected):
     df = pd.DataFrame(dataframe)
     expected = pd.DataFrame(expected)
 
-    result = transformer.count_if_cells(
-        dataframe=df.copy(),
-        name=name,
-        group_column_list=group_dimension_list
-    )
+    result = transformer.count_group_cells(dataframe=df.copy(), name=name, group_column_list=group_dimension_list)
 
     pd.testing.assert_frame_equal(result, expected)
 
