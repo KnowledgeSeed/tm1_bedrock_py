@@ -1064,6 +1064,42 @@ def input_handler_sum_group():
     print(final_state)
 
 
+def input_handler_conditional_concat():
+    tm1_service = create_tm1_connection('ks_academy')
+
+    cube_name = "testbenchPrice"
+
+    domain_coords = {
+        "testbenchProduct": "ProductSubCategory01",
+        "testbenchVersion": "Actual",
+        "testbenchMeasurePrice": "Price",
+        "testbenchPeriod": "{[testbenchPeriod].[202402]}"
+    }
+
+    calculation_steps = [
+        {
+            "name": "conditional_concat_column",
+            "method": "string_template",
+            "template_string": "{{testbenchProduct}}_{{testbenchPeriod}}_"
+        }
+    ]
+
+    utility.configure_pandas_display(pd)
+
+    final_state = bedrock.input_handler(
+        tm1_service=tm1_service,
+        target_cube_name=cube_name,
+        domain_coordinates=domain_coords,
+        input_value=1000,
+        calculation_steps=calculation_steps,
+        output_final_state_dataframe=True,
+        do_write=False,
+        input_column_name='Input'
+    )
+
+    print(final_state)
+
+
 if __name__ == '__main__':
     # complex_transform_demo()
     # tm1_to_sql_pyodbc_custom_writer_demo()
@@ -1091,4 +1127,4 @@ if __name__ == '__main__':
     # input_handler_countif()
     # input_handler_sumif()
     # input_handler_count_unique()
-    input_handler_sum_group()
+    input_handler_conditional_concat()

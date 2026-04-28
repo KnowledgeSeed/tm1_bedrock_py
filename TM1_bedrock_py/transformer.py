@@ -3,6 +3,7 @@ import re
 import pandas as pd
 import numpy as np
 from pandas import DataFrame
+from jinja2 import Template
 
 from TM1_bedrock_py import utility, basic_logger
 from TM1_bedrock_py.utility import create_audit_columns_for_step
@@ -1211,6 +1212,31 @@ def assign_constant(
     return dataframe
 
 
+def apply_string_template(
+        dataframe: pd.DataFrame,
+        name: str,
+        template_string: str,
+        **_kwargs: Any
+) -> pd.DataFrame:
+
+    if not isinstance(template_string, str) or "{{" not in template_string:
+        dataframe[name] = template_string
+        return dataframe
+
+    if template_string.startswith("{{") and template_string.endswith("}}") and template_string.count("{{") == 1 and template_string.count("}}") == 1:
+        dataframe[name] = dataframe[template_string[2:-2]]
+        return dataframe
+
+    compiled_template = Template(template_string)
+
+    dataframe[name] = pd.Series(
+        data=[compiled_template.render(**record) for record in dataframe.to_dict(orient="records")],
+        index=dataframe.index
+    )
+
+    return dataframe
+
+
 def sum_cells(
         dataframe: pd.DataFrame,
         name: str,
@@ -1386,18 +1412,26 @@ def apply_conditional_logic(
         dataframe.eval(expression) for expression in if_then.keys()
     ]
 
+    def process_mapping_value(value: Any) -> Any:
+        if not isinstance(value, str) or "{{" not in value:
+            return value
+
+        if value.startswith("{{") and value.endswith("}}") and value.count("{{") == 1 and value.count("}}") == 1:
+            return dataframe[value[2:-2]]
+
+        compiled_template = Template(value)
+
+        return pd.Series(
+            data=[compiled_template.render(**record) for record in dataframe.to_dict(orient="records")],
+            index=dataframe.index
+        )
+
     mapped_results: List[Any] = [
-        dataframe[match_object.group(1)]
-        if isinstance(mapped_value, str) and (match_object := re.fullmatch(r"\{\{(.*?)\}\}", mapped_value))
-        else mapped_value
+        process_mapping_value(value=mapped_value)
         for mapped_value in if_then.values()
     ]
 
-    parsed_fallback_value: Any = (
-        dataframe[fallback_match_object.group(1)]
-        if isinstance(fallback, str) and (fallback_match_object := re.fullmatch(r"\{\{(.*?)\}\}", fallback))
-        else fallback
-    )
+    parsed_fallback_value: Any = process_mapping_value(value=fallback)
 
     dataframe[name] = np.select(
         condlist=evaluated_conditions,
@@ -1448,7 +1482,10 @@ calc_method_handlers = {
     "if": apply_conditional_logic,
     "condition": apply_conditional_logic,
     "formula": evaluate_and_assign_formula,
-    "custom": apply_custom_calculation_step
+    "custom": apply_custom_calculation_step,
+    "string": apply_string_template,
+    "template": apply_string_template,
+    "string_template": apply_string_template,
 }
 
 

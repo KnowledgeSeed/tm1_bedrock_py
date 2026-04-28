@@ -180,6 +180,11 @@ class FormulaStep(BaseCalculationStep):
     formula: str
 
 
+class StringtemplateStep(BaseCalculationStep):
+    method: Literal["string", "template", "string_template"]
+    template_string: str
+
+
 class CustomStep(BaseCalculationStep):
     method: Literal["custom"]
     custom_callable: Callable
@@ -201,7 +206,8 @@ CalculationStep = Union[
     CubeDataStep,
     IfStep,
     FormulaStep,
-    CustomStep
+    CustomStep,
+    StringtemplateStep
 ]
 
 pipeline_adapter: TypeAdapter = TypeAdapter(List[CalculationStep])
