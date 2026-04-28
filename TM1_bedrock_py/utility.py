@@ -757,9 +757,11 @@ def generate_dynamic_mdx_query_string(
         dimension_filter_mapping: dict[str, list[str]] = None,
         parallel_dimensions_for_template: list[str] = None,
         dimension_hierarchy_mapping: dict[str, str] = None,
-        skip_zeros: bool = False
+        skip_zeros: bool = False,
+        cube_dimensions_list: list[str] = None
 ) -> str:
-    cube_dimensions_list = tm1_service.cubes.get_dimension_names(cube_name=target_cube_name)
+    if cube_dimensions_list is None:
+        cube_dimensions_list = tm1_service.cubes.get_dimension_names(cube_name=target_cube_name)
 
     dimension_filter_mapping = dimension_filter_mapping or {}
     dimension_hierarchy_mapping = dimension_hierarchy_mapping or {}

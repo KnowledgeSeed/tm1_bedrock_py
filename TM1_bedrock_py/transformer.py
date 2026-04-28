@@ -1225,19 +1225,30 @@ def sum_cells(
     return dataframe
 
 
+def sum_group_cells(dataframe: pd.DataFrame, name: str, column_to_sum: str, group_column_list: list[str],
+                    case_and_space_insensitive_inputs: Optional[bool] = False, **_kwargs) -> pd.DataFrame:
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+
+    dataframe[name] = dataframe.groupby(group_column_list)[column_to_sum].transform('sum')
+    return dataframe
+
+
 def sum_if_cells(
         dataframe: pd.DataFrame,
         name: str,
+        statement: str,
         column_to_sum: str,
-        group_column_list: list[str],
         case_and_space_insensitive_inputs: Optional[bool] = False,
         **_kwargs
 ) -> pd.DataFrame:
     if case_and_space_insensitive_inputs:
         utility.normalize_dataframe_strings(dataframe)
 
-    dataframe[name] = dataframe.groupby(group_column_list)[column_to_sum].transform('sum')
-    return dataframe
+    evaluated_condition = dataframe.eval(statement)
+    matched_records_sum = dataframe.loc[evaluated_condition, column_to_sum].sum()
+
+    return dataframe.assign(**{name: matched_records_sum})
 
 
 def count_cells(
@@ -1253,7 +1264,33 @@ def count_cells(
     return dataframe
 
 
+def count_group_cells(dataframe: pd.DataFrame, name: str, group_column_list: list[str],
+                      case_and_space_insensitive_inputs: Optional[bool] = False, **_kwargs) -> pd.DataFrame:
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+
+    dataframe[name] = dataframe.groupby(group_column_list)[group_column_list[0]].transform('count')
+
+    return dataframe
+
+
 def count_if_cells(
+        dataframe: pd.DataFrame,
+        name: str,
+        statement: str,
+        case_and_space_insensitive_inputs: Optional[bool] = False,
+        **_kwargs
+) -> pd.DataFrame:
+    if case_and_space_insensitive_inputs:
+        utility.normalize_dataframe_strings(dataframe)
+
+    evaluated_condition = dataframe.eval(statement)
+    matched_records_count = evaluated_condition.sum()
+
+    return dataframe.assign(**{name: matched_records_count})
+
+
+def count_unique_cells(
         dataframe: pd.DataFrame,
         name: str,
         group_column_list: list[str],
@@ -1262,10 +1299,8 @@ def count_if_cells(
 ) -> pd.DataFrame:
     if case_and_space_insensitive_inputs:
         utility.normalize_dataframe_strings(dataframe)
-
-    dataframe[name] = dataframe.groupby(group_column_list)[group_column_list[0]].transform('count')
-
-    return dataframe
+    unique_combination_count = dataframe.drop_duplicates(subset=group_column_list).shape[0]
+    return dataframe.assign(**{name: unique_combination_count})
 
 
 def rank_over_cells(
@@ -1290,6 +1325,7 @@ def index_cells(
         start_index: int = 1,
         direction: Literal["asc", "desc"] = "asc",
         case_and_space_insensitive_inputs: Optional[bool] = False,
+        **_kwargs
 ) -> pd.DataFrame:
     if case_and_space_insensitive_inputs:
         utility.normalize_dataframe_strings(dataframe)
@@ -1398,11 +1434,14 @@ def apply_custom_calculation_step(
 calc_method_handlers = {
     "sum": sum_cells,
     "count": count_cells,
+    "sum_group": sum_group_cells,
+    "count_group": count_group_cells,
     "sumif": sum_if_cells,
     "countif": count_if_cells,
+    "count_unique": count_unique_cells,
     "index": index_cells,
-    "indexif": rank_over_cells,
     "rank_over": rank_over_cells,
+    "index_group": rank_over_cells,
     "constant": assign_constant,
     "query": assign_data,
     "cube_data": assign_data,
