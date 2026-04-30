@@ -150,22 +150,16 @@ def refresh_legacy_attributes(
     columns_to_keep = ['ElementName'] + attribute_columns
     attributes_only_dataframe = unique_input_dataframe[columns_to_keep]
 
-    updated_legacy_df = legacy_df.merge(
-        attributes_only_dataframe,
-        on='ElementName',
-        how='left',
-        suffixes=('', '_new_value')
-    )
+    updated_legacy_dataframe = legacy_df.set_index('ElementName')
+    attributes_indexed_dataframe = attributes_only_dataframe.set_index('ElementName')
 
-    for column in attribute_columns:
-        updated_legacy_df[column] = np.where(
-            updated_legacy_df[f"{column}_new_value"].notna(),
-            updated_legacy_df[f"{column}_new_value"],
-            updated_legacy_df[column]
-        )
-        updated_legacy_df = updated_legacy_df.drop(columns=[f"{column}_new_value"])
+    updated_legacy_dataframe.update(attributes_indexed_dataframe)
 
-    return updated_legacy_df
+    new_attribute_columns = attributes_indexed_dataframe.columns.difference(updated_legacy_dataframe.columns)
+    updated_legacy_dataframe = updated_legacy_dataframe.join(
+        attributes_indexed_dataframe[new_attribute_columns]).reset_index()
+
+    return updated_legacy_dataframe
 
 
 _UPDATE_STRATEGIES = {

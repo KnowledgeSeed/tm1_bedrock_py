@@ -1100,7 +1100,28 @@ def input_handler_conditional_concat():
     print(final_state)
 
 
+def dimension_builder_update_bugfix_validation():
+    tm1_service = create_tm1_connection('ks_academy')
+    dimension_name = "UpdateBugfixTesting"
+    level_columns = ["Level1", "Level2", "Level3"]
+
+    file_path = os.path.join(os.path.dirname(__file__), "update_bugfix_phase3.xlsx")
+
+    try:
+        bedrock.dimension_builder(
+            tm1_service=tm1_service,
+            dimension_name=dimension_name,
+            level_columns=level_columns,
+            input_format="indented_levels",
+            build_strategy="update",
+            input_datasource=file_path
+        )
+    finally:
+        tm1_service.logout()
+
+
 if __name__ == '__main__':
+    dimension_builder_update_bugfix_validation()
     # complex_transform_demo()
     # tm1_to_sql_pyodbc_custom_writer_demo()
     # context_metadata_basic_demo()
@@ -1127,4 +1148,4 @@ if __name__ == '__main__':
     # input_handler_countif()
     # input_handler_sumif()
     # input_handler_count_unique()
-    input_handler_conditional_concat()
+    # input_handler_conditional_concat()
