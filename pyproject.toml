@@ -33,15 +33,15 @@ dependencies = [
     "sqlalchemy>=1.4.36,<3.0.0",
     "pyodbc>=5.2.0,<6.0.0",
     "pyyaml>=6.0,<7.0",
-    "openpyxl>=3.1.0"
+    "openpyxl>=3.1.0",
+    "jinja2>=3.1.2,<3.2.0"
 ]
 
 [project.optional-dependencies]
 airflow = [
     "apache-airflow>=2.4.0,<=2.11.0; python_version < '3.13'",
     "airflow_provider_tm1>=0.5.1; python_version < '3.13'",
-    "sqlalchemy>=1.4.36,<2.0.0",
-    "jinja2>=3.1.2,<3.2.0; python_version < '3.13'"
+    "sqlalchemy>=1.4.36,<2.0.0"
 ]
 postgres= [
     "apache-airflow-providers-postgres>=3.3.0,<7.0.0; python_version < '3.13'"
