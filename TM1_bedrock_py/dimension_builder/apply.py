@@ -288,6 +288,12 @@ def init_existing_schema_for_builder(
         return None, None
 
     existing_edges_df, existing_elements_df = io.retrieve_existing_schema(tm1_service, dimension_name)
+
+    if existing_elements_df is None:
+        return None, None
+    if existing_elements_df.empty:
+        return None, None
+
     existing_edges_df, existing_elements_df = normalize.normalize_existing_schema_for_builder(existing_edges_df,
                                                                                               existing_elements_df,
                                                                                               old_orphan_parent_name,
