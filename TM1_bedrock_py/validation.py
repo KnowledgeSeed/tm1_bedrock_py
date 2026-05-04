@@ -167,6 +167,7 @@ class CubeDataStep(BaseCalculationStep):
     ignore_in_join: List[str] | None = None
     omit_where_from_df: bool = False
     value_type: Type | None = None
+    fallback_value: str | int | float
 
 
 class IfStep(BaseCalculationStep):

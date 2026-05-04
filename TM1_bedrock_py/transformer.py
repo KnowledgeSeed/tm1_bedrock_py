@@ -1366,6 +1366,7 @@ def assign_data(
         name: str,
         case_and_space_insensitive_inputs: Optional[bool] = False,
         ignore_in_join: list[str] = None,
+        fallback_value: str | int | float = None,
         **_kwargs
 ) -> pd.DataFrame:
     if case_and_space_insensitive_inputs:
@@ -1384,11 +1385,16 @@ def assign_data(
         columns={'Value': name}
     )
 
-    return dataframe.merge(
+    merged_dataframe = dataframe.merge(
         filtered_assign_dataframe,
         on=shared_dimensions,
         how='left'
     )
+
+    if fallback_value is not None:
+        merged_dataframe[name] = merged_dataframe[name].fillna(value=fallback_value)
+
+    return merged_dataframe
 
 
 def apply_conditional_logic(
