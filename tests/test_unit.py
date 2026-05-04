@@ -167,6 +167,10 @@ def test_all_leaves_identifiers_to_dataframe(tm1_connection_factory, dimname, ex
     with tm1_connection_factory("tm1srv") as conn:
         expected_df = pd.DataFrame(expected)
         df = utility.all_leaves_identifiers_to_dataframe(conn, dimname, dimname)
+
+        print(df)
+        print(expected_df)
+
         pd.testing.assert_frame_equal(df, expected_df)
 
 

@@ -806,7 +806,14 @@ test_all_leaves_identifiers_to_dataframe:
                  "Group_2", "Finance and HR",
                  "Group_3", "Project A",
                  "Group_4", "Project B",
-                 "Group_5", "Project C"]
+                 "Group_5", "Project C",
+                 "Group_6",
+                 "Group_7",
+                 "Group_8",
+                 "Group_9",
+                 "Group_10",
+                 "Group_11",
+                 "Group_12"]
     }
 
 test_rename_columns_with_reference:
