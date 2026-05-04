@@ -179,6 +179,8 @@ def apply_updates(
     if mode == "rebuild":
         return input_edges_df, input_elements_df
 
+    input_elements_df = enrich_input_dataframe_with_legacy_attributes(input_elements_df, existing_elements_df)
+
     legacy_elements_df = utility.get_legacy_elements(existing_elements_df, input_elements_df)
     if len(legacy_elements_df) == 0:
         return input_edges_df, input_elements_df
@@ -625,4 +627,24 @@ def create_attribute_structure(
         }
         baseutils.create_cubes(
             tm1_service=tm1_service, cube_dimension_create_map=cube_dimension_create_map)
+
+
+def enrich_input_dataframe_with_legacy_attributes(
+        input_dataframe: pd.DataFrame,
+        existing_dataframe: pd.DataFrame
+) -> pd.DataFrame:
+    missing_columns = list(set(existing_dataframe.columns) - set(input_dataframe.columns))
+
+    columns_to_extract = ['Hierarchy', 'ElementName'] + missing_columns
+
+    extracted_existing_dataframe = existing_dataframe[columns_to_extract]
+
+    enriched_dataframe: pd.DataFrame = pd.merge(
+        left=input_dataframe,
+        right=extracted_existing_dataframe,
+        on=['Hierarchy', 'ElementName'],
+        how='left'
+    )
+
+    return enriched_dataframe
 
