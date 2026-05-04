@@ -163,11 +163,6 @@ class CubeDataStep(BaseCalculationStep):
     model_config = ConfigDict(arbitrary_types_allowed=True, extra="allow")
     method: Union[Literal["cube_data"], Literal["query"]]
     calc_mdx: str
-    dimension_map: Dict[str, str] | None = None
-    ignore_in_join: List[str] | None = None
-    omit_where_from_df: bool = False
-    value_type: Type | None = None
-    fallback_value: str | int | float
 
 
 class IfStep(BaseCalculationStep):

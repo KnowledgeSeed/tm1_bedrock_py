@@ -808,9 +808,11 @@ def input_handler_proportional_spread():
             "calc_mdx": """
             
             SELECT
+            NON EMPTY
                 {{testbenchVersion}}
                 * {{testbenchMeasurePrice}}
             ON COLUMNS,
+            NON EMPTY
                 [testbenchProduct].[testbenchProduct].Members
             ON ROWS
             FROM [testbenchPrice]
@@ -820,7 +822,8 @@ def input_handler_proportional_spread():
             
             """,
 
-            "omit_where_from_df": True
+            "omit_where_from_df": True,
+            "fallback_value": 1
         },
         {
             "name": "ratioTotal",
@@ -834,13 +837,18 @@ def input_handler_proportional_spread():
         }
     ]
 
-    bedrock.input_handler(
+    final_state = bedrock.input_handler(
         tm1_service=tm1_service,
         target_cube_name=cube_name,
         domain_coordinates=domain_coords,
         input_value=1000,
-        calculation_steps=calculation_steps
+        calculation_steps=calculation_steps,
+        output_final_state_dataframe=True,
+        do_write=False
     )
+
+    utility.configure_pandas_display(pd)
+    print(final_state)
 
 
 def input_handler_proportional_spread_the_other_way():
@@ -1121,7 +1129,7 @@ def dimension_builder_update_bugfix_validation():
 
 
 if __name__ == '__main__':
-    dimension_builder_update_bugfix_validation()
+    # dimension_builder_update_bugfix_validation()
     # complex_transform_demo()
     # tm1_to_sql_pyodbc_custom_writer_demo()
     # context_metadata_basic_demo()
@@ -1143,7 +1151,7 @@ if __name__ == '__main__':
     # input_handler_conditional()
     # input_handler_with_mixed_coord_and_set()
     # input_handler_with_postcalc_cartesian()
-    # input_handler_proportional_spread()
+    input_handler_proportional_spread()
     # input_handler_proportional_spread_the_other_way()
     # input_handler_countif()
     # input_handler_sumif()
