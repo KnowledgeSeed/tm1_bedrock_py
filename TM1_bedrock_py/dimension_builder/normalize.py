@@ -406,6 +406,9 @@ def normalize_existing_schema_full(
 def normalize_updated_schema_for_builder(
         updated_edges_df: pd.DataFrame, updated_elements_df: pd.DataFrame
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    updated_edges_df = updated_edges_df.drop_duplicates(subset=["Parent", "Child", "Hierarchy"])
+    updated_elements_df = updated_elements_df.drop_duplicates(subset=["ElementName", "Hierarchy"])
+
     attribute_columns = utility.get_attribute_columns_list(input_df=updated_elements_df)
 
     # further enhance if necessary, currently this seems enough
@@ -638,3 +641,34 @@ def transform_hierarchy_structure_for_copy(edges_df: pd.DataFrame, elements_df: 
         mapping=find_and_replace_mapping)
 
     return edges_df, elements_df
+
+
+def normalize_alias_element_names(
+        elements_dataframe: pd.DataFrame,
+        edges_dataframe: pd.DataFrame
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    alias_column_names = [column_name for column_name in elements_dataframe.columns if ":Alias" in column_name]
+
+    melted_aliases_dataframe = elements_dataframe.melt(
+        id_vars=["ElementName"],
+        value_vars=alias_column_names,
+        value_name="AliasValue"
+    ).dropna(subset=["AliasValue"])
+
+    alias_to_principal_name_mapping = dict(
+        zip(melted_aliases_dataframe["AliasValue"], melted_aliases_dataframe["ElementName"])
+    )
+
+    elements_dataframe["ElementName"] = elements_dataframe["ElementName"].map(
+        alias_to_principal_name_mapping
+    ).fillna(elements_dataframe["ElementName"])
+
+    edges_dataframe["Parent"] = edges_dataframe["Parent"].map(
+        alias_to_principal_name_mapping
+    ).fillna(edges_dataframe["Parent"])
+
+    edges_dataframe["Child"] = edges_dataframe["Child"].map(
+        alias_to_principal_name_mapping
+    ).fillna(edges_dataframe["Child"])
+
+    return elements_dataframe, edges_dataframe

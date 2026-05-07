@@ -1128,8 +1128,55 @@ def dimension_builder_update_bugfix_validation():
         tm1_service.logout()
 
 
+def dimension_copy_alias_fix_validation():
+    tm1_service = create_tm1_connection('ks_academy')
+
+    test1_data = [
+        {"Parent": "", "Child": "Összes", "ElementType": "Consolidated", "aliasAttribute:a": "Total"},
+        {"Parent": "Összes", "Child": "Elem1", "ElementType": "Numeric", "aliasAttribute:a": "Elem1"},
+        {"Parent": "Összes", "Child": "Elem2", "ElementType": "Numeric", "aliasAttribute:a": "Elem2"},
+    ]
+    test2_data = [
+        {"Parent": "", "Child": "Total", "ElementType": "Consolidated", "aliasAttribute:a": "Total"},
+        {"Parent": "Total", "Child": "Elem1", "ElementType": "Numeric", "aliasAttribute:a": "Elem1"},
+        {"Parent": "Total", "Child": "Elem2", "ElementType": "Numeric", "aliasAttribute:a": "Elem2"},
+        {"Parent": "Total", "Child": "Elem3", "ElementType": "Numeric", "aliasAttribute:a": "Elem3"},
+    ]
+    test1_dim = "test1"
+    test2_dim = "test2"
+
+    utility.configure_pandas_display(pd)
+
+    try:
+        bedrock.dimension_builder(
+            tm1_service=tm1_service,
+            dimension_name=test1_dim,
+            build_strategy="rebuild",
+            input_format="parent_child",
+            raw_input_df=pd.DataFrame(test1_data)
+        )
+        bedrock.dimension_builder(
+            tm1_service=tm1_service,
+            dimension_name=test2_dim,
+            build_strategy="rebuild",
+            input_format="parent_child",
+            raw_input_df=pd.DataFrame(test2_data)
+        )
+
+        bedrock.dimension_copy(
+            tm1_service=tm1_service,
+            source_dimension_name=test2_dim,
+            target_dimension_name=test1_dim,
+            build_strategy="update"
+        )
+
+    finally:
+        tm1_service.logout()
+
+
 if __name__ == '__main__':
     # dimension_builder_update_bugfix_validation()
+    dimension_copy_alias_fix_validation()
     # complex_transform_demo()
     # tm1_to_sql_pyodbc_custom_writer_demo()
     # context_metadata_basic_demo()
@@ -1151,7 +1198,7 @@ if __name__ == '__main__':
     # input_handler_conditional()
     # input_handler_with_mixed_coord_and_set()
     # input_handler_with_postcalc_cartesian()
-    input_handler_proportional_spread()
+    # input_handler_proportional_spread()
     # input_handler_proportional_spread_the_other_way()
     # input_handler_countif()
     # input_handler_sumif()

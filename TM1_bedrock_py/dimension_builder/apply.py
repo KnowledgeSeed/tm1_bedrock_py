@@ -364,6 +364,9 @@ def resolve_schema(
         existing_elements_df=existing_elements_df, input_elements_df=input_elements_df,
         dimension_name=dimension_name, orphan_consolidation_name=orphan_parent_name)
 
+    updated_elements_df, updated_edges_df = normalize.normalize_alias_element_names(
+        updated_elements_df, updated_edges_df)
+
     normalized_updated_edges_df, normalized_updated_elements_df = normalize.normalize_updated_schema_for_builder(
         updated_edges_df, updated_elements_df)
 
