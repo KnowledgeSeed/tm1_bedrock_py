@@ -755,6 +755,7 @@ def generate_dynamic_mdx_query_string(
         tm1_service: Any,
         target_cube_name: str,
         dimension_filter_mapping: dict[str, list[str]] = None,
+        dimension_set_mdx_mapping: dict[str, str] = None,
         parallel_dimensions_for_template: list[str] = None,
         dimension_hierarchy_mapping: dict[str, str] = None,
         skip_zeros: bool = False,
@@ -774,12 +775,18 @@ def generate_dynamic_mdx_query_string(
     for dimension_name in cube_dimensions_list:
         active_hierarchy = dimension_hierarchy_mapping.get(dimension_name, dimension_name)
 
+        if dimension_name in dimension_filter_mapping and dimension_name in dimension_set_mdx_mapping:
+            raise ValueError(f"The dimension {dimension_name} is defined in both dictionaries."
+                             f"Choose either set mdx or element list declaration.")
+
         if dimension_name in dimension_filter_mapping:
             formatted_elements = ", ".join(
                 f"[{dimension_name}].[{active_hierarchy}].[{element_name}]"
                 for element_name in dimension_filter_mapping[dimension_name]
             )
             dimension_mdx_sets.append(f"{{ {formatted_elements} }}")
+        if dimension_name in dimension_set_mdx_mapping:
+            dimension_mdx_sets.append(dimension_set_mdx_mapping[dimension_name])
         else:
             dimension_mdx_sets.append(
                 f"TM1FILTERBYLEVEL(TM1SUBSETALL([{dimension_name}].[{active_hierarchy}]), 0)"
