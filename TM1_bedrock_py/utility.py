@@ -765,6 +765,7 @@ def generate_dynamic_mdx_query_string(
         cube_dimensions_list = tm1_service.cubes.get_dimension_names(cube_name=target_cube_name)
 
     dimension_filter_mapping = dimension_filter_mapping or {}
+    dimension_set_mdx_mapping = dimension_set_mdx_mapping or {}
     dimension_hierarchy_mapping = dimension_hierarchy_mapping or {}
 
     if parallel_dimensions_for_template is not None:
