@@ -372,7 +372,7 @@ def resolve_schema(
 
     post_validate_schema(normalized_updated_edges_df, normalized_updated_elements_df)
 
-    return updated_edges_df, updated_elements_df
+    return normalized_updated_edges_df, normalized_updated_elements_df
 
 
 @baseutils.log_exec_metrics

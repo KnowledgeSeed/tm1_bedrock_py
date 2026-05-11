@@ -1178,7 +1178,7 @@ def dimension_copy_alias_fix_validation():
 
 if __name__ == '__main__':
     # dimension_builder_update_bugfix_validation()
-    # dimension_copy_alias_fix_validation()
+    dimension_copy_alias_fix_validation()
     # complex_transform_demo()
     # tm1_to_sql_pyodbc_custom_writer_demo()
     # context_metadata_basic_demo()
@@ -1192,7 +1192,7 @@ if __name__ == '__main__':
     # copy_dim_between_servers_demo()
     # copy_data_between_servers_demo()
     # copy_cube_structure_between_servers_demo()
-    mdx_gen_demo()
+    # mdx_gen_demo()
     # attribute_structure_creation_demo()
     # input_handler_leaf_domain()
     # input_handler_repeat_on_children()

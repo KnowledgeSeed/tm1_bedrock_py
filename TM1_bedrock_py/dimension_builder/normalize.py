@@ -667,12 +667,13 @@ def normalize_alias_element_names(
         alias_to_principal_name_mapping
     ).fillna(elements_dataframe["ElementName"])
 
-    edges_dataframe["Parent"] = edges_dataframe["Parent"].map(
-        alias_to_principal_name_mapping
-    ).fillna(edges_dataframe["Parent"])
+    if edges_dataframe is not None:
+        edges_dataframe["Parent"] = edges_dataframe["Parent"].map(
+            alias_to_principal_name_mapping
+        ).fillna(edges_dataframe["Parent"])
 
-    edges_dataframe["Child"] = edges_dataframe["Child"].map(
-        alias_to_principal_name_mapping
-    ).fillna(edges_dataframe["Child"])
+        edges_dataframe["Child"] = edges_dataframe["Child"].map(
+            alias_to_principal_name_mapping
+        ).fillna(edges_dataframe["Child"])
 
     return elements_dataframe, edges_dataframe

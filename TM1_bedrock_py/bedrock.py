@@ -284,9 +284,6 @@ def dimension_builder(
     if override_input_elements_df is not None:
         input_edges_df = override_input_edges_df
         input_elements_df = override_input_elements_df
-
-        input_edges_df, input_elements_df = normalize.normalize_updated_schema_for_builder(
-            input_edges_df, input_elements_df)
     else:
         input_edges_df, input_elements_df = apply.init_input_schema(
             dimension_name=dimension_name, hierarchy_name=hierarchy_name, input_format=input_format,
@@ -320,9 +317,6 @@ def dimension_builder(
         orphan_parent_name=new_orphan_parent_name,
         mode=build_strategy,
         allow_type_changes=allow_type_changes)
-
-    updated_edges_df, updated_elements_df = normalize.normalize_updated_schema_for_builder(
-        updated_edges_df, updated_elements_df)
 
     if remove_empty_subtrees:
         updated_edges_df, updated_elements_df = apply.remove_empty_subtrees(updated_edges_df, updated_elements_df)
