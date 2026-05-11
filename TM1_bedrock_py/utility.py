@@ -779,13 +779,13 @@ def generate_dynamic_mdx_query_string(
             raise ValueError(f"The dimension {dimension_name} is defined in both dictionaries."
                              f"Choose either set mdx or element list declaration.")
 
-        if dimension_name in dimension_filter_mapping:
+        elif dimension_name in dimension_filter_mapping:
             formatted_elements = ", ".join(
                 f"[{dimension_name}].[{active_hierarchy}].[{element_name}]"
                 for element_name in dimension_filter_mapping[dimension_name]
             )
             dimension_mdx_sets.append(f"{{ {formatted_elements} }}")
-        if dimension_name in dimension_set_mdx_mapping:
+        elif dimension_name in dimension_set_mdx_mapping:
             dimension_mdx_sets.append(dimension_set_mdx_mapping[dimension_name])
         else:
             dimension_mdx_sets.append(
