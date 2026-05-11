@@ -405,15 +405,19 @@ def normalize_existing_schema_full(
 
 def normalize_updated_schema_for_builder(
         updated_edges_df: pd.DataFrame, updated_elements_df: pd.DataFrame
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    updated_edges_df = updated_edges_df.drop_duplicates(subset=["Parent", "Child", "Hierarchy"])
+) -> Tuple[Optional[pd.DataFrame], Optional[pd.DataFrame]]:
+    if updated_elements_df is None:
+        return updated_edges_df, updated_elements_df
+
     updated_elements_df = updated_elements_df.drop_duplicates(subset=["ElementName", "Hierarchy"])
 
     attribute_columns = utility.get_attribute_columns_list(input_df=updated_elements_df)
-
-    # further enhance if necessary, currently this seems enough
     assign_missing_attribute_values(elements_df=updated_elements_df, attribute_columns=attribute_columns)
     validate_and_normalize_attr_column_types(elements_df=updated_elements_df, attr_columns=attribute_columns)
+
+    if updated_edges_df is not None:
+        updated_edges_df = updated_edges_df.drop_duplicates(subset=["Parent", "Child", "Hierarchy"])
+
     return updated_edges_df, updated_elements_df
 
 
