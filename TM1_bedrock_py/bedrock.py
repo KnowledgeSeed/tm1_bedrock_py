@@ -813,6 +813,7 @@ def data_copy_intercube(tm1_service: Optional[Any],
 
                         increment: Optional[bool] = False,
                         sum_numeric_duplicates: Optional[bool] = False,
+                        aggregate_numeric_duplicates: bool = False,
 
                         logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
                         verbose_logging_mode: Optional[Literal["file", "print_console"]] = None,
@@ -1151,6 +1152,9 @@ def data_copy_intercube(tm1_service: Optional[Any],
             pre_load_kwargs = {}
 
         dataframe = pre_load_function(dataframe, *pre_load_args, **pre_load_kwargs)
+
+    if aggregate_numeric_duplicates:
+        dataframe = transformer.dataframe_aggregate_numeric_values(dataframe, target_cube_dims)
 
     loader.dataframe_to_cube(
         tm1_service=target_tm1_service,

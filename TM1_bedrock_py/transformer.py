@@ -1517,3 +1517,20 @@ def dataframe_execute_calculation(
 @utility.log_exec_metrics
 def dataframe_remove_zero_records(dataframe: DataFrame) -> DataFrame:
     return dataframe[dataframe["Value"] != 0]
+
+
+@utility.log_exec_metrics
+def dataframe_aggregate_numeric_values(dataframe: DataFrame, cube_dimensions: list[str]) -> DataFrame:
+    numeric_mask = pd.to_numeric(dataframe["Value"], errors="coerce").notna()
+
+    numeric_agg = (
+        dataframe[numeric_mask]
+        .assign(Value=lambda d: pd.to_numeric(d["Value"]))
+        .groupby(cube_dimensions, as_index=False)
+        .agg({"Value": "sum"})
+    )
+
+    string_rows = dataframe[~numeric_mask]
+
+    result = pd.concat([numeric_agg, string_rows], ignore_index=True)
+    return result
