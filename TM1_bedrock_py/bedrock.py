@@ -1088,10 +1088,6 @@ def data_copy_intercube(tm1_service: Optional[Any],
 
     final_row_count = len(dataframe)
     basic_logger.debug(f"initial row count was: {initial_row_count}, Final row count was: {final_row_count}")
-    if initial_row_count < final_row_count:
-        msg = f"Initial row count: {initial_row_count} does not match Final row count: {final_row_count}"
-        basic_logger.error(msg)
-        raise ValueError(msg)
 
     if dataframe.empty:
         if clear_target:
