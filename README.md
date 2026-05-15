@@ -152,7 +152,7 @@ The toolkit includes a robust logging framework to help you debug your data inte
 * **Performance Metrics:** The execution time of key functions is automatically logged. By setting the logging level to DEBUG, you can see the time taken for each major operation, which helps in identifying performance bottlenecks. The `logging.json` file can be configured to output these metrics to a separate file for analysis.
 
 ## Requirements
-* TM1py >=2.1, <3.0
+* TM1py >=2.2, <3.0
 * pandas >=2.3.3, <3.0.0
 * json_logging >=1.3.0, <2.0.0
 * sqlalchemy >=2.0.0, <3.0.0
