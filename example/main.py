@@ -400,39 +400,6 @@ def copy_data_between_servers_demo():
         tm1srv_hrdemo.logout()
 
 
-def dimension_builder_no_edges_old_format():
-    tm1_service = create_tm1_connection('ks_academy')
-    
-    dimension_name = "DimBuilderDemo7"
-    file_path = os.path.join(os.path.dirname(__file__), "company.csv")
-    utility.configure_pandas_display(pd)
-
-    """
-    'vL1', 'vL2', 'vL3', 'vL4', 'vL5',
-    'vL6', 'vL7', 'vL8', 'vL9', 'vL10',
-    'vL11', 'vL12', 'vL13', 'vL14', 'vL15'
-    """
-
-    try:
-        bedrock.dimension_builder(
-            tm1_service=tm1_service,
-            dimension_name=dimension_name,
-            input_datasource=file_path,
-            input_format='indented_levels',
-            build_strategy='rebuild',
-            level_columns=[
-                'L1', 'L2', 'L3', 'L4', 'L5',
-                'L6', 'L7', 'L8', 'L9', 'L10',
-                'L11', 'L12', 'L13', 'L14', 'L15'
-            ],
-            weight_column="vWeight",
-            type_column="vType",
-            attribute_parser="square_brackets_start"
-        )
-    finally:
-        tm1_service.logout()
-
-
 def context_metadata_basic_demo():
     tm1_service = create_tm1_connection('ks_academy')
 
@@ -587,6 +554,19 @@ def mdx_gen_demo():
         dimension_set_mdx_mapping={"Employees": "{[Employees].[Employees].[Total]}"}
     )
     print(mdx)
+
+
+def dimexport_demo():
+    tm1srv_target = create_tm1_connection('hr_demo')
+
+    bedrock.dimension_export(
+        dimension_name="Groups",
+        tm1_service=tm1srv_target,
+        output_format="parent_child",
+        target_destinations=["csv"],
+        file_path_destination="C:\\Users\\ullmann.david\\PycharmProjects\\tm1bedrockpy\\testfile.csv",
+    )
+
 
 
 def attribute_structure_creation_demo():
@@ -1178,7 +1158,7 @@ def dimension_copy_alias_fix_validation():
 
 if __name__ == '__main__':
     # dimension_builder_update_bugfix_validation()
-    dimension_copy_alias_fix_validation()
+    # dimension_copy_alias_fix_validation()
     # complex_transform_demo()
     # tm1_to_sql_pyodbc_custom_writer_demo()
     # context_metadata_basic_demo()
@@ -1206,3 +1186,4 @@ if __name__ == '__main__':
     # input_handler_sumif()
     # input_handler_count_unique()
     # input_handler_conditional_concat()
+    dimexport_demo()

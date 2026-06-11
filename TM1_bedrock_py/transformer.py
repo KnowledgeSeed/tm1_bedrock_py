@@ -1030,7 +1030,7 @@ def __apply_basic_dimension_reshaping(
         columns_to_save.update(dict.fromkeys(existing_filter_columns))
 
     if "columns_to_drop" in mapping_step:
-        existing_drop_columns = [col for col in mapping_step["columns_to_drop"].keys() if col in data_df.columns]
+        existing_drop_columns = [col for col in mapping_step["columns_to_drop"] if col in data_df.columns]
         columns_to_save.update(dict.fromkeys(existing_drop_columns))
 
     if audit_mode:

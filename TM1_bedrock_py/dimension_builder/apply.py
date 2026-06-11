@@ -600,8 +600,8 @@ def combine_schema_for_export(
         raise ValueError(f"Unsupported format_selector provided: {format_selector}")
 
     structured_dataframe: pd.DataFrame = selected_processing_function(
-        elements_dataframe=cleaned_elements_dataframe,
-        edges_dataframe=cleaned_edges_dataframe,
+        elements_df=cleaned_elements_dataframe,
+        edges_df=cleaned_edges_dataframe,
         format_selector=format_selector,
         maximum_levels_depth=maximum_levels_depth
     )

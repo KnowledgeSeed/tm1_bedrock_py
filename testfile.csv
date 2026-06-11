@@ -1,0 +1,29 @@
+Dimension;Hierarchy;Parent;Child;Weight;ElementType;Created By:String;Created DateTime:String;Long_name:Alias;Created_DateTime:String;Created_By:String
+Groups;Groups;;Total Groups;;Consolidated;;;Total Groups;2023.01.01.;CEO
+Groups;Groups;Total Groups;Group_1;1.0;Numeric;2023.01.01.;;Marketing and Management;2023.01.01.;CEO
+Groups;Groups;Total Groups;Group_10;1.0;Numeric;;;;;
+Groups;Groups;Total Groups;Group_11;1.0;Numeric;;;;;
+Groups;Groups;Total Groups;Group_12;1.0;Numeric;;;;;
+Groups;Groups;Total Groups;Group_13;1.0;Numeric;;;;;
+Groups;Groups;Total Groups;Group_14;1.0;Numeric;;;;;
+Groups;Groups;Total Groups;Group_15;1.0;Numeric;;;;;
+Groups;Groups;Total Groups;Group_16;1.0;Numeric;;;;;
+Groups;Groups;Total Groups;Group_17;1.0;Numeric;;;;;
+Groups;Groups;Total Groups;Group_18;1.0;Numeric;;;;;
+Groups;Groups;Total Groups;Group_19;1.0;Numeric;;;;;
+Groups;Groups;Total Groups;Group_2;1.0;Numeric;;;Finance and HR;2023.01.01.;CEO
+Groups;Groups;Total Groups;Group_20;1.0;Numeric;;;;;
+Groups;Groups;Total Groups;Group_21;1.0;Numeric;;;;;
+Groups;Groups;Total Groups;Group_22;1.0;Numeric;;;;;
+Groups;Groups;Total Groups;Group_23;1.0;Numeric;;;;;
+Groups;Groups;Total Groups;Group_24;1.0;Numeric;;;;;
+Groups;Groups;Total Groups;Group_25;1.0;Numeric;;;;;
+Groups;Groups;Total Groups;Group_26;1.0;Numeric;;;;;
+Groups;Groups;Total Groups;Group_27;1.0;Numeric;;;;;
+Groups;Groups;Total Groups;Group_3;1.0;Numeric;;;Project A;2023.01.01.;CFO
+Groups;Groups;Total Groups;Group_4;1.0;Numeric;;;Project B;2023.01.01.;CFO
+Groups;Groups;Total Groups;Group_5;1.0;Numeric;;;Project C;2023.01.01.;CTO
+Groups;Groups;Total Groups;Group_6;1.0;Numeric;;;;;
+Groups;Groups;Total Groups;Group_7;1.0;Numeric;;;;;
+Groups;Groups;Total Groups;Group_8;1.0;Numeric;;;;;
+Groups;Groups;Total Groups;Group_9;1.0;Numeric;;;;;
