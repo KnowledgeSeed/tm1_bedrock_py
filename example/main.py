@@ -1156,6 +1156,90 @@ def dimension_copy_alias_fix_validation():
         tm1_service.logout()
 
 
+def run_advanced_mapping_integration_test():
+    tm1_service = create_tm1_connection('ks_academy')
+
+    # AMTEST_TARGETCLEAR_PERIOD és AMTEST_TARGETCLEAR_VERSION set mdx-ek
+    target_clear_set_mdx_list = ["{[testbenchVersion].[testbenchVersion].[Budget]}",
+                                 "{[testbenchPeriod].[testbenchPeriod].[202401]}"]
+
+    amtest_1_source_mdx = """
+        SELECT
+            NON EMPTY {[testbenchMeasureSales].[testbenchMeasureSales].[Quantity],[testbenchMeasureSales].[testbenchMeasureSales].[Revenue],[testbenchMeasureSales].[testbenchMeasureSales].[Discount]}
+        ON COLUMNS, NON EMPTY {TM1FILTERBYLEVEL({TM1SUBSETALL([testbenchKeyAccountManager].[testbenchKeyAccountManager])}, 0)}
+            * {TM1FILTERBYLEVEL({TM1SUBSETALL([testbenchProduct].[testbenchProduct])}, 0)}
+        ON ROWS
+        FROM [testbenchSales]
+        WHERE (
+            [testbenchVersion].[testbenchVersion].[Actual],
+            [testbenchPeriod].[testbenchPeriod].[202401],
+            [testbenchCustomer].[testbenchCustomer].[All Customer])
+    """
+
+    amtest_2_mapping_mdx = """
+        SELECT
+            NON EMPTY [testbenchMeasureMappingProductToAccount].[testbenchMeasureMappingProductToAccount].Members
+        ON COLUMNS, NON EMPTY {TM1FILTERBYLEVEL({TM1SUBSETALL([testbenchAccount].[testbenchAccount])}, 0)}
+            * {TM1FILTERBYLEVEL({TM1SUBSETALL([testbenchProduct].[testbenchProduct])}, 0)}
+            * {[testbenchMeasureSales].[testbenchMeasureSales].[Quantity],[testbenchMeasureSales].[testbenchMeasureSales].[Revenue],[testbenchMeasureSales].[testbenchMeasureSales].[Discount]}
+        ON ROWS
+        FROM [testbenchMappingProductToAccount]
+        WHERE (
+            [testbenchVersion].[testbenchVersion].[Actual] )
+    """
+
+    amtest_3_mapping_mdx = """
+        SELECT
+            NON EMPTY [testbenchMeasureMappingKeyAccountManagerToOrganizationUnit].[testbenchMeasureMappingKeyAccountManagerToOrganizationUnit].Members
+        ON COLUMNS, NON EMPTY {TM1FILTERBYLEVEL({TM1SUBSETALL([testbenchKeyAccountManager].[testbenchKeyAccountManager])}, 0)}
+            * {TM1FILTERBYLEVEL({TM1SUBSETALL([testbenchOrganizationUnit].[testbenchOrganizationUnit])}, 0)}
+        ON ROWS
+        FROM [testbenchMappingKeyAccountManagerToOrganizationUnit]
+        WHERE (
+            [testbenchVersion].[testbenchVersion].[Actual],
+            [testbenchPeriod].[testbenchPeriod].[202401] )
+    """
+
+    mapping_steps = [
+        {
+            "method": "map_and_join",
+            "mapping_mdx": amtest_2_mapping_mdx,
+            "joined_columns": ["testbenchAccount"]
+        },
+        {
+            "method": "map_and_join",
+            "mapping_mdx": amtest_3_mapping_mdx,
+            "joined_columns": ["testbenchOrganizationUnit"]
+        },
+        {
+            "method": "replace",
+            "mapping": {"testbenchVersion": {"Actual": "Budget"}}
+        },
+        {
+            "method": "basic_reshaping",
+            "new_columns_with_values": {"testbenchMeasurePnL": "InputValue"}
+        }
+    ]
+
+    try:
+        bedrock.data_copy_intercube(
+            tm1_service=tm1_service,
+            target_cube_name="testbenchPnL",
+            data_mdx=amtest_1_source_mdx,
+            skip_zeros=True,
+            skip_consolidated_cells=False,
+            check_missing_elements=True,
+            cast_cell_type_mapping_on_values=True,
+            mapping_steps=mapping_steps,
+            clear_target=True,
+            target_clear_set_mdx_list=target_clear_set_mdx_list,
+            logging_level="DEBUG",
+            verbose_logging_mode="print_console"
+        )
+    finally:
+        tm1_service.logout()
+
+
 if __name__ == '__main__':
     # dimension_builder_update_bugfix_validation()
     # dimension_copy_alias_fix_validation()
@@ -1186,4 +1270,5 @@ if __name__ == '__main__':
     # input_handler_sumif()
     # input_handler_count_unique()
     # input_handler_conditional_concat()
-    dimexport_demo()
+    # dimexport_demo()
+    run_advanced_mapping_integration_test()

@@ -11,7 +11,7 @@ from TM1_bedrock_py import utility, basic_logger
 from TM1_bedrock_py.transformer import (
     rename_columns_by_reference,
     dataframe_add_column_assign_value,
-    normalize_table_source_dataframe, dataframe_relabel,
+    normalize_table_source_dataframe, dataframe_relabel, cast_coordinates_to_str
 )
 from itertools import product
 
@@ -201,6 +201,7 @@ def _handle_mapping_mdx(
     native_view_extraction_enabled = mdx_function == "native_view_extractor"
 
     mdx = step["mapping_mdx"]
+    skip_consolidated = step.get("skip_consolidated_cells", False)
     step_specific_tm1_service = step.get("tm1_service")
 
     kwargs_copy = kwargs.copy()
@@ -209,22 +210,28 @@ def _handle_mapping_mdx(
 
     if not step_specific_tm1_service:
         step_specific_tm1_service = tm1_service
+
+    metadata_object = utility.TM1CubeObjectMetadata.collect(
+        metadata_function=step.get("mapping_metadata_function"),
+        tm1_service=step_specific_tm1_service,
+        mdx=mdx,
+        collect_base_cube_metadata=True,
+        collect_source_cube_metadata=native_view_extraction_enabled,
+        **kwargs_copy
+    )
+    mapping_cube_dims = metadata_object.get_cube_dims()
+
     dataframe = tm1_mdx_to_dataframe(
         mdx_function=mdx_function,
         tm1_service=step_specific_tm1_service,
         data_mdx=mdx,
         skip_zeros=True,
-        skip_consolidated_cells=True,
+        skip_consolidated_cells=skip_consolidated,
+        cube_dimensions=mapping_cube_dims,
         **kwargs_copy
     )
-    metadata_object = utility.TM1CubeObjectMetadata.collect(
-        metadata_function=step.get("mapping_metadata_function"),
-        tm1_service=step_specific_tm1_service,
-        mdx=mdx,
-        collect_base_cube_metadata=False,
-        collect_source_cube_metadata=native_view_extraction_enabled,
-        **kwargs_copy
-    )
+
+    cast_coordinates_to_str(mapping_cube_dims, dataframe)
     filter_dict = metadata_object.get_filter_dict()
     if native_view_extraction_enabled:
         dataframe = rename_columns_by_reference(
