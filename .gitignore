@@ -2,6 +2,7 @@ example/config.ini
 
 # Byte-compiled / optimized / compiled Python files
 __pycache__/
+.pytest_cache/
 *.py[cod]
 *.pyo
 *.pyd
