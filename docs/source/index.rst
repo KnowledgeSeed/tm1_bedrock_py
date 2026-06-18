@@ -1,49 +1,48 @@
-.. tm1_bedrock_py documentation master file, created by
-   sphinx-quickstart on Mon Aug 11 15:05:37 2025.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+TM1 Bedrock for Python
+======================
 
-Welcome to tm1_bedrock_py documentation!
-========================================
-This project is a Python-based toolkit by Knowledgeseed, designed to streamline data integration and automation tasks with IBM Planning Analytics (TM1).
+``tm1_bedrock_py`` provides high-level, composable workflows for IBM Planning
+Analytics (TM1). It moves and transforms data between TM1 cubes, SQL databases,
+CSV files, and dimension structures while keeping TM1py and pandas available
+for custom behavior.
 
-It leverages the ``TM1py`` library to provide a high-level, configurable, and extensible framework for moving data between TM1 cubes, SQL databases, and CSV files. The toolkit is built with a focus on performance, offering features like asynchronous operations and detailed logging for debugging and optimization.
-
-Check out the :doc:`usage` section for a guide on getting started, and the :doc:`data_copy` and :doc:`tm1_csv` and :doc:`tm1_sql` manuals for a deep dive into the core data manipulation functions.
-For high performance use-cases, refer to :doc:`async_executor`, :doc:`async_csv` and :doc:`async_sql`.
+Start with :doc:`usage` to choose a workflow. Use :doc:`api_reference` for the
+current public signatures and parameter defaults.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Introduction:
+   :caption: Getting started
 
    usage
+   reliability
+   calculations
 
 .. toctree::
    :maxdepth: 2
-   :caption: Synchronous Executors:
+   :caption: Data workflows
 
    data_copy
-   tm1_csv
    tm1_sql
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Asynchronous Executors:
-
+   tm1_csv
    async_executor
-   async_csv
    async_sql
+   async_csv
 
 .. toctree::
    :maxdepth: 2
-   :caption: Airflow Integration:
+   :caption: Structure and orchestration
 
+   dimension_management
    airflow_executor
 
-Indices and tables
-==================
+.. toctree::
+   :maxdepth: 2
+   :caption: Reference
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   api_reference
 
+Project links
+-------------
+
+* `Source repository <https://github.com/KnowledgeSeed/tm1_bedrock_py>`_
+* `Issue tracker <https://github.com/KnowledgeSeed/tm1_bedrock_py/issues>`_

@@ -10,6 +10,7 @@ from TM1py.Exceptions import TM1pyRestException
 from sqlalchemy.exc import OperationalError, InterfaceError, ArgumentError
 
 from TM1_bedrock_py import utility, basic_logger
+from tests.mock_tm1_service import MockTM1Service
 
 _SOURCE_VERSION = "Actual"
 _TARGET_VERSION = "ForeCast"
@@ -160,19 +161,42 @@ def tm1_connection_factory():
             basic_logger.debug("Successfully connected to TM1.")
             yield tm1
 
-        except (TM1pyRestException, TypeError):
+        except (TM1pyRestException, TypeError, ValueError):
             try:
                 config = configparser.ConfigParser()
                 config.read(Path(__file__).parent.joinpath('config.ini'))
+                if not config.has_section(connection_name):
+                    pytest.skip(
+                        f"TM1 connection '{connection_name}' is not configured via environment "
+                        f"variables or tests/config.ini."
+                    )
                 tm1 = TM1Service(**config[connection_name])
                 basic_logger.debug("Successfully connected to TM1.")
                 yield tm1
-            except TM1pyRestException:
-                basic_logger.error("Unable to connect to TM1: ", exc_info=True)
+            except (TM1pyRestException, KeyError, ValueError, TypeError):
+                pytest.skip(
+                    f"Unable to initialize TM1 connection '{connection_name}' from environment "
+                    f"variables or tests/config.ini."
+                )
         finally:
             if tm1 is not None:
                 tm1.logout()
                 basic_logger.debug("Connection closed.")
+    return _connect
+
+
+@pytest.fixture
+def mock_tm1_service():
+    return MockTM1Service()
+
+
+@pytest.fixture
+def mock_tm1_connection_factory():
+    @contextmanager
+    def _connect(server_name: str = "mock-tm1"):
+        with MockTM1Service(server_name=server_name) as tm1:
+            yield tm1
+
     return _connect
 
 
@@ -194,15 +218,23 @@ def sql_engine_factory():
             basic_logger.debug("SQL engine successfully created")
             yield engine
 
-        except (ArgumentError, AttributeError):
+        except (ArgumentError, AttributeError, TypeError, ValueError):
             try:
                 config = configparser.ConfigParser()
                 config.read(Path(__file__).parent.joinpath('config.ini'))
+                if not config.has_section(connection_name):
+                    pytest.skip(
+                        f"SQL connection '{connection_name}' is not configured via environment "
+                        f"variables or tests/config.ini."
+                    )
                 engine = utility.create_sql_engine(**config[connection_name])
                 basic_logger.debug("SQL engine successfully created")
                 yield engine
-            except OperationalError or InterfaceError:
-                basic_logger.error("Unable to connect to SQL: ", exc_info=True)
+            except (OperationalError, InterfaceError, ArgumentError, KeyError, TypeError, ValueError):
+                pytest.skip(
+                    f"Unable to initialize SQL connection '{connection_name}' from environment "
+                    f"variables or tests/config.ini."
+                )
         finally:
             if engine is not None:
                 engine.dispose()

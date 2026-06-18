@@ -9,7 +9,8 @@ from sqlalchemy import text, create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
 
-from TM1_bedrock_py import extractor, transformer, utility, loader, input as bedrock_input
+from TM1_bedrock_py import bedrock, extractor, transformer, utility, loader, input as bedrock_input
+from TM1_bedrock_py.context_metadata import ContextMetadata
 from tests.config import tm1_connection_factory, sql_engine_factory
 
 EXCEPTION_MAP = {
@@ -196,6 +197,398 @@ def test_normalize_dataframe_strings(input_df, expected_df):
     pd.testing.assert_frame_equal(output_df, expected_df)
 
 
+def test_create_sql_engine_invalid_connection_type():
+    with pytest.raises(ValueError) as excinfo:
+        utility.create_sql_engine(connection_type="unsupported")
+
+    assert "Unsupported connection_type" in str(excinfo.value)
+
+
+def test_dataframe_to_sql_rejects_unknown_writer():
+    with pytest.raises(ValueError, match="Unsupported sql_function"):
+        loader.dataframe_to_sql(sql_function="unknown", dataframe=pd.DataFrame({"A": [1]}))
+
+
+def test_clear_table_rejects_unknown_clear_function():
+    with pytest.raises(ValueError, match="Unsupported clear_function"):
+        loader.clear_table(clear_function="unknown")
+
+
+def test_clear_table_requires_table_name_or_delete_statement():
+    with pytest.raises(ValueError, match="Either 'table_name' or 'delete_statement'"):
+        loader.clear_table(clear_function="pyodbc", database_engine_or_connection=object())
+
+
+def test_clear_table_rolls_back_failed_database_operation():
+    class BrokenCursor:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def execute(self, _statement):
+            raise OSError("write failed")
+
+    class Connection:
+        def __init__(self):
+            self.rollback_called = False
+
+        def cursor(self):
+            return BrokenCursor()
+
+        def rollback(self):
+            self.rollback_called = True
+
+    connection = Connection()
+    with pytest.raises(OSError, match="write failed"):
+        loader.clear_table(
+            clear_function="pyodbc",
+            database_engine_or_connection=connection,
+            table_name="Target",
+            delete_statement=None,
+        )
+
+    assert connection.rollback_called is True
+
+
+def test_clear_table_supports_cursor_without_context_manager():
+    import sqlite3
+
+    connection = sqlite3.connect(":memory:")
+    connection.execute("CREATE TABLE Target (Value INTEGER)")
+    connection.execute("INSERT INTO Target VALUES (1)")
+    connection.commit()
+
+    loader.clear_table(
+        database_engine_or_connection=connection,
+        delete_statement="DELETE FROM Target",
+    )
+
+    assert connection.execute("SELECT COUNT(*) FROM Target").fetchone()[0] == 0
+    connection.close()
+
+
+def test_clear_table_sqlalchemy_default_is_backend_agnostic():
+    engine = create_engine("sqlite://", echo=False)
+    pd.DataFrame({"Value": [1, 2]}).to_sql("Target", engine, index=False, if_exists="replace")
+
+    loader.clear_table(
+        clear_function="sqlalchemy",
+        database_engine_or_connection=engine,
+        table_name="Target",
+    )
+
+    with engine.connect() as connection:
+        assert connection.execute(text("SELECT COUNT(*) FROM Target")).fetchone()[0] == 0
+
+
+def test_clear_table_preserves_primary_error_when_cleanup_also_fails():
+    class BrokenCursor:
+        def execute(self, _statement):
+            raise OSError("primary write failure")
+
+        def close(self):
+            raise RuntimeError("cursor close failure")
+
+    class Connection:
+        def cursor(self):
+            return BrokenCursor()
+
+        def rollback(self):
+            raise RuntimeError("rollback failure")
+
+    with pytest.raises(OSError, match="primary write failure"):
+        loader.clear_table(
+            clear_function="pyodbc",
+            database_engine_or_connection=Connection(),
+            table_name="Target",
+            delete_statement=None,
+        )
+
+
+def test_get_sql_table_count_propagates_connection_failure():
+    class BrokenEngine:
+        def connect(self):
+            raise OSError("database unavailable")
+
+    with pytest.raises(RuntimeError, match="Failed to get row count"):
+        extractor._get_sql_table_count(BrokenEngine(), "SourceTable")
+
+
+def test_async_worker_errors_are_propagated():
+    worker_error = ValueError("worker failed")
+
+    with pytest.raises(RuntimeError, match=r"indexes: 1"):
+        utility.raise_async_worker_errors([None, worker_error], "Test operation")
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "expected_message"),
+    [
+        ({"if_exists": "invalid"}, "Unsupported if_exists strategy"),
+        ({"chunksize": 0}, "'chunksize' must be greater than zero"),
+    ],
+)
+def test_sql_api_writer_rejects_invalid_structural_inputs(kwargs, expected_message):
+    with pytest.raises(ValueError, match=expected_message):
+        loader.__write_dataframe_sql_api(
+            dataframe=pd.DataFrame({"A": [1]}),
+            table_name="Target",
+            database_engine_or_connection=object(),
+            table_exists_query="SELECT 1",
+            **kwargs,
+        )
+
+
+def test_sql_api_writer_rejects_dataframe_without_columns():
+    with pytest.raises(ValueError, match="without columns"):
+        loader.__write_dataframe_sql_api(
+            dataframe=pd.DataFrame(index=[0]),
+            table_name="Target",
+            database_engine_or_connection=object(),
+            table_exists_query="SELECT 1",
+        )
+
+
+def test_context_metadata_rejects_empty_sql_result(monkeypatch):
+    monkeypatch.setattr(
+        extractor,
+        "sql_to_dataframe",
+        lambda **_kwargs: pd.DataFrame(),
+    )
+    context = ContextMetadata(sql_engine=object())
+
+    with pytest.raises(ValueError, match="returned no values"):
+        context.add_parameter_from_sql("CurrentPeriod", "SELECT Period")
+
+
+def test_context_metadata_rejects_tm1_result_without_value(monkeypatch):
+    monkeypatch.setattr(
+        extractor,
+        "tm1_mdx_to_dataframe",
+        lambda **_kwargs: pd.DataFrame({"Period": ["2026"]}),
+    )
+    context = ContextMetadata(tm1_service=object())
+
+    with pytest.raises(ValueError, match="has no 'Value' column"):
+        context.add_parameter_from_tm1("CurrentPeriod", "SELECT ...")
+
+
+def test_context_metadata_reads_first_tm1_value_by_position(monkeypatch):
+    monkeypatch.setattr(
+        extractor,
+        "tm1_mdx_to_dataframe",
+        lambda **_kwargs: pd.DataFrame({"Value": ["2026"]}, index=[5]),
+    )
+    context = ContextMetadata(tm1_service=object())
+
+    context.add_parameter_from_tm1("CurrentPeriod", "SELECT ...")
+
+    assert context.get_value("CurrentPeriod") == "2026"
+
+
+def test_context_metadata_rejects_empty_init_yaml(tmp_path):
+    source = tmp_path / "empty_context.yaml"
+    source.write_text("", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="must contain a mapping"):
+        ContextMetadata(path_to_init_yaml=str(source))
+
+
+def test_context_metadata_rejects_non_mapping_parameter_config(tmp_path):
+    source = tmp_path / "invalid_context.yaml"
+    source.write_text("CurrentPeriod: 202601\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="must be a mapping"):
+        ContextMetadata(path_to_init_yaml=str(source))
+
+
+def test_context_metadata_requires_one_value_source(tmp_path):
+    source = tmp_path / "missing_value_source.yaml"
+    source.write_text("CurrentPeriod:\n  type: dimension_element\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="must define one of"):
+        ContextMetadata(path_to_init_yaml=str(source))
+
+
+def test_build_input_domain_drops_value_column(monkeypatch):
+    class DummyMetadata:
+        def get_cube_dims(self):
+            return ["Dim1"]
+
+        def get_filter_dict(self):
+            return {"Version": "Actual"}
+
+    monkeypatch.setattr(utility.TM1CubeObjectMetadata, "collect", lambda **_kwargs: DummyMetadata())
+    monkeypatch.setattr(
+        extractor,
+        "tm1_mdx_to_dataframe",
+        lambda **_kwargs: pd.DataFrame({"Dim1": ["A"], "Value": [1]})
+    )
+
+    domain_df = extractor.build_input_domain(
+        tm1_service=object(),
+        domain_mdx="SELECT {[Dim1].[A]} ON 0 FROM [Cube]"
+    )
+
+    assert "Value" not in domain_df.columns
+
+
+def test_build_input_domain_from_coordinates_expands_leaf_combinations():
+    class ElementsService:
+        def __init__(self, responses):
+            self._responses = responses
+
+        def execute_set_mdx(self, mdx):
+            return self._responses[mdx]
+
+    class TM1Stub:
+        def __init__(self, responses):
+            self.elements = ElementsService(responses)
+
+    first_mdx = "{Tm1FilterByLevel({Tm1DrillDownMember({[Version].[Actual]},ALL,RECURSIVE)},0)}"
+    second_mdx = "{Tm1FilterByLevel({Tm1DrillDownMember({[Period].[FY24].[Q1]},ALL,RECURSIVE)},0)}"
+    tm1 = TM1Stub(
+        {
+            first_mdx: [[{"Name": "Actual"}]],
+            second_mdx: [[{"Name": "Jan"}], [{"Name": "Feb"}]],
+        }
+    )
+
+    domain_df = extractor.build_input_domain(
+        tm1_service=tm1,
+        domain_coords={"Version": "Actual", "Period": "FY24:Q1"},
+    )
+
+    expected_df = pd.DataFrame(
+        {
+            "Version": ["Actual", "Actual"],
+            "Period": ["FY24:Jan", "FY24:Feb"],
+        },
+        dtype="string",
+    )
+    pd.testing.assert_frame_equal(domain_df, expected_df)
+
+
+def test_sql_to_dataframe_rejects_missing_query_and_table_name():
+    with pytest.raises(ValueError, match="Either 'table_name' or 'sql_query'"):
+        extractor.sql_to_dataframe(engine=object())
+
+
+def test_sql_to_dataframe_supports_dbapi_cursor_connections():
+    class Cursor:
+        description = [("Id",), ("Name",)]
+
+        def execute(self, sql_query):
+            self.sql_query = sql_query
+
+        def fetchall(self):
+            return [(1, "A"), (2, "B")]
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+    class Connection:
+        def cursor(self):
+            return Cursor()
+
+    dataframe = extractor.sql_to_dataframe(
+        engine=Connection(),
+        sql_query="SELECT Id, Name FROM Example",
+    )
+
+    expected = pd.DataFrame({"Id": [1, 2], "Name": ["A", "B"]})
+    pd.testing.assert_frame_equal(dataframe, expected)
+
+
+def test_sql_to_dataframe_supports_cursor_without_context_manager():
+    class Cursor:
+        description = [("Id",)]
+
+        def __init__(self):
+            self.closed = False
+
+        def execute(self, _sql_query):
+            return None
+
+        def fetchall(self):
+            return [(1,)]
+
+        def close(self):
+            self.closed = True
+
+    class Connection:
+        def __init__(self):
+            self.db_cursor = Cursor()
+
+        def cursor(self):
+            return self.db_cursor
+
+    connection = Connection()
+    dataframe = extractor.sql_to_dataframe(
+        engine=connection,
+        sql_query="SELECT Id FROM Source",
+    )
+
+    pd.testing.assert_frame_equal(dataframe, pd.DataFrame({"Id": [1]}))
+    assert connection.db_cursor.closed is True
+
+
+def test_native_view_cleanup_does_not_mask_extraction_failure(monkeypatch):
+    class TemporaryObject:
+        def __init__(self, **_kwargs):
+            pass
+
+        def add_elements(self, **_kwargs):
+            pass
+
+        def add_column(self, **_kwargs):
+            pass
+
+        def add_row(self, **_kwargs):
+            pass
+
+    class Service:
+        class Subsets:
+            def create(self, **_kwargs):
+                pass
+
+            def delete(self, **_kwargs):
+                raise RuntimeError("cleanup failed")
+
+        class Views:
+            def create(self, **_kwargs):
+                pass
+
+            def delete(self, **_kwargs):
+                raise RuntimeError("cleanup failed")
+
+        class Cells:
+            def execute_view_dataframe(self, **_kwargs):
+                raise OSError("primary extraction failure")
+
+        subsets = Subsets()
+        views = Views()
+        cells = Cells()
+
+    monkeypatch.setattr(extractor, "NativeView", TemporaryObject)
+    monkeypatch.setattr(extractor, "Subset", TemporaryObject)
+    monkeypatch.setattr(utility, "get_cube_name_from_mdx", lambda **_kwargs: "Cube")
+    monkeypatch.setattr(utility, "extract_mdx_components", lambda **_kwargs: ["set"])
+    monkeypatch.setattr(utility, "get_dimensions_from_set_mdx_list", lambda **_kwargs: ["Dim"])
+    monkeypatch.setattr(utility, "generate_element_lists_from_set_mdx_list", lambda **_kwargs: [["A"]])
+
+    with pytest.raises(OSError, match="primary extraction failure"):
+        extractor.__tm1_mdx_to_native_view_to_dataframe(
+            tm1_service=Service(),
+            data_mdx="SELECT FROM [Cube]",
+        )
+
+
 # ------------------------------------------------------------------------------------------------------------
 # Utility: Cube metadata collection using input MDXs and/or other cubes
 # ------------------------------------------------------------------------------------------------------------
@@ -295,6 +688,11 @@ def test_tm1_cube_object_metadata_collect_filter_dict_match(tm1_connection_facto
             assert filter_dict == expected_filter_dict
         except TM1pyRestException as e:
             pytest.fail(f"Cube name not found: {e}")
+
+
+def test_tm1_cube_object_metadata_requires_mdx_or_cube_name():
+    with pytest.raises(ValueError, match="either an MDX or a cube name"):
+        utility.TM1CubeObjectMetadata.collect(tm1_service=object())
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -603,6 +1001,19 @@ def test_mssql_extract_query_with_chunksize(sql_engine_factory, query, expected,
     pd.testing.assert_frame_equal(df, expected_df)
 
 
+def test_sql_to_dataframe_chunked_table_read_supports_empty_table():
+    table_name = "EmptyTable"
+    sql_engine = create_engine("sqlite://", echo=False)
+    pd.DataFrame(columns=["Version", "Value"]).to_sql(
+        name=table_name, con=sql_engine, index=False, if_exists="replace"
+    )
+
+    df = extractor.sql_to_dataframe(engine=sql_engine, table_name=table_name, chunksize=10)
+
+    assert list(df.columns) == ["Version", "Value"]
+    assert df.empty
+
+
 @parametrize_from_file
 def test_sql_normalize_relabel(dataframe, expected, column_mapping):
     df = pd.DataFrame(dataframe)
@@ -625,6 +1036,22 @@ def test_mssql_loader_replace(sql_engine_factory, dataframe, if_exists, table_na
     loader.dataframe_to_sql(
         dataframe=df, engine=sql_engine, table_name=table_name, if_exists=if_exists, index=False
     )
+
+
+def test_dataframe_to_sql_default_creates_missing_table():
+    sql_engine = create_engine("sqlite://", echo=False)
+    df = pd.DataFrame({"Version": ["Actual"], "Value": [1.0]})
+
+    loader.dataframe_to_sql(
+        dataframe=df,
+        engine=sql_engine,
+        table_name="new_target",
+        if_exists="append",
+        index=False,
+    )
+
+    result = pd.read_sql_table("new_target", sql_engine)
+    pd.testing.assert_frame_equal(result, df)
 
 
 # ------------------------------------------------------------------------------------------------------------

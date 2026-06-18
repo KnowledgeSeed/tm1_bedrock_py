@@ -16,6 +16,7 @@ venv/
 
 # Other data and test files
 developer_test_files/
+dev/
 
 # Build artifacts
 *.egg-info/

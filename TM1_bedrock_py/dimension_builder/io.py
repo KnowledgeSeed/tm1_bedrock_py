@@ -101,9 +101,14 @@ def read_yaml_source_to_df(
 
     if not isinstance(payload, dict):
         if isinstance(payload, list):
+            if not payload:
+                raise ValueError("YAML input list must contain at least one mapping.")
             payload = payload[0]
         else:
             raise ValueError("YAML input must be a mapping with keys like format and rows.")
+
+    if not isinstance(payload, dict):
+        raise ValueError("YAML input must contain a mapping with keys like format and rows.")
 
     rows = payload.get("rows", [])
 
@@ -434,6 +439,11 @@ def execute_dimension_dataframe_writers(
     }
 
     for target_format in target_destinations:
+        if target_format not in writer_function_mapping:
+            raise ValueError(
+                f"Unsupported target destination '{target_format}'. "
+                f"Expected one of: {', '.join(writer_function_mapping)}."
+            )
         execution_parameters = {**configuration_mapping[target_format], **kwargs}
         writer_function_mapping[target_format](
             dataframe=dataframe,

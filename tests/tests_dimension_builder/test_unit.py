@@ -5,7 +5,8 @@ import parametrize_from_file
 import pytest
 from sqlalchemy import create_engine
 
-from TM1_bedrock_py.dimension_builder import validate, normalize, utility, apply
+from TM1_bedrock_py.dimension_builder import validate, normalize, utility, apply, io
+from TM1_bedrock_py import bedrock
 from TM1_bedrock_py.dimension_builder.io import read_source_to_df
 from TM1_bedrock_py.dimension_builder.exceptions import (
     SchemaValidationError,
@@ -925,6 +926,35 @@ def test_apply_updates_success(
     )
     pd.testing.assert_frame_equal(output_edges_df, expected_edges_df)
     pd.testing.assert_frame_equal(output_elements_df, expected_elements_df)
+
+
+def test_dimension_builder_override_requires_both_dataframes():
+    with pytest.raises(ValueError) as excinfo:
+        bedrock.dimension_builder(
+            dimension_name="Dim1",
+            input_format="parent_child",
+            build_strategy="rebuild",
+            tm1_service=None,
+            override_input_edges_df=pd.DataFrame({"Parent": ["Total"], "Child": ["A"]})
+        )
+
+    assert "must be provided together" in str(excinfo.value)
+
+
+def test_read_yaml_source_to_df_rejects_empty_list(tmp_path):
+    source = tmp_path / "empty.yaml"
+    source.write_text("[]", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="at least one mapping"):
+        io.read_yaml_source_to_df(source)
+
+
+def test_execute_dimension_dataframe_writers_rejects_unknown_destination():
+    with pytest.raises(ValueError, match="Unsupported target destination"):
+        io.execute_dimension_dataframe_writers(
+            dataframe=pd.DataFrame({"ElementName": ["A"]}),
+            target_destinations=["xml"],
+        )
 
 
 @parametrize_from_file

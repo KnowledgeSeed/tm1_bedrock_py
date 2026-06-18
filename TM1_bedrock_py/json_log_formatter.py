@@ -8,7 +8,7 @@ class JSONLogFormatter(BaseJSONLogFormatter):
         json_log_object = super()._format_log_object(record, request_util)
 
 
-        for key in ('func', 'fileName', 'exec_id'):
+        for key in ('func', 'fileName', 'exec_id', 'operation', 'error_type', 'error_context'):
             if hasattr(record, key):
                 json_log_object[key] = getattr(record, key)
 

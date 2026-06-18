@@ -141,42 +141,67 @@ def __tm1_mdx_to_native_view_to_dataframe(
     set_mdx_elements = utility.generate_element_lists_from_set_mdx_list(tm1_service=tm1_service,
                                                                         set_mdx_list=set_mdx_list)
 
-    native_view = NativeView(cube_name=cube_name, view_name=view_name,
-                             suppress_empty_rows=skip_zeros, suppress_empty_columns=skip_zeros)
-    native_view.suppress_empty_cells = skip_zeros
-    for i, (dimension_name, set_mdx, elements) in enumerate(zip(set_mdx_dimensions, set_mdx_list, set_mdx_elements)):
-        subset = Subset(subset_name=view_name,
-                        dimension_name=dimension_name)
-        subset.add_elements(elements=elements)
-        tm1_service.subsets.create(subset=subset)
-        if i == 0:
-            native_view.add_column(dimension_name=dimension_name, subset=subset)
-        else:
-            native_view.add_row(dimension_name=dimension_name, subset=subset)
-    tm1_service.views.create(view=native_view)
-    basic_logger.info("View and dimension subsets named " + view_name + " were created.")
-
-    column_dimension_list = [f"[{set_mdx_dimensions[0]}].[{set_mdx_dimensions[0]}]"]
-    row_dimension_list = [f"[{d}].[{d}]" for d in set_mdx_dimensions[1:]]
-
-    dataframe = tm1_service.cells.execute_view_dataframe(
-        cube_name=cube_name,
-        view_name=view_name,
-        skip_zeros=skip_zeros,
-        skip_consolidated_cells=skip_consolidated_cells,
-        skip_rule_derived_cells=skip_rule_derived_cells,
-        use_blob=use_blob,
-        arranged_axes=([], row_dimension_list, column_dimension_list),
-        decimal=decimal
-    )
+    created_subset_dimensions = []
+    view_created = False
+    operation_error = None
     try:
-        return dataframe
+        native_view = NativeView(cube_name=cube_name, view_name=view_name,
+                                 suppress_empty_rows=skip_zeros, suppress_empty_columns=skip_zeros)
+        native_view.suppress_empty_cells = skip_zeros
+        for i, (dimension_name, set_mdx, elements) in enumerate(zip(set_mdx_dimensions, set_mdx_list, set_mdx_elements)):
+            subset = Subset(subset_name=view_name,
+                            dimension_name=dimension_name)
+            subset.add_elements(elements=elements)
+            tm1_service.subsets.create(subset=subset)
+            created_subset_dimensions.append(dimension_name)
+            if i == 0:
+                native_view.add_column(dimension_name=dimension_name, subset=subset)
+            else:
+                native_view.add_row(dimension_name=dimension_name, subset=subset)
+        tm1_service.views.create(view=native_view)
+        view_created = True
+        basic_logger.info("View and dimension subsets named " + view_name + " were created.")
+
+        column_dimension_list = [f"[{set_mdx_dimensions[0]}].[{set_mdx_dimensions[0]}]"]
+        row_dimension_list = [f"[{d}].[{d}]" for d in set_mdx_dimensions[1:]]
+
+        return tm1_service.cells.execute_view_dataframe(
+            cube_name=cube_name,
+            view_name=view_name,
+            skip_zeros=skip_zeros,
+            skip_consolidated_cells=skip_consolidated_cells,
+            skip_rule_derived_cells=skip_rule_derived_cells,
+            use_blob=use_blob,
+            arranged_axes=([], row_dimension_list, column_dimension_list),
+            decimal=decimal
+        )
+    except Exception as error:
+        operation_error = error
+        raise
     finally:
         if view_and_subset_cleanup:
-            tm1_service.views.delete(cube_name=cube_name, view_name=view_name)
-            for dimension_name in set_mdx_dimensions:
-                tm1_service.subsets.delete(subset_name=view_name, dimension_name=dimension_name)
-            basic_logger.info("View and dimension subsets named " + view_name + " were deleted.")
+            cleanup_errors = []
+            if view_created:
+                try:
+                    tm1_service.views.delete(cube_name=cube_name, view_name=view_name)
+                except Exception as error:
+                    cleanup_errors.append(error)
+                    basic_logger.warning("Failed to delete temporary TM1 view %s.", view_name)
+            for dimension_name in created_subset_dimensions:
+                try:
+                    tm1_service.subsets.delete(subset_name=view_name, dimension_name=dimension_name)
+                except Exception as error:
+                    cleanup_errors.append(error)
+                    basic_logger.warning(
+                        "Failed to delete temporary TM1 subset %s in dimension %s.",
+                        view_name,
+                        dimension_name,
+                    )
+            if cleanup_errors and operation_error is None:
+                raise RuntimeError(
+                    f"Failed to clean up {len(cleanup_errors)} temporary TM1 object(s) "
+                    f"for view '{view_name}'."
+                ) from cleanup_errors[0]
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -384,7 +409,7 @@ def _get_sql_table_count(engine: Any, table_name: str) -> int:
             return result.scalar_one()
     except Exception as e:
         basic_logger.error(f"Failed to get row count for table '{table_name}': {e}")
-        return 0
+        raise RuntimeError(f"Failed to get row count for table '{table_name}'.") from e
 
 
 @utility.log_exec_metrics
@@ -424,12 +449,24 @@ def __sql_to_dataframe_default(
     if not engine:
         engine = utility.create_sql_engine(**kwargs)
 
-    def fetch(func, **fetch_kwargs):
-        return (concat(list(func(**fetch_kwargs)), ignore_index=True)
-                if chunksize else func(**fetch_kwargs))
+    def fetch(func, empty_columns: Optional[list[str]] = None, **fetch_kwargs):
+        if not chunksize:
+            return func(**fetch_kwargs)
+
+        chunks = list(func(**fetch_kwargs))
+        if chunks:
+            return concat(chunks, ignore_index=True)
+        return DataFrame(columns=empty_columns)
 
     if table_name:
+        empty_columns = table_columns
+        if empty_columns is None:
+            empty_columns = [
+                column.get("name")
+                for column in utility.inspect_table(engine, table_name=table_name, schema=schema)
+            ]
         return fetch(read_sql_table,
+                     empty_columns=empty_columns,
                      con=engine,
                      table_name=table_name,
                      columns=table_columns,
@@ -438,11 +475,18 @@ def __sql_to_dataframe_default(
 
     if sql_query:
         if hasattr(engine, "cursor"):
-            with engine.cursor() as cursor:
+            cursor = engine.cursor()
+            try:
                 cursor.execute(sql_query)
                 rows = cursor.fetchall()
                 columns = [description[0] for description in cursor.description]
                 return DataFrame(rows, columns=columns)
+            finally:
+                if hasattr(cursor, "close"):
+                    try:
+                        cursor.close()
+                    except Exception:
+                        basic_logger.warning("Failed to close SQL extraction cursor.")
 
         if hasattr(engine, "connect"):
             with engine.connect() as connection:
@@ -598,7 +642,7 @@ def build_input_domain(
             dataframe=domain,
             column_value=metadata.get_filter_dict()
         )
-        domain.drop(columns=["Value"])
+        domain = domain.drop(columns=["Value"])
     else:
         leaf_elements_per_dimension = []
         for dimension_name, raw_element in domain_coords.items():

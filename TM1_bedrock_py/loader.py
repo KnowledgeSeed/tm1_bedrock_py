@@ -1,8 +1,36 @@
 from typing import Callable, List, Optional, Any, Literal, Union
 from TM1py import TM1Service
 from pandas import DataFrame
-from sqlalchemy import text
+from sqlalchemy import MetaData, Table, text
+from sqlalchemy.exc import NoSuchTableError
 from TM1_bedrock_py import utility, basic_logger
+
+
+def _rollback_quietly(connection: Any) -> None:
+    if not hasattr(connection, "rollback"):
+        return
+    try:
+        connection.rollback()
+    except Exception:
+        basic_logger.warning("Database rollback failed while preserving the original error.")
+
+
+def _close_quietly(resource: Any, resource_name: str) -> None:
+    if not hasattr(resource, "close"):
+        return
+    try:
+        resource.close()
+    except Exception:
+        basic_logger.warning("Failed to close database %s.", resource_name)
+
+
+def _execute_cursor_statement(connection: Any, statement: str) -> None:
+    cursor = connection.cursor()
+    try:
+        cursor.execute(statement)
+        connection.commit()
+    finally:
+        _close_quietly(cursor, "cursor")
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -158,6 +186,7 @@ def dataframe_to_sql(
     Returns:
         DataFrame: The DataFrame resulting from the SQL query.
     """
+    requested_sql_function = sql_function
     writer_function = sql_function if isinstance(sql_function, Callable) else {
         None: __dataframe_to_sql_default,
         "sqlalchemy": __dataframe_to_sql_default,
@@ -166,7 +195,15 @@ def dataframe_to_sql(
         "snowflake": __dataframe_to_sql_snowflake
     }.get(sql_function)
 
+    if writer_function is None:
+        raise ValueError(
+            f"Unsupported sql_function '{requested_sql_function}'. "
+            "Expected a callable or one of: sqlalchemy, pyodbc, psycopg2, snowflake."
+        )
+
     dataframe = kwargs.get("dataframe")
+    if not isinstance(dataframe, DataFrame):
+        raise TypeError("'dataframe' must be a pandas DataFrame.")
     writer_function(**kwargs)
     basic_logger.info("Writing of " + str(len(dataframe)) + " rows into sql is complete.")
 
@@ -188,13 +225,18 @@ def __dataframe_to_sql_default(
         engine = utility.create_sql_engine(**kwargs)
 
     if table_column_order is None:
-        table_column_order = utility.inspect_table(engine, table_name=table_name, schema=schema)
+        try:
+            table_column_order = utility.inspect_table(engine, table_name=table_name, schema=schema)
+        except NoSuchTableError:
+            table_column_order = []
         column_order = [col.get('name') for col in table_column_order]
     else:
         column_order = table_column_order
 
     df_cols = list(dataframe.columns)
     column_order = [c for c in column_order if c in df_cols]
+    if not column_order:
+        column_order = df_cols
 
     dataframe = dataframe[column_order]
     dataframe.to_sql(
@@ -274,6 +316,16 @@ def __write_dataframe_sql_api(
         use_multi_value_insert: bool = False,
         max_statement_parameters: Optional[int] = None
 ) -> None:
+    if if_exists not in {"fail", "replace_data", "replace_table", "append"}:
+        raise ValueError(
+            f"Unsupported if_exists strategy '{if_exists}'. "
+            "Expected one of: fail, replace_data, replace_table, append."
+        )
+    if chunksize is not None and chunksize <= 0:
+        raise ValueError("'chunksize' must be greater than zero when provided.")
+    if dataframe.columns.empty:
+        raise ValueError("Cannot write a DataFrame without columns to SQL.")
+
     database_connection, owns_connection = __get_sql_api_connection(database_engine_or_connection)
     database_cursor = database_connection.cursor()
 
@@ -326,7 +378,7 @@ def __write_dataframe_sql_api(
             try:
                 database_cursor.fast_executemany = True
                 cursor_supports_fast_executemany = True
-            except (AttributeError, Exception):
+            except Exception:
                 cursor_supports_fast_executemany = False
 
         if use_multi_value_insert and not cursor_supports_fast_executemany and max_statement_parameters:
@@ -352,10 +404,13 @@ def __write_dataframe_sql_api(
                 database_cursor.executemany(sql_insert_statement, chunk.to_numpy().tolist())
 
         database_connection.commit()
+    except Exception:
+        _rollback_quietly(database_connection)
+        raise
     finally:
-        database_cursor.close()
+        _close_quietly(database_cursor, "cursor")
         if owns_connection and hasattr(database_connection, "close"):
-            database_connection.close()
+            _close_quietly(database_connection, "connection")
 
 
 def __get_sql_api_connection(database_engine_or_connection: Any) -> tuple[Any, bool]:
@@ -398,7 +453,7 @@ def __dataframe_to_sql_pyodbc(
         dtype=dtype,
         table_column_order=table_column_order,
         default_schema="dbo",
-        quote_identifier=lambda identifier: f"[{identifier}]",
+        quote_identifier=lambda identifier: f"[{identifier.replace(']', ']]')}]",
         pandas_to_sql_type_map={
             "int64": "BIGINT",
             "int32": "INT",
@@ -511,6 +566,7 @@ def clear_table(
                         - cube_name (str): The name of the cube to clear.
                         - clear_set_mdx_list (List[str]): A list of valid MDX set expressions defining the clear space.
     """
+    requested_clear_function = clear_function
     clear_function = clear_function if isinstance(clear_function, Callable) else {
         None: __clear_table_default,
         "sqlalchemy": __clear_table_default,
@@ -519,91 +575,120 @@ def clear_table(
         "snowflake": __clear_table_snowflake
     }.get(clear_function)
 
+    if clear_function is None:
+        raise ValueError(
+            f"Unsupported clear_function '{requested_clear_function}'. "
+            "Expected a callable or one of: sqlalchemy, pyodbc, psycopg2, snowflake."
+        )
+    if not isinstance(requested_clear_function, Callable):
+        if not kwargs.get("delete_statement") and not kwargs.get("table_name"):
+            raise ValueError("Either 'table_name' or 'delete_statement' must be provided.")
+
     clear_function(**kwargs)
 
 
 def __clear_table_default(
         database_engine_or_connection: Any,
-        table_name: Optional[str],
-        delete_statement: Optional[str],
+        table_name: Optional[str] = None,
+        schema_name: Optional[str] = None,
+        delete_statement: Optional[str] = None,
         **_kwargs
 ) -> None:
     connection, owns_connection = __get_sql_api_connection(database_engine_or_connection)
+    quoted_table_name = table_name.replace("]", "]]") if table_name is not None else None
 
     try:
         if hasattr(connection, "begin") and hasattr(connection, "execute"):
             transaction = connection.begin()
-            if delete_statement:
-                connection.execute(text(delete_statement))
-            elif table_name:
-                connection.execute(text("TRUNCATE TABLE [" + table_name + "]"))
-            transaction.commit()
-        else:
-            with connection.cursor() as cursor:
+            try:
                 if delete_statement:
-                    cursor.execute(delete_statement)
+                    connection.execute(text(delete_statement))
                 elif table_name:
-                    cursor.execute("TRUNCATE TABLE [" + table_name + "]")
-                connection.commit()
+                    table = Table(
+                        table_name,
+                        MetaData(),
+                        schema=schema_name,
+                        autoload_with=connection,
+                    )
+                    connection.execute(table.delete())
+                transaction.commit()
+            except Exception:
+                _rollback_quietly(transaction)
+                raise
+        else:
+            statement = delete_statement or "DELETE FROM [" + quoted_table_name + "]"
+            _execute_cursor_statement(connection, statement)
+    except Exception:
+        _rollback_quietly(connection)
+        raise
     finally:
         if owns_connection and hasattr(connection, "close"):
-            connection.close()
+            _close_quietly(connection, "connection")
 
 
 def __clear_table_pyodbc(
         database_engine_or_connection: Any,
-        table_name: Optional[str],
-        delete_statement: Optional[str],
+        table_name: Optional[str] = None,
+        delete_statement: Optional[str] = None,
         **_kwargs
 ) -> None:
     connection, owns_connection = __get_sql_api_connection(database_engine_or_connection)
-    statement: str = delete_statement or f"TRUNCATE TABLE [{table_name}]"
+    quoted_table_name = table_name.replace("]", "]]") if table_name is not None else None
+    statement: str = delete_statement or f"TRUNCATE TABLE [{quoted_table_name}]"
 
     try:
-        with connection.cursor() as cursor:
-            cursor.execute(statement)
-            connection.commit()
+        _execute_cursor_statement(connection, statement)
+    except Exception:
+        _rollback_quietly(connection)
+        raise
     finally:
         if owns_connection and hasattr(connection, "close"):
-            connection.close()
+            _close_quietly(connection, "connection")
 
 
 def __clear_table_psycopg2(
         database_engine_or_connection: Any,
-        table_name: Optional[str],
-        schema_name: Optional[str],
-        delete_statement: Optional[str],
+        table_name: Optional[str] = None,
+        schema_name: Optional[str] = None,
+        delete_statement: Optional[str] = None,
         **_kwargs
 ) -> None:
     connection, owns_connection = __get_sql_api_connection(database_engine_or_connection)
-    statement: str = delete_statement or f"TRUNCATE TABLE {schema_name}.{table_name}"
+    target_schema = schema_name or "public"
+    quoted_schema = target_schema.replace('"', '""')
+    quoted_table = table_name.replace('"', '""') if table_name is not None else None
+    statement: str = delete_statement or f'TRUNCATE TABLE "{quoted_schema}"."{quoted_table}"'
 
     try:
-        with connection.cursor() as cursor:
-            cursor.execute(statement)
-            connection.commit()
+        _execute_cursor_statement(connection, statement)
+    except Exception:
+        _rollback_quietly(connection)
+        raise
     finally:
         if owns_connection and hasattr(connection, "close"):
-            connection.close()
+            _close_quietly(connection, "connection")
 
 
 def __clear_table_snowflake(
         database_engine_or_connection: Any,
-        table_name: Optional[str],
-        schema_name: Optional[str],
-        delete_statement: Optional[str],
+        table_name: Optional[str] = None,
+        schema_name: Optional[str] = None,
+        delete_statement: Optional[str] = None,
         **_kwargs
 ) -> None:
     connection, owns_connection = __get_sql_api_connection(database_engine_or_connection)
-    statement: str = delete_statement or f'TRUNCATE TABLE "{schema_name or "PUBLIC"}"."{table_name}"'
+    target_schema = (schema_name or "PUBLIC").replace('"', '""')
+    quoted_table = table_name.replace('"', '""') if table_name is not None else None
+    statement: str = delete_statement or f'TRUNCATE TABLE "{target_schema}"."{quoted_table}"'
 
     try:
-        with connection.cursor() as cursor:
-            cursor.execute(statement)
-            connection.commit()
+        _execute_cursor_statement(connection, statement)
+    except Exception:
+        _rollback_quietly(connection)
+        raise
     finally:
         if owns_connection and hasattr(connection, "close"):
-            connection.close()
+            _close_quietly(connection, "connection")
 
 # ------------------------------------------------------------------------------------------------------------
 # pandas dataframe into CSV functions

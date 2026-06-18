@@ -13,7 +13,7 @@ import asyncio
 from TM1py.Exceptions import TM1pyRestException
 from requests.cookies import CookieConflictError
 
-from TM1_bedrock_py import utility, transformer, loader, extractor, basic_logger
+from TM1_bedrock_py import utility, transformer, loader, extractor, basic_logger, exception_handling
 
 from TM1_bedrock_py.dimension_builder import apply, normalize
 from TM1_bedrock_py.dimension_builder.io import execute_dimension_dataframe_writers
@@ -41,6 +41,7 @@ from TM1_bedrock_py import validation
 # ------------------------------------------------------------------------------------------------------------
 
 
+@exception_handling.public_operation()
 @utility.log_exec_metrics
 def input_handler(
         tm1_service: Any,
@@ -111,12 +112,6 @@ def input_handler(
     if output_final_state_dataframe:
         final_state_dataframe = dataframe.copy()
 
-    if clear_target:
-        loader.clear_cube(tm1_service=tm1_service,
-                          cube_name=target_cube_name,
-                          clear_set_mdx_list=target_clear_set_mdx_list,
-                          **kwargs)
-
     input_column_name = (
         input_column_name if input_column_name is not None
         else calculation_steps[-1]["name"] if calculation_steps
@@ -135,6 +130,11 @@ def input_handler(
     )
 
     if do_write:
+        if clear_target:
+            loader.clear_cube(tm1_service=tm1_service,
+                              cube_name=target_cube_name,
+                              clear_set_mdx_list=target_clear_set_mdx_list,
+                              **kwargs)
         loader.dataframe_to_cube(
             tm1_service=tm1_service,
             dataframe=dataframe,
@@ -158,6 +158,7 @@ def input_handler(
 # ------------------------------------------------------------------------------------------------------------
 
 
+@exception_handling.public_operation()
 @utility.log_exec_metrics
 def cube_builder(
         tm1_service: Any,
@@ -177,6 +178,12 @@ def cube_builder(
         **dim_builder_kwargs
 ) -> None:
     utility.set_logging_level(logging_level=logging_level)
+    validation.validate_choice("build_mode", build_mode, {"create_from_map", "copy_from_source"})
+    validation.validate_choice("if_cube_exist_strategy", if_cube_exist_strategy, {"rebuild", "skip", "raise_error"})
+    validation.validate_choice(
+        "missing_dimension_strategy", missing_dimension_strategy, {"copy_from_source", "raise_error"}
+    )
+    validation.validate_choice("input_error_mode", input_error_mode, {"strict", "loose"})
     utility.validate_cube_create_inputs(
         build_mode=build_mode,
         cube_dimension_create_map=cube_dimension_create_map,
@@ -201,9 +208,18 @@ def cube_builder(
                                           copy_source_cubes, copy_cube_rename_map, copy_dimension_rename_map)
 
     unique_dimensions_list = utility.create_unique_dim_list_from_cube_dim_map(cube_dimension_create_map)
-    missing_dimensions = utility.check_dimensions_existance(tm1_service, unique_dimensions_list)
+    missing_dimensions = utility.check_dimensions_existance(
+        tm1_service,
+        unique_dimensions_list,
+        missing_dimension_strategy=missing_dimension_strategy
+    )
 
     if missing_dimension_strategy == "copy_from_source" and len(missing_dimensions) > 0:
+        if copy_source_tm1_service is tm1_service:
+            raise ValueError(
+                "Missing dimensions cannot be copied because source and target "
+                "TM1 services are the same."
+            )
         missing_dimensions_rename_map = utility.get_dimension_copy_map_for_missing(
             missing_dimensions, copy_dimension_rename_map)
         for source, target in missing_dimensions_rename_map.items():
@@ -230,6 +246,7 @@ def cube_builder(
 # ------------------------------------------------------------------------------------------------------------
 
 
+@exception_handling.public_operation()
 @utility.log_exec_metrics
 def dimension_builder(
         dimension_name: str,
@@ -276,12 +293,21 @@ def dimension_builder(
         **kwargs
 ) -> Optional[Tuple[pd.DataFrame, pd.DataFrame]]:
     utility.set_logging_level(logging_level=logging_level)
+    validation.validate_choice("input_format", input_format, {"parent_child", "indented_levels", "filled_levels"})
+    validation.validate_choice(
+        "build_strategy", build_strategy, {"rebuild", "safe_rebuild", "safe_rebuild_unwind", "update"}
+    )
+    validation.validate_choice("output_mode", output_mode, {"build", "build_and_output", "output"})
 
     if build_strategy == 'update' and allow_type_changes:
         basic_logger.warning("Update mode doesnt allow type change, parameter was set to false")
         allow_type_changes = False
 
-    if override_input_elements_df is not None:
+    if override_input_edges_df is not None or override_input_elements_df is not None:
+        if override_input_edges_df is None or override_input_elements_df is None:
+            raise ValueError(
+                "Both 'override_input_edges_df' and 'override_input_elements_df' must be provided together."
+            )
         input_edges_df = override_input_edges_df
         input_elements_df = override_input_elements_df
     else:
@@ -353,6 +379,7 @@ def dimension_builder(
         return updated_edges_df, updated_elements_df
 
 
+@exception_handling.public_operation()
 @utility.log_exec_metrics
 def hierarchy_builder(
         dimension_name: str,
@@ -397,8 +424,17 @@ def hierarchy_builder(
         **kwargs
 ) -> Optional[Tuple[pd.DataFrame, pd.DataFrame]]:
     utility.set_logging_level(logging_level=logging_level)
+    validation.validate_choice("input_format", input_format, {"parent_child", "indented_levels", "filled_levels"})
+    validation.validate_choice(
+        "build_strategy", build_strategy, {"rebuild", "safe_rebuild", "safe_rebuild_unwind", "update"}
+    )
+    validation.validate_choice("output_mode", output_mode, {"build", "build_and_output", "output"})
 
-    if override_input_elements_df is not None:
+    if override_input_edges_df is not None or override_input_elements_df is not None:
+        if override_input_edges_df is None or override_input_elements_df is None:
+            raise ValueError(
+                "Both 'override_input_edges_df' and 'override_input_elements_df' must be provided together."
+            )
         input_edges_df = override_input_edges_df
         input_elements_df = override_input_elements_df
     else:
@@ -475,6 +511,7 @@ def hierarchy_builder(
         return updated_edges_df, updated_elements_df
 
 
+@exception_handling.public_operation()
 @utility.log_exec_metrics
 def dimension_copy(
         tm1_service: Any,
@@ -528,6 +565,7 @@ def dimension_copy(
     )
 
 
+@exception_handling.public_operation()
 @utility.log_exec_metrics
 def hierarchy_copy(
         tm1_service: Any,
@@ -572,6 +610,7 @@ def hierarchy_copy(
     )
 
 
+@exception_handling.public_operation()
 def dimension_modify(
         tm1_service: Any,
         dimension_name: str,
@@ -581,6 +620,7 @@ def dimension_modify(
         logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
 ) -> None:
     utility.set_logging_level(logging_level=logging_level)
+    validation.validate_callable("modify_function", modify_function)
     validate_dimension_for_modify(tm1_service, dimension_name)
 
     # retrieve and normalize existing schema that is ready for back upload
@@ -591,9 +631,15 @@ def dimension_modify(
     #     other parameters can be passed through args and kwargs
     #     expected to output edges_df, elements_df in this exact order
 
-    modified_edges_df, modified_elements_df = modify_function(edges_df, elements_df,
-                                                              *(modify_function_args or []),
-                                                              **(modify_function_kwargs or {}))
+    modified_edges_df, modified_elements_df = validation.validate_schema_callback_result(
+        "modify_function",
+        modify_function(
+            edges_df,
+            elements_df,
+            *(modify_function_args or []),
+            **(modify_function_kwargs or {})
+        )
+    )
     dimension_builder(
         dimension_name=dimension_name,
         input_format='parent_child',
@@ -605,6 +651,7 @@ def dimension_modify(
     )
 
 
+@exception_handling.public_operation()
 def hierarchy_modify(
         tm1_service: Any,
         dimension_name: str,
@@ -615,7 +662,8 @@ def hierarchy_modify(
         logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
 ) -> None:
     utility.set_logging_level(logging_level=logging_level)
-    validate_dimension_for_modify(tm1_service, dimension_name)
+    validation.validate_callable("modify_function", modify_function)
+    validate_dimension_for_modify(tm1_service, dimension_name, hierarchy_name)
 
     # retrieve and normalize existing schema that is ready for back upload
     edges_df, elements_df = apply.init_existing_schema_filtered(tm1_service=tm1_service,
@@ -627,9 +675,15 @@ def hierarchy_modify(
     #     other parameters can be passed through args and kwargs
     #     expected to output edges_df, elements_df in this exact order
 
-    modified_edges_df, modified_elements_df = modify_function(edges_df, elements_df,
-                                                              *(modify_function_args or []),
-                                                              **(modify_function_kwargs or {}))
+    modified_edges_df, modified_elements_df = validation.validate_schema_callback_result(
+        "modify_function",
+        modify_function(
+            edges_df,
+            elements_df,
+            *(modify_function_args or []),
+            **(modify_function_kwargs or {})
+        )
+    )
     hierarchy_builder(
         dimension_name=dimension_name,
         hierarchy_name=hierarchy_name,
@@ -642,6 +696,7 @@ def hierarchy_modify(
     )
 
 
+@exception_handling.public_operation()
 def hierarchy_build_from_attributes(
         tm1_service: Any,
         dimension_name: str,
@@ -651,6 +706,10 @@ def hierarchy_build_from_attributes(
         logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
 ) -> None:
     utility.set_logging_level(logging_level=logging_level)
+    if not isinstance(attributes, list) or not attributes:
+        raise ValueError("'attributes' must be a non-empty list of attribute names.")
+    if not all(isinstance(attribute, str) and attribute.strip() for attribute in attributes):
+        raise ValueError("Every item in 'attributes' must be a non-empty string.")
 
     target_tm1_service = target_tm1_service or tm1_service
 
@@ -685,6 +744,7 @@ def hierarchy_build_from_attributes(
     )
 
 
+@exception_handling.public_operation()
 @utility.log_exec_metrics
 def dimension_export(
         dimension_name: str,
@@ -699,7 +759,10 @@ def dimension_export(
         table_name: Optional[str] = None,
         sql_engine: Optional[Any] = None,
         sql_connection: Optional[Any] = None,
-        sql_function: Optional[Union[Callable[..., DataFrame], Literal["sqlalchemy", "pyodbc"]]] = None,
+        sql_function: Optional[Union[
+            Callable[..., DataFrame],
+            Literal["sqlalchemy", "pyodbc", "psycopg2", "snowflake"]
+        ]] = None,
         if_exists_strategy: Literal["fail", "replace", "append"] = "append",
         database_schema: Optional[str] = None,
         table_column_order: Optional[list[str]] = None,
@@ -715,6 +778,10 @@ def dimension_export(
         **writer_kwargs
 ) -> None:
     utility.set_logging_level(logging_level=logging_level)
+    validation.validate_choice("output_format", output_format, {"parent_child", "indented_levels", "filled_levels"})
+    validation.validate_choice("if_exists_strategy", if_exists_strategy, {"fail", "replace", "append"})
+    if not isinstance(target_destinations, list) or not target_destinations:
+        raise ValueError("'target_destinations' must contain at least one output destination.")
 
     if tm1_service is None and elements_df is None:
         raise ValueError("Must provide at least one source of local/server")
@@ -761,6 +828,7 @@ def dimension_export(
 # ------------------------------------------------------------------------------------------------------------
 
 
+@exception_handling.public_operation()
 @utility.log_benchmark_metrics
 @utility.log_exec_metrics
 def data_copy_intercube(tm1_service: Optional[Any],
@@ -970,6 +1038,7 @@ def data_copy_intercube(tm1_service: Optional[Any],
     """
     if not target_tm1_service:
         target_tm1_service = tm1_service
+    validation.validate_choice("element_query_mode", element_query_mode, {"bulk", "on_demand"})
 
     native_view_correction_enabled = (
             mdx_function == "native_view_extractor" and not case_and_space_insensitive_inputs)
@@ -1132,11 +1201,6 @@ def data_copy_intercube(tm1_service: Optional[Any],
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, **kwargs
     )
 
-    if clear_target:
-        loader.clear_cube(tm1_service=target_tm1_service,
-                          cube_name=target_cube_name,
-                          clear_set_mdx_list=target_clear_set_mdx_list,
-                          **kwargs)
     utility.dataframe_verbose_logger(
         dataframe=dataframe,
         step_number="end_data_copy_intercube",
@@ -1151,10 +1215,20 @@ def data_copy_intercube(tm1_service: Optional[Any],
         if pre_load_kwargs is None:
             pre_load_kwargs = {}
 
-        dataframe = pre_load_function(dataframe, *pre_load_args, **pre_load_kwargs)
+        validation.validate_callable("pre_load_function", pre_load_function)
+        dataframe = validation.validate_dataframe_callback_result(
+            "pre_load_function",
+            pre_load_function(dataframe, *pre_load_args, **pre_load_kwargs)
+        )
 
     if aggregate_numeric_duplicates:
         dataframe = transformer.dataframe_aggregate_numeric_values(dataframe, target_cube_dims)
+
+    if clear_target:
+        loader.clear_cube(tm1_service=target_tm1_service,
+                          cube_name=target_cube_name,
+                          clear_set_mdx_list=target_clear_set_mdx_list,
+                          **kwargs)
 
     loader.dataframe_to_cube(
         tm1_service=target_tm1_service,
@@ -1181,6 +1255,7 @@ def data_copy_intercube(tm1_service: Optional[Any],
         return missing_elements_dataframe
 
 
+@exception_handling.public_operation()
 @utility.log_benchmark_metrics
 @utility.log_exec_metrics
 def data_copy(
@@ -1350,6 +1425,7 @@ def data_copy(
 
     utility.set_logging_level(logging_level=logging_level)
     basic_logger.info("Execution started.")
+    validation.validate_choice("element_query_mode", element_query_mode, {"bulk", "on_demand"})
 
     if not target_tm1_service:
         target_tm1_service = tm1_service
@@ -1516,11 +1592,6 @@ def data_copy(
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs, **kwargs
     )
 
-    if clear_target:
-        loader.clear_cube(tm1_service=target_tm1_service,
-                          cube_name=cube_name,
-                          clear_set_mdx_list=target_clear_set_mdx_list,
-                          **kwargs)
     utility.dataframe_verbose_logger(
         dataframe=dataframe,
         step_number="end_data_copy",
@@ -1535,7 +1606,17 @@ def data_copy(
         if pre_load_kwargs is None:
             pre_load_kwargs = {}
 
-        dataframe = pre_load_function(dataframe, *pre_load_args, **pre_load_kwargs)
+        validation.validate_callable("pre_load_function", pre_load_function)
+        dataframe = validation.validate_dataframe_callback_result(
+            "pre_load_function",
+            pre_load_function(dataframe, *pre_load_args, **pre_load_kwargs)
+        )
+
+    if clear_target:
+        loader.clear_cube(tm1_service=target_tm1_service,
+                          cube_name=cube_name,
+                          clear_set_mdx_list=target_clear_set_mdx_list,
+                          **kwargs)
 
     loader.dataframe_to_cube(
         tm1_service=target_tm1_service,
@@ -1556,6 +1637,7 @@ def data_copy(
         return missing_elements_dataframe
 
 
+@exception_handling.public_operation()
 @utility.log_async_benchmark_metrics
 @utility.log_async_exec_metrics
 async def async_executor_tm1(
@@ -1632,6 +1714,9 @@ async def async_executor_tm1(
     param_names = utility.get_dimensions_from_set_mdx_list(param_set_mdx_list)
     param_values = utility.generate_element_lists_from_set_mdx_list(tm1_service, param_set_mdx_list)
     param_tuples = utility.generate_cartesian_product(param_values)
+    validation.validate_parallel_mdx_inputs(
+        param_names, param_tuples, data_mdx_template, data_copy_function, max_workers
+    )
     basic_logger.info(f"Parameter tuples ready. Count: {len(param_tuples)}")
 
     target_cube_name = kwargs.get("target_cube_name")
@@ -1641,15 +1726,22 @@ async def async_executor_tm1(
         target_cube_name = utility.get_cube_name_from_mdx(data_mdx_template)
         dim_identifier = False
 
-    target_metadata = utility.TM1CubeObjectMetadata.collect(
-        tm1_service=target_tm1_service,
-        cube_name=target_cube_name,
-        metadata_function=kwargs.get("target_metadata_function"),
-        collect_itemskip_info=dim_identifier,
-        **kwargs
-    )
-    def get_target_metadata(**_kwargs): return target_metadata
-    target_metadata_provider = get_target_metadata
+    target_metadata_provider = None
+    if data_copy_function in (data_copy, data_copy_intercube):
+        target_metadata_kwargs = kwargs.copy()
+        target_metadata_function = target_metadata_kwargs.pop("target_metadata_function", None)
+        target_metadata = utility.TM1CubeObjectMetadata.collect(
+            tm1_service=target_tm1_service,
+            cube_name=target_cube_name,
+            metadata_function=target_metadata_function,
+            collect_itemskip_info=dim_identifier,
+            **target_metadata_kwargs
+        )
+
+        def get_target_metadata(**_kwargs):
+            return target_metadata
+
+        target_metadata_provider = get_target_metadata
 
     if mapping_steps:
         extractor.generate_step_specific_mapping_dataframes(
@@ -1690,15 +1782,19 @@ async def async_executor_tm1(
             data_copy_function(**copy_func_kwargs)
 
         except Exception as e:
+            exception_handling.redact_exception_values(
+                e,
+                {_data_mdx: f"<query text, {len(_data_mdx)} characters>"},
+            )
             basic_logger.error(
-                f"Error during execution {_execution_id} with MDX: {_data_mdx}. Error: {e}", exc_info=True)
+                "Async TM1 worker %s failed. Error: %s", _execution_id, e, exc_info=True)
             return e
 
     loop = asyncio.get_event_loop()
     futures = []
 
     if target_clear_set_mdx_list:
-        loader.clear_cube(tm1_service=tm1_service,
+        loader.clear_cube(tm1_service=target_tm1_service,
                           cube_name=target_cube_name,
                           clear_set_mdx_list=target_clear_set_mdx_list,
                           **kwargs)
@@ -1725,12 +1821,14 @@ async def async_executor_tm1(
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 basic_logger.error(f"Task {i} failed with exception: {result}")
+        utility.raise_async_worker_errors(results, "TM1 parallel execution")
 
 
 # ------------------------------------------------------------------------------------------------------------
 # TM1 <-> SQL data copy functions
 # ------------------------------------------------------------------------------------------------------------
 
+@exception_handling.public_operation()
 @utility.log_benchmark_metrics
 @utility.log_exec_metrics
 def load_sql_data_to_tm1_cube(
@@ -1877,6 +1975,7 @@ def load_sql_data_to_tm1_cube(
 
     utility.set_logging_level(logging_level=logging_level)
     basic_logger.info("Execution started.")
+    validation.validate_choice("element_query_mode", element_query_mode, {"bulk", "on_demand"})
 
     dataframe = extractor.sql_to_dataframe(
         sql_function=sql_function,
@@ -1922,9 +2021,9 @@ def load_sql_data_to_tm1_cube(
         try:
             tm1_service.re_connect()
             basic_logger.warning("TM1 service reconnected.")
-        except Exception as e:
-            basic_logger.error(f"Lost TM1 connection. Error {e}", exc_info=True)
-            raise e
+        except Exception:
+            basic_logger.error("Lost TM1 connection after reconnect attempt.")
+            raise
 
     cube_dims = target_metadata.get_cube_dims()
 
@@ -2029,12 +2128,6 @@ def load_sql_data_to_tm1_cube(
         case_and_space_insensitive_inputs=case_and_space_insensitive_inputs
     )
 
-    if clear_target:
-        loader.clear_cube(tm1_service=tm1_service,
-                          cube_name=target_cube_name,
-                          clear_set_mdx_list=target_clear_set_mdx_list,
-                          **kwargs)
-
     utility.dataframe_verbose_logger(
         dataframe=dataframe,
         step_number="end_load_sql_data_to_tm1_cube",
@@ -2049,7 +2142,17 @@ def load_sql_data_to_tm1_cube(
         if pre_load_kwargs is None:
             pre_load_kwargs = {}
 
-        dataframe = pre_load_function(dataframe, *pre_load_args, **pre_load_kwargs)
+        validation.validate_callable("pre_load_function", pre_load_function)
+        dataframe = validation.validate_dataframe_callback_result(
+            "pre_load_function",
+            pre_load_function(dataframe, *pre_load_args, **pre_load_kwargs)
+        )
+
+    if clear_target:
+        loader.clear_cube(tm1_service=tm1_service,
+                          cube_name=target_cube_name,
+                          clear_set_mdx_list=target_clear_set_mdx_list,
+                          **kwargs)
 
     loader.dataframe_to_cube(
         tm1_service=tm1_service,
@@ -2065,7 +2168,7 @@ def load_sql_data_to_tm1_cube(
     )
 
     if clear_source:
-        loader.clear_table(engine=sql_engine,
+        loader.clear_table(database_engine_or_connection=sql_engine,
                            table_name=sql_table_name,
                            delete_statement=sql_delete_statement)
 
@@ -2074,6 +2177,7 @@ def load_sql_data_to_tm1_cube(
         return missing_elements_dataframe
 
 
+@exception_handling.public_operation()
 @utility.log_benchmark_metrics
 @utility.log_exec_metrics
 def load_tm1_cube_to_sql_table(
@@ -2105,7 +2209,10 @@ def load_tm1_cube_to_sql_table(
 
         clear_target: Optional[bool] = False,
         sql_delete_statement: Optional[str] = None,
-        clear_function: Optional[Union[Callable[..., Any], Literal["sqlalchemy", "pyodbc"]]] = None,
+        clear_function: Optional[Union[
+            Callable[..., Any],
+            Literal["sqlalchemy", "pyodbc", "psycopg2", "snowflake"]
+        ]] = None,
         clear_source: Optional[bool] = False,
         source_clear_set_mdx_list: Optional[List[str]] = None,
 
@@ -2311,13 +2418,6 @@ def load_tm1_cube_to_sql_table(
         transformer.dataframe_value_scale(dataframe=dataframe, value_function=value_function,
                                           case_and_space_insensitive_inputs=case_and_space_insensitive_inputs)
 
-    if clear_target:
-        loader.clear_table(clear_function=clear_function,
-                           database_engine_or_connection=sql_engine_or_connection,
-                           table_name=target_table_name,
-                           schema_name=sql_schema,
-                           delete_statement=sql_delete_statement)
-
     utility.dataframe_verbose_logger(
         dataframe=dataframe,
         step_number="end_load_tm1_cube_to_sql_table",
@@ -2332,7 +2432,22 @@ def load_tm1_cube_to_sql_table(
         if pre_load_kwargs is None:
             pre_load_kwargs = {}
 
-        dataframe = pre_load_function(dataframe, *pre_load_args, **pre_load_kwargs)
+        validation.validate_callable("pre_load_function", pre_load_function)
+        dataframe = validation.validate_dataframe_callback_result(
+            "pre_load_function",
+            pre_load_function(dataframe, *pre_load_args, **pre_load_kwargs)
+        )
+
+    if dataframe.empty:
+        basic_logger.warning("Transformed dataframe is empty. Skipping SQL write and source clear.")
+        return
+
+    if clear_target:
+        loader.clear_table(clear_function=clear_function,
+                           database_engine_or_connection=sql_engine_or_connection,
+                           table_name=target_table_name,
+                           schema_name=sql_schema,
+                           delete_statement=sql_delete_statement)
 
     loader.dataframe_to_sql(
         dataframe=dataframe,
@@ -2353,9 +2468,9 @@ def load_tm1_cube_to_sql_table(
         try:
             tm1_service.re_connect()
             basic_logger.warning("TM1 service reconnected.")
-        except Exception as e:
-            basic_logger.error(f"Lost TM1 connection. Error {e}", exc_info=True)
-            raise e
+        except Exception:
+            basic_logger.error("Lost TM1 connection after reconnect attempt.")
+            raise
 
     if clear_source:
         loader.clear_cube(tm1_service=tm1_service,
@@ -2366,6 +2481,7 @@ def load_tm1_cube_to_sql_table(
     basic_logger.info("Execution ended.")
 
 
+@exception_handling.public_operation()
 @utility.log_async_benchmark_metrics
 @utility.log_async_exec_metrics
 async def async_executor_tm1_to_sql(
@@ -2450,27 +2566,32 @@ async def async_executor_tm1_to_sql(
     param_names = utility.get_dimensions_from_set_mdx_list(param_set_mdx_list)
     param_values = utility.generate_element_lists_from_set_mdx_list(tm1_service, param_set_mdx_list)
     param_tuples = utility.generate_cartesian_product(param_values)
+    validation.validate_parallel_mdx_inputs(
+        param_names, param_tuples, data_mdx_template, data_copy_function, max_workers
+    )
     basic_logger.info(f"Parameter tuples ready. Count: {len(param_tuples)}")
 
     target_metadata_provider = None
     data_metadata_provider = None
 
     if clear_target:
-        loader.clear_table(engine=sql_engine,
+        loader.clear_table(database_engine_or_connection=sql_engine,
                            table_name=target_table_name,
                            delete_statement=sql_delete_statement)
 
     if data_copy_function is load_tm1_cube_to_sql_table:
         source_cube_name = utility.get_cube_name_from_mdx(data_mdx_template)
         if source_cube_name:
-            data_metadata = utility.TM1CubeObjectMetadata.collect(
-                tm1_service=tm1_service,
-                cube_name=source_cube_name,
-                metadata_function=kwargs.get("data_metadata_function"),
-                collect_itemskip_info=kwargs.get("check_missing_elements", False),
-                **kwargs
-            )
-            def get_data_metadata(**_kwargs): return data_metadata
+            def get_data_metadata(**metadata_kwargs):
+                current_mdx = metadata_kwargs.get("mdx")
+                return utility.TM1CubeObjectMetadata.collect(
+                    tm1_service=tm1_service,
+                    mdx=current_mdx,
+                    cube_name=source_cube_name if current_mdx is None else None,
+                    metadata_function=kwargs.get("data_metadata_function"),
+                    collect_itemskip_info=kwargs.get("check_missing_elements", False),
+                    **kwargs
+                )
             data_metadata_provider = get_data_metadata
         else:
             basic_logger.warning(
@@ -2521,8 +2642,12 @@ async def async_executor_tm1_to_sql(
             data_copy_function(**copy_func_kwargs)
 
         except Exception as e:
+            exception_handling.redact_exception_values(
+                e,
+                {_data_mdx: f"<query text, {len(_data_mdx)} characters>"},
+            )
             basic_logger.error(
-                f"Error during execution {_execution_id} with MDX: {_data_mdx}. Error: {e}", exc_info=True)
+                "Async TM1-to-SQL worker %s failed. Error: %s", _execution_id, e, exc_info=True)
             return e
 
     loop = asyncio.get_event_loop()
@@ -2550,8 +2675,10 @@ async def async_executor_tm1_to_sql(
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 basic_logger.error(f"Task {i} failed with exception: {result}")
+        utility.raise_async_worker_errors(results, "TM1-to-SQL parallel execution")
 
 
+@exception_handling.public_operation()
 @utility.log_async_benchmark_metrics
 @utility.log_async_exec_metrics
 async def async_executor_sql_to_tm1(
@@ -2631,6 +2758,9 @@ async def async_executor_sql_to_tm1(
         - Tested databases: MS SQL, PostgeSQL.
     """
 
+    validation.validate_sql_pagination_inputs(
+        sql_query_template, slice_size, data_copy_function, max_workers
+    )
     total_records = extractor._get_sql_table_count(sql_engine, sql_table_for_count)
     if total_records == 0:
         basic_logger.warning("Source SQL table has 0 records. Nothing to load.")
@@ -2706,8 +2836,12 @@ async def async_executor_sql_to_tm1(
             data_copy_function(**copy_func_kwargs)
 
         except Exception as e:
+            exception_handling.redact_exception_values(
+                e,
+                {_sql_query: f"<query text, {len(_sql_query)} characters>"},
+            )
             basic_logger.error(
-                f"Error during execution {_execution_id} with SQL query: {_sql_query}. Error: {e}", exc_info=True)
+                "Async SQL-to-TM1 worker %s failed. Error: %s", _execution_id, e, exc_info=True)
             return e
 
     loop = asyncio.get_event_loop()
@@ -2715,7 +2849,7 @@ async def async_executor_sql_to_tm1(
 
     if target_clear_set_mdx_list:
         kwargs["clear_target"] = False
-        loader.clear_cube(tm1_service=tm1_service,
+        loader.clear_cube(tm1_service=target_tm1_service,
                           cube_name=target_cube_name,
                           clear_set_mdx_list=target_clear_set_mdx_list,
                           **kwargs)
@@ -2739,12 +2873,14 @@ async def async_executor_sql_to_tm1(
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 basic_logger.error(f"Task {i} failed with exception: {result}")
+        utility.raise_async_worker_errors(results, "SQL-to-TM1 parallel execution")
 
 
 # ------------------------------------------------------------------------------------------------------------
 # TM1 <-> CSV data copy functions
 # ------------------------------------------------------------------------------------------------------------
 
+@exception_handling.public_operation()
 @utility.log_benchmark_metrics
 @utility.log_exec_metrics
 def load_csv_data_to_tm1_cube(
@@ -2910,6 +3046,7 @@ def load_csv_data_to_tm1_cube(
 
     utility.set_logging_level(logging_level=logging_level)
     basic_logger.info("Execution started.")
+    validation.validate_choice("element_query_mode", element_query_mode, {"bulk", "on_demand"})
 
     dataframe = extractor.csv_to_dataframe(
         csv_file_path=source_csv_file_path,
@@ -3044,12 +3181,6 @@ def load_csv_data_to_tm1_cube(
             **kwargs
         )
 
-    if clear_target:
-        loader.clear_cube(tm1_service=tm1_service,
-                          cube_name=target_cube_name,
-                          clear_set_mdx_list=target_clear_set_mdx_list,
-                          **kwargs)
-
     utility.dataframe_verbose_logger(
         dataframe=dataframe,
         step_number="end_load_csv_data_to_tm1_cube",
@@ -3064,7 +3195,17 @@ def load_csv_data_to_tm1_cube(
         if pre_load_kwargs is None:
             pre_load_kwargs = {}
 
-        dataframe = pre_load_function(dataframe, *pre_load_args, **pre_load_kwargs)
+        validation.validate_callable("pre_load_function", pre_load_function)
+        dataframe = validation.validate_dataframe_callback_result(
+            "pre_load_function",
+            pre_load_function(dataframe, *pre_load_args, **pre_load_kwargs)
+        )
+
+    if clear_target:
+        loader.clear_cube(tm1_service=tm1_service,
+                          cube_name=target_cube_name,
+                          clear_set_mdx_list=target_clear_set_mdx_list,
+                          **kwargs)
 
     loader.dataframe_to_cube(
         tm1_service=tm1_service,
@@ -3085,6 +3226,7 @@ def load_csv_data_to_tm1_cube(
         return missing_elements_dataframe
 
 
+@exception_handling.public_operation()
 @utility.log_benchmark_metrics
 @utility.log_exec_metrics
 def load_tm1_cube_to_csv_file(
@@ -3314,14 +3456,22 @@ def load_tm1_cube_to_csv_file(
         if pre_load_kwargs is None:
             pre_load_kwargs = {}
 
-        dataframe = pre_load_function(dataframe, *pre_load_args, **pre_load_kwargs)
+        validation.validate_callable("pre_load_function", pre_load_function)
+        dataframe = validation.validate_dataframe_callback_result(
+            "pre_load_function",
+            pre_load_function(dataframe, *pre_load_args, **pre_load_kwargs)
+        )
+
+    if dataframe.empty:
+        basic_logger.warning("Transformed dataframe is empty. Skipping CSV write and source clear.")
+        return
 
     loader.dataframe_to_csv(
         dataframe=dataframe,
         csv_file_name=target_csv_file_name,
         csv_output_dir=target_csv_output_dir,
         mode=mode,
-        chunsize=chunksize,
+        chunksize=chunksize,
         float_format=float_format,
         sep=delimiter,
         decimal=decimal,
@@ -3340,6 +3490,7 @@ def load_tm1_cube_to_csv_file(
     basic_logger.info("Execution ended.")
 
 
+@exception_handling.public_operation()
 @utility.log_async_benchmark_metrics
 @utility.log_async_exec_metrics
 async def async_executor_csv_to_tm1(
@@ -3350,7 +3501,7 @@ async def async_executor_csv_to_tm1(
         data_mdx_template: str,
         shared_mapping: Optional[Dict] = None,
         mapping_steps: Optional[List[Dict]] = None,
-        data_copy_function: Callable = data_copy,
+        data_copy_function: Callable = load_csv_data_to_tm1_cube,
         target_clear_set_mdx_list: Optional[bool] = False,
         max_workers: int = 8,
         **kwargs):
@@ -3414,6 +3565,18 @@ async def async_executor_csv_to_tm1(
     param_names = utility.get_dimensions_from_set_mdx_list(param_set_mdx_list)
     param_values = utility.generate_element_lists_from_set_mdx_list(tm1_service, param_set_mdx_list)
     param_tuples = utility.generate_cartesian_product(param_values)
+    validation.validate_parallel_mdx_inputs(
+        param_names, param_tuples, data_mdx_template, data_copy_function, max_workers
+    )
+    source_path = Path(source_directory)
+    if not source_path.is_dir():
+        raise ValueError(f"CSV source directory does not exist or is not a directory: {source_directory}")
+    source_csv_files = sorted(str(path) for path in source_path.glob("*.csv"))
+    if len(source_csv_files) != len(param_tuples):
+        raise ValueError(
+            "CSV file count must match the number of parameter tuples exactly. "
+            f"Found {len(source_csv_files)} CSV file(s) and {len(param_tuples)} parameter tuple(s)."
+        )
     basic_logger.info(f"Parameter tuples ready. Count: {len(param_tuples)}")
 
     target_metadata_provider = None
@@ -3480,8 +3643,12 @@ async def async_executor_csv_to_tm1(
             data_copy_function(**copy_func_kwargs)
 
         except Exception as e:
+            exception_handling.redact_exception_values(
+                e,
+                {_data_mdx: f"<query text, {len(_data_mdx)} characters>"},
+            )
             basic_logger.error(
-                f"Error during execution {_execution_id} with MDX: {_data_mdx}. Error: {e}", exc_info=True)
+                "Async CSV-to-TM1 worker %s failed. Error: %s", _execution_id, e, exc_info=True)
             return e
 
     if target_clear_set_mdx_list:
@@ -3493,7 +3660,6 @@ async def async_executor_csv_to_tm1(
 
     loop = asyncio.get_event_loop()
     futures = []
-    source_csv_files = glob.glob(f"{source_directory}/*.csv")
     i = 0
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         for current_tuple, source_csv_file_path in zip(param_tuples, source_csv_files):
@@ -3518,3 +3684,4 @@ async def async_executor_csv_to_tm1(
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 basic_logger.error(f"Task {i} failed with exception: {result}")
+        utility.raise_async_worker_errors(results, "CSV-to-TM1 parallel execution")
