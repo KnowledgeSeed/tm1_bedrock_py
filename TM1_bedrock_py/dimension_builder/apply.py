@@ -165,7 +165,7 @@ def refresh_legacy_attributes(
 _UPDATE_STRATEGIES = {
     "safe_rebuild": apply_safe_rebuild_on_edges,
     "safe_rebuild_unwind": apply_safe_rebuild_unwind_on_edges,
-    "update": apply_safe_rebuild_on_edges
+    "update": apply_dataframe_union
 }
 
 
