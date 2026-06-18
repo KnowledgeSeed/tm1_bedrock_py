@@ -105,9 +105,15 @@ def unpivot_attributes_to_cube_format(elements_df: pd.DataFrame, dimension_name:
     attribute_dimension_name = "}ElementAttributes_" + dimension_name
     attribute_columns = get_attribute_columns_list(input_df=elements_df)
 
-    elements_df[dimension_name] = (elements_df['Hierarchy'] + ':' + elements_df['ElementName']) \
-        if elements_df['Hierarchy'].nunique() > 1 \
+    should_prefix_hierarchy = (
+        elements_df['Hierarchy'].nunique() > 1
+        or elements_df['Hierarchy'].iloc[0] != dimension_name
+    )
+    elements_df[dimension_name] = (
+        elements_df['Hierarchy'] + ':' + elements_df['ElementName']
+        if should_prefix_hierarchy
         else elements_df['ElementName']
+    )
 
     df_to_melt = elements_df.drop(columns=['ElementName', 'ElementType', 'Dimension', 'Hierarchy'])
     df_to_melt = df_to_melt.rename(columns={

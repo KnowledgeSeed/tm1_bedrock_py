@@ -1,214 +1,161 @@
 ![Project Banner](banner.png)
 
-# TM1 Data Integration and Automation Toolkit
+# TM1 Bedrock for Python
 
-This project is a Python-based toolkit by Knowledgeseed, designed to streamline data integration and automation tasks with IBM Planning Analytics (TM1). It leverages the `TM1py` library to provide a high-level, configurable, and extensible framework for moving data between TM1 cubes, SQL databases, and CSV files. The toolkit is built with a focus on performance, offering features like asynchronous operations and detailed logging for debugging and optimization.
+`tm1_bedrock_py` is a high-level integration toolkit for IBM Planning Analytics
+(TM1). It builds on TM1py and pandas to move, transform, validate, and load data
+between TM1 cubes, SQL databases, CSV files, and dimension structures.
 
-For further information about the project, please refer to [https://knowledgeseed.ch/blog/tmbedrockpy_python_library](https://knowledgeseed.ch/blog/tmbedrockpy_python_library).
+The public API lives in `TM1_bedrock_py.bedrock`.
 
-The detailed documentation of the project is available at [https://tm1-bedrock-py.readthedocs.io/en/latest/](https://tm1-bedrock-py.readthedocs.io/en/latest/).
+## Main workflows
 
-## Features
+| Need | Function |
+| --- | --- |
+| Transform and write data within one cube | `data_copy` |
+| Move data between cubes or TM1 servers | `data_copy_intercube` |
+| Load SQL data into TM1 | `load_sql_data_to_tm1_cube` |
+| Export TM1 data to SQL | `load_tm1_cube_to_sql_table` |
+| Load CSV data into TM1 | `load_csv_data_to_tm1_cube` |
+| Export TM1 data to CSV | `load_tm1_cube_to_csv_file` |
+| Run TM1-sliced work in parallel | `async_executor_tm1` |
+| Export TM1 slices to SQL in parallel | `async_executor_tm1_to_sql` |
+| Load paginated SQL slices in parallel | `async_executor_sql_to_tm1` |
+| Load a directory of CSV files in parallel | `async_executor_csv_to_tm1` |
+| Build or copy cubes and dimensions | `cube_builder`, `dimension_builder`, `dimension_copy` |
+| Build one hierarchy | `hierarchy_builder`, `hierarchy_build_from_attributes` |
+| Export a dimension schema | `dimension_export` |
+| Run a coordinate-domain calculation pipeline | `input_handler` |
 
-*   **Versatile Data Flows:**
-    *   Copy data between TM1 cubes (inter-cube and intra-cube).
-    *   Load data from SQL databases into TM1 cubes.
-    *   Export data from TM1 cubes to SQL tables.
-    *   Load data from CSV files into TM1 cubes.
-    *   Export data from TM1 cubes to CSV files.
-*   **Powerful Data Transformation:**
-    *   Apply a series of mapping and transformation steps to your data in-flight.
-    *   Support for shared and step-specific mapping rules.
-    *   Methods for replacing, mapping and replacing, and mapping and joining data based on dimension values.
-    *   Ability to redimension data by adding, removing, or renaming columns.
-    *   Transform values using custom functions.
-*   **Performance-Oriented:**
-    *   Asynchronous data writing for improved performance on large datasets.
-    *   Asynchronous execution of multiple data copy operations in parallel.
-    *   Detailed performance metrics logging to identify bottlenecks.
-*   **Robust and Debuggable:**
-    *   Comprehensive logging framework with configurable verbosity.
-    *   Option to log intermediate DataFrames to CSV files for detailed debugging of transformation steps.
-    *   Validation utilities to ensure data integrity.
-*   **Extensible:**
-    *   Use custom functions for data extraction, transformation, and loading to fit your specific needs.
+## Installation
 
-## How to Use
+```bash
+pip install tm1-bedrock-py
+```
 
-This toolkit is designed to be used as a library within your Python scripts for TM1 automation. The core functionality is exposed through a set of high-level functions in the `bedrock.py` module.
+Airflow integration is optional:
 
-### Core Functions
+```bash
+pip install "tm1-bedrock-py[airflow]"
+```
 
-*   `data_copy_intercube`: Copies data from a source TM1 cube to a target TM1 cube.
-*   `data_copy`: Copies and transforms data within the same TM1 cube.
-*   `load_sql_data_to_tm1_cube`: Loads data from a SQL query or table into a TM1 cube.
-*   `load_tm1_cube_to_sql_table`: Exports data from a TM1 cube to a SQL table.
-*   `load_csv_data_to_tm1_cube`: Loads data from a CSV file into a TM1 cube.
-*   `load_tm1_cube_to_csv_file`: Exports data from a TM1 cube to a CSV file.
-*   `async_executor_tm1`: Asynchronously executes multiple `data_copy`, `data_copy_intercube`, `load_tm1_cube_to_sql_table` or `load_csv_data_to_tm1_cube` operations.
-*   `async_executor_tm1_to_sql`: Asynchronously executes multiple `load_tm1_cube_to_sql_table` operations.
-*   `async_executor_csv_to_tm1`: Asynchronously executes multiple `load_csv_data_to_tm1_cube` operations.
+Python 3.9 or newer is required. The current dependency ranges are defined in
+`pyproject.toml`.
 
-### Create a connection in TM1 with at least the following parameters set:
-
-* address
-* user
-* password
-* port
-* ssl
-
-You can check your connection via running `example/check_connectivity.py`. You can configure your connection in `examples/config_example.ini` or if left empty, via user input from the terminal.
-
-### Example: Copying Data Between Cubes with Transformations
-
-Here is an example of how to use `data_copy_intercube` to copy data from a source cube to a target cube while applying some transformations. For further examples, please refer to [`tests/test_integration.py`](https://github.com/KnowledgeSeed/tm1_bedrock_py/blob/main/tests/test_integration.py) and [`tests/test_benchmark.py`](https://github.com/KnowledgeSeed/tm1_bedrock_py/blob/main/tests/test_benchmark.py).
+## Quick start
 
 ```python
 from TM1py import TM1Service
-from TM1_bedrock_py.bedrock import data_copy_intercube
+from TM1_bedrock_py import bedrock
 
-# --- 1. Connect to TM1 ---
-# Establish your TM1Service connection
-tm1 = TM1Service(address='localhost', port=8001, user='admin', password='apple', ssl=False)
-
-# --- 2. Define the Data Copy Parameters ---
-# MDX to select the source data
 source_mdx = """
 SELECT
-{ [Version].[Actual] } ON COLUMNS,
-{ [Year]. } ON ROWS
+  {[Period].[Period].[2026-01]} ON 0
 FROM [Sales]
-WHERE ([Measures].[Amount])
+WHERE ([Version].[Version].[Actual], [Measure].[Measure].[Amount])
 """
 
-# Define mapping and transformation steps
+with TM1Service(
+    address="tm1.example.com",
+    port=12354,
+    user="svc_bedrock",
+    password="...",
+    ssl=True,
+) as tm1:
+    bedrock.data_copy_intercube(
+        tm1_service=tm1,
+        data_mdx=source_mdx,
+        target_cube_name="Sales Reporting",
+        target_dim_mapping={"Scenario": "Reported"},
+        clear_target=True,
+        target_clear_set_mdx_list=[
+            "{[Period].[Period].[2026-01]}",
+            "{[Scenario].[Scenario].[Reported]}",
+        ],
+        async_write=True,
+        skip_zeros=True,
+    )
+```
+
+Transformation arguments such as `source_dim_mapping`, `related_dimensions`,
+and `target_dim_mapping` are accepted through the wrappers' `**kwargs`.
+
+## Mapping pipeline
+
+`mapping_steps` is an ordered list. Supported methods are:
+
+- `replace`
+- `map_and_replace`
+- `map_and_join`
+- `cartesian`
+- `pivot`
+- `unpivot`
+- `basic_reshaping`
+- `cartesian_with_set`
+
+Example:
+
+```python
 mapping_steps = [
     {
         "method": "replace",
-        "mapping": {
-            "Region": {"Old Region": "New Region"}
-        }
+        "mapping": {"Version": {"Working": "Budget"}},
     },
     {
-        "method": "map_and_replace",
-        "mapping_mdx": "SELECT {[Product].[All Products].Children} ON COLUMNS FROM [Product]",
-        "mapping_dimensions": {
-            "Product": "Product"
-        }
-    }
+        "method": "basic_reshaping",
+        "new_columns_with_values": {"Load Source": "SQL"},
+        "column_relabel_map": {"Amount": "Value"},
+    },
 ]
-
-# --- 3. Execute the Data Copy ---
-data_copy_intercube(tm1_service=tm1, target_cube_name="Sales Target", data_mdx=source_mdx, mapping_steps=mapping_steps,
-                    clear_target=True, logging_level="INFO")
 ```
-### Configuration of Mapping Steps
-The `mapping_steps` parameter is a powerful feature that allows you to define a pipeline of transformations. Each step is a dictionary that specifies the transformation method and its parameters.
-* `replace`: Performs a simple find-and-replace on dimension elements.
-* `map_and_replace`: Uses a mapping DataFrame (from an MDX query, SQL, or CSV) to replace values in specified dimensions.
-* `map_and_join`: Joins columns from a mapping DataFrame to the main data based on shared dimensions.
 
-## Optimizing Performance
-This toolkit provides several ways to optimize the performance of your data operations:
-* **Asynchronous Operations:** For large data writes to TM1, set the `async_write=True` parameter in the core functions. This will write data in parallel, significantly reducing the overall execution time.
-* **Asynchronous Executors:** When you need to run multiple independent data copy processes, use the `async_executor_` functions. These functions will execute the operations concurrently, making efficient use of available resources.
-```python
-import asyncio
-from TM1py import TM1Service
-from TM1_bedrock_py.bedrock import async_executor_tm1, data_copy_intercube
+Invalid mapping and calculation configurations fail before execution with
+field-level validation messages.
 
-tm1 = TM1Service(address='localhost', port=8001, user='admin', password='apple', ssl=False)
+## Failure behavior
 
-asyncio.run(async_executor_tm1(
-            data_copy_function=data_copy_intercube,
-            tm1_service=tm1,
-            data_mdx_template=data_mdx_template,
-            skip_zeros=True,
-            skip_consolidated_cells=True,
-            target_cube_name=target_cube_name,
-            shared_mapping=shared_mapping,
-            mapping_steps=mapping_steps,
-            clear_target=True,
-            async_write=True,
-            logging_level="DEBUG",
-            use_blob=True,
-            param_set_mdx_list=param_set_mdx_list,
-            clear_param_templates=clear_param_templates,
-            ignore_missing_elements=True,
-            max_workers=8
-        ))
+Public `bedrock` functions preserve the original exception type and traceback
+while adding operation and safe parameter context. Passwords, tokens, secrets,
+credentials, API keys, MDX, and SQL query text are redacted or summarized in
+Bedrock-generated error messages. Parallel executors wait for their workers and
+raise if any worker failed; partial failures are not reported as success.
 
-```
-### IMPORTANT NOTES ON PERFORMANCE
-* **skip_zeros:** When extracting data from TM1, setting `skip_zeros=True` can reduce the amount of data transferred and processed, especially for sparse cubes.
-* **use_blob:** Default value is `use_blob=False` as `True` needs `administrator` privileges. Setting the value to `True` improves performance significantly.
-* **slice_size_of_dataframe:** Default value is `slice_size_of_dataframe=5000`.
-* **Efficient MDX:** The performance of the entire process is heavily dependent on the efficiency of your MDX queries. Ensure your MDX is optimized for the source cube structure.
+SQL and MDX strings are executable configuration. Only use statements from a
+trusted source.
 
-## Debugging Options
-The toolkit includes a robust logging framework to help you debug your data integration processes.
-* **Logging Level:** You can control the verbosity of the logs by setting the `logging_level` parameter in the core functions. The available levels are DEBUG, INFO, WARNING, ERROR, and CRITICAL.
-* **DataFrame Logger:** This is a powerful debugging feature that allows you to inspect the state of your DataFrame at various stages of the transformation pipeline. To enable it, set `df_verbose_logging=True` in the core functions. This will save a CSV file of the DataFrame at each significant step (e.g., after each mapping step) into a dataframe_logs directory. This is invaluable for understanding how your data is being transformed and for troubleshooting mapping issues.
-* **Performance Metrics:** The execution time of key functions is automatically logged. By setting the logging level to DEBUG, you can see the time taken for each major operation, which helps in identifying performance bottlenecks. The `logging.json` file can be configured to output these metrics to a separate file for analysis.
+## Documentation
 
-## Requirements
-* TM1py >=2.2, <3.0
-* pandas >=2.3.3, <3.0.0
-* json_logging >=1.3.0, <2.0.0
-* sqlalchemy >=2.0.0, <3.0.0
-* pyodbc >=5.2.0, <6.0.0
-* pyyaml >=6.0, <7.0
-* openpyxl >=3.1.0
+The full guide includes:
 
-## Installation
-### Install without airflow
-```
-pip install tm1-bedrock-py
-```
-### Install with `airflow`
-As of now the _airflow_executor_ sub-package of `tm1-bedrock-py` only supports `apache-airflow` for versions >=2.4.0, <=2.11.0, with Python versions 3.9 to 3.12.
-```
-pip install tm1-bedrock-py[airflow]
-```
-> Additional options for `airflow` database connectors for Microsoft-MSSQL and Postgres
-```
-pip install tm1-bedrock-py[airflow, microsoft-mssql]
-pip install tm1-bedrock-py[airflow, postgres]
-```
+- current function selection and connection examples;
+- complete `bedrock` API signatures and parameters;
+- TM1, SQL, CSV, async, dimension, and Airflow workflows;
+- mapping, clearing, performance, and error-handling guidance.
+
+Read the hosted documentation at
+[tm1-bedrock-py.readthedocs.io](https://tm1-bedrock-py.readthedocs.io/en/latest/).
+
+## Validation scope
+
+The release hardening suite covers public exception boundaries, offline TM1
+wrapper orchestration through `MockTM1Service`, SQL/CSV fixtures, dimension
+building, async failure propagation, query redaction, rollback, and cleanup.
+Live TM1 behavior still requires validation against your Planning Analytics
+environment because authentication, server configuration, privileges, and
+version-specific REST behavior cannot be reproduced fully offline.
 
 ## Development
-### Windows
-```
-git clone https://github.com/KnowledgeSeed/tm1_bedrock_py.git
-cd tm1_bedrock_py
 
-python -m venv .env
-.\.env\Scripts\activate
+```bash
+python -m venv .venv
+.\.venv\Scripts\activate
 pip install -r requirements-dev.txt
+pytest
 python -m build
 ```
 
-### Linux/macOS
-```
-git clone https://github.com/KnowledgeSeed/tm1_bedrock_py.git
-cd tm1_bedrock_py
-
-virtualenv .env
-source .env/bin/activate
-pip install -r requirements-dev.txt
-python -m build
-```
-
-## Manual integration testing
-
-Use `tests_integration/docker-compose.yaml` as a baseline, which spins up a TM1 provider and a base TM1 database and a PostgreSQL database to test against. Please note that `tm1-docker` image is properietary IBM product wrapped in Docker by Knowledgeseed and therefore it is only available internally for Knowledgeseed developers.
-
-```
-docker compose up -d tm1 test_db_postgres
-```
-
-To obtain a licensed IBM TM1 database for testing or production purpose, please see https://www.ibm.com/topics/tm1 for further details.
+The repository may contain tests that require a configured `tm1srv` connection.
 
 ## License
 
-See [LICENSE](https://github.com/KnowledgeSeed/tm1_bedrock_py/blob/main/LICENSE)
+Apache-2.0. See [LICENSE](LICENSE).

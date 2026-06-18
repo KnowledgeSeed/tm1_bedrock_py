@@ -199,7 +199,7 @@ def apply_updates(
         orphan_consolidation_name=orphan_consolidation_name
     )
 
-    if mode != 'update':
+    if mode in ('safe_rebuild', 'safe_rebuild_unwind', 'update'):
         updated_elements_df = add_orphan_consolidation_elements(
             elements_df=updated_elements_df, orphan_consolidation_name=orphan_consolidation_name,
             dimension_name=dimension_name, retained_hierarchies=retained_element_hierarchies
@@ -423,7 +423,8 @@ def build_hierarchy_object(
     if elements_df is None:
         return
 
-    edges_df = edges_df.loc[edges_df['Hierarchy'] == hierarchy_name].copy()
+    if edges_df is not None:
+        edges_df = edges_df.loc[edges_df['Hierarchy'] == hierarchy_name].copy()
     elements_df = elements_df.loc[elements_df['Hierarchy'] == hierarchy_name].copy()
 
     if dimension_name is None:
@@ -512,9 +513,13 @@ def generate_schema_from_attributes(
     attr_hier_edges_df["Weight"] = 1.0
 
     new_elements_list = attr_hier_edges_df['Parent'].drop_duplicates().tolist()
-    new_elements_df = pd.DataFrame
-    new_elements_df["ElementName"] = new_elements_list
-    new_elements_df["ElementType"] = "Consolidated"
+    new_elements_df = pd.DataFrame({
+        "ElementName": new_elements_list,
+        "ElementType": "Consolidated"
+    })
+    if not elements_df.empty:
+        new_elements_df["Dimension"] = elements_df["Dimension"].iloc[0]
+        new_elements_df["Hierarchy"] = elements_df["Hierarchy"].iloc[0]
     attr_hier_elements_df = pd.concat([elements_df, new_elements_df])
 
     return attr_hier_edges_df, attr_hier_elements_df
@@ -578,6 +583,11 @@ def combine_schema_for_export(
         format_selector: Literal["parent_child", "indented_levels", "filled_levels"],
         maximum_levels_depth: Optional[int] = None
 ) -> pd.DataFrame:
+    if edges_df is None:
+        edges_df = pd.DataFrame(
+            columns=["Parent", "Child", "Weight", "Dimension", "Hierarchy"]
+        )
+
     cleaned_edges_dataframe: pd.DataFrame = normalize.clear_orphan_parent_edges(
         edges_df=edges_df.copy(),
         orphan_consolidation_name=orphan_parent_name

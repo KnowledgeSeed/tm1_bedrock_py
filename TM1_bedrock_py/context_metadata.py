@@ -79,6 +79,10 @@ class ContextMetadata:
             raise RuntimeError("Cannot execute SQL query: 'sql_engine' was not provided during initialization.")
 
         extracted_df = extractor.sql_to_dataframe(engine=self._sql_engine, sql_query=sql_query)
+        if extracted_df.empty or extracted_df.shape[1] == 0:
+            raise ValueError(
+                f"SQL query returned no values for context parameter '{param_name}'."
+            )
 
         if parameter_type == "dimension_element":
             value = extracted_df.iloc[0, 0]
@@ -96,13 +100,21 @@ class ContextMetadata:
             raise RuntimeError("Cannot execute MDX query: 'tm1_service' was not provided during initialization.")
 
         extracted_df = extractor.tm1_mdx_to_dataframe(tm1_service=self._tm1_service, data_mdx=mdx_query)
+        if "Value" not in extracted_df.columns:
+            raise ValueError(
+                f"MDX query result for context parameter '{param_name}' has no 'Value' column."
+            )
+        if extracted_df.empty:
+            raise ValueError(
+                f"MDX query returned no values for context parameter '{param_name}'."
+            )
 
         if parameter_type == "dimension_element":
-            value = str(extracted_df["Value"][0])
+            value = str(extracted_df["Value"].iloc[0])
         elif parameter_type == "dimension_element_list":
             value = [str(val) for val in extracted_df["Value"].tolist()]
         else:
-            value = str(extracted_df["Value"][0])
+            value = str(extracted_df["Value"].iloc[0])
 
         self.add_parameter(param_name, value, parameter_type, parameter_type_context)
 
@@ -122,10 +134,17 @@ class ContextMetadata:
         return {name: param.value for name, param in self._params.items()}
 
     def load_init_yaml_to_parameters(self, yaml_path: str):
-        with open(yaml_path, "r") as f:
+        with open(yaml_path, "r", encoding="utf-8") as f:
             parameters_init = yaml.safe_load(f)
 
+        if not isinstance(parameters_init, dict):
+            raise ValueError("Context initialization YAML must contain a mapping of parameter names.")
+
         for param_name, param_data in parameters_init.items():
+            if not isinstance(param_data, dict):
+                raise ValueError(
+                    f"Configuration for context parameter '{param_name}' must be a mapping."
+                )
             param_type = param_data.get("type")
             param_type_context = param_data.get("type_context")
             if "value" in param_data:
@@ -137,6 +156,10 @@ class ContextMetadata:
             elif "mdx_query" in param_data:
                 mdx_query = param_data["mdx_query"]
                 self.add_parameter_from_tm1(param_name, mdx_query, param_type, param_type_context)
+            else:
+                raise ValueError(
+                    f"Context parameter '{param_name}' must define one of: value, sql_query, mdx_query."
+                )
 
     def render_template_yaml(self,
                              yaml_path: str,

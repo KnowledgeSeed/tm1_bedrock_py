@@ -15,6 +15,24 @@ from sqlalchemy import create_engine, inspect
 from TM1_bedrock_py import exec_metrics_logger, basic_logger, benchmark_metrics_logger
 from TM1py.Objects import Cube
 
+
+def raise_async_worker_errors(results: List[Any], operation_name: str) -> None:
+    worker_errors = [
+        (index, result)
+        for index, result in enumerate(results)
+        if isinstance(result, Exception)
+    ]
+    if not worker_errors:
+        return
+
+    failed_indexes = ", ".join(str(index) for index, _ in worker_errors)
+    first_index, first_error = worker_errors[0]
+    raise RuntimeError(
+        f"{operation_name} failed in {len(worker_errors)} worker(s) "
+        f"(indexes: {failed_indexes}). First failure at worker {first_index}: {first_error}"
+    ) from first_error
+
+
 # ------------------------------------------------------------------------------------------------------------
 # Utility: Logging helper functions
 # ------------------------------------------------------------------------------------------------------------
@@ -578,6 +596,11 @@ def create_sql_engine(
     }
     if connection_type and not connection_string:
         connection_string = connection_strings.get(connection_type)
+        if connection_string is None:
+            raise ValueError(
+                f"Unsupported connection_type '{connection_type}'. "
+                f"Supported values are: {sorted(connection_strings.keys())}"
+            )
         if 'mssql' in connection_string:
             return create_engine(connection_string, fast_executemany=True)
     return create_engine(connection_string)
@@ -650,7 +673,7 @@ def check_dimensions_existance(
             missing_dimensions.append(dimension)
 
     if len(missing_dimensions) > 0 and missing_dimension_strategy == "raise_error":
-        raise ValueError(f"Dimensions '{','.join(dimension)}' does not exist. "
+        raise ValueError(f"Dimensions '{','.join(missing_dimensions)}' does not exist. "
                          f"Please create or copy dimension from source")
 
     return missing_dimensions
@@ -850,7 +873,7 @@ def all_leaves_identifiers_to_dataframe(
     dataset = tm1_service.elements.get_all_leaf_element_identifiers(
         dimension_name=dimension_name, hierarchy_name=hierarchy_name
     )
-    return DataFrame({dimension_name: list(dataset)})
+    return DataFrame({dimension_name: sorted(dataset)})
 
 
 def get_default_hierarchy(tm1_service: Any, dimension_name: str) -> str:
@@ -1043,7 +1066,7 @@ class TM1CubeObjectMetadata:
             cube_name = cls.get_cube_name(metadata)
 
         if not cube_name:
-            basic_logger.error("You need to have either an MDX or a cube name specified.")
+            raise ValueError("You need to have either an MDX or a cube name specified.")
 
         if collect_base_cube_metadata:
             cls._expand_base_cube_metadata(tm1_service=tm1_service, cube_name=cube_name, metadata=metadata)

@@ -3,14 +3,14 @@ import os
 import sys
 import importlib.metadata
 
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Project information -----------------------------------------------------
 
 project = 'tm1_bedrock_py'
-copyright = '2025, KnowledgeSeed'
+copyright = '2026, KnowledgeSeed'
 author = 'KnowledgeSeed'
-release = '1.0.0'
+release = '0.4.1'
 
 # -- General configuration ---------------------------------------------------
 
@@ -40,6 +40,6 @@ epub_show_urls = 'footnote'
 try:
     release = importlib.metadata.version(project)
 except importlib.metadata.PackageNotFoundError:
-    release = '1.0.0'
+    release = '0.4.1'
 
 version = '.'.join(release.split('.')[:2])

@@ -642,7 +642,11 @@ def dataframe_map_and_replace(
     shared_dimensions = list(shared_dimensions_set)
 
     if len(shared_dimensions) == 0:
-        raise ValueError
+        raise ValueError(
+            "Map-and-replace requires at least one shared join column between "
+            f"the data and mapping DataFrames. Data columns: {list(data_df.columns)}; "
+            f"mapping columns: {list(mapping_df.columns)}; mapped dimensions: {list(mapped_dimensions)}."
+        )
 
     original_columns = data_df.columns
 
