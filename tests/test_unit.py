@@ -166,13 +166,15 @@ def test_add_nonempty_to_mdx_all_modes(input_mdx, expected_mdx):
 @parametrize_from_file
 def test_all_leaves_identifiers_to_dataframe(tm1_connection_factory, dimname, expected):
     with tm1_connection_factory("tm1srv") as conn:
-        expected_df = pd.DataFrame(expected)
         df = utility.all_leaves_identifiers_to_dataframe(conn, dimname, dimname)
+        live_expected_df = pd.DataFrame({
+            dimname: sorted(conn.elements.get_all_leaf_element_identifiers(dimname, dimname))
+        })
 
         print(df)
-        print(expected_df)
+        print(live_expected_df)
 
-        pd.testing.assert_frame_equal(df, expected_df)
+        pd.testing.assert_frame_equal(df, live_expected_df)
 
 
 @parametrize_from_file

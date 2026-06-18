@@ -873,7 +873,7 @@ def all_leaves_identifiers_to_dataframe(
     dataset = tm1_service.elements.get_all_leaf_element_identifiers(
         dimension_name=dimension_name, hierarchy_name=hierarchy_name
     )
-    return DataFrame({dimension_name: list(dataset)})
+    return DataFrame({dimension_name: sorted(dataset)})
 
 
 def get_default_hierarchy(tm1_service: Any, dimension_name: str) -> str:
