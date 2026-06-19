@@ -1,6 +1,10 @@
 Cube, Dimension, and Hierarchy Management
 =========================================
 
+For structure management, ``dimension_builder`` is the main entry point. It is
+designed for tabular inputs such as Excel extracts, CSV files, SQL result sets,
+and already-prepared pandas DataFrames.
+
 Choose the wrapper
 ------------------
 
@@ -27,6 +31,13 @@ Choose the wrapper
 
 ``dimension_export``
    Export normalized dimension data to SQL, CSV, XLSX, YAML, or JSON.
+
+Primary workflow: dimension_builder
+-----------------------------------
+
+Use ``dimension_builder`` when you want the docs to reflect the actual source
+of truth for a dimension: a business-maintained file, a generated DataFrame, or
+an upstream SQL extract.
 
 Build a cube
 ------------
@@ -76,6 +87,11 @@ Input formats:
 ``filled_levels``
    Every row contains its complete hierarchy path.
 
+The project examples also use ``indented_levels`` heavily for Excel-based
+dimension maintenance. That format works well when business users want to own
+the hierarchy shape in a spreadsheet while Bedrock handles normalization,
+validation, and TM1 updates.
+
 Build strategies:
 
 ``rebuild``
@@ -91,6 +107,21 @@ Build strategies:
    Apply additions and changes while preserving compatible legacy elements.
    Legacy child relationships omitted from the input are reparented under the
    orphan consolidation instead of being left untouched.
+
+Common data sources
+-------------------
+
+``input_datasource``
+   File path for CSV, XLSX, YAML, or JSON input.
+
+``raw_input_df``
+   pandas DataFrame supplied directly by your code.
+
+``sql_engine`` with ``sql_query`` or ``sql_table_name``
+   SQL-driven structure generation.
+
+This flexibility is one of the main reasons to use ``dimension_builder`` as
+the primary interface instead of building TM1 objects manually.
 
 For advanced pipelines, provide both ``override_input_edges_df`` and
 ``override_input_elements_df``. Supplying only one is rejected.
@@ -125,3 +156,11 @@ The callable used by ``dimension_modify`` receives the normalized edge and
 element DataFrames and must return a two-item tuple:
 ``(edges_df, elements_df)``. ``hierarchy_modify`` follows the same contract for
 one hierarchy. Returned schemas are validated before changes are applied.
+
+Related wrappers
+----------------
+
+Use ``hierarchy_builder`` when you only want to rebuild one hierarchy inside an
+existing dimension. Use ``dimension_copy`` and ``hierarchy_copy`` when TM1 is
+already the source of truth and you want to clone or migrate structures between
+servers.

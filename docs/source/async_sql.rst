@@ -1,6 +1,9 @@
 Parallel SQL Workflows
 ======================
 
+These wrappers are the parallel versions of the primary SQL workflows in
+:doc:`tm1_sql`.
+
 TM1 to SQL
 ----------
 

@@ -2,8 +2,19 @@ Bedrock API Reference
 =====================
 
 This page is generated from the installed Python functions, so signatures and
-default values match the current package. The task guides explain when to use
-each group.
+default values match the current package.
+
+For most users, start with these primary interfaces:
+
+* ``data_copy_intercube``
+* ``dimension_builder``
+* ``input_handler``
+* ``load_sql_data_to_tm1_cube``
+* ``load_tm1_cube_to_sql_table``
+* ``load_csv_data_to_tm1_cube``
+* ``load_tm1_cube_to_csv_file``
+
+The task guides explain when to use each group.
 
 Calculation and cube structure
 ------------------------------
@@ -34,9 +45,9 @@ Dimension and hierarchy management
 TM1 data movement
 -----------------
 
-.. autofunction:: TM1_bedrock_py.bedrock.data_copy
-
 .. autofunction:: TM1_bedrock_py.bedrock.data_copy_intercube
+
+.. autofunction:: TM1_bedrock_py.bedrock.data_copy
 
 SQL integration
 ---------------
