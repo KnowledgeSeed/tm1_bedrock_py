@@ -1,6 +1,10 @@
 CSV Integration
 ===============
 
+The CSV wrappers are the lightweight file-based equivalents of the SQL
+wrappers. They are useful for scheduled imports and exports, business-managed
+files, and intermediate landing zones where a database would be unnecessary.
+
 CSV to TM1
 ----------
 
@@ -50,6 +54,9 @@ Important parsing parameters:
 ``csv_function``
    Custom callable replacing the default CSV extractor.
 
+This wrapper is often the fastest path from a controlled business file into a
+TM1 cube.
+
 TM1 to CSV
 ----------
 
@@ -94,6 +101,9 @@ Output parameters:
 
 ``csv_function``
    Custom CSV writer callable.
+
+This wrapper is useful for handoffs to other systems, audit snapshots, and
+debugging transformed TM1 slices outside the server.
 
 Source clearing
 ---------------

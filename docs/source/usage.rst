@@ -1,6 +1,10 @@
 Getting Started
 ===============
 
+TM1 Bedrock is aimed at Python developers who are already comfortable with
+TM1py and want reusable integration workflows instead of hand-building the same
+extract-transform-load code for every job.
+
 Installation
 ------------
 
@@ -15,7 +19,8 @@ Create a TM1 connection
 -----------------------
 
 Bedrock accepts an existing TM1py ``TM1Service``. Connection settings are not
-stored by the library.
+stored by the library, so your application remains in control of credentials,
+session lifecycle, and environment-specific connection setup.
 
 .. code-block:: python
 
@@ -48,11 +53,14 @@ Choose a workflow
      - Target
      - Function
    * - TM1 cube
-     - Same cube
-     - :py:func:`~TM1_bedrock_py.bedrock.data_copy`
-   * - TM1 cube
      - Another cube or server
      - :py:func:`~TM1_bedrock_py.bedrock.data_copy_intercube`
+   * - TM1 dimension data
+     - TM1 dimension or hierarchy
+     - :py:func:`~TM1_bedrock_py.bedrock.dimension_builder`
+   * - Coordinate domain
+     - Calculated TM1 input
+     - :py:func:`~TM1_bedrock_py.bedrock.input_handler`
    * - SQL
      - TM1 cube
      - :py:func:`~TM1_bedrock_py.bedrock.load_sql_data_to_tm1_cube`
@@ -65,12 +73,14 @@ Choose a workflow
    * - TM1 cube
      - CSV
      - :py:func:`~TM1_bedrock_py.bedrock.load_tm1_cube_to_csv_file`
-   * - Dimension data
-     - TM1 dimension or hierarchy
-     - :py:func:`~TM1_bedrock_py.bedrock.dimension_builder`
-   * - Coordinate domain
-     - Calculated TM1 input
-     - :py:func:`~TM1_bedrock_py.bedrock.input_handler`
+   * - TM1 cube
+     - Same cube
+     - :py:func:`~TM1_bedrock_py.bedrock.data_copy`
+
+For most TM1-to-TM1 movement, start with
+:py:func:`~TM1_bedrock_py.bedrock.data_copy_intercube`. It also covers the
+common case where the source and target structures differ. ``data_copy`` is
+mainly the convenience wrapper for same-cube writes.
 
 The standard data pipeline
 --------------------------
@@ -86,6 +96,9 @@ Most data wrappers follow the same sequence:
 7. Clear the target only when requested.
 8. Write the result.
 9. Clear the source only after a successful non-empty export.
+
+The same shape shows up across TM1, SQL, and CSV wrappers, so once you learn
+one workflow the others feel familiar.
 
 Common transformation parameters
 --------------------------------
@@ -115,6 +128,23 @@ Common transformation parameters
 ``case_and_space_insensitive_inputs``
    Normalize source labels before matching them to cube dimensions.
 
+TM1 redimensionalization shortcuts
+----------------------------------
+
+Several wrappers accept these arguments through ``**kwargs``:
+
+``source_dim_mapping``
+   Filter a source dimension to one element, then drop that source column.
+
+``related_dimensions``
+   Rename source dimension columns to target dimension names.
+
+``target_dim_mapping``
+   Add target-only dimensions with constant element values.
+
+These three arguments are especially important for
+:py:func:`~TM1_bedrock_py.bedrock.data_copy_intercube`.
+
 Missing-element checks
 ----------------------
 
@@ -136,3 +166,11 @@ output.
 
 Do not put secrets in SQL or MDX text. Bedrock redacts query text in its public
 error boundary, but query strings remain trusted executable configuration.
+
+Where to go next
+----------------
+
+* :doc:`data_copy` for TM1-to-TM1 mappings and redimensionalization
+* :doc:`dimension_management` for dimension and hierarchy builds
+* :doc:`calculations` for ``input_handler`` pipelines
+* :doc:`tm1_sql` and :doc:`tm1_csv` for external integrations

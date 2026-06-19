@@ -1,6 +1,10 @@
 Parallel Execution
 ==================
 
+These executors are advanced throughput tools. Start with the synchronous
+wrappers first, and move to the async executors when the same workflow already
+works correctly for one slice and the bottleneck is runtime.
+
 Bedrock's async executors use a Python ``ThreadPoolExecutor`` behind an
 ``async`` public function. Call them with ``asyncio.run`` from synchronous code
 or ``await`` them inside an existing event loop.

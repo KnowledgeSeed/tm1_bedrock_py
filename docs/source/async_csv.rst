@@ -1,6 +1,9 @@
 Parallel CSV Workflows
 ======================
 
+These wrappers are the parallel versions of the CSV workflows in
+:doc:`tm1_csv`.
+
 CSV directory to TM1
 --------------------
 

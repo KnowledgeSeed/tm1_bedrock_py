@@ -1,6 +1,10 @@
 SQL Integration
 ===============
 
+The SQL wrappers are first-class Bedrock workflows, not add-ons. They let you
+reuse the same mapping, validation, and write concepts you use for TM1-to-TM1
+loads while integrating with warehouse or staging-table data.
+
 SQL to TM1
 ----------
 
@@ -51,6 +55,9 @@ Source parameters:
    Clear the SQL source only after a successful, non-empty TM1 load. Supply
    ``sql_delete_statement`` for portable, explicit behavior.
 
+This wrapper is the main choice when SQL is the source of truth and TM1 is the
+serving layer.
+
 TM1 to SQL
 ----------
 
@@ -100,6 +107,9 @@ Target parameters:
 
 ``clear_source``
    Clear the TM1 source slice only after a successful, non-empty SQL write.
+
+This wrapper is useful for audit exports, downstream reporting feeds, and
+staging data for further transformation outside TM1.
 
 SQL safety
 ----------

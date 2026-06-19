@@ -1,6 +1,10 @@
 Airflow Integration
 ===================
 
+Airflow support is optional. The core package does not require Airflow, and the
+documentation for TM1, SQL, CSV, dimension, and input workflows remains valid
+without it.
+
 Install the optional dependencies:
 
 .. code-block:: bash

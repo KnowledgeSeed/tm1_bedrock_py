@@ -1,43 +1,34 @@
 TM1-to-TM1 Data Workflows
 =========================
 
-``data_copy`` and ``data_copy_intercube`` use the same extraction,
-transformation, validation, and TM1 write pipeline.
+For current projects, ``data_copy_intercube`` is the primary TM1-to-TM1
+workflow. It covers both classic cube-to-cube loads and the more important
+real-world case where the target dimensionality or target server differs from
+the source.
+
+``data_copy`` uses the same internal pipeline, but is mainly the convenience
+wrapper for same-cube writes.
 
 Choose the function
 -------------------
 
-Use ``data_copy`` when the source MDX cube is also the target cube. Use
-``data_copy_intercube`` when writing to another cube, changing dimensionality,
-or writing through another ``TM1Service``.
+Use ``data_copy_intercube`` when:
 
-Minimal in-cube copy
---------------------
+* writing to another cube;
+* renaming or reshaping dimensions;
+* adding target-only dimensions;
+* writing through another ``TM1Service``;
+* or simply standardizing on one TM1-to-TM1 wrapper.
 
-.. code-block:: python
+Use ``data_copy`` only when the source MDX cube is also the target cube and
+you do not need the extra target-cube argument.
 
-   bedrock.data_copy(
-       tm1_service=tm1,
-       data_mdx="""
-       SELECT {[Period].[Period].[2026-01]} ON 0
-       FROM [Planning]
-       WHERE ([Version].[Version].[Working])
-       """,
-       mapping_steps=[
-           {
-               "method": "replace",
-               "mapping": {"Version": {"Working": "Budget"}},
-           }
-       ],
-       clear_target=True,
-       target_clear_set_mdx_list=[
-           "{[Period].[Period].[2026-01]}",
-           "{[Version].[Version].[Budget]}",
-       ],
-   )
+Primary example: intercube redimensionalization
+-----------------------------------------------
 
-Intercube redimensionalization
-------------------------------
+This is the style of workflow Bedrock is best known for: extract a TM1 slice,
+transform coordinates with ordered mapping steps, and write into a different
+target cube or server.
 
 .. code-block:: python
 
@@ -82,7 +73,9 @@ A callable ``mdx_function`` may implement a custom extractor.
 Mapping steps
 -------------
 
-Steps execute in list order and are validated before processing.
+Steps execute in list order and are validated before processing. This ordered
+pipeline is the core abstraction behind Bedrock's TM1, SQL, CSV, and
+``input_handler`` workflows.
 
 ``replace``
    Replace values in one or more columns.
@@ -136,6 +129,47 @@ Steps execute in list order and are validated before processing.
 
 ``cartesian_with_set``
    Combine source data with a mapping DataFrame populated from a TM1 set.
+
+Example based on the project examples
+-------------------------------------
+
+``example/main.py`` shows a representative multi-step pattern:
+
+* replace one coordinate such as ``Version``;
+* map one dimension from a TM1 attribute or mapping cube;
+* map another dimension through a second TM1 lookup;
+* optionally scale or otherwise transform values;
+* clear only the intended target slice before write.
+
+That composition model is what makes ``data_copy_intercube`` the best starting
+point for most TM1-to-TM1 integrations.
+
+Same-cube convenience
+---------------------
+
+Use ``data_copy`` when the source and target cube are the same.
+
+.. code-block:: python
+
+   bedrock.data_copy(
+       tm1_service=tm1,
+       data_mdx="""
+       SELECT {[Period].[Period].[2026-01]} ON 0
+       FROM [Planning]
+       WHERE ([Version].[Version].[Working])
+       """,
+       mapping_steps=[
+           {
+               "method": "replace",
+               "mapping": {"Version": {"Working": "Budget"}},
+           }
+       ],
+       clear_target=True,
+       target_clear_set_mdx_list=[
+           "{[Period].[Period].[2026-01]}",
+           "{[Version].[Version].[Budget]}",
+       ],
+   )
 
 Mapping data sources
 --------------------
