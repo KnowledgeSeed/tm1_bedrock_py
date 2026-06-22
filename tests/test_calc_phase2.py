@@ -912,6 +912,116 @@ def test_compile_preview_emits_true_cross_cube_feeders_for_direct_lookup_case():
     assert preview.manifest["Sales:FX Rate EUR"]["artifact"]["preview_only"] is False
 
 
+def test_compile_preview_feeds_nested_branches_traced_intermediates_and_multiple_cross_cube_origins():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={
+                    "Revenue": "Numeric",
+                    "Cost": "Numeric",
+                    "Base Margin": "Numeric",
+                    "Use A": "Numeric",
+                    "Fallback": "Numeric",
+                    "Routed Value": "Numeric",
+                },
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+            ),
+            "A FX": build_static_cube_metadata(
+                "A FX",
+                ["Version", "Company", "TargetCurrency", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "TargetCurrency": "TargetCurrency",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "TargetCurrency": ["TargetCurrency"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={"TargetCurrency": ["EUR"]},
+            ),
+            "B FX": build_static_cube_metadata(
+                "B FX",
+                ["Version", "Company", "TargetCurrency", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "TargetCurrency": "TargetCurrency",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "TargetCurrency": ["TargetCurrency"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={"TargetCurrency": ["USD"]},
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+    a_fx = model.cube("A FX")
+    b_fx = model.cube("B FX")
+
+    # Stress case for feeder-origin direction: a same-cube rule-calculated intermediate ("Base
+    # Margin") used as a nested-case selector must trace back to its original sources (Revenue, Cost)
+    # rather than chain through the intermediate; "Use A" and "Fallback" are genuine branch
+    # selector/value inputs; "A FX" and "B FX" are two independent cross-cube origins selected by
+    # different nested branches. All of these must feed "Routed Value" directly and exactly once.
+    sales["Base Margin"] = sales["Revenue"] - sales["Cost"]
+    sales["Routed Value"] = model.case(
+        (sales["Use A"] != 0, a_fx["Rate"].align(TargetCurrency="EUR")),
+        default=model.case(
+            (sales["Base Margin"] != 0, b_fx["Rate"].align(TargetCurrency="USD")),
+            default=sales["Fallback"],
+        ),
+    )
+
+    explanation = model.explain("Sales:Routed Value")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["feeder_strategy"] == "conditional_cross_cube_branches"
+    assert preview.feeders["Sales"] == (
+        "['Measure':'Measure':'Cost'] => ['Measure':'Measure':'Base Margin'];\n"
+        "['Measure':'Measure':'Cost'] => ['Measure':'Measure':'Routed Value'];\n"
+        "['Measure':'Measure':'Fallback'] => ['Measure':'Measure':'Routed Value'];\n"
+        "['Measure':'Measure':'Revenue'] => ['Measure':'Measure':'Base Margin'];\n"
+        "['Measure':'Measure':'Revenue'] => ['Measure':'Measure':'Routed Value'];\n"
+        "['Measure':'Measure':'Use A'] => ['Measure':'Measure':'Routed Value'];"
+    )
+    assert preview.feeders["A FX"] == (
+        "[!Version, !Company, 'TargetCurrency':'TargetCurrency':'EUR', 'Measure':'Measure':'Rate'] => "
+        "DB('Sales', !Version, !Company, 'Measure':'Measure':'Routed Value');"
+    )
+    assert preview.feeders["B FX"] == (
+        "[!Version, !Company, 'TargetCurrency':'TargetCurrency':'USD', 'Measure':'Measure':'Rate'] => "
+        "DB('Sales', !Version, !Company, 'Measure':'Measure':'Routed Value');"
+    )
+    assert preview.manifest["Sales:Routed Value"]["artifact"]["feeder_deployment_cubes"] == [
+        "A FX",
+        "B FX",
+        "Sales",
+    ]
+    assert preview.manifest["Sales:Routed Value"]["artifact"]["preview_only"] is False
+
+
 def test_compile_preview_feeds_both_same_cube_driver_and_cross_cube_origin():
     provider = StaticMetadataProvider(
         {
