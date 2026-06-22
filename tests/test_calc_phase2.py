@@ -1,6 +1,12 @@
 import pytest
 
-from TM1_bedrock_py.calc import DeploymentError, Model, StaticMetadataProvider, build_static_cube_metadata
+from TM1_bedrock_py.calc import (
+    DeploymentError,
+    Model,
+    StaticMetadataProvider,
+    TM1ServiceMetadataProvider,
+    build_static_cube_metadata,
+)
 from tests.mock_tm1_service import MockTM1Service
 
 
@@ -2412,3 +2418,342 @@ def test_phase2_readiness_rejects_string_measure_for_native_rule_target():
     assert readiness["backend"] == "native-rule backend"
     assert readiness["metadata_ready"] is False
     assert "numeric_measure" in readiness["missing_metadata"]
+
+
+def test_metadata_provider_collects_element_types_and_children_from_tm1():
+    tm1 = MockTM1Service()
+    tm1.add_dimension("Version", {"Actual": "String"})
+    tm1.add_dimension(
+        "TargetCurrency",
+        {"All Reporting": "Consolidated", "EUR": "Numeric", "USD": "Numeric"},
+        edges={("All Reporting", "EUR"): 1, ("All Reporting", "USD"): 1},
+    )
+    tm1.add_dimension("Measure", {"Rate": "Numeric"})
+    tm1.add_cube("FX Rates", ["Version", "TargetCurrency", "Measure"])
+
+    provider = TM1ServiceMetadataProvider(tm1)
+    metadata = provider.get_cube_metadata("FX Rates")
+
+    assert metadata.dimension_element_types["TargetCurrency"] == {
+        "All Reporting": "Consolidated",
+        "EUR": "Numeric",
+        "USD": "Numeric",
+    }
+    assert set(metadata.dimension_leaf_elements["TargetCurrency"]) == {"EUR", "USD"}
+    assert metadata.dimension_children["TargetCurrency"]["All Reporting"] == ("EUR", "USD")
+
+
+def test_compile_deploys_fixed_cross_cube_origin_via_structural_leaf_expansion():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"FX Rate Group": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "Company": ["ACME", "BETA"],
+                },
+            ),
+            "FX Rates": build_static_cube_metadata(
+                "FX Rates",
+                ["Version", "Company", "TargetCurrency", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "TargetCurrency": "TargetCurrency",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "TargetCurrency": ["TargetCurrency"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "TargetCurrency": ["EUR", "USD"],
+                },
+                dimension_element_types={
+                    "TargetCurrency": {
+                        "All Reporting": "Consolidated",
+                        "EUR": "Numeric",
+                        "USD": "Numeric",
+                    },
+                },
+                dimension_children={
+                    "TargetCurrency": {
+                        "All Reporting": ["EUR", "USD"],
+                    },
+                },
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+    fx = model.cube("FX Rates")
+
+    sales["FX Rate Group"] = fx["Rate"].align(TargetCurrency="All Reporting")
+
+    explanation = model.explain("Sales:FX Rate Group")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["feeder_strategy"] == "cross_cube_source_lookup"
+    assert preview.feeders["FX Rates"] == (
+        "[!Version, !Company, 'TargetCurrency':'TargetCurrency':'EUR', 'Measure':'Measure':'Rate'] => "
+        "DB('Sales', !Version, !Company, 'Measure':'Measure':'FX Rate Group');\n"
+        "[!Version, !Company, 'TargetCurrency':'TargetCurrency':'USD', 'Measure':'Measure':'Rate'] => "
+        "DB('Sales', !Version, !Company, 'Measure':'Measure':'FX Rate Group');"
+    )
+    assert preview.manifest["Sales:FX Rate Group"]["artifact"]["preview_only"] is False
+
+
+def test_compile_rejects_consolidated_feeder_origin_with_explicit_reason():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"FX Rate Group": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+            ),
+            "FX Rates": build_static_cube_metadata(
+                "FX Rates",
+                ["Version", "Company", "TargetCurrency", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "TargetCurrency": "TargetCurrency",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "TargetCurrency": ["TargetCurrency"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "TargetCurrency": ["EUR", "USD"],
+                },
+                dimension_element_types={
+                    "TargetCurrency": {
+                        "All Reporting": "Consolidated",
+                        "EUR": "Numeric",
+                        "USD": "Numeric",
+                    },
+                },
+            ),
+        }
+    )
+    model = Model(tm1=MockTM1Service(), metadata_provider=provider)
+    sales = model.cube("Sales")
+    fx = model.cube("FX Rates")
+
+    sales["FX Rate Group"] = fx["Rate"].align(TargetCurrency="All Reporting")
+
+    explanation = model.explain("Sales:FX Rate Group")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["feeder_strategy"] == "preview_only_cross_cube"
+    assert preview.manifest["Sales:FX Rate Group"]["artifact"]["preview_only"] is True
+    assert "is consolidated and has no provable leaf expansion" in explanation["feeder_rationale"]
+    assert "'All Reporting'" in explanation["feeder_rationale"]
+
+
+def test_compile_rejects_partial_structural_expansion_as_unsafe():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"FX Rate Group": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+            ),
+            "FX Rates": build_static_cube_metadata(
+                "FX Rates",
+                ["Version", "Company", "TargetCurrency", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "TargetCurrency": "TargetCurrency",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "TargetCurrency": ["TargetCurrency"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "TargetCurrency": ["EUR"],
+                },
+                dimension_element_types={
+                    "TargetCurrency": {
+                        "All Reporting": "Consolidated",
+                        "Europe": "Consolidated",
+                        "EUR": "Numeric",
+                        "GBP": "Consolidated",
+                    },
+                },
+                dimension_children={
+                    "TargetCurrency": {
+                        "All Reporting": ["Europe", "GBP"],
+                        "Europe": ["EUR"],
+                    },
+                },
+            ),
+        }
+    )
+    model = Model(tm1=MockTM1Service(), metadata_provider=provider)
+    sales = model.cube("Sales")
+    fx = model.cube("FX Rates")
+
+    sales["FX Rate Group"] = fx["Rate"].align(TargetCurrency="All Reporting")
+
+    explanation = model.explain("Sales:FX Rate Group")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["feeder_strategy"] == "preview_only_cross_cube"
+    assert preview.manifest["Sales:FX Rate Group"]["artifact"]["preview_only"] is True
+
+
+def test_compile_rejects_target_only_broadcast_dimension_with_ambiguous_hierarchy():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Region", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"FX Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Region": ["Region", "Alt Region"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "Region": ["East", "West"],
+                },
+            ),
+            "FX Rates": build_static_cube_metadata(
+                "FX Rates",
+                ["Version", "TargetCurrency", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "TargetCurrency": "TargetCurrency",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "TargetCurrency": ["TargetCurrency"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "TargetCurrency": ["EUR"],
+                },
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+    fx = model.cube("FX Rates")
+
+    sales["FX Rate"] = fx["Rate"].align(TargetCurrency="EUR")
+
+    explanation = model.explain("Sales:FX Rate")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["feeder_strategy"] == "preview_only_cross_cube"
+    assert preview.manifest["Sales:FX Rate"]["artifact"]["preview_only"] is True
+    assert "Region" in explanation["feeder_rationale"]
+    assert "multiple hierarchies" in explanation["feeder_rationale"]
+
+
+def test_compile_deploys_target_only_broadcast_dimension_when_hierarchy_is_unambiguous():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Region", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"FX Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Region": ["Region"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "Region": ["East", "West"],
+                },
+            ),
+            "FX Rates": build_static_cube_metadata(
+                "FX Rates",
+                ["Version", "TargetCurrency", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "TargetCurrency": "TargetCurrency",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "TargetCurrency": ["TargetCurrency"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "TargetCurrency": ["EUR"],
+                },
+            ),
+        }
+    )
+    model = Model(tm1=MockTM1Service(), metadata_provider=provider)
+    sales = model.cube("Sales")
+    fx = model.cube("FX Rates")
+
+    sales["FX Rate"] = fx["Rate"].align(TargetCurrency="EUR")
+
+    explanation = model.explain("Sales:FX Rate")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["feeder_strategy"] == "cross_cube_source_lookup"
+    assert preview.manifest["Sales:FX Rate"]["artifact"]["preview_only"] is False
+    assert preview.feeders["FX Rates"] == (
+        "[!Version, 'TargetCurrency':'TargetCurrency':'EUR', 'Measure':'Measure':'Rate'] => "
+        "DB('Sales', !Version, 'Region':'Region':'East', 'Measure':'Measure':'FX Rate'), "
+        "DB('Sales', !Version, 'Region':'Region':'West', 'Measure':'Measure':'FX Rate');"
+    )

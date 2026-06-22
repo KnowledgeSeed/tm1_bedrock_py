@@ -269,6 +269,24 @@ class MockElementService(_BaseService):
             if not skip_consolidations or element.element_type != Element.Types.CONSOLIDATED
         }
 
+    def get_leaf_element_names(
+        self, dimension_name: str, hierarchy_name: str, **kwargs: Any
+    ) -> list[str]:
+        self._record("get_leaf_element_names", dimension_name, hierarchy_name, **kwargs)
+        hierarchy = self._tm1._get_hierarchy(dimension_name, hierarchy_name)
+        return [
+            element.name
+            for element in hierarchy.elements.values()
+            if element.element_type != Element.Types.CONSOLIDATED
+        ]
+
+    def get_edges(
+        self, dimension_name: str, hierarchy_name: str, **kwargs: Any
+    ) -> dict[tuple[str, str], float]:
+        self._record("get_edges", dimension_name, hierarchy_name, **kwargs)
+        hierarchy = self._tm1._get_hierarchy(dimension_name, hierarchy_name)
+        return dict(hierarchy.edges or {})
+
 
 class MockCellService(_BaseService):
     def execute_mdx_dataframe(self, mdx: str, **kwargs: Any) -> pd.DataFrame:

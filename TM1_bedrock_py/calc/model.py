@@ -1544,13 +1544,17 @@ class Model:
                 return self._merge_same_cube_driver_feeders(
                     attribute_routed_cross_cube_plan, formula.target.cube_name, statements
                 )
+            rationale = (
+                "Cross-cube native preview exists, but Phase 2 cannot yet prove a safe feeder "
+                "origin, invertible routing path, and leaf-level target scope for this lookup."
+            )
+            unresolved_reasons = self._describe_unresolved_cross_cube_feeder_elements(formula)
+            if unresolved_reasons:
+                rationale += " " + " ".join(unresolved_reasons)
             return FeederPlan(
                 statements=(),
                 strategy="preview_only_cross_cube",
-                rationale=(
-                    "Cross-cube native preview exists, but Phase 2 cannot yet prove a safe feeder "
-                    "origin, invertible routing path, and leaf-level target scope for this lookup."
-                ),
+                rationale=rationale,
                 deployment_cube=formula.target.cube_name,
                 preview_only=True,
             )
@@ -2062,6 +2066,16 @@ class Model:
         assert target_metadata.measure_dimension_name is not None
 
         broadcast_dimensions = tuple(sorted(set(broadcast_target_dimensions)))
+        if any(
+            self._dimension_hierarchy_ambiguity_reason(
+                cube_name=target_ref.cube_name,
+                dimension_name=dimension_name,
+                explicit_hierarchy_name=None,
+            )
+            is not None
+            for dimension_name in broadcast_dimensions
+        ):
+            return []
         broadcast_options = [
             tuple(target_metadata.dimension_leaf_elements.get(dimension_name, ()))
             for dimension_name in broadcast_dimensions
@@ -2151,7 +2165,83 @@ class Model:
         if expanded_leaf_elements:
             return tuple((explicit_hierarchy_name, leaf_element_name) for leaf_element_name in expanded_leaf_elements)
 
+        structural_leaf_elements = self._expand_consolidated_element_to_leaves(
+            metadata=metadata,
+            dimension_name=dimension_name,
+            element_name=element_name,
+        )
+        if structural_leaf_elements:
+            return tuple(
+                (explicit_hierarchy_name, leaf_element_name) for leaf_element_name in structural_leaf_elements
+            )
+
         return None
+
+    def _expand_consolidated_element_to_leaves(
+        self,
+        metadata: Any,
+        dimension_name: str,
+        element_name: str,
+        _visited: frozenset[str] = frozenset(),
+    ) -> Optional[tuple[str, ...]]:
+        leaf_elements = tuple(metadata.dimension_leaf_elements.get(dimension_name, ()))
+        if element_name in leaf_elements:
+            return (element_name,)
+
+        if element_name in _visited:
+            return None
+
+        children = tuple(metadata.dimension_children.get(dimension_name, {}).get(element_name, ()))
+        if not children:
+            return None
+
+        visited = _visited | {element_name}
+        collected_leaf_elements: List[str] = []
+        for child_name in children:
+            child_leaf_elements = self._expand_consolidated_element_to_leaves(
+                metadata=metadata,
+                dimension_name=dimension_name,
+                element_name=child_name,
+                _visited=visited,
+            )
+            if child_leaf_elements is None:
+                return None
+            collected_leaf_elements.extend(child_leaf_elements)
+
+        return tuple(collected_leaf_elements)
+
+    def _consolidated_feeder_rejection_reason(
+        self,
+        cube_name: str,
+        dimension_name: str,
+        element_name: str,
+        explicit_hierarchy_name: Optional[str] = None,
+    ) -> Optional[str]:
+        resolved = self._resolve_leaf_safe_element_names(
+            cube_name=cube_name,
+            dimension_name=dimension_name,
+            element_name=element_name,
+            explicit_hierarchy_name=explicit_hierarchy_name,
+        )
+        if resolved is not None:
+            return None
+
+        metadata = self._get_cube_metadata(cube_name)
+        element_type = None
+        if metadata is not None:
+            element_type = metadata.dimension_element_types.get(dimension_name, {}).get(element_name)
+
+        if element_type == "Consolidated":
+            return (
+                f"element '{element_name}' on dimension '{dimension_name}' in cube '{cube_name}' is "
+                "consolidated and has no provable leaf expansion (no explicit mapping and no hierarchy "
+                "child metadata)"
+            )
+
+        return (
+            f"element '{element_name}' on dimension '{dimension_name}' in cube '{cube_name}' has unknown "
+            "element type and no provable leaf expansion"
+        )
 
     def _iter_align_expressions(self, expression: Expression) -> Iterator[MethodExpression]:
         if isinstance(expression, MethodExpression):
@@ -2184,6 +2274,56 @@ class Model:
                 yield from self._iter_align_expressions(condition)
                 yield from self._iter_align_expressions(value)
             yield from self._iter_align_expressions(expression.default)
+
+    def _describe_unresolved_cross_cube_feeder_elements(self, formula: Formula) -> List[str]:
+        reasons: List[str] = []
+        seen: set[str] = set()
+        for align_expression in self._iter_align_expressions(formula.expression):
+            if not isinstance(align_expression.base, MeasureExpression):
+                continue
+            source_cube_name = align_expression.base.ref.cube_name
+            for dimension_name, mapping in align_expression.kwargs.items():
+                if isinstance(mapping, LiteralExpression) and isinstance(mapping.value, str):
+                    element_name = mapping.value
+                    explicit_hierarchy_name = None
+                elif isinstance(mapping, ElementExpression):
+                    element_name = mapping.ref.element_name
+                    explicit_hierarchy_name = mapping.ref.hierarchy_name
+                else:
+                    continue
+
+                reason = self._consolidated_feeder_rejection_reason(
+                    cube_name=source_cube_name,
+                    dimension_name=dimension_name,
+                    element_name=element_name,
+                    explicit_hierarchy_name=explicit_hierarchy_name,
+                )
+                if reason is not None and reason not in seen:
+                    seen.add(reason)
+                    reasons.append(reason)
+
+            source_metadata = self._get_cube_metadata(source_cube_name)
+            target_metadata = self._get_cube_metadata(formula.target.cube_name)
+            if source_metadata is None or target_metadata is None:
+                continue
+            source_dimension_names = set(source_metadata.dimensions)
+            for dimension_name in target_metadata.dimensions:
+                if dimension_name == target_metadata.measure_dimension_name:
+                    continue
+                if dimension_name in source_dimension_names:
+                    continue
+                if dimension_name in align_expression.kwargs:
+                    continue
+                reason = self._dimension_hierarchy_ambiguity_reason(
+                    cube_name=formula.target.cube_name,
+                    dimension_name=dimension_name,
+                    explicit_hierarchy_name=None,
+                )
+                if reason is not None and reason not in seen:
+                    seen.add(reason)
+                    reasons.append(reason)
+
+        return reasons
 
     def _native_align_unsupported_reason(
         self,
