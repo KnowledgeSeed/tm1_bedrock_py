@@ -1059,6 +1059,14 @@ class Model:
                 return self._native_align_unsupported_reason(expression, target_cube_name)
             if expression.method_name == "growth":
                 return self._native_growth_unsupported_reason(expression, target_cube_name)
+            if expression.method_name == "shift":
+                return self._native_shift_unsupported_reason(expression, target_cube_name)
+            if expression.method_name == "ytd":
+                return (
+                    "ytd(...) requires summing a variable number of prior-period cells, which is a "
+                    "multi-cell aggregation that does not reduce to a single bounded DB(...)/ATTRS(...) "
+                    "lookup; it stays on the Python materialization backend by design"
+                )
 
             base_reason = self._native_unsupported_reason(expression.base, target_cube_name)
             if base_reason is not None:
@@ -1078,7 +1086,11 @@ class Model:
             return f"method '{expression.method_name}' is outside the native subset"
 
         if isinstance(expression, RollingExpression):
-            return "rolling windows are outside the native subset"
+            return (
+                "rolling(...) requires summing or aggregating a variable-size window of cells, which "
+                "is a multi-cell aggregation that does not reduce to a single bounded DB(...)/ATTRS(...) "
+                "lookup; it stays on the Python materialization backend by design"
+            )
 
         if isinstance(expression, CaseExpression):
             for condition, value in expression.cases:
@@ -1122,6 +1134,8 @@ class Model:
                 return self._compile_native_align_expression(expression, target_cube_name)
             if expression.method_name == "growth":
                 return self._compile_native_growth_expression(expression, target_cube_name)
+            if expression.method_name == "shift":
+                return self._compile_native_shift_expression(expression, target_cube_name)
             raise ValueError(f"Method '{expression.method_name}' is not supported by the native compiler")
 
         if isinstance(expression, CaseExpression):
@@ -1242,6 +1256,132 @@ class Model:
             return "growth(...) baseline must come from the target cube in the native subset"
         return None
 
+    def _native_shift_unsupported_reason(
+        self,
+        expression: MethodExpression,
+        target_cube_name: str,
+    ) -> Optional[str]:
+        if expression.args:
+            return "shift(...) does not support positional arguments in the native subset"
+        if len(expression.kwargs) != 1:
+            return "shift(...) requires exactly one dimension keyword argument in the native subset"
+        if not isinstance(expression.base, MeasureExpression):
+            return "shift(...) requires a same-cube measure base in the native subset"
+        if expression.base.ref.cube_name != target_cube_name:
+            return "shift(...) base measure must come from the target cube in the native subset"
+
+        dimension_name, mapping_expression = next(iter(expression.kwargs.items()))
+        if not isinstance(mapping_expression, LiteralExpression):
+            return (
+                "shift(...) requires a literal attribute-name string or integer offset for the "
+                "shift dimension"
+            )
+
+        metadata = self._get_cube_metadata(target_cube_name)
+        if metadata is None:
+            return "shift(...) needs cube metadata to resolve the shift dimension"
+        if dimension_name not in metadata.dimensions:
+            return f"shift(...) dimension '{dimension_name}' is not part of cube '{target_cube_name}'"
+        if dimension_name == metadata.measure_dimension_name:
+            return "shift(...) cannot target the measure dimension"
+
+        mapping_value = mapping_expression.value
+
+        if isinstance(mapping_value, str):
+            attribute_name = mapping_value
+            available_attributes = metadata.dimension_attributes.get(dimension_name, ())
+            if attribute_name not in available_attributes:
+                return (
+                    f"shift(...) attribute '{attribute_name}' is not available for dimension "
+                    f"'{dimension_name}' in cube '{target_cube_name}'"
+                )
+
+            hierarchy_reason = self._dimension_hierarchy_ambiguity_reason(
+                cube_name=target_cube_name,
+                dimension_name=dimension_name,
+                explicit_hierarchy_name=None,
+            )
+            if hierarchy_reason is not None:
+                return hierarchy_reason
+
+            return None
+
+        if isinstance(mapping_value, int) and not isinstance(mapping_value, bool):
+            leaf_elements = metadata.dimension_leaf_elements.get(dimension_name, ())
+            if not leaf_elements:
+                return (
+                    f"shift(...) numeric offset for dimension '{dimension_name}' needs leaf-element "
+                    "metadata to prove the elements are numeric"
+                )
+            if any(not self._is_numeric_element_name(element_name) for element_name in leaf_elements):
+                return (
+                    f"shift(...) numeric offset requires dimension '{dimension_name}' leaf elements "
+                    "to be numeric strings in the native subset"
+                )
+            return None
+
+        return "shift(...) mapping value must be a literal attribute-name string or integer offset"
+
+    @staticmethod
+    def _is_numeric_element_name(element_name: Any) -> bool:
+        text = str(element_name).strip()
+        if text.startswith("-"):
+            text = text[1:]
+        return bool(text) and text.isdigit()
+
+    @staticmethod
+    def _resolve_shift_spec(
+        expression: MethodExpression,
+    ) -> Optional[Tuple[str, str, Union[str, int]]]:
+        if len(expression.kwargs) != 1:
+            return None
+        dimension_name, mapping_expression = next(iter(expression.kwargs.items()))
+        if not isinstance(mapping_expression, LiteralExpression):
+            return None
+        mapping_value = mapping_expression.value
+        if isinstance(mapping_value, str):
+            return dimension_name, "attribute", mapping_value
+        if isinstance(mapping_value, int) and not isinstance(mapping_value, bool):
+            return dimension_name, "numeric_offset", mapping_value
+        return None
+
+    def _compile_native_shift_expression(self, expression: MethodExpression, target_cube_name: str) -> str:
+        unsupported_reason = self._native_shift_unsupported_reason(expression, target_cube_name)
+        if unsupported_reason is not None:
+            raise ValueError(f"shift(...) cannot compile natively: {unsupported_reason}")
+
+        resolved = self._resolve_shift_spec(expression)
+        assert resolved is not None
+        dimension_name, mode, mapping_value = resolved
+        assert isinstance(expression.base, MeasureExpression)
+        source_measure = expression.base.ref
+
+        metadata = self._get_cube_metadata(target_cube_name)
+        assert metadata is not None
+
+        coordinates: List[str] = []
+        for current_dimension_name in metadata.dimensions:
+            if current_dimension_name == metadata.measure_dimension_name:
+                coordinates.append(
+                    self._compile_dimension_element_coordinate(
+                        cube_name=target_cube_name,
+                        dimension_name=current_dimension_name,
+                        element_name=source_measure.measure_name,
+                        explicit_hierarchy_name=None,
+                    )
+                )
+            elif current_dimension_name == dimension_name:
+                if mode == "attribute":
+                    coordinates.append(
+                        f"ATTRS('{dimension_name}', !{dimension_name}, '{mapping_value}')"
+                    )
+                else:
+                    coordinates.append(f"STR(NUMBR(!{dimension_name}) + ({mapping_value}))")
+            else:
+                coordinates.append(f"!{current_dimension_name}")
+
+        return f"DB('{target_cube_name}', {', '.join(coordinates)})"
+
     @staticmethod
     def _resolve_growth_baseline_ref(
         expression: MethodExpression,
@@ -1360,11 +1500,29 @@ class Model:
             for ref in same_cube_source_refs
         )
 
+        if isinstance(formula.expression, MethodExpression) and formula.expression.method_name == "shift":
+            shift_plan = self._build_same_cube_shift_feeders(formula)
+            if shift_plan is not None:
+                return shift_plan
+            return FeederPlan(
+                statements=(),
+                strategy="preview_only_same_cube_shift",
+                rationale=(
+                    "Same-cube time-shift native preview exists, but Phase 2 cannot yet prove a safe "
+                    "reverse-attribute feeder mapping from source elements to shifted target elements."
+                ),
+                deployment_cube=formula.target.cube_name,
+                preview_only=True,
+            )
+
         if self._contains_align_expression(formula.expression):
             conditional_cross_cube_plan = self._build_conditional_cross_cube_feeders(formula)
             if conditional_cross_cube_plan is not None:
-                return conditional_cross_cube_plan
-            if same_cube_source_refs:
+                return self._merge_same_cube_driver_feeders(
+                    conditional_cross_cube_plan, formula.target.cube_name, statements
+                )
+            align_expression_count = sum(1 for _ in self._iter_align_expressions(formula.expression))
+            if same_cube_source_refs and align_expression_count <= 1:
                 return FeederPlan(
                     statements=statements,
                     strategy="cross_cube_local_driver",
@@ -1378,10 +1536,14 @@ class Model:
                 )
             direct_cross_cube_plan = self._build_direct_cross_cube_feeders(formula)
             if direct_cross_cube_plan is not None:
-                return direct_cross_cube_plan
+                return self._merge_same_cube_driver_feeders(
+                    direct_cross_cube_plan, formula.target.cube_name, statements
+                )
             attribute_routed_cross_cube_plan = self._build_attribute_routed_cross_cube_feeders(formula)
             if attribute_routed_cross_cube_plan is not None:
-                return attribute_routed_cross_cube_plan
+                return self._merge_same_cube_driver_feeders(
+                    attribute_routed_cross_cube_plan, formula.target.cube_name, statements
+                )
             return FeederPlan(
                 statements=(),
                 strategy="preview_only_cross_cube",
@@ -1402,6 +1564,49 @@ class Model:
             ),
             deployment_cube=formula.target.cube_name,
             preview_only=False,
+        )
+
+    def _merge_same_cube_driver_feeders(
+        self,
+        plan: FeederPlan,
+        target_cube_name: str,
+        local_driver_statements: tuple[str, ...],
+    ) -> FeederPlan:
+        if not local_driver_statements:
+            return plan
+
+        deployment_statements_by_cube: Dict[str, set[str]] = defaultdict(set)
+        for cube_name, cube_statements in plan.iter_deployment_statements(default_cube=target_cube_name):
+            deployment_statements_by_cube[cube_name].update(cube_statements)
+        deployment_statements_by_cube[target_cube_name].update(local_driver_statements)
+
+        merged_statements = tuple(
+            sorted(
+                statement
+                for grouped_statements in deployment_statements_by_cube.values()
+                for statement in grouped_statements
+            )
+        )
+        merged_deployment_statements = tuple(
+            (cube_name, tuple(sorted(grouped_statements)))
+            for cube_name, grouped_statements in sorted(deployment_statements_by_cube.items())
+        )
+        merged_deployment_cube = (
+            merged_deployment_statements[0][0] if len(merged_deployment_statements) == 1 else None
+        )
+
+        return FeederPlan(
+            statements=merged_statements,
+            strategy=plan.strategy,
+            rationale=(
+                plan.rationale
+                + " Same-cube measures that also genuinely contribute to the formula's value "
+                "(value-composing drivers, zero-gating multipliers, or branch selectors) are fed "
+                "directly into the target as well, alongside the cross-cube origin."
+            ),
+            deployment_cube=merged_deployment_cube,
+            deployment_statements=merged_deployment_statements,
+            preview_only=plan.preview_only,
         )
 
     def _build_conditional_cross_cube_feeders(self, formula: Formula) -> Optional[FeederPlan]:
@@ -1748,6 +1953,100 @@ class Model:
                 "from source lookup elements to target leaf elements through explicit attribute values."
             ),
             deployment_cube=source_ref.cube_name,
+            preview_only=False,
+        )
+
+    def _build_same_cube_shift_feeders(self, formula: Formula) -> Optional[FeederPlan]:
+        expression = formula.expression
+        if not isinstance(expression, MethodExpression) or expression.method_name != "shift":
+            return None
+        if self._native_shift_unsupported_reason(expression, formula.target.cube_name) is not None:
+            return None
+
+        resolved = self._resolve_shift_spec(expression)
+        assert resolved is not None
+        dimension_name, mode, mapping_value = resolved
+        assert isinstance(expression.base, MeasureExpression)
+        source_measure = expression.base.ref
+        cube_name = formula.target.cube_name
+
+        metadata = self._get_cube_metadata(cube_name)
+        if metadata is None:
+            return None
+
+        leaf_elements = tuple(metadata.dimension_leaf_elements.get(dimension_name, ()))
+        if not leaf_elements:
+            return None
+
+        matched_target_elements_by_source: Dict[str, List[str]] = defaultdict(list)
+        if mode == "attribute":
+            attribute_values = metadata.dimension_attribute_values.get(dimension_name, {})
+            for element_name in leaf_elements:
+                predecessor = str(attribute_values.get(element_name, {}).get(mapping_value, "")).strip()
+                if predecessor:
+                    matched_target_elements_by_source[predecessor].append(element_name)
+            strategy = "same_cube_attribute_shift"
+            rationale = (
+                "Same-cube time-shift feeder deployment is allowed because metadata proves a bounded "
+                "reverse mapping from source elements to shifted target elements through the shift "
+                "dimension's attribute."
+            )
+        else:
+            offset = mapping_value
+            for element_name in leaf_elements:
+                predecessor_value = int(str(element_name).strip()) + offset
+                matched_target_elements_by_source[str(predecessor_value)].append(element_name)
+            strategy = "same_cube_numeric_shift"
+            rationale = (
+                "Same-cube time-shift feeder deployment is allowed because metadata proves the shift "
+                "dimension's leaf elements are numeric, so the reverse mapping from source elements to "
+                "shifted target elements can be derived through bounded integer arithmetic."
+            )
+
+        if not matched_target_elements_by_source:
+            return None
+
+        source_reference = self._compile_native_measure_reference(cube_name, source_measure.measure_name)
+        statements: List[str] = []
+        for source_element_name in sorted(matched_target_elements_by_source):
+            target_db_targets: List[str] = []
+            for target_element_name in matched_target_elements_by_source[source_element_name]:
+                target_db_targets.extend(
+                    self._build_target_db_statements(
+                        source_cube_name=cube_name,
+                        target_ref=formula.target,
+                        fixed_target_elements={dimension_name: target_element_name},
+                        broadcast_target_dimensions=[],
+                    )
+                )
+            if not target_db_targets:
+                continue
+
+            lhs_parts: List[str] = []
+            for current_dimension_name in metadata.dimensions:
+                if current_dimension_name == metadata.measure_dimension_name:
+                    lhs_parts.append(source_reference[1:-1] if source_reference.startswith("[") else source_reference)
+                elif current_dimension_name == dimension_name:
+                    lhs_parts.append(
+                        self._compile_dimension_element_coordinate(
+                            cube_name=cube_name,
+                            dimension_name=dimension_name,
+                            element_name=source_element_name,
+                            explicit_hierarchy_name=None,
+                        )
+                    )
+                else:
+                    lhs_parts.append(f"!{current_dimension_name}")
+            statements.append(f"[{', '.join(lhs_parts)}] => {', '.join(target_db_targets)};")
+
+        if not statements:
+            return None
+
+        return FeederPlan(
+            statements=tuple(statements),
+            strategy=strategy,
+            rationale=rationale,
+            deployment_cube=cube_name,
             preview_only=False,
         )
 

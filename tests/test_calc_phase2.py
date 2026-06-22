@@ -99,6 +99,30 @@ def test_compile_preview_falls_back_to_python_for_cross_cube_alignment_without_m
     assert preview.manifest["Sales:Revenue EUR"]["backend"] == "Python materialization backend"
 
 
+def test_compile_explains_ytd_as_intentionally_deferred_to_python_backend():
+    model = Model()
+    sales = model.cube("Sales")
+
+    sales["Revenue YTD"] = sales["Revenue"].ytd()
+
+    explanation = model.explain("Sales:Revenue YTD")
+
+    assert explanation["backend"] == "Python materialization backend"
+    assert "multi-cell aggregation" in explanation["rationale"]
+
+
+def test_compile_explains_rolling_as_intentionally_deferred_to_python_backend():
+    model = Model()
+    sales = model.cube("Sales")
+
+    sales["Revenue Rolling 12M"] = sales["Revenue"].rolling(months=12)
+
+    explanation = model.explain("Sales:Revenue Rolling 12M")
+
+    assert explanation["backend"] == "Python materialization backend"
+    assert "multi-cell aggregation" in explanation["rationale"]
+
+
 def test_compile_preview_lowers_case_to_nested_tm1_if():
     model = Model()
     sales = model.cube("Sales")
@@ -159,6 +183,241 @@ def test_compile_preview_lowers_growth_helper_with_string_baseline():
         "['Measure':'Measure':'Revenue Prior Year'] => ['Measure':'Measure':'Revenue Growth %'];\n"
         "['Measure':'Measure':'Revenue'] => ['Measure':'Measure':'Revenue Growth %'];"
     )
+
+
+def test_compile_preview_lowers_shift_helper_to_attrs_lookup_with_safe_feeder():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Month", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Month": "Month",
+                    "Measure": "Measure",
+                },
+                measure_element_types={
+                    "Revenue": "Numeric",
+                    "Revenue Prior Month": "Numeric",
+                },
+                dimension_attributes={"Month": ["Prev Month"]},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Month": ["Month"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "Month": ["Jan", "Feb", "Mar"],
+                },
+                dimension_attribute_values={
+                    "Month": {
+                        "Jan": {"Prev Month": "Dec"},
+                        "Feb": {"Prev Month": "Jan"},
+                        "Mar": {"Prev Month": "Feb"},
+                    },
+                },
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+
+    sales["Revenue Prior Month"] = sales["Revenue"].shift(Month="Prev Month")
+
+    explanation = model.explain("Sales:Revenue Prior Month")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["backend"] == "native-rule backend"
+    assert explanation["feeder_strategy"] == "same_cube_attribute_shift"
+    assert preview.rules["Sales"] == (
+        "['Measure':'Measure':'Revenue Prior Month'] = N: "
+        "DB('Sales', !Version, ATTRS('Month', !Month, 'Prev Month'), 'Measure':'Measure':'Revenue');"
+    )
+    assert preview.feeders["Sales"] == (
+        "[!Version, 'Month':'Month':'Dec', 'Measure':'Measure':'Revenue'] => "
+        "DB('Sales', !Version, 'Month':'Month':'Jan', 'Measure':'Measure':'Revenue Prior Month');\n"
+        "[!Version, 'Month':'Month':'Feb', 'Measure':'Measure':'Revenue'] => "
+        "DB('Sales', !Version, 'Month':'Month':'Mar', 'Measure':'Measure':'Revenue Prior Month');\n"
+        "[!Version, 'Month':'Month':'Jan', 'Measure':'Measure':'Revenue'] => "
+        "DB('Sales', !Version, 'Month':'Month':'Feb', 'Measure':'Measure':'Revenue Prior Month');"
+    )
+    assert preview.manifest["Sales:Revenue Prior Month"]["artifact"]["feeder_strategy"] == "same_cube_attribute_shift"
+    assert preview.manifest["Sales:Revenue Prior Month"]["artifact"]["preview_only"] is False
+
+
+def test_compile_preview_lowers_shift_helper_to_numeric_offset_lookup_with_safe_feeder():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Year", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Year": "Year",
+                    "Measure": "Measure",
+                },
+                measure_element_types={
+                    "Revenue": "Numeric",
+                    "Revenue Prior Year": "Numeric",
+                },
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Year": ["Year"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "Year": ["2023", "2024", "2025"],
+                },
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+
+    sales["Revenue Prior Year"] = sales["Revenue"].shift(Year=-1)
+
+    explanation = model.explain("Sales:Revenue Prior Year")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["backend"] == "native-rule backend"
+    assert explanation["feeder_strategy"] == "same_cube_numeric_shift"
+    assert preview.rules["Sales"] == (
+        "['Measure':'Measure':'Revenue Prior Year'] = N: "
+        "DB('Sales', !Version, STR(NUMBR(!Year) + (-1)), 'Measure':'Measure':'Revenue');"
+    )
+    assert preview.feeders["Sales"] == (
+        "[!Version, 'Year':'Year':'2022', 'Measure':'Measure':'Revenue'] => "
+        "DB('Sales', !Version, 'Year':'Year':'2023', 'Measure':'Measure':'Revenue Prior Year');\n"
+        "[!Version, 'Year':'Year':'2023', 'Measure':'Measure':'Revenue'] => "
+        "DB('Sales', !Version, 'Year':'Year':'2024', 'Measure':'Measure':'Revenue Prior Year');\n"
+        "[!Version, 'Year':'Year':'2024', 'Measure':'Measure':'Revenue'] => "
+        "DB('Sales', !Version, 'Year':'Year':'2025', 'Measure':'Measure':'Revenue Prior Year');"
+    )
+    assert preview.manifest["Sales:Revenue Prior Year"]["artifact"]["feeder_strategy"] == "same_cube_numeric_shift"
+    assert preview.manifest["Sales:Revenue Prior Year"]["artifact"]["preview_only"] is False
+
+
+def test_compile_keeps_shift_helper_preview_only_when_offset_dimension_is_not_numeric():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Month", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Month": "Month",
+                    "Measure": "Measure",
+                },
+                measure_element_types={
+                    "Revenue": "Numeric",
+                    "Revenue Prior Month": "Numeric",
+                },
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Month": ["Month"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "Month": ["Jan", "Feb"],
+                },
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+
+    sales["Revenue Prior Month"] = sales["Revenue"].shift(Month=-1)
+
+    explanation = model.explain("Sales:Revenue Prior Month")
+    assert explanation["backend"] == "Python materialization backend"
+
+
+def test_compile_deploys_shift_helper_when_reverse_attribute_mapping_is_proven():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Month", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Month": "Month",
+                    "Measure": "Measure",
+                },
+                measure_element_types={
+                    "Revenue": "Numeric",
+                    "Revenue Prior Month": "Numeric",
+                },
+                dimension_attributes={"Month": ["Prev Month"]},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Month": ["Month"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "Month": ["Jan", "Feb"],
+                },
+                dimension_attribute_values={
+                    "Month": {
+                        "Feb": {"Prev Month": "Jan"},
+                    },
+                },
+            ),
+        }
+    )
+    tm1 = MockTM1Service()
+    model = Model(metadata_provider=provider, tm1=tm1)
+    sales = model.cube("Sales")
+
+    sales["Revenue Prior Month"] = sales["Revenue"].shift(Month="Prev Month")
+
+    preview = model.compile(dry_run=False)
+
+    assert preview.deployment["Sales"]["deployed"] is True
+
+
+def test_compile_keeps_shift_helper_preview_only_without_reverse_attribute_metadata():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Month", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Month": "Month",
+                    "Measure": "Measure",
+                },
+                measure_element_types={
+                    "Revenue": "Numeric",
+                    "Revenue Prior Month": "Numeric",
+                },
+                dimension_attributes={"Month": ["Prev Month"]},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Month": ["Month"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "Month": ["Jan", "Feb"],
+                },
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+
+    sales["Revenue Prior Month"] = sales["Revenue"].shift(Month="Prev Month")
+
+    explanation = model.explain("Sales:Revenue Prior Month")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["feeder_strategy"] == "preview_only_same_cube_shift"
+    assert preview.manifest["Sales:Revenue Prior Month"]["artifact"]["preview_only"] is True
+
+    blocked_model = Model(metadata_provider=provider, tm1=MockTM1Service())
+    blocked_sales = blocked_model.cube("Sales")
+    blocked_sales["Revenue Prior Month"] = blocked_sales["Revenue"].shift(Month="Prev Month")
+    with pytest.raises(DeploymentError):
+        blocked_model.compile(dry_run=False)
 
 
 def test_validate_warns_when_native_formula_is_not_deployment_ready():
@@ -651,6 +910,76 @@ def test_compile_preview_emits_true_cross_cube_feeders_for_direct_lookup_case():
     assert preview.manifest["Sales:FX Rate EUR"]["artifact"]["feeder_strategy"] == "cross_cube_source_lookup"
     assert preview.manifest["Sales:FX Rate EUR"]["artifact"]["feeder_deployment_cube"] == "FX Rates"
     assert preview.manifest["Sales:FX Rate EUR"]["artifact"]["preview_only"] is False
+
+
+def test_compile_preview_feeds_both_same_cube_driver_and_cross_cube_origin():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Revenue Local": "Numeric", "Revenue EUR": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "Company": ["ACME"],
+                },
+            ),
+            "FX Rates": build_static_cube_metadata(
+                "FX Rates",
+                ["Version", "Company", "TargetCurrency", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "TargetCurrency": "TargetCurrency",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "TargetCurrency": ["TargetCurrency"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "TargetCurrency": ["EUR"],
+                },
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+    fx = model.cube("FX Rates")
+
+    # "Revenue Local" is a genuine value-composing, zero-gating same-cube driver, AND the cross-cube
+    # align is independently resolvable as a direct invertible lookup. Both sides of the formula
+    # contribute to the result, so both must feed the target: missing either one is under-feeding
+    # (e.g. a Revenue Local update or a Rate update would otherwise silently fail to trigger recalc).
+    sales["Revenue EUR"] = sales["Revenue Local"] * fx["Rate"].align(TargetCurrency="EUR")
+
+    explanation = model.explain("Sales:Revenue EUR")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["backend"] == "native-rule backend"
+    assert preview.feeders["Sales"] == "['Measure':'Measure':'Revenue Local'] => ['Measure':'Measure':'Revenue EUR'];"
+    assert preview.feeders["FX Rates"] == (
+        "[!Version, !Company, 'TargetCurrency':'TargetCurrency':'EUR', 'Measure':'Measure':'Rate'] => "
+        "DB('Sales', !Version, !Company, 'Measure':'Measure':'Revenue EUR');"
+    )
+    assert preview.manifest["Sales:Revenue EUR"]["artifact"]["feeder_deployment_cube"] is None
+    assert preview.manifest["Sales:Revenue EUR"]["artifact"]["feeder_deployment_cubes"] == [
+        "FX Rates",
+        "Sales",
+    ]
+    assert preview.manifest["Sales:Revenue EUR"]["artifact"]["preview_only"] is False
 
 
 def test_compile_preview_expands_consolidated_fixed_source_elements_to_leaf_feeders():
@@ -1175,13 +1504,310 @@ def test_compile_preview_emits_conditional_cross_cube_branch_feeders_from_multip
         "[!Version, !Company, 'TargetCurrency':'TargetCurrency':'EUR', 'Measure':'Measure':'Rate'] => "
         "DB('Sales', !Version, !Company, 'Measure':'Measure':'FX Rate Routed');"
     )
+    # "Use Corporate Rate" is the branch selector: it genuinely changes the computed value (which FX
+    # cube's rate is used), so it must also feed the target directly, alongside both cross-cube origins.
+    assert preview.feeders["Sales"] == (
+        "['Measure':'Measure':'Use Corporate Rate'] => ['Measure':'Measure':'FX Rate Routed'];"
+    )
     assert preview.manifest["Sales:FX Rate Routed"]["artifact"]["feeder_strategy"] == "conditional_cross_cube_branches"
     assert preview.manifest["Sales:FX Rate Routed"]["artifact"]["feeder_deployment_cube"] is None
     assert preview.manifest["Sales:FX Rate Routed"]["artifact"]["feeder_deployment_cubes"] == [
         "Corporate FX",
         "Market FX",
+        "Sales",
     ]
     assert preview.manifest["Sales:FX Rate Routed"]["artifact"]["preview_only"] is False
+
+
+def test_compile_preview_emits_conditional_cross_cube_branch_feeders_for_parameter_cube_gated_condition():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={
+                    "Local Rate": "Numeric",
+                    "Fallback Rate": "Numeric",
+                    "FX Rate Param Gated": "Numeric",
+                },
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+            ),
+            "FX Rates": build_static_cube_metadata(
+                "FX Rates",
+                ["Version", "Company", "TargetCurrency", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "TargetCurrency": "TargetCurrency",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Use Flag": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "TargetCurrency": ["TargetCurrency"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "TargetCurrency": ["EUR"],
+                },
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+    fx = model.cube("FX Rates")
+
+    sales["FX Rate Param Gated"] = model.case(
+        (fx["Use Flag"].align(TargetCurrency="EUR") != 0, sales["Local Rate"]),
+        default=sales["Fallback Rate"],
+    )
+
+    explanation = model.explain("Sales:FX Rate Param Gated")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["feeder_strategy"] == "conditional_cross_cube_branches"
+    assert preview.feeders["FX Rates"] == (
+        "[!Version, !Company, 'TargetCurrency':'TargetCurrency':'EUR', 'Measure':'Measure':'Use Flag'] => "
+        "DB('Sales', !Version, !Company, 'Measure':'Measure':'FX Rate Param Gated');"
+    )
+    # "Local Rate" and "Fallback Rate" are the branch values themselves: they genuinely determine the
+    # computed result, so both must also feed the target directly alongside the parameter-cube gate.
+    assert preview.feeders["Sales"] == (
+        "['Measure':'Measure':'Fallback Rate'] => ['Measure':'Measure':'FX Rate Param Gated'];\n"
+        "['Measure':'Measure':'Local Rate'] => ['Measure':'Measure':'FX Rate Param Gated'];"
+    )
+    assert preview.manifest["Sales:FX Rate Param Gated"]["artifact"]["feeder_strategy"] == "conditional_cross_cube_branches"
+    assert preview.manifest["Sales:FX Rate Param Gated"]["artifact"]["feeder_deployment_cube"] is None
+    assert preview.manifest["Sales:FX Rate Param Gated"]["artifact"]["feeder_deployment_cubes"] == [
+        "FX Rates",
+        "Sales",
+    ]
+    assert preview.manifest["Sales:FX Rate Param Gated"]["artifact"]["preview_only"] is False
+
+
+def test_compile_rejects_conditional_branch_union_when_one_branch_is_structurally_unsafe():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={
+                    "Use EUR": "Numeric",
+                    "FX Rate Group": "Numeric",
+                },
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+            ),
+            "FX Rates": build_static_cube_metadata(
+                "FX Rates",
+                ["Version", "Company", "TargetCurrency", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "TargetCurrency": "TargetCurrency",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "TargetCurrency": ["TargetCurrency"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "TargetCurrency": ["EUR", "USD"],
+                },
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+    fx = model.cube("FX Rates")
+
+    # "Use EUR" is a pure branch selector here, not a value-composing or zero-gating driver of the
+    # whole cross-cube term, and the default branch's "All Reporting" target is consolidated with no
+    # leaf-expansion metadata. The conditional branch union must therefore reject the whole formula
+    # for live deployment rather than fall back to a same-cube-only feeder plan that would silently
+    # ignore the FX Rates dependency for the resolvable branch and hide the unresolvable branch.
+    sales["FX Rate Group"] = model.case(
+        (sales["Use EUR"] != 0, fx["Rate"].align(TargetCurrency="EUR")),
+        default=fx["Rate"].align(TargetCurrency="All Reporting"),
+    )
+
+    explanation = model.explain("Sales:FX Rate Group")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["backend"] == "native-rule backend"
+    assert explanation["feeder_strategy"] == "preview_only_cross_cube"
+    assert preview.manifest["Sales:FX Rate Group"]["artifact"]["preview_only"] is True
+
+    blocked_model = Model(metadata_provider=provider, tm1=MockTM1Service())
+    blocked_sales = blocked_model.cube("Sales")
+    blocked_fx = blocked_model.cube("FX Rates")
+    blocked_sales["FX Rate Group"] = model.case(
+        (blocked_sales["Use EUR"] != 0, blocked_fx["Rate"].align(TargetCurrency="EUR")),
+        default=blocked_fx["Rate"].align(TargetCurrency="All Reporting"),
+    )
+    with pytest.raises(DeploymentError):
+        blocked_model.compile(dry_run=False)
+
+
+def test_align_mapping_rejects_cross_cube_value_driven_routing_as_ambiguous():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"FX Rate Routed": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+            ),
+            "FX Rates": build_static_cube_metadata(
+                "FX Rates",
+                ["Version", "Company", "TargetCurrency", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "TargetCurrency": "TargetCurrency",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "TargetCurrency": ["TargetCurrency"],
+                    "Measure": ["Measure"],
+                },
+            ),
+            "Routing Params": build_static_cube_metadata(
+                "Routing Params",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Currency Code": "String"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+    fx = model.cube("FX Rates")
+    routing = model.cube("Routing Params")
+
+    # The routing target currency is determined by a cell VALUE in a parameter cube, not by a static
+    # dimension attribute. This is exactly the "many-to-many ambiguous routing driven by a parameter
+    # cube value" pattern the project documents flag as unsafe to automate: the planner cannot derive
+    # a bounded, metadata-proven reverse feeder mapping from a runtime cell value, so it must fall back
+    # to the Python materialization backend rather than guess.
+    sales["FX Rate Routed"] = fx["Rate"].align(
+        TargetCurrency=routing["Currency Code"],
+    )
+
+    explanation = model.explain("Sales:FX Rate Routed")
+
+    assert explanation["backend"] == "Python materialization backend"
+    assert "literal" in explanation["rationale"] or "attribute reference" in explanation["rationale"]
+
+
+def test_align_mapping_rejects_nested_align_as_ambiguous_routing():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"FX Rate Routed": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+            ),
+            "FX Rates": build_static_cube_metadata(
+                "FX Rates",
+                ["Version", "Company", "TargetCurrency", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "TargetCurrency": "TargetCurrency",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "TargetCurrency": ["TargetCurrency"],
+                    "Measure": ["Measure"],
+                },
+            ),
+            "Routing Params": build_static_cube_metadata(
+                "Routing Params",
+                ["Version", "TargetCurrency", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "TargetCurrency": "TargetCurrency",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Mapped Currency": "String"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "TargetCurrency": ["TargetCurrency"],
+                    "Measure": ["Measure"],
+                },
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+    fx = model.cube("FX Rates")
+    routing = model.cube("Routing Params")
+
+    # A mapping value that is itself another align(...) lookup is a two-hop, value-driven routing
+    # chain. It must be rejected the same way a direct cross-cube value reference is.
+    sales["FX Rate Routed"] = fx["Rate"].align(
+        TargetCurrency=routing["Mapped Currency"].align(TargetCurrency="EUR"),
+    )
+
+    explanation = model.explain("Sales:FX Rate Routed")
+
+    assert explanation["backend"] == "Python materialization backend"
 
 
 def test_compile_blocks_live_deployment_for_preview_only_cross_cube_align_without_local_driver():
