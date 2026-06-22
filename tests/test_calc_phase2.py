@@ -193,6 +193,9 @@ def test_validate_warns_when_cross_cube_native_preview_is_still_live_blocked():
                     "Company": ["Company"],
                     "Measure": ["Measure"],
                 },
+                dimension_leaf_elements={
+                    "Company": ["ACME"],
+                },
             ),
             "FX Rates": build_static_cube_metadata(
                 "FX Rates",
@@ -288,6 +291,9 @@ def test_phase2_readiness_reports_align_prerequisites_when_mapping_is_incomplete
                     "Company": ["Company"],
                     "Measure": ["Measure"],
                 },
+                dimension_leaf_elements={
+                    "Company": ["ACME"],
+                },
             ),
             "FX Rates": build_static_cube_metadata(
                 "FX Rates",
@@ -350,6 +356,9 @@ def test_phase2_readiness_marks_constrained_align_ready_when_metadata_proves_map
                     "Company": ["Company"],
                     "Measure": ["Measure"],
                 },
+                dimension_leaf_elements={
+                    "Company": ["ACME", "BETA"],
+                },
             ),
             "FX Rates": build_static_cube_metadata(
                 "FX Rates",
@@ -406,6 +415,9 @@ def test_compile_preview_lowers_constrained_cross_cube_align_to_db_lookup():
                     "Version": ["Version"],
                     "Company": ["Company"],
                     "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "Company": ["ACME"],
                 },
             ),
             "FX Rates": build_static_cube_metadata(
@@ -658,6 +670,9 @@ def test_compile_preview_expands_consolidated_fixed_source_elements_to_leaf_feed
                     "Company": ["Company"],
                     "Measure": ["Measure"],
                 },
+                dimension_leaf_elements={
+                    "Company": ["ACME", "BETA"],
+                },
             ),
             "FX Rates": build_static_cube_metadata(
                 "FX Rates",
@@ -838,6 +853,335 @@ def test_compile_preview_emits_attribute_routed_cross_cube_feeders_when_leaf_map
     assert preview.manifest["Sales:FX Rate"]["artifact"]["feeder_strategy"] == "cross_cube_attribute_lookup"
     assert preview.manifest["Sales:FX Rate"]["artifact"]["feeder_deployment_cube"] == "FX Rates"
     assert preview.manifest["Sales:FX Rate"]["artifact"]["preview_only"] is False
+
+
+def test_compile_preview_emits_conditional_cross_cube_branch_feeders_for_case_expression():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={
+                    "Use EUR": "Numeric",
+                    "FX Rate Chosen": "Numeric",
+                },
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+            ),
+            "FX Rates": build_static_cube_metadata(
+                "FX Rates",
+                ["Version", "Company", "TargetCurrency", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "TargetCurrency": "TargetCurrency",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "TargetCurrency": ["TargetCurrency"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "TargetCurrency": ["EUR", "USD"],
+                },
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+    fx = model.cube("FX Rates")
+
+    sales["FX Rate Chosen"] = model.case(
+        (sales["Use EUR"] != 0, fx["Rate"].align(TargetCurrency="EUR")),
+        default=fx["Rate"].align(TargetCurrency="USD"),
+    )
+
+    explanation = model.explain("Sales:FX Rate Chosen")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["feeder_strategy"] == "conditional_cross_cube_branches"
+    assert preview.feeders["FX Rates"] == (
+        "[!Version, !Company, 'TargetCurrency':'TargetCurrency':'EUR', 'Measure':'Measure':'Rate'] => "
+        "DB('Sales', !Version, !Company, 'Measure':'Measure':'FX Rate Chosen');\n"
+        "[!Version, !Company, 'TargetCurrency':'TargetCurrency':'USD', 'Measure':'Measure':'Rate'] => "
+        "DB('Sales', !Version, !Company, 'Measure':'Measure':'FX Rate Chosen');"
+    )
+    assert preview.manifest["Sales:FX Rate Chosen"]["artifact"]["feeder_strategy"] == "conditional_cross_cube_branches"
+    assert preview.manifest["Sales:FX Rate Chosen"]["artifact"]["preview_only"] is False
+
+
+def test_compile_preview_emits_conditional_cross_cube_branch_feeders_for_where_expression():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={
+                    "Enable FX": "Numeric",
+                    "FX Rate Guarded": "Numeric",
+                },
+                dimension_attributes={"Company": ["Currency"]},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "Company": ["ACME", "BETA", "GAMMA"],
+                },
+                dimension_attribute_values={
+                    "Company": {
+                        "ACME": {"Currency": "USD"},
+                        "BETA": {"Currency": "USD"},
+                        "GAMMA": {"Currency": "EUR"},
+                    },
+                },
+            ),
+            "FX Rates": build_static_cube_metadata(
+                "FX Rates",
+                ["Version", "Currency", "TargetCurrency", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Currency": "Currency",
+                    "TargetCurrency": "TargetCurrency",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Currency": ["Currency"],
+                    "TargetCurrency": ["TargetCurrency"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "Currency": ["USD", "EUR"],
+                    "TargetCurrency": ["EUR"],
+                },
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+    fx = model.cube("FX Rates")
+
+    sales["FX Rate Guarded"] = fx["Rate"].align(
+        Currency=sales.Company.attribute("Currency"),
+        TargetCurrency="EUR",
+    ).where(sales["Enable FX"] != 0)
+
+    explanation = model.explain("Sales:FX Rate Guarded")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["feeder_strategy"] == "conditional_cross_cube_branches"
+    assert preview.feeders["FX Rates"] == (
+        "[!Version, 'Currency':'Currency':'EUR', 'TargetCurrency':'TargetCurrency':'EUR', "
+        "'Measure':'Measure':'Rate'] => DB('Sales', !Version, 'Company':'Company':'GAMMA', "
+        "'Measure':'Measure':'FX Rate Guarded');\n"
+        "[!Version, 'Currency':'Currency':'USD', 'TargetCurrency':'TargetCurrency':'EUR', "
+        "'Measure':'Measure':'Rate'] => DB('Sales', !Version, 'Company':'Company':'ACME', "
+        "'Measure':'Measure':'FX Rate Guarded'), DB('Sales', !Version, 'Company':'Company':'BETA', "
+        "'Measure':'Measure':'FX Rate Guarded');"
+    )
+    assert preview.manifest["Sales:FX Rate Guarded"]["artifact"]["feeder_strategy"] == "conditional_cross_cube_branches"
+    assert preview.manifest["Sales:FX Rate Guarded"]["artifact"]["preview_only"] is False
+
+
+def test_compile_preview_emits_mixed_conditional_cross_cube_branch_feeders_from_same_source_cube():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={
+                    "Use Corporate Rate": "Numeric",
+                    "FX Rate Mixed": "Numeric",
+                },
+                dimension_attributes={"Company": ["Region"]},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "Company": ["ACME", "BETA", "GAMMA"],
+                },
+                dimension_attribute_values={
+                    "Company": {
+                        "ACME": {"Region": "NA"},
+                        "BETA": {"Region": "NA"},
+                        "GAMMA": {"Region": "EU"},
+                    },
+                },
+            ),
+            "FX Rates": build_static_cube_metadata(
+                "FX Rates",
+                ["Version", "Region", "TargetCurrency", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Region": "Region",
+                    "TargetCurrency": "TargetCurrency",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Region": ["Region"],
+                    "TargetCurrency": ["TargetCurrency"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "Region": ["Global", "NA", "EU"],
+                    "TargetCurrency": ["EUR", "USD"],
+                },
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+    fx = model.cube("FX Rates")
+
+    sales["FX Rate Mixed"] = model.case(
+        (sales["Use Corporate Rate"] != 0, fx["Rate"].align(Region="Global", TargetCurrency="EUR")),
+        default=fx["Rate"].align(
+            Region=sales.Company.attribute("Region"),
+            TargetCurrency="USD",
+        ),
+    )
+
+    explanation = model.explain("Sales:FX Rate Mixed")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["feeder_strategy"] == "conditional_cross_cube_branches"
+    assert preview.feeders["FX Rates"] == (
+        "[!Version, 'Region':'Region':'EU', 'TargetCurrency':'TargetCurrency':'USD', "
+        "'Measure':'Measure':'Rate'] => DB('Sales', !Version, 'Company':'Company':'GAMMA', "
+        "'Measure':'Measure':'FX Rate Mixed');\n"
+        "[!Version, 'Region':'Region':'Global', 'TargetCurrency':'TargetCurrency':'EUR', 'Measure':'Measure':'Rate'] => "
+        "DB('Sales', !Version, 'Company':'Company':'ACME', 'Measure':'Measure':'FX Rate Mixed'), "
+        "DB('Sales', !Version, 'Company':'Company':'BETA', 'Measure':'Measure':'FX Rate Mixed'), "
+        "DB('Sales', !Version, 'Company':'Company':'GAMMA', 'Measure':'Measure':'FX Rate Mixed');\n"
+        "[!Version, 'Region':'Region':'NA', 'TargetCurrency':'TargetCurrency':'USD', "
+        "'Measure':'Measure':'Rate'] => DB('Sales', !Version, 'Company':'Company':'ACME', "
+        "'Measure':'Measure':'FX Rate Mixed'), DB('Sales', !Version, 'Company':'Company':'BETA', "
+        "'Measure':'Measure':'FX Rate Mixed');"
+    )
+    assert preview.manifest["Sales:FX Rate Mixed"]["artifact"]["feeder_strategy"] == "conditional_cross_cube_branches"
+    assert preview.manifest["Sales:FX Rate Mixed"]["artifact"]["preview_only"] is False
+
+
+def test_compile_preview_emits_conditional_cross_cube_branch_feeders_from_multiple_source_cubes():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={
+                    "Use Corporate Rate": "Numeric",
+                    "FX Rate Routed": "Numeric",
+                },
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+            ),
+            "Corporate FX": build_static_cube_metadata(
+                "Corporate FX",
+                ["Version", "Company", "TargetCurrency", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "TargetCurrency": "TargetCurrency",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "TargetCurrency": ["TargetCurrency"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "TargetCurrency": ["EUR"],
+                },
+            ),
+            "Market FX": build_static_cube_metadata(
+                "Market FX",
+                ["Version", "Company", "TargetCurrency", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "TargetCurrency": "TargetCurrency",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "TargetCurrency": ["TargetCurrency"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "TargetCurrency": ["EUR"],
+                },
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+    corporate_fx = model.cube("Corporate FX")
+    market_fx = model.cube("Market FX")
+
+    sales["FX Rate Routed"] = model.case(
+        (sales["Use Corporate Rate"] != 0, corporate_fx["Rate"].align(TargetCurrency="EUR")),
+        default=market_fx["Rate"].align(TargetCurrency="EUR"),
+    )
+
+    explanation = model.explain("Sales:FX Rate Routed")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["feeder_strategy"] == "conditional_cross_cube_branches"
+    assert preview.feeders["Corporate FX"] == (
+        "[!Version, !Company, 'TargetCurrency':'TargetCurrency':'EUR', 'Measure':'Measure':'Rate'] => "
+        "DB('Sales', !Version, !Company, 'Measure':'Measure':'FX Rate Routed');"
+    )
+    assert preview.feeders["Market FX"] == (
+        "[!Version, !Company, 'TargetCurrency':'TargetCurrency':'EUR', 'Measure':'Measure':'Rate'] => "
+        "DB('Sales', !Version, !Company, 'Measure':'Measure':'FX Rate Routed');"
+    )
+    assert preview.manifest["Sales:FX Rate Routed"]["artifact"]["feeder_strategy"] == "conditional_cross_cube_branches"
+    assert preview.manifest["Sales:FX Rate Routed"]["artifact"]["feeder_deployment_cube"] is None
+    assert preview.manifest["Sales:FX Rate Routed"]["artifact"]["feeder_deployment_cubes"] == [
+        "Corporate FX",
+        "Market FX",
+    ]
+    assert preview.manifest["Sales:FX Rate Routed"]["artifact"]["preview_only"] is False
 
 
 def test_compile_blocks_live_deployment_for_preview_only_cross_cube_align_without_local_driver():
@@ -1142,6 +1486,115 @@ def test_compile_deploys_attribute_routed_cross_cube_feeders_when_leaf_mapping_i
         "'Measure':'Measure':'Rate'] => DB('Sales', !Version, 'Company':'Company':'ACME', "
         "'Measure':'Measure':'FX Rate'), DB('Sales', !Version, 'Company':'Company':'BETA', "
         "'Measure':'Measure':'FX Rate');\n"
+    )
+
+
+def test_compile_deploys_conditional_cross_cube_branch_feeders_from_multiple_source_cubes():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={
+                    "Use Corporate Rate": "Numeric",
+                    "FX Rate Routed": "Numeric",
+                },
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+            ),
+            "Corporate FX": build_static_cube_metadata(
+                "Corporate FX",
+                ["Version", "Company", "TargetCurrency", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "TargetCurrency": "TargetCurrency",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "TargetCurrency": ["TargetCurrency"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "TargetCurrency": ["EUR"],
+                },
+            ),
+            "Market FX": build_static_cube_metadata(
+                "Market FX",
+                ["Version", "Company", "TargetCurrency", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "TargetCurrency": "TargetCurrency",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "TargetCurrency": ["TargetCurrency"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "TargetCurrency": ["EUR"],
+                },
+            ),
+        }
+    )
+    tm1 = MockTM1Service()
+    tm1.add_dimension("Version", {"Actual": "String"})
+    tm1.add_dimension("Company", {"ACME": "String"})
+    tm1.add_dimension("Measure", {"Use Corporate Rate": "Numeric", "FX Rate Routed": "Numeric", "Rate": "Numeric"})
+    tm1.add_dimension("TargetCurrency", {"EUR": "String"})
+    tm1.add_cube("Sales", ["Version", "Company", "Measure"])
+    tm1.add_cube("Corporate FX", ["Version", "Company", "TargetCurrency", "Measure"])
+    tm1.add_cube("Market FX", ["Version", "Company", "TargetCurrency", "Measure"])
+
+    model = Model(tm1=tm1, metadata_provider=provider)
+    sales = model.cube("Sales")
+    corporate_fx = model.cube("Corporate FX")
+    market_fx = model.cube("Market FX")
+
+    sales["FX Rate Routed"] = model.case(
+        (sales["Use Corporate Rate"] != 0, corporate_fx["Rate"].align(TargetCurrency="EUR")),
+        default=market_fx["Rate"].align(TargetCurrency="EUR"),
+    )
+
+    result = model.compile(dry_run=False)
+
+    assert result.deployment["Sales"]["deployed"] is True
+    assert result.deployment["Corporate FX"]["deployed"] is True
+    assert result.deployment["Market FX"]["deployed"] is True
+    assert result.deployment["Corporate FX"]["rule_line_count"] == 0
+    assert result.deployment["Market FX"]["rule_line_count"] == 0
+    assert result.deployment["Corporate FX"]["feeder_count"] == 1
+    assert result.deployment["Market FX"]["feeder_count"] == 1
+    assert tm1.cube_rules("Corporate FX") == (
+        "# Generated by TM1_bedrock_py calc Phase 2 compiler\n"
+        "# Cube: Corporate FX\n"
+        "\n"
+        "FEEDERS;\n"
+        "[!Version, !Company, 'TargetCurrency':'TargetCurrency':'EUR', 'Measure':'Measure':'Rate'] => DB('Sales', !Version, !Company, "
+        "'Measure':'Measure':'FX Rate Routed');\n"
+    )
+    assert tm1.cube_rules("Market FX") == (
+        "# Generated by TM1_bedrock_py calc Phase 2 compiler\n"
+        "# Cube: Market FX\n"
+        "\n"
+        "FEEDERS;\n"
+        "[!Version, !Company, 'TargetCurrency':'TargetCurrency':'EUR', 'Measure':'Measure':'Rate'] => DB('Sales', !Version, !Company, "
+        "'Measure':'Measure':'FX Rate Routed');\n"
     )
 
 

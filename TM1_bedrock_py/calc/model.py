@@ -399,7 +399,23 @@ class FeederPlan:
     strategy: str
     rationale: str
     deployment_cube: Optional[str] = None
+    deployment_statements: tuple[tuple[str, tuple[str, ...]], ...] = ()
     preview_only: bool = False
+
+    def iter_deployment_statements(self, default_cube: Optional[str] = None) -> Iterator[tuple[str, tuple[str, ...]]]:
+        if self.deployment_statements:
+            yield from self.deployment_statements
+            return
+        cube_name = self.deployment_cube or default_cube
+        if cube_name is None or not self.statements:
+            return
+        yield cube_name, self.statements
+
+    def deployment_cubes(self, default_cube: Optional[str] = None) -> tuple[str, ...]:
+        return tuple(
+            cube_name
+            for cube_name, _statements in self.iter_deployment_statements(default_cube=default_cube)
+        )
 
 
 class DimensionProxy:
@@ -570,16 +586,19 @@ class Model:
                     "preview_only": decision.backend is Backend.NATIVE and feeder_plan.preview_only,
                 },
             }
+            feeder_deployment_cubes = feeder_plan.deployment_cubes(default_cube=formula.target.cube_name)
+            if len(feeder_deployment_cubes) > 1:
+                manifest[target_key]["artifact"]["feeder_deployment_cubes"] = list(feeder_deployment_cubes)
             if decision.backend is not Backend.NATIVE:
                 continue
 
             rules_by_cube[formula.target.cube_name].append(
                 rule_statement
             )
-            feeder_cube_name = feeder_plan.deployment_cube or formula.target.cube_name
-            feeders_by_cube[feeder_cube_name].extend(
-                feeder_statements
-            )
+            for feeder_cube_name, grouped_feeder_statements in feeder_plan.iter_deployment_statements(
+                default_cube=formula.target.cube_name
+            ):
+                feeders_by_cube[feeder_cube_name].extend(grouped_feeder_statements)
 
         preview = CompilePreview(
             rules={
@@ -1342,6 +1361,9 @@ class Model:
         )
 
         if self._contains_align_expression(formula.expression):
+            conditional_cross_cube_plan = self._build_conditional_cross_cube_feeders(formula)
+            if conditional_cross_cube_plan is not None:
+                return conditional_cross_cube_plan
             if same_cube_source_refs:
                 return FeederPlan(
                     statements=statements,
@@ -1382,6 +1404,61 @@ class Model:
             preview_only=False,
         )
 
+    def _build_conditional_cross_cube_feeders(self, formula: Formula) -> Optional[FeederPlan]:
+        align_expressions = tuple(self._iter_align_expressions(formula.expression))
+        if not align_expressions:
+            return None
+        if len(align_expressions) == 1 and isinstance(formula.expression, MethodExpression) and formula.expression.method_name == "align":
+            return None
+
+        branch_plans: List[FeederPlan] = []
+        for align_expression in align_expressions:
+            branch_formula = Formula(target=formula.target, expression=align_expression)
+            direct_plan = self._build_direct_cross_cube_feeders(branch_formula)
+            if direct_plan is not None:
+                branch_plans.append(direct_plan)
+                continue
+            attribute_plan = self._build_attribute_routed_cross_cube_feeders(branch_formula)
+            if attribute_plan is not None:
+                branch_plans.append(attribute_plan)
+                continue
+            return None
+
+        deployment_statements_by_cube: Dict[str, set[str]] = defaultdict(set)
+        for plan in branch_plans:
+            for cube_name, statements in plan.iter_deployment_statements():
+                deployment_statements_by_cube[cube_name].update(statements)
+
+        statements = tuple(
+            sorted(
+                statement
+                for grouped_statements in deployment_statements_by_cube.values()
+                for statement in grouped_statements
+            )
+        )
+        if not statements:
+            return None
+
+        deployment_statements = tuple(
+            (cube_name, tuple(sorted(grouped_statements)))
+            for cube_name, grouped_statements in sorted(deployment_statements_by_cube.items())
+        )
+
+        deployment_cube = deployment_statements[0][0] if len(deployment_statements) == 1 else None
+
+        return FeederPlan(
+            statements=statements,
+            strategy="conditional_cross_cube_branches",
+            rationale=(
+                "Cross-cube feeder deployment is allowed because each native align branch has a bounded, "
+                "metadata-proven feeder plan, so the combined branch routing can be represented as an "
+                "explicit union of safe feeder statements across the required source cubes."
+            ),
+            deployment_cube=deployment_cube,
+            deployment_statements=deployment_statements,
+            preview_only=False,
+        )
+
     def _build_direct_cross_cube_feeders(self, formula: Formula) -> Optional[FeederPlan]:
         expression = formula.expression
         if not isinstance(expression, MethodExpression) or expression.method_name != "align":
@@ -1405,13 +1482,17 @@ class Model:
         if source_measure_dim is None or target_measure_dim is None:
             return None
 
+        broadcast_target_dimensions: List[str] = []
         for dimension_name in target_dims:
             if dimension_name == target_measure_dim:
                 continue
-            if dimension_name not in source_dims:
-                return None
             if dimension_name in expression.kwargs:
                 return None
+            if dimension_name not in source_dims:
+                leaf_elements = tuple(target_metadata.dimension_leaf_elements.get(dimension_name, ()))
+                if not leaf_elements:
+                    return None
+                broadcast_target_dimensions.append(dimension_name)
 
         for dimension_name in source_dims:
             if dimension_name == source_measure_dim:
@@ -1430,7 +1511,14 @@ class Model:
             cube_name=source_ref.cube_name,
             measure_name=source_ref.measure_name,
         )
-        target_statement = self._build_target_db_statement(formula.target)
+        target_statements = self._build_target_db_statements(
+            source_cube_name=source_ref.cube_name,
+            target_ref=formula.target,
+            fixed_target_elements={},
+            broadcast_target_dimensions=broadcast_target_dimensions,
+        )
+        if not target_statements:
+            return None
         fixed_origin_options: List[List[tuple[str, Optional[str], str]]] = []
         for dimension_name in sorted(
             dimension_name
@@ -1474,7 +1562,7 @@ class Model:
                     )
                 else:
                     lhs_parts.append(f"!{dimension_name}")
-            statements.append(f"[{', '.join(lhs_parts)}] => {target_statement};")
+            statements.append(f"[{', '.join(lhs_parts)}] => {', '.join(target_statements)};")
 
         return FeederPlan(
             statements=tuple(statements),
@@ -1482,7 +1570,8 @@ class Model:
             rationale=(
                 "Cross-cube feeder deployment is allowed because the lookup is direct and invertible: "
                 "shared target dimensions map one-to-one from the source cube, and any extra source "
-                "dimensions are fixed to explicit leaf-safe elements or metadata-proven leaf expansions."
+                "dimensions are fixed to explicit leaf-safe elements or metadata-proven leaf expansions, "
+                "while any target-only dimensions are expanded to explicit target leaf sets when metadata proves them."
             ),
             deployment_cube=source_ref.cube_name,
             preview_only=False,
@@ -1592,31 +1681,15 @@ class Model:
             target_db_targets: List[str] = []
             for target_combo in product(*target_coordinate_options):
                 target_elements_by_dimension = dict(target_combo)
-                target_coordinates: List[str] = []
-                for dimension_name in target_metadata.dimensions:
-                    if dimension_name == target_measure_dim:
-                        target_coordinates.append(
-                            self._compile_dimension_element_coordinate(
-                                cube_name=formula.target.cube_name,
-                                dimension_name=dimension_name,
-                                element_name=formula.target.measure_name,
-                                explicit_hierarchy_name=None,
-                            )
-                        )
-                    elif dimension_name in target_elements_by_dimension:
-                        target_coordinates.append(
-                            self._compile_dimension_element_coordinate(
-                                cube_name=formula.target.cube_name,
-                                dimension_name=dimension_name,
-                                element_name=target_elements_by_dimension[dimension_name],
-                                explicit_hierarchy_name=None,
-                            )
-                        )
-                    else:
-                        target_coordinates.append(f"!{dimension_name}")
-                target_db_targets.append(
-                    f"DB('{formula.target.cube_name}', {', '.join(target_coordinates)})"
+                built_targets = self._build_target_db_statements(
+                    source_cube_name=source_ref.cube_name,
+                    target_ref=formula.target,
+                    fixed_target_elements=target_elements_by_dimension,
+                    broadcast_target_dimensions=[],
                 )
+                if not built_targets:
+                    return None
+                target_db_targets.extend(built_targets)
 
             if not target_db_targets:
                 continue
@@ -1678,25 +1751,64 @@ class Model:
             preview_only=False,
         )
 
-    def _build_target_db_statement(self, target_ref: MeasureRef) -> str:
+    def _build_target_db_statements(
+        self,
+        source_cube_name: str,
+        target_ref: MeasureRef,
+        fixed_target_elements: Mapping[str, str],
+        broadcast_target_dimensions: Sequence[str],
+    ) -> List[str]:
         target_metadata = self._get_cube_metadata(target_ref.cube_name)
         assert target_metadata is not None
         assert target_metadata.measure_dimension_name is not None
 
-        target_coordinates: List[str] = []
-        for dimension_name in target_metadata.dimensions:
-            if dimension_name == target_metadata.measure_dimension_name:
-                target_coordinates.append(
-                    self._compile_dimension_element_coordinate(
-                        cube_name=target_ref.cube_name,
-                        dimension_name=dimension_name,
-                        element_name=target_ref.measure_name,
-                        explicit_hierarchy_name=None,
+        broadcast_dimensions = tuple(sorted(set(broadcast_target_dimensions)))
+        broadcast_options = [
+            tuple(target_metadata.dimension_leaf_elements.get(dimension_name, ()))
+            for dimension_name in broadcast_dimensions
+        ]
+        if any(not options for options in broadcast_options):
+            return []
+
+        statements: List[str] = []
+        for broadcast_combo in product(*broadcast_options) if broadcast_options else [()]:
+            broadcast_elements_by_dimension = dict(zip(broadcast_dimensions, broadcast_combo))
+            target_coordinates: List[str] = []
+            for dimension_name in target_metadata.dimensions:
+                if dimension_name == target_metadata.measure_dimension_name:
+                    target_coordinates.append(
+                        self._compile_dimension_element_coordinate(
+                            cube_name=target_ref.cube_name,
+                            dimension_name=dimension_name,
+                            element_name=target_ref.measure_name,
+                            explicit_hierarchy_name=None,
+                        )
                     )
-                )
-            else:
-                target_coordinates.append(f"!{dimension_name}")
-        return f"DB('{target_ref.cube_name}', {', '.join(target_coordinates)})"
+                elif dimension_name in fixed_target_elements:
+                    target_coordinates.append(
+                        self._compile_dimension_element_coordinate(
+                            cube_name=target_ref.cube_name,
+                            dimension_name=dimension_name,
+                            element_name=fixed_target_elements[dimension_name],
+                            explicit_hierarchy_name=None,
+                        )
+                    )
+                elif dimension_name in broadcast_elements_by_dimension:
+                    target_coordinates.append(
+                        self._compile_dimension_element_coordinate(
+                            cube_name=target_ref.cube_name,
+                            dimension_name=dimension_name,
+                            element_name=broadcast_elements_by_dimension[dimension_name],
+                            explicit_hierarchy_name=None,
+                        )
+                    )
+                elif dimension_name in (self._get_cube_metadata(source_cube_name).dimensions if self._get_cube_metadata(source_cube_name) is not None else ()):
+                    target_coordinates.append(f"!{dimension_name}")
+                else:
+                    return []
+            statements.append(f"DB('{target_ref.cube_name}', {', '.join(target_coordinates)})")
+
+        return statements
 
     def _expand_feeder_origin_elements(
         self,
@@ -1741,6 +1853,38 @@ class Model:
             return tuple((explicit_hierarchy_name, leaf_element_name) for leaf_element_name in expanded_leaf_elements)
 
         return None
+
+    def _iter_align_expressions(self, expression: Expression) -> Iterator[MethodExpression]:
+        if isinstance(expression, MethodExpression):
+            if expression.method_name == "align":
+                yield expression
+            yield from self._iter_align_expressions(expression.base)
+            for arg in expression.args:
+                yield from self._iter_align_expressions(arg)
+            for value in expression.kwargs.values():
+                yield from self._iter_align_expressions(value)
+            return
+
+        if isinstance(expression, UnaryExpression):
+            yield from self._iter_align_expressions(expression.operand)
+            return
+
+        if isinstance(expression, (BinaryExpression, ComparisonExpression)):
+            yield from self._iter_align_expressions(expression.left)
+            yield from self._iter_align_expressions(expression.right)
+            return
+
+        if isinstance(expression, RollingExpression):
+            yield from self._iter_align_expressions(expression.base)
+            for value in expression.kwargs.values():
+                yield from self._iter_align_expressions(value)
+            return
+
+        if isinstance(expression, CaseExpression):
+            for condition, value in expression.cases:
+                yield from self._iter_align_expressions(condition)
+                yield from self._iter_align_expressions(value)
+            yield from self._iter_align_expressions(expression.default)
 
     def _native_align_unsupported_reason(
         self,
