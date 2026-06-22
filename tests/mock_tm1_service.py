@@ -65,6 +65,26 @@ class MockCubeService(_BaseService):
         self._record("get_dimension_names", cube_name, skip_sandbox_dimension, **kwargs)
         return list(self._tm1._get_cube(cube_name).dimensions)
 
+    def update_or_create_rules(self, cube_name: str, rules: Any, **kwargs: Any) -> Any:
+        self._record("update_or_create_rules", cube_name, rules, **kwargs)
+        self._tm1._cube_rules[_name_key(cube_name)] = str(rules)
+        return _MockResponse(status_code=204, text="")
+
+    def check_rules(self, cube_name: str, **kwargs: Any) -> Any:
+        self._record("check_rules", cube_name, **kwargs)
+        if _name_key(cube_name) not in self._tm1._cube_rules:
+            raise KeyError(f"Cube '{cube_name}' has no deployed rules in MockTM1Service.")
+        return self._tm1._cube_rule_check_results.get(
+            _name_key(cube_name),
+            _MockResponse(status_code=200, text="Rules are valid."),
+        )
+
+
+@dataclass(frozen=True)
+class _MockResponse:
+    status_code: int
+    text: str = ""
+
 
 class MockDimensionAttributeService(_BaseService):
     def get_all(self, dimension_name: str, **kwargs: Any) -> list[Any]:
@@ -396,6 +416,8 @@ class MockTM1Service:
         self.rest_post_handlers: dict[str, Callable[..., Any]] = {}
         self._dimensions: dict[str, Dimension] = {}
         self._cubes: dict[str, Cube] = {}
+        self._cube_rules: dict[str, str] = {}
+        self._cube_rule_check_results: dict[str, _MockResponse] = {}
         self._cube_data: dict[str, pd.DataFrame] = {}
         self._mdx_results: dict[str, Union[pd.DataFrame, Exception]] = {}
         self._set_mdx_results: dict[str, Union[list, Exception]] = {}
@@ -467,6 +489,15 @@ class MockTM1Service:
 
     def cube_data(self, cube_name: str) -> pd.DataFrame:
         return self._cube_data.get(_name_key(cube_name), pd.DataFrame()).copy(deep=True)
+
+    def cube_rules(self, cube_name: str) -> str:
+        return self._cube_rules.get(_name_key(cube_name), "")
+
+    def set_cube_rule_check_result(self, cube_name: str, status_code: int, text: str = "") -> None:
+        self._cube_rule_check_results[_name_key(cube_name)] = _MockResponse(
+            status_code=status_code,
+            text=text,
+        )
 
     def re_connect(self) -> None:
         self.calls.append(TM1Call("MockTM1Service", "re_connect", (), {}))
