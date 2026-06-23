@@ -2394,12 +2394,12 @@ def test_align_mapping_rejects_cross_cube_value_driven_routing_as_ambiguous():
 
     assert explanation["backend"] == "Python materialization backend"
     assert "literal" in explanation["rationale"] or "attribute reference" in explanation["rationale"]
-    assert explanation["native_eligibility"] == {
-        "status": "unsupported",
-        "code": "native_align_value_driven_mapping",
-        "category": "mapping_shape",
-        "detail": "The align(...) mapping is value-driven rather than metadata-invertible, so it is not native-safe.",
-    }
+    native_eligibility = explanation["native_eligibility"]
+    assert native_eligibility["status"] == "unsupported"
+    assert native_eligibility["code"] == "native_align_value_driven_mapping"
+    assert native_eligibility["category"] == "mapping_shape"
+    assert "value-driven" in native_eligibility["detail"]
+    assert "confirmed permanent exclusion" in native_eligibility["detail"]
 
 
 def test_align_mapping_rejects_nested_align_as_ambiguous_routing():
@@ -3680,3 +3680,195 @@ def test_compile_deploys_target_only_broadcast_dimension_when_hierarchy_is_unamb
         "DB('Sales', !Version, 'Region':'Region':'East', 'Measure':'Measure':'FX Rate'), "
         "DB('Sales', !Version, 'Region':'Region':'West', 'Measure':'Measure':'FX Rate');"
     )
+
+
+def _chained_attribute_metadata_provider():
+    return StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                    "Region": "Region",
+                },
+                measure_element_types={"FX Rate": "Numeric"},
+                dimension_attributes={"Company": ["Region Code"], "Region": ["Default Currency"]},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                    "Region": ["Region"],
+                },
+                dimension_leaf_elements={
+                    "Company": ["ACME", "BETA", "GAMMA"],
+                    "Region": ["NA", "EU"],
+                },
+                dimension_attribute_values={
+                    "Company": {
+                        "ACME": {"Region Code": "NA"},
+                        "BETA": {"Region Code": "NA"},
+                        "GAMMA": {"Region Code": "EU"},
+                    },
+                    "Region": {
+                        "NA": {"Default Currency": "USD"},
+                        "EU": {"Default Currency": "EUR"},
+                    },
+                },
+            ),
+            "FX Rates": build_static_cube_metadata(
+                "FX Rates",
+                ["Version", "TargetCurrency", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "TargetCurrency": "TargetCurrency",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "TargetCurrency": ["TargetCurrency"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "TargetCurrency": ["USD", "EUR"],
+                },
+            ),
+        }
+    )
+
+
+def test_compile_preview_emits_nested_attrs_for_two_hop_chained_attribute_align():
+    provider = _chained_attribute_metadata_provider()
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+    fx = model.cube("FX Rates")
+
+    sales["FX Rate"] = fx["Rate"].align(
+        TargetCurrency=sales.Company.attribute_chain(
+            "Region Code", via_dimension="Region", attribute="Default Currency"
+        ),
+    )
+
+    explanation = model.explain("Sales:FX Rate")
+    preview = model.compile(dry_run=True)
+
+    assert preview.errors == []
+    assert preview.rules["Sales"] == (
+        "['Measure':'Measure':'FX Rate'] = N: DB('FX Rates', !Version, "
+        "ATTRS('Region', ATTRS('Company', !Company, 'Region Code'), 'Default Currency'), "
+        "'Measure':'Measure':'Rate');"
+    )
+    assert explanation["feeder_strategy"] == "cross_cube_attribute_lookup"
+    assert explanation["native_eligibility"]["status"] == "deployable"
+    assert preview.manifest["Sales:FX Rate"]["artifact"]["preview_only"] is False
+    assert preview.feeders["FX Rates"] == (
+        "[!Version, 'TargetCurrency':'TargetCurrency':'EUR', 'Measure':'Measure':'Rate'] => "
+        "DB('Sales', !Version, 'Company':'Company':'GAMMA', 'Measure':'Measure':'FX Rate');\n"
+        "[!Version, 'TargetCurrency':'TargetCurrency':'USD', 'Measure':'Measure':'Rate'] => "
+        "DB('Sales', !Version, 'Company':'Company':'ACME', 'Measure':'Measure':'FX Rate'), "
+        "DB('Sales', !Version, 'Company':'Company':'BETA', 'Measure':'Measure':'FX Rate');"
+    )
+
+
+def test_compile_deploys_two_hop_chained_attribute_align_via_mock_tm1_service():
+    provider = _chained_attribute_metadata_provider()
+    tm1 = MockTM1Service()
+    tm1.add_dimension("Version", {"Actual": "String"})
+    tm1.add_dimension("Company", {"ACME": "String", "BETA": "String", "GAMMA": "String"})
+    tm1.add_dimension("Measure", {"FX Rate": "Numeric", "Rate": "Numeric"})
+    tm1.add_dimension("TargetCurrency", {"USD": "String", "EUR": "String"})
+    tm1.add_cube("Sales", ["Version", "Company", "Measure"])
+    tm1.add_cube("FX Rates", ["Version", "TargetCurrency", "Measure"])
+
+    model = Model(tm1=tm1, metadata_provider=provider)
+    sales = model.cube("Sales")
+    fx = model.cube("FX Rates")
+
+    sales["FX Rate"] = fx["Rate"].align(
+        TargetCurrency=sales.Company.attribute_chain(
+            "Region Code", via_dimension="Region", attribute="Default Currency"
+        ),
+    )
+
+    result = model.compile(dry_run=False)
+
+    assert result.deployment["FX Rates"]["deployed"] is True
+    assert result.deployment["FX Rates"]["feeder_count"] == 2
+
+
+def test_compile_keeps_chained_attribute_align_preview_only_when_intermediate_value_unresolved():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                    "Region": "Region",
+                },
+                measure_element_types={"FX Rate": "Numeric"},
+                dimension_attributes={"Company": ["Region Code"], "Region": ["Default Currency"]},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                    "Region": ["Region"],
+                },
+                dimension_leaf_elements={
+                    "Company": ["ACME", "BETA", "GAMMA"],
+                    "Region": ["NA", "EU"],
+                },
+                dimension_attribute_values={
+                    "Company": {
+                        "ACME": {"Region Code": "NA"},
+                        "BETA": {"Region Code": "NA"},
+                        # GAMMA's "Region Code" does not resolve to a real Region leaf element --
+                        # the chain must fail closed, not silently drop GAMMA's feeder coverage.
+                        "GAMMA": {"Region Code": "UNKNOWN"},
+                    },
+                    "Region": {
+                        "NA": {"Default Currency": "USD"},
+                        "EU": {"Default Currency": "EUR"},
+                    },
+                },
+            ),
+            "FX Rates": build_static_cube_metadata(
+                "FX Rates",
+                ["Version", "TargetCurrency", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "TargetCurrency": "TargetCurrency",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "TargetCurrency": ["TargetCurrency"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "TargetCurrency": ["USD", "EUR"],
+                },
+            ),
+        }
+    )
+
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+    fx = model.cube("FX Rates")
+
+    sales["FX Rate"] = fx["Rate"].align(
+        TargetCurrency=sales.Company.attribute_chain(
+            "Region Code", via_dimension="Region", attribute="Default Currency"
+        ),
+    )
+
+    explanation = model.explain("Sales:FX Rate")
+
+    assert explanation["native_eligibility"]["status"] == "metadata_incomplete"
+    assert explanation["native_eligibility"]["code"] == "native_align_reverse_mapping_unproven"

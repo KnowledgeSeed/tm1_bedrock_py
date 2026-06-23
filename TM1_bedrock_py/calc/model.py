@@ -41,6 +41,23 @@ class AttributeRef:
 
 
 @dataclass(frozen=True)
+class ChainedAttributeRef:
+    cube_name: str
+    first_dimension_name: str
+    first_attribute_name: str
+    second_dimension_name: str
+    second_attribute_name: str
+
+    @property
+    def label(self) -> str:
+        return (
+            f"{self.cube_name}.{self.first_dimension_name}.attribute_chain("
+            f"{self.first_attribute_name}, via_dimension={self.second_dimension_name}, "
+            f"attribute={self.second_attribute_name})"
+        )
+
+
+@dataclass(frozen=True)
 class ElementRef:
     cube_name: str
     dimension_name: str
@@ -193,6 +210,14 @@ class AttributeExpression(Expression):
 
     def iter_attribute_refs(self) -> Iterator[AttributeRef]:
         yield self.ref
+
+    def describe(self) -> str:
+        return self.ref.label
+
+
+@dataclass(frozen=True)
+class ChainedAttributeExpression(Expression):
+    ref: ChainedAttributeRef
 
     def describe(self) -> str:
         return self.ref.label
@@ -504,6 +529,17 @@ class DimensionProxy:
                 cube_name=self._cube_name,
                 dimension_name=self._dimension_name,
                 attribute_name=attribute_name,
+            )
+        )
+
+    def attribute_chain(self, first_attribute: str, via_dimension: str, attribute: str) -> ChainedAttributeExpression:
+        return ChainedAttributeExpression(
+            ref=ChainedAttributeRef(
+                cube_name=self._cube_name,
+                first_dimension_name=self._dimension_name,
+                first_attribute_name=first_attribute,
+                second_dimension_name=via_dimension,
+                second_attribute_name=attribute,
             )
         )
 
@@ -1088,7 +1124,14 @@ class Model:
                 "status": "unsupported",
                 "code": "native_align_value_driven_mapping",
                 "category": "mapping_shape",
-                "detail": "The align(...) mapping is value-driven rather than metadata-invertible, so it is not native-safe.",
+                "detail": (
+                    "The align(...) mapping is value-driven rather than metadata-invertible, so it is not "
+                    "native-safe. This is a confirmed permanent exclusion, not an unimplemented feature: TM1 "
+                    "places no constraint on a measure cell's possible values (unlike a dimension's fixed "
+                    "leaf-element set), so no compile-time metadata fact can ever bound the feeder enumeration "
+                    "for this shape. Multi-hop attribute chains (ChainedAttributeExpression) are a different, "
+                    "bounded shape and are native-eligible -- see native_align_reverse_mapping_unproven instead."
+                ),
             }
         if "cannot infer source dimensions" in blocker_reason:
             return {
@@ -1656,6 +1699,9 @@ class Model:
         if isinstance(expression, AttributeExpression):
             return f"attribute reference '{expression.ref.label}' is outside the native subset"
 
+        if isinstance(expression, ChainedAttributeExpression):
+            return f"chained attribute reference '{expression.ref.label}' is outside the native subset"
+
         if isinstance(expression, DimensionFunctionExpression):
             if expression.ref.cube_name != target_cube_name:
                 return f"dimension-function reference '{expression.ref.label}' is outside the native subset (cross-cube)"
@@ -2101,6 +2147,17 @@ class Model:
                 f"'{expression.ref.attribute_name}')"
             )
 
+        if isinstance(expression, ChainedAttributeExpression):
+            inner = (
+                f"ATTRS('{expression.ref.first_dimension_name}', "
+                f"!{expression.ref.first_dimension_name}, "
+                f"'{expression.ref.first_attribute_name}')"
+            )
+            return (
+                f"ATTRS('{expression.ref.second_dimension_name}', {inner}, "
+                f"'{expression.ref.second_attribute_name}')"
+            )
+
         if isinstance(expression, ElementExpression):
             return self._compile_dimension_element_coordinate(
                 cube_name=expression.ref.cube_name,
@@ -2520,7 +2577,7 @@ class Model:
         if source_measure_dim is None or target_measure_dim is None:
             return None
 
-        attribute_mappings: Dict[str, AttributeExpression] = {}
+        attribute_mappings: Dict[str, Expression] = {}
         fixed_source_values: Dict[str, Expression] = {}
         passthrough_dims: List[str] = []
 
@@ -2529,7 +2586,7 @@ class Model:
                 continue
 
             mapping = expression.kwargs.get(dimension_name)
-            if isinstance(mapping, AttributeExpression):
+            if isinstance(mapping, (AttributeExpression, ChainedAttributeExpression)):
                 attribute_mappings[dimension_name] = mapping
                 continue
             if mapping is not None:
@@ -2543,10 +2600,11 @@ class Model:
         if not attribute_mappings:
             return None
 
-        attribute_target_dimensions = {
-            mapping.ref.dimension_name
-            for mapping in attribute_mappings.values()
-        }
+        attribute_target_dimensions: set[str] = set()
+        for mapping in attribute_mappings.values():
+            attribute_target_dimensions.add(self._align_mapping_attribute_home_dimension(mapping))
+            if isinstance(mapping, ChainedAttributeExpression):
+                attribute_target_dimensions.add(mapping.ref.second_dimension_name)
         broadcast_target_dimensions = [
             dimension_name
             for dimension_name in target_metadata.dimensions
@@ -2682,17 +2740,67 @@ class Model:
         )
 
     @staticmethod
+    def _align_mapping_attribute_home_dimension(mapped_expression: Expression) -> Optional[str]:
+        if isinstance(mapped_expression, AttributeExpression):
+            return mapped_expression.ref.dimension_name
+        if isinstance(mapped_expression, ChainedAttributeExpression):
+            return mapped_expression.ref.first_dimension_name
+        return None
+
+    @staticmethod
     def _group_align_attribute_mappings_by_target_dimension(
         expression: MethodExpression,
-    ) -> Dict[str, List[tuple[str, AttributeExpression]]]:
-        grouped_mappings: Dict[str, List[tuple[str, AttributeExpression]]] = defaultdict(list)
+    ) -> Dict[str, List[tuple[str, Expression]]]:
+        grouped_mappings: Dict[str, List[tuple[str, Expression]]] = defaultdict(list)
         for source_dimension_name, mapped_expression in sorted(expression.kwargs.items()):
-            if not isinstance(mapped_expression, AttributeExpression):
+            home_dimension_name = Model._align_mapping_attribute_home_dimension(mapped_expression)
+            if home_dimension_name is None:
                 continue
-            grouped_mappings[mapped_expression.ref.dimension_name].append(
+            grouped_mappings[home_dimension_name].append(
                 (source_dimension_name, mapped_expression)
             )
         return dict(grouped_mappings)
+
+    def _resolve_align_attribute_mapping_value(
+        self,
+        mapping: Expression,
+        target_metadata: CubeMetadata,
+        attribute_values: Dict[str, Dict[str, Any]],
+        target_element_name: str,
+    ) -> Optional[str]:
+        if isinstance(mapping, AttributeExpression):
+            return str(
+                attribute_values.get(target_element_name, {}).get(mapping.ref.attribute_name, "")
+            ).strip()
+
+        if isinstance(mapping, ChainedAttributeExpression):
+            intermediate_value = str(
+                attribute_values.get(target_element_name, {}).get(mapping.ref.first_attribute_name, "")
+            ).strip()
+            intermediate_leaf_elements = tuple(
+                target_metadata.dimension_leaf_elements.get(mapping.ref.second_dimension_name, ())
+            )
+            canonical_intermediate_element = next(
+                (
+                    leaf_element_name
+                    for leaf_element_name in intermediate_leaf_elements
+                    if str(leaf_element_name).strip() == intermediate_value
+                ),
+                None,
+            )
+            if canonical_intermediate_element is None:
+                return None
+            second_hop_attribute_values = target_metadata.dimension_attribute_values.get(
+                mapping.ref.second_dimension_name, {}
+            )
+            final_value = second_hop_attribute_values.get(canonical_intermediate_element, {}).get(
+                mapping.ref.second_attribute_name
+            )
+            if final_value is None:
+                return None
+            return str(final_value).strip()
+
+        return None
 
     def _build_align_attribute_reverse_mapping_groups(
         self,
@@ -2730,12 +2838,17 @@ class Model:
             for target_element_name in leaf_elements:
                 source_key: List[str] = []
                 for source_dimension_name, mapping in mappings:
-                    mapped_source_element = str(
-                        attribute_values.get(target_element_name, {}).get(mapping.ref.attribute_name, "")
-                    ).strip()
-                    canonical_source_element = allowed_source_elements_by_dimension[
-                        source_dimension_name
-                    ].get(mapped_source_element)
+                    mapped_source_element = self._resolve_align_attribute_mapping_value(
+                        mapping=mapping,
+                        target_metadata=target_metadata,
+                        attribute_values=attribute_values,
+                        target_element_name=target_element_name,
+                    )
+                    canonical_source_element = (
+                        allowed_source_elements_by_dimension[source_dimension_name].get(mapped_source_element)
+                        if mapped_source_element is not None
+                        else None
+                    )
                     if canonical_source_element is None:
                         return None
                     source_key.append(canonical_source_element)
@@ -3363,6 +3476,40 @@ class Model:
                 if hierarchy_reason is not None:
                     return hierarchy_reason
                 continue
+            if isinstance(mapped_expression, ChainedAttributeExpression):
+                if mapped_expression.ref.cube_name != target_cube_name:
+                    return "align(...) attribute mappings must come from the target cube context"
+                if mapped_expression.ref.first_dimension_name not in target_dimension_names:
+                    return (
+                        f"align(...) attribute mapping uses target dimension "
+                        f"'{mapped_expression.ref.first_dimension_name}', which is not part of cube '{target_cube_name}'"
+                    )
+                # second_dimension_name is the intermediate "via" dimension for the attribute chase. Unlike
+                # first_dimension_name, it is never used as a feeder coordinate axis -- it's purely a metadata
+                # lookup table -- so it does not need to be one of this cube's own dimensions.
+                first_hierarchy_reason = self._dimension_hierarchy_ambiguity_reason(
+                    cube_name=target_cube_name,
+                    dimension_name=mapped_expression.ref.first_dimension_name,
+                    explicit_hierarchy_name=None,
+                )
+                if first_hierarchy_reason is not None:
+                    return first_hierarchy_reason
+                second_hierarchy_reason = self._dimension_hierarchy_ambiguity_reason(
+                    cube_name=target_cube_name,
+                    dimension_name=mapped_expression.ref.second_dimension_name,
+                    explicit_hierarchy_name=None,
+                )
+                if second_hierarchy_reason is not None:
+                    return second_hierarchy_reason
+                continue
+            if isinstance(mapped_expression, (MeasureExpression, MethodExpression, CaseExpression)):
+                return (
+                    f"align(...) mapping for source dimension '{source_dimension_name}' must be a literal "
+                    "or target-cube attribute reference; this mapping's value comes from a measure cell, "
+                    "whose possible contents are not enumerable from cube/dimension metadata -- TM1 places "
+                    "no constraint on a String/Numeric cell's value, unlike a dimension's fixed leaf-element "
+                    "set, so no compile-time feeder enumeration is possible for this shape"
+                )
             return (
                 f"align(...) mapping for source dimension '{source_dimension_name}' must be a literal "
                 "or target-cube attribute reference"
@@ -3386,7 +3533,7 @@ class Model:
     @staticmethod
     def _align_uses_attribute_mapping(expression: MethodExpression) -> bool:
         return any(
-            isinstance(mapped_expression, AttributeExpression)
+            isinstance(mapped_expression, (AttributeExpression, ChainedAttributeExpression))
             for mapped_expression in expression.kwargs.values()
         )
 
@@ -3402,11 +3549,13 @@ class Model:
         if source_metadata is None or target_metadata is None:
             return False
         source_dimension_names = set(source_metadata.dimensions)
-        attribute_target_dimensions = {
-            mapped_expression.ref.dimension_name
-            for mapped_expression in expression.kwargs.values()
-            if isinstance(mapped_expression, AttributeExpression)
-        }
+        attribute_target_dimensions: set[str] = set()
+        for mapped_expression in expression.kwargs.values():
+            if isinstance(mapped_expression, AttributeExpression):
+                attribute_target_dimensions.add(mapped_expression.ref.dimension_name)
+            elif isinstance(mapped_expression, ChainedAttributeExpression):
+                attribute_target_dimensions.add(mapped_expression.ref.first_dimension_name)
+                attribute_target_dimensions.add(mapped_expression.ref.second_dimension_name)
         return any(
             dimension_name != target_metadata.measure_dimension_name
             and dimension_name not in source_dimension_names
@@ -3430,7 +3579,7 @@ class Model:
         attribute_mappings = {
             source_dimension_name: mapped_expression
             for source_dimension_name, mapped_expression in expression.kwargs.items()
-            if isinstance(mapped_expression, AttributeExpression)
+            if isinstance(mapped_expression, (AttributeExpression, ChainedAttributeExpression))
         }
         if not attribute_mappings:
             return True
@@ -3693,7 +3842,7 @@ class Model:
             yield expression.ref
             return
 
-        if isinstance(expression, (LiteralExpression, AttributeExpression, ElementExpression)):
+        if isinstance(expression, (LiteralExpression, AttributeExpression, ChainedAttributeExpression, ElementExpression)):
             return
 
         if isinstance(expression, UnaryExpression):
