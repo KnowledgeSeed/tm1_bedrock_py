@@ -20,6 +20,9 @@ class CubeMetadata:
     dimension_element_leaf_expansions: Mapping[str, Mapping[str, tuple[str, ...]]] = field(default_factory=dict)
     dimension_element_types: Mapping[str, Mapping[str, str]] = field(default_factory=dict)
     dimension_children: Mapping[str, Mapping[str, tuple[str, ...]]] = field(default_factory=dict)
+    dimension_children_by_hierarchy: Mapping[str, Mapping[str, Mapping[str, tuple[str, ...]]]] = field(
+        default_factory=dict
+    )
 
 
 class MetadataProvider(Protocol):
@@ -96,6 +99,28 @@ class TM1ServiceMetadataProvider:
             for parent_name, child_names in children_by_parent.items()
         }
 
+    def _collect_dimension_attribute_values(
+        self,
+        dimension_name: str,
+        hierarchy_name: str,
+        attribute_names: Sequence[str],
+    ) -> Mapping[str, Mapping[str, Any]]:
+        values_by_element: dict[str, dict[str, Any]] = {}
+        for attribute_name in attribute_names:
+            try:
+                attribute_values = self._tm1_service.elements.get_attribute_of_elements(
+                    dimension_name=dimension_name,
+                    hierarchy_name=hierarchy_name,
+                    attribute=attribute_name,
+                    elements=None,
+                    exclude_empty_cells=False,
+                )
+            except Exception:
+                continue
+            for element_name, value in dict(attribute_values).items():
+                values_by_element.setdefault(element_name, {})[attribute_name] = value
+        return values_by_element
+
     def get_cube_metadata(self, cube_name: str) -> Optional[CubeMetadata]:
         try:
             raw_metadata = utility.TM1CubeObjectMetadata.collect(
@@ -134,7 +159,10 @@ class TM1ServiceMetadataProvider:
         dimension_leaf_elements = {}
         dimension_element_types = {}
         dimension_children = {}
+        dimension_children_by_hierarchy = {}
+        dimension_attribute_values = {}
         for dimension_name in dimensions:
+            hierarchy_names = tuple(dimension_hierarchies.get(dimension_name, ()))
             hierarchy_name = default_hierarchies.get(dimension_name) or dimension_name
             leaf_elements = self._collect_dimension_leaf_elements(dimension_name, hierarchy_name)
             if leaf_elements:
@@ -142,9 +170,22 @@ class TM1ServiceMetadataProvider:
             element_types = self._collect_dimension_element_types(dimension_name, hierarchy_name)
             if element_types:
                 dimension_element_types[dimension_name] = element_types
-            children = self._collect_dimension_children(dimension_name, hierarchy_name)
-            if children:
-                dimension_children[dimension_name] = children
+            hierarchy_children = {}
+            for current_hierarchy_name in hierarchy_names or (hierarchy_name,):
+                children = self._collect_dimension_children(dimension_name, current_hierarchy_name)
+                if children:
+                    hierarchy_children[current_hierarchy_name] = children
+            if hierarchy_children:
+                dimension_children_by_hierarchy[dimension_name] = hierarchy_children
+            if hierarchy_name in hierarchy_children:
+                dimension_children[dimension_name] = hierarchy_children[hierarchy_name]
+            attribute_values = self._collect_dimension_attribute_values(
+                dimension_name=dimension_name,
+                hierarchy_name=hierarchy_name,
+                attribute_names=dimension_attributes.get(dimension_name, ()),
+            )
+            if attribute_values:
+                dimension_attribute_values[dimension_name] = attribute_values
 
         return CubeMetadata(
             cube_name=cube_name,
@@ -155,10 +196,11 @@ class TM1ServiceMetadataProvider:
             dimension_attributes=dimension_attributes,
             dimension_hierarchies=dimension_hierarchies,
             dimension_leaf_elements=dimension_leaf_elements,
-            dimension_attribute_values={},
+            dimension_attribute_values=dimension_attribute_values,
             dimension_element_leaf_expansions={},
             dimension_element_types=dimension_element_types,
             dimension_children=dimension_children,
+            dimension_children_by_hierarchy=dimension_children_by_hierarchy,
         )
 
 
@@ -176,6 +218,9 @@ def build_static_cube_metadata(
     dimension_element_leaf_expansions: Optional[Mapping[str, Mapping[str, Sequence[str]]]] = None,
     dimension_element_types: Optional[Mapping[str, Mapping[str, str]]] = None,
     dimension_children: Optional[Mapping[str, Mapping[str, Sequence[str]]]] = None,
+    dimension_children_by_hierarchy: Optional[
+        Mapping[str, Mapping[str, Mapping[str, Sequence[str]]]]
+    ] = None,
 ) -> CubeMetadata:
     return CubeMetadata(
         cube_name=cube_name,
@@ -219,5 +264,15 @@ def build_static_cube_metadata(
                 for parent_name, child_names in children_mapping.items()
             }
             for dimension_name, children_mapping in (dimension_children or {}).items()
+        },
+        dimension_children_by_hierarchy={
+            dimension_name: {
+                hierarchy_name: {
+                    parent_name: tuple(child_names)
+                    for parent_name, child_names in children_mapping.items()
+                }
+                for hierarchy_name, children_mapping in hierarchy_mapping.items()
+            }
+            for dimension_name, hierarchy_mapping in (dimension_children_by_hierarchy or {}).items()
         },
     )

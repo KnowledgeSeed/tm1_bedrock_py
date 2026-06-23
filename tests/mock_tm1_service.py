@@ -6,7 +6,7 @@ from threading import RLock
 from typing import Any, Callable, Iterable, Optional, Union
 
 import pandas as pd
-from TM1py.Objects import Cube, Dimension, Element, Hierarchy
+from TM1py.Objects import Cube, Dimension, Element, ElementAttribute, Hierarchy
 
 
 class UnregisteredTM1QueryError(KeyError):
@@ -43,7 +43,23 @@ class MockServerService(_BaseService):
         return self._tm1.server_name
 
 
+@dataclass(frozen=True)
+class _MockRules:
+    text: str
+
+
+@dataclass(frozen=True)
+class _MockCubeHandle:
+    name: str
+    rules: _MockRules
+
+
 class MockCubeService(_BaseService):
+    def get(self, cube_name: str, **kwargs: Any) -> _MockCubeHandle:
+        self._record("get", cube_name, **kwargs)
+        rule_text = self._tm1._cube_rules.get(_name_key(cube_name), "")
+        return _MockCubeHandle(name=cube_name, rules=_MockRules(text=rule_text))
+
     def create(self, cube: Cube, **kwargs: Any) -> None:
         self._record("create", cube, **kwargs)
         self._tm1._cubes[_name_key(cube.name)] = deepcopy(cube)
@@ -287,6 +303,47 @@ class MockElementService(_BaseService):
         hierarchy = self._tm1._get_hierarchy(dimension_name, hierarchy_name)
         return dict(hierarchy.edges or {})
 
+    def get_attribute_of_elements(
+        self,
+        dimension_name: str,
+        hierarchy_name: str,
+        attribute: str,
+        elements: Optional[Union[str, list[str]]] = None,
+        exclude_empty_cells: bool = True,
+        element_unique_names: bool = False,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        self._record(
+            "get_attribute_of_elements",
+            dimension_name,
+            hierarchy_name,
+            attribute,
+            elements,
+            exclude_empty_cells,
+            element_unique_names,
+            **kwargs,
+        )
+        values_by_element = self._tm1._dimension_attribute_values.get(
+            (_name_key(dimension_name), _name_key(hierarchy_name)),
+            {},
+        )
+        requested_elements: Optional[set[str]] = None
+        if elements is not None:
+            if isinstance(elements, str):
+                requested_elements = {_name_key(elements)}
+            else:
+                requested_elements = {_name_key(element_name) for element_name in elements}
+
+        result = {}
+        for element_name, attribute_values in values_by_element.items():
+            if requested_elements is not None and _name_key(element_name) not in requested_elements:
+                continue
+            value = attribute_values.get(attribute)
+            if exclude_empty_cells and (value is None or str(value) == ""):
+                continue
+            result[element_name if not element_unique_names else f"[{dimension_name}].[{element_name}]"] = value
+        return result
+
 
 class MockCellService(_BaseService):
     def execute_mdx_dataframe(self, mdx: str, **kwargs: Any) -> pd.DataFrame:
@@ -437,6 +494,7 @@ class MockTM1Service:
         self._cube_rules: dict[str, str] = {}
         self._cube_rule_check_results: dict[str, _MockResponse] = {}
         self._cube_data: dict[str, pd.DataFrame] = {}
+        self._dimension_attribute_values: dict[tuple[str, str], dict[str, dict[str, Any]]] = {}
         self._mdx_results: dict[str, Union[pd.DataFrame, Exception]] = {}
         self._set_mdx_results: dict[str, Union[list, Exception]] = {}
         self._view_results: dict[tuple[str, str], pd.DataFrame] = {}
@@ -460,6 +518,8 @@ class MockTM1Service:
         elements: Union[dict[str, Union[str, Element.Types]], Iterable[Element]],
         hierarchy_name: Optional[str] = None,
         edges: Optional[dict[tuple[str, str], float]] = None,
+        element_attributes: Optional[dict[str, Union[str, ElementAttribute.Types]]] = None,
+        attribute_values: Optional[dict[str, dict[str, Any]]] = None,
     ) -> Dimension:
         hierarchy_name = hierarchy_name or name
         element_objects = (
@@ -467,11 +527,27 @@ class MockTM1Service:
             if isinstance(elements, dict)
             else list(elements)
         )
+        attribute_objects = [
+            ElementAttribute(attribute_name, attribute_type)
+            for attribute_name, attribute_type in (element_attributes or {}).items()
+        ]
         dimension = Dimension(
             name,
-            [Hierarchy(hierarchy_name, name, elements=element_objects, edges=edges)],
+            [
+                Hierarchy(
+                    hierarchy_name,
+                    name,
+                    elements=element_objects,
+                    element_attributes=attribute_objects,
+                    edges=edges,
+                )
+            ],
         )
         self.dimensions.update_or_create(dimension)
+        if attribute_values:
+            self._dimension_attribute_values[(_name_key(name), _name_key(hierarchy_name))] = deepcopy(
+                attribute_values
+            )
         return dimension
 
     def add_cube(

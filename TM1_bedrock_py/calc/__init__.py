@@ -1,3 +1,4 @@
+from .ingest import RuleIngestionRejection, RuleIngestionReport
 from .metadata import CubeMetadata, StaticMetadataProvider, TM1ServiceMetadataProvider, build_static_cube_metadata
 from .model import CompilePreview, DeploymentError, Model, Phase2ReadinessReport, ValidationReport
 
@@ -7,6 +8,8 @@ __all__ = [
     "DeploymentError",
     "Model",
     "Phase2ReadinessReport",
+    "RuleIngestionRejection",
+    "RuleIngestionReport",
     "StaticMetadataProvider",
     "TM1ServiceMetadataProvider",
     "ValidationReport",

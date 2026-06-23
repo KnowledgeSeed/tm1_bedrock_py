@@ -128,6 +128,33 @@ class Expression:
     def rolling(self, **kwargs: Any) -> "RollingExpression":
         return RollingExpression(self, kwargs={key: _ensure_expression(value) for key, value in kwargs.items()})
 
+    def native(self, scope: str = "N") -> "ScopedExpression":
+        return ScopedExpression(inner=self, scope=scope)
+
+    def abs(self) -> "Expression":
+        return MethodExpression("abs", self)
+
+    def round(self, ndigits: Any = 0) -> "Expression":
+        return MethodExpression("round", self, args=(_ensure_expression(ndigits),))
+
+    def mod(self, divisor: Any) -> "Expression":
+        return MethodExpression("mod", self, args=(_ensure_expression(divisor),))
+
+    def int_part(self) -> "Expression":
+        return MethodExpression("int_part", self)
+
+    def upper(self) -> "Expression":
+        return MethodExpression("upper", self)
+
+    def lower(self) -> "Expression":
+        return MethodExpression("lower", self)
+
+    def trim(self) -> "Expression":
+        return MethodExpression("trim", self)
+
+    def substring(self, start: Any, length: Any) -> "Expression":
+        return MethodExpression("substring", self, args=(_ensure_expression(start), _ensure_expression(length)))
+
     def iter_measure_refs(self) -> Iterator[MeasureRef]:
         return iter(())
 
@@ -177,6 +204,29 @@ class ElementExpression(Expression):
 
     def iter_element_refs(self) -> Iterator[ElementRef]:
         yield self.ref
+
+    def describe(self) -> str:
+        return self.ref.label
+
+
+@dataclass(frozen=True)
+class DimensionFunctionRef:
+    cube_name: str
+    dimension_name: str
+    function_name: str
+    element_name: Optional[str] = None
+    args: Tuple[Any, ...] = ()
+
+    @property
+    def label(self) -> str:
+        element_part = self.element_name if self.element_name is not None else f"!{self.dimension_name}"
+        extra = f", {', '.join(repr(arg) for arg in self.args)}" if self.args else ""
+        return f"{self.cube_name}.{self.dimension_name}.{self.function_name}({element_part}{extra})"
+
+
+@dataclass(frozen=True)
+class DimensionFunctionExpression(Expression):
+    ref: DimensionFunctionRef
 
     def describe(self) -> str:
         return self.ref.label
@@ -323,9 +373,34 @@ class CaseExpression(Expression):
 
 
 @dataclass(frozen=True)
+class ScopedExpression(Expression):
+    """Marks an explicit rule-area hint (e.g. ``scope="C"``) before formula registration.
+
+    This wrapper is unwrapped by ``Model.register_formula`` and never appears inside a
+    stored ``Formula.expression`` tree, so the rest of the compiler stays scope-agnostic.
+    """
+
+    inner: Expression
+    scope: str
+
+    def iter_measure_refs(self) -> Iterator[MeasureRef]:
+        return self.inner.iter_measure_refs()
+
+    def iter_attribute_refs(self) -> Iterator[AttributeRef]:
+        return self.inner.iter_attribute_refs()
+
+    def iter_element_refs(self) -> Iterator[ElementRef]:
+        return self.inner.iter_element_refs()
+
+    def describe(self) -> str:
+        return f"{self.inner.describe()}.native(scope={self.scope!r})"
+
+
+@dataclass(frozen=True)
 class Formula:
     target: MeasureRef
     expression: Expression
+    scope: str = "N"
 
     @property
     def key(self) -> str:
@@ -442,6 +517,34 @@ class DimensionProxy:
             )
         )
 
+    def _dimension_function(
+        self, function_name: str, element: Optional[str], args: Tuple[Any, ...] = ()
+    ) -> DimensionFunctionExpression:
+        return DimensionFunctionExpression(
+            ref=DimensionFunctionRef(
+                cube_name=self._cube_name,
+                dimension_name=self._dimension_name,
+                function_name=function_name,
+                element_name=element,
+                args=args,
+            )
+        )
+
+    def level(self, element: Optional[str] = None) -> DimensionFunctionExpression:
+        return self._dimension_function("ellev", element)
+
+    def parent_count(self, element: Optional[str] = None) -> DimensionFunctionExpression:
+        return self._dimension_function("elparn", element)
+
+    def child_count(self, element: Optional[str] = None) -> DimensionFunctionExpression:
+        return self._dimension_function("elcompn", element)
+
+    def child(self, position: int, element: Optional[str] = None) -> DimensionFunctionExpression:
+        return self._dimension_function("elcomp", element, args=(position,))
+
+    def is_component_of(self, parent_element: str, element: Optional[str] = None) -> DimensionFunctionExpression:
+        return self._dimension_function("eliscomp", element, args=(parent_element,))
+
 
 class CubeRef:
     def __init__(self, model: "Model", cube_name: str):
@@ -461,6 +564,9 @@ class CubeRef:
 
 
 class Model:
+    _SUPPORTED_RULE_AREA_SCOPES = ("N", "C")
+    _CONSOLIDATED_FEEDER_LEAF_CEILING = 2000
+
     def __init__(self, tm1: Any = None, metadata_provider: Optional[MetadataProvider] = None):
         self.tm1 = tm1
         self.metadata_provider = metadata_provider or (TM1ServiceMetadataProvider(tm1) if tm1 is not None else None)
@@ -476,11 +582,160 @@ class Model:
         normalized_cases = tuple((_ensure_expression(condition), _ensure_expression(value)) for condition, value in cases)
         return CaseExpression(cases=normalized_cases, default=_ensure_expression(default))
 
+    def import_native_rule_text(self, cube_name: str, rule_text: str) -> "RuleIngestionReport":
+        from .ingest import RuleIngestionRejection, RuleIngestionReport, parse_native_rule_text
+
+        parsed_statements, rejections = parse_native_rule_text(
+            cube_name=cube_name, rule_text=rule_text, metadata_provider=self.metadata_provider
+        )
+        report = RuleIngestionReport(cube_name=cube_name, rejected=list(rejections))
+
+        for statement in parsed_statements:
+            try:
+                self.cube(cube_name)[statement.measure_name] = statement.expression
+            except ValueError as error:
+                report.rejected.append(
+                    RuleIngestionRejection(
+                        statement_text=statement.expression.describe(),
+                        reason=str(error),
+                        measure_name=statement.measure_name,
+                    )
+                )
+                continue
+            report.ingested.append(statement.measure_name)
+
+        return report
+
+    def import_cube_rules_from_tm1(self, cube_name: str) -> "RuleIngestionReport":
+        if self.tm1 is None:
+            raise ValueError("Model.import_cube_rules_from_tm1 requires an attached TM1 service")
+
+        cube = self.tm1.cubes.get(cube_name)
+        rules = getattr(cube, "rules", None)
+        rule_text = getattr(rules, "text", None)
+        if rule_text is None:
+            rule_text = str(rules) if rules is not None else ""
+
+        return self.import_native_rule_text(cube_name=cube_name, rule_text=rule_text)
+
+    def execute_python_backend(
+        self,
+        *,
+        read_function: Optional[Any] = None,
+        write_function: Optional[Any] = None,
+        write: bool = True,
+    ) -> "PythonExecutionReport":
+        from . import execute as execute_module
+        from .. import extractor, loader, utility
+
+        if read_function is None:
+            def read_function(tm1_service: Any, mdx: str) -> Any:
+                return extractor.tm1_mdx_to_dataframe(tm1_service=tm1_service, data_mdx=mdx)
+
+        if write_function is None:
+            def write_function(tm1_service: Any, cube_name: str, dataframe: Any, cube_dims: List[str]) -> None:
+                loader.dataframe_to_cube(
+                    tm1_service=tm1_service,
+                    dataframe=dataframe,
+                    cube_name=cube_name,
+                    cube_dims=cube_dims,
+                    use_blob=True,
+                )
+
+        plan = self._build_plan()
+        report = execute_module.PythonExecutionReport()
+
+        accepted_by_cube: Dict[str, List[Formula]] = defaultdict(list)
+        for key in plan.order:
+            formula = plan.formulas[key]
+            decision = self._select_backend(formula)
+            if decision.backend != Backend.PYTHON:
+                continue
+            unsupported_reason = execute_module.unsupported_python_execution_reason(
+                formula.expression, formula.target.cube_name
+            )
+            if unsupported_reason is not None:
+                report.rejected.append(
+                    execute_module.PythonExecutionRejection(target=key, reason=unsupported_reason)
+                )
+                continue
+            accepted_by_cube[formula.target.cube_name].append(formula)
+
+        for cube_name, formulas in accepted_by_cube.items():
+            metadata = self._get_cube_metadata(cube_name)
+            if metadata is None or not metadata.measure_dimension_name:
+                for formula in formulas:
+                    report.rejected.append(
+                        execute_module.PythonExecutionRejection(
+                            target=formula.target.key,
+                            reason=f"cube metadata is required to build the execution MDX for '{cube_name}'",
+                        )
+                    )
+                continue
+
+            measure_dimension_name = metadata.measure_dimension_name
+            required_measures = {formula.target.measure_name for formula in formulas}
+            for formula in formulas:
+                required_measures.update(ref.measure_name for ref in formula.expression.iter_measure_refs())
+
+            mdx = utility.generate_dynamic_mdx_query_string(
+                tm1_service=self.tm1,
+                target_cube_name=cube_name,
+                dimension_filter_mapping={measure_dimension_name: sorted(required_measures)},
+                cube_dimensions_list=list(metadata.dimensions),
+            )
+            long_dataframe = read_function(self.tm1, mdx)
+            wide_dataframe, dimension_columns = execute_module.pivot_long_to_wide(
+                long_dataframe, measure_dimension_name
+            )
+
+            write_frames = []
+            for formula in formulas:
+                value, mask = execute_module.evaluate_formula(
+                    formula.expression,
+                    wide_dataframe,
+                    cube_name,
+                    metadata=metadata,
+                    dimension_columns=dimension_columns,
+                )
+                wide_dataframe[formula.target.measure_name] = value
+                write_frames.append(
+                    execute_module.melt_wide_to_long(
+                        wide_dataframe,
+                        dimension_columns,
+                        measure_dimension_name,
+                        formula.target.measure_name,
+                        value,
+                        mask,
+                    )
+                )
+                report.executed.append(formula.target.key)
+                report.written_rows[formula.target.key] = int(mask.sum()) if mask is not None else len(value)
+
+            if write and write_frames:
+                import pandas as pd
+
+                write_dataframe = pd.concat(write_frames, ignore_index=True)
+                write_function(self.tm1, cube_name, write_dataframe, list(metadata.dimensions))
+
+        return report
+
     def register_formula(self, target: MeasureExpression, expression: Expression) -> None:
         key = target.ref.key
         if key in self._formulas:
             raise ValueError(f"Formula target '{key}' is already registered")
-        self._formulas[key] = Formula(target=target.ref, expression=expression)
+
+        scope = "N"
+        if isinstance(expression, ScopedExpression):
+            scope = expression.scope
+            expression = expression.inner
+        if scope not in self._SUPPORTED_RULE_AREA_SCOPES:
+            raise ValueError(
+                f"Unsupported rule-area scope '{scope}' for target '{key}'; "
+                f"currently supported scopes are {', '.join(self._SUPPORTED_RULE_AREA_SCOPES)}"
+            )
+
+        self._formulas[key] = Formula(target=target.ref, expression=expression, scope=scope)
 
     @property
     def formulas(self) -> List[Formula]:
@@ -510,7 +765,7 @@ class Model:
     def phase2_readiness(self, target: Optional[str] = None) -> Union[Phase2ReadinessReport, Dict[str, Any]]:
         plan = self._build_plan()
         formulas = {
-            key: self._formula_phase2_readiness(plan.formulas[key])
+            key: self._formula_phase2_readiness(plan, plan.formulas[key])
             for key in sorted(plan.formulas)
         }
         if target is None:
@@ -545,7 +800,7 @@ class Model:
         for target_key in plan.order:
             formula = plan.formulas[target_key]
             decision = self._select_backend(formula)
-            readiness = self._formula_phase2_readiness(formula)
+            readiness = self._formula_phase2_readiness(plan, formula)
             feeder_plan = (
                 self._plan_feeders(plan, formula)
                 if decision.backend is Backend.NATIVE
@@ -565,11 +820,12 @@ class Model:
                     cube_name=formula.target.cube_name,
                     measure_name=formula.target.measure_name,
                 )
-                rule_statement = f"{target_reference} = N: {rule_body};"
+                rule_statement = f"{target_reference} = {formula.scope}: {rule_body};"
 
             manifest[target_key] = {
                 "cube": formula.target.cube_name,
                 "measure": formula.target.measure_name,
+                "rule_area": formula.scope,
                 "backend": decision.backend.value,
                 "rationale": decision.rationale,
                 "expression": formula.expression.describe(),
@@ -726,7 +982,7 @@ class Model:
         formula = plan.formulas[target_key]
         upstream = self._collect_upstream_formula_keys(plan.dependencies, target_key)
         decision = self._select_backend(formula)
-        readiness = self._formula_phase2_readiness(formula)
+        readiness = self._formula_phase2_readiness(plan, formula)
         return {
             "target": target_key,
             "expression": formula.expression.describe(),
@@ -749,11 +1005,17 @@ class Model:
             "metadata_ready": readiness["metadata_ready"],
             "required_metadata": readiness["required_metadata"],
             "missing_metadata": readiness["missing_metadata"],
+            "native_eligibility": readiness["native_eligibility"],
         }
 
-    def _formula_phase2_readiness(self, formula: Formula) -> Dict[str, Any]:
+    def _formula_phase2_readiness(self, plan: BuildPlan, formula: Formula) -> Dict[str, Any]:
         decision = self._select_backend(formula)
         requirements = self._metadata_requirements_for_formula(formula)
+        missing_metadata = [
+            requirement.code
+            for requirement in requirements
+            if not requirement.satisfied
+        ]
         return {
             "target": formula.key,
             "backend": decision.backend.value,
@@ -769,14 +1031,193 @@ class Model:
                 }
                 for requirement in requirements
             ],
-            "missing_metadata": [
-                requirement.code
-                for requirement in requirements
-                if not requirement.satisfied
-            ],
+            "missing_metadata": missing_metadata,
+            "native_eligibility": self._native_eligibility(
+                plan=plan,
+                formula=formula,
+                decision=decision,
+                missing_metadata=missing_metadata,
+            ),
         }
 
+    def _native_eligibility(
+        self,
+        plan: BuildPlan,
+        formula: Formula,
+        decision: BackendDecision,
+        missing_metadata: Sequence[str],
+    ) -> Dict[str, str]:
+        if decision.backend is Backend.NATIVE:
+            if missing_metadata:
+                return {
+                    "status": "metadata_incomplete",
+                    "code": self._native_metadata_missing_code(formula, missing_metadata),
+                    "category": "metadata",
+                    "detail": self._native_metadata_missing_detail(formula, missing_metadata),
+                }
+            feeder_plan = self._plan_feeders(plan, formula)
+            if feeder_plan.preview_only:
+                preview_only_code = self._native_preview_only_code(formula)
+                return {
+                    "status": "preview_only",
+                    "code": preview_only_code,
+                    "category": (
+                        "metadata"
+                        if preview_only_code == "native_align_target_leaf_scope_unproven"
+                        else "feeder_proof"
+                    ),
+                    "detail": self._native_preview_only_detail(preview_only_code),
+                }
+            return {
+                "status": "deployable",
+                "code": "native_deployable",
+                "category": "supported",
+                "detail": "The formula is currently within the bounded native subset and is deployable.",
+            }
+
+        blocker_reason = decision.rationale.removeprefix("Falls back to Python materialization because ").strip()
+        if "multi-cell aggregation" in blocker_reason:
+            return {
+                "status": "unsupported",
+                "code": "native_non_native_by_design",
+                "category": "by_design",
+                "detail": "This shape is intentionally excluded from the native subset because it requires true multi-cell aggregation.",
+            }
+        if "must be a literal or target-cube attribute reference" in blocker_reason:
+            return {
+                "status": "unsupported",
+                "code": "native_align_value_driven_mapping",
+                "category": "mapping_shape",
+                "detail": "The align(...) mapping is value-driven rather than metadata-invertible, so it is not native-safe.",
+            }
+        if "cannot infer source dimensions" in blocker_reason:
+            return {
+                "status": "unsupported",
+                "code": "native_align_mapping_unresolved",
+                "category": "mapping_shape",
+                "detail": "The align(...) mapping leaves source dimensions unresolved, so the lookup is not native-safe.",
+            }
+        if (
+            "attribute mappings must come from the target cube context" in blocker_reason
+            or "which is not part of cube" in blocker_reason
+            or "which does not exist in cube" in blocker_reason
+        ):
+            return {
+                "status": "unsupported",
+                "code": "native_align_mapping_unresolved",
+                "category": "mapping_shape",
+                "detail": "The align(...) mapping cannot be resolved to a metadata-safe target-cube lookup shape.",
+            }
+        if "multiple hierarchies" in blocker_reason:
+            return {
+                "status": "unsupported",
+                "code": "native_hierarchy_ambiguous",
+                "category": "metadata",
+                "detail": "Hierarchy intent is ambiguous, so fixed-element native emission is blocked.",
+            }
+        if "cross-cube reference" in blocker_reason and "outside the native subset" in blocker_reason:
+            return {
+                "status": "unsupported",
+                "code": "native_cross_cube_reference_unbounded",
+                "category": "shape",
+                "detail": "The formula uses a cross-cube reference outside the bounded native lookup subset.",
+            }
+        if "outside the native subset" in blocker_reason or "does not support" in blocker_reason:
+            return {
+                "status": "unsupported",
+                "code": "native_shape_unsupported",
+                "category": "shape",
+                "detail": "The formula shape is not currently part of the bounded native subset.",
+            }
+        return {
+            "status": "unsupported",
+            "code": "native_blocked",
+            "category": "shape",
+            "detail": blocker_reason or "The formula is not currently native-safe.",
+        }
+
+    def _native_metadata_missing_code(
+        self,
+        formula: Formula,
+        missing_metadata: Sequence[str],
+    ) -> str:
+        if (
+            "native_align_target_leaf_scope_unproven" in missing_metadata
+            and self._contains_align_expression(formula.expression)
+        ):
+            return "native_align_target_leaf_scope_unproven"
+        if (
+            "native_align_reverse_mapping_unproven" in missing_metadata
+            and self._contains_align_expression(formula.expression)
+        ):
+            return "native_align_reverse_mapping_unproven"
+        return "native_metadata_missing"
+
+    def _native_metadata_missing_detail(
+        self,
+        formula: Formula,
+        missing_metadata: Sequence[str],
+    ) -> str:
+        code = self._native_metadata_missing_code(formula, missing_metadata)
+        if code == "native_align_target_leaf_scope_unproven":
+            return (
+                "Native rule lowering remains the intended path, but metadata does not yet prove "
+                "the target-only broadcast leaf scope."
+            )
+        if code == "native_align_reverse_mapping_unproven":
+            return (
+                "Native rule lowering remains the intended path, but metadata does not yet prove "
+                "the reverse attribute mapping from source lookup elements to target leaf elements, "
+                "including any required composite multi-attribute route."
+            )
+        return "Native compilation remains the intended path, but required metadata is missing."
+
+    def _native_preview_only_code(self, formula: Formula) -> str:
+        if self._contains_align_expression(formula.expression):
+            if self._align_contains_unproven_target_leaf_scope(
+                formula.expression,
+                formula.target.cube_name,
+            ):
+                return "native_align_target_leaf_scope_unproven"
+            if self._align_contains_unproven_reverse_mapping(
+                formula.expression,
+                formula.target.cube_name,
+            ):
+                return "native_align_reverse_mapping_unproven"
+        return "native_feeder_plan_unproven"
+
+    @staticmethod
+    def _native_preview_only_detail(code: str) -> str:
+        if code == "native_align_target_leaf_scope_unproven":
+            return (
+                "Rule lowering is native-safe, but feeder deployment proof is still blocked because "
+                "the target-only broadcast leaf scope is not metadata-proven."
+            )
+        if code == "native_align_reverse_mapping_unproven":
+            return (
+                "Rule lowering is native-safe, but feeder deployment proof is still blocked because "
+                "the reverse attribute mapping from source lookup elements to target leaf elements, "
+                "including any required composite multi-attribute route, is not metadata-proven."
+            )
+        return "Rule lowering is native-safe, but feeder/deployment proof is still incomplete."
+
     def _select_backend(self, formula: Formula) -> BackendDecision:
+        if formula.scope == "C":
+            unsupported_reason = self._native_consolidated_unsupported_reason(formula)
+            if unsupported_reason is None:
+                return BackendDecision(
+                    backend=Backend.NATIVE,
+                    rationale=(
+                        "Compiles within the Phase 2 C: MVP subset: same-cube arithmetic, comparisons, "
+                        "where, case, and constrained metadata-resolved cross-cube align lookups over a "
+                        "metadata-proven, bounded leaf-measure expansion of the consolidated target."
+                    ),
+                )
+            return BackendDecision(
+                backend=Backend.PYTHON,
+                rationale=f"Falls back to Python materialization because {unsupported_reason}",
+            )
+
         unsupported_reason = self._native_unsupported_reason(
             formula.expression,
             target_cube_name=formula.target.cube_name,
@@ -793,6 +1234,101 @@ class Model:
             backend=Backend.PYTHON,
             rationale=f"Falls back to Python materialization because {unsupported_reason}",
         )
+
+    def _native_consolidated_unsupported_reason(self, formula: Formula) -> Optional[str]:
+        """Gate for C: rule-area native compilation.
+
+        Deliberately narrower than the N: subset: even constructs that would otherwise be
+        metadata-safe for N: (shift, growth, ytd, rolling) are rejected outright here,
+        because C: feeders are a structurally different problem (feed the consolidated
+        target's leaf measures, never the consolidated element itself). Cross-cube align(...)
+        is allowed only through the existing bounded N:-level feeder subsets, applied
+        independently to each expanded target leaf measure.
+        """
+        expression_reason = self._native_unsupported_reason(formula.expression, formula.target.cube_name)
+        if expression_reason is not None:
+            return expression_reason
+
+        if self._contains_disallowed_consolidated_methods(formula.expression):
+            return (
+                "C: rule-area compilation does not support shift(...), growth(...), ytd(), or "
+                "rolling(...) in the current bounded subset; supported shapes are same-cube "
+                "arithmetic/comparisons/where/case plus constrained align(...) lookups that each "
+                "expanded target leaf can prove safe through the existing N:-level feeder planner"
+            )
+
+        metadata = self._get_cube_metadata(formula.target.cube_name)
+        if metadata is None or not metadata.measure_dimension_name:
+            return "C: rule-area compilation needs measure dimension metadata to prove the consolidated target"
+
+        target_measure_type = self._measure_type_for(metadata, formula.target.measure_name)
+        if not self._is_consolidated_measure_type(target_measure_type):
+            return (
+                "C: rule-area compilation requires the target measure to resolve to a "
+                "Consolidated element type"
+            )
+
+        leaf_measures = self._expand_consolidated_element_to_leaves(
+            metadata=metadata,
+            dimension_name=metadata.measure_dimension_name,
+            element_name=formula.target.measure_name,
+        )
+        if not leaf_measures:
+            return (
+                "C: rule-area compilation could not prove a bounded leaf-measure expansion for the "
+                "consolidated target (no provable hierarchy child metadata)"
+            )
+        if len(leaf_measures) > self._CONSOLIDATED_FEEDER_LEAF_CEILING:
+            return (
+                f"C: rule-area compilation rejected because the consolidated target expands to "
+                f"{len(leaf_measures)} leaf measures, beyond the bounded ceiling of "
+                f"{self._CONSOLIDATED_FEEDER_LEAF_CEILING}"
+            )
+        return None
+
+    def _contains_disallowed_consolidated_methods(self, expression: Expression) -> bool:
+        disallowed = {"shift", "growth", "ytd", "rolling.sum"}
+
+        if isinstance(expression, MethodExpression):
+            if expression.method_name in disallowed:
+                return True
+            if self._contains_disallowed_consolidated_methods(expression.base):
+                return True
+            if any(self._contains_disallowed_consolidated_methods(arg) for arg in expression.args):
+                return True
+            return any(
+                self._contains_disallowed_consolidated_methods(value)
+                for value in expression.kwargs.values()
+            )
+
+        if isinstance(expression, UnaryExpression):
+            return self._contains_disallowed_consolidated_methods(expression.operand)
+
+        if isinstance(expression, (BinaryExpression, ComparisonExpression)):
+            return self._contains_disallowed_consolidated_methods(
+                expression.left
+            ) or self._contains_disallowed_consolidated_methods(expression.right)
+
+        if isinstance(expression, RollingExpression):
+            return True
+
+        if isinstance(expression, CaseExpression):
+            for condition, value in expression.cases:
+                if self._contains_disallowed_consolidated_methods(
+                    condition
+                ) or self._contains_disallowed_consolidated_methods(value):
+                    return True
+            return self._contains_disallowed_consolidated_methods(expression.default)
+
+        return False
+
+    @staticmethod
+    def _is_consolidated_measure_type(measure_type: Any) -> bool:
+        if measure_type is None:
+            return False
+        if isinstance(measure_type, str):
+            return measure_type.strip().casefold() == "consolidated"
+        return measure_type == 3
 
     def _metadata_requirements_for_formula(self, formula: Formula) -> List[MetadataRequirement]:
         requirements: List[MetadataRequirement] = []
@@ -848,13 +1384,42 @@ class Model:
             detail=f"Target measure '{formula.target.measure_name}'",
             satisfied=target_measure_type is not None,
         )
-        add_requirement(
-            code="numeric_measure",
-            description="Native rule compilation currently requires numeric target measures.",
-            cube_name=formula.target.cube_name,
-            detail=f"Target measure '{formula.target.measure_name}'",
-            satisfied=self._is_numeric_measure_type(target_measure_type),
-        )
+        if formula.scope == "C":
+            add_requirement(
+                code="consolidated_target",
+                description=(
+                    "C: rule-area compilation requires the target measure to resolve to a "
+                    "Consolidated element type."
+                ),
+                cube_name=formula.target.cube_name,
+                detail=f"Target measure '{formula.target.measure_name}'",
+                satisfied=self._is_consolidated_measure_type(target_measure_type),
+            )
+            leaf_measures = None
+            if target_metadata is not None and target_metadata.measure_dimension_name:
+                leaf_measures = self._expand_consolidated_element_to_leaves(
+                    metadata=target_metadata,
+                    dimension_name=target_metadata.measure_dimension_name,
+                    element_name=formula.target.measure_name,
+                )
+            add_requirement(
+                code="consolidated_leaf_expansion",
+                description=(
+                    "C: rule-area compilation requires a bounded, metadata-proven leaf-measure "
+                    "expansion of the consolidated target, within the leaf-count ceiling."
+                ),
+                cube_name=formula.target.cube_name,
+                detail=f"Target measure '{formula.target.measure_name}' leaf expansion",
+                satisfied=bool(leaf_measures) and len(leaf_measures) <= self._CONSOLIDATED_FEEDER_LEAF_CEILING,
+            )
+        else:
+            add_requirement(
+                code="numeric_measure",
+                description="Native rule compilation currently requires numeric target measures.",
+                cube_name=formula.target.cube_name,
+                detail=f"Target measure '{formula.target.measure_name}'",
+                satisfied=self._is_numeric_measure_type(target_measure_type),
+            )
 
         for ref in sorted(
             set(measure_refs),
@@ -900,13 +1465,7 @@ class Model:
                 description=description,
                 cube_name=cube_name,
                 detail=detail,
-                satisfied=(
-                    code not in {"alignment_mapping", "hierarchy_resolution", "growth_baseline"}
-                    or self._native_unsupported_reason(
-                        formula.expression,
-                        target_cube_name=formula.target.cube_name,
-                    ) is None
-                ),
+                satisfied=self._metadata_requirement_satisfied(formula, code),
             )
 
         return requirements
@@ -936,6 +1495,24 @@ class Model:
                         "align(...) hierarchy resolution",
                     )
                 )
+                if self._align_uses_attribute_mapping(expression):
+                    requirements.append(
+                        (
+                            "native_align_reverse_mapping_unproven",
+                            "Attribute-routed native align(...) needs metadata-proven reverse mapping from source lookup elements to target leaf elements, including any required composite multi-attribute route.",
+                            target_cube_name,
+                            "align(...) reverse attribute mapping proof",
+                        )
+                    )
+                if self._align_has_target_only_broadcast_dimensions(expression, target_cube_name):
+                    requirements.append(
+                        (
+                            "native_align_target_leaf_scope_unproven",
+                            "Native align(...) broadcast into target-only dimensions needs an explicit, hierarchy-safe target leaf set.",
+                            target_cube_name,
+                            "align(...) target-only broadcast leaf scope",
+                        )
+                    )
             elif expression.method_name in {"shift", "ytd", "growth", "rolling.sum"}:
                 requirements.append(
                     (
@@ -1011,6 +1588,40 @@ class Model:
 
         return requirements
 
+    def _metadata_requirement_satisfied(self, formula: Formula, code: str) -> bool:
+        if code in {"alignment_mapping", "hierarchy_resolution", "growth_baseline"}:
+            return self._native_unsupported_reason(
+                formula.expression,
+                target_cube_name=formula.target.cube_name,
+            ) is None
+        if code == "native_align_reverse_mapping_unproven":
+            if self._formula_can_use_same_cube_cross_cube_fallback(formula):
+                return True
+            return not self._align_contains_unproven_reverse_mapping(
+                formula.expression,
+                formula.target.cube_name,
+            )
+        if code == "native_align_target_leaf_scope_unproven":
+            if self._formula_can_use_same_cube_cross_cube_fallback(formula):
+                return True
+            return not self._align_contains_unproven_target_leaf_scope(
+                formula.expression,
+                formula.target.cube_name,
+            )
+        return True
+
+    def _formula_can_use_same_cube_cross_cube_fallback(self, formula: Formula) -> bool:
+        align_expression_count = sum(1 for _ in self._iter_align_expressions(formula.expression))
+        if align_expression_count > 1:
+            return False
+        return any(
+            ref.cube_name == formula.target.cube_name
+            for ref in self._iter_expression_measure_refs(
+                formula.expression,
+                formula.target.cube_name,
+            )
+        )
+
     def _get_cube_metadata(self, cube_name: str) -> Any:
         if self.metadata_provider is None:
             return None
@@ -1044,6 +1655,11 @@ class Model:
 
         if isinstance(expression, AttributeExpression):
             return f"attribute reference '{expression.ref.label}' is outside the native subset"
+
+        if isinstance(expression, DimensionFunctionExpression):
+            if expression.ref.cube_name != target_cube_name:
+                return f"dimension-function reference '{expression.ref.label}' is outside the native subset (cross-cube)"
+            return None
 
         if isinstance(expression, UnaryExpression):
             return self._native_unsupported_reason(expression.operand, target_cube_name)
@@ -1083,6 +1699,17 @@ class Model:
                 if len(expression.args) != 1:
                     return "where requires exactly one condition"
                 return None
+            if expression.method_name in (
+                "abs",
+                "round",
+                "mod",
+                "int_part",
+                "upper",
+                "lower",
+                "trim",
+                "substring",
+            ):
+                return None
             return f"method '{expression.method_name}' is outside the native subset"
 
         if isinstance(expression, RollingExpression):
@@ -1118,6 +1745,9 @@ class Model:
                 measure_name=expression.ref.measure_name,
             )
 
+        if isinstance(expression, DimensionFunctionExpression):
+            return self._compile_dimension_function_expression(expression, target_cube_name)
+
         if isinstance(expression, UnaryExpression):
             return f"({expression.operator}{self._compile_native_expression(expression.operand, target_cube_name)})"
 
@@ -1136,12 +1766,66 @@ class Model:
                 return self._compile_native_growth_expression(expression, target_cube_name)
             if expression.method_name == "shift":
                 return self._compile_native_shift_expression(expression, target_cube_name)
+            if expression.method_name == "abs":
+                return f"ABS({self._compile_native_expression(expression.base, target_cube_name)})"
+            if expression.method_name == "round":
+                ndigits = self._compile_native_expression(expression.args[0], target_cube_name)
+                return f"ROUND({self._compile_native_expression(expression.base, target_cube_name)}, {ndigits})"
+            if expression.method_name == "mod":
+                divisor = self._compile_native_expression(expression.args[0], target_cube_name)
+                return f"MOD({self._compile_native_expression(expression.base, target_cube_name)}, {divisor})"
+            if expression.method_name == "int_part":
+                return f"INT({self._compile_native_expression(expression.base, target_cube_name)})"
+            if expression.method_name == "upper":
+                return f"UPPER({self._compile_native_expression(expression.base, target_cube_name)})"
+            if expression.method_name == "lower":
+                return f"LOWER({self._compile_native_expression(expression.base, target_cube_name)})"
+            if expression.method_name == "trim":
+                return f"TRIM({self._compile_native_expression(expression.base, target_cube_name)})"
+            if expression.method_name == "substring":
+                start = self._compile_native_expression(expression.args[0], target_cube_name)
+                length = self._compile_native_expression(expression.args[1], target_cube_name)
+                return f"SUBST({self._compile_native_expression(expression.base, target_cube_name)}, {start}, {length})"
             raise ValueError(f"Method '{expression.method_name}' is not supported by the native compiler")
 
         if isinstance(expression, CaseExpression):
             return self._compile_native_case_expression(expression, target_cube_name)
 
         raise ValueError(f"Expression type '{type(expression).__name__}' is not supported by the native compiler")
+
+    def _compile_dimension_function_expression(
+        self, expression: DimensionFunctionExpression, target_cube_name: str
+    ) -> str:
+        ref = expression.ref
+        if ref.element_name is None:
+            element_coordinate = f"!{ref.dimension_name}"
+        else:
+            element_coordinate = self._compile_dimension_element_coordinate(
+                cube_name=ref.cube_name,
+                dimension_name=ref.dimension_name,
+                element_name=ref.element_name,
+                explicit_hierarchy_name=None,
+            )
+        dimension_literal = f"'{ref.dimension_name}'"
+
+        if ref.function_name == "ellev":
+            return f"ELLEV({dimension_literal}, {element_coordinate})"
+        if ref.function_name == "elparn":
+            return f"ELPARN({dimension_literal}, {element_coordinate})"
+        if ref.function_name == "elcompn":
+            return f"ELCOMPN({dimension_literal}, {element_coordinate})"
+        if ref.function_name == "elcomp":
+            position = ref.args[0]
+            return f"ELCOMP({dimension_literal}, {element_coordinate}, {position})"
+        if ref.function_name == "eliscomp":
+            parent_coordinate = self._compile_dimension_element_coordinate(
+                cube_name=ref.cube_name,
+                dimension_name=ref.dimension_name,
+                element_name=ref.args[0],
+                explicit_hierarchy_name=None,
+            )
+            return f"ELISCOMP({dimension_literal}, {element_coordinate}, {parent_coordinate})"
+        raise ValueError(f"dimension function '{ref.function_name}' is not supported by the native compiler")
 
     def _compile_native_binary_expression(self, expression: BinaryExpression, target_cube_name: str) -> str:
         left = self._compile_native_expression(expression.left, target_cube_name)
@@ -1485,6 +2169,38 @@ class Model:
         return False
 
     def _plan_feeders(self, plan: BuildPlan, formula: Formula) -> FeederPlan:
+        if formula.scope == "C":
+            if self._contains_align_expression(formula.expression):
+                consolidated_cross_cube_plan = self._build_consolidated_leaf_cross_cube_feeders(
+                    plan, formula
+                )
+                if consolidated_cross_cube_plan is not None:
+                    return consolidated_cross_cube_plan
+                return FeederPlan(
+                    statements=(),
+                    strategy="preview_only_consolidated_cross_cube",
+                    rationale=(
+                        "C: rule-area native preview exists, but Phase 2 cannot yet prove that every "
+                        "leaf measure in the consolidated target independently resolves to a safe "
+                        "N:-level cross-cube feeder plan."
+                    ),
+                    deployment_cube=formula.target.cube_name,
+                    preview_only=True,
+                )
+            consolidated_plan = self._build_consolidated_target_leaf_feeders(plan, formula)
+            if consolidated_plan is not None:
+                return consolidated_plan
+            return FeederPlan(
+                statements=(),
+                strategy="preview_only_consolidated",
+                rationale=(
+                    "C: rule-area native preview exists, but Phase 2 cannot yet prove a bounded "
+                    "leaf-measure feeder expansion for this consolidated target."
+                ),
+                deployment_cube=formula.target.cube_name,
+                preview_only=True,
+            )
+
         target_reference = self._compile_native_measure_reference(
             cube_name=formula.target.cube_name,
             measure_name=formula.target.measure_name,
@@ -1827,30 +2543,27 @@ class Model:
         if not attribute_mappings:
             return None
 
-        target_candidates_by_source_dim: Dict[str, Dict[str, tuple[str, ...]]] = {}
-        for source_dimension_name, mapping in sorted(attribute_mappings.items()):
-            if mapping.ref.cube_name != formula.target.cube_name:
-                return None
+        attribute_target_dimensions = {
+            mapping.ref.dimension_name
+            for mapping in attribute_mappings.values()
+        }
+        broadcast_target_dimensions = [
+            dimension_name
+            for dimension_name in target_metadata.dimensions
+            if dimension_name != target_measure_dim
+            and dimension_name not in source_metadata.dimensions
+            and dimension_name not in attribute_target_dimensions
+        ]
 
-            target_dimension_name = mapping.ref.dimension_name
-            leaf_elements = tuple(target_metadata.dimension_leaf_elements.get(target_dimension_name, ()))
-            attribute_values = target_metadata.dimension_attribute_values.get(target_dimension_name, {})
-            source_leaf_elements = tuple(source_metadata.dimension_leaf_elements.get(source_dimension_name, ()))
-            if not leaf_elements or not source_leaf_elements:
-                return None
-
-            candidates: Dict[str, tuple[str, ...]] = {}
-            for source_element_name in source_leaf_elements:
-                matched_target_elements = tuple(
-                    target_element_name
-                    for target_element_name in leaf_elements
-                    if str(
-                        attribute_values.get(target_element_name, {}).get(mapping.ref.attribute_name, "")
-                    ).strip()
-                    == str(source_element_name).strip()
-                )
-                candidates[source_element_name] = matched_target_elements
-            target_candidates_by_source_dim[source_dimension_name] = candidates
+        attribute_mapping_groups = self._group_align_attribute_mappings_by_target_dimension(expression)
+        target_candidates_by_dimension_group = self._build_align_attribute_reverse_mapping_groups(
+            expression=expression,
+            source_metadata=source_metadata,
+            target_metadata=target_metadata,
+            target_cube_name=formula.target.cube_name,
+        )
+        if target_candidates_by_dimension_group is None:
+            return None
 
         for fixed_dimension_name, fixed_expression in fixed_source_values.items():
             if self._expand_feeder_origin_elements(
@@ -1872,13 +2585,19 @@ class Model:
         for source_combo in product(*source_combo_elements):
             source_element_by_dimension = dict(zip(source_combo_dimensions, source_combo))
             target_element_groups: List[tuple[str, tuple[str, ...]]] = []
-            for source_dimension_name, mapping in sorted(attribute_mappings.items()):
-                source_element_name = source_element_by_dimension[source_dimension_name]
-                target_elements = target_candidates_by_source_dim[source_dimension_name][source_element_name]
+            for target_dimension_name, mappings in sorted(attribute_mapping_groups.items()):
+                source_key = tuple(
+                    source_element_by_dimension[source_dimension_name]
+                    for source_dimension_name, _mapping in mappings
+                )
+                target_elements = target_candidates_by_dimension_group[target_dimension_name].get(
+                    source_key,
+                    (),
+                )
                 if not target_elements:
                     target_element_groups = []
                     break
-                target_element_groups.append((mapping.ref.dimension_name, target_elements))
+                target_element_groups.append((target_dimension_name, target_elements))
             if not target_element_groups:
                 continue
 
@@ -1894,7 +2613,7 @@ class Model:
                     source_cube_name=source_ref.cube_name,
                     target_ref=formula.target,
                     fixed_target_elements=target_elements_by_dimension,
-                    broadcast_target_dimensions=[],
+                    broadcast_target_dimensions=broadcast_target_dimensions,
                 )
                 if not built_targets:
                     return None
@@ -1954,11 +2673,80 @@ class Model:
             strategy="cross_cube_attribute_lookup",
             rationale=(
                 "Cross-cube feeder deployment is allowed because metadata proves a bounded reverse mapping "
-                "from source lookup elements to target leaf elements through explicit attribute values."
+                "from source lookup elements to target leaf elements through explicit target-dimension "
+                "attribute values, including composite multi-attribute routes when applicable, and any "
+                "target-only dimensions are expanded to explicit target leaf sets when metadata proves them."
             ),
             deployment_cube=source_ref.cube_name,
             preview_only=False,
         )
+
+    @staticmethod
+    def _group_align_attribute_mappings_by_target_dimension(
+        expression: MethodExpression,
+    ) -> Dict[str, List[tuple[str, AttributeExpression]]]:
+        grouped_mappings: Dict[str, List[tuple[str, AttributeExpression]]] = defaultdict(list)
+        for source_dimension_name, mapped_expression in sorted(expression.kwargs.items()):
+            if not isinstance(mapped_expression, AttributeExpression):
+                continue
+            grouped_mappings[mapped_expression.ref.dimension_name].append(
+                (source_dimension_name, mapped_expression)
+            )
+        return dict(grouped_mappings)
+
+    def _build_align_attribute_reverse_mapping_groups(
+        self,
+        expression: MethodExpression,
+        source_metadata: CubeMetadata,
+        target_metadata: CubeMetadata,
+        target_cube_name: str,
+    ) -> Optional[Dict[str, Dict[tuple[str, ...], tuple[str, ...]]]]:
+        attribute_mapping_groups = self._group_align_attribute_mappings_by_target_dimension(expression)
+        reverse_mapping_groups: Dict[str, Dict[tuple[str, ...], tuple[str, ...]]] = {}
+
+        for target_dimension_name, mappings in sorted(attribute_mapping_groups.items()):
+            leaf_elements = tuple(target_metadata.dimension_leaf_elements.get(target_dimension_name, ()))
+            attribute_values = target_metadata.dimension_attribute_values.get(target_dimension_name, {})
+            if not leaf_elements:
+                return None
+
+            source_leaf_elements_by_dimension: List[tuple[str, ...]] = []
+            allowed_source_elements_by_dimension: Dict[str, Dict[str, str]] = {}
+            for source_dimension_name, mapping in mappings:
+                if mapping.ref.cube_name != target_cube_name:
+                    return None
+                source_leaf_elements = tuple(
+                    source_metadata.dimension_leaf_elements.get(source_dimension_name, ())
+                )
+                if not source_leaf_elements:
+                    return None
+                source_leaf_elements_by_dimension.append(source_leaf_elements)
+                allowed_source_elements_by_dimension[source_dimension_name] = {
+                    str(source_element_name).strip(): source_element_name
+                    for source_element_name in source_leaf_elements
+                }
+
+            grouped_targets: Dict[tuple[str, ...], List[str]] = defaultdict(list)
+            for target_element_name in leaf_elements:
+                source_key: List[str] = []
+                for source_dimension_name, mapping in mappings:
+                    mapped_source_element = str(
+                        attribute_values.get(target_element_name, {}).get(mapping.ref.attribute_name, "")
+                    ).strip()
+                    canonical_source_element = allowed_source_elements_by_dimension[
+                        source_dimension_name
+                    ].get(mapped_source_element)
+                    if canonical_source_element is None:
+                        return None
+                    source_key.append(canonical_source_element)
+                grouped_targets[tuple(source_key)].append(target_element_name)
+
+            reverse_mapping_groups[target_dimension_name] = {
+                source_combo: tuple(grouped_targets.get(source_combo, ()))
+                for source_combo in product(*source_leaf_elements_by_dimension)
+            }
+
+        return reverse_mapping_groups
 
     def _build_same_cube_shift_feeders(self, formula: Formula) -> Optional[FeederPlan]:
         expression = formula.expression
@@ -2053,6 +2841,155 @@ class Model:
             deployment_cube=cube_name,
             preview_only=False,
         )
+
+    def _build_consolidated_target_leaf_feeders(self, plan: BuildPlan, formula: Formula) -> Optional[FeederPlan]:
+        """Feeder strategy for C: targets: never feed the consolidated element itself.
+
+        Instead, expand the target measure (a Consolidated element on the measure dimension)
+        to its bounded leaf-measure set and emit one same-cube feeder statement per
+        (driver measure, leaf measure) pair, exactly mirroring the project's own rule:
+        "do not write feeders for C type elements ... determine what exact N elements to
+        write multiple feeders for, instead of over-feeding."
+        """
+        metadata = self._get_cube_metadata(formula.target.cube_name)
+        if metadata is None or not metadata.measure_dimension_name:
+            return None
+
+        leaf_measures = self._expand_consolidated_element_to_leaves(
+            metadata=metadata,
+            dimension_name=metadata.measure_dimension_name,
+            element_name=formula.target.measure_name,
+        )
+        if not leaf_measures or len(leaf_measures) > self._CONSOLIDATED_FEEDER_LEAF_CEILING:
+            return None
+
+        same_cube_source_refs = tuple(
+            sorted(
+                self._resolve_simple_feeder_source_refs(plan, formula),
+                key=lambda item: item.key,
+            )
+        )
+
+        statements = tuple(
+            sorted(
+                {
+                    f"{self._compile_native_measure_reference(ref.cube_name, ref.measure_name)} => "
+                    f"{self._compile_native_measure_reference(formula.target.cube_name, leaf_measure_name)};"
+                    for leaf_measure_name in leaf_measures
+                    for ref in same_cube_source_refs
+                }
+            )
+        )
+
+        return FeederPlan(
+            statements=statements,
+            strategy="consolidated_target_leaf_feeders",
+            rationale=(
+                "C: rule-area feeder deployment is allowed because the consolidated target measure "
+                "expands to a bounded, metadata-proven set of leaf measures; feeders are emitted "
+                "for each leaf measure individually, never for the consolidated element itself."
+            ),
+            deployment_cube=formula.target.cube_name,
+            preview_only=False,
+        )
+
+    def _build_consolidated_leaf_cross_cube_feeders(
+        self,
+        plan: BuildPlan,
+        formula: Formula,
+    ) -> Optional[FeederPlan]:
+        """Apply the bounded N:-level cross-cube feeder planner to each expanded target leaf.
+
+        This keeps C: cross-cube support deliberately narrow: the consolidated target is first
+        expanded to a bounded set of leaf measures, then each leaf is treated like an ordinary
+        N: target and must independently resolve through the existing safe feeder subsets.
+        """
+        metadata = self._get_cube_metadata(formula.target.cube_name)
+        if metadata is None or not metadata.measure_dimension_name:
+            return None
+
+        leaf_measures = self._expand_consolidated_element_to_leaves(
+            metadata=metadata,
+            dimension_name=metadata.measure_dimension_name,
+            element_name=formula.target.measure_name,
+        )
+        if not leaf_measures or len(leaf_measures) > self._CONSOLIDATED_FEEDER_LEAF_CEILING:
+            return None
+
+        deployment_statements_by_cube: Dict[str, set[str]] = defaultdict(set)
+        for leaf_measure_name in leaf_measures:
+            leaf_formula = Formula(
+                target=MeasureRef(
+                    cube_name=formula.target.cube_name,
+                    measure_name=leaf_measure_name,
+                ),
+                expression=formula.expression,
+                scope="N",
+            )
+            leaf_plan = self._plan_feeders(plan, leaf_formula)
+            if leaf_plan.preview_only:
+                return None
+            for cube_name, cube_statements in leaf_plan.iter_deployment_statements(
+                default_cube=formula.target.cube_name
+            ):
+                deployment_statements_by_cube[cube_name].update(cube_statements)
+
+        deployment_statements_by_cube = {
+            cube_name: self._merge_db_target_feeder_statements(cube_statements)
+            for cube_name, cube_statements in deployment_statements_by_cube.items()
+        }
+
+        statements = tuple(
+            sorted(
+                statement
+                for grouped_statements in deployment_statements_by_cube.values()
+                for statement in grouped_statements
+            )
+        )
+        if not statements:
+            return None
+
+        deployment_statements = tuple(
+            (cube_name, tuple(sorted(grouped_statements)))
+            for cube_name, grouped_statements in sorted(deployment_statements_by_cube.items())
+        )
+        deployment_cube = deployment_statements[0][0] if len(deployment_statements) == 1 else None
+
+        return FeederPlan(
+            statements=statements,
+            strategy="consolidated_target_leaf_cross_cube",
+            rationale=(
+                "C: cross-cube feeder deployment is allowed because the consolidated target expands "
+                "to a bounded, metadata-proven set of leaf measures, and each leaf measure "
+                "independently resolves through an existing safe N:-level cross-cube feeder plan; "
+                "the deployed feeders are the explicit union of those leaf-level plans."
+            ),
+            deployment_cube=deployment_cube,
+            deployment_statements=deployment_statements,
+            preview_only=False,
+        )
+
+    @staticmethod
+    def _merge_db_target_feeder_statements(statements: Iterable[str]) -> set[str]:
+        grouped_targets_by_lhs: Dict[str, set[str]] = defaultdict(set)
+        passthrough: set[str] = set()
+
+        for statement in statements:
+            if " => " not in statement or not statement.endswith(";"):
+                passthrough.add(statement)
+                continue
+            lhs, rhs_with_semicolon = statement[:-1].split(" => ", 1)
+            rhs = rhs_with_semicolon.strip()
+            if not rhs.startswith("DB("):
+                passthrough.add(statement)
+                continue
+            grouped_targets_by_lhs[lhs].add(rhs)
+
+        merged = {
+            f"{lhs} => {', '.join(sorted(targets))};"
+            for lhs, targets in grouped_targets_by_lhs.items()
+        }
+        return merged | passthrough
 
     def _build_target_db_statements(
         self,
@@ -2169,6 +3106,7 @@ class Model:
             metadata=metadata,
             dimension_name=dimension_name,
             element_name=element_name,
+            explicit_hierarchy_name=explicit_hierarchy_name,
         )
         if structural_leaf_elements:
             return tuple(
@@ -2182,33 +3120,56 @@ class Model:
         metadata: Any,
         dimension_name: str,
         element_name: str,
-        _visited: frozenset[str] = frozenset(),
+        explicit_hierarchy_name: Optional[str] = None,
+        _visited: frozenset[tuple[Optional[str], str]] = frozenset(),
     ) -> Optional[tuple[str, ...]]:
         leaf_elements = tuple(metadata.dimension_leaf_elements.get(dimension_name, ()))
         if element_name in leaf_elements:
             return (element_name,)
 
-        if element_name in _visited:
+        visited_key = (explicit_hierarchy_name, element_name)
+        if visited_key in _visited:
             return None
 
-        children = tuple(metadata.dimension_children.get(dimension_name, {}).get(element_name, ()))
-        if not children:
-            return None
+        hierarchy_children = metadata.dimension_children_by_hierarchy.get(dimension_name, {})
+        hierarchy_order: List[Optional[str]] = []
+        if explicit_hierarchy_name is not None:
+            hierarchy_order.append(explicit_hierarchy_name)
+        default_hierarchy_name = metadata.default_hierarchies.get(dimension_name)
+        if default_hierarchy_name is not None and default_hierarchy_name not in hierarchy_order:
+            hierarchy_order.append(default_hierarchy_name)
+        for hierarchy_name in metadata.dimension_hierarchies.get(dimension_name, ()):
+            if hierarchy_name not in hierarchy_order:
+                hierarchy_order.append(hierarchy_name)
+        if None not in hierarchy_order:
+            hierarchy_order.append(None)
 
-        visited = _visited | {element_name}
-        collected_leaf_elements: List[str] = []
-        for child_name in children:
-            child_leaf_elements = self._expand_consolidated_element_to_leaves(
-                metadata=metadata,
-                dimension_name=dimension_name,
-                element_name=child_name,
-                _visited=visited,
-            )
-            if child_leaf_elements is None:
-                return None
-            collected_leaf_elements.extend(child_leaf_elements)
+        visited = _visited | {visited_key}
+        for hierarchy_name in hierarchy_order:
+            if hierarchy_name is None:
+                children = tuple(metadata.dimension_children.get(dimension_name, {}).get(element_name, ()))
+            else:
+                children = tuple(hierarchy_children.get(hierarchy_name, {}).get(element_name, ()))
+            if not children:
+                continue
 
-        return tuple(collected_leaf_elements)
+            collected_leaf_elements: List[str] = []
+            for child_name in children:
+                child_leaf_elements = self._expand_consolidated_element_to_leaves(
+                    metadata=metadata,
+                    dimension_name=dimension_name,
+                    element_name=child_name,
+                    explicit_hierarchy_name=hierarchy_name,
+                    _visited=visited,
+                )
+                if child_leaf_elements is None:
+                    collected_leaf_elements = []
+                    break
+                collected_leaf_elements.extend(child_leaf_elements)
+            if collected_leaf_elements:
+                return tuple(collected_leaf_elements)
+
+        return None
 
     def _consolidated_feeder_rejection_reason(
         self,
@@ -2422,6 +3383,122 @@ class Model:
 
         return None
 
+    @staticmethod
+    def _align_uses_attribute_mapping(expression: MethodExpression) -> bool:
+        return any(
+            isinstance(mapped_expression, AttributeExpression)
+            for mapped_expression in expression.kwargs.values()
+        )
+
+    def _align_has_target_only_broadcast_dimensions(
+        self,
+        expression: MethodExpression,
+        target_cube_name: str,
+    ) -> bool:
+        if expression.method_name != "align" or not isinstance(expression.base, MeasureExpression):
+            return False
+        source_metadata = self._get_cube_metadata(expression.base.ref.cube_name)
+        target_metadata = self._get_cube_metadata(target_cube_name)
+        if source_metadata is None or target_metadata is None:
+            return False
+        source_dimension_names = set(source_metadata.dimensions)
+        attribute_target_dimensions = {
+            mapped_expression.ref.dimension_name
+            for mapped_expression in expression.kwargs.values()
+            if isinstance(mapped_expression, AttributeExpression)
+        }
+        return any(
+            dimension_name != target_metadata.measure_dimension_name
+            and dimension_name not in source_dimension_names
+            and dimension_name not in attribute_target_dimensions
+            for dimension_name in target_metadata.dimensions
+        )
+
+    def _align_reverse_mapping_proven(
+        self,
+        expression: MethodExpression,
+        target_cube_name: str,
+    ) -> bool:
+        if expression.method_name != "align" or not isinstance(expression.base, MeasureExpression):
+            return True
+
+        source_metadata = self._get_cube_metadata(expression.base.ref.cube_name)
+        target_metadata = self._get_cube_metadata(target_cube_name)
+        if source_metadata is None or target_metadata is None:
+            return False
+
+        attribute_mappings = {
+            source_dimension_name: mapped_expression
+            for source_dimension_name, mapped_expression in expression.kwargs.items()
+            if isinstance(mapped_expression, AttributeExpression)
+        }
+        if not attribute_mappings:
+            return True
+
+        return (
+            self._build_align_attribute_reverse_mapping_groups(
+                expression=expression,
+                source_metadata=source_metadata,
+                target_metadata=target_metadata,
+                target_cube_name=target_cube_name,
+            )
+            is not None
+        )
+
+    def _align_target_leaf_scope_proven(
+        self,
+        expression: MethodExpression,
+        target_cube_name: str,
+    ) -> bool:
+        if not self._align_has_target_only_broadcast_dimensions(expression, target_cube_name):
+            return True
+        if not isinstance(expression.base, MeasureExpression):
+            return False
+        source_metadata = self._get_cube_metadata(expression.base.ref.cube_name)
+        target_metadata = self._get_cube_metadata(target_cube_name)
+        if source_metadata is None or target_metadata is None:
+            return False
+        source_dimension_names = set(source_metadata.dimensions)
+        for dimension_name in target_metadata.dimensions:
+            if dimension_name == target_metadata.measure_dimension_name:
+                continue
+            if dimension_name in source_dimension_names:
+                continue
+            if (
+                self._dimension_hierarchy_ambiguity_reason(
+                    cube_name=target_cube_name,
+                    dimension_name=dimension_name,
+                    explicit_hierarchy_name=None,
+                )
+                is not None
+            ):
+                return False
+            if not tuple(target_metadata.dimension_leaf_elements.get(dimension_name, ())):
+                return False
+        return True
+
+    def _align_contains_unproven_reverse_mapping(
+        self,
+        expression: Expression,
+        target_cube_name: str,
+    ) -> bool:
+        return any(
+            not self._align_reverse_mapping_proven(align_expression, target_cube_name)
+            for align_expression in self._iter_align_expressions(expression)
+            if self._align_uses_attribute_mapping(align_expression)
+        )
+
+    def _align_contains_unproven_target_leaf_scope(
+        self,
+        expression: Expression,
+        target_cube_name: str,
+    ) -> bool:
+        return any(
+            not self._align_target_leaf_scope_proven(align_expression, target_cube_name)
+            for align_expression in self._iter_align_expressions(expression)
+            if self._align_has_target_only_broadcast_dimensions(align_expression, target_cube_name)
+        )
+
     def _resolve_dimension_hierarchy(
         self,
         cube_name: Optional[str],
@@ -2561,7 +3638,16 @@ class Model:
             for key in sorted(formulas):
                 formula = formulas[key]
                 decision = self._select_backend(formula)
-                readiness = self._formula_phase2_readiness(formula)
+                readiness = self._formula_phase2_readiness(
+                    BuildPlan(
+                        formulas=formulas,
+                        graph=dict(graph),
+                        dependencies=dependencies,
+                        order=order,
+                        report=ValidationReport(errors=errors, warnings=[], execution_order=order),
+                    ),
+                    formula,
+                )
                 if decision.backend is Backend.PYTHON:
                     warnings.append(
                         f"Formula '{key}' will use Python materialization backend. {decision.rationale}"
