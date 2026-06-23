@@ -10,6 +10,18 @@ from TM1_bedrock_py.calc import (
 from tests.mock_tm1_service import MockTM1Service
 
 
+def test_compile_preview_emits_tm1_equality_operator_not_python_equality():
+    model = Model()
+    sales = model.cube("Sales")
+
+    sales["Is Closed"] = sales["Revenue"].where(sales["Status"] == 1)
+
+    preview = model.compile(dry_run=True)
+
+    assert preview.errors == []
+    assert preview.rules["Sales"] == "['Is Closed'] = N: IF((['Status'] = 1), ['Revenue'], STET);"
+
+
 def test_compile_preview_emits_rules_and_feeders_for_native_subset():
     model = Model()
     sales = model.cube("Sales")
@@ -4131,3 +4143,88 @@ def test_compile_keeps_chained_attribute_align_preview_only_when_intermediate_va
 
     assert explanation["native_eligibility"]["status"] == "metadata_incomplete"
     assert explanation["native_eligibility"]["code"] == "native_align_reverse_mapping_unproven"
+
+
+def test_compile_deploys_fan_out_allocation_of_a_broadcast_total_weighted_by_a_same_cube_ratio():
+    """Verifies dev/13_native_parity_plan.md Work Item 5 (fan-out/allocation).
+
+    Representative shape: a parameter-cube total (one cell per Department) is allocated
+    across many CostCenter leaves, weighted by a same-cube "Weight Pct" driver measure.
+    From each target leaf's point of view this is exactly the existing bounded
+    target-only-broadcast align(...) primitive (Department maps straight through,
+    CostCenter is target-only and broadcasts to every leaf) combined with the existing
+    same-cube-driver-merge logic (Weight Pct is a genuine value-composing driver, not a
+    selector, so it must be fed alongside the cross-cube origin). No new compiler or
+    feeder-planner code is needed -- this test exists to prove that, not to add a feature.
+    """
+    provider = StaticMetadataProvider(
+        {
+            "CostCenter": build_static_cube_metadata(
+                "CostCenter",
+                ["Version", "Department", "CostCenter", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Department": "Department",
+                    "CostCenter": "CostCenter",
+                    "Measure": "Measure",
+                },
+                measure_element_types={
+                    "Weight Pct": "Numeric",
+                    "Allocated Amount": "Numeric",
+                },
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Department": ["Department"],
+                    "CostCenter": ["CostCenter"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "CostCenter": ["CC100", "CC200"],
+                },
+            ),
+            "Budget": build_static_cube_metadata(
+                "Budget",
+                ["Version", "Department", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Department": "Department",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Total Amount": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Department": ["Department"],
+                    "Measure": ["Measure"],
+                },
+            ),
+        }
+    )
+    model = Model(tm1=MockTM1Service(), metadata_provider=provider)
+    cost_center = model.cube("CostCenter")
+    budget = model.cube("Budget")
+
+    cost_center["Allocated Amount"] = budget["Total Amount"].align() * cost_center["Weight Pct"]
+
+    explanation = model.explain("CostCenter:Allocated Amount")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["native_eligibility"]["status"] == "deployable"
+    assert preview.errors == []
+    assert preview.rules["CostCenter"] == (
+        "['Measure':'Measure':'Allocated Amount'] = N: (DB('Budget', !Version, !Department, "
+        "'Measure':'Measure':'Total Amount') * ['Measure':'Measure':'Weight Pct']);"
+    )
+    assert preview.feeders["CostCenter"] == (
+        "['Measure':'Measure':'Weight Pct'] => ['Measure':'Measure':'Allocated Amount'];"
+    )
+    assert preview.feeders["Budget"] == (
+        "[!Version, !Department, 'Measure':'Measure':'Total Amount'] => "
+        "DB('CostCenter', !Version, !Department, 'CostCenter':'CostCenter':'CC100', "
+        "'Measure':'Measure':'Allocated Amount'), DB('CostCenter', !Version, !Department, "
+        "'CostCenter':'CostCenter':'CC200', 'Measure':'Measure':'Allocated Amount');"
+    )
+    assert preview.manifest["CostCenter:Allocated Amount"]["artifact"]["preview_only"] is False
+
+    deployment = model.compile(dry_run=False)
+    assert deployment.deployment["CostCenter"]["deployed"] is True
+    assert deployment.deployment["Budget"]["deployed"] is True

@@ -62,7 +62,7 @@ def test_ingest_consolidated_scope_statement():
 def test_ingest_rejects_unsupported_constructs_but_keeps_other_statements():
     rule_text = (
         "['Good'] = N: (['Revenue'] - ['Cost']);\n"
-        "['StringRule'] = S: 'literal text';\n"
+        "['BadScope'] = X: 'literal text';\n"
         "['CrossCube'] = N: DB('FX Rates', !Version, 'EUR', 'Rate');\n"
         "['BadCall'] = N: NOTAFUNCTION(['Revenue']);\n"
     )
@@ -72,11 +72,20 @@ def test_ingest_rejects_unsupported_constructs_but_keeps_other_statements():
 
     assert report.ingested == ["Good"]
     rejected_measures = {rejection.measure_name: rejection.reason for rejection in report.rejected}
-    assert "StringRule" in rejected_measures
-    assert "S:" in rejected_measures["StringRule"]
+    assert "BadScope" in rejected_measures
+    assert "X:" in rejected_measures["BadScope"]
     assert "CrossCube" in rejected_measures
     assert "DB" in rejected_measures["CrossCube"]
     assert "BadCall" in rejected_measures
+
+
+def test_ingest_accepts_string_scope_rule_text():
+    parsed, rejected = parse_native_rule_text("Sales", "['Full Name'] = S: 'literal text';")
+    assert rejected == []
+    assert len(parsed) == 1
+    assert parsed[0].scope == "S"
+    assert parsed[0].measure_name == "Full Name"
+    assert parsed[0].expression.describe() == "'literal text'.native(scope='string')"
 
 
 def test_ingest_rejects_duplicate_target_without_raising():

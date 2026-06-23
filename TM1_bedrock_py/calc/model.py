@@ -136,6 +136,35 @@ class Expression:
     def shift(self, **offsets: Any) -> "Expression":
         return MethodExpression("shift", self, kwargs={key: _ensure_expression(value) for key, value in offsets.items()})
 
+    def _consolidated_aggregate(self, method_name: str, flag: int, **dimension_overrides: Any) -> "Expression":
+        kwargs = {key: _ensure_expression(value) for key, value in dimension_overrides.items()}
+        kwargs["__flag__"] = LiteralExpression(flag)
+        return MethodExpression(method_name, self, kwargs=kwargs)
+
+    def consolidated_max(self, flag: int = 0, **dimension_overrides: Any) -> "Expression":
+        """Lowers to TM1's native `ConsolidatedMax(...)` -- a non-additive consolidation
+        override that returns the maximum leaf value beneath the current (or overridden)
+        coordinate of this same-cube measure, instead of the default sum. `flag` follows TM1's
+        own convention: 0 = plain, 1 = consolidation-weighted, 2 = ignore zero values,
+        3 = weighted and ignore zero values."""
+        return self._consolidated_aggregate("consolidated_max", flag, **dimension_overrides)
+
+    def consolidated_min(self, flag: int = 0, **dimension_overrides: Any) -> "Expression":
+        """Lowers to TM1's native `ConsolidatedMin(...)`. See `consolidated_max` for `flag`."""
+        return self._consolidated_aggregate("consolidated_min", flag, **dimension_overrides)
+
+    def consolidated_avg(self, flag: int = 0, **dimension_overrides: Any) -> "Expression":
+        """Lowers to TM1's native `ConsolidatedAvg(...)`. See `consolidated_max` for `flag`."""
+        return self._consolidated_aggregate("consolidated_avg", flag, **dimension_overrides)
+
+    def consolidated_count(self, flag: int = 0, **dimension_overrides: Any) -> "Expression":
+        """Lowers to TM1's native `ConsolidatedCount(...)`. See `consolidated_max` for `flag`."""
+        return self._consolidated_aggregate("consolidated_count", flag, **dimension_overrides)
+
+    def consolidated_count_unique(self, flag: int = 0, **dimension_overrides: Any) -> "Expression":
+        """Lowers to TM1's native `ConsolidatedCountUnique(...)`. See `consolidated_max` for `flag`."""
+        return self._consolidated_aggregate("consolidated_count_unique", flag, **dimension_overrides)
+
     def ytd(self, dimension: str, period_number_attribute: str) -> "Expression":
         return MethodExpression(
             "ytd",
@@ -167,6 +196,59 @@ class Expression:
     def int_part(self) -> "Expression":
         return MethodExpression("int_part", self)
 
+    def exp(self) -> "Expression":
+        """Lowers to TM1's native `EXP(x)` -- the natural anti-log (e^x) of this value."""
+        return MethodExpression("exp", self)
+
+    def ln(self) -> "Expression":
+        """Lowers to TM1's native `LN(x)` -- the natural base-e logarithm. TM1 requires a
+        positive input; this DSL does not validate that at compile time, matching the existing
+        posture for `mod`/`int_part`/etc., which also trust the caller's domain."""
+        return MethodExpression("ln", self)
+
+    def log10(self) -> "Expression":
+        """Lowers to TM1's native `LOG(x)` -- the base-10 logarithm of a positive number."""
+        return MethodExpression("log10", self)
+
+    def sqrt(self) -> "Expression":
+        """Lowers to TM1's native `SQRT(x)` -- the square root."""
+        return MethodExpression("sqrt", self)
+
+    def sin(self) -> "Expression":
+        """Lowers to TM1's native `SIN(x)` -- sine of an angle expressed in radians."""
+        return MethodExpression("sin", self)
+
+    def cos(self) -> "Expression":
+        """Lowers to TM1's native `COS(x)` -- cosine of an angle expressed in radians."""
+        return MethodExpression("cos", self)
+
+    def tan(self) -> "Expression":
+        """Lowers to TM1's native `TAN(x)` -- tangent of an angle expressed in radians."""
+        return MethodExpression("tan", self)
+
+    def asin(self) -> "Expression":
+        """Lowers to TM1's native `ASIN(x)` -- the angle, in radians, whose sine is x."""
+        return MethodExpression("asin", self)
+
+    def acos(self) -> "Expression":
+        """Lowers to TM1's native `ACOS(x)` -- the angle, in radians, whose cosine is x."""
+        return MethodExpression("acos", self)
+
+    def atan(self) -> "Expression":
+        """Lowers to TM1's native `ATAN(x)` -- the angle, in radians, whose tangent is x."""
+        return MethodExpression("atan", self)
+
+    def insert(self, text: Any, position: Any) -> "Expression":
+        """Lowers to TM1's native `INSRT(String1, String2, Location)`, where `String1` is the
+        string being inserted (`text`), `String2` is the string it's inserted into (`self`), and
+        `Location` is the 1-based insertion position. Confirmed against a real worked example
+        (a REPLACE-style rule combining SCAN/DELET/LONG/INSRT) since the function-library pages
+        alone never stated which string is inserted into which -- see
+        dev/07_handover_status.md's "INSRT" entry."""
+        return MethodExpression(
+            "insert", self, args=(_ensure_expression(text), _ensure_expression(position))
+        )
+
     def upper(self) -> "Expression":
         return MethodExpression("upper", self)
 
@@ -178,6 +260,51 @@ class Expression:
 
     def substring(self, start: Any, length: Any) -> "Expression":
         return MethodExpression("substring", self, args=(_ensure_expression(start), _ensure_expression(length)))
+
+    def delete(self, start: Any, length: Any) -> "Expression":
+        """Lowers to TM1's native `DELET(string, start, number)` -- deletes `length` characters
+        starting at position `start` (1-based) from the string."""
+        return MethodExpression("delete", self, args=(_ensure_expression(start), _ensure_expression(length)))
+
+    def scan(self, substring: Any) -> "Expression":
+        """Lowers to TM1's native `SCAN(substring, string)` -- returns the 1-based position of
+        the first occurrence of `substring` within this string, or 0 if not found."""
+        return MethodExpression("scan", self, args=(_ensure_expression(substring),))
+
+    def length(self) -> "Expression":
+        """Lowers to TM1's native `LONG(string)` -- returns the character length of the string."""
+        return MethodExpression("length", self)
+
+    def char_code(self, position: Any = 1) -> "Expression":
+        """Lowers to TM1's native `CODE(string, position)` -- returns the ASCII code of the
+        character at `position` (1-based) in the string."""
+        return MethodExpression("char_code", self, args=(_ensure_expression(position),))
+
+    def to_char(self) -> "Expression":
+        """Lowers to TM1's native `CHAR(number)` -- the inverse of `char_code`, returning the
+        single character associated with this numeric ASCII code."""
+        return MethodExpression("to_char", self)
+
+    def to_string(self, length: Any, decimals: Any = 0) -> "Expression":
+        """Numeric-to-string conversion, lowering to TM1's native `STR(value, length, decimals)`.
+
+        Bounded MVP: only allowed when applied directly to a same-cube measure reference (see
+        `Model._measure_type_conversion_overrides`), mirroring this project's narrow-first
+        posture for every other widening. This is what lets an `S:` formula reference a Numeric
+        measure, or an `N:` formula reference a String measure, without the type-checking gate
+        rejecting the cross-type reference outright.
+        """
+        return MethodExpression(
+            "to_string", self, args=(_ensure_expression(length), _ensure_expression(decimals))
+        )
+
+    def to_number(self) -> "Expression":
+        """String-to-number conversion, lowering to TM1's native `NUMBR(value)`.
+
+        Same bounded-MVP posture as `to_string`: only allowed when applied directly to a
+        same-cube measure reference.
+        """
+        return MethodExpression("to_number", self)
 
     def concat(self, other: Any) -> "Expression":
         """String concatenation, lowering to TM1's native `|` operator.
@@ -203,7 +330,7 @@ class Expression:
         raise NotImplementedError
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class LiteralExpression(Expression):
     value: Any
 
@@ -211,7 +338,7 @@ class LiteralExpression(Expression):
         return repr(self.value)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class MeasureExpression(Expression):
     ref: MeasureRef
 
@@ -222,7 +349,7 @@ class MeasureExpression(Expression):
         return self.ref.label
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class AttributeExpression(Expression):
     ref: AttributeRef
 
@@ -233,7 +360,7 @@ class AttributeExpression(Expression):
         return self.ref.label
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class ChainedAttributeExpression(Expression):
     ref: ChainedAttributeRef
 
@@ -241,7 +368,7 @@ class ChainedAttributeExpression(Expression):
         return self.ref.label
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class ElementExpression(Expression):
     ref: ElementRef
 
@@ -267,7 +394,7 @@ class DimensionFunctionRef:
         return f"{self.cube_name}.{self.dimension_name}.{self.function_name}({element_part}{extra})"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class DimensionFunctionExpression(Expression):
     ref: DimensionFunctionRef
 
@@ -275,7 +402,7 @@ class DimensionFunctionExpression(Expression):
         return self.ref.label
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class UnaryExpression(Expression):
     operator: str
     operand: Expression
@@ -293,7 +420,7 @@ class UnaryExpression(Expression):
         return f"({self.operator}{self.operand.describe()})"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class BinaryExpression(Expression):
     operator: str
     left: Expression
@@ -315,12 +442,12 @@ class BinaryExpression(Expression):
         return f"({self.left.describe()} {self.operator} {self.right.describe()})"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class ComparisonExpression(BinaryExpression):
     pass
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class MethodExpression(Expression):
     method_name: str
     base: Expression
@@ -355,7 +482,7 @@ class MethodExpression(Expression):
         return f"{self.base.describe()}.{self.method_name}({inner})"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class RollingExpression(Expression):
     base: Expression
     kwargs: Mapping[str, Expression] = field(default_factory=dict)
@@ -383,7 +510,34 @@ class RollingExpression(Expression):
         return f"{self.base.describe()}.rolling({inner})"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
+class FunctionCallExpression(Expression):
+    """A free-standing native function call not bound to any particular measure/dimension
+    receiver -- e.g. TM1's date functions (`DATE`/`DATES`/`DAY`/`DAYNO`), which take plain
+    value arguments rather than operating on a `.base` expression the way `.abs()`/`.upper()`
+    etc. do. Built via `Model.date(...)`/`Model.dates(...)`/`Model.day(...)`/`Model.dayno(...)`."""
+
+    function_name: str
+    args: Tuple[Expression, ...]
+
+    def iter_measure_refs(self) -> Iterator[MeasureRef]:
+        for arg in self.args:
+            yield from arg.iter_measure_refs()
+
+    def iter_attribute_refs(self) -> Iterator[AttributeRef]:
+        for arg in self.args:
+            yield from arg.iter_attribute_refs()
+
+    def iter_element_refs(self) -> Iterator[ElementRef]:
+        for arg in self.args:
+            yield from arg.iter_element_refs()
+
+    def describe(self) -> str:
+        inner = ", ".join(arg.describe() for arg in self.args)
+        return f"{self.function_name}({inner})"
+
+
+@dataclass(frozen=True, eq=False)
 class CaseExpression(Expression):
     cases: Tuple[Tuple[Expression, Expression], ...]
     default: Expression
@@ -415,7 +569,7 @@ class CaseExpression(Expression):
         return f"case({', '.join(parts)})"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class ScopedExpression(Expression):
     """Marks an explicit rule-area hint (e.g. ``scope="consolidated"``) before formula registration.
 
@@ -599,6 +753,28 @@ class DimensionProxy:
     def is_component_of(self, parent_element: str, element: Optional[str] = None) -> DimensionFunctionExpression:
         return self._dimension_function("eliscomp", element, args=(parent_element,))
 
+    def parent(self, index: int = 1, element: Optional[str] = None) -> DimensionFunctionExpression:
+        """Lowers to TM1's native `ELPAR(Dimension, Element, Index)` -- returns the name of the
+        `index`-th (1-based) direct parent of `element` (defaults to the current element)."""
+        return self._dimension_function("elpar", element, args=(index,))
+
+    def is_parent_of(self, child_element: str, element: Optional[str] = None) -> DimensionFunctionExpression:
+        """Lowers to TM1's native `ELISPAR(Dimension, Parent, Child)` -- true if `element`
+        (defaults to the current element) is the *direct* parent of `child_element`."""
+        return self._dimension_function("elispar", element, args=(child_element,))
+
+    def is_ancestor_of(self, descendant_element: str, element: Optional[str] = None) -> DimensionFunctionExpression:
+        """Lowers to TM1's native `ELISANC(Dimension, Ancestor, Descendant)` -- true if
+        `element` (defaults to the current element) is an ancestor, at any level, of
+        `descendant_element`."""
+        return self._dimension_function("elisanc", element, args=(descendant_element,))
+
+    def weight(self, parent_element: str, element: Optional[str] = None) -> DimensionFunctionExpression:
+        """Lowers to TM1's native `ELWEIGHT(Dimension, Parent, Child)` -- returns the
+        consolidation weight of `element` (defaults to the current element, the "child" role)
+        within `parent_element`."""
+        return self._dimension_function("elweight", element, args=(parent_element,))
+
 
 class CubeRef:
     def __init__(self, model: "Model", cube_name: str):
@@ -621,6 +797,25 @@ class Model:
     _SUPPORTED_RULE_AREA_SCOPES = ("leaf", "consolidated", "string")
     _RULE_AREA_KEYWORDS = {"leaf": "N", "consolidated": "C", "string": "S"}
     _CONSOLIDATED_FEEDER_LEAF_CEILING = 2000
+    _CONSOLIDATED_AGGREGATE_FUNCTIONS = {
+        "consolidated_max": "ConsolidatedMax",
+        "consolidated_min": "ConsolidatedMin",
+        "consolidated_avg": "ConsolidatedAvg",
+        "consolidated_count": "ConsolidatedCount",
+        "consolidated_count_unique": "ConsolidatedCountUnique",
+    }
+    _SINGLE_ARG_MATH_FUNCTIONS = {
+        "exp": "EXP",
+        "ln": "LN",
+        "log10": "LOG",
+        "sqrt": "SQRT",
+        "sin": "SIN",
+        "cos": "COS",
+        "tan": "TAN",
+        "asin": "ASIN",
+        "acos": "ACOS",
+        "atan": "ATAN",
+    }
 
     def __init__(self, tm1: Any = None, metadata_provider: Optional[MetadataProvider] = None):
         self.tm1 = tm1
@@ -636,6 +831,33 @@ class Model:
     def case(self, *cases: Tuple[Any, Any], default: Any) -> CaseExpression:
         normalized_cases = tuple((_ensure_expression(condition), _ensure_expression(value)) for condition, value in cases)
         return CaseExpression(cases=normalized_cases, default=_ensure_expression(default))
+
+    def dates(self, year: Any, month: Any, day: Any) -> FunctionCallExpression:
+        """Lowers to TM1's native `DATES(Year, Month, Day)` -- returns the serial date number
+        for the given year/month/day. Confirmed via a worked example: `DATES(2012,12,2)`."""
+        return FunctionCallExpression(
+            function_name="DATES",
+            args=(_ensure_expression(year), _ensure_expression(month), _ensure_expression(day)),
+        )
+
+    def day(self, date_string: Any) -> FunctionCallExpression:
+        """Lowers to TM1's native `DAY(DateString)` -- extracts the day-of-month number from a
+        date string in 'YY-MM-DD' or 'YYYY-MM-DD' form."""
+        return FunctionCallExpression(function_name="DAY", args=(_ensure_expression(date_string),))
+
+    def dayno(self, date_string: Any) -> FunctionCallExpression:
+        """Lowers to TM1's native `DAYNO(DateString)` -- the TM1 serial date number (days since
+        1960-01-01) for a date string in 'YY-MM-DD' or 'YYYY-MM-DD' form."""
+        return FunctionCallExpression(function_name="DAYNO", args=(_ensure_expression(date_string),))
+
+    def date(self, serial_number: Any, four_digit_year: Any = 0) -> FunctionCallExpression:
+        """Lowers to TM1's native `DATE(SerialNumber, FourDigitYear)` -- converts a serial date
+        number back to a text date. `four_digit_year` is TM1's own optional 0/1 flag (0 = 2-digit
+        year, 1 = 4-digit year), defaulting to 0 to match TM1's own default."""
+        return FunctionCallExpression(
+            function_name="DATE",
+            args=(_ensure_expression(serial_number), _ensure_expression(four_digit_year)),
+        )
 
     def import_native_rule_text(self, cube_name: str, rule_text: str) -> "RuleIngestionReport":
         from .ingest import RuleIngestionRejection, RuleIngestionReport, parse_native_rule_text
@@ -1370,7 +1592,7 @@ class Model:
 
     def _contains_disallowed_string_methods(self, expression: Expression) -> bool:
         return self._contains_method_names(
-            expression, {"align", "shift", "growth", "ytd", "rolling.sum"}
+            expression, {"shift", "growth", "ytd", "rolling.sum"}
         )
 
     def _contains_method_names(self, expression: Expression, disallowed: set) -> bool:
@@ -1433,14 +1655,14 @@ class Model:
     def _native_string_unsupported_reason(self, formula: Formula) -> Optional[str]:
         """Gate for S: rule-area native compilation.
 
-        First MVP slice, mirroring how C: was introduced (see dev/09_consolidated_rule_area.md):
-        same-cube arithmetic/comparisons/where/case plus string-specific operations only.
-        Cross-cube align(...) and every time-intelligence method (shift/growth/ytd/rolling) are
-        rejected outright in this slice -- not because they are structurally impossible for
-        strings, but because S: has no demonstrated need for them yet and no test coverage to
-        prove the existing feeder builders behave correctly against a String-typed target. This
-        is the same "ship the narrow case first" posture C: took initially before its bounded
-        cross-cube widening.
+        Same-cube arithmetic/comparisons/where/case plus string-specific operations, and
+        bounded cross-cube align(...) reusing the same metadata-proven feeder-origin subsets
+        N: already relies on (the underlying _native_unsupported_reason call below proves
+        align(...) mapping/hierarchy/reverse-mapping safety identically regardless of rule
+        area -- that proof has nothing to do with the target/source measure's element type).
+        Every time-intelligence method (shift/growth/ytd/rolling) stays rejected outright:
+        S: has no demonstrated need for them yet and no test coverage proving the existing
+        time-shift/rolling/ytd feeder builders behave correctly against a String-typed target.
         """
         expression_reason = self._native_unsupported_reason(formula.expression, formula.target.cube_name)
         if expression_reason is not None:
@@ -1448,10 +1670,12 @@ class Model:
 
         if self._contains_disallowed_string_methods(formula.expression):
             return (
-                "S: rule-area compilation does not support align(...), shift(...), growth(...), "
-                "ytd(), or rolling(...) in the current bounded subset; supported shapes are "
-                "same-cube arithmetic/comparisons/where/case plus string-specific operations "
-                "(concat/upper/lower/trim/substring) over same-cube String-typed measures"
+                "S: rule-area compilation does not support shift(...), growth(...), ytd(), or "
+                "rolling(...) in the current bounded subset; supported shapes are same-cube "
+                "arithmetic/comparisons/where/case plus string-specific operations "
+                "(concat/upper/lower/trim/substring) over String-typed measures, plus bounded "
+                "cross-cube align(...) when metadata proves the same feeder-origin safety N: "
+                "already requires"
             )
 
         metadata = self._get_cube_metadata(formula.target.cube_name)
@@ -1462,12 +1686,17 @@ class Model:
         if not self._is_string_measure_type(target_measure_type):
             return "S: rule-area compilation requires the target measure to resolve to a String element type"
 
+        type_overrides = self._measure_type_conversion_overrides(formula.expression)
         for ref in self._iter_expression_measure_refs(formula.expression, formula.target.cube_name):
-            ref_measure_type = self._measure_type_for(metadata, ref.measure_name)
+            if type_overrides.get((ref.cube_name, ref.measure_name)) == "Numeric":
+                continue
+            ref_metadata = self._get_cube_metadata(ref.cube_name)
+            ref_measure_type = self._measure_type_for(ref_metadata, ref.measure_name)
             if not self._is_string_measure_type(ref_measure_type):
                 return (
-                    f"S: rule-area compilation requires referenced measure '{ref.measure_name}' to "
-                    "resolve to a String element type in the current bounded subset"
+                    f"S: rule-area compilation requires referenced measure '{ref.measure_name}' in "
+                    f"cube '{ref.cube_name}' to resolve to a String element type in the current "
+                    "bounded subset"
                 )
 
         return None
@@ -1571,6 +1800,7 @@ class Model:
                 satisfied=self._is_numeric_measure_type(target_measure_type),
             )
 
+        type_overrides = self._measure_type_conversion_overrides(formula.expression)
         for ref in sorted(
             set(measure_refs),
             key=lambda item: (item.cube_name, item.measure_name),
@@ -1584,6 +1814,25 @@ class Model:
                 detail=f"Referenced measure '{ref.measure_name}'",
                 satisfied=measure_type is not None,
             )
+            override = type_overrides.get((ref.cube_name, ref.measure_name))
+            if override is not None:
+                # Explicitly converted via .to_string(...)/.to_number() -- the expected type is
+                # the opposite of the formula's own scope, not the scope's normal requirement.
+                add_requirement(
+                    code="string_measure" if override == "String" else "numeric_measure",
+                    description=(
+                        f"'.{'to_number' if override == 'String' else 'to_string'}(...)' "
+                        f"requires the wrapped measure to resolve to a {override} element type."
+                    ),
+                    cube_name=ref.cube_name,
+                    detail=f"Referenced measure '{ref.measure_name}'",
+                    satisfied=(
+                        self._is_string_measure_type(measure_type)
+                        if override == "String"
+                        else self._is_numeric_measure_type(measure_type)
+                    ),
+                )
+                continue
             if formula.scope == "string":
                 add_requirement(
                     code="string_measure",
@@ -1823,6 +2072,13 @@ class Model:
                 return f"dimension-function reference '{expression.ref.label}' is outside the native subset (cross-cube)"
             return None
 
+        if isinstance(expression, FunctionCallExpression):
+            for arg in expression.args:
+                arg_reason = self._native_unsupported_reason(arg, target_cube_name)
+                if arg_reason is not None:
+                    return arg_reason
+            return None
+
         if isinstance(expression, UnaryExpression):
             return self._native_unsupported_reason(expression.operand, target_cube_name)
 
@@ -1843,6 +2099,8 @@ class Model:
                 return self._native_rolling_unsupported_reason(expression, target_cube_name)
             if expression.method_name == "ytd":
                 return self._native_ytd_unsupported_reason(expression, target_cube_name)
+            if expression.method_name in self._CONSOLIDATED_AGGREGATE_FUNCTIONS:
+                return self._native_consolidated_aggregate_unsupported_reason(expression, target_cube_name)
 
             base_reason = self._native_unsupported_reason(expression.base, target_cube_name)
             if base_reason is not None:
@@ -1868,7 +2126,30 @@ class Model:
                 "lower",
                 "trim",
                 "substring",
+                "delete",
+                "scan",
+                "length",
+                "char_code",
+                "to_char",
+                "exp",
+                "ln",
+                "log10",
+                "sqrt",
+                "sin",
+                "cos",
+                "tan",
+                "asin",
+                "acos",
+                "atan",
+                "insert",
             ):
+                return None
+            if expression.method_name in ("to_string", "to_number"):
+                if not isinstance(expression.base, MeasureExpression):
+                    return (
+                        f"'{expression.method_name}(...)' is only supported directly on a "
+                        "measure reference in the current bounded subset"
+                    )
                 return None
             return f"method '{expression.method_name}' is outside the native subset"
 
@@ -1908,6 +2189,12 @@ class Model:
         if isinstance(expression, DimensionFunctionExpression):
             return self._compile_dimension_function_expression(expression, target_cube_name)
 
+        if isinstance(expression, FunctionCallExpression):
+            args = ", ".join(
+                self._compile_native_expression(arg, target_cube_name) for arg in expression.args
+            )
+            return f"{expression.function_name}({args})"
+
         if isinstance(expression, UnaryExpression):
             return f"({expression.operator}{self._compile_native_expression(expression.operand, target_cube_name)})"
 
@@ -1930,6 +2217,8 @@ class Model:
                 return self._compile_native_rolling_expression(expression, target_cube_name)
             if expression.method_name == "ytd":
                 return self._compile_native_ytd_expression(expression, target_cube_name)
+            if expression.method_name in self._CONSOLIDATED_AGGREGATE_FUNCTIONS:
+                return self._compile_native_consolidated_aggregate_expression(expression, target_cube_name)
             if expression.method_name == "abs":
                 return f"ABS({self._compile_native_expression(expression.base, target_cube_name)})"
             if expression.method_name == "round":
@@ -1950,6 +2239,33 @@ class Model:
                 start = self._compile_native_expression(expression.args[0], target_cube_name)
                 length = self._compile_native_expression(expression.args[1], target_cube_name)
                 return f"SUBST({self._compile_native_expression(expression.base, target_cube_name)}, {start}, {length})"
+            if expression.method_name == "to_string":
+                length = self._compile_native_expression(expression.args[0], target_cube_name)
+                decimals = self._compile_native_expression(expression.args[1], target_cube_name)
+                return f"STR({self._compile_native_expression(expression.base, target_cube_name)}, {length}, {decimals})"
+            if expression.method_name == "to_number":
+                return f"NUMBR({self._compile_native_expression(expression.base, target_cube_name)})"
+            if expression.method_name == "delete":
+                start = self._compile_native_expression(expression.args[0], target_cube_name)
+                length = self._compile_native_expression(expression.args[1], target_cube_name)
+                return f"DELET({self._compile_native_expression(expression.base, target_cube_name)}, {start}, {length})"
+            if expression.method_name == "scan":
+                substring = self._compile_native_expression(expression.args[0], target_cube_name)
+                return f"SCAN({substring}, {self._compile_native_expression(expression.base, target_cube_name)})"
+            if expression.method_name == "length":
+                return f"LONG({self._compile_native_expression(expression.base, target_cube_name)})"
+            if expression.method_name == "char_code":
+                position = self._compile_native_expression(expression.args[0], target_cube_name)
+                return f"CODE({self._compile_native_expression(expression.base, target_cube_name)}, {position})"
+            if expression.method_name == "to_char":
+                return f"CHAR({self._compile_native_expression(expression.base, target_cube_name)})"
+            if expression.method_name in self._SINGLE_ARG_MATH_FUNCTIONS:
+                function_name = self._SINGLE_ARG_MATH_FUNCTIONS[expression.method_name]
+                return f"{function_name}({self._compile_native_expression(expression.base, target_cube_name)})"
+            if expression.method_name == "insert":
+                text = self._compile_native_expression(expression.args[0], target_cube_name)
+                position = self._compile_native_expression(expression.args[1], target_cube_name)
+                return f"INSRT({text}, {self._compile_native_expression(expression.base, target_cube_name)}, {position})"
             raise ValueError(f"Method '{expression.method_name}' is not supported by the native compiler")
 
         if isinstance(expression, CaseExpression):
@@ -1989,12 +2305,44 @@ class Model:
                 explicit_hierarchy_name=None,
             )
             return f"ELISCOMP({dimension_literal}, {element_coordinate}, {parent_coordinate})"
+        if ref.function_name == "elpar":
+            index = ref.args[0]
+            return f"ELPAR({dimension_literal}, {element_coordinate}, {index})"
+        if ref.function_name == "elispar":
+            child_coordinate = self._compile_dimension_element_coordinate(
+                cube_name=ref.cube_name,
+                dimension_name=ref.dimension_name,
+                element_name=ref.args[0],
+                explicit_hierarchy_name=None,
+            )
+            return f"ELISPAR({dimension_literal}, {element_coordinate}, {child_coordinate})"
+        if ref.function_name == "elisanc":
+            descendant_coordinate = self._compile_dimension_element_coordinate(
+                cube_name=ref.cube_name,
+                dimension_name=ref.dimension_name,
+                element_name=ref.args[0],
+                explicit_hierarchy_name=None,
+            )
+            return f"ELISANC({dimension_literal}, {element_coordinate}, {descendant_coordinate})"
+        if ref.function_name == "elweight":
+            parent_coordinate = self._compile_dimension_element_coordinate(
+                cube_name=ref.cube_name,
+                dimension_name=ref.dimension_name,
+                element_name=ref.args[0],
+                explicit_hierarchy_name=None,
+            )
+            return f"ELWEIGHT({dimension_literal}, {parent_coordinate}, {element_coordinate})"
         raise ValueError(f"dimension function '{ref.function_name}' is not supported by the native compiler")
 
     def _compile_native_binary_expression(self, expression: BinaryExpression, target_cube_name: str) -> str:
         left = self._compile_native_expression(expression.left, target_cube_name)
         right = self._compile_native_expression(expression.right, target_cube_name)
-        operator = "<>" if expression.operator == "!=" else expression.operator
+        if expression.operator == "!=":
+            operator = "<>"
+        elif expression.operator == "==":
+            operator = "="
+        else:
+            operator = expression.operator
         return f"({left} {operator} {right})"
 
     def _compile_native_measure_reference(self, cube_name: str, measure_name: str) -> str:
@@ -2401,6 +2749,126 @@ class Model:
 
         return None
 
+    @staticmethod
+    def _resolve_consolidated_aggregate_flag(expression: MethodExpression) -> Optional[int]:
+        flag_expression = expression.kwargs.get("__flag__")
+        if not isinstance(flag_expression, LiteralExpression) or not isinstance(flag_expression.value, int):
+            return None
+        return flag_expression.value
+
+    def _native_consolidated_aggregate_unsupported_reason(
+        self,
+        expression: MethodExpression,
+        target_cube_name: str,
+    ) -> Optional[str]:
+        """Gate for ConsolidatedMax/Min/Avg/Count/CountUnique -- the non-additive consolidation
+        override family. Bounded MVP, same-cube only: see dev/07_handover_status.md's
+        "non-sum consolidation overrides" entry for the confirmed TM1 function signature
+        (flag, cube name, one literal/passthrough coordinate per cube dimension in order,
+        including the measure dimension) and why no new feeder code is needed for this same-cube
+        shape -- these functions read off the same measure's own existing leaf data the same way
+        normal structural consolidation does, per IBM/Cubewise documentation, rather than doing a
+        generic DB(...)-style lookup that would need an explicit feeder.
+        """
+        if expression.args:
+            return (
+                f"{expression.method_name}(...) does not support positional arguments in the "
+                "native subset; use flag=... and dimension=literal_element keyword arguments"
+            )
+        if not isinstance(expression.base, MeasureExpression):
+            return f"{expression.method_name}(...) requires a same-cube measure base in the native subset"
+        if expression.base.ref.cube_name != target_cube_name:
+            return (
+                f"{expression.method_name}(...) base measure must come from the target cube in "
+                "the native subset; cross-cube non-additive consolidation is not yet supported"
+            )
+
+        flag = self._resolve_consolidated_aggregate_flag(expression)
+        if flag is None:
+            return f"{expression.method_name}(...) requires a literal integer 'flag' argument"
+        if flag not in (0, 1, 2, 3):
+            return (
+                f"{expression.method_name}(...) 'flag' must be 0 (plain), 1 (consolidation-weighted), "
+                "2 (ignore zeros), or 3 (weighted and ignore zeros)"
+            )
+
+        metadata = self._get_cube_metadata(target_cube_name)
+        if metadata is None or not metadata.measure_dimension_name:
+            return f"{expression.method_name}(...) needs measure dimension metadata to resolve the cube layout"
+
+        base_measure_type = self._measure_type_for(metadata, expression.base.ref.measure_name)
+        if not self._is_numeric_measure_type(base_measure_type):
+            return (
+                f"{expression.method_name}(...) requires the aggregated measure "
+                f"'{expression.base.ref.measure_name}' to resolve to a Numeric element type"
+            )
+
+        for dimension_name, override_expression in expression.kwargs.items():
+            if dimension_name == "__flag__":
+                continue
+            if dimension_name not in metadata.dimensions:
+                return (
+                    f"{expression.method_name}(...) dimension override '{dimension_name}' is not "
+                    f"part of cube '{target_cube_name}'"
+                )
+            if dimension_name == metadata.measure_dimension_name:
+                return f"{expression.method_name}(...) cannot override the measure dimension"
+            if not isinstance(override_expression, LiteralExpression) or not isinstance(
+                override_expression.value, str
+            ):
+                return (
+                    f"{expression.method_name}(...) dimension override '{dimension_name}' must be a "
+                    "literal element name string in the native subset"
+                )
+            hierarchy_reason = self._dimension_hierarchy_ambiguity_reason(
+                cube_name=target_cube_name,
+                dimension_name=dimension_name,
+                explicit_hierarchy_name=None,
+            )
+            if hierarchy_reason is not None:
+                return hierarchy_reason
+
+        return None
+
+    def _compile_native_consolidated_aggregate_expression(
+        self, expression: MethodExpression, target_cube_name: str
+    ) -> str:
+        unsupported_reason = self._native_consolidated_aggregate_unsupported_reason(expression, target_cube_name)
+        if unsupported_reason is not None:
+            raise ValueError(f"{expression.method_name}(...) cannot compile natively: {unsupported_reason}")
+
+        function_name = self._CONSOLIDATED_AGGREGATE_FUNCTIONS[expression.method_name]
+        flag = self._resolve_consolidated_aggregate_flag(expression)
+        base_measure = expression.base.ref
+        metadata = self._get_cube_metadata(target_cube_name)
+        assert metadata is not None
+
+        coordinates: List[str] = [str(flag), f"'{target_cube_name}'"]
+        for dimension_name in metadata.dimensions:
+            if dimension_name == metadata.measure_dimension_name:
+                coordinates.append(
+                    self._compile_dimension_element_coordinate(
+                        cube_name=target_cube_name,
+                        dimension_name=dimension_name,
+                        element_name=base_measure.measure_name,
+                        explicit_hierarchy_name=None,
+                    )
+                )
+                continue
+            if dimension_name in expression.kwargs:
+                coordinates.append(
+                    self._compile_dimension_element_coordinate(
+                        cube_name=target_cube_name,
+                        dimension_name=dimension_name,
+                        element_name=expression.kwargs[dimension_name].value,
+                        explicit_hierarchy_name=None,
+                    )
+                )
+                continue
+            coordinates.append(f"!{dimension_name}")
+
+        return f"{function_name}({', '.join(coordinates)})"
+
     def _compile_native_ytd_expression(self, expression: MethodExpression, target_cube_name: str) -> str:
         """Loop-unrolls ytd(dimension=..., period_number_attribute=...) into a bounded, gated sum.
 
@@ -2650,6 +3118,33 @@ class Model:
                 ),
                 deployment_cube=formula.target.cube_name,
                 preview_only=True,
+            )
+
+        if (
+            isinstance(formula.expression, MethodExpression)
+            and formula.expression.method_name in self._CONSOLIDATED_AGGREGATE_FUNCTIONS
+        ):
+            # No new feeder statements are needed for ConsolidatedMax/Min/Avg/Count/CountUnique:
+            # per IBM/Cubewise documentation these functions "work directly off the leaf data in
+            # the same way as normal consolidation and use the [existing] feeder information",
+            # i.e. they piggyback on whatever feeding already keeps the aggregated measure's own
+            # leaf cells live, the same way TM1's native sum-consolidation never needs an explicit
+            # feeder either. The aggregated measure is also typically the formula's own target
+            # measure (a non-additive override of its own default consolidation), which the
+            # self-reference cycle guard in `_resolve_simple_feeder_source_refs` already excludes
+            # from `same_cube_source_refs` -- self-feeding a measure to itself is invalid in TM1.
+            return FeederPlan(
+                statements=statements,
+                strategy="consolidated_aggregate_self_consolidating",
+                rationale=(
+                    "ConsolidatedMax/Min/Avg/Count/CountUnique read the aggregated measure's own "
+                    "leaf data the same way native sum-consolidation does, so no additional feeder "
+                    "statements are required for the aggregation itself; any other genuine "
+                    "same-cube driver measures referenced elsewhere in the formula are still fed "
+                    "normally."
+                ),
+                deployment_cube=formula.target.cube_name,
+                preview_only=False,
             )
 
         if self._contains_align_expression(formula.expression):
@@ -4229,10 +4724,19 @@ class Model:
         formula: Formula,
     ) -> set[MeasureRef]:
         resolved: set[MeasureRef] = set()
+        visited_keys: set[str] = set()
 
         def visit_measure_ref(ref: MeasureRef) -> None:
             if ref.cube_name != formula.target.cube_name:
                 return
+            if ref.key in visited_keys:
+                # Cycle guard: a formula that references its own target (e.g. a non-additive
+                # consolidation override reading the same measure's own leaf data, or any other
+                # self-referencing same-cube formula) would otherwise recurse into the identical
+                # expression tree forever, since plan.formulas.get(ref.key) resolves back to this
+                # same formula. Already-visited refs are skipped rather than re-traced.
+                return
+            visited_keys.add(ref.key)
 
             nested_formula = plan.formulas.get(ref.key)
             if nested_formula is None:
@@ -4269,6 +4773,16 @@ class Model:
             )
             dependencies[key] = measure_deps
             for dep_key in measure_deps:
+                if dep_key == key:
+                    # A formula referencing its own target (e.g. a non-additive consolidation
+                    # override reading the same measure's own leaf data via
+                    # ConsolidatedMax/Min/Avg/Count/CountUnique) is not a real build-order
+                    # dependency -- there is no other coordinate to place "before" or "after"
+                    # itself in this measure-level graph, and TM1 evaluates the rule directly
+                    # without needing a Python-side execution order for it. Recording a
+                    # self-edge here would make the topological sort see a cycle that isn't
+                    # real at the cell level, so it is excluded rather than reported.
+                    continue
                 if dep_key in formulas:
                     graph[dep_key].append(key)
                     in_degree[key] += 1
@@ -4392,6 +4906,55 @@ class Model:
                 yield from self._iter_expression_measure_refs(condition, target_cube_name)
                 yield from self._iter_expression_measure_refs(value, target_cube_name)
             yield from self._iter_expression_measure_refs(expression.default, target_cube_name)
+
+    def _measure_type_conversion_overrides(self, expression: Expression) -> Dict[Tuple[str, str], str]:
+        """Finds every `measure_ref.to_string(...)`/`measure_ref.to_number()` in ``expression``.
+
+        Returns a ``{(cube_name, measure_name): expected_type}`` map naming the *actual*
+        element type the wrapped measure is expected to have (e.g. `to_number()` only makes
+        sense applied to a String measure, so its expected type is "String"). Callers use this
+        to skip the normal same-type-as-target-scope check for exactly the references that are
+        explicitly converted -- this is what lets an `S:` formula reference a Numeric measure
+        (via `.to_string(...)`) or an `N:` formula reference a String measure (via
+        `.to_number()`) without the type-checking gate rejecting the cross-type reference.
+        Bounded MVP: only recognizes the conversion method applied directly to a measure
+        reference, matching `_native_unsupported_reason`'s structural gate for these methods.
+        """
+        overrides: Dict[Tuple[str, str], str] = {}
+
+        def walk(node: Expression) -> None:
+            if isinstance(node, MethodExpression):
+                if node.method_name == "to_number" and isinstance(node.base, MeasureExpression):
+                    overrides[(node.base.ref.cube_name, node.base.ref.measure_name)] = "String"
+                elif node.method_name == "to_string" and isinstance(node.base, MeasureExpression):
+                    overrides[(node.base.ref.cube_name, node.base.ref.measure_name)] = "Numeric"
+                walk(node.base)
+                for arg in node.args:
+                    walk(arg)
+                for value in node.kwargs.values():
+                    walk(value)
+                return
+            if isinstance(node, UnaryExpression):
+                walk(node.operand)
+                return
+            if isinstance(node, (BinaryExpression, ComparisonExpression)):
+                walk(node.left)
+                walk(node.right)
+                return
+            if isinstance(node, RollingExpression):
+                walk(node.base)
+                for value in node.kwargs.values():
+                    walk(value)
+                return
+            if isinstance(node, CaseExpression):
+                for condition, value in node.cases:
+                    walk(condition)
+                    walk(value)
+                walk(node.default)
+                return
+
+        walk(expression)
+        return overrides
 
     @staticmethod
     def _collect_upstream_formula_keys(dependencies: Mapping[str, Sequence[str]], target_key: str) -> List[str]:

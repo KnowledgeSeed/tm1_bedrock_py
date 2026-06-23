@@ -546,11 +546,11 @@ def parse_native_rule_text(
 
         measure_name = _extract_measure_name(match.group("target"))
         scope = match.group("scope").upper()
-        if scope not in ("N", "C"):
+        if scope not in ("N", "C", "S"):
             rejected.append(
                 RuleIngestionRejection(
                     statement_text=statement_text,
-                    reason=f"rule-area scope '{scope}:' is not supported by the current DSL (supported: N, C)",
+                    reason=f"rule-area scope '{scope}:' is not supported by the current DSL (supported: N, C, S)",
                     measure_name=measure_name,
                 )
             )
@@ -570,6 +570,8 @@ def parse_native_rule_text(
 
         if scope == "C":
             expression = expression.native(scope="consolidated")
+        elif scope == "S":
+            expression = expression.native(scope="string")
 
         parsed.append(ParsedRuleStatement(measure_name=measure_name, scope=scope, expression=expression))
 

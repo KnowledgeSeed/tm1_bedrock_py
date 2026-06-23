@@ -152,7 +152,10 @@ def test_compile_rejects_string_formula_referencing_numeric_measure():
     assert "String element type" in explanation["rationale"]
 
 
-def test_compile_rejects_cross_cube_align_inside_string_scope():
+def test_compile_previews_cross_cube_align_inside_string_scope_but_stays_preview_only_without_metadata():
+    """Cross-cube S: align(...) is no longer rejected outright -- it goes through the same
+    metadata-proven feeder-origin gate as N:, so without leaf/hierarchy metadata it compiles
+    natively but stays preview-only rather than falling back to Python or being rejected."""
     provider = _string_sales_metadata_provider()
     model = Model(metadata_provider=provider)
     sales = model.cube("Sales")
@@ -161,8 +164,57 @@ def test_compile_rejects_cross_cube_align_inside_string_scope():
     sales["First Name"] = fx["Label"].align(Currency="USD").native(scope="string")
 
     explanation = model.explain("Sales:First Name")
-    assert explanation["backend"] == "Python materialization backend"
-    assert "does not support align(...)" in explanation["rationale"]
+    assert explanation["backend"] == "native-rule backend"
+    assert explanation["feeder_strategy"] == "preview_only_cross_cube"
+    assert explanation["native_eligibility"]["status"] == "metadata_incomplete"
+
+
+def test_compile_deploys_cross_cube_align_inside_string_scope_when_target_leaf_scope_is_proven():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Region", "Measure"],
+                default_hierarchies={"Version": "Version", "Region": "Region", "Measure": "Measure"},
+                measure_element_types={"First Name": "String"},
+                dimension_hierarchies={"Version": ["Version"], "Region": ["Region"], "Measure": ["Measure"]},
+                dimension_leaf_elements={"Region": ["East", "West"]},
+            ),
+            "FX Rates": build_static_cube_metadata(
+                "FX Rates",
+                ["Version", "Currency", "Measure"],
+                default_hierarchies={"Version": "Version", "Currency": "Currency", "Measure": "Measure"},
+                measure_element_types={"Label": "String"},
+                dimension_hierarchies={"Version": ["Version"], "Currency": ["Currency"], "Measure": ["Measure"]},
+                dimension_leaf_elements={"Currency": ["USD"]},
+            ),
+        }
+    )
+    model = Model(tm1=MockTM1Service(), metadata_provider=provider)
+    sales = model.cube("Sales")
+    fx = model.cube("FX Rates")
+
+    sales["First Name"] = fx["Label"].align(Currency="USD").native(scope="string")
+
+    explanation = model.explain("Sales:First Name")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["feeder_strategy"] == "cross_cube_source_lookup"
+    assert preview.manifest["Sales:First Name"]["artifact"]["preview_only"] is False
+    assert preview.rules["Sales"] == (
+        "['Measure':'Measure':'First Name'] = S: DB('FX Rates', !Version, "
+        "'Currency':'Currency':'USD', 'Measure':'Measure':'Label');"
+    )
+    assert preview.feeders["FX Rates"] == (
+        "[!Version, 'Currency':'Currency':'USD', 'Measure':'Measure':'Label'] => "
+        "DB('Sales', !Version, 'Region':'Region':'East', 'Measure':'Measure':'First Name'), "
+        "DB('Sales', !Version, 'Region':'Region':'West', 'Measure':'Measure':'First Name');"
+    )
+
+    deployment = model.compile(dry_run=False)
+    assert deployment.errors == []
+    assert deployment.deployment["Sales"]["deployed"] is True
+    assert deployment.deployment["FX Rates"]["deployed"] is True
 
 
 def test_compile_rejects_time_intelligence_methods_inside_string_scope():
@@ -183,7 +235,93 @@ def test_compile_rejects_time_intelligence_methods_inside_string_scope():
 
     explanation = model.explain("Sales:Status")
     assert explanation["backend"] == "Python materialization backend"
-    assert "does not support align(...)" in explanation["rationale"]
+    assert "does not support shift(...)" in explanation["rationale"]
+
+
+def test_compile_deploys_string_target_referencing_numeric_measure_via_to_string():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Region", "Measure"],
+                default_hierarchies={"Version": "Version", "Region": "Region", "Measure": "Measure"},
+                measure_element_types={"Revenue": "Numeric", "Revenue Label": "String"},
+                dimension_hierarchies={"Version": ["Version"], "Region": ["Region"], "Measure": ["Measure"]},
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider, tm1=MockTM1Service())
+    sales = model.cube("Sales")
+
+    sales["Revenue Label"] = sales["Revenue"].to_string(10, 2).native(scope="string")
+
+    explanation = model.explain("Sales:Revenue Label")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["backend"] == "native-rule backend"
+    assert explanation["feeder_strategy"] == "same_cube_traceback"
+    assert preview.rules["Sales"] == (
+        "['Measure':'Measure':'Revenue Label'] = S: STR(['Measure':'Measure':'Revenue'], 10, 2);"
+    )
+    assert preview.feeders["Sales"] == (
+        "['Measure':'Measure':'Revenue'] => ['Measure':'Measure':'Revenue Label'];"
+    )
+    assert preview.manifest["Sales:Revenue Label"]["artifact"]["preview_only"] is False
+
+    deployment = model.compile(dry_run=False)
+    assert deployment.errors == []
+    assert deployment.deployment["Sales"]["deployed"] is True
+
+
+def test_compile_deploys_numeric_target_referencing_string_measure_via_to_number():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Region", "Measure"],
+                default_hierarchies={"Version": "Version", "Region": "Region", "Measure": "Measure"},
+                measure_element_types={"Revenue Text": "String", "Revenue": "Numeric"},
+                dimension_hierarchies={"Version": ["Version"], "Region": ["Region"], "Measure": ["Measure"]},
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider, tm1=MockTM1Service())
+    sales = model.cube("Sales")
+
+    sales["Revenue"] = sales["Revenue Text"].to_number()
+
+    explanation = model.explain("Sales:Revenue")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["backend"] == "native-rule backend"
+    assert preview.rules["Sales"] == (
+        "['Measure':'Measure':'Revenue'] = N: NUMBR(['Measure':'Measure':'Revenue Text']);"
+    )
+    assert preview.manifest["Sales:Revenue"]["artifact"]["preview_only"] is False
+
+    deployment = model.compile(dry_run=False)
+    assert deployment.errors == []
+    assert deployment.deployment["Sales"]["deployed"] is True
+
+
+def test_compile_rejects_to_number_applied_to_non_measure_expression():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Region", "Measure"],
+                measure_element_types={"A": "String", "B": "String", "Revenue": "Numeric"},
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+
+    sales["Revenue"] = (sales["A"].concat(sales["B"])).to_number()
+
+    explanation = model.explain("Sales:Revenue")
+    assert explanation["backend"] == "Python materialization backend"
+    assert "only supported directly on a measure reference" in explanation["rationale"]
 
 
 def test_register_formula_rejects_unsupported_scope():
