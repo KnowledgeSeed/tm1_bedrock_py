@@ -136,8 +136,15 @@ class Expression:
     def shift(self, **offsets: Any) -> "Expression":
         return MethodExpression("shift", self, kwargs={key: _ensure_expression(value) for key, value in offsets.items()})
 
-    def ytd(self) -> "Expression":
-        return MethodExpression("ytd", self)
+    def ytd(self, dimension: str, period_number_attribute: str) -> "Expression":
+        return MethodExpression(
+            "ytd",
+            self,
+            kwargs={
+                "dimension": LiteralExpression(dimension),
+                "period_number_attribute": LiteralExpression(period_number_attribute),
+            },
+        )
 
     def growth(self, **kwargs: Any) -> "Expression":
         return MethodExpression("growth", self, kwargs={key: _ensure_expression(value) for key, value in kwargs.items()})
@@ -145,7 +152,7 @@ class Expression:
     def rolling(self, **kwargs: Any) -> "RollingExpression":
         return RollingExpression(self, kwargs={key: _ensure_expression(value) for key, value in kwargs.items()})
 
-    def native(self, scope: str = "N") -> "ScopedExpression":
+    def native(self, scope: str = "leaf") -> "ScopedExpression":
         return ScopedExpression(inner=self, scope=scope)
 
     def abs(self) -> "Expression":
@@ -171,6 +178,17 @@ class Expression:
 
     def substring(self, start: Any, length: Any) -> "Expression":
         return MethodExpression("substring", self, args=(_ensure_expression(start), _ensure_expression(length)))
+
+    def concat(self, other: Any) -> "Expression":
+        """String concatenation, lowering to TM1's native `|` operator.
+
+        Deliberately a separate method rather than overloading `+`/`__add__`: `+` already means
+        numeric addition for this DSL's `BinaryExpression`, and inferring "string concat" from
+        runtime operand types would reintroduce the same "just a flag" inference problem this
+        project's scope design explicitly rejected (see dev/07_handover_status.md, "Design
+        Decision Reaffirmed: Why S:/C: Aren't 'Just A Flag'").
+        """
+        return BinaryExpression("|", self, _ensure_expression(other))
 
     def iter_measure_refs(self) -> Iterator[MeasureRef]:
         return iter(())
@@ -399,7 +417,7 @@ class CaseExpression(Expression):
 
 @dataclass(frozen=True)
 class ScopedExpression(Expression):
-    """Marks an explicit rule-area hint (e.g. ``scope="C"``) before formula registration.
+    """Marks an explicit rule-area hint (e.g. ``scope="consolidated"``) before formula registration.
 
     This wrapper is unwrapped by ``Model.register_formula`` and never appears inside a
     stored ``Formula.expression`` tree, so the rest of the compiler stays scope-agnostic.
@@ -425,7 +443,7 @@ class ScopedExpression(Expression):
 class Formula:
     target: MeasureRef
     expression: Expression
-    scope: str = "N"
+    scope: str = "leaf"
 
     @property
     def key(self) -> str:
@@ -600,7 +618,8 @@ class CubeRef:
 
 
 class Model:
-    _SUPPORTED_RULE_AREA_SCOPES = ("N", "C")
+    _SUPPORTED_RULE_AREA_SCOPES = ("leaf", "consolidated", "string")
+    _RULE_AREA_KEYWORDS = {"leaf": "N", "consolidated": "C", "string": "S"}
     _CONSOLIDATED_FEEDER_LEAF_CEILING = 2000
 
     def __init__(self, tm1: Any = None, metadata_provider: Optional[MetadataProvider] = None):
@@ -761,7 +780,7 @@ class Model:
         if key in self._formulas:
             raise ValueError(f"Formula target '{key}' is already registered")
 
-        scope = "N"
+        scope = "leaf"
         if isinstance(expression, ScopedExpression):
             scope = expression.scope
             expression = expression.inner
@@ -856,7 +875,8 @@ class Model:
                     cube_name=formula.target.cube_name,
                     measure_name=formula.target.measure_name,
                 )
-                rule_statement = f"{target_reference} = {formula.scope}: {rule_body};"
+                rule_area_keyword = self._RULE_AREA_KEYWORDS[formula.scope]
+                rule_statement = f"{target_reference} = {rule_area_keyword}: {rule_body};"
 
             manifest[target_key] = {
                 "cube": formula.target.cube_name,
@@ -1245,7 +1265,7 @@ class Model:
         return "Rule lowering is native-safe, but feeder/deployment proof is still incomplete."
 
     def _select_backend(self, formula: Formula) -> BackendDecision:
-        if formula.scope == "C":
+        if formula.scope == "consolidated":
             unsupported_reason = self._native_consolidated_unsupported_reason(formula)
             if unsupported_reason is None:
                 return BackendDecision(
@@ -1254,6 +1274,22 @@ class Model:
                         "Compiles within the Phase 2 C: MVP subset: same-cube arithmetic, comparisons, "
                         "where, case, and constrained metadata-resolved cross-cube align lookups over a "
                         "metadata-proven, bounded leaf-measure expansion of the consolidated target."
+                    ),
+                )
+            return BackendDecision(
+                backend=Backend.PYTHON,
+                rationale=f"Falls back to Python materialization because {unsupported_reason}",
+            )
+
+        if formula.scope == "string":
+            unsupported_reason = self._native_string_unsupported_reason(formula)
+            if unsupported_reason is None:
+                return BackendDecision(
+                    backend=Backend.NATIVE,
+                    rationale=(
+                        "Compiles within the Phase 2 S: MVP subset: same-cube arithmetic, "
+                        "comparisons, where, case, and string-specific operations over "
+                        "same-cube String-typed measures."
                     ),
                 )
             return BackendDecision(
@@ -1330,38 +1366,51 @@ class Model:
         return None
 
     def _contains_disallowed_consolidated_methods(self, expression: Expression) -> bool:
-        disallowed = {"shift", "growth", "ytd", "rolling.sum"}
+        return self._contains_method_names(expression, {"shift", "growth", "ytd", "rolling.sum"})
 
+    def _contains_disallowed_string_methods(self, expression: Expression) -> bool:
+        return self._contains_method_names(
+            expression, {"align", "shift", "growth", "ytd", "rolling.sum"}
+        )
+
+    def _contains_method_names(self, expression: Expression, disallowed: set) -> bool:
+        """Shared recursive walk used by both the C: and S: method-shape gates.
+
+        Each rule-area scope disallows a different method set (C: still permits align(...)
+        through its bounded leaf-expansion subset; S: blocks it outright in this first MVP
+        slice, same posture C: took initially), so the disallowed set is parameterized rather
+        than duplicating this walk per scope.
+        """
         if isinstance(expression, MethodExpression):
             if expression.method_name in disallowed:
                 return True
-            if self._contains_disallowed_consolidated_methods(expression.base):
+            if self._contains_method_names(expression.base, disallowed):
                 return True
-            if any(self._contains_disallowed_consolidated_methods(arg) for arg in expression.args):
+            if any(self._contains_method_names(arg, disallowed) for arg in expression.args):
                 return True
             return any(
-                self._contains_disallowed_consolidated_methods(value)
+                self._contains_method_names(value, disallowed)
                 for value in expression.kwargs.values()
             )
 
         if isinstance(expression, UnaryExpression):
-            return self._contains_disallowed_consolidated_methods(expression.operand)
+            return self._contains_method_names(expression.operand, disallowed)
 
         if isinstance(expression, (BinaryExpression, ComparisonExpression)):
-            return self._contains_disallowed_consolidated_methods(
-                expression.left
-            ) or self._contains_disallowed_consolidated_methods(expression.right)
+            return self._contains_method_names(
+                expression.left, disallowed
+            ) or self._contains_method_names(expression.right, disallowed)
 
         if isinstance(expression, RollingExpression):
             return True
 
         if isinstance(expression, CaseExpression):
             for condition, value in expression.cases:
-                if self._contains_disallowed_consolidated_methods(
-                    condition
-                ) or self._contains_disallowed_consolidated_methods(value):
+                if self._contains_method_names(condition, disallowed) or self._contains_method_names(
+                    value, disallowed
+                ):
                     return True
-            return self._contains_disallowed_consolidated_methods(expression.default)
+            return self._contains_method_names(expression.default, disallowed)
 
         return False
 
@@ -1372,6 +1421,56 @@ class Model:
         if isinstance(measure_type, str):
             return measure_type.strip().casefold() == "consolidated"
         return measure_type == 3
+
+    @staticmethod
+    def _is_string_measure_type(measure_type: Any) -> bool:
+        if measure_type is None:
+            return False
+        if isinstance(measure_type, str):
+            return measure_type.strip().casefold() == "string"
+        return measure_type == 2
+
+    def _native_string_unsupported_reason(self, formula: Formula) -> Optional[str]:
+        """Gate for S: rule-area native compilation.
+
+        First MVP slice, mirroring how C: was introduced (see dev/09_consolidated_rule_area.md):
+        same-cube arithmetic/comparisons/where/case plus string-specific operations only.
+        Cross-cube align(...) and every time-intelligence method (shift/growth/ytd/rolling) are
+        rejected outright in this slice -- not because they are structurally impossible for
+        strings, but because S: has no demonstrated need for them yet and no test coverage to
+        prove the existing feeder builders behave correctly against a String-typed target. This
+        is the same "ship the narrow case first" posture C: took initially before its bounded
+        cross-cube widening.
+        """
+        expression_reason = self._native_unsupported_reason(formula.expression, formula.target.cube_name)
+        if expression_reason is not None:
+            return expression_reason
+
+        if self._contains_disallowed_string_methods(formula.expression):
+            return (
+                "S: rule-area compilation does not support align(...), shift(...), growth(...), "
+                "ytd(), or rolling(...) in the current bounded subset; supported shapes are "
+                "same-cube arithmetic/comparisons/where/case plus string-specific operations "
+                "(concat/upper/lower/trim/substring) over same-cube String-typed measures"
+            )
+
+        metadata = self._get_cube_metadata(formula.target.cube_name)
+        if metadata is None or not metadata.measure_dimension_name:
+            return "S: rule-area compilation needs measure dimension metadata to prove the string target"
+
+        target_measure_type = self._measure_type_for(metadata, formula.target.measure_name)
+        if not self._is_string_measure_type(target_measure_type):
+            return "S: rule-area compilation requires the target measure to resolve to a String element type"
+
+        for ref in self._iter_expression_measure_refs(formula.expression, formula.target.cube_name):
+            ref_measure_type = self._measure_type_for(metadata, ref.measure_name)
+            if not self._is_string_measure_type(ref_measure_type):
+                return (
+                    f"S: rule-area compilation requires referenced measure '{ref.measure_name}' to "
+                    "resolve to a String element type in the current bounded subset"
+                )
+
+        return None
 
     def _metadata_requirements_for_formula(self, formula: Formula) -> List[MetadataRequirement]:
         requirements: List[MetadataRequirement] = []
@@ -1427,7 +1526,7 @@ class Model:
             detail=f"Target measure '{formula.target.measure_name}'",
             satisfied=target_measure_type is not None,
         )
-        if formula.scope == "C":
+        if formula.scope == "consolidated":
             add_requirement(
                 code="consolidated_target",
                 description=(
@@ -1455,6 +1554,14 @@ class Model:
                 detail=f"Target measure '{formula.target.measure_name}' leaf expansion",
                 satisfied=bool(leaf_measures) and len(leaf_measures) <= self._CONSOLIDATED_FEEDER_LEAF_CEILING,
             )
+        elif formula.scope == "string":
+            add_requirement(
+                code="string_target",
+                description="S: rule-area compilation requires the target measure to resolve to a String element type.",
+                cube_name=formula.target.cube_name,
+                detail=f"Target measure '{formula.target.measure_name}'",
+                satisfied=self._is_string_measure_type(target_measure_type),
+            )
         else:
             add_requirement(
                 code="numeric_measure",
@@ -1477,13 +1584,22 @@ class Model:
                 detail=f"Referenced measure '{ref.measure_name}'",
                 satisfied=measure_type is not None,
             )
-            add_requirement(
-                code="numeric_measure",
-                description="The current native rule subset assumes numeric referenced measures.",
-                cube_name=ref.cube_name,
-                detail=f"Referenced measure '{ref.measure_name}'",
-                satisfied=self._is_numeric_measure_type(measure_type),
-            )
+            if formula.scope == "string":
+                add_requirement(
+                    code="string_measure",
+                    description="The current S: rule-area subset assumes String-typed referenced measures.",
+                    cube_name=ref.cube_name,
+                    detail=f"Referenced measure '{ref.measure_name}'",
+                    satisfied=self._is_string_measure_type(measure_type),
+                )
+            else:
+                add_requirement(
+                    code="numeric_measure",
+                    description="The current native rule subset assumes numeric referenced measures.",
+                    cube_name=ref.cube_name,
+                    detail=f"Referenced measure '{ref.measure_name}'",
+                    satisfied=self._is_numeric_measure_type(measure_type),
+                )
 
         for ref in sorted(
             {ref for ref in formula.expression.iter_attribute_refs()},
@@ -1723,12 +1839,10 @@ class Model:
                 return self._native_growth_unsupported_reason(expression, target_cube_name)
             if expression.method_name == "shift":
                 return self._native_shift_unsupported_reason(expression, target_cube_name)
+            if expression.method_name == "rolling.sum":
+                return self._native_rolling_unsupported_reason(expression, target_cube_name)
             if expression.method_name == "ytd":
-                return (
-                    "ytd(...) requires summing a variable number of prior-period cells, which is a "
-                    "multi-cell aggregation that does not reduce to a single bounded DB(...)/ATTRS(...) "
-                    "lookup; it stays on the Python materialization backend by design"
-                )
+                return self._native_ytd_unsupported_reason(expression, target_cube_name)
 
             base_reason = self._native_unsupported_reason(expression.base, target_cube_name)
             if base_reason is not None:
@@ -1812,6 +1926,10 @@ class Model:
                 return self._compile_native_growth_expression(expression, target_cube_name)
             if expression.method_name == "shift":
                 return self._compile_native_shift_expression(expression, target_cube_name)
+            if expression.method_name == "rolling.sum":
+                return self._compile_native_rolling_expression(expression, target_cube_name)
+            if expression.method_name == "ytd":
+                return self._compile_native_ytd_expression(expression, target_cube_name)
             if expression.method_name == "abs":
                 return f"ABS({self._compile_native_expression(expression.base, target_cube_name)})"
             if expression.method_name == "round":
@@ -2112,6 +2230,222 @@ class Model:
 
         return f"DB('{target_cube_name}', {', '.join(coordinates)})"
 
+    def _native_rolling_unsupported_reason(
+        self,
+        expression: MethodExpression,
+        target_cube_name: str,
+    ) -> Optional[str]:
+        if expression.args:
+            return "rolling(...).sum() does not support positional arguments in the native subset"
+        if len(expression.kwargs) != 1:
+            return "rolling(...).sum() requires exactly one dimension keyword argument in the native subset"
+        if not isinstance(expression.base, MeasureExpression):
+            return "rolling(...).sum() requires a same-cube measure base in the native subset"
+        if expression.base.ref.cube_name != target_cube_name:
+            return "rolling(...).sum() base measure must come from the target cube in the native subset"
+
+        resolved = self._resolve_rolling_spec(expression)
+        if resolved is None:
+            return "rolling(...).sum() requires a literal positive integer window for the rolling dimension"
+        dimension_name, _window = resolved
+
+        metadata = self._get_cube_metadata(target_cube_name)
+        if metadata is None:
+            return "rolling(...).sum() needs cube metadata to resolve the rolling dimension"
+        if dimension_name not in metadata.dimensions:
+            return f"rolling(...).sum() dimension '{dimension_name}' is not part of cube '{target_cube_name}'"
+        if dimension_name == metadata.measure_dimension_name:
+            return "rolling(...).sum() cannot target the measure dimension"
+
+        leaf_elements = metadata.dimension_leaf_elements.get(dimension_name, ())
+        if not leaf_elements:
+            return (
+                f"rolling(...).sum() for dimension '{dimension_name}' needs leaf-element metadata "
+                "to prove the elements are numeric, the same bounding fact shift(...)'s numeric-"
+                "offset form relies on"
+            )
+        if any(not self._is_numeric_element_name(element_name) for element_name in leaf_elements):
+            return (
+                f"rolling(...).sum() requires dimension '{dimension_name}' leaf elements to be "
+                "numeric strings in the native subset, because the window is unrolled at compile "
+                "time into a bounded sum of numeric-offset shift(...) terms"
+            )
+        return None
+
+    @staticmethod
+    def _resolve_rolling_spec(expression: MethodExpression) -> Optional[Tuple[str, int]]:
+        if len(expression.kwargs) != 1:
+            return None
+        dimension_name, window_expression = next(iter(expression.kwargs.items()))
+        if not isinstance(window_expression, LiteralExpression):
+            return None
+        window_value = window_expression.value
+        if not isinstance(window_value, int) or isinstance(window_value, bool) or window_value < 1:
+            return None
+        return dimension_name, window_value
+
+    def _compile_native_rolling_expression(self, expression: MethodExpression, target_cube_name: str) -> str:
+        """Loop-unrolls rolling(dimension=window).sum() into a bounded sum of shift(...) terms.
+
+        The window is known and finite at compile time (metadata proves the dimension's leaf set),
+        so `rolling(dim=window).sum()` lowers to `shift(dim=0) + shift(dim=-1) + ... +
+        shift(dim=-(window-1))`, reusing the existing numeric-offset shift(...) lowering unchanged
+        per term. No boundary clamp is applied for a current element near the start of the
+        dimension's known range: a synthesized offset coordinate that doesn't name an existing
+        element is left to TM1's own DB(...) behavior (it evaluates to 0), exactly the same
+        assumption shift(...)'s numeric-offset form already makes for a single term.
+        """
+        unsupported_reason = self._native_rolling_unsupported_reason(expression, target_cube_name)
+        if unsupported_reason is not None:
+            raise ValueError(f"rolling(...).sum() cannot compile natively: {unsupported_reason}")
+
+        resolved = self._resolve_rolling_spec(expression)
+        assert resolved is not None
+        dimension_name, window = resolved
+
+        terms = [
+            self._compile_native_shift_expression(
+                MethodExpression(
+                    "shift",
+                    expression.base,
+                    kwargs={dimension_name: LiteralExpression(-offset)},
+                ),
+                target_cube_name,
+            )
+            for offset in range(window)
+        ]
+        return " + ".join(terms)
+
+    @staticmethod
+    def _resolve_ytd_spec(expression: MethodExpression) -> Optional[Tuple[str, str]]:
+        if set(expression.kwargs) != {"dimension", "period_number_attribute"}:
+            return None
+        dimension_expression = expression.kwargs.get("dimension")
+        attribute_expression = expression.kwargs.get("period_number_attribute")
+        if not isinstance(dimension_expression, LiteralExpression) or not isinstance(
+            dimension_expression.value, str
+        ):
+            return None
+        if not isinstance(attribute_expression, LiteralExpression) or not isinstance(
+            attribute_expression.value, str
+        ):
+            return None
+        return dimension_expression.value, attribute_expression.value
+
+    def _native_ytd_unsupported_reason(
+        self,
+        expression: MethodExpression,
+        target_cube_name: str,
+    ) -> Optional[str]:
+        if expression.args:
+            return "ytd(...) does not support positional arguments in the native subset"
+        if not isinstance(expression.base, MeasureExpression):
+            return "ytd(...) requires a same-cube measure base in the native subset"
+        if expression.base.ref.cube_name != target_cube_name:
+            return "ytd(...) base measure must come from the target cube in the native subset"
+
+        resolved = self._resolve_ytd_spec(expression)
+        if resolved is None:
+            return (
+                "ytd(...) requires explicit literal string 'dimension' and 'period_number_attribute' "
+                "keyword arguments in the native subset"
+            )
+        dimension_name, period_attribute = resolved
+
+        metadata = self._get_cube_metadata(target_cube_name)
+        if metadata is None:
+            return "ytd(...) needs cube metadata to resolve the time dimension"
+        if dimension_name not in metadata.dimensions:
+            return f"ytd(...) dimension '{dimension_name}' is not part of cube '{target_cube_name}'"
+        if dimension_name == metadata.measure_dimension_name:
+            return "ytd(...) cannot target the measure dimension"
+
+        leaf_elements = metadata.dimension_leaf_elements.get(dimension_name, ())
+        if not leaf_elements:
+            return (
+                f"ytd(...) for dimension '{dimension_name}' needs leaf-element metadata to prove "
+                "the elements are numeric, the same bounding fact shift(...)'s numeric-offset form "
+                "relies on"
+            )
+        if any(not self._is_numeric_element_name(element_name) for element_name in leaf_elements):
+            return (
+                f"ytd(...) requires dimension '{dimension_name}' leaf elements to be numeric strings "
+                "in the native subset, because the year-to-date window is unrolled at compile time "
+                "into a bounded sum of numeric-offset shift(...) terms"
+            )
+
+        available_attributes = metadata.dimension_attributes.get(dimension_name, ())
+        if period_attribute not in available_attributes:
+            return (
+                f"ytd(...) period-number attribute '{period_attribute}' is not available for "
+                f"dimension '{dimension_name}' in cube '{target_cube_name}'"
+            )
+
+        attribute_values = metadata.dimension_attribute_values.get(dimension_name, {})
+        for element_name in leaf_elements:
+            raw_value = str(attribute_values.get(element_name, {}).get(period_attribute, "")).strip()
+            if not raw_value.lstrip("-").isdigit() or int(raw_value) < 1:
+                return (
+                    f"ytd(...) period-number attribute '{period_attribute}' must resolve to a "
+                    f"positive integer for every leaf element of dimension '{dimension_name}', to "
+                    "bound the per-element unrolled term count"
+                )
+
+        hierarchy_reason = self._dimension_hierarchy_ambiguity_reason(
+            cube_name=target_cube_name,
+            dimension_name=dimension_name,
+            explicit_hierarchy_name=None,
+        )
+        if hierarchy_reason is not None:
+            return hierarchy_reason
+
+        return None
+
+    def _compile_native_ytd_expression(self, expression: MethodExpression, target_cube_name: str) -> str:
+        """Loop-unrolls ytd(dimension=..., period_number_attribute=...) into a bounded, gated sum.
+
+        Unlike rolling(...).sum(), the term count varies per current element (the current period's
+        position within its year), not a fixed window. The period-number attribute (e.g. "Month
+        Number", 1-12) provides the bounding fact: for an element at position `p`, exactly `p` terms
+        (offsets 0 through -(p-1)) belong in the sum. Since a single native rule must hold for every
+        element of `!dimension` at once, this compiles to a fixed maximal number of terms (the
+        attribute's known maximum across all leaf elements), each gated by
+        `IF(NUMBR(ATTRS(...)) > k, shift(dim=-k), 0)` so only the terms within the current element's
+        own year actually contribute.
+        """
+        unsupported_reason = self._native_ytd_unsupported_reason(expression, target_cube_name)
+        if unsupported_reason is not None:
+            raise ValueError(f"ytd(...) cannot compile natively: {unsupported_reason}")
+
+        resolved = self._resolve_ytd_spec(expression)
+        assert resolved is not None
+        dimension_name, period_attribute = resolved
+
+        metadata = self._get_cube_metadata(target_cube_name)
+        assert metadata is not None
+        leaf_elements = metadata.dimension_leaf_elements.get(dimension_name, ())
+        attribute_values = metadata.dimension_attribute_values.get(dimension_name, {})
+        max_terms = max(
+            int(str(attribute_values[element_name][period_attribute]).strip())
+            for element_name in leaf_elements
+        )
+
+        terms: List[str] = []
+        for offset in range(max_terms):
+            shift_term = self._compile_native_shift_expression(
+                MethodExpression(
+                    "shift",
+                    expression.base,
+                    kwargs={dimension_name: LiteralExpression(-offset)},
+                ),
+                target_cube_name,
+            )
+            condition = (
+                f"(NUMBR(ATTRS('{dimension_name}', !{dimension_name}, '{period_attribute}')) > {offset})"
+            )
+            terms.append(f"IF({condition}, {shift_term}, 0)")
+        return " + ".join(terms)
+
     @staticmethod
     def _resolve_growth_baseline_ref(
         expression: MethodExpression,
@@ -2226,7 +2560,7 @@ class Model:
         return False
 
     def _plan_feeders(self, plan: BuildPlan, formula: Formula) -> FeederPlan:
-        if formula.scope == "C":
+        if formula.scope == "consolidated":
             if self._contains_align_expression(formula.expression):
                 consolidated_cross_cube_plan = self._build_consolidated_leaf_cross_cube_feeders(
                     plan, formula
@@ -2283,6 +2617,36 @@ class Model:
                 rationale=(
                     "Same-cube time-shift native preview exists, but Phase 2 cannot yet prove a safe "
                     "reverse-attribute feeder mapping from source elements to shifted target elements."
+                ),
+                deployment_cube=formula.target.cube_name,
+                preview_only=True,
+            )
+
+        if isinstance(formula.expression, MethodExpression) and formula.expression.method_name == "rolling.sum":
+            rolling_plan = self._build_same_cube_rolling_feeders(formula)
+            if rolling_plan is not None:
+                return rolling_plan
+            return FeederPlan(
+                statements=(),
+                strategy="preview_only_same_cube_rolling",
+                rationale=(
+                    "Same-cube rolling-window native preview exists, but Phase 2 cannot yet prove a "
+                    "safe reverse-mapping feeder plan for every unrolled offset term in the window."
+                ),
+                deployment_cube=formula.target.cube_name,
+                preview_only=True,
+            )
+
+        if isinstance(formula.expression, MethodExpression) and formula.expression.method_name == "ytd":
+            ytd_plan = self._build_same_cube_ytd_feeders(formula)
+            if ytd_plan is not None:
+                return ytd_plan
+            return FeederPlan(
+                statements=(),
+                strategy="preview_only_same_cube_ytd",
+                rationale=(
+                    "Same-cube year-to-date native preview exists, but Phase 2 cannot yet prove a "
+                    "safe reverse-mapping feeder plan for every unrolled, gated offset term."
                 ),
                 deployment_cube=formula.target.cube_name,
                 preview_only=True,
@@ -2955,6 +3319,157 @@ class Model:
             preview_only=False,
         )
 
+    def _build_same_cube_rolling_feeders(self, formula: Formula) -> Optional[FeederPlan]:
+        """Unions the bounded shift(...) feeder plan for every unrolled term in the window.
+
+        All-or-nothing, same discipline as every other bounded expansion in this project: if any
+        unrolled offset term cannot independently prove a safe reverse-mapping feeder plan, the
+        whole rolling(...).sum() formula stays preview-only rather than partially feeding.
+        """
+        expression = formula.expression
+        if not isinstance(expression, MethodExpression) or expression.method_name != "rolling.sum":
+            return None
+        if self._native_rolling_unsupported_reason(expression, formula.target.cube_name) is not None:
+            return None
+
+        resolved = self._resolve_rolling_spec(expression)
+        assert resolved is not None
+        dimension_name, window = resolved
+
+        combined_statements: set = set()
+        for offset in range(window):
+            synthetic_formula = Formula(
+                target=formula.target,
+                expression=MethodExpression(
+                    "shift",
+                    expression.base,
+                    kwargs={dimension_name: LiteralExpression(-offset)},
+                ),
+                scope=formula.scope,
+            )
+            term_plan = self._build_same_cube_shift_feeders(synthetic_formula)
+            if term_plan is None:
+                return None
+            combined_statements.update(term_plan.statements)
+
+        if not combined_statements:
+            return None
+
+        return FeederPlan(
+            statements=tuple(sorted(combined_statements)),
+            strategy="same_cube_rolling_window",
+            rationale=(
+                "Same-cube rolling-window feeder deployment is allowed because the window is "
+                "unrolled at compile time into a bounded sum of numeric-offset shift(...) terms, "
+                "each of which independently proves a safe reverse-mapping feeder through the "
+                "rolling dimension's numeric leaf elements; the union of all per-term feeders "
+                "covers the whole window."
+            ),
+            deployment_cube=formula.target.cube_name,
+            preview_only=False,
+        )
+
+    def _build_same_cube_ytd_feeders(self, formula: Formula) -> Optional[FeederPlan]:
+        """Unions a gated per-term feeder plan for every unrolled offset in the year-to-date sum.
+
+        Mirrors `_build_same_cube_shift_feeders`'s numeric-offset branch, but each term `k` only
+        contributes a feeder for a target element whose period-number attribute value is `> k`,
+        matching exactly the runtime gate `_compile_native_ytd_expression` emits in the rule itself.
+        All-or-nothing per term, same discipline as every other bounded expansion in this project.
+        """
+        expression = formula.expression
+        if not isinstance(expression, MethodExpression) or expression.method_name != "ytd":
+            return None
+        if self._native_ytd_unsupported_reason(expression, formula.target.cube_name) is not None:
+            return None
+
+        resolved = self._resolve_ytd_spec(expression)
+        assert resolved is not None
+        dimension_name, period_attribute = resolved
+        assert isinstance(expression.base, MeasureExpression)
+        source_measure = expression.base.ref
+        cube_name = formula.target.cube_name
+
+        metadata = self._get_cube_metadata(cube_name)
+        if metadata is None:
+            return None
+
+        leaf_elements = tuple(metadata.dimension_leaf_elements.get(dimension_name, ()))
+        if not leaf_elements:
+            return None
+
+        attribute_values = metadata.dimension_attribute_values.get(dimension_name, {})
+        period_value_by_element: Dict[str, int] = {}
+        for element_name in leaf_elements:
+            raw_value = str(attribute_values.get(element_name, {}).get(period_attribute, "")).strip()
+            if not raw_value.lstrip("-").isdigit():
+                return None
+            period_value_by_element[element_name] = int(raw_value)
+
+        max_terms = max(period_value_by_element.values())
+        if max_terms < 1:
+            return None
+
+        source_reference = self._compile_native_measure_reference(cube_name, source_measure.measure_name)
+        combined_statements: set = set()
+
+        for offset in range(max_terms):
+            matched_target_elements_by_source: Dict[str, List[str]] = defaultdict(list)
+            for element_name in leaf_elements:
+                if period_value_by_element[element_name] <= offset:
+                    continue
+                predecessor_value = int(str(element_name).strip()) - offset
+                matched_target_elements_by_source[str(predecessor_value)].append(element_name)
+
+            for source_element_name in sorted(matched_target_elements_by_source):
+                target_db_targets: List[str] = []
+                for target_element_name in matched_target_elements_by_source[source_element_name]:
+                    target_db_targets.extend(
+                        self._build_target_db_statements(
+                            source_cube_name=cube_name,
+                            target_ref=formula.target,
+                            fixed_target_elements={dimension_name: target_element_name},
+                            broadcast_target_dimensions=[],
+                        )
+                    )
+                if not target_db_targets:
+                    continue
+
+                lhs_parts: List[str] = []
+                for current_dimension_name in metadata.dimensions:
+                    if current_dimension_name == metadata.measure_dimension_name:
+                        lhs_parts.append(
+                            source_reference[1:-1] if source_reference.startswith("[") else source_reference
+                        )
+                    elif current_dimension_name == dimension_name:
+                        lhs_parts.append(
+                            self._compile_dimension_element_coordinate(
+                                cube_name=cube_name,
+                                dimension_name=dimension_name,
+                                element_name=source_element_name,
+                                explicit_hierarchy_name=None,
+                            )
+                        )
+                    else:
+                        lhs_parts.append(f"!{current_dimension_name}")
+                combined_statements.add(f"[{', '.join(lhs_parts)}] => {', '.join(target_db_targets)};")
+
+        if not combined_statements:
+            return None
+
+        return FeederPlan(
+            statements=tuple(sorted(combined_statements)),
+            strategy="same_cube_ytd_window",
+            rationale=(
+                "Same-cube year-to-date feeder deployment is allowed because the variable-size "
+                "window is unrolled at compile time into a bounded, gated sum of numeric-offset "
+                "shift(...) terms, each of which independently proves a safe reverse-mapping feeder "
+                "restricted to the target elements where that term's period-number gate is active."
+            ),
+            deployment_cube=cube_name,
+            preview_only=False,
+        )
+
     def _build_consolidated_target_leaf_feeders(self, plan: BuildPlan, formula: Formula) -> Optional[FeederPlan]:
         """Feeder strategy for C: targets: never feed the consolidated element itself.
 
@@ -3037,7 +3552,7 @@ class Model:
                     measure_name=leaf_measure_name,
                 ),
                 expression=formula.expression,
-                scope="N",
+                scope="leaf",
             )
             leaf_plan = self._plan_feeders(plan, leaf_formula)
             if leaf_plan.preview_only:

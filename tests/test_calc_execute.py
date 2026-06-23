@@ -103,9 +103,9 @@ def test_unsupported_python_execution_reason_rejects_cross_cube_and_ytd():
     cross_cube_expr = cube["Revenue"] + other["Rate"]
     assert "cross-cube" in unsupported_python_execution_reason(cross_cube_expr, "Sales")
 
-    ytd_expr = cube["Revenue"].ytd()
+    ytd_expr = cube["Revenue"].ytd(dimension="Month", period_number_attribute="Month Number")
     reason = unsupported_python_execution_reason(ytd_expr, "Sales")
-    assert "ytd()" in reason and "no parameters" in reason
+    assert "ytd" in reason and "native-only" in reason
 
     align_expr = cube["Revenue"].align(Currency="EUR")
     align_reason = unsupported_python_execution_reason(align_expr, "Sales")
@@ -190,7 +190,7 @@ def test_model_execute_python_backend_reports_rejections():
     sales = model.cube("Sales")
     fx = model.cube("FX Rates")
 
-    sales["Revenue YTD"] = sales["Revenue"].ytd()
+    sales["Revenue YTD"] = sales["Revenue"].ytd(dimension="Month", period_number_attribute="Month Number")
     sales["Revenue Converted"] = sales["Revenue"] * fx["Rate"]
 
     report = model.execute_python_backend(read_function=lambda *a, **k: pd.DataFrame(), write=False)

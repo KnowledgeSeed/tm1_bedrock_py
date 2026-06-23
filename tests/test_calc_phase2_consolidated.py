@@ -142,7 +142,7 @@ def test_compile_deploys_consolidated_target_with_per_leaf_feeders():
     model = Model(metadata_provider=metadata_provider)
     sales = model.cube("Sales")
 
-    sales["Total Cost"] = (sales["Driver"] * 2).native(scope="C")
+    sales["Total Cost"] = (sales["Driver"] * 2).native(scope="consolidated")
 
     explanation = model.explain("Sales:Total Cost")
     assert explanation["backend"] == "native-rule backend"
@@ -160,7 +160,7 @@ def test_compile_deploys_consolidated_target_with_per_leaf_feeders():
     )
 
     manifest = preview.manifest["Sales:Total Cost"]
-    assert manifest["rule_area"] == "C"
+    assert manifest["rule_area"] == "consolidated"
     assert manifest["artifact"]["feeder_strategy"] == "consolidated_target_leaf_feeders"
     assert manifest["artifact"]["preview_only"] is False
 
@@ -171,7 +171,7 @@ def test_compile_deploys_consolidated_target_live():
     model = Model(tm1=mock, metadata_provider=metadata_provider)
     sales = model.cube("Sales")
 
-    sales["Total Cost"] = (sales["Driver"] * 2).native(scope="C")
+    sales["Total Cost"] = (sales["Driver"] * 2).native(scope="consolidated")
 
     preview = model.compile(dry_run=False)
 
@@ -213,7 +213,7 @@ def test_consolidated_target_with_attribute_routed_cross_cube_align_deploys_live
     sales["Total Cost"] = fx["Rate"].align(
         Currency=sales.Company.attribute("Currency"),
         TargetCurrency="EUR",
-    ).native(scope="C")
+    ).native(scope="consolidated")
 
     explanation = model.explain("Sales:Total Cost")
     preview = model.compile(dry_run=False)
@@ -244,7 +244,7 @@ def test_consolidated_target_with_multi_attribute_same_target_dimension_align_de
         Currency=sales.Company.attribute("Currency"),
         RegionCode=sales.Company.attribute("RegionCode"),
         TargetCurrency="EUR",
-    ).native(scope="C")
+    ).native(scope="consolidated")
 
     explanation = model.explain("Sales:Total Cost")
     preview = model.compile(dry_run=True)
@@ -282,7 +282,7 @@ def test_consolidated_target_with_multi_attribute_broadcast_align_stays_preview_
         Currency=sales.Company.attribute("Currency"),
         RegionCode=sales.Company.attribute("RegionCode"),
         TargetCurrency="EUR",
-    ).native(scope="C")
+    ).native(scope="consolidated")
 
     explanation = model.explain("Sales:Total Cost")
     preview = model.compile(dry_run=True)
@@ -334,7 +334,7 @@ def test_consolidated_target_expands_through_non_default_hierarchy_when_default_
     model = Model(metadata_provider=metadata_provider)
     sales = model.cube("Sales")
 
-    sales["Total Cost"] = sales["Driver"].native(scope="C")
+    sales["Total Cost"] = sales["Driver"].native(scope="consolidated")
 
     explanation = model.explain("Sales:Total Cost")
     preview = model.compile(dry_run=True)
@@ -386,7 +386,7 @@ def test_consolidated_target_case_feeds_all_branch_drivers_to_each_leaf_measure(
     sales["Total Cost"] = model.case(
         (sales["Use Alt"] != 0, sales["Driver"]),
         default=sales["Fallback"],
-    ).native(scope="C")
+    ).native(scope="consolidated")
 
     preview = model.compile(dry_run=True)
 
@@ -471,7 +471,7 @@ def test_consolidated_target_with_cross_cube_align_deploys_leaf_level_source_fee
     sales = model.cube("Sales")
     fx = model.cube("FX Rates")
 
-    sales["Total Cost"] = fx["Rate"].align(TargetCurrency="EUR").native(scope="C")
+    sales["Total Cost"] = fx["Rate"].align(TargetCurrency="EUR").native(scope="consolidated")
 
     explanation = model.explain("Sales:Total Cost")
     preview = model.compile(dry_run=True)
@@ -566,7 +566,7 @@ def test_consolidated_target_with_attribute_routed_cross_cube_align_deploys_leaf
     sales["Total Cost"] = fx["Rate"].align(
         Currency=sales.Company.attribute("Currency"),
         TargetCurrency="EUR",
-    ).native(scope="C")
+    ).native(scope="consolidated")
 
     explanation = model.explain("Sales:Total Cost")
     preview = model.compile(dry_run=True)
@@ -660,7 +660,7 @@ def test_consolidated_target_with_attribute_routed_broadcast_cross_cube_align_de
     sales["Total Cost"] = fx["Rate"].align(
         Currency=sales.Company.attribute("Currency"),
         TargetCurrency="EUR",
-    ).native(scope="C")
+    ).native(scope="consolidated")
 
     explanation = model.explain("Sales:Total Cost")
     preview = model.compile(dry_run=True)
@@ -750,7 +750,7 @@ def test_consolidated_target_with_cross_cube_align_keeps_same_cube_driver_feeder
     sales = model.cube("Sales")
     fx = model.cube("FX Rates")
 
-    sales["Total Cost"] = (sales["Driver"] * fx["Rate"].align(TargetCurrency="EUR")).native(scope="C")
+    sales["Total Cost"] = (sales["Driver"] * fx["Rate"].align(TargetCurrency="EUR")).native(scope="consolidated")
 
     preview = model.compile(dry_run=True)
 
@@ -853,7 +853,7 @@ def test_consolidated_target_with_conditional_cross_cube_branches_unions_leaf_le
     sales["Total Cost"] = model.case(
         (sales["Use Corporate Rate"] != 0, corporate_fx["Rate"].align(TargetCurrency="EUR")),
         default=market_fx["Rate"].align(TargetCurrency="EUR"),
-    ).native(scope="C")
+    ).native(scope="consolidated")
 
     explanation = model.explain("Sales:Total Cost")
     preview = model.compile(dry_run=True)
@@ -887,7 +887,7 @@ def test_consolidated_target_rejected_when_measure_is_not_consolidated_type():
     model = Model(metadata_provider=metadata_provider)
     sales = model.cube("Sales")
 
-    sales["Driver Copy"] = sales["Driver"].native(scope="C")
+    sales["Driver Copy"] = sales["Driver"].native(scope="consolidated")
 
     explanation = model.explain("Sales:Driver Copy")
 
@@ -968,7 +968,7 @@ def test_consolidated_target_keeps_attribute_routed_broadcast_cross_cube_preview
     sales["Total Cost"] = fx["Rate"].align(
         Currency=sales.Company.attribute("Currency"),
         TargetCurrency="EUR",
-    ).native(scope="C")
+    ).native(scope="consolidated")
 
     explanation = model.explain("Sales:Total Cost")
     preview = model.compile(dry_run=True)
@@ -987,7 +987,7 @@ def test_consolidated_target_rejected_when_leaf_expansion_is_partial():
     model = Model(metadata_provider=metadata_provider)
     sales = model.cube("Sales")
 
-    sales["Total Cost"] = sales["Driver"].native(scope="C")
+    sales["Total Cost"] = sales["Driver"].native(scope="consolidated")
 
     explanation = model.explain("Sales:Total Cost")
 
@@ -1001,7 +1001,7 @@ def test_consolidated_target_rejected_when_leaf_count_exceeds_ceiling():
     model._CONSOLIDATED_FEEDER_LEAF_CEILING = 1
     sales = model.cube("Sales")
 
-    sales["Total Cost"] = sales["Driver"].native(scope="C")
+    sales["Total Cost"] = sales["Driver"].native(scope="consolidated")
 
     explanation = model.explain("Sales:Total Cost")
 

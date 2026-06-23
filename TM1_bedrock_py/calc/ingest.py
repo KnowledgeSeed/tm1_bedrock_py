@@ -569,7 +569,7 @@ def parse_native_rule_text(
             continue
 
         if scope == "C":
-            expression = expression.native(scope="C")
+            expression = expression.native(scope="consolidated")
 
         parsed.append(ParsedRuleStatement(measure_name=measure_name, scope=scope, expression=expression))
 

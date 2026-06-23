@@ -105,22 +105,18 @@ def test_compile_preview_falls_back_to_python_for_cross_cube_alignment_without_m
     assert preview.manifest["Sales:Revenue EUR"]["backend"] == "Python materialization backend"
 
 
-def test_compile_explains_ytd_as_intentionally_deferred_to_python_backend():
+def test_compile_explains_ytd_falls_back_to_python_without_time_dimension_metadata():
     model = Model()
     sales = model.cube("Sales")
 
-    sales["Revenue YTD"] = sales["Revenue"].ytd()
+    sales["Revenue YTD"] = sales["Revenue"].ytd(
+        dimension="Month", period_number_attribute="Month Number"
+    )
 
     explanation = model.explain("Sales:Revenue YTD")
 
     assert explanation["backend"] == "Python materialization backend"
-    assert "multi-cell aggregation" in explanation["rationale"]
-    assert explanation["native_eligibility"] == {
-        "status": "unsupported",
-        "code": "native_non_native_by_design",
-        "category": "by_design",
-        "detail": "This shape is intentionally excluded from the native subset because it requires true multi-cell aggregation.",
-    }
+    assert "needs cube metadata to resolve the time dimension" in explanation["rationale"]
 
 
 def test_compile_explains_rolling_as_intentionally_deferred_to_python_backend():
@@ -341,6 +337,269 @@ def test_compile_keeps_shift_helper_preview_only_when_offset_dimension_is_not_nu
     sales["Revenue Prior Month"] = sales["Revenue"].shift(Month=-1)
 
     explanation = model.explain("Sales:Revenue Prior Month")
+    assert explanation["backend"] == "Python materialization backend"
+
+
+def test_compile_preview_lowers_rolling_sum_to_unrolled_shift_sum_with_safe_feeder():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Year", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Year": "Year",
+                    "Measure": "Measure",
+                },
+                measure_element_types={
+                    "Revenue": "Numeric",
+                    "Revenue 2yr Sum": "Numeric",
+                },
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Year": ["Year"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "Year": ["2023", "2024", "2025"],
+                },
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+
+    sales["Revenue 2yr Sum"] = sales["Revenue"].rolling(Year=2).sum()
+
+    explanation = model.explain("Sales:Revenue 2yr Sum")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["backend"] == "native-rule backend"
+    assert explanation["feeder_strategy"] == "same_cube_rolling_window"
+    assert preview.rules["Sales"] == (
+        "['Measure':'Measure':'Revenue 2yr Sum'] = N: "
+        "DB('Sales', !Version, STR(NUMBR(!Year) + (0)), 'Measure':'Measure':'Revenue') + "
+        "DB('Sales', !Version, STR(NUMBR(!Year) + (-1)), 'Measure':'Measure':'Revenue');"
+    )
+    assert preview.feeders["Sales"] == (
+        "[!Version, 'Year':'Year':'2022', 'Measure':'Measure':'Revenue'] => "
+        "DB('Sales', !Version, 'Year':'Year':'2023', 'Measure':'Measure':'Revenue 2yr Sum');\n"
+        "[!Version, 'Year':'Year':'2023', 'Measure':'Measure':'Revenue'] => "
+        "DB('Sales', !Version, 'Year':'Year':'2023', 'Measure':'Measure':'Revenue 2yr Sum');\n"
+        "[!Version, 'Year':'Year':'2023', 'Measure':'Measure':'Revenue'] => "
+        "DB('Sales', !Version, 'Year':'Year':'2024', 'Measure':'Measure':'Revenue 2yr Sum');\n"
+        "[!Version, 'Year':'Year':'2024', 'Measure':'Measure':'Revenue'] => "
+        "DB('Sales', !Version, 'Year':'Year':'2024', 'Measure':'Measure':'Revenue 2yr Sum');\n"
+        "[!Version, 'Year':'Year':'2024', 'Measure':'Measure':'Revenue'] => "
+        "DB('Sales', !Version, 'Year':'Year':'2025', 'Measure':'Measure':'Revenue 2yr Sum');\n"
+        "[!Version, 'Year':'Year':'2025', 'Measure':'Measure':'Revenue'] => "
+        "DB('Sales', !Version, 'Year':'Year':'2025', 'Measure':'Measure':'Revenue 2yr Sum');"
+    )
+    assert preview.manifest["Sales:Revenue 2yr Sum"]["artifact"]["feeder_strategy"] == "same_cube_rolling_window"
+    assert preview.manifest["Sales:Revenue 2yr Sum"]["artifact"]["preview_only"] is False
+
+
+def test_compile_deploys_rolling_sum_when_dimension_is_proven_numeric():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Year", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Year": "Year",
+                    "Measure": "Measure",
+                },
+                measure_element_types={
+                    "Revenue": "Numeric",
+                    "Revenue 2yr Sum": "Numeric",
+                },
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Year": ["Year"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "Year": ["2023", "2024", "2025"],
+                },
+            ),
+        }
+    )
+    tm1_service = MockTM1Service()
+    model = Model(metadata_provider=provider, tm1=tm1_service)
+    sales = model.cube("Sales")
+
+    sales["Revenue 2yr Sum"] = sales["Revenue"].rolling(Year=2).sum()
+
+    deployment = model.compile(dry_run=False)
+
+    assert deployment.errors == []
+    assert deployment.deployment["Sales"]["deployed"] is True
+    assert deployment.deployment["Sales"]["check_rules_status"] == 200
+
+
+def test_compile_keeps_rolling_sum_preview_only_when_dimension_is_not_numeric():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Month", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Month": "Month",
+                    "Measure": "Measure",
+                },
+                measure_element_types={
+                    "Revenue": "Numeric",
+                    "Revenue 3mo Sum": "Numeric",
+                },
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Month": ["Month"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "Month": ["Jan", "Feb", "Mar"],
+                },
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+
+    sales["Revenue 3mo Sum"] = sales["Revenue"].rolling(Month=3).sum()
+
+    explanation = model.explain("Sales:Revenue 3mo Sum")
+    assert explanation["backend"] == "Python materialization backend"
+
+
+def _ytd_metadata_provider():
+    return StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Month", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Month": "Month",
+                    "Measure": "Measure",
+                },
+                measure_element_types={
+                    "Revenue": "Numeric",
+                    "Revenue YTD": "Numeric",
+                },
+                dimension_attributes={"Month": ["Month Number"]},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Month": ["Month"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "Month": ["1", "2", "3"],
+                },
+                dimension_attribute_values={
+                    "Month": {
+                        "1": {"Month Number": "1"},
+                        "2": {"Month Number": "2"},
+                        "3": {"Month Number": "3"},
+                    },
+                },
+            ),
+        }
+    )
+
+
+def test_compile_preview_lowers_ytd_to_gated_unrolled_shift_sum_with_safe_feeder():
+    model = Model(metadata_provider=_ytd_metadata_provider())
+    sales = model.cube("Sales")
+
+    sales["Revenue YTD"] = sales["Revenue"].ytd(dimension="Month", period_number_attribute="Month Number")
+
+    explanation = model.explain("Sales:Revenue YTD")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["backend"] == "native-rule backend"
+    assert explanation["feeder_strategy"] == "same_cube_ytd_window"
+    assert preview.rules["Sales"] == (
+        "['Measure':'Measure':'Revenue YTD'] = N: "
+        "IF((NUMBR(ATTRS('Month', !Month, 'Month Number')) > 0), "
+        "DB('Sales', !Version, STR(NUMBR(!Month) + (0)), 'Measure':'Measure':'Revenue'), 0) + "
+        "IF((NUMBR(ATTRS('Month', !Month, 'Month Number')) > 1), "
+        "DB('Sales', !Version, STR(NUMBR(!Month) + (-1)), 'Measure':'Measure':'Revenue'), 0) + "
+        "IF((NUMBR(ATTRS('Month', !Month, 'Month Number')) > 2), "
+        "DB('Sales', !Version, STR(NUMBR(!Month) + (-2)), 'Measure':'Measure':'Revenue'), 0);"
+    )
+    assert preview.feeders["Sales"] == (
+        "[!Version, 'Month':'Month':'1', 'Measure':'Measure':'Revenue'] => "
+        "DB('Sales', !Version, 'Month':'Month':'1', 'Measure':'Measure':'Revenue YTD');\n"
+        "[!Version, 'Month':'Month':'1', 'Measure':'Measure':'Revenue'] => "
+        "DB('Sales', !Version, 'Month':'Month':'2', 'Measure':'Measure':'Revenue YTD');\n"
+        "[!Version, 'Month':'Month':'1', 'Measure':'Measure':'Revenue'] => "
+        "DB('Sales', !Version, 'Month':'Month':'3', 'Measure':'Measure':'Revenue YTD');\n"
+        "[!Version, 'Month':'Month':'2', 'Measure':'Measure':'Revenue'] => "
+        "DB('Sales', !Version, 'Month':'Month':'2', 'Measure':'Measure':'Revenue YTD');\n"
+        "[!Version, 'Month':'Month':'2', 'Measure':'Measure':'Revenue'] => "
+        "DB('Sales', !Version, 'Month':'Month':'3', 'Measure':'Measure':'Revenue YTD');\n"
+        "[!Version, 'Month':'Month':'3', 'Measure':'Measure':'Revenue'] => "
+        "DB('Sales', !Version, 'Month':'Month':'3', 'Measure':'Measure':'Revenue YTD');"
+    )
+    assert preview.manifest["Sales:Revenue YTD"]["artifact"]["feeder_strategy"] == "same_cube_ytd_window"
+    assert preview.manifest["Sales:Revenue YTD"]["artifact"]["preview_only"] is False
+
+
+def test_compile_deploys_ytd_when_period_number_attribute_is_proven():
+    model = Model(metadata_provider=_ytd_metadata_provider(), tm1=MockTM1Service())
+    sales = model.cube("Sales")
+
+    sales["Revenue YTD"] = sales["Revenue"].ytd(dimension="Month", period_number_attribute="Month Number")
+
+    deployment = model.compile(dry_run=False)
+
+    assert deployment.errors == []
+    assert deployment.deployment["Sales"]["deployed"] is True
+    assert deployment.deployment["Sales"]["check_rules_status"] == 200
+
+
+def test_compile_keeps_ytd_preview_only_when_dimension_is_not_numeric():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Month", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Month": "Month",
+                    "Measure": "Measure",
+                },
+                measure_element_types={
+                    "Revenue": "Numeric",
+                    "Revenue YTD": "Numeric",
+                },
+                dimension_attributes={"Month": ["Month Number"]},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Month": ["Month"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={
+                    "Month": ["Jan", "Feb", "Mar"],
+                },
+                dimension_attribute_values={
+                    "Month": {
+                        "Jan": {"Month Number": "1"},
+                        "Feb": {"Month Number": "2"},
+                        "Mar": {"Month Number": "3"},
+                    },
+                },
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+
+    sales["Revenue YTD"] = sales["Revenue"].ytd(dimension="Month", period_number_attribute="Month Number")
+
+    explanation = model.explain("Sales:Revenue YTD")
     assert explanation["backend"] == "Python materialization backend"
 
 

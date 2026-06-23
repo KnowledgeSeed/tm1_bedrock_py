@@ -80,13 +80,7 @@ def unsupported_python_execution_reason(expression: Expression, target_cube_name
             if not _is_plain_value_expression(expression.base):
                 return "rolling(...).sum() base must be a plain same-cube measure expression"
             return None
-        if expression.method_name == "ytd":
-            return (
-                "ytd() cannot be executed by any backend in its current form: the DSL's ytd() takes no "
-                "parameters, so there is no way to know which dimension represents time. This is a DSL-level "
-                "gap, not an executor limitation -- see dev/12_current_gaps.md."
-            )
-        if expression.method_name in ("align", "shift", "growth"):
+        if expression.method_name in ("align", "shift", "growth", "ytd"):
             return (
                 f"{expression.method_name}(...) inside a Python-backend formula is not supported by this "
                 "execution MVP; these are native-only constructs and should be fixed at the native-compiler "
