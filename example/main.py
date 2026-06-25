@@ -11,6 +11,7 @@ from TM1_bedrock_py.context_metadata import ContextMetadata
 from tests.tests_dimension_builder.test_data.test_data import generate_hierarchy_data
 import pyodbc
 from TM1_bedrock_py.dimension_builder.apply import create_attribute_structure
+from scripts.live_server_test_harness import run_full_suite
 
 
 def create_tm1_connection(connection_name: str = 'ks_academy'):
@@ -1240,6 +1241,13 @@ def run_advanced_mapping_integration_test():
         tm1_service.logout()
 
 
+def rules_test_harness_full_suite_run():
+    tm1_service = create_tm1_connection('ks_academy')
+
+    results = run_full_suite(tm1_service, cleanup=False)
+    print(results.ok, results.failures)
+
+
 if __name__ == '__main__':
     # dimension_builder_update_bugfix_validation()
     # dimension_copy_alias_fix_validation()
@@ -1271,4 +1279,5 @@ if __name__ == '__main__':
     # input_handler_count_unique()
     # input_handler_conditional_concat()
     # dimexport_demo()
-    run_advanced_mapping_integration_test()
+    # run_advanced_mapping_integration_test()
+    rules_test_harness_full_suite_run()
