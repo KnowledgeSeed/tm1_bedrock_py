@@ -142,7 +142,10 @@ class TM1ServiceMetadataProvider:
                 sorted(
                     {
                         attribute.name
-                        for attribute in self._tm1_service.dimensions.attributes.get_all(dimension_name)
+                        for attribute in self._tm1_service.elements.get_element_attributes(
+                            dimension_name=dimension_name,
+                            hierarchy_name=default_hierarchies.get(dimension_name) or dimension_name,
+                        )
                     }
                 )
             )

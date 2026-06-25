@@ -102,20 +102,9 @@ class _MockResponse:
     text: str = ""
 
 
-class MockDimensionAttributeService(_BaseService):
-    def get_all(self, dimension_name: str, **kwargs: Any) -> list[Any]:
-        self._record("get_all", dimension_name, **kwargs)
-        attributes: dict[str, Any] = {}
-        for hierarchy in self._tm1._get_dimension(dimension_name).hierarchies:
-            for attribute in hierarchy.element_attributes:
-                attributes[_name_key(attribute.name)] = attribute
-        return list(attributes.values())
-
-
 class MockDimensionService(_BaseService):
     def __init__(self, tm1: "MockTM1Service"):
         super().__init__(tm1)
-        self.attributes = MockDimensionAttributeService(tm1)
 
     def get(self, dimension_name: str, **kwargs: Any) -> Dimension:
         self._record("get", dimension_name, **kwargs)
@@ -206,6 +195,20 @@ class MockElementService(_BaseService):
         )
         if matching_name is not None:
             del hierarchy.elements[matching_name]
+
+    def get_element_attributes(
+        self, dimension_name: str, hierarchy_name: str, **kwargs: Any
+    ) -> list[ElementAttribute]:
+        self._record("get_element_attributes", dimension_name, hierarchy_name, **kwargs)
+        hierarchy = self._tm1._get_hierarchy(dimension_name, hierarchy_name)
+        return [deepcopy(attribute) for attribute in hierarchy.element_attributes]
+
+    def get_element_attribute_names(
+        self, dimension_name: str, hierarchy_name: str, **kwargs: Any
+    ) -> list[str]:
+        self._record("get_element_attribute_names", dimension_name, hierarchy_name, **kwargs)
+        hierarchy = self._tm1._get_hierarchy(dimension_name, hierarchy_name)
+        return [attribute.name for attribute in hierarchy.element_attributes]
 
     def get_elements(
         self, dimension_name: str, hierarchy_name: str, **kwargs: Any

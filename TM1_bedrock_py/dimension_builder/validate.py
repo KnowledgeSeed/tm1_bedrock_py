@@ -433,7 +433,13 @@ def validate_attribute_name_for_dimension(
         dimension_name: str,
         attributes: list[str]
 ) -> None:
-    existing_attrs = {attr.name for attr in tm1_service.dimensions.attributes.get_all(dimension_name=dimension_name)}
+    hierarchy_name = baseutils.get_default_hierarchy(tm1_service, dimension_name)
+    existing_attrs = {
+        attr.name
+        for attr in tm1_service.elements.get_element_attributes(
+            dimension_name=dimension_name, hierarchy_name=hierarchy_name
+        )
+    }
     invalid_attrs = [a for a in attributes if a not in existing_attrs]
     if invalid_attrs:
         raise InvalidAttributeColumnNameError("Following attributes dont exist in dimension: "+','.join(invalid_attrs))
