@@ -67,9 +67,48 @@ class HarnessReport:
 # ----------------------------------------------------------------------------------
 
 
+_ALL_TEST_DIMENSIONS = (
+    DIM_VERSION, DIM_YEAR, DIM_MONTH, DIM_REGION,
+    DIM_CURRENCY, DIM_TARGET_CURRENCY, DIM_SALES_MEASURE, DIM_FX_MEASURE,
+)
+_ALL_TEST_CUBES = (CUBE_SALES, CUBE_FX)
+
+
+def _reset_existing_schema(tm1_service: Any) -> None:
+    """Tears down any leftover TEST_PREFIX structures from a prior interrupted run
+    before building fresh. `build_schema` is meant to be safely re-runnable -- if a
+    previous run was killed mid-way (e.g. the process was stopped before its own
+    `cleanup_schema` finally-block ran), structures could be left half-built (e.g. a
+    dimension created but its cube not yet, or an alternate hierarchy missing). Rather
+    than rely on every individual create call being independently idempotent against
+    every possible partial state, this unconditionally deletes anything already
+    present under TEST_PREFIX first, so build_schema always starts from a clean slate.
+    Mirrors cleanup_schema's own logic, but driven by this module's static name lists
+    since a fresh process has no in-memory `schema` dict from the run it's recovering
+    from."""
+
+    for cube_name in _ALL_TEST_CUBES:
+        if tm1_service.cubes.exists(cube_name):
+            basic_logger.info(f"Found pre-existing test cube '{cube_name}', deleting before rebuild.")
+            tm1_service.cubes.delete(cube_name)
+
+    for dimension_name in _ALL_TEST_DIMENSIONS:
+        attribute_cube = f"}}ElementAttributes_{dimension_name}"
+        if tm1_service.cubes.exists(attribute_cube):
+            basic_logger.info(f"Found pre-existing attribute cube '{attribute_cube}', deleting before rebuild.")
+            tm1_service.cubes.delete(attribute_cube)
+        if tm1_service.dimensions.exists(dimension_name) and hasattr(tm1_service.dimensions, "delete"):
+            basic_logger.info(f"Found pre-existing test dimension '{dimension_name}', deleting before rebuild.")
+            tm1_service.dimensions.delete(dimension_name)
+
+
 def build_schema(tm1_service: Any, log_level: Optional[str] = None) -> Dict[str, Any]:
     """Creates all test dimensions and cubes. Safe to call against a real server:
-    every object name is prefixed with TEST_PREFIX.
+    every object name is prefixed with TEST_PREFIX. Also safe to call repeatedly, or
+    after a prior run was interrupted before its cleanup ran: any pre-existing
+    TEST_PREFIX structure is deleted and recreated from scratch first (see
+    `_reset_existing_schema`), rather than erroring or silently building on top of
+    stale, possibly inconsistent state.
 
     `log_level`, if given, is passed straight through to `bedrock.cube_builder`'s own
     `logging_level` parameter (default `None` -- leave bedrock's own logging
@@ -81,6 +120,8 @@ def build_schema(tm1_service: Any, log_level: Optional[str] = None) -> Dict[str,
     bedrock's shared logger to INFO can turn a few-second compile into a minute-plus
     one purely from console I/O. See `run_full_suite`'s `verbose_bedrock_logging`
     parameter for the same tradeoff at the top level."""
+
+    _reset_existing_schema(tm1_service)
 
     _create_simple_dimension(tm1_service, DIM_VERSION, {"Actual": "Numeric", "Budget": "Numeric"})
 
@@ -114,11 +155,8 @@ def build_schema(tm1_service: Any, log_level: Optional[str] = None) -> Dict[str,
     )
 
     return {
-        "dimensions": [
-            DIM_VERSION, DIM_YEAR, DIM_MONTH, DIM_REGION,
-            DIM_CURRENCY, DIM_TARGET_CURRENCY, DIM_SALES_MEASURE, DIM_FX_MEASURE,
-        ],
-        "cubes": [CUBE_SALES, CUBE_FX],
+        "dimensions": list(_ALL_TEST_DIMENSIONS),
+        "cubes": list(_ALL_TEST_CUBES),
     }
 
 

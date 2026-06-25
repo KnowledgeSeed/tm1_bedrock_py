@@ -64,6 +64,39 @@ def test_build_schema_creates_all_test_dimensions_and_cubes(tm1_service):
     assert tm1_service.hierarchies.exists(harness.DIM_REGION, "Coastal Grouping")
 
 
+def test_build_schema_is_safely_rerunnable_against_a_fully_built_schema(tm1_service):
+    """build_schema must not error on a second call against the same server -- the
+    scenario this guards is a prior run being stopped/killed before its own
+    cleanup_schema finally-block ran, leaving a previous schema fully or partially
+    in place."""
+
+    harness.build_schema(tm1_service)
+    schema = harness.build_schema(tm1_service)
+
+    for dimension_name in schema["dimensions"]:
+        assert tm1_service.dimensions.exists(dimension_name), dimension_name
+    for cube_name in schema["cubes"]:
+        assert tm1_service.cubes.exists(cube_name), cube_name
+    assert tm1_service.hierarchies.exists(harness.DIM_REGION, "Coastal Grouping")
+
+
+def test_build_schema_is_safely_rerunnable_against_a_partially_torn_down_schema(tm1_service):
+    """Simulates a process stopped mid-cleanup (or mid-build): only the cubes were
+    removed, dimensions left behind. build_schema must still succeed and produce a
+    complete, consistent schema."""
+
+    schema = harness.build_schema(tm1_service)
+    for cube_name in schema["cubes"]:
+        tm1_service.cubes.delete(cube_name)
+
+    schema = harness.build_schema(tm1_service)
+
+    for dimension_name in schema["dimensions"]:
+        assert tm1_service.dimensions.exists(dimension_name), dimension_name
+    for cube_name in schema["cubes"]:
+        assert tm1_service.cubes.exists(cube_name), cube_name
+
+
 def test_load_baseline_data_writes_expected_row_counts(tm1_service):
     harness.build_schema(tm1_service)
     baseline = harness.load_baseline_data(tm1_service)

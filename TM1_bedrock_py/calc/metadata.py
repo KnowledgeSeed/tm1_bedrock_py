@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Optional, Protocol, Sequence
 
-from TM1_bedrock_py import utility
+from TM1_bedrock_py import basic_logger, utility
 
 
 @dataclass(frozen=True)
@@ -60,6 +60,10 @@ def _normalize_element_type(raw_type: Any) -> Optional[str]:
 class TM1ServiceMetadataProvider:
     def __init__(self, tm1_service: Any):
         self._tm1_service = tm1_service
+        self._cache: dict[str, Optional["CubeMetadata"]] = {}
+
+    def clear_cache(self) -> None:
+        self._cache.clear()
 
     def _collect_dimension_element_types(self, dimension_name: str, hierarchy_name: str) -> Mapping[str, str]:
         try:
@@ -122,16 +126,28 @@ class TM1ServiceMetadataProvider:
         return values_by_element
 
     def get_cube_metadata(self, cube_name: str) -> Optional[CubeMetadata]:
+        cache_key = str(cube_name).strip().casefold()
+        if cache_key in self._cache:
+            basic_logger.debug(f"Cube metadata cache hit for '{cube_name}'.")
+            return self._cache[cache_key]
+        basic_logger.info(f"Cube metadata cache miss for '{cube_name}', collecting from TM1.")
+        result = self._collect_cube_metadata(cube_name)
+        self._cache[cache_key] = result
+        return result
+
+    def _collect_cube_metadata(self, cube_name: str) -> Optional[CubeMetadata]:
         try:
             raw_metadata = utility.TM1CubeObjectMetadata.collect(
                 tm1_service=self._tm1_service,
                 cube_name=cube_name,
                 collect_measure_types=True,
             )
-        except Exception:
+        except Exception as error:
+            basic_logger.warning(f"Failed to collect cube metadata for '{cube_name}': {error}")
             return None
 
         dimensions = tuple(raw_metadata.get_cube_dims() or ())
+        basic_logger.debug(f"Cube '{cube_name}' has {len(dimensions)} dimension(s): {dimensions}")
         measure_dimension_name = dimensions[-1] if dimensions else None
         default_hierarchies = {
             dimension_name: utility.get_default_hierarchy(self._tm1_service, dimension_name)
@@ -165,6 +181,7 @@ class TM1ServiceMetadataProvider:
         dimension_children_by_hierarchy = {}
         dimension_attribute_values = {}
         for dimension_name in dimensions:
+            basic_logger.debug(f"Cube '{cube_name}': collecting dimension metadata for '{dimension_name}'.")
             hierarchy_names = tuple(dimension_hierarchies.get(dimension_name, ()))
             hierarchy_name = default_hierarchies.get(dimension_name) or dimension_name
             leaf_elements = self._collect_dimension_leaf_elements(dimension_name, hierarchy_name)
@@ -190,6 +207,7 @@ class TM1ServiceMetadataProvider:
             if attribute_values:
                 dimension_attribute_values[dimension_name] = attribute_values
 
+        basic_logger.info(f"Cube metadata collection for '{cube_name}' complete ({len(dimensions)} dimension(s)).")
         return CubeMetadata(
             cube_name=cube_name,
             dimensions=dimensions,

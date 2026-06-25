@@ -10,6 +10,7 @@ from enum import Enum
 from itertools import product
 from typing import Any, Dict, Iterable, Iterator, List, Mapping, Optional, Sequence, Tuple, Union
 
+from TM1_bedrock_py import basic_logger
 from .metadata import MetadataProvider, TM1ServiceMetadataProvider
 
 
@@ -867,15 +868,24 @@ class Model:
     def import_native_rule_text(self, cube_name: str, rule_text: str) -> "RuleIngestionReport":
         from .ingest import RuleIngestionRejection, RuleIngestionReport, parse_native_rule_text
 
+        basic_logger.info(f"Ingesting native rule text for cube '{cube_name}' ({len(rule_text)} chars).")
         parsed_statements, rejections = parse_native_rule_text(
             cube_name=cube_name, rule_text=rule_text, metadata_provider=self.metadata_provider
         )
         report = RuleIngestionReport(cube_name=cube_name, rejected=list(rejections))
+        if rejections:
+            basic_logger.warning(
+                f"Cube '{cube_name}' ingestion rejected {len(rejections)} statement(s): "
+                f"{[r.reason for r in rejections]}"
+            )
 
         for statement in parsed_statements:
             try:
                 self.cube(cube_name)[statement.measure_name] = statement.expression
             except ValueError as error:
+                basic_logger.warning(
+                    f"Cube '{cube_name}' measure '{statement.measure_name}' rejected after parsing: {error}"
+                )
                 report.rejected.append(
                     RuleIngestionRejection(
                         statement_text=statement.expression.describe(),
@@ -886,12 +896,17 @@ class Model:
                 continue
             report.ingested.append(statement.measure_name)
 
+        basic_logger.info(
+            f"Cube '{cube_name}' ingestion complete: {len(report.ingested)} ingested, "
+            f"{len(report.rejected)} rejected."
+        )
         return report
 
     def import_cube_rules_from_tm1(self, cube_name: str) -> "RuleIngestionReport":
         if self.tm1 is None:
             raise ValueError("Model.import_cube_rules_from_tm1 requires an attached TM1 service")
 
+        basic_logger.debug(f"Fetching live rule text for cube '{cube_name}' from TM1.")
         cube = self.tm1.cubes.get(cube_name)
         rules = getattr(cube, "rules", None)
         rule_text = getattr(rules, "text", None)
@@ -1069,14 +1084,19 @@ class Model:
         dry_run: bool = True,
         deployment_log_dir: Optional[str] = None,
     ) -> CompilePreview:
+        basic_logger.info(f"compile() starting, dry_run={dry_run}")
         plan = self._build_plan()
         rules_by_cube: Dict[str, List[str]] = defaultdict(list)
         feeders_by_cube: Dict[str, List[str]] = defaultdict(list)
         manifest: Dict[str, Dict[str, Any]] = {}
         errors = list(plan.report.errors)
         warnings = list(plan.report.warnings)
+        basic_logger.debug(f"compile() build plan resolved {len(plan.formulas)} formula(s), {len(errors)} error(s)")
 
         if errors:
+            basic_logger.warning(
+                f"compile() aborting before artifact generation, {len(errors)} build-plan error(s): {errors}"
+            )
             return CompilePreview(
                 rules={},
                 feeders={},
@@ -1160,7 +1180,12 @@ class Model:
             warnings=warnings,
         )
         preview.deployment = self._build_deployment_plan(preview, live=False)
+        basic_logger.info(
+            f"compile() produced rule artifacts for {len(preview.rules)} cube(s), "
+            f"feeder artifacts for {len(preview.feeders)} cube(s)"
+        )
         if dry_run:
+            basic_logger.debug("compile() dry_run=True, skipping live deployment")
             return preview
 
         self._deploy_compile_preview(preview, deployment_log_dir=deployment_log_dir)
@@ -1184,8 +1209,10 @@ class Model:
 
         deployment = self._build_deployment_plan(preview, live=True)
         deployed_cubes: List[str] = []
+        cube_names_to_deploy = sorted(set(preview.rules) | set(preview.feeders))
+        basic_logger.info(f"Deploying compiled rules/feeders to {len(cube_names_to_deploy)} cube(s) on live TM1.")
         try:
-            for cube_name in sorted(set(preview.rules) | set(preview.feeders)):
+            for cube_name in cube_names_to_deploy:
                 prior_rule_text = self._fetch_prior_rule_text(cube_name)
                 rule_text = self._render_rule_artifact(
                     cube_name,
@@ -1203,17 +1230,23 @@ class Model:
                     )
                 )
 
+                basic_logger.debug(f"Writing rule text ({len(rule_text)} chars) to cube '{cube_name}'.")
                 self.tm1.cubes.update_or_create_rules(cube_name, rule_text)
                 deployed_cubes.append(cube_name)
                 check_response = self.tm1.cubes.check_rules(cube_name)
                 status_code = getattr(check_response, "status_code", None)
                 if status_code is not None and not (200 <= status_code < 300):
+                    basic_logger.warning(
+                        f"TM1 rule validation failed for cube '{cube_name}' with status {status_code}, "
+                        f"rolling back {len(deployed_cubes)} already-deployed cube(s)."
+                    )
                     raise DeploymentError(
                         f"TM1 rule validation failed for cube '{cube_name}' with status {status_code}."
                     )
                 deployment[cube_name]["deployed"] = True
                 deployment[cube_name]["rule_length"] = len(rule_text)
                 deployment[cube_name]["check_rules_status"] = status_code
+                basic_logger.info(f"Cube '{cube_name}' rules deployed and validated (status {status_code}).")
         except DeploymentError:
             self._rollback_cubes(deployment, deployed_cubes)
             raise
@@ -1222,13 +1255,20 @@ class Model:
         preview.deployment_manifest_path = self._persist_deployment_manifest(
             preview, deployment_log_dir=deployment_log_dir
         )
+        basic_logger.info(
+            f"Deployment of {len(deployed_cubes)} cube(s) complete. "
+            f"Manifest written to {preview.deployment_manifest_path}."
+        )
 
     def _rollback_cubes(self, deployment: Dict[str, Dict[str, Any]], cube_names: Iterable[str]) -> None:
+        cube_names = list(cube_names)
+        basic_logger.warning(f"Rolling back {len(cube_names)} cube(s) to their prior rule text.")
         for cube_name in cube_names:
             prior_rule_text = deployment.get(cube_name, {}).get("prior_rule_text", "")
             self.tm1.cubes.update_or_create_rules(cube_name, prior_rule_text)
             deployment.setdefault(cube_name, {})["deployed"] = False
             deployment[cube_name]["rolled_back"] = True
+            basic_logger.debug(f"Cube '{cube_name}' rolled back to prior rule text ({len(prior_rule_text)} chars).")
 
     def _persist_deployment_manifest(
         self,
@@ -1246,12 +1286,14 @@ class Model:
         }
         with open(manifest_path, "w", encoding="utf-8") as handle:
             json.dump(record, handle, indent=2, sort_keys=True)
+        basic_logger.debug(f"Deployment manifest persisted to {manifest_path}.")
         return manifest_path
 
     def rollback_deployment(self, manifest_path: str) -> Dict[str, Any]:
         if self.tm1 is None:
             raise DeploymentError("Rollback requires an attached TM1 service.")
 
+        basic_logger.info(f"rollback_deployment() reading manifest from {manifest_path}.")
         with open(manifest_path, "r", encoding="utf-8") as handle:
             record = json.load(handle)
 
@@ -1259,17 +1301,23 @@ class Model:
         results: Dict[str, Any] = {}
         for cube_name, cube_record in sorted(deployment.items()):
             if not cube_record.get("deployed"):
+                basic_logger.debug(f"Cube '{cube_name}' was never deployed in this manifest, skipping rollback.")
                 continue
             prior_rule_text = cube_record.get("prior_rule_text", "")
             self.tm1.cubes.update_or_create_rules(cube_name, prior_rule_text)
             check_response = self.tm1.cubes.check_rules(cube_name)
             status_code = getattr(check_response, "status_code", None)
             if status_code is not None and not (200 <= status_code < 300):
+                basic_logger.warning(
+                    f"TM1 rule validation failed while rolling back cube '{cube_name}' with status {status_code}."
+                )
                 raise DeploymentError(
                     f"TM1 rule validation failed while rolling back cube '{cube_name}' with status {status_code}."
                 )
             results[cube_name] = {"rolled_back": True, "check_rules_status": status_code}
+            basic_logger.info(f"Cube '{cube_name}' rolled back via manifest (status {status_code}).")
 
+        basic_logger.info(f"rollback_deployment() complete, {len(results)} cube(s) rolled back.")
         return results
 
     def _assert_deployment_ready(self, preview: CompilePreview) -> None:
@@ -2125,6 +2173,19 @@ class Model:
         if self.metadata_provider is None:
             return None
         return self.metadata_provider.get_cube_metadata(cube_name)
+
+    def refresh_metadata_cache(self) -> None:
+        """Drops any cached cube metadata so the next lookup re-queries TM1.
+
+        `TM1ServiceMetadataProvider.get_cube_metadata` caches per cube name for the lifetime
+        of the provider, since cube/dimension structure doesn't change mid-compile. Call this
+        if the underlying schema was altered (e.g. via `dimension_builder`) after this `Model`
+        was constructed and before compiling again against the same live server.
+        """
+        clear_cache = getattr(self.metadata_provider, "clear_cache", None)
+        if callable(clear_cache):
+            basic_logger.debug("refresh_metadata_cache() clearing cached cube metadata.")
+            clear_cache()
 
     @staticmethod
     def _measure_type_for(metadata: Any, measure_name: str) -> Any:
@@ -4852,6 +4913,7 @@ class Model:
 
     def _build_plan(self) -> BuildPlan:
         formulas = dict(sorted(self._formulas.items()))
+        basic_logger.debug(f"_build_plan() resolving dependency order for {len(formulas)} formula(s).")
         dependencies: Dict[str, List[str]] = {}
         graph: Dict[str, List[str]] = defaultdict(list)
         in_degree: Dict[str, int] = {key: 0 for key in formulas}
@@ -4904,6 +4966,7 @@ class Model:
         errors: List[str] = []
         if len(order) != len(formulas):
             cycle_nodes = sorted(key for key, degree in in_degree.items() if degree > 0)
+            basic_logger.warning(f"_build_plan() detected a cyclic dependency among: {cycle_nodes}")
             errors.append(
                 "Cyclic formula dependencies detected for targets: " + ", ".join(cycle_nodes)
             )
@@ -4950,6 +5013,10 @@ class Model:
                         "a safe cross-cube feeder plan is proven."
                     )
 
+        basic_logger.debug(
+            f"_build_plan() resolved order for {len(order)} formula(s), "
+            f"{len(errors)} error(s), {len(set(warnings))} warning(s)."
+        )
         return BuildPlan(
             formulas=formulas,
             graph=dict(graph),
