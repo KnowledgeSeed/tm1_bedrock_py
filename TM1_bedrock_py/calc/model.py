@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import difflib
+import json
+import os
+import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from enum import Enum
@@ -643,6 +647,7 @@ class CompilePreview:
     deployment: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     errors: List[str] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
+    deployment_manifest_path: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -1057,7 +1062,13 @@ class Model:
             raise KeyError(f"Unknown formula target '{target}'")
         return formulas[normalized_target]
 
-    def compile(self, dry_run: bool = True) -> CompilePreview:
+    _DEPLOYMENT_LOG_DIR = ".tm1_bedrock_deployments"
+
+    def compile(
+        self,
+        dry_run: bool = True,
+        deployment_log_dir: Optional[str] = None,
+    ) -> CompilePreview:
         plan = self._build_plan()
         rules_by_cube: Dict[str, List[str]] = defaultdict(list)
         feeders_by_cube: Dict[str, List[str]] = defaultdict(list)
@@ -1152,34 +1163,114 @@ class Model:
         if dry_run:
             return preview
 
-        self._deploy_compile_preview(preview)
+        self._deploy_compile_preview(preview, deployment_log_dir=deployment_log_dir)
         return preview
 
-    def _deploy_compile_preview(self, preview: CompilePreview) -> None:
+    def _fetch_prior_rule_text(self, cube_name: str) -> str:
+        try:
+            return self.tm1.cubes.get(cube_name).rules.text or ""
+        except Exception:
+            return ""
+
+    def _deploy_compile_preview(
+        self,
+        preview: CompilePreview,
+        deployment_log_dir: Optional[str] = None,
+    ) -> None:
         if self.tm1 is None:
             raise DeploymentError("Live TM1 deployment requires an attached TM1 service.")
 
         self._assert_deployment_ready(preview)
 
         deployment = self._build_deployment_plan(preview, live=True)
-        for cube_name in sorted(set(preview.rules) | set(preview.feeders)):
-            rule_text = self._render_rule_artifact(
-                cube_name,
-                preview.rules.get(cube_name, ""),
-                preview.feeders.get(cube_name, ""),
-            )
-            self.tm1.cubes.update_or_create_rules(cube_name, rule_text)
+        deployed_cubes: List[str] = []
+        try:
+            for cube_name in sorted(set(preview.rules) | set(preview.feeders)):
+                prior_rule_text = self._fetch_prior_rule_text(cube_name)
+                rule_text = self._render_rule_artifact(
+                    cube_name,
+                    preview.rules.get(cube_name, ""),
+                    preview.feeders.get(cube_name, ""),
+                )
+                deployment[cube_name]["prior_rule_text"] = prior_rule_text
+                deployment[cube_name]["diff"] = "\n".join(
+                    difflib.unified_diff(
+                        prior_rule_text.splitlines(),
+                        rule_text.splitlines(),
+                        fromfile=f"{cube_name}/prior",
+                        tofile=f"{cube_name}/new",
+                        lineterm="",
+                    )
+                )
+
+                self.tm1.cubes.update_or_create_rules(cube_name, rule_text)
+                deployed_cubes.append(cube_name)
+                check_response = self.tm1.cubes.check_rules(cube_name)
+                status_code = getattr(check_response, "status_code", None)
+                if status_code is not None and not (200 <= status_code < 300):
+                    raise DeploymentError(
+                        f"TM1 rule validation failed for cube '{cube_name}' with status {status_code}."
+                    )
+                deployment[cube_name]["deployed"] = True
+                deployment[cube_name]["rule_length"] = len(rule_text)
+                deployment[cube_name]["check_rules_status"] = status_code
+        except DeploymentError:
+            self._rollback_cubes(deployment, deployed_cubes)
+            raise
+
+        preview.deployment = deployment
+        preview.deployment_manifest_path = self._persist_deployment_manifest(
+            preview, deployment_log_dir=deployment_log_dir
+        )
+
+    def _rollback_cubes(self, deployment: Dict[str, Dict[str, Any]], cube_names: Iterable[str]) -> None:
+        for cube_name in cube_names:
+            prior_rule_text = deployment.get(cube_name, {}).get("prior_rule_text", "")
+            self.tm1.cubes.update_or_create_rules(cube_name, prior_rule_text)
+            deployment.setdefault(cube_name, {})["deployed"] = False
+            deployment[cube_name]["rolled_back"] = True
+
+    def _persist_deployment_manifest(
+        self,
+        preview: CompilePreview,
+        deployment_log_dir: Optional[str] = None,
+    ) -> str:
+        log_dir = deployment_log_dir or self._DEPLOYMENT_LOG_DIR
+        os.makedirs(log_dir, exist_ok=True)
+        timestamp = time.strftime("%Y%m%dT%H%M%S", time.gmtime())
+        manifest_path = os.path.join(log_dir, f"deployment_{timestamp}_{int(time.time() * 1000) % 1000:03d}.json")
+        record = {
+            "timestamp": timestamp,
+            "deployment": preview.deployment,
+            "manifest": preview.manifest,
+        }
+        with open(manifest_path, "w", encoding="utf-8") as handle:
+            json.dump(record, handle, indent=2, sort_keys=True)
+        return manifest_path
+
+    def rollback_deployment(self, manifest_path: str) -> Dict[str, Any]:
+        if self.tm1 is None:
+            raise DeploymentError("Rollback requires an attached TM1 service.")
+
+        with open(manifest_path, "r", encoding="utf-8") as handle:
+            record = json.load(handle)
+
+        deployment = record.get("deployment", {})
+        results: Dict[str, Any] = {}
+        for cube_name, cube_record in sorted(deployment.items()):
+            if not cube_record.get("deployed"):
+                continue
+            prior_rule_text = cube_record.get("prior_rule_text", "")
+            self.tm1.cubes.update_or_create_rules(cube_name, prior_rule_text)
             check_response = self.tm1.cubes.check_rules(cube_name)
             status_code = getattr(check_response, "status_code", None)
             if status_code is not None and not (200 <= status_code < 300):
                 raise DeploymentError(
-                    f"TM1 rule validation failed for cube '{cube_name}' with status {status_code}."
+                    f"TM1 rule validation failed while rolling back cube '{cube_name}' with status {status_code}."
                 )
-            deployment[cube_name]["deployed"] = True
-            deployment[cube_name]["rule_length"] = len(rule_text)
-            deployment[cube_name]["check_rules_status"] = status_code
+            results[cube_name] = {"rolled_back": True, "check_rules_status": status_code}
 
-        preview.deployment = deployment
+        return results
 
     def _assert_deployment_ready(self, preview: CompilePreview) -> None:
         if preview.errors:
@@ -4257,15 +4348,20 @@ class Model:
         hierarchy_children = metadata.dimension_children_by_hierarchy.get(dimension_name, {})
         hierarchy_order: List[Optional[str]] = []
         if explicit_hierarchy_name is not None:
+            # Caller pinned a hierarchy: resolve only against that hierarchy. Falling through to
+            # other hierarchies here would silently resolve a different, unrequested hierarchy's
+            # subtree -- exactly the "guess instead of fail closed" outcome this project's safety
+            # discipline forbids elsewhere (see _dimension_hierarchy_ambiguity_reason).
             hierarchy_order.append(explicit_hierarchy_name)
-        default_hierarchy_name = metadata.default_hierarchies.get(dimension_name)
-        if default_hierarchy_name is not None and default_hierarchy_name not in hierarchy_order:
-            hierarchy_order.append(default_hierarchy_name)
-        for hierarchy_name in metadata.dimension_hierarchies.get(dimension_name, ()):
-            if hierarchy_name not in hierarchy_order:
-                hierarchy_order.append(hierarchy_name)
-        if None not in hierarchy_order:
-            hierarchy_order.append(None)
+        else:
+            default_hierarchy_name = metadata.default_hierarchies.get(dimension_name)
+            if default_hierarchy_name is not None and default_hierarchy_name not in hierarchy_order:
+                hierarchy_order.append(default_hierarchy_name)
+            for hierarchy_name in metadata.dimension_hierarchies.get(dimension_name, ()):
+                if hierarchy_name not in hierarchy_order:
+                    hierarchy_order.append(hierarchy_name)
+            if None not in hierarchy_order:
+                hierarchy_order.append(None)
 
         visited = _visited | {visited_key}
         for hierarchy_name in hierarchy_order:
