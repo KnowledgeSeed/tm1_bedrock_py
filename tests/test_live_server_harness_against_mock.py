@@ -148,6 +148,39 @@ def test_read_measure_values_forces_dimension_columns_to_string_dtype(tm1_servic
     assert captured_kwargs.get("cube_dimensions") == tm1_service.cubes.get_dimension_names(harness.CUBE_SALES)
 
 
+def test_read_measure_values_disables_blob_extraction(tm1_service, monkeypatch):
+    """Regression test for a real third-live-run failure: every rule-derived measure
+    (Gross Margin, Revenue EUR, the shift/rolling/YTD measures, ...) read back as a
+    literal 0.0 against a real server, while raw stored measures (Revenue, Cost) read
+    correctly. Root cause: extractor.py's __tm1_mdx_to_dataframe_default defaults
+    use_blob=True (overriding TM1py's own more conservative default of False), and the
+    blob/CSV bulk-export path does not reliably trigger rule evaluation the way the
+    standard JSON cellset path does. read_measure_values must now pass use_blob=False
+    explicitly. The mock can't reproduce the underlying blob-vs-JSON discrepancy
+    itself, so this asserts the fix's actual mechanism: the kwarg is set correctly."""
+
+    harness.build_schema(tm1_service)
+
+    captured_kwargs: Dict[str, Any] = {}
+    original = harness.extractor.tm1_mdx_to_dataframe
+
+    def _capture(**kwargs):
+        captured_kwargs.update(kwargs)
+        return original(**kwargs)
+
+    monkeypatch.setattr(harness.extractor, "tm1_mdx_to_dataframe", _capture)
+
+    try:
+        harness.read_measure_values(
+            tm1_service, harness.CUBE_SALES, harness.DIM_SALES_MEASURE, ["Gross Margin"],
+            extra_filters={harness.DIM_VERSION: ["Actual"], harness.DIM_YEAR: ["2024"]},
+        )
+    except Exception:
+        pass
+
+    assert captured_kwargs.get("use_blob") is False
+
+
 def test_read_measure_values_defaults_to_float_but_honors_value_dtype_override(tm1_service, monkeypatch):
     """Regression test for a real first-live-run failure: read_measure_values used to
     hardcode default_returned_value_type=float for every call, including

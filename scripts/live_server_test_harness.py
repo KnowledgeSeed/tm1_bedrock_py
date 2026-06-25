@@ -528,12 +528,20 @@ def read_measure_values(tm1_service: Any, cube_name: str, measure_dimension: str
     # computed expected-value frames (those always build dimension columns as str) --
     # "merge on object and int64 columns" is exactly that mismatch. The mock happened
     # to not trigger it, which is why this surfaced only on the first real-server run.
+    #
+    # use_blob=False: extractor.py's own default for this is True (overriding TM1py's
+    # own, more conservative default of False), which on a real server returned a
+    # literal 0.0 for every rule-derived cell while raw stored cells (Revenue/Cost)
+    # read back correctly -- the blob/CSV bulk-export path does not reliably trigger
+    # rule evaluation the same way the standard JSON cellset path does. Confirmed by
+    # a real-server run where every formula-derived measure came back as exactly 0.0.
     return extractor.tm1_mdx_to_dataframe(
         tm1_service=tm1_service,
         data_mdx=mdx,
         default_returned_value_type=value_dtype,
         skip_zeros=False,
         cube_dimensions=tm1_service.cubes.get_dimension_names(cube_name),
+        use_blob=False,
     )
 
 
@@ -635,8 +643,11 @@ def verify_consolidated_feeders(tm1_service: Any, report: HarnessReport) -> None
             DIM_SALES_MEASURE: ["Revenue", "Gross Margin", "Revenue EUR"],
         },
     )
+    # use_blob=False -- see read_measure_values' comment: the blob/CSV bulk-export path
+    # does not reliably trigger rule evaluation, and this reads two rule-derived
+    # measures (Gross Margin, Revenue EUR).
     consolidated_actual = extractor.tm1_mdx_to_dataframe(
-        tm1_service=tm1_service, data_mdx=consolidated_mdx, default_returned_value_type=float,
+        tm1_service=tm1_service, data_mdx=consolidated_mdx, default_returned_value_type=float, use_blob=False,
     )
     consolidated_sum_by_measure = consolidated_actual.groupby(DIM_SALES_MEASURE)["Value"].sum()
 
@@ -783,7 +794,11 @@ def _read_consolidated_totals(tm1_service: Any) -> Dict[str, float]:
             DIM_SALES_MEASURE: ["Revenue", "Gross Margin", "Revenue EUR"],
         },
     )
-    actual = extractor.tm1_mdx_to_dataframe(tm1_service=tm1_service, data_mdx=mdx, default_returned_value_type=float)
+    # use_blob=False -- same rule-derived-cell concern as read_measure_values/
+    # verify_consolidated_feeders above; this reads Gross Margin/Revenue EUR too.
+    actual = extractor.tm1_mdx_to_dataframe(
+        tm1_service=tm1_service, data_mdx=mdx, default_returned_value_type=float, use_blob=False,
+    )
     return actual.groupby(DIM_SALES_MEASURE)["Value"].sum().to_dict()
 
 
