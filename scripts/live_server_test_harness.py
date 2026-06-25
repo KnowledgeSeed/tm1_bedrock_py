@@ -503,7 +503,16 @@ def compute_expected_values(baseline: Dict[str, pd.DataFrame]) -> Dict[str, pd.D
 
 
 def read_measure_values(tm1_service: Any, cube_name: str, measure_dimension: str, measure_names: List[str],
-                         extra_filters: Optional[Dict[str, List[str]]] = None) -> pd.DataFrame:
+                         extra_filters: Optional[Dict[str, List[str]]] = None,
+                         value_dtype: type = float) -> pd.DataFrame:
+    """`value_dtype` controls the dtype forced onto the returned 'Value' column (passed
+    straight through to extractor.tm1_mdx_to_dataframe's `default_returned_value_type`).
+    Defaults to `float` for this harness's overwhelmingly numeric measures, but MUST be
+    overridden to `str` when reading a String-typed measure (e.g. 'Region Status') --
+    forcing a numeric dtype onto string cell values silently produces wrong/empty
+    results rather than raising, which is exactly what caused every region to come back
+    mismatched in verify_string_calculations before this was made configurable."""
+
     dimension_filter_mapping = dict(extra_filters or {})
     dimension_filter_mapping[measure_dimension] = list(measure_names)
 
@@ -522,7 +531,7 @@ def read_measure_values(tm1_service: Any, cube_name: str, measure_dimension: str
     return extractor.tm1_mdx_to_dataframe(
         tm1_service=tm1_service,
         data_mdx=mdx,
-        default_returned_value_type=float,
+        default_returned_value_type=value_dtype,
         skip_zeros=False,
         cube_dimensions=tm1_service.cubes.get_dimension_names(cube_name),
     )
@@ -551,16 +560,23 @@ def verify_leaf_calculations(tm1_service: Any, expected: Dict[str, pd.DataFrame]
     )
 
     for measure in (
+        # "Revenue"/"Cost" are raw baseline writes with no formula at all -- checking
+        # them here too tells us whether a mismatch is upstream (the baseline write
+        # itself didn't land as expected) or downstream (a real formula/rule bug),
+        # rather than only ever seeing every *derived* measure fail with no way to
+        # tell which case it is.
+        "Revenue", "Cost",
         "Gross Margin", "Gross Margin Pct", "Revenue Prior Month Attr", "Revenue Prior Month Num",
         "Revenue Prior Year", "Revenue Rolling 2yr", "Revenue YTD", "Revenue EUR",
     ):
         expected_col = f"{measure}_expected" if f"{measure}_expected" in merged.columns else measure
         actual_col = f"{measure}_actual" if f"{measure}_actual" in merged.columns else measure
         mismatches = merged[~_isclose(merged[expected_col], merged[actual_col])]
+        sample = mismatches[[DIM_MONTH, DIM_REGION, expected_col, actual_col]].head(5).to_dict("records")
         report.record(
             f"leaf_calculation:{measure}",
             mismatches.empty,
-            "" if mismatches.empty else f"{len(mismatches)} mismatched rows",
+            "" if mismatches.empty else f"{len(mismatches)} mismatched rows, sample: {sample}",
         )
 
 
@@ -578,6 +594,7 @@ def verify_string_calculations(tm1_service: Any, expected: Dict[str, pd.DataFram
         DIM_SALES_MEASURE,
         ["Region Status"],
         extra_filters={DIM_VERSION: ["Actual"], DIM_YEAR: ["2024"], DIM_MONTH: ["1"]},
+        value_dtype=str,
     )
     actual_by_region = actual.set_index(DIM_REGION)["Value"]
     expected_by_region = expected["region_status"].set_index(DIM_REGION)["Region Status"]

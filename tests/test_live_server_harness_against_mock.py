@@ -148,6 +148,47 @@ def test_read_measure_values_forces_dimension_columns_to_string_dtype(tm1_servic
     assert captured_kwargs.get("cube_dimensions") == tm1_service.cubes.get_dimension_names(harness.CUBE_SALES)
 
 
+def test_read_measure_values_defaults_to_float_but_honors_value_dtype_override(tm1_service, monkeypatch):
+    """Regression test for a real first-live-run failure: read_measure_values used to
+    hardcode default_returned_value_type=float for every call, including
+    verify_string_calculations' read of the String-typed 'Region Status' measure --
+    forcing a numeric dtype onto string cell values silently produced wrong/empty
+    results (every region came back mismatched) rather than raising. Confirms the
+    fix's actual mechanism: value_dtype must default to float but be honored when the
+    caller overrides it (as verify_string_calculations now does with value_dtype=str)."""
+
+    harness.build_schema(tm1_service)
+
+    captured_kwargs: Dict[str, Any] = {}
+    original = harness.extractor.tm1_mdx_to_dataframe
+
+    def _capture(**kwargs):
+        captured_kwargs.update(kwargs)
+        return original(**kwargs)
+
+    monkeypatch.setattr(harness.extractor, "tm1_mdx_to_dataframe", _capture)
+
+    try:
+        harness.read_measure_values(
+            tm1_service, harness.CUBE_SALES, harness.DIM_SALES_MEASURE, ["Revenue"],
+            extra_filters={harness.DIM_VERSION: ["Actual"], harness.DIM_YEAR: ["2024"]},
+        )
+    except Exception:
+        pass
+    assert captured_kwargs.get("default_returned_value_type") is float
+
+    captured_kwargs.clear()
+    try:
+        harness.read_measure_values(
+            tm1_service, harness.CUBE_SALES, harness.DIM_SALES_MEASURE, ["Region Status"],
+            extra_filters={harness.DIM_VERSION: ["Actual"], harness.DIM_YEAR: ["2024"]},
+            value_dtype=str,
+        )
+    except Exception:
+        pass
+    assert captured_kwargs.get("default_returned_value_type") is str
+
+
 def test_build_model_compiles_every_formula_without_errors(tm1_service):
     harness.build_schema(tm1_service)
     harness.load_baseline_data(tm1_service)
