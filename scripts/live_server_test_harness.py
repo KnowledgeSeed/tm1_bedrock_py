@@ -512,11 +512,19 @@ def read_measure_values(tm1_service: Any, cube_name: str, measure_dimension: str
         target_cube_name=cube_name,
         dimension_filter_mapping=dimension_filter_mapping,
     )
+    # cube_dimensions forces every dimension column to dtype=str (see extractor.py's
+    # __tm1_mdx_to_dataframe_default). Without it, pandas infers a numeric dtype for
+    # all-numeric-looking element names (e.g. TM1BPY_TEST_Month's "1".."12") against a
+    # real TM1 server, which then fails to merge against this harness's independently
+    # computed expected-value frames (those always build dimension columns as str) --
+    # "merge on object and int64 columns" is exactly that mismatch. The mock happened
+    # to not trigger it, which is why this surfaced only on the first real-server run.
     return extractor.tm1_mdx_to_dataframe(
         tm1_service=tm1_service,
         data_mdx=mdx,
         default_returned_value_type=float,
         skip_zeros=False,
+        cube_dimensions=tm1_service.cubes.get_dimension_names(cube_name),
     )
 
 

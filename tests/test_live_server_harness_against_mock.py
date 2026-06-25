@@ -16,6 +16,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any, Dict
 
 import pandas as pd
 import pytest
@@ -109,6 +110,42 @@ def test_load_baseline_data_writes_expected_row_counts(tm1_service):
 
     written = tm1_service.cube_data(harness.CUBE_SALES)
     assert len(written) > 0
+
+
+def test_read_measure_values_forces_dimension_columns_to_string_dtype(tm1_service, monkeypatch):
+    """Regression test for a real first-live-run failure: against a real TM1 server,
+    pandas infers a numeric dtype for all-numeric-looking element names (e.g.
+    TM1BPY_TEST_Month's '1'..'12'), which then fails to merge against this harness's
+    independently computed expected-value frames (always built with str dimension
+    columns) -- 'You are trying to merge on object and int64 columns'. The mock
+    doesn't reproduce the dtype-inference behavior itself, so this asserts the actual
+    mechanism of the fix: read_measure_values must request cube_dimensions so
+    extractor.tm1_mdx_to_dataframe forces every dimension column to dtype=str
+    regardless of what the underlying values look like."""
+
+    harness.build_schema(tm1_service)
+
+    captured_kwargs: Dict[str, Any] = {}
+    from TM1_bedrock_py import extractor as extractor_module
+
+    original = extractor_module.tm1_mdx_to_dataframe
+
+    def _capture(**kwargs):
+        captured_kwargs.update(kwargs)
+        return original(**kwargs)
+
+    monkeypatch.setattr(harness.extractor, "tm1_mdx_to_dataframe", _capture)
+
+    try:
+        harness.read_measure_values(
+            tm1_service, harness.CUBE_SALES, harness.DIM_SALES_MEASURE,
+            list(harness.SALES_MEASURES_NUMERIC),
+            extra_filters={harness.DIM_VERSION: ["Actual"], harness.DIM_YEAR: ["2024"]},
+        )
+    except Exception:
+        pass
+
+    assert captured_kwargs.get("cube_dimensions") == tm1_service.cubes.get_dimension_names(harness.CUBE_SALES)
 
 
 def test_build_model_compiles_every_formula_without_errors(tm1_service):
