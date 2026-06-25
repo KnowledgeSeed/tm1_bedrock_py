@@ -3155,10 +3155,12 @@ def test_align_mapping_rejects_cross_cube_value_driven_routing_as_ambiguous():
     assert "literal" in explanation["rationale"] or "attribute reference" in explanation["rationale"]
     native_eligibility = explanation["native_eligibility"]
     assert native_eligibility["status"] == "unsupported"
-    assert native_eligibility["code"] == "native_align_value_driven_mapping"
+    assert native_eligibility["code"] == "native_value_driven_mapping"
     assert native_eligibility["category"] == "mapping_shape"
+    assert "align(...)" in native_eligibility["detail"]
     assert "value-driven" in native_eligibility["detail"]
     assert "confirmed permanent exclusion" in native_eligibility["detail"]
+    assert "Recommended workaround" in native_eligibility["detail"]
 
 
 def test_align_mapping_rejects_nested_align_as_ambiguous_routing():
@@ -4380,7 +4382,7 @@ def test_align_mapping_rejects_non_target_cube_attribute_routing_as_unresolved()
     readiness = model.phase2_readiness("Sales:FX Rate")
 
     assert readiness["backend"] == "Python materialization backend"
-    assert readiness["native_eligibility"]["code"] == "native_align_mapping_unresolved"
+    assert readiness["native_eligibility"]["code"] == "native_mapping_unresolved"
 
 
 def test_compile_deploys_target_only_broadcast_dimension_when_hierarchy_is_unambiguous():

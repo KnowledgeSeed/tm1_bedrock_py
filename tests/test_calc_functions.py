@@ -301,14 +301,164 @@ def test_consolidated_aggregate_rejects_non_numeric_measure():
     assert "Numeric element type" in explanation["rationale"]
 
 
-def test_consolidated_aggregate_rejects_cross_cube_base():
+def test_consolidated_aggregate_cross_cube_base_compiles_native_with_passthrough_dimension():
+    """Closed 2026-06-25 (dev/19_ordering_consolidation_and_indirect_db_plan.md Work Item 2):
+    cross-cube non-additive consolidation is now supported wherever every source dimension other
+    than the measure dimension resolves via same-named passthrough, a literal override, or a
+    target-cube attribute mapping. 'FX Rates' only has a 'Version' dimension besides its measure
+    dimension, and 'Version' exists in the target cube 'Sales' too, so it resolves by passthrough
+    with no override needed."""
     provider = _sales_metadata_provider({"Bad": "Numeric"})
     model = Model(metadata_provider=provider)
     sales = model.cube("Sales")
-    other = model.cube("FX Rates")
+    fx_rates = model.cube("FX Rates")
+
+    sales["Bad"] = fx_rates["Rate"].consolidated_max(flag=0)
+
+    explanation = model.explain("Sales:Bad")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["backend"] == Backend.NATIVE.value
+    assert explanation["feeder_strategy"] == "consolidated_aggregate_cross_cube_mapped"
+    assert preview.errors == []
+    assert preview.rules["Sales"] == (
+        "['Measure':'Measure':'Bad'] = N: ConsolidatedMax(0, 'FX Rates', !Version, "
+        "'Measure':'Measure':'Rate');"
+    )
+    # A consolidation read, not a rule-derived lookup -- no feeder statements are needed even
+    # cross-cube, per the same IBM/Cubewise documentation already confirmed for the same-cube case.
+    assert preview.feeders.get("Sales", "") == ""
+
+
+def test_consolidated_aggregate_cross_cube_base_without_metadata_falls_back_to_python():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Measure"],
+                default_hierarchies={"Version": "Version", "Measure": "Measure"},
+                measure_element_types={"Bad": "Numeric"},
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+    other = model.cube("Unknown Cube")
 
     sales["Bad"] = other["Rate"].consolidated_max(flag=0)
 
     explanation = model.explain("Sales:Bad")
     assert explanation["backend"] == Backend.PYTHON.value
-    assert "target cube" in explanation["rationale"]
+    assert "measure dimension metadata" in explanation["rationale"]
+
+
+def test_consolidated_aggregate_cross_cube_unmapped_dimension_falls_back_to_python():
+    # The cross-cube source cube's only non-measure dimension ("Currency") has no counterpart in
+    # the target cube "Sales" and is given no override, so it cannot be resolved.
+    cross_cube_provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Measure"],
+                default_hierarchies={"Version": "Version", "Measure": "Measure"},
+                measure_element_types={"Bad Cross": "Numeric"},
+            ),
+            "FX Rates Extended": build_static_cube_metadata(
+                "FX Rates Extended",
+                ["Currency", "Measure"],
+                default_hierarchies={"Currency": "Currency", "Measure": "Measure"},
+                measure_element_types={"Rate": "Numeric"},
+            ),
+        }
+    )
+    cross_model = Model(metadata_provider=cross_cube_provider)
+    cross_sales = cross_model.cube("Sales")
+    fx_extended = cross_model.cube("FX Rates Extended")
+
+    cross_sales["Bad Cross"] = fx_extended["Rate"].consolidated_max(flag=0)
+
+    explanation = cross_model.explain("Sales:Bad Cross")
+    assert explanation["backend"] == Backend.PYTHON.value
+    assert "cannot infer source dimension" in explanation["rationale"]
+    assert "Currency" in explanation["rationale"]
+    # Regression guard: this used to fall through to the generic "native_blocked" catch-all
+    # because the eligibility classifier's substring match was align(...)-specific (looked for
+    # "cannot infer source dimensions", which doesn't match consolidated_max's own "dimension(s)"
+    # wording) -- it must now classify correctly as a mapping_shape failure.
+    native_eligibility = explanation["native_eligibility"]
+    assert native_eligibility["code"] == "native_mapping_unresolved"
+    assert native_eligibility["category"] == "mapping_shape"
+
+
+def test_consolidated_aggregate_cross_cube_attribute_routed_dimension_compiles_native():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Region", "Measure"],
+                default_hierarchies={"Version": "Version", "Region": "Region", "Measure": "Measure"},
+                measure_element_types={"Max Rate": "Numeric"},
+            ),
+            "FX Rates": build_static_cube_metadata(
+                "FX Rates",
+                ["Version", "Currency", "Measure"],
+                default_hierarchies={"Version": "Version", "Currency": "Currency", "Measure": "Measure"},
+                measure_element_types={"Rate": "Numeric"},
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+    fx_rates = model.cube("FX Rates")
+
+    sales["Max Rate"] = fx_rates["Rate"].consolidated_max(
+        flag=0, Currency=sales.Region.attribute("Currency")
+    )
+
+    explanation = model.explain("Sales:Max Rate")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["backend"] == Backend.NATIVE.value
+    assert preview.errors == []
+    assert preview.rules["Sales"] == (
+        "['Measure':'Measure':'Max Rate'] = N: ConsolidatedMax(0, 'FX Rates', !Version, "
+        "ATTRS('Region', !Region, 'Currency'), 'Measure':'Measure':'Rate');"
+    )
+
+
+def test_consolidated_aggregate_cross_cube_value_driven_dimension_falls_back_to_python():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Region", "Measure"],
+                default_hierarchies={"Version": "Version", "Region": "Region", "Measure": "Measure"},
+                measure_element_types={"Max Rate": "Numeric", "Currency Code": "String"},
+            ),
+            "FX Rates": build_static_cube_metadata(
+                "FX Rates",
+                ["Version", "Currency", "Measure"],
+                default_hierarchies={"Version": "Version", "Currency": "Currency", "Measure": "Measure"},
+                measure_element_types={"Rate": "Numeric"},
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+    fx_rates = model.cube("FX Rates")
+
+    sales["Max Rate"] = fx_rates["Rate"].consolidated_max(flag=0, Currency=sales["Currency Code"])
+
+    explanation = model.explain("Sales:Max Rate")
+    assert explanation["backend"] == Backend.PYTHON.value
+    assert "not enumerable from cube/dimension metadata" in explanation["rationale"]
+
+    native_eligibility = explanation["native_eligibility"]
+    assert native_eligibility["status"] == "unsupported"
+    assert native_eligibility["code"] == "native_value_driven_mapping"
+    assert native_eligibility["category"] == "mapping_shape"
+    # Regression guard for the mislabeling this slice fixed: the construct named in the detail
+    # must be the one that actually triggered it (consolidated_max), not a hardcoded "align(...)".
+    assert "consolidated_max(...)" in native_eligibility["detail"]
+    assert "align(...)" not in native_eligibility["detail"].split("Multi-hop")[0]
+    assert "Recommended workaround" in native_eligibility["detail"]

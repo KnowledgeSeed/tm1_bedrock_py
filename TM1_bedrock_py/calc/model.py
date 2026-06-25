@@ -3,6 +3,7 @@ from __future__ import annotations
 import difflib
 import json
 import os
+import re
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
@@ -26,14 +27,32 @@ def _ensure_expression(value: Any) -> "Expression":
 class MeasureRef:
     cube_name: str
     measure_name: str
+    # Fixed dimension-element overrides narrowing this target to a sub-area of the measure's
+    # cell space (e.g. (("Region", "US"),)), mirroring TM1's own rule-LHS area syntax
+    # (['MeasureElement', 'OtherElement', ...]). Empty by default: the whole-measure target,
+    # unchanged from this project's original single-area-per-measure behavior.
+    area: Tuple[Tuple[str, str], ...] = ()
 
     @property
-    def key(self) -> str:
+    def base_key(self) -> str:
+        """The plain 'cube:measure' identity, ignoring any area -- this is what a measure
+        *reference* inside another formula's expression always resolves to, since references
+        never carry an area of their own; see Model._build_plan's base_measure_keys grouping."""
         return f"{self.cube_name}:{self.measure_name}"
 
     @property
+    def key(self) -> str:
+        if not self.area:
+            return self.base_key
+        area_suffix = ",".join(f"{dimension_name}={element_name}" for dimension_name, element_name in self.area)
+        return f"{self.base_key}|{area_suffix}"
+
+    @property
     def label(self) -> str:
-        return f"{self.cube_name}.{self.measure_name}"
+        if not self.area:
+            return f"{self.cube_name}.{self.measure_name}"
+        area_suffix = ", ".join(f"{dimension_name}={element_name}" for dimension_name, element_name in self.area)
+        return f"{self.cube_name}.{self.measure_name}[{area_suffix}]"
 
 
 @dataclass(frozen=True)
@@ -609,6 +628,12 @@ class Formula:
     expression: Expression
     scope: str = "leaf"
     feeder_mode: str = "ranked_single"
+    # Resolves emission order between two area-scoped formulas on the same measure whose areas
+    # overlap (e.g. a blanket default plus a narrower exception): lower priority is emitted
+    # earlier in the cube's rule text, matching TM1's documented "first matching rule statement
+    # in file order wins" behavior for overlapping areas. Default 0; irrelevant for formulas
+    # whose area never overlaps another formula's area on the same measure.
+    priority: int = 0
 
     @property
     def key(self) -> str:
@@ -825,10 +850,46 @@ class CubeRef:
     def __setitem__(self, measure_name: str, expression: Any) -> None:
         self._model.register_formula(self[measure_name], _ensure_expression(expression))
 
+    def area(self, measure_name: str, **fixed_elements: str) -> "AreaTarget":
+        """Targets a sub-area of `measure_name`'s cell space, fixed to literal elements on the
+        given dimensions (every other dimension stays a passthrough wildcard, exactly like a
+        whole-measure target). Use this -- instead of `cube[measure_name] = ...` -- to author
+        TM1's "blanket rule plus narrower exception" pattern as separate rule statements, e.g.:
+
+            sales.area("Revenue", Region="US").set(special_expr, priority=-1)
+            sales["Revenue"] = blanket_expr
+
+        Both target the same measure; their areas overlap (the "US" area is a subset of the
+        unconstrained blanket area), so an explicit, distinct `priority` is required -- the
+        model fails closed at compile time otherwise. Lower priority is emitted earlier in the
+        cube's rule text, matching TM1's documented first-matching-statement-wins behavior for
+        overlapping rule areas.
+        """
+        ref = MeasureRef(
+            cube_name=self._cube_name,
+            measure_name=measure_name,
+            area=tuple(sorted(fixed_elements.items())),
+        )
+        return AreaTarget(self._model, ref)
+
     def __getattr__(self, name: str) -> DimensionProxy:
         if name.startswith("_"):
             raise AttributeError(name)
         return DimensionProxy(self._cube_name, name)
+
+
+class AreaTarget:
+    """Returned by `CubeRef.area(...)`; binds an area-scoped `MeasureRef` to `.set(...)` so the
+    formula can be registered with an explicit `priority` without overloading `__setitem__`."""
+
+    def __init__(self, model: "Model", ref: MeasureRef):
+        self._model = model
+        self._ref = ref
+
+    def set(self, expression: Any, priority: int = 0) -> None:
+        self._model.register_formula(
+            MeasureExpression(ref=self._ref), _ensure_expression(expression), priority=priority
+        )
 
 
 class Model:
@@ -1050,7 +1111,7 @@ class Model:
 
         return report
 
-    def register_formula(self, target: MeasureExpression, expression: Expression) -> None:
+    def register_formula(self, target: MeasureExpression, expression: Expression, priority: int = 0) -> None:
         key = target.ref.key
         if key in self._formulas:
             raise ValueError(f"Formula target '{key}' is already registered")
@@ -1077,6 +1138,7 @@ class Model:
             expression=expression,
             scope=scope,
             feeder_mode=feeder_mode,
+            priority=priority,
         )
 
     @property
@@ -1169,9 +1231,10 @@ class Model:
             rule_statement = None
             if decision.backend is Backend.NATIVE:
                 rule_body = self._compile_native_expression(formula.expression, formula.target.cube_name)
-                target_reference = self._compile_native_measure_reference(
+                target_reference = self._compile_native_measure_reference_with_area(
                     cube_name=formula.target.cube_name,
                     measure_name=formula.target.measure_name,
+                    area=formula.target.area,
                 )
                 rule_area_keyword = self._RULE_AREA_KEYWORDS[formula.scope]
                 rule_statement = f"{target_reference} = {rule_area_keyword}: {rule_body};"
@@ -1453,6 +1516,33 @@ class Model:
             for cube_name in sorted(set(preview.rules) | set(preview.feeders))
         }
 
+    def _formula_area_overlaps(self, plan: BuildPlan, target_key: str) -> List[Dict[str, Any]]:
+        """Other registered formulas sharing this target's base measure whose rule area could
+        match the same cell, with how their relative order was resolved -- see
+        `Model._formula_areas_overlap` and the priority-edge pass in `Model._build_plan`."""
+        formula = plan.formulas[target_key]
+        overlaps: List[Dict[str, Any]] = []
+        for other_key, other_formula in plan.formulas.items():
+            if other_key == target_key or other_formula.target.base_key != formula.target.base_key:
+                continue
+            if not self._formula_areas_overlap(formula.target.area, other_formula.target.area):
+                continue
+            if formula.priority == other_formula.priority:
+                resolution = "unresolved: equal priority, fails closed at build time"
+            elif formula.priority < other_formula.priority:
+                resolution = "this formula is emitted first (lower priority)"
+            else:
+                resolution = "this formula is emitted after (higher priority)"
+            overlaps.append(
+                {
+                    "target": other_key,
+                    "this_priority": formula.priority,
+                    "other_priority": other_formula.priority,
+                    "resolution": resolution,
+                }
+            )
+        return overlaps
+
     def _formula_explanation(self, plan: BuildPlan, target_key: str) -> Dict[str, Any]:
         formula = plan.formulas[target_key]
         upstream = self._collect_upstream_formula_keys(plan.dependencies, target_key)
@@ -1461,6 +1551,9 @@ class Model:
         return {
             "target": target_key,
             "expression": formula.expression.describe(),
+            "area": dict(formula.target.area),
+            "priority": formula.priority,
+            "area_overlaps": self._formula_area_overlaps(plan, target_key),
             "measure_dependencies": plan.dependencies[target_key],
             "attribute_dependencies": sorted({ref.label for ref in formula.expression.iter_attribute_refs()}),
             "upstream_formulas": upstream,
@@ -1581,25 +1674,42 @@ class Model:
                 "detail": "This shape is intentionally excluded from the native subset because it requires true multi-cell aggregation.",
             }
         if "must be a literal or target-cube attribute reference" in blocker_reason:
+            # Shared between align(...) and the cross-cube subset of consolidated_max/min/avg/
+            # count/count_unique(...) -- both route through Model._native_dimension_mapping_
+            # unsupported_reason, whose value-driven-rejection message starts with the triggering
+            # construct's own label (e.g. "align(...)" or "consolidated_max(...)"), so the detail
+            # below names the real construct instead of hardcoding one.
+            triggering_construct_match = re.match(r"^(\S+\(\.\.\.\))", blocker_reason)
+            triggering_construct = (
+                triggering_construct_match.group(1) if triggering_construct_match else "This mapping"
+            )
             return {
                 "status": "unsupported",
-                "code": "native_align_value_driven_mapping",
+                "code": "native_value_driven_mapping",
                 "category": "mapping_shape",
                 "detail": (
-                    "The align(...) mapping is value-driven rather than metadata-invertible, so it is not "
-                    "native-safe. This is a confirmed permanent exclusion, not an unimplemented feature: TM1 "
-                    "places no constraint on a measure cell's possible values (unlike a dimension's fixed "
-                    "leaf-element set), so no compile-time metadata fact can ever bound the feeder enumeration "
-                    "for this shape. Multi-hop attribute chains (ChainedAttributeExpression) are a different, "
-                    "bounded shape and are native-eligible -- see native_align_reverse_mapping_unproven instead."
+                    f"{triggering_construct}'s dimension mapping is value-driven (the routing value comes "
+                    "from a measure cell) rather than metadata-invertible, so it is not native-safe. This is "
+                    "a confirmed permanent exclusion, not an unimplemented feature: TM1 places no constraint "
+                    "on a measure cell's possible values (unlike a dimension's fixed leaf-element set), so "
+                    "no compile-time metadata fact can ever bound the feeder enumeration for this shape. "
+                    "Multi-hop attribute chains (ChainedAttributeExpression) are a different, bounded shape "
+                    "and are native-eligible -- see native_align_reverse_mapping_unproven instead. "
+                    "Recommended workaround: pre-resolve the driver value into a dimension element or "
+                    "attribute upstream of this model (e.g. via a TI process or this repo's own "
+                    "dimension-builder tooling), so the routing becomes element/attribute-based and "
+                    "therefore native-compilable."
                 ),
             }
-        if "cannot infer source dimensions" in blocker_reason:
+        if "cannot infer source dimension" in blocker_reason:
+            # Shared substring between align(...)'s "cannot infer source dimensions" and
+            # consolidated_max/min/avg/count/count_unique(...)'s "cannot infer source dimension(s)"
+            # -- both route through the same unresolved-cross-cube-dimension failure shape.
             return {
                 "status": "unsupported",
-                "code": "native_align_mapping_unresolved",
+                "code": "native_mapping_unresolved",
                 "category": "mapping_shape",
-                "detail": "The align(...) mapping leaves source dimensions unresolved, so the lookup is not native-safe.",
+                "detail": "The cross-cube dimension mapping leaves source dimension(s) unresolved, so the lookup is not native-safe.",
             }
         if (
             "attribute mappings must come from the target cube context" in blocker_reason
@@ -1608,9 +1718,9 @@ class Model:
         ):
             return {
                 "status": "unsupported",
-                "code": "native_align_mapping_unresolved",
+                "code": "native_mapping_unresolved",
                 "category": "mapping_shape",
-                "detail": "The align(...) mapping cannot be resolved to a metadata-safe target-cube lookup shape.",
+                "detail": "The cross-cube dimension mapping cannot be resolved to a metadata-safe target-cube lookup shape.",
             }
         if "multiple hierarchies" in blocker_reason:
             return {
@@ -2606,6 +2716,60 @@ class Model:
             f"['{metadata.measure_dimension_name}':'{hierarchy_name}':'{measure_name}']"
         )
 
+    def _compile_native_measure_reference_with_area(
+        self, cube_name: str, measure_name: str, area: Tuple[Tuple[str, str], ...]
+    ) -> str:
+        """Builds the rule-statement LHS for an area-scoped target (`CubeRef.area(...)`), e.g.
+        `[Measure-coordinate, 'US']` for `Region="US"`. Mirrors TM1's own rule-LHS syntax: one
+        coordinate per fixed dimension, every other dimension left as an implicit passthrough.
+        Requires metadata (unlike the whole-measure case) because every fixed element must be
+        validated against a real dimension of the cube and hierarchy-resolved the same way every
+        other fixed coordinate in this compiler is -- no silent guessing for area targets.
+        """
+        if not area:
+            return self._compile_native_measure_reference(cube_name, measure_name)
+
+        metadata = self._get_cube_metadata(cube_name)
+        if metadata is None or not metadata.measure_dimension_name:
+            raise ValueError(
+                f"Cannot compile area-scoped rule target for '{cube_name}'.'{measure_name}' "
+                "without cube metadata to validate and hierarchy-resolve the fixed dimension(s)"
+            )
+
+        area_by_dimension = dict(area)
+        unknown_dimensions = sorted(set(area_by_dimension) - set(metadata.dimensions))
+        if unknown_dimensions:
+            raise ValueError(
+                f"Area-scoped rule target for '{cube_name}'.'{measure_name}' references "
+                f"unknown dimension(s) of that cube: {', '.join(unknown_dimensions)}"
+            )
+        if metadata.measure_dimension_name in area_by_dimension:
+            raise ValueError(
+                f"Area-scoped rule target for '{cube_name}'.'{measure_name}' must not fix the "
+                "measure dimension itself; register a separate measure target instead"
+            )
+
+        coordinates: List[str] = [
+            self._compile_dimension_element_coordinate(
+                cube_name=cube_name,
+                dimension_name=metadata.measure_dimension_name,
+                element_name=measure_name,
+                explicit_hierarchy_name=None,
+            )
+        ]
+        for dimension_name in metadata.dimensions:
+            if dimension_name == metadata.measure_dimension_name or dimension_name not in area_by_dimension:
+                continue
+            coordinates.append(
+                self._compile_dimension_element_coordinate(
+                    cube_name=cube_name,
+                    dimension_name=dimension_name,
+                    element_name=area_by_dimension[dimension_name],
+                    explicit_hierarchy_name=None,
+                )
+            )
+        return f"[{', '.join(coordinates)}]"
+
     def _compile_native_where_expression(self, expression: MethodExpression, target_cube_name: str) -> str:
         value = self._compile_native_expression(expression.base, target_cube_name)
         condition = self._compile_native_expression(expression.args[0], target_cube_name)
@@ -3004,13 +3168,23 @@ class Model:
         target_cube_name: str,
     ) -> Optional[str]:
         """Gate for ConsolidatedMax/Min/Avg/Count/CountUnique -- the non-additive consolidation
-        override family. Bounded MVP, same-cube only: see dev/07_handover_status.md's
-        "non-sum consolidation overrides" entry for the confirmed TM1 function signature
-        (flag, cube name, one literal/passthrough coordinate per cube dimension in order,
-        including the measure dimension) and why no new feeder code is needed for this same-cube
-        shape -- these functions read off the same measure's own existing leaf data the same way
-        normal structural consolidation does, per IBM/Cubewise documentation, rather than doing a
-        generic DB(...)-style lookup that would need an explicit feeder.
+        override family. See dev/07_handover_status.md's "non-sum consolidation overrides" entry
+        for the confirmed TM1 function signature (flag, cube name, one literal/passthrough
+        coordinate per cube dimension in order, including the measure dimension) and why no new
+        feeder statements are needed for this shape: per IBM/Cubewise documentation, these
+        functions read directly off the aggregated measure's own existing leaf data the same way
+        TM1's native structural (sum) consolidation does -- a consolidation *read*, not a
+        rule-derived `DB(...)`-style lookup. That distinction, not the cube boundary, is what
+        determines whether a feeder is needed, so it holds the same way for a foreign 'CubeName'
+        argument as it does for the target's own cube; see
+        `dev/19_ordering_consolidation_and_indirect_db_plan.md` Work Item 2 for the full reasoning.
+
+        Cross-cube is therefore allowed (closed 2026-06-25) for the bounded subset where every
+        source-cube dimension other than the measure dimension resolves one of three ways, reusing
+        exactly the same per-dimension mapping proof `align(...)` uses:
+        - a same-named dimension in the target cube (implicit passthrough), or
+        - an explicit literal/element/target-cube-attribute `dimension_overrides` kwarg, or
+        - fails closed (a named reason) for anything else, including a value-driven mapping.
         """
         if expression.args:
             return (
@@ -3018,12 +3192,10 @@ class Model:
                 "native subset; use flag=... and dimension=literal_element keyword arguments"
             )
         if not isinstance(expression.base, MeasureExpression):
-            return f"{expression.method_name}(...) requires a same-cube measure base in the native subset"
-        if expression.base.ref.cube_name != target_cube_name:
-            return (
-                f"{expression.method_name}(...) base measure must come from the target cube in "
-                "the native subset; cross-cube non-additive consolidation is not yet supported"
-            )
+            return f"{expression.method_name}(...) requires a measure lookup base in the native subset"
+
+        source_cube_name = expression.base.ref.cube_name
+        is_cross_cube = source_cube_name != target_cube_name
 
         flag = self._resolve_consolidated_aggregate_flag(expression)
         if flag is None:
@@ -3034,7 +3206,7 @@ class Model:
                 "2 (ignore zeros), or 3 (weighted and ignore zeros)"
             )
 
-        metadata = self._get_cube_metadata(target_cube_name)
+        metadata = self._get_cube_metadata(source_cube_name)
         if metadata is None or not metadata.measure_dimension_name:
             return f"{expression.method_name}(...) needs measure dimension metadata to resolve the cube layout"
 
@@ -3045,30 +3217,68 @@ class Model:
                 f"'{expression.base.ref.measure_name}' to resolve to a Numeric element type"
             )
 
+        target_metadata: Optional[CubeMetadata] = None
+        target_dimension_names: set = set()
+        if is_cross_cube:
+            target_metadata = self._get_cube_metadata(target_cube_name)
+            if target_metadata is None or not target_metadata.dimensions:
+                return (
+                    f"{expression.method_name}(...) needs target cube metadata to resolve a "
+                    "cross-cube dimension mapping"
+                )
+            target_dimension_names = set(target_metadata.dimensions)
+
         for dimension_name, override_expression in expression.kwargs.items():
             if dimension_name == "__flag__":
                 continue
             if dimension_name not in metadata.dimensions:
                 return (
                     f"{expression.method_name}(...) dimension override '{dimension_name}' is not "
-                    f"part of cube '{target_cube_name}'"
+                    f"part of cube '{source_cube_name}'"
                 )
             if dimension_name == metadata.measure_dimension_name:
                 return f"{expression.method_name}(...) cannot override the measure dimension"
-            if not isinstance(override_expression, LiteralExpression) or not isinstance(
-                override_expression.value, str
-            ):
-                return (
-                    f"{expression.method_name}(...) dimension override '{dimension_name}' must be a "
-                    "literal element name string in the native subset"
+            if not is_cross_cube:
+                if not isinstance(override_expression, LiteralExpression) or not isinstance(
+                    override_expression.value, str
+                ):
+                    return (
+                        f"{expression.method_name}(...) dimension override '{dimension_name}' must be a "
+                        "literal element name string in the native subset"
+                    )
+                hierarchy_reason = self._dimension_hierarchy_ambiguity_reason(
+                    cube_name=source_cube_name,
+                    dimension_name=dimension_name,
+                    explicit_hierarchy_name=None,
                 )
-            hierarchy_reason = self._dimension_hierarchy_ambiguity_reason(
-                cube_name=target_cube_name,
-                dimension_name=dimension_name,
-                explicit_hierarchy_name=None,
+                if hierarchy_reason is not None:
+                    return hierarchy_reason
+                continue
+            mapping_reason = self._native_dimension_mapping_unsupported_reason(
+                method_label=f"{expression.method_name}(...)",
+                source_cube_name=source_cube_name,
+                source_dimension_name=dimension_name,
+                mapped_expression=override_expression,
+                target_cube_name=target_cube_name,
+                target_dimension_names=target_dimension_names,
             )
-            if hierarchy_reason is not None:
-                return hierarchy_reason
+            if mapping_reason is not None:
+                return mapping_reason
+
+        if is_cross_cube:
+            unresolved_dimensions = [
+                dimension_name
+                for dimension_name in metadata.dimensions
+                if dimension_name != metadata.measure_dimension_name
+                and dimension_name not in expression.kwargs
+                and dimension_name not in target_dimension_names
+            ]
+            if unresolved_dimensions:
+                return (
+                    f"{expression.method_name}(...) cannot infer source dimension(s) "
+                    + ", ".join(f"'{dimension_name}'" for dimension_name in unresolved_dimensions)
+                    + " for the cross-cube mapping; pass an explicit dimension_overrides keyword for each"
+                )
 
         return None
 
@@ -3082,15 +3292,16 @@ class Model:
         function_name = self._CONSOLIDATED_AGGREGATE_FUNCTIONS[expression.method_name]
         flag = self._resolve_consolidated_aggregate_flag(expression)
         base_measure = expression.base.ref
-        metadata = self._get_cube_metadata(target_cube_name)
+        source_cube_name = base_measure.cube_name
+        metadata = self._get_cube_metadata(source_cube_name)
         assert metadata is not None
 
-        coordinates: List[str] = [str(flag), f"'{target_cube_name}'"]
+        coordinates: List[str] = [str(flag), f"'{source_cube_name}'"]
         for dimension_name in metadata.dimensions:
             if dimension_name == metadata.measure_dimension_name:
                 coordinates.append(
                     self._compile_dimension_element_coordinate(
-                        cube_name=target_cube_name,
+                        cube_name=source_cube_name,
                         dimension_name=dimension_name,
                         element_name=base_measure.measure_name,
                         explicit_hierarchy_name=None,
@@ -3099,11 +3310,10 @@ class Model:
                 continue
             if dimension_name in expression.kwargs:
                 coordinates.append(
-                    self._compile_dimension_element_coordinate(
-                        cube_name=target_cube_name,
+                    self._compile_native_lookup_coordinate(
+                        cube_name=source_cube_name,
                         dimension_name=dimension_name,
-                        element_name=expression.kwargs[dimension_name].value,
-                        explicit_hierarchy_name=None,
+                        expression=expression.kwargs[dimension_name],
                     )
                 )
                 continue
@@ -3366,24 +3576,39 @@ class Model:
             isinstance(formula.expression, MethodExpression)
             and formula.expression.method_name in self._CONSOLIDATED_AGGREGATE_FUNCTIONS
         ):
-            # No new feeder statements are needed for ConsolidatedMax/Min/Avg/Count/CountUnique:
-            # per IBM/Cubewise documentation these functions "work directly off the leaf data in
-            # the same way as normal consolidation and use the [existing] feeder information",
-            # i.e. they piggyback on whatever feeding already keeps the aggregated measure's own
-            # leaf cells live, the same way TM1's native sum-consolidation never needs an explicit
-            # feeder either. The aggregated measure is also typically the formula's own target
-            # measure (a non-additive override of its own default consolidation), which the
-            # self-reference cycle guard in `_resolve_simple_feeder_source_refs` already excludes
-            # from `same_cube_source_refs` -- self-feeding a measure to itself is invalid in TM1.
+            # No new feeder statements are needed for ConsolidatedMax/Min/Avg/Count/CountUnique,
+            # same-cube or cross-cube: per IBM/Cubewise documentation these functions "work
+            # directly off the leaf data in the same way as normal consolidation and use the
+            # [existing] feeder information" -- a consolidation *read*, not a rule-derived
+            # `DB(...)`-style lookup. That distinction (not which cube the literal 'CubeName'
+            # argument names) is what determines whether a feeder is needed, so a foreign cube
+            # argument doesn't change this: the function still reads that other cube's leaf data
+            # the same way TM1's native sum-consolidation reads its own, never via the
+            # FEEDERS-gated rule-evaluation mechanism that genuine cross-cube DB(...) lookups (and
+            # align(...)) require. See dev/19_ordering_consolidation_and_indirect_db_plan.md Work
+            # Item 2. The aggregated measure is also typically the formula's own target measure (a
+            # non-additive override of its own default consolidation), which the self-reference
+            # cycle guard in `_resolve_simple_feeder_source_refs` already excludes from
+            # `same_cube_source_refs` -- self-feeding a measure to itself is invalid in TM1.
+            is_cross_cube_aggregate = (
+                isinstance(formula.expression.base, MeasureExpression)
+                and formula.expression.base.ref.cube_name != formula.target.cube_name
+            )
             return FeederPlan(
                 statements=statements,
-                strategy="consolidated_aggregate_self_consolidating",
+                strategy=(
+                    "consolidated_aggregate_cross_cube_mapped"
+                    if is_cross_cube_aggregate
+                    else "consolidated_aggregate_self_consolidating"
+                ),
                 rationale=(
                     "ConsolidatedMax/Min/Avg/Count/CountUnique read the aggregated measure's own "
-                    "leaf data the same way native sum-consolidation does, so no additional feeder "
-                    "statements are required for the aggregation itself; any other genuine "
-                    "same-cube driver measures referenced elsewhere in the formula are still fed "
-                    "normally."
+                    "leaf data the same way native sum-consolidation does -- a structural "
+                    "consolidation read, not a rule-derived DB(...)-style lookup -- so no "
+                    "additional feeder statements are required for the aggregation itself, "
+                    "whether the aggregated measure is same-cube or an explicitly cube-mapped "
+                    "cross-cube source; any other genuine same-cube driver measures referenced "
+                    "elsewhere in the formula are still fed normally."
                 ),
                 deployment_cube=formula.target.cube_name,
                 preview_only=False,
@@ -5117,6 +5342,89 @@ class Model:
 
         return reasons
 
+    def _native_dimension_mapping_unsupported_reason(
+        self,
+        method_label: str,
+        source_cube_name: str,
+        source_dimension_name: str,
+        mapped_expression: Expression,
+        target_cube_name: str,
+        target_dimension_names: set,
+    ) -> Optional[str]:
+        """Shared per-dimension mapping validation for any cross-cube lookup that resolves a
+        source-cube dimension's coordinate to a literal, a target-cube attribute (single-hop or
+        chained), or an explicit element reference -- used by both `align(...)` and the cross-cube
+        subset of `consolidated_max/min/avg/count/count_unique(...)`. Value-driven mappings (a
+        measure cell's own contents) are rejected the same way in both cases: no metadata field
+        anywhere enumerates a generic measure cell's possible values, so no compile-time bounding
+        fact can exist for that shape.
+        """
+        if isinstance(mapped_expression, AttributeExpression):
+            if mapped_expression.ref.cube_name != target_cube_name:
+                return f"{method_label} attribute mappings must come from the target cube context"
+            if mapped_expression.ref.dimension_name not in target_dimension_names:
+                return (
+                    f"{method_label} attribute mapping uses target dimension "
+                    f"'{mapped_expression.ref.dimension_name}', which is not part of cube '{target_cube_name}'"
+                )
+            return self._dimension_hierarchy_ambiguity_reason(
+                cube_name=target_cube_name,
+                dimension_name=mapped_expression.ref.dimension_name,
+                explicit_hierarchy_name=None,
+            )
+        if isinstance(mapped_expression, LiteralExpression):
+            return self._dimension_hierarchy_ambiguity_reason(
+                cube_name=source_cube_name,
+                dimension_name=source_dimension_name,
+                explicit_hierarchy_name=None,
+            )
+        if isinstance(mapped_expression, ElementExpression):
+            if mapped_expression.ref.dimension_name != source_dimension_name:
+                return (
+                    f"{method_label} element mapping for source dimension '{source_dimension_name}' "
+                    f"must target the same dimension, not '{mapped_expression.ref.dimension_name}'"
+                )
+            return self._dimension_hierarchy_ambiguity_reason(
+                cube_name=source_cube_name,
+                dimension_name=source_dimension_name,
+                explicit_hierarchy_name=mapped_expression.ref.hierarchy_name,
+            )
+        if isinstance(mapped_expression, ChainedAttributeExpression):
+            if mapped_expression.ref.cube_name != target_cube_name:
+                return f"{method_label} attribute mappings must come from the target cube context"
+            if mapped_expression.ref.first_dimension_name not in target_dimension_names:
+                return (
+                    f"{method_label} attribute mapping uses target dimension "
+                    f"'{mapped_expression.ref.first_dimension_name}', which is not part of cube '{target_cube_name}'"
+                )
+            # second_dimension_name is the intermediate "via" dimension for the attribute chase. Unlike
+            # first_dimension_name, it is never used as a feeder coordinate axis -- it's purely a metadata
+            # lookup table -- so it does not need to be one of this cube's own dimensions.
+            first_hierarchy_reason = self._dimension_hierarchy_ambiguity_reason(
+                cube_name=target_cube_name,
+                dimension_name=mapped_expression.ref.first_dimension_name,
+                explicit_hierarchy_name=None,
+            )
+            if first_hierarchy_reason is not None:
+                return first_hierarchy_reason
+            return self._dimension_hierarchy_ambiguity_reason(
+                cube_name=target_cube_name,
+                dimension_name=mapped_expression.ref.second_dimension_name,
+                explicit_hierarchy_name=None,
+            )
+        if isinstance(mapped_expression, (MeasureExpression, MethodExpression, CaseExpression)):
+            return (
+                f"{method_label} mapping for source dimension '{source_dimension_name}' must be a literal "
+                "or target-cube attribute reference; this mapping's value comes from a measure cell, "
+                "whose possible contents are not enumerable from cube/dimension metadata -- TM1 places "
+                "no constraint on a String/Numeric cell's value, unlike a dimension's fixed leaf-element "
+                "set, so no compile-time feeder enumeration is possible for this shape"
+            )
+        return (
+            f"{method_label} mapping for source dimension '{source_dimension_name}' must be a literal "
+            "or target-cube attribute reference"
+        )
+
     def _native_align_unsupported_reason(
         self,
         expression: MethodExpression,
@@ -5155,83 +5463,16 @@ class Model:
                     f"align(...) maps source dimension '{source_dimension_name}', "
                     f"which does not exist in cube '{expression.base.ref.cube_name}'"
                 )
-            if isinstance(mapped_expression, AttributeExpression):
-                if mapped_expression.ref.cube_name != target_cube_name:
-                    return "align(...) attribute mappings must come from the target cube context"
-                if mapped_expression.ref.dimension_name not in target_dimension_names:
-                    return (
-                        f"align(...) attribute mapping uses target dimension "
-                        f"'{mapped_expression.ref.dimension_name}', which is not part of cube '{target_cube_name}'"
-                    )
-                attribute_hierarchy_reason = self._dimension_hierarchy_ambiguity_reason(
-                    cube_name=target_cube_name,
-                    dimension_name=mapped_expression.ref.dimension_name,
-                    explicit_hierarchy_name=None,
-                )
-                if attribute_hierarchy_reason is not None:
-                    return attribute_hierarchy_reason
-                continue
-            if isinstance(mapped_expression, LiteralExpression):
-                hierarchy_reason = self._dimension_hierarchy_ambiguity_reason(
-                    cube_name=expression.base.ref.cube_name,
-                    dimension_name=source_dimension_name,
-                    explicit_hierarchy_name=None,
-                )
-                if hierarchy_reason is not None:
-                    return hierarchy_reason
-                continue
-            if isinstance(mapped_expression, ElementExpression):
-                if mapped_expression.ref.dimension_name != source_dimension_name:
-                    return (
-                        f"align(...) element mapping for source dimension '{source_dimension_name}' "
-                        f"must target the same dimension, not '{mapped_expression.ref.dimension_name}'"
-                    )
-                hierarchy_reason = self._dimension_hierarchy_ambiguity_reason(
-                    cube_name=expression.base.ref.cube_name,
-                    dimension_name=source_dimension_name,
-                    explicit_hierarchy_name=mapped_expression.ref.hierarchy_name,
-                )
-                if hierarchy_reason is not None:
-                    return hierarchy_reason
-                continue
-            if isinstance(mapped_expression, ChainedAttributeExpression):
-                if mapped_expression.ref.cube_name != target_cube_name:
-                    return "align(...) attribute mappings must come from the target cube context"
-                if mapped_expression.ref.first_dimension_name not in target_dimension_names:
-                    return (
-                        f"align(...) attribute mapping uses target dimension "
-                        f"'{mapped_expression.ref.first_dimension_name}', which is not part of cube '{target_cube_name}'"
-                    )
-                # second_dimension_name is the intermediate "via" dimension for the attribute chase. Unlike
-                # first_dimension_name, it is never used as a feeder coordinate axis -- it's purely a metadata
-                # lookup table -- so it does not need to be one of this cube's own dimensions.
-                first_hierarchy_reason = self._dimension_hierarchy_ambiguity_reason(
-                    cube_name=target_cube_name,
-                    dimension_name=mapped_expression.ref.first_dimension_name,
-                    explicit_hierarchy_name=None,
-                )
-                if first_hierarchy_reason is not None:
-                    return first_hierarchy_reason
-                second_hierarchy_reason = self._dimension_hierarchy_ambiguity_reason(
-                    cube_name=target_cube_name,
-                    dimension_name=mapped_expression.ref.second_dimension_name,
-                    explicit_hierarchy_name=None,
-                )
-                if second_hierarchy_reason is not None:
-                    return second_hierarchy_reason
-                continue
-            if isinstance(mapped_expression, (MeasureExpression, MethodExpression, CaseExpression)):
-                return (
-                    f"align(...) mapping for source dimension '{source_dimension_name}' must be a literal "
-                    "or target-cube attribute reference; this mapping's value comes from a measure cell, "
-                    "whose possible contents are not enumerable from cube/dimension metadata -- TM1 places "
-                    "no constraint on a String/Numeric cell's value, unlike a dimension's fixed leaf-element "
-                    "set, so no compile-time feeder enumeration is possible for this shape"
-                )
-            return (
-                f"align(...) mapping for source dimension '{source_dimension_name}' must be a literal "
-                "or target-cube attribute reference"
+            mapping_reason = self._native_dimension_mapping_unsupported_reason(
+                method_label="align(...)",
+                source_cube_name=expression.base.ref.cube_name,
+                source_dimension_name=source_dimension_name,
+                mapped_expression=mapped_expression,
+                target_cube_name=target_cube_name,
+                target_dimension_names=target_dimension_names,
             )
+            if mapping_reason is not None:
+                return mapping_reason
 
         unresolved_dimensions = [
             dimension_name
@@ -5462,6 +5703,20 @@ class Model:
 
         return resolved
 
+    @staticmethod
+    def _formula_areas_overlap(area_a: Tuple[Tuple[str, str], ...], area_b: Tuple[Tuple[str, str], ...]) -> bool:
+        """Two area-scoped targets on the same measure overlap if every dimension fixed by both
+        agrees on the element, and any dimension fixed by only one side is an unconstrained
+        wildcard on the other -- i.e. there is at least one real cell both areas could match.
+        A dimension neither side fixes is a wildcard on both sides and never disqualifies overlap.
+        """
+        dict_a = dict(area_a)
+        dict_b = dict(area_b)
+        for dimension_name in set(dict_a) & set(dict_b):
+            if dict_a[dimension_name] != dict_b[dimension_name]:
+                return False
+        return True
+
     def _build_plan(self) -> BuildPlan:
         formulas = dict(sorted(self._formulas.items()))
         basic_logger.debug(f"_build_plan() resolving dependency order for {len(formulas)} formula(s).")
@@ -5469,6 +5724,16 @@ class Model:
         graph: Dict[str, List[str]] = defaultdict(list)
         in_degree: Dict[str, int] = {key: 0 for key in formulas}
         warnings: List[str] = []
+        errors: List[str] = []
+
+        # Multiple area-scoped formulas (CubeRef.area(...)) can share the same base "cube:measure"
+        # identity. A measure *reference* inside another formula's expression never carries an
+        # area of its own, so it always resolves to the bare base-measure key -- this mapping lets
+        # such a reference depend on every area-variant registered for that measure, not just an
+        # (impossible) exact string match against an area-suffixed key.
+        base_measure_keys: Dict[str, List[str]] = defaultdict(list)
+        for key, formula in formulas.items():
+            base_measure_keys[formula.target.base_key].append(key)
 
         for key, formula in formulas.items():
             measure_deps = sorted(
@@ -5492,13 +5757,46 @@ class Model:
                     # self-edge here would make the topological sort see a cycle that isn't
                     # real at the cell level, so it is excluded rather than reported.
                     continue
-                if dep_key in formulas:
-                    graph[dep_key].append(key)
-                    in_degree[key] += 1
+                matched_keys = [
+                    matched_key for matched_key in base_measure_keys.get(dep_key, []) if matched_key != key
+                ]
+                if matched_keys:
+                    for matched_key in matched_keys:
+                        graph[matched_key].append(key)
+                        in_degree[key] += 1
                 elif dep_key.split(":", 1)[0] == formula.target.cube_name:
                     warnings.append(
                         f"Formula '{key}' references '{dep_key}', which is treated as an external input because no formula is registered for it."
                     )
+
+        # Rule-area overlap: two formulas on the same measure whose areas could both match the
+        # same real cell must have an explicit, distinct precedence (Formula.priority), since
+        # TM1 applies the first matching rule statement in file order for overlapping areas, and
+        # this project never wants that order to fall out of an incidental alphabetical
+        # tie-break. Fail closed instead of guessing whenever precedence is ambiguous.
+        for base_key, group_keys in sorted(base_measure_keys.items()):
+            if len(group_keys) < 2:
+                continue
+            for index_a in range(len(group_keys)):
+                for index_b in range(index_a + 1, len(group_keys)):
+                    key_a, key_b = group_keys[index_a], group_keys[index_b]
+                    formula_a, formula_b = formulas[key_a], formulas[key_b]
+                    if not self._formula_areas_overlap(formula_a.target.area, formula_b.target.area):
+                        continue
+                    if formula_a.priority == formula_b.priority:
+                        errors.append(
+                            f"Formulas '{key_a}' and '{key_b}' have overlapping rule areas on the "
+                            f"same measure '{base_key}' with no distinct priority; set a lower "
+                            "'priority' on whichever one must take precedence (CubeRef.area(...)"
+                            ".set(expression, priority=...))."
+                        )
+                        continue
+                    lower_key, higher_key = (
+                        (key_a, key_b) if formula_a.priority < formula_b.priority else (key_b, key_a)
+                    )
+                    if higher_key not in graph[lower_key]:
+                        graph[lower_key].append(higher_key)
+                        in_degree[higher_key] += 1
 
         for dep_key in graph:
             graph[dep_key].sort()
@@ -5514,7 +5812,6 @@ class Model:
                 if in_degree[downstream] == 0:
                     queue.append(downstream)
 
-        errors: List[str] = []
         if len(order) != len(formulas):
             cycle_nodes = sorted(key for key, degree in in_degree.items() if degree > 0)
             basic_logger.warning(f"_build_plan() detected a cyclic dependency among: {cycle_nodes}")
