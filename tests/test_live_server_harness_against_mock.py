@@ -267,6 +267,38 @@ def test_under_feeding_live_mutation_check_writes_and_reverts_cube_data(tm1_serv
     )
 
 
+def test_run_full_suite_prints_progress_narration(tm1_service, capsys):
+    # run_full_suite raises a tests.mock_tm1_service.UnregisteredTM1QueryError once it
+    # reaches a verification step that needs a registered MDX result the mock doesn't
+    # have (expected -- the mock has no real engine, see module docstring). What this
+    # test actually checks: the steps that DO run before that point print progress
+    # narration -- proving the harness is no longer silent by default. Narration is
+    # plain print(), not routed through TM1_bedrock_py's logger, deliberately (see
+    # run_full_suite's docstring: raising that shared logger to INFO by default
+    # triggered a real ~50x slowdown via a separate, pre-existing compiler
+    # performance characteristic -- utility.get_default_hierarchy logs at INFO and
+    # gets called tens of thousands of times for even a handful of formulas).
+    _seed_mock_attribute_values(tm1_service)
+    with pytest.raises(Exception):
+        harness.run_full_suite(tm1_service, cleanup=True)
+
+    captured = capsys.readouterr()
+    assert "[1/9]" in captured.out
+    assert "Schema built" in captured.out
+    assert "[2/9]" in captured.out
+    assert "[3/9]" in captured.out
+
+
+def test_run_full_suite_does_not_leave_bedrock_logger_more_verbose_than_before(tm1_service):
+    original_level = harness.basic_logger.level
+    _seed_mock_attribute_values(tm1_service)
+
+    with pytest.raises(Exception):
+        harness.run_full_suite(tm1_service, cleanup=True, verbose_bedrock_logging="INFO")
+
+    assert harness.basic_logger.level == original_level
+
+
 def test_cleanup_schema_removes_only_prefixed_objects(tm1_service):
     # MockDimensionService has no delete() (TM1py/a real server does); cleanup_schema
     # guards for that, so this checks what the mock CAN verify: cube removal (including

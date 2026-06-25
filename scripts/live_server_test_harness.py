@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 from TM1py.Objects import Cube, Dimension, Element, ElementAttribute, Hierarchy
 
-from TM1_bedrock_py import bedrock, extractor, loader, utility
+from TM1_bedrock_py import basic_logger, benchmark_metrics_logger, bedrock, exec_metrics_logger, extractor, loader, utility
 from TM1_bedrock_py.calc import Model, TM1ServiceMetadataProvider
 from TM1_bedrock_py.dimension_builder import apply as dimension_builder_apply
 
@@ -67,9 +67,20 @@ class HarnessReport:
 # ----------------------------------------------------------------------------------
 
 
-def build_schema(tm1_service: Any) -> Dict[str, Any]:
+def build_schema(tm1_service: Any, log_level: Optional[str] = None) -> Dict[str, Any]:
     """Creates all test dimensions and cubes. Safe to call against a real server:
-    every object name is prefixed with TEST_PREFIX."""
+    every object name is prefixed with TEST_PREFIX.
+
+    `log_level`, if given, is passed straight through to `bedrock.cube_builder`'s own
+    `logging_level` parameter (default `None` -- leave bedrock's own logging
+    configuration untouched). Be aware before passing "INFO"/"DEBUG" here: this
+    project's calc compiler calls `utility.get_default_hierarchy(...)` an
+    extremely large number of times per compile (tens of thousands, even for a
+    handful of formulas -- a separate, real performance characteristic, not a bug
+    in this harness) and that function logs at INFO on every call, so raising
+    bedrock's shared logger to INFO can turn a few-second compile into a minute-plus
+    one purely from console I/O. See `run_full_suite`'s `verbose_bedrock_logging`
+    parameter for the same tradeoff at the top level."""
 
     _create_simple_dimension(tm1_service, DIM_VERSION, {"Actual": "Numeric", "Budget": "Numeric"})
 
@@ -88,6 +99,9 @@ def build_schema(tm1_service: Any) -> Dict[str, Any]:
     _create_sales_measure_dimension(tm1_service)
     _create_simple_dimension(tm1_service, DIM_FX_MEASURE, {"Rate": "Numeric"})
 
+    cube_builder_kwargs: Dict[str, Any] = {}
+    if log_level:
+        cube_builder_kwargs["logging_level"] = log_level
     bedrock.cube_builder(
         tm1_service=tm1_service,
         build_mode="create_from_map",
@@ -96,6 +110,7 @@ def build_schema(tm1_service: Any) -> Dict[str, Any]:
             CUBE_SALES: [DIM_VERSION, DIM_YEAR, DIM_MONTH, DIM_REGION, DIM_SALES_MEASURE],
             CUBE_FX: [DIM_VERSION, DIM_YEAR, DIM_CURRENCY, DIM_TARGET_CURRENCY, DIM_FX_MEASURE],
         },
+        **cube_builder_kwargs,
     )
 
     return {
@@ -807,39 +822,109 @@ def cleanup_schema(tm1_service: Any, schema: Dict[str, Any]) -> None:
 # ----------------------------------------------------------------------------------
 
 
-def run_full_suite(tm1_service: Any, cleanup: bool = True) -> HarnessReport:
-    report = HarnessReport()
-    schema = build_schema(tm1_service)
-    report.schema = schema
+def _announce(message: str) -> None:
+    """Always-visible progress narration for run_full_suite, independent of
+    bedrock's own logging configuration (see verbose_bedrock_logging below for why
+    that independence matters)."""
+    print(message, flush=True)
+
+
+def run_full_suite(
+    tm1_service: Any, cleanup: bool = True, verbose_bedrock_logging: Optional[str] = None
+) -> HarnessReport:
+    """Runs the full live-server check suite, printing a step-by-step progress
+    narration so this isn't silent while it runs against a real server.
+
+    Progress narration uses plain `print(...)`, not TM1_bedrock_py's logging
+    framework -- deliberately. `TM1_bedrock_py`'s logger defaults to WARNING, which
+    is why this harness used to be silent; the natural fix is to raise it, but doing
+    that here is a real performance trap discovered while building this: the calc
+    compiler's `_build_target_db_statements`/feeder-planning code calls
+    `utility.get_default_hierarchy(...)` an enormous number of times even for a
+    handful of formulas (tens of thousands of calls observed for 10 formulas), and
+    that function logs at INFO on every call -- at the default WARNING level this
+    is a cheap no-op, but at INFO it's tens of thousands of real log writes, which
+    measured roughly 50x slower in practice (a multi-second compile became well
+    over a minute). So progress narration here is independent of bedrock's logger
+    by design, and bedrock's own internal verbose logging stays opt-in:
+    `verbose_bedrock_logging="INFO"` enables it (restored to its original level on
+    exit, regardless of outcome), with the performance tradeoff above understood
+    and accepted by the caller."""
+
+    original_levels = (basic_logger.level, exec_metrics_logger.level, benchmark_metrics_logger.level)
+    if verbose_bedrock_logging:
+        utility.set_logging_level(verbose_bedrock_logging)
 
     try:
-        baseline = load_baseline_data(tm1_service)
-        model = build_model(tm1_service)
-        preview = model.compile(dry_run=False)
-        report.record("deploy:no_errors", not preview.errors, str(preview.errors))
-        report.record(
-            "deploy:no_preview_only_targets",
-            all(
-                not entry["artifact"].get("preview_only")
-                for entry in preview.manifest.values()
-                if entry["backend"] == "native"
-            ),
-            "one or more native formulas stayed preview-only; check preview.manifest",
-        )
+        report = HarnessReport()
+        _announce(f"[1/9] Building test schema (dimensions + cubes, prefix '{TEST_PREFIX}')...")
+        schema = build_schema(tm1_service, log_level=verbose_bedrock_logging)
+        if verbose_bedrock_logging:
+            utility.set_logging_level(verbose_bedrock_logging)  # bedrock builders reset this internally
+        report.schema = schema
+        _announce(f"[1/9] Schema built: {len(schema['dimensions'])} dimensions, {len(schema['cubes'])} cubes.")
 
-        if preview.errors:
-            return report
+        try:
+            _announce("[2/9] Loading baseline test data...")
+            baseline = load_baseline_data(tm1_service)
+            _announce("[2/9] Baseline data loaded.")
 
-        expected = compute_expected_values(baseline)
-        verify_leaf_calculations(tm1_service, expected, report)
-        verify_string_calculations(tm1_service, expected, report)
-        verify_consolidated_feeders(tm1_service, report)
-        verify_no_over_feeding(model, preview, report)
-        verify_no_under_feeding_via_live_mutation(tm1_service, report)
-        verify_alternate_hierarchy_resolution(tm1_service, report)
-        run_deployment_safety_net_check(model, report)
+            _announce("[3/9] Registering formulas and compiling/deploying native rules...")
+            model = build_model(tm1_service)
+            preview = model.compile(dry_run=False)
+            _announce(f"[3/9] Deploy finished: {len(preview.errors)} errors, {len(preview.manifest)} manifest entries.")
+            report.record("deploy:no_errors", not preview.errors, str(preview.errors))
+            report.record(
+                "deploy:no_preview_only_targets",
+                all(
+                    not entry["artifact"].get("preview_only")
+                    for entry in preview.manifest.values()
+                    if entry["backend"] == "native"
+                ),
+                "one or more native formulas stayed preview-only; check preview.manifest",
+            )
+
+            if preview.errors:
+                _announce(f"[3/9] Deploy reported errors, aborting remaining checks: {preview.errors}")
+                return report
+
+            _announce("[4/9] Computing independent expected values...")
+            expected = compute_expected_values(baseline)
+
+            _announce("[5/9] Verifying leaf-level calculations...")
+            verify_leaf_calculations(tm1_service, expected, report)
+
+            _announce("[5/9] Verifying string-rule calculations...")
+            verify_string_calculations(tm1_service, expected, report)
+
+            _announce("[6/9] Verifying consolidated feeder totals (under-feeding, static)...")
+            verify_consolidated_feeders(tm1_service, report)
+
+            _announce("[7/9] Verifying no over-feeding (structural)...")
+            verify_no_over_feeding(model, preview, report)
+
+            _announce("[7/9] Verifying no under-feeding via live data mutation...")
+            verify_no_under_feeding_via_live_mutation(tm1_service, report)
+
+            _announce("[8/9] Verifying alternate-hierarchy resolution...")
+            verify_alternate_hierarchy_resolution(tm1_service, report)
+
+            _announce("[9/9] Verifying deployment safety net (deploy v2, rollback, compare)...")
+            run_deployment_safety_net_check(model, report)
+
+            _announce(
+                f"All checks complete. {len(report.checks) - len(report.failures)} passed, "
+                f"{len(report.failures)} failed."
+            )
+        finally:
+            if cleanup:
+                _announce("Cleaning up test schema...")
+                cleanup_schema(tm1_service, schema)
+                _announce("Cleanup complete.")
+
+        return report
     finally:
-        if cleanup:
-            cleanup_schema(tm1_service, schema)
-
-    return report
+        if verbose_bedrock_logging:
+            basic_logger.setLevel(original_levels[0])
+            exec_metrics_logger.setLevel(original_levels[1])
+            benchmark_metrics_logger.setLevel(original_levels[2])
