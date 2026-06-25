@@ -396,6 +396,23 @@ def test_under_feeding_live_mutation_check_writes_and_reverts_cube_data(tm1_serv
         ),
         pd.DataFrame({"Value": [1060.0]}),
     )
+    tm1_service.register_mdx(
+        harness.utility.generate_dynamic_mdx_query_string(
+            tm1_service=tm1_service,
+            target_cube_name=harness.CUBE_SALES,
+            dimension_filter_mapping={
+                harness.DIM_VERSION: ["Actual"], harness.DIM_YEAR: ["2024"], harness.DIM_MONTH: ["6"],
+                harness.DIM_REGION: ["East"],
+                harness.DIM_SALES_MEASURE: ["Revenue", "Gross Margin", "Revenue EUR"],
+            },
+        ),
+        pd.DataFrame(
+            {
+                harness.DIM_SALES_MEASURE: ["Revenue", "Gross Margin", "Revenue EUR"],
+                "Value": [1060.0, 0.0, 0.0],
+            }
+        ),
+    )
 
     report = harness.HarnessReport()
     harness.verify_no_under_feeding_via_live_mutation(tm1_service, report)

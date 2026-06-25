@@ -11,6 +11,8 @@ from itertools import product
 from typing import Any, Dict, Iterable, Iterator, List, Mapping, Optional, Sequence, Tuple, Union
 
 from TM1_bedrock_py import basic_logger
+from TM1_bedrock_py import extractor, utility
+import pandas as pd
 from .metadata import MetadataProvider, TM1ServiceMetadataProvider
 
 
@@ -186,8 +188,8 @@ class Expression:
     def rolling(self, **kwargs: Any) -> "RollingExpression":
         return RollingExpression(self, kwargs={key: _ensure_expression(value) for key, value in kwargs.items()})
 
-    def native(self, scope: str = "leaf") -> "ScopedExpression":
-        return ScopedExpression(inner=self, scope=scope)
+    def native(self, scope: str = "leaf", feeder_mode: str = "ranked_single") -> "ScopedExpression":
+        return ScopedExpression(inner=self, scope=scope, feeder_mode=feeder_mode)
 
     def abs(self) -> "Expression":
         return MethodExpression("abs", self)
@@ -584,6 +586,7 @@ class ScopedExpression(Expression):
 
     inner: Expression
     scope: str
+    feeder_mode: str = "ranked_single"
 
     def iter_measure_refs(self) -> Iterator[MeasureRef]:
         return self.inner.iter_measure_refs()
@@ -595,7 +598,9 @@ class ScopedExpression(Expression):
         return self.inner.iter_element_refs()
 
     def describe(self) -> str:
-        return f"{self.inner.describe()}.native(scope={self.scope!r})"
+        if self.feeder_mode == "ranked_single":
+            return f"{self.inner.describe()}.native(scope={self.scope!r})"
+        return f"{self.inner.describe()}.native(scope={self.scope!r}, feeder_mode={self.feeder_mode!r})"
 
 
 @dataclass(frozen=True)
@@ -603,6 +608,7 @@ class Formula:
     target: MeasureRef
     expression: Expression
     scope: str = "leaf"
+    feeder_mode: str = "ranked_single"
 
     @property
     def key(self) -> str:
@@ -679,6 +685,8 @@ class FeederPlan:
     deployment_cube: Optional[str] = None
     deployment_statements: tuple[tuple[str, tuple[str, ...]], ...] = ()
     preview_only: bool = False
+    origin_candidates: tuple["FeederOriginCandidate", ...] = ()
+    selected_origin_key: Optional[str] = None
 
     def iter_deployment_statements(self, default_cube: Optional[str] = None) -> Iterator[tuple[str, tuple[str, ...]]]:
         if self.deployment_statements:
@@ -694,6 +702,30 @@ class FeederPlan:
             cube_name
             for cube_name, _statements in self.iter_deployment_statements(default_cube=default_cube)
         )
+
+
+@dataclass(frozen=True)
+class FeederOriginCandidate:
+    cube_name: str
+    measure_names: tuple[str, ...]
+    fixed_coordinates: tuple[tuple[str, tuple[str, ...]], ...]
+    dimension_count: int
+    fixed_coordinate_count: int
+    same_cube: bool
+    description: str
+    candidate_kind: str = "same_cube"
+    statements: tuple[str, ...] = ()
+    deployment_cube: Optional[str] = None
+    deployment_statements: tuple[tuple[str, tuple[str, ...]], ...] = ()
+
+    @property
+    def key(self) -> str:
+        fixed_part = ",".join(
+            f"{dimension_name}={'|'.join(str(element_name) for element_name in element_names)}"
+            for dimension_name, element_names in self.fixed_coordinates
+        )
+        measures_part = ",".join(self.measure_names)
+        return f"{self.cube_name}::{measures_part}::{fixed_part}"
 
 
 class DimensionProxy:
@@ -801,6 +833,7 @@ class CubeRef:
 
 class Model:
     _SUPPORTED_RULE_AREA_SCOPES = ("leaf", "consolidated", "string")
+    _SUPPORTED_FEEDER_MODES = ("ranked_single", "safe_union")
     _RULE_AREA_KEYWORDS = {"leaf": "N", "consolidated": "C", "string": "S"}
     _CONSOLIDATED_FEEDER_LEAF_CEILING = 2000
     _CONSOLIDATED_AGGREGATE_FUNCTIONS = {
@@ -1023,16 +1056,28 @@ class Model:
             raise ValueError(f"Formula target '{key}' is already registered")
 
         scope = "leaf"
+        feeder_mode = "ranked_single"
         if isinstance(expression, ScopedExpression):
             scope = expression.scope
+            feeder_mode = expression.feeder_mode
             expression = expression.inner
         if scope not in self._SUPPORTED_RULE_AREA_SCOPES:
             raise ValueError(
                 f"Unsupported rule-area scope '{scope}' for target '{key}'; "
                 f"currently supported scopes are {', '.join(self._SUPPORTED_RULE_AREA_SCOPES)}"
             )
+        if feeder_mode not in self._SUPPORTED_FEEDER_MODES:
+            raise ValueError(
+                f"Unsupported feeder mode '{feeder_mode}' for target '{key}'; "
+                f"currently supported modes are {', '.join(self._SUPPORTED_FEEDER_MODES)}"
+            )
 
-        self._formulas[key] = Formula(target=target.ref, expression=expression, scope=scope)
+        self._formulas[key] = Formula(
+            target=target.ref,
+            expression=expression,
+            scope=scope,
+            feeder_mode=feeder_mode,
+        )
 
     @property
     def formulas(self) -> List[Formula]:
@@ -1135,6 +1180,7 @@ class Model:
                 "cube": formula.target.cube_name,
                 "measure": formula.target.measure_name,
                 "rule_area": formula.scope,
+                "feeder_mode": formula.feeder_mode,
                 "backend": decision.backend.value,
                 "rationale": decision.rationale,
                 "expression": formula.expression.describe(),
@@ -1218,6 +1264,11 @@ class Model:
                     cube_name,
                     preview.rules.get(cube_name, ""),
                     preview.feeders.get(cube_name, ""),
+                    include_feedstrings=any(
+                        manifest_entry.get("rule_area") == "string"
+                        for manifest_entry in preview.manifest.values()
+                        if manifest_entry.get("cube") == cube_name
+                    ),
                 )
                 deployment[cube_name]["prior_rule_text"] = prior_rule_text
                 deployment[cube_name]["diff"] = "\n".join(
@@ -1352,12 +1403,19 @@ class Model:
             )
 
     @staticmethod
-    def _render_rule_artifact(cube_name: str, rules_text: str, feeders_text: str) -> str:
+    def _render_rule_artifact(
+        cube_name: str,
+        rules_text: str,
+        feeders_text: str,
+        include_feedstrings: bool = False,
+    ) -> str:
         sections = [
             "# Generated by TM1_bedrock_py calc Phase 2 compiler",
             f"# Cube: {cube_name}",
         ]
         if rules_text.strip():
+            if include_feedstrings:
+                sections.extend(["FEEDSTRINGS;", ""])
             sections.extend(
                 [
                     "SKIPCHECK;",
@@ -1409,6 +1467,7 @@ class Model:
             "execution_order": [key for key in plan.order if key in upstream or key == target_key],
             "backend": decision.backend.value,
             "rationale": decision.rationale,
+            "feeder_mode": formula.feeder_mode,
             "feeder_strategy": (
                 self._plan_feeders(plan, formula).strategy
                 if decision.backend is Backend.NATIVE
@@ -1416,6 +1475,16 @@ class Model:
             ),
             "feeder_rationale": (
                 self._plan_feeders(plan, formula).rationale
+                if decision.backend is Backend.NATIVE
+                else None
+            ),
+            "feeder_origin_candidates": (
+                self._format_feeder_origin_candidates(self._plan_feeders(plan, formula))
+                if decision.backend is Backend.NATIVE
+                else []
+            ),
+            "selected_feeder_origin": (
+                self._plan_feeders(plan, formula).selected_origin_key
                 if decision.backend is Backend.NATIVE
                 else None
             ),
@@ -1437,6 +1506,7 @@ class Model:
             "target": formula.key,
             "backend": decision.backend.value,
             "rationale": decision.rationale,
+            "feeder_mode": formula.feeder_mode,
             "metadata_ready": all(requirement.satisfied for requirement in requirements),
             "required_metadata": [
                 {
@@ -1449,6 +1519,16 @@ class Model:
                 for requirement in requirements
             ],
             "missing_metadata": missing_metadata,
+            "feeder_origin_candidates": (
+                self._format_feeder_origin_candidates(self._plan_feeders(plan, formula))
+                if decision.backend is Backend.NATIVE
+                else []
+            ),
+            "selected_feeder_origin": (
+                self._plan_feeders(plan, formula).selected_origin_key
+                if decision.backend is Backend.NATIVE
+                else None
+            ),
             "native_eligibility": self._native_eligibility(
                 plan=plan,
                 formula=formula,
@@ -1474,7 +1554,7 @@ class Model:
                 }
             feeder_plan = self._plan_feeders(plan, formula)
             if feeder_plan.preview_only:
-                preview_only_code = self._native_preview_only_code(formula)
+                preview_only_code = self._native_preview_only_code(formula, feeder_plan)
                 return {
                     "status": "preview_only",
                     "code": preview_only_code,
@@ -1596,7 +1676,11 @@ class Model:
             )
         return "Native compilation remains the intended path, but required metadata is missing."
 
-    def _native_preview_only_code(self, formula: Formula) -> str:
+    def _native_preview_only_code(self, formula: Formula, feeder_plan: Optional[FeederPlan] = None) -> str:
+        if feeder_plan is None:
+            feeder_plan = self._plan_feeders(self._build_plan(), formula)
+        if feeder_plan.strategy == "preview_only_ranked_origin":
+            return "native_live_feeder_ranking_required"
         if self._contains_align_expression(formula.expression):
             if self._align_contains_unproven_target_leaf_scope(
                 formula.expression,
@@ -1612,6 +1696,12 @@ class Model:
 
     @staticmethod
     def _native_preview_only_detail(code: str) -> str:
+        if code == "native_live_feeder_ranking_required":
+            return (
+                "Multiple safe feeder origins exist with equal dimension counts, so live TM1 nonzero "
+                "data is required to choose the rarer-fill origin. No live read was available or the "
+                "read failed, so deployment stays preview-only."
+            )
         if code == "native_align_target_leaf_scope_unproven":
             return (
                 "Rule lowering is native-safe, but feeder deployment proof is still blocked because "
@@ -3179,7 +3269,7 @@ class Model:
 
         return False
 
-    def _plan_feeders(self, plan: BuildPlan, formula: Formula) -> FeederPlan:
+    def _plan_feeders(self, plan: BuildPlan, formula: Formula, allow_origin_ranking: bool = True) -> FeederPlan:
         if formula.scope == "consolidated":
             if self._contains_align_expression(formula.expression):
                 consolidated_cross_cube_plan = self._build_consolidated_leaf_cross_cube_feeders(
@@ -3300,12 +3390,50 @@ class Model:
             )
 
         if self._contains_align_expression(formula.expression):
+            align_expressions = tuple(self._iter_align_expressions(formula.expression))
+            align_expression_count = len(align_expressions)
+            if same_cube_source_refs and align_expression_count == 1 and isinstance(formula.expression, BinaryExpression):
+                branch_formula = Formula(
+                    target=formula.target,
+                    expression=align_expressions[0],
+                    scope=formula.scope,
+                    feeder_mode=formula.feeder_mode,
+                )
+                direct_cross_cube_plan = self._build_direct_cross_cube_feeders(branch_formula)
+                if direct_cross_cube_plan is not None:
+                    return self._merge_same_cube_driver_feeders(
+                        formula,
+                        direct_cross_cube_plan,
+                        formula.target.cube_name,
+                        statements,
+                        same_cube_source_refs,
+                        allow_origin_ranking=allow_origin_ranking,
+                    )
+                attribute_routed_cross_cube_plan = self._build_attribute_routed_cross_cube_feeders(branch_formula)
+                if attribute_routed_cross_cube_plan is not None:
+                    return self._merge_same_cube_driver_feeders(
+                        formula,
+                        attribute_routed_cross_cube_plan,
+                        formula.target.cube_name,
+                        statements,
+                        same_cube_source_refs,
+                        allow_origin_ranking=allow_origin_ranking,
+                    )
             conditional_cross_cube_plan = self._build_conditional_cross_cube_feeders(formula)
             if conditional_cross_cube_plan is not None:
+                if formula.feeder_mode == "ranked_single" and not same_cube_source_refs and len(conditional_cross_cube_plan.origin_candidates) > 1:
+                    return self._rank_feeder_origin_candidates(
+                        target_cube_name=formula.target.cube_name,
+                        candidates=conditional_cross_cube_plan.origin_candidates,
+                    )
                 return self._merge_same_cube_driver_feeders(
-                    conditional_cross_cube_plan, formula.target.cube_name, statements
+                    formula,
+                    conditional_cross_cube_plan,
+                    formula.target.cube_name,
+                    statements,
+                    same_cube_source_refs,
+                    allow_origin_ranking=formula.feeder_mode == "ranked_single",
                 )
-            align_expression_count = sum(1 for _ in self._iter_align_expressions(formula.expression))
             if same_cube_source_refs and align_expression_count <= 1:
                 return FeederPlan(
                     statements=statements,
@@ -3321,12 +3449,22 @@ class Model:
             direct_cross_cube_plan = self._build_direct_cross_cube_feeders(formula)
             if direct_cross_cube_plan is not None:
                 return self._merge_same_cube_driver_feeders(
-                    direct_cross_cube_plan, formula.target.cube_name, statements
+                    formula,
+                    direct_cross_cube_plan,
+                    formula.target.cube_name,
+                    statements,
+                    same_cube_source_refs,
+                    allow_origin_ranking=allow_origin_ranking,
                 )
             attribute_routed_cross_cube_plan = self._build_attribute_routed_cross_cube_feeders(formula)
             if attribute_routed_cross_cube_plan is not None:
                 return self._merge_same_cube_driver_feeders(
-                    attribute_routed_cross_cube_plan, formula.target.cube_name, statements
+                    formula,
+                    attribute_routed_cross_cube_plan,
+                    formula.target.cube_name,
+                    statements,
+                    same_cube_source_refs,
+                    allow_origin_ranking=allow_origin_ranking,
                 )
             rationale = (
                 "Cross-cube native preview exists, but Phase 2 cannot yet prove a safe feeder "
@@ -3343,6 +3481,17 @@ class Model:
                 preview_only=True,
             )
 
+        same_cube_candidates = self._build_same_cube_origin_candidates(
+            target_cube_name=formula.target.cube_name,
+            same_cube_source_refs=same_cube_source_refs,
+            target_measure_name=formula.target.measure_name,
+        )
+        if formula.feeder_mode == "ranked_single" and len(same_cube_candidates) > 1:
+            return self._rank_feeder_origin_candidates(
+                target_cube_name=formula.target.cube_name,
+                candidates=same_cube_candidates,
+            )
+
         return FeederPlan(
             statements=statements,
             strategy="same_cube_traceback",
@@ -3352,16 +3501,32 @@ class Model:
             ),
             deployment_cube=formula.target.cube_name,
             preview_only=False,
+            origin_candidates=same_cube_candidates,
         )
 
     def _merge_same_cube_driver_feeders(
         self,
+        formula: Formula,
         plan: FeederPlan,
         target_cube_name: str,
         local_driver_statements: tuple[str, ...],
+        same_cube_source_refs: tuple[MeasureRef, ...],
+        allow_origin_ranking: bool = True,
     ) -> FeederPlan:
         if not local_driver_statements:
             return plan
+
+        local_candidates = self._build_same_cube_origin_candidates(
+            target_cube_name=target_cube_name,
+            same_cube_source_refs=same_cube_source_refs,
+            target_measure_name=formula.target.measure_name,
+        )
+        all_candidates = (*local_candidates, *plan.origin_candidates)
+        if formula.feeder_mode == "ranked_single" and allow_origin_ranking and len(all_candidates) > 1:
+            return self._rank_feeder_origin_candidates(
+                target_cube_name=target_cube_name,
+                candidates=all_candidates,
+            )
 
         deployment_statements_by_cube: Dict[str, set[str]] = defaultdict(set)
         for cube_name, cube_statements in plan.iter_deployment_statements(default_cube=target_cube_name):
@@ -3395,7 +3560,251 @@ class Model:
             deployment_cube=merged_deployment_cube,
             deployment_statements=merged_deployment_statements,
             preview_only=plan.preview_only,
+            origin_candidates=all_candidates,
         )
+
+    def _build_same_cube_origin_candidates(
+        self,
+        target_cube_name: str,
+        same_cube_source_refs: tuple[MeasureRef, ...],
+        target_measure_name: str,
+    ) -> tuple[FeederOriginCandidate, ...]:
+        metadata = self._get_cube_metadata(target_cube_name)
+        target_reference = self._compile_native_measure_reference(
+            cube_name=target_cube_name,
+            measure_name=target_measure_name,
+        )
+        return tuple(
+            FeederOriginCandidate(
+                cube_name=target_cube_name,
+                measure_names=(ref.measure_name,),
+                fixed_coordinates=(),
+                dimension_count=len(metadata.dimensions) if metadata is not None else 0,
+                fixed_coordinate_count=0,
+                same_cube=True,
+                description="Same-cube base driver candidate",
+                candidate_kind="same_cube",
+                statements=(
+                    f"{self._compile_native_measure_reference(ref.cube_name, ref.measure_name)} => {target_reference};",
+                ),
+                deployment_cube=target_cube_name,
+                deployment_statements=(
+                    (
+                        target_cube_name,
+                        (
+                            f"{self._compile_native_measure_reference(ref.cube_name, ref.measure_name)} => {target_reference};",
+                        ),
+                    ),
+                ),
+            )
+            for ref in same_cube_source_refs
+        )
+
+    def _rank_feeder_origin_candidates(
+        self,
+        target_cube_name: str,
+        candidates: Sequence[FeederOriginCandidate],
+    ) -> FeederPlan:
+        candidate_origins = tuple(candidates)
+        winner = candidate_origins[0]
+        winner_nonzero_count: Optional[int] = None
+
+        for challenger in candidate_origins[1:]:
+            if winner.dimension_count > challenger.dimension_count:
+                continue
+            if challenger.dimension_count > winner.dimension_count:
+                winner = challenger
+                winner_nonzero_count = None
+                continue
+
+            current_nonzero = self._count_candidate_origin_nonzero_cells(winner)
+            challenger_nonzero = self._count_candidate_origin_nonzero_cells(challenger)
+            if current_nonzero is None or challenger_nonzero is None:
+                loser = challenger if winner is candidate_origins[0] else winner
+                return FeederPlan(
+                    statements=(),
+                    strategy="preview_only_ranked_origin",
+                    rationale=(
+                        "Multiple safe feeder origins exist with equal dimension counts, but live TM1 "
+                        "nonzero data was unavailable to choose the rarer-fill origin, so deployment "
+                        "stays preview-only."
+                    ),
+                    deployment_cube=target_cube_name,
+                    preview_only=True,
+                    origin_candidates=candidate_origins,
+                )
+            winner_nonzero_count = current_nonzero
+            if challenger_nonzero < current_nonzero:
+                winner = challenger
+                winner_nonzero_count = challenger_nonzero
+                continue
+            if current_nonzero < challenger_nonzero:
+                continue
+            if challenger.fixed_coordinate_count > winner.fixed_coordinate_count:
+                winner = challenger
+                winner_nonzero_count = challenger_nonzero
+                continue
+            if winner.fixed_coordinate_count > challenger.fixed_coordinate_count:
+                continue
+            if challenger.same_cube and not winner.same_cube:
+                winner = challenger
+                winner_nonzero_count = challenger_nonzero
+                continue
+            if winner.same_cube and not challenger.same_cube:
+                continue
+            if challenger.cube_name.casefold() < winner.cube_name.casefold():
+                winner = challenger
+                winner_nonzero_count = challenger_nonzero
+
+        loser_candidates = [candidate for candidate in candidate_origins if candidate.key != winner.key]
+        loser = loser_candidates[0] if loser_candidates else winner
+        reason = "higher dimension count"
+        loser_nonzero_count: Optional[int] = None
+        if winner.dimension_count == loser.dimension_count:
+            winner_nonzero_count = self._count_candidate_origin_nonzero_cells(winner)
+            loser_nonzero_count = self._count_candidate_origin_nonzero_cells(loser)
+            if winner_nonzero_count is None or loser_nonzero_count is None:
+                return FeederPlan(
+                    statements=(),
+                    strategy="preview_only_ranked_origin",
+                    rationale=(
+                        "Multiple safe feeder origins exist with equal dimension counts, but live TM1 "
+                        "nonzero data was unavailable to choose the rarer-fill origin, so deployment "
+                        "stays preview-only."
+                    ),
+                    deployment_cube=target_cube_name,
+                    preview_only=True,
+                    origin_candidates=candidate_origins,
+                )
+            if winner_nonzero_count != loser_nonzero_count:
+                reason = "rarer fill probability"
+            elif winner.fixed_coordinate_count != loser.fixed_coordinate_count:
+                reason = "more fixed/current coordinates"
+            elif winner.same_cube != loser.same_cube:
+                reason = "same-cube preference"
+            else:
+                reason = "deterministic lexical fallback"
+
+        return self._build_ranked_origin_result(
+            winner=winner,
+            loser=loser,
+            reason=reason,
+            candidate_origins=candidate_origins,
+            winner_nonzero_count=winner_nonzero_count,
+            loser_nonzero_count=loser_nonzero_count,
+        )
+
+    def _build_ranked_origin_result(
+        self,
+        winner: FeederOriginCandidate,
+        loser: FeederOriginCandidate,
+        reason: str,
+        candidate_origins: tuple[FeederOriginCandidate, ...],
+        winner_nonzero_count: Optional[int] = None,
+        loser_nonzero_count: Optional[int] = None,
+    ) -> FeederPlan:
+        deployment_statements = (
+            winner.deployment_statements
+            or (
+                ((winner.deployment_cube, winner.statements),)
+                if winner.deployment_cube is not None and winner.statements
+                else ()
+            )
+        )
+        statements = winner.statements or tuple(
+            sorted(
+                statement
+                for _cube_name, cube_statements in deployment_statements
+                for statement in cube_statements
+            )
+        )
+        deployment_cube = winner.deployment_cube
+        strategy = (
+            "ranked_same_cube_origin"
+            if winner.same_cube
+            else f"ranked_{winner.candidate_kind}_origin"
+        )
+
+        count_detail = ""
+        if winner_nonzero_count is not None and loser_nonzero_count is not None:
+            count_detail = (
+                f" Winner nonzero count={winner_nonzero_count}; loser nonzero count={loser_nonzero_count}."
+            )
+        rationale = (
+            f"Feeder origin ranking selected '{winner.cube_name}' over '{loser.cube_name}' by {reason}, "
+            f"following the original rule order (higher dimension count first; equal-dimension ties by rarer fill)."
+            f"{count_detail}"
+        )
+        if winner.fixed_coordinate_count:
+            rationale += " The winning origin qualifies as a simpler feeder surface because it uses fixed/current coordinates."
+
+        return FeederPlan(
+            statements=statements,
+            strategy=strategy,
+            rationale=rationale,
+            deployment_cube=deployment_cube,
+            deployment_statements=deployment_statements,
+            preview_only=False,
+            origin_candidates=candidate_origins,
+            selected_origin_key=winner.key,
+        )
+
+    def _count_candidate_origin_nonzero_cells(self, candidate: FeederOriginCandidate) -> Optional[int]:
+        if self.tm1 is None:
+            return None
+        metadata = self._get_cube_metadata(candidate.cube_name)
+        if metadata is None or not metadata.measure_dimension_name:
+            return None
+        filter_mapping = {
+            metadata.measure_dimension_name: list(candidate.measure_names),
+            **{
+                dimension_name: list(element_names)
+                for dimension_name, element_names in candidate.fixed_coordinates
+            },
+        }
+        try:
+            mdx = utility.generate_dynamic_mdx_query_string(
+                tm1_service=self.tm1,
+                target_cube_name=candidate.cube_name,
+                dimension_filter_mapping=filter_mapping,
+                cube_dimensions_list=list(metadata.dimensions),
+            )
+            dataframe = extractor.tm1_mdx_to_dataframe(
+                tm1_service=self.tm1,
+                data_mdx=mdx,
+                cube_dimensions=list(metadata.dimensions),
+                default_returned_value_type=float,
+                use_blob=False,
+            )
+        except Exception:
+            return None
+        if "Value" not in dataframe.columns:
+            return None
+        numeric_values = pd.to_numeric(dataframe["Value"], errors="coerce")
+        if numeric_values.notna().any():
+            return int((numeric_values.fillna(0) != 0).sum())
+        return int(dataframe["Value"].astype(str).str.strip().ne("").sum())
+
+    @staticmethod
+    def _format_feeder_origin_candidates(plan: FeederPlan) -> List[Dict[str, Any]]:
+        return [
+            {
+                "key": candidate.key,
+                "cube": candidate.cube_name,
+                "measures": list(candidate.measure_names),
+                "dimension_count": candidate.dimension_count,
+                "fixed_coordinate_count": candidate.fixed_coordinate_count,
+                "same_cube": candidate.same_cube,
+                "candidate_kind": candidate.candidate_kind,
+                "simple_feeder": candidate.fixed_coordinate_count > 0,
+                "fixed_coordinates": {
+                    dimension_name: list(element_names)
+                    for dimension_name, element_names in candidate.fixed_coordinates
+                },
+                "description": candidate.description,
+            }
+            for candidate in plan.origin_candidates
+        ]
 
     def _build_conditional_cross_cube_feeders(self, formula: Formula) -> Optional[FeederPlan]:
         align_expressions = tuple(self._iter_align_expressions(formula.expression))
@@ -3406,7 +3815,12 @@ class Model:
 
         branch_plans: List[FeederPlan] = []
         for align_expression in align_expressions:
-            branch_formula = Formula(target=formula.target, expression=align_expression)
+            branch_formula = Formula(
+                target=formula.target,
+                expression=align_expression,
+                scope=formula.scope,
+                feeder_mode=formula.feeder_mode,
+            )
             direct_plan = self._build_direct_cross_cube_feeders(branch_formula)
             if direct_plan is not None:
                 branch_plans.append(direct_plan)
@@ -3450,6 +3864,11 @@ class Model:
             deployment_cube=deployment_cube,
             deployment_statements=deployment_statements,
             preview_only=False,
+            origin_candidates=tuple(
+                candidate
+                for branch_plan in branch_plans
+                for candidate in branch_plan.origin_candidates
+            ),
         )
 
     def _build_direct_cross_cube_feeders(self, formula: Formula) -> Optional[FeederPlan]:
@@ -3534,6 +3953,25 @@ class Model:
             )
 
         statements: List[str] = []
+        fixed_coordinate_groups = tuple(
+            (
+                dimension_name,
+                tuple(
+                    element_name
+                    for _explicit_hierarchy_name, element_name in self._expand_feeder_origin_elements(
+                        cube_name=source_ref.cube_name,
+                        dimension_name=dimension_name,
+                        expression=expression.kwargs[dimension_name],
+                    ) or ()
+                ),
+            )
+            for dimension_name in sorted(
+                dimension_name
+                for dimension_name in source_dims
+                if dimension_name != source_measure_dim
+                and dimension_name not in target_dims
+            )
+        )
         for fixed_origin_combo in product(*fixed_origin_options) if fixed_origin_options else [()]:
             fixed_origin_by_dimension = {
                 dimension_name: (explicit_hierarchy_name, element_name)
@@ -3568,6 +4006,25 @@ class Model:
             ),
             deployment_cube=source_ref.cube_name,
             preview_only=False,
+            origin_candidates=(
+                FeederOriginCandidate(
+                    cube_name=source_ref.cube_name,
+                    measure_names=(source_ref.measure_name,),
+                    fixed_coordinates=tuple(
+                        (dimension_name, element_names)
+                        for dimension_name, element_names in fixed_coordinate_groups
+                        if element_names
+                    ),
+                    dimension_count=len(source_dims),
+                    fixed_coordinate_count=sum(1 for _dimension_name, element_names in fixed_coordinate_groups if element_names),
+                    same_cube=source_ref.cube_name == formula.target.cube_name,
+                    description="Cross-cube direct lookup candidate",
+                    candidate_kind="cross_cube_direct",
+                    statements=tuple(statements),
+                    deployment_cube=source_ref.cube_name,
+                    deployment_statements=((source_ref.cube_name, tuple(statements)),),
+                ),
+            ),
         )
 
     def _build_attribute_routed_cross_cube_feeders(self, formula: Formula) -> Optional[FeederPlan]:
@@ -3737,6 +4194,23 @@ class Model:
         if not feeder_statements:
             return None
 
+        fixed_coordinate_groups = tuple(
+            (
+                dimension_name,
+                tuple(
+                    element_name
+                    for _explicit_hierarchy_name, element_name in (
+                        self._expand_feeder_origin_elements(
+                            cube_name=source_ref.cube_name,
+                            dimension_name=dimension_name,
+                            expression=fixed_expression,
+                        ) or ()
+                    )
+                ),
+            )
+            for dimension_name, fixed_expression in sorted(fixed_source_values.items())
+        )
+
         return FeederPlan(
             statements=tuple(feeder_statements),
             strategy="cross_cube_attribute_lookup",
@@ -3748,6 +4222,25 @@ class Model:
             ),
             deployment_cube=source_ref.cube_name,
             preview_only=False,
+            origin_candidates=(
+                FeederOriginCandidate(
+                    cube_name=source_ref.cube_name,
+                    measure_names=(source_ref.measure_name,),
+                    fixed_coordinates=tuple(
+                        (dimension_name, element_names)
+                        for dimension_name, element_names in fixed_coordinate_groups
+                        if element_names
+                    ),
+                    dimension_count=len(source_metadata.dimensions),
+                    fixed_coordinate_count=sum(1 for _dimension_name, element_names in fixed_coordinate_groups if element_names),
+                    same_cube=source_ref.cube_name == formula.target.cube_name,
+                    description="Cross-cube attribute-routed lookup candidate",
+                    candidate_kind="cross_cube_attribute",
+                    statements=tuple(feeder_statements),
+                    deployment_cube=source_ref.cube_name,
+                    deployment_statements=((source_ref.cube_name, tuple(feeder_statements)),),
+                ),
+            ),
         )
 
     @staticmethod
@@ -3909,9 +4402,12 @@ class Model:
             )
         else:
             offset = mapping_value
+            allowed_source_elements = {str(element_name).strip() for element_name in leaf_elements}
             for element_name in leaf_elements:
                 predecessor_value = int(str(element_name).strip()) + offset
-                matched_target_elements_by_source[str(predecessor_value)].append(element_name)
+                predecessor_key = str(predecessor_value)
+                if predecessor_key in allowed_source_elements:
+                    matched_target_elements_by_source[predecessor_key].append(element_name)
             strategy = "same_cube_numeric_shift"
             rationale = (
                 "Same-cube time-shift feeder deployment is allowed because metadata proves the shift "
@@ -3993,6 +4489,7 @@ class Model:
                     kwargs={dimension_name: LiteralExpression(-offset)},
                 ),
                 scope=formula.scope,
+                feeder_mode=formula.feeder_mode,
             )
             term_plan = self._build_same_cube_shift_feeders(synthetic_formula)
             if term_plan is None:
@@ -4059,6 +4556,7 @@ class Model:
 
         source_reference = self._compile_native_measure_reference(cube_name, source_measure.measure_name)
         combined_statements: set = set()
+        allowed_source_elements = {str(element_name).strip() for element_name in leaf_elements}
 
         for offset in range(max_terms):
             matched_target_elements_by_source: Dict[str, List[str]] = defaultdict(list)
@@ -4066,7 +4564,9 @@ class Model:
                 if period_value_by_element[element_name] <= offset:
                     continue
                 predecessor_value = int(str(element_name).strip()) - offset
-                matched_target_elements_by_source[str(predecessor_value)].append(element_name)
+                predecessor_key = str(predecessor_value)
+                if predecessor_key in allowed_source_elements:
+                    matched_target_elements_by_source[predecessor_key].append(element_name)
 
             for source_element_name in sorted(matched_target_elements_by_source):
                 target_db_targets: List[str] = []
@@ -4145,6 +4645,51 @@ class Model:
             )
         )
 
+        same_cube_candidates = tuple(
+            FeederOriginCandidate(
+                cube_name=formula.target.cube_name,
+                measure_names=(ref.measure_name,),
+                fixed_coordinates=(),
+                dimension_count=len(metadata.dimensions),
+                fixed_coordinate_count=0,
+                same_cube=True,
+                description="Same-cube consolidated leaf feeder candidate",
+                candidate_kind="same_cube_consolidated",
+                statements=tuple(
+                    f"{self._compile_native_measure_reference(ref.cube_name, ref.measure_name)} => "
+                    f"{self._compile_native_measure_reference(formula.target.cube_name, leaf_measure_name)};"
+                    for leaf_measure_name in leaf_measures
+                ),
+                deployment_cube=formula.target.cube_name,
+                deployment_statements=(
+                    (
+                        formula.target.cube_name,
+                        tuple(
+                            f"{self._compile_native_measure_reference(ref.cube_name, ref.measure_name)} => "
+                            f"{self._compile_native_measure_reference(formula.target.cube_name, leaf_measure_name)};"
+                            for leaf_measure_name in leaf_measures
+                        ),
+                    ),
+                ),
+            )
+            for ref in same_cube_source_refs
+        )
+        if formula.feeder_mode == "ranked_single" and len(same_cube_candidates) > 1:
+            ranked_plan = self._rank_feeder_origin_candidates(
+                target_cube_name=formula.target.cube_name,
+                candidates=same_cube_candidates,
+            )
+            return FeederPlan(
+                statements=ranked_plan.statements,
+                strategy="consolidated_target_leaf_feeders",
+                rationale=ranked_plan.rationale,
+                deployment_cube=ranked_plan.deployment_cube,
+                deployment_statements=ranked_plan.deployment_statements,
+                preview_only=ranked_plan.preview_only,
+                origin_candidates=ranked_plan.origin_candidates,
+                selected_origin_key=ranked_plan.selected_origin_key,
+            )
+
         statements = tuple(
             sorted(
                 {
@@ -4166,6 +4711,7 @@ class Model:
             ),
             deployment_cube=formula.target.cube_name,
             preview_only=False,
+            origin_candidates=same_cube_candidates,
         )
 
     def _build_consolidated_leaf_cross_cube_feeders(
@@ -4200,8 +4746,13 @@ class Model:
                 ),
                 expression=formula.expression,
                 scope="leaf",
+                feeder_mode=formula.feeder_mode,
             )
-            leaf_plan = self._plan_feeders(plan, leaf_formula)
+            leaf_plan = self._plan_feeders(
+                plan,
+                leaf_formula,
+                allow_origin_ranking=formula.feeder_mode == "ranked_single",
+            )
             if leaf_plan.preview_only:
                 return None
             for cube_name, cube_statements in leaf_plan.iter_deployment_statements(

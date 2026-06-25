@@ -386,7 +386,7 @@ def test_consolidated_target_case_feeds_all_branch_drivers_to_each_leaf_measure(
     sales["Total Cost"] = model.case(
         (sales["Use Alt"] != 0, sales["Driver"]),
         default=sales["Fallback"],
-    ).native(scope="consolidated")
+    ).native(scope="consolidated", feeder_mode="safe_union")
 
     preview = model.compile(dry_run=True)
 
@@ -750,7 +750,9 @@ def test_consolidated_target_with_cross_cube_align_keeps_same_cube_driver_feeder
     sales = model.cube("Sales")
     fx = model.cube("FX Rates")
 
-    sales["Total Cost"] = (sales["Driver"] * fx["Rate"].align(TargetCurrency="EUR")).native(scope="consolidated")
+    sales["Total Cost"] = (
+        sales["Driver"] * fx["Rate"].align(TargetCurrency="EUR")
+    ).native(scope="consolidated", feeder_mode="safe_union")
 
     preview = model.compile(dry_run=True)
 
@@ -853,7 +855,7 @@ def test_consolidated_target_with_conditional_cross_cube_branches_unions_leaf_le
     sales["Total Cost"] = model.case(
         (sales["Use Corporate Rate"] != 0, corporate_fx["Rate"].align(TargetCurrency="EUR")),
         default=market_fx["Rate"].align(TargetCurrency="EUR"),
-    ).native(scope="consolidated")
+    ).native(scope="consolidated", feeder_mode="safe_union")
 
     explanation = model.explain("Sales:Total Cost")
     preview = model.compile(dry_run=True)

@@ -566,6 +566,11 @@ def verify_leaf_calculations(tm1_service: Any, expected: Dict[str, pd.DataFrame]
     merged = expected_leaf.merge(
         actual_pivot, on=[DIM_MONTH, DIM_REGION], suffixes=("_expected", "_actual")
     )
+    # A real server's MDX result has occasionally produced a duplicate-named column
+    # somewhere in this merge (seen as "DataFrame columns are not unique" warnings
+    # when sampling below) -- not yet root-caused, but harmless to guard against here:
+    # keep only the first occurrence of any duplicate column name.
+    merged = merged.loc[:, ~merged.columns.duplicated()]
 
     for measure in (
         # "Revenue"/"Cost" are raw baseline writes with no formula at all -- checking
@@ -600,21 +605,47 @@ def verify_string_calculations(tm1_service: Any, expected: Dict[str, pd.DataFram
         tm1_service,
         CUBE_SALES,
         DIM_SALES_MEASURE,
-        ["Region Status"],
+        ["Region Code", "Region Status"],
         extra_filters={DIM_VERSION: ["Actual"], DIM_YEAR: ["2024"], DIM_MONTH: ["1"]},
         value_dtype=str,
     )
-    actual_by_region = actual.set_index(DIM_REGION)["Value"]
+    actual_pivot = actual.pivot_table(
+        index=[DIM_REGION], columns=DIM_SALES_MEASURE, values="Value", aggfunc="first"
+    )
+
+    # "Region Code" is a raw, non-rule string write -- checking it too (same rationale
+    # as Revenue/Cost in verify_leaf_calculations) tells us whether a "Region Status"
+    # mismatch is upstream (the raw write/read itself is wrong) or downstream (the
+    # UPPER(... | ' REGION') rule formula is wrong), instead of only ever seeing the
+    # one derived measure fail with no way to tell which.
+    region_code_mismatches = [
+        region for region in REGIONS
+        if str(actual_pivot.get("Region Code", {}).get(region)) != str(REGION_CODE[region])
+    ]
+    report.record(
+        "string_calculation:Region Code",
+        not region_code_mismatches,
+        "" if not region_code_mismatches else (
+            f"mismatched regions: {region_code_mismatches}, "
+            f"actual values: {[actual_pivot.get('Region Code', {}).get(r) for r in region_code_mismatches]}"
+        ),
+    )
+
+    actual_by_region = actual_pivot.get("Region Status", pd.Series(dtype=object))
     expected_by_region = expected["region_status"].set_index(DIM_REGION)["Region Status"]
 
     mismatches = [
         region for region in REGIONS
         if str(actual_by_region.get(region)) != str(expected_by_region.get(region))
     ]
+    sample = {
+        region: {"expected": expected_by_region.get(region), "actual": actual_by_region.get(region)}
+        for region in mismatches
+    }
     report.record(
         "string_calculation:Region Status",
         not mismatches,
-        "" if not mismatches else f"mismatched regions: {mismatches}",
+        "" if not mismatches else f"mismatched regions: {mismatches}, sample: {sample}",
     )
 
 
@@ -764,14 +795,28 @@ def verify_no_under_feeding_via_live_mutation(tm1_service: Any, report: HarnessR
             "Gross Margin": delta,
             "Revenue EUR": delta * fx_rate,
         }
+        # Reads the LEAF cell directly at the mutated coordinate too, so a failure's
+        # detail can distinguish a real feeder problem (the leaf recalculates correctly
+        # on direct query -- it always does, regardless of feeders -- but the
+        # consolidated total doesn't move because the new write was never fed up) from
+        # a formula/read problem (the leaf itself doesn't reflect the new value either).
+        leaf_actual = read_measure_values(
+            tm1_service, CUBE_SALES, DIM_SALES_MEASURE, list(expected_deltas),
+            extra_filters={DIM_VERSION: ["Actual"], DIM_YEAR: ["2024"], DIM_MONTH: [mutated_month],
+                           DIM_REGION: [mutated_region]},
+        ).set_index(DIM_SALES_MEASURE)["Value"]
+
         for measure, expected_delta in expected_deltas.items():
             actual_delta = after.get(measure, 0.0) - before.get(measure, 0.0)
+            leaf_value = leaf_actual.get(measure)
             report.record(
                 f"under_feeding_live_mutation:{measure}@All Regions",
                 abs(actual_delta - expected_delta) < 1e-6,
                 f"after writing +{delta} to Revenue at {mutated_region}/{mutated_month}, expected "
                 f"consolidated {measure} to move by {expected_delta}, moved by {actual_delta} -- "
-                f"a smaller-than-expected move means the new leaf write was not fed into 'All Regions'",
+                f"leaf value at {mutated_region}/{mutated_month} reads as {leaf_value} (if this leaf "
+                f"value is correct but the consolidated move above is wrong, the leaf rule itself is "
+                f"fine and this is a real feeder/consolidation problem, not a formula problem)",
             )
     finally:
         revert_row = mutation_row.copy()

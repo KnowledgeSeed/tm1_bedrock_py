@@ -26,10 +26,10 @@ def test_compile_preview_emits_rules_and_feeders_for_native_subset():
     model = Model()
     sales = model.cube("Sales")
 
-    sales["Gross Margin"] = sales["Revenue"] - sales["Cost"]
+    sales["Gross Margin"] = (sales["Revenue"] - sales["Cost"]).native(feeder_mode="safe_union")
     sales["Gross Margin %"] = (
         sales["Gross Margin"] / sales["Revenue"]
-    ).where(sales["Revenue"] != 0)
+    ).where(sales["Revenue"] != 0).native(feeder_mode="safe_union")
 
     preview = model.compile(dry_run=True)
 
@@ -189,7 +189,7 @@ def test_compile_preview_lowers_growth_helper_with_string_baseline():
     model = Model(metadata_provider=provider)
     sales = model.cube("Sales")
 
-    sales["Revenue Growth %"] = sales["Revenue"].growth(vs="Revenue Prior Year")
+    sales["Revenue Growth %"] = sales["Revenue"].growth(vs="Revenue Prior Year").native(feeder_mode="safe_union")
 
     preview = model.compile(dry_run=True)
 
@@ -306,8 +306,6 @@ def test_compile_preview_lowers_shift_helper_to_numeric_offset_lookup_with_safe_
         "DB('Sales', !Version, STR(NUMBR(!Year) + (-1)), 'Measure':'Measure':'Revenue');"
     )
     assert preview.feeders["Sales"] == (
-        "[!Version, 'Year':'Year':'2022', 'Measure':'Measure':'Revenue'] => "
-        "DB('Sales', !Version, 'Year':'Year':'2023', 'Measure':'Measure':'Revenue Prior Year');\n"
         "[!Version, 'Year':'Year':'2023', 'Measure':'Measure':'Revenue'] => "
         "DB('Sales', !Version, 'Year':'Year':'2024', 'Measure':'Measure':'Revenue Prior Year');\n"
         "[!Version, 'Year':'Year':'2024', 'Measure':'Measure':'Revenue'] => "
@@ -394,8 +392,6 @@ def test_compile_preview_lowers_rolling_sum_to_unrolled_shift_sum_with_safe_feed
         "DB('Sales', !Version, STR(NUMBR(!Year) + (-1)), 'Measure':'Measure':'Revenue');"
     )
     assert preview.feeders["Sales"] == (
-        "[!Version, 'Year':'Year':'2022', 'Measure':'Measure':'Revenue'] => "
-        "DB('Sales', !Version, 'Year':'Year':'2023', 'Measure':'Measure':'Revenue 2yr Sum');\n"
         "[!Version, 'Year':'Year':'2023', 'Measure':'Measure':'Revenue'] => "
         "DB('Sales', !Version, 'Year':'Year':'2023', 'Measure':'Measure':'Revenue 2yr Sum');\n"
         "[!Version, 'Year':'Year':'2023', 'Measure':'Measure':'Revenue'] => "
@@ -1274,14 +1270,14 @@ def test_compile_preview_feeds_nested_branches_traced_intermediates_and_multiple
     # rather than chain through the intermediate; "Use A" and "Fallback" are genuine branch
     # selector/value inputs; "A FX" and "B FX" are two independent cross-cube origins selected by
     # different nested branches. All of these must feed "Routed Value" directly and exactly once.
-    sales["Base Margin"] = sales["Revenue"] - sales["Cost"]
+    sales["Base Margin"] = (sales["Revenue"] - sales["Cost"]).native(feeder_mode="safe_union")
     sales["Routed Value"] = model.case(
         (sales["Use A"] != 0, a_fx["Rate"].align(TargetCurrency="EUR")),
         default=model.case(
             (sales["Base Margin"] != 0, b_fx["Rate"].align(TargetCurrency="USD")),
             default=sales["Fallback"],
         ),
-    )
+    ).native(feeder_mode="safe_union")
 
     explanation = model.explain("Sales:Routed Value")
     preview = model.compile(dry_run=True)
@@ -1368,17 +1364,509 @@ def test_compile_preview_feeds_both_same_cube_driver_and_cross_cube_origin():
     preview = model.compile(dry_run=True)
 
     assert explanation["backend"] == "native-rule backend"
-    assert preview.feeders["Sales"] == "['Measure':'Measure':'Revenue Local'] => ['Measure':'Measure':'Revenue EUR'];"
     assert preview.feeders["FX Rates"] == (
         "[!Version, !Company, 'TargetCurrency':'TargetCurrency':'EUR', 'Measure':'Measure':'Rate'] => "
         "DB('Sales', !Version, !Company, 'Measure':'Measure':'Revenue EUR');"
     )
-    assert preview.manifest["Sales:Revenue EUR"]["artifact"]["feeder_deployment_cube"] is None
-    assert preview.manifest["Sales:Revenue EUR"]["artifact"]["feeder_deployment_cubes"] == [
-        "FX Rates",
-        "Sales",
-    ]
+    assert "Sales" not in preview.feeders
+    assert explanation["feeder_rationale"].startswith(
+        "Feeder origin ranking selected 'FX Rates' over 'Sales' by higher dimension count, "
+        "following the original rule order (higher dimension count first; equal-dimension ties by rarer fill)."
+    )
+    assert explanation["selected_feeder_origin"] == "FX Rates::Rate::TargetCurrency=EUR"
+    assert preview.manifest["Sales:Revenue EUR"]["artifact"]["feeder_deployment_cube"] == "FX Rates"
+    assert preview.manifest["Sales:Revenue EUR"]["artifact"].get("feeder_deployment_cubes") in (None, ["FX Rates"])
     assert preview.manifest["Sales:Revenue EUR"]["artifact"]["preview_only"] is False
+
+
+def test_compile_preview_ranks_equal_dimension_candidates_by_rarer_fill(monkeypatch):
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Amount": "Numeric", "Revenue EUR": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+            ),
+            "FX Rates": build_static_cube_metadata(
+                "FX Rates",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider, tm1=MockTM1Service())
+    sales = model.cube("Sales")
+    fx = model.cube("FX Rates")
+
+    sales["Revenue EUR"] = sales["Amount"] * fx["Rate"].align()
+
+    def _fake_count(candidate):
+        return 3 if candidate.cube_name == "Sales" else 9
+
+    monkeypatch.setattr(model, "_count_candidate_origin_nonzero_cells", _fake_count)
+
+    explanation = model.explain("Sales:Revenue EUR")
+    preview = model.compile(dry_run=True)
+
+    assert preview.feeders["Sales"] == "['Measure':'Measure':'Amount'] => ['Measure':'Measure':'Revenue EUR'];"
+    assert "FX Rates" not in preview.feeders
+    assert "rarer fill probability" in explanation["feeder_rationale"]
+    assert "Winner nonzero count=3; loser nonzero count=9." in explanation["feeder_rationale"]
+    assert explanation["selected_feeder_origin"] == "Sales::Amount::"
+
+
+def test_compile_preview_keeps_equal_dimension_ranked_origin_preview_only_without_tm1():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Amount": "Numeric", "Revenue EUR": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+            ),
+            "FX Rates": build_static_cube_metadata(
+                "FX Rates",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+    fx = model.cube("FX Rates")
+
+    sales["Revenue EUR"] = sales["Amount"] * fx["Rate"].align()
+
+    explanation = model.explain("Sales:Revenue EUR")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["feeder_strategy"] == "preview_only_ranked_origin"
+    assert explanation["native_eligibility"]["code"] == "native_live_feeder_ranking_required"
+    assert preview.manifest["Sales:Revenue EUR"]["artifact"]["preview_only"] is True
+
+
+def test_compile_preview_keeps_equal_dimension_ranked_origin_preview_only_when_live_rarity_read_fails(monkeypatch):
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Amount": "Numeric", "Revenue EUR": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+            ),
+            "FX Rates": build_static_cube_metadata(
+                "FX Rates",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider, tm1=MockTM1Service())
+    sales = model.cube("Sales")
+    fx = model.cube("FX Rates")
+
+    sales["Revenue EUR"] = sales["Amount"] * fx["Rate"].align()
+
+    monkeypatch.setattr(model, "_count_candidate_origin_nonzero_cells", lambda _candidate: None)
+
+    explanation = model.explain("Sales:Revenue EUR")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["feeder_strategy"] == "preview_only_ranked_origin"
+    assert explanation["native_eligibility"]["code"] == "native_live_feeder_ranking_required"
+    assert preview.manifest["Sales:Revenue EUR"]["artifact"]["preview_only"] is True
+
+
+def test_compile_preview_same_cube_multi_source_defaults_to_ranked_single_and_preview_only_without_tm1():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={
+                    "Revenue": "Numeric",
+                    "Cost": "Numeric",
+                    "Gross Margin": "Numeric",
+                },
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+
+    sales["Gross Margin"] = sales["Revenue"] - sales["Cost"]
+
+    explanation = model.explain("Sales:Gross Margin")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["feeder_mode"] == "ranked_single"
+    assert explanation["feeder_strategy"] == "preview_only_ranked_origin"
+    assert explanation["native_eligibility"]["code"] == "native_live_feeder_ranking_required"
+    assert preview.manifest["Sales:Gross Margin"]["artifact"]["preview_only"] is True
+
+
+def test_compile_preview_same_cube_multi_source_safe_union_keeps_all_feeders():
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={
+                    "Revenue": "Numeric",
+                    "Cost": "Numeric",
+                    "Gross Margin": "Numeric",
+                },
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider)
+    sales = model.cube("Sales")
+
+    sales["Gross Margin"] = (sales["Revenue"] - sales["Cost"]).native(feeder_mode="safe_union")
+
+    explanation = model.explain("Sales:Gross Margin")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["feeder_mode"] == "safe_union"
+    assert preview.feeders["Sales"] == (
+        "['Measure':'Measure':'Cost'] => ['Measure':'Measure':'Gross Margin'];\n"
+        "['Measure':'Measure':'Revenue'] => ['Measure':'Measure':'Gross Margin'];"
+    )
+
+
+def test_compile_preview_ranks_conditional_branch_origins_in_ranked_single_mode(monkeypatch):
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={
+                    "Use Corporate Rate": "Numeric",
+                    "FX Rate Routed": "Numeric",
+                },
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+            ),
+            "Corporate FX": build_static_cube_metadata(
+                "Corporate FX",
+                ["Version", "Company", "TargetCurrency", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "TargetCurrency": "TargetCurrency",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "TargetCurrency": ["TargetCurrency"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={"TargetCurrency": ["EUR"]},
+            ),
+            "Market FX": build_static_cube_metadata(
+                "Market FX",
+                ["Version", "Company", "TargetCurrency", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "TargetCurrency": "TargetCurrency",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "TargetCurrency": ["TargetCurrency"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={"TargetCurrency": ["EUR"]},
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider, tm1=MockTM1Service())
+    sales = model.cube("Sales")
+    corporate_fx = model.cube("Corporate FX")
+    market_fx = model.cube("Market FX")
+
+    sales["FX Rate Routed"] = model.case(
+        (sales["Use Corporate Rate"] != 0, corporate_fx["Rate"].align(TargetCurrency="EUR")),
+        default=market_fx["Rate"].align(TargetCurrency="EUR"),
+    )
+
+    def _fake_count(candidate):
+        return 1 if candidate.cube_name == "Corporate FX" else 9
+
+    monkeypatch.setattr(model, "_count_candidate_origin_nonzero_cells", _fake_count)
+
+    explanation = model.explain("Sales:FX Rate Routed")
+    preview = model.compile(dry_run=True)
+
+    assert explanation["feeder_mode"] == "ranked_single"
+    assert explanation["feeder_strategy"] == "ranked_cross_cube_direct_origin"
+    assert explanation["selected_feeder_origin"] == "Corporate FX::Rate::TargetCurrency=EUR"
+    assert "Corporate FX" in preview.feeders
+    assert "Market FX" not in preview.feeders
+
+
+def test_compile_preview_prefers_more_fixed_coordinates_when_equal_dimension_and_fill(monkeypatch):
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Amount": "Numeric", "Revenue EUR": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={"Company": ["ACME"]},
+            ),
+            "FX Rates": build_static_cube_metadata(
+                "FX Rates",
+                ["Version", "Currency", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Currency": "Currency",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Currency": ["Currency"],
+                    "Measure": ["Measure"],
+                },
+                dimension_leaf_elements={"Currency": ["EUR"]},
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider, tm1=MockTM1Service())
+    sales = model.cube("Sales")
+    fx = model.cube("FX Rates")
+
+    sales["Revenue EUR"] = sales["Amount"] * fx["Rate"].align(Currency="EUR")
+
+    def _fake_count(_candidate):
+        return 5
+
+    monkeypatch.setattr(model, "_count_candidate_origin_nonzero_cells", _fake_count)
+
+    explanation = model.explain("Sales:Revenue EUR")
+    preview = model.compile(dry_run=True)
+
+    assert "more fixed/current coordinates" in explanation["feeder_rationale"]
+    assert preview.feeders["FX Rates"] == (
+        "[!Version, 'Currency':'Currency':'EUR', 'Measure':'Measure':'Rate'] => "
+        "DB('Sales', !Version, 'Company':'Company':'ACME', 'Measure':'Measure':'Revenue EUR');"
+    )
+    assert "Sales" not in preview.feeders
+
+
+def test_compile_preview_prefers_same_cube_when_equal_dimension_fill_and_fixed(monkeypatch):
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Amount": "Numeric", "Revenue EUR": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+            ),
+            "FX Rates": build_static_cube_metadata(
+                "FX Rates",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider, tm1=MockTM1Service())
+    sales = model.cube("Sales")
+    fx = model.cube("FX Rates")
+
+    sales["Revenue EUR"] = sales["Amount"] * fx["Rate"].align()
+
+    def _fake_count(_candidate):
+        return 5
+
+    monkeypatch.setattr(model, "_count_candidate_origin_nonzero_cells", _fake_count)
+
+    explanation = model.explain("Sales:Revenue EUR")
+    preview = model.compile(dry_run=True)
+
+    assert "same-cube preference" in explanation["feeder_rationale"]
+    assert preview.feeders["Sales"] == "['Measure':'Measure':'Amount'] => ['Measure':'Measure':'Revenue EUR'];"
+    assert "FX Rates" not in preview.feeders
+
+
+def test_ranked_origin_traceback_uses_true_upstream_base_driver(monkeypatch):
+    provider = StaticMetadataProvider(
+        {
+            "Sales": build_static_cube_metadata(
+                "Sales",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={
+                    "Revenue": "Numeric",
+                    "Base Amount": "Numeric",
+                    "Revenue EUR": "Numeric",
+                },
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+            ),
+            "FX Rates": build_static_cube_metadata(
+                "FX Rates",
+                ["Version", "Company", "Measure"],
+                default_hierarchies={
+                    "Version": "Version",
+                    "Company": "Company",
+                    "Measure": "Measure",
+                },
+                measure_element_types={"Rate": "Numeric"},
+                dimension_hierarchies={
+                    "Version": ["Version"],
+                    "Company": ["Company"],
+                    "Measure": ["Measure"],
+                },
+            ),
+        }
+    )
+    model = Model(metadata_provider=provider, tm1=MockTM1Service())
+    sales = model.cube("Sales")
+    fx = model.cube("FX Rates")
+
+    sales["Base Amount"] = sales["Revenue"]
+    sales["Revenue EUR"] = sales["Base Amount"] * fx["Rate"].align()
+
+    def _fake_count(candidate):
+        return 1 if candidate.cube_name == "Sales" else 10
+
+    monkeypatch.setattr(model, "_count_candidate_origin_nonzero_cells", _fake_count)
+
+    explanation = model.explain("Sales:Revenue EUR")
+
+    same_cube_candidate = next(
+        candidate for candidate in explanation["feeder_origin_candidates"]
+        if candidate["cube"] == "Sales"
+    )
+    assert same_cube_candidate["measures"] == ["Revenue"]
 
 
 def test_compile_preview_expands_consolidated_fixed_source_elements_to_leaf_feeders():
@@ -2159,7 +2647,7 @@ def test_compile_preview_emits_conditional_cross_cube_branch_feeders_for_case_ex
     sales["FX Rate Chosen"] = model.case(
         (sales["Use EUR"] != 0, fx["Rate"].align(TargetCurrency="EUR")),
         default=fx["Rate"].align(TargetCurrency="USD"),
-    )
+    ).native(feeder_mode="safe_union")
 
     explanation = model.explain("Sales:FX Rate Chosen")
     preview = model.compile(dry_run=True)
@@ -2237,7 +2725,7 @@ def test_compile_preview_emits_conditional_cross_cube_branch_feeders_for_where_e
     sales["FX Rate Guarded"] = fx["Rate"].align(
         Currency=sales.Company.attribute("Currency"),
         TargetCurrency="EUR",
-    ).where(sales["Enable FX"] != 0)
+    ).where(sales["Enable FX"] != 0).native(feeder_mode="safe_union")
 
     explanation = model.explain("Sales:FX Rate Guarded")
     preview = model.compile(dry_run=True)
@@ -2321,7 +2809,7 @@ def test_compile_preview_emits_mixed_conditional_cross_cube_branch_feeders_from_
             Region=sales.Company.attribute("Region"),
             TargetCurrency="USD",
         ),
-    )
+    ).native(feeder_mode="safe_union")
 
     explanation = model.explain("Sales:FX Rate Mixed")
     preview = model.compile(dry_run=True)
@@ -2415,7 +2903,7 @@ def test_compile_preview_emits_conditional_cross_cube_branch_feeders_from_multip
     sales["FX Rate Routed"] = model.case(
         (sales["Use Corporate Rate"] != 0, corporate_fx["Rate"].align(TargetCurrency="EUR")),
         default=market_fx["Rate"].align(TargetCurrency="EUR"),
-    )
+    ).native(feeder_mode="safe_union")
 
     explanation = model.explain("Sales:FX Rate Routed")
     preview = model.compile(dry_run=True)
@@ -2495,7 +2983,7 @@ def test_compile_preview_emits_conditional_cross_cube_branch_feeders_for_paramet
     sales["FX Rate Param Gated"] = model.case(
         (fx["Use Flag"].align(TargetCurrency="EUR") != 0, sales["Local Rate"]),
         default=sales["Fallback Rate"],
-    )
+    ).native(feeder_mode="safe_union")
 
     explanation = model.explain("Sales:FX Rate Param Gated")
     preview = model.compile(dry_run=True)
@@ -3234,7 +3722,7 @@ def test_compile_deploys_conditional_cross_cube_branch_feeders_from_multiple_sou
     sales["FX Rate Routed"] = model.case(
         (sales["Use Corporate Rate"] != 0, corporate_fx["Rate"].align(TargetCurrency="EUR")),
         default=market_fx["Rate"].align(TargetCurrency="EUR"),
-    )
+    ).native(feeder_mode="safe_union")
 
     result = model.compile(dry_run=False)
 
@@ -3272,7 +3760,7 @@ def test_compile_deploys_native_rule_artifacts_when_metadata_is_ready():
 
     model = Model(tm1=tm1)
     sales = model.cube("Sales")
-    sales["Gross Margin"] = sales["Revenue"] - sales["Cost"]
+    sales["Gross Margin"] = (sales["Revenue"] - sales["Cost"]).native(feeder_mode="safe_union")
 
     result = model.compile(dry_run=False)
 
@@ -3297,7 +3785,7 @@ def test_compile_deploys_native_rule_artifacts_when_metadata_is_ready():
 def test_compile_blocks_live_deployment_when_native_metadata_is_missing():
     model = Model(tm1=MockTM1Service())
     sales = model.cube("Sales")
-    sales["Gross Margin"] = sales["Revenue"] - sales["Cost"]
+    sales["Gross Margin"] = (sales["Revenue"] - sales["Cost"]).native(feeder_mode="safe_union")
 
     with pytest.raises(DeploymentError, match="required metadata is missing"):
         model.compile(dry_run=False)
@@ -3313,7 +3801,7 @@ def test_compile_raises_when_tm1_rule_check_fails():
 
     model = Model(tm1=tm1)
     sales = model.cube("Sales")
-    sales["Gross Margin"] = sales["Revenue"] - sales["Cost"]
+    sales["Gross Margin"] = (sales["Revenue"] - sales["Cost"]).native(feeder_mode="safe_union")
 
     with pytest.raises(DeploymentError, match="TM1 rule validation failed"):
         model.compile(dry_run=False)
@@ -4217,14 +4705,10 @@ def test_compile_deploys_fan_out_allocation_of_a_broadcast_total_weighted_by_a_s
     assert preview.feeders["CostCenter"] == (
         "['Measure':'Measure':'Weight Pct'] => ['Measure':'Measure':'Allocated Amount'];"
     )
-    assert preview.feeders["Budget"] == (
-        "[!Version, !Department, 'Measure':'Measure':'Total Amount'] => "
-        "DB('CostCenter', !Version, !Department, 'CostCenter':'CostCenter':'CC100', "
-        "'Measure':'Measure':'Allocated Amount'), DB('CostCenter', !Version, !Department, "
-        "'CostCenter':'CostCenter':'CC200', 'Measure':'Measure':'Allocated Amount');"
-    )
+    assert "Budget" not in preview.feeders
+    assert "higher dimension count" in explanation["feeder_rationale"]
     assert preview.manifest["CostCenter:Allocated Amount"]["artifact"]["preview_only"] is False
 
     deployment = model.compile(dry_run=False)
     assert deployment.deployment["CostCenter"]["deployed"] is True
-    assert deployment.deployment["Budget"]["deployed"] is True
+    assert "Budget" not in deployment.deployment
