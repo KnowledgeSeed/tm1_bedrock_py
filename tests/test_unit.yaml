@@ -1283,31 +1283,31 @@ test_dataframe_value_scale:
 test_dataframe_itemskip_elements:
   -
     source: {
-      "A": [ "apple", "banana", "cherry", "date" ],
-      "B": [ "x", "y", "z", "w" ],
-      "Value": [ 10, 20, 30, 40 ]
+      "a": [ "apple", "banana", "cherry", "date" ],
+      "b": [ "x", "y", "z", "w" ],
+      "value": [ 10, 20, 30, 40 ]
     }
-    check1: {"A": ["apple", "cherry"]}
-    check2: {"B": ["x", "y"]}
+    check1: {"a": ["apple", "cherry"]}
+    check2: {"b": ["x", "y"]}
     defaults: {}
     expected: {
-      "A": [ "apple" ],
-      "B": [ "x" ],
-      "Value": [ 10 ]
+      "a": [ "apple" ],
+      "b": [ "x" ],
+      "value": [ 10 ]
     }
   -
     source: {
-      "A": [ "apple", "banana", "cherry", "date" ],
-      "B": [ "x", "y", "z", "w" ],
-      "Value": [ 10, 20, 30, 40 ]
+      "a": [ "apple", "banana", "cherry", "date" ],
+      "b": [ "x", "y", "z", "w" ],
+      "value": [ 10, 20, 30, 40 ]
     }
-    check1: { "A": [ "apple", "cherry", "default_elem" ] }
-    check2: { "B": [ "x", "y" ] }
-    defaults: {"A": "default_elem"}
+    check1: { "a": [ "apple", "cherry", "default_elem" ] }
+    check2: { "b": [ "x", "y" ] }
+    defaults: {"a": "default_elem"}
     expected: {
-      "A": [ "apple", "default_elem" ],
-      "B": [ "x", "y" ],
-      "Value": [ 10, 20 ]
+      "a": [ "apple", "default_elem" ],
+      "b": [ "x", "y" ],
+      "value": [ 10, 20 ]
     }
 
 test_dataframe_validate_datatypes:

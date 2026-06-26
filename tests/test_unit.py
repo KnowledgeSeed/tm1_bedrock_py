@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 import pandas as pd
 import parametrize_from_file
 import pytest
@@ -859,12 +860,73 @@ def test_dataframe_value_scale(dataframe, expected_dataframe):
 def test_dataframe_itemskip_elements(source, check1, check2, defaults, expected):
     utility.set_logging_level("DEBUG")
     df = pd.DataFrame(source)
-    check_dfs = {'A': pd.DataFrame(check1), 'B': pd.DataFrame(check2)}
+    check_dfs = {'a': pd.DataFrame(check1), 'b': pd.DataFrame(check2)}
     expected_df = pd.DataFrame(expected)
     transformer.dataframe_itemskip_elements(dataframe=df, check_dfs=check_dfs, fallback_elements=defaults)
     print(df)
     print(expected_df)
     pd.testing.assert_frame_equal(df, expected_df)
+
+
+def test_dataframe_itemskip_elements_case_and_space_insensitive_with_fallback():
+    df = pd.DataFrame({
+        "versionrep": [" actual ", "budget", "Fcst"],
+        "measure": [" x ", "Y", "z"],
+        "value": [10, 20, 30]
+    })
+    check_dfs = {
+        "versionrep": pd.DataFrame({"versionrep": ["Actual", "Fcst", "Fallback"]}),
+        "measure": pd.DataFrame({"measure": ["X", "Y", "Z"]})
+    }
+    expected_df = pd.DataFrame({
+        "versionrep": [" actual ", "fallback", "Fcst"],
+        "measure": [" x ", "Y", "z"],
+        "value": [10, 20, 30]
+    })
+
+    transformer.dataframe_itemskip_elements(
+        dataframe=df,
+        check_dfs=check_dfs,
+        fallback_elements={"versionrep": "Fallback"}
+    )
+
+    pd.testing.assert_frame_equal(df, expected_df)
+
+
+def test_dataframe_itemskip_elements_case_and_space_insensitive_return_dropped_rows():
+    df = pd.DataFrame({
+        "versionrep": [" actual ", "budget", None, "Fcst"],
+        "measure": [" x ", "bad", "Y", "z"],
+        "value": [10, 20, 30, 40]
+    })
+    check_dfs = {
+        "versionrep": pd.DataFrame({"versionrep": ["Actual", "Fcst"]}),
+        "measure": pd.DataFrame({"measure": ["X", "Y", "Z"]})
+    }
+    expected_df = pd.DataFrame({
+        "versionrep": [" actual ", "Fcst"],
+        "measure": [" x ", "z"],
+        "value": [10, 40]
+    })
+    expected_dropped = pd.DataFrame({
+        "versionrep": [None, "budget", "budget"],
+        "measure": ["Y", "bad", "bad"],
+        "value": [30, 20, 20],
+        "Itemskip:NaN:versionrep": [1.0, np.nan, np.nan],
+        "Itemskip:NaN:measure": [np.nan, np.nan, np.nan],
+        "Itemskip:NaN:value": [np.nan, np.nan, np.nan],
+        "Itemskip:Missing:versionrep": [np.nan, 1.0, np.nan],
+        "Itemskip:Missing:measure": [np.nan, np.nan, 1.0]
+    })
+
+    dropped = transformer.dataframe_itemskip_elements(
+        dataframe=df,
+        check_dfs=check_dfs,
+        return_dropped_rows=True
+    )
+
+    pd.testing.assert_frame_equal(df, expected_df)
+    pd.testing.assert_frame_equal(dropped.reset_index(drop=True), expected_dropped)
 
 
 @parametrize_from_file

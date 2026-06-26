@@ -444,12 +444,28 @@ def dataframe_itemskip_elements(
         fallback_elements: Optional[Dict[str, str]] = None,
         logging_enabled: Optional[bool] = False,
         raise_error_if_missing_found: Optional[bool] = False,
-        case_and_space_insensitive_inputs: Optional[bool] = False,
         query_mode: Literal['bulk', 'on_demand'] = 'bulk',
         check_missing_elements_audit: bool = False,
         return_dropped_rows: bool = False,
         **_kwargs: Any
 ) -> Optional[DataFrame]:
+    case_and_space_insensitive_inputs: Optional[bool] = True
+    dataframe_copy = dataframe.copy()
+    def _normalize_check_dfs(
+            input_check_dfs: Optional[Dict[str, pd.DataFrame]]
+    ) -> Optional[Dict[str, pd.DataFrame]]:
+        if input_check_dfs is None:
+            return None
+
+        normalized_check_dfs = {}
+        for dimension_name, validation_dataframe in input_check_dfs.items():
+            normalized_dimension_name = utility.normalize_string(dimension_name)
+            if validation_dataframe is not None:
+                utility.normalize_dataframe_strings(validation_dataframe)
+            normalized_check_dfs[normalized_dimension_name] = validation_dataframe
+
+        return normalized_check_dfs
+
     if query_mode == 'on_demand' and tm1_service is None:
         raise ValueError("TM1Service object is mandatory for on_demand mode.")
 
@@ -470,27 +486,39 @@ def dataframe_itemskip_elements(
     fallback_elements = fallback_elements or {}
 
     if case_and_space_insensitive_inputs:
-        utility.normalize_dataframe_strings(dataframe)
-        check_dfs = utility.normalize_structure_strings(check_dfs)
+        utility.normalize_dataframe_strings(dataframe_copy)
+        check_dfs = _normalize_check_dfs(check_dfs)
+        check_hierarchies = utility.normalize_structure_strings(check_hierarchies)
         fallback_elements = utility.normalize_structure_strings(fallback_elements)
         check_dimensions = utility.normalize_structure_strings(check_dimensions)
 
-    global_nan_mask = np.ones(len(dataframe), dtype=bool)
+    nan_drop_mask = dataframe_copy.isna().any(axis=1).to_numpy()
+
     nan_dropped_dataframe = pd.DataFrame()
-    for column in dataframe.columns:
-        current_nan_mask = dataframe[column].isna()
-        current_dropped = dataframe[current_nan_mask].copy()
 
-        if not current_dropped.empty:
-            current_dropped[f"Itemskip:NaN:{column}"] = 1
-            nan_dropped_dataframe = pd.concat([nan_dropped_dataframe, current_dropped])
+    if return_dropped_rows and nan_drop_mask.any():
+        nan_dropped_dataframe = dataframe.loc[nan_drop_mask].copy()
 
-        global_nan_mask &= current_nan_mask
+        for column in dataframe_copy.columns:
+            column_nan_mask = dataframe_copy[column].isna().to_numpy()
+            nan_dropped_dataframe.loc[
+                column_nan_mask[nan_drop_mask],
+                f"Itemskip:NaN:{column}"
+            ] = 1
 
-    dataframe.drop(index=dataframe.index[global_nan_mask], inplace=True)
+    dataframe.drop(
+        index=dataframe.index[nan_drop_mask],
+        inplace=True
+    )
+    dataframe_copy.drop(
+        index=dataframe_copy.index[nan_drop_mask],
+        inplace=True
+    )
+
     dataframe.reset_index(drop=True, inplace=True)
+    dataframe_copy.reset_index(drop=True, inplace=True)
 
-    global_validity_mask = np.ones(len(dataframe), dtype=bool)
+    global_validity_mask = np.ones(len(dataframe_copy), dtype=bool)
     invalid_records_dataframe = pd.DataFrame()
     exit_with_error = False
 
@@ -504,7 +532,7 @@ def dataframe_itemskip_elements(
     for dimension_name in check_dimensions:
         dimension_prefix = f"{dimension_name}@"
         matching_dataframe_columns = [
-            column_name for column_name in dataframe.columns
+            column_name for column_name in dataframe_copy.columns
             if
             column_name == dimension_name or (check_missing_elements_audit and column_name.startswith(dimension_prefix))
         ]
@@ -513,9 +541,9 @@ def dataframe_itemskip_elements(
             if query_mode == 'bulk':
                 validation_dataframe = check_dfs[dimension_name]
                 valid_elements_set = set(validation_dataframe[dimension_name])
-                current_column_validity_mask = dataframe[dataframe_column].isin(valid_elements_set).to_numpy()
+                current_column_validity_mask = dataframe_copy[dataframe_column].isin(valid_elements_set).to_numpy()
             else:
-                unique_element_list = dataframe[dataframe_column].astype(str).unique().tolist()
+                unique_element_list = dataframe_copy[dataframe_column].astype(str).unique().tolist()
                 element_validity_map = {
                     element_name: tm1_service.elements.exists(
                         tm1_service=tm1_service,
@@ -525,7 +553,7 @@ def dataframe_itemskip_elements(
                     )
                     for element_name in unique_element_list
                 }
-                current_column_validity_mask = dataframe[dataframe_column].map(element_validity_map).to_numpy()
+                current_column_validity_mask = dataframe_copy[dataframe_column].map(element_validity_map).to_numpy()
 
             if not current_column_validity_mask.all():
                 fallback_value = fallback_elements.get(dimension_name)
@@ -536,6 +564,7 @@ def dataframe_itemskip_elements(
                             f"Records of dimension {dimension_name} that will be changed to default '{fallback_value}'")
                         basic_logger.debug(invalid_records_dataframe)
 
+                    dataframe_copy.loc[~current_column_validity_mask, dataframe_column] = fallback_value
                     dataframe.loc[~current_column_validity_mask, dataframe_column] = fallback_value
                 else:
                     if logging_enabled:
@@ -563,12 +592,18 @@ def dataframe_itemskip_elements(
     if exit_with_error:
         raise ValueError("Invalid records found with raise error mode enabled, exiting...")
 
-    dataframe.drop(index=dataframe.index[~global_validity_mask], inplace=True)
+    invalid_drop_mask = ~global_validity_mask
+
+    dataframe.drop(
+        index=dataframe.index[invalid_drop_mask],
+        inplace=True
+    )
     dataframe.reset_index(drop=True, inplace=True)
 
     if return_dropped_rows:
         return pd.concat([nan_dropped_dataframe, invalid_records_dataframe], ignore_index=True)
 
+    del dataframe_copy
     return None
 
 
