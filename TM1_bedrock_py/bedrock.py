@@ -303,13 +303,16 @@ def dimension_builder(
         basic_logger.warning("Update mode doesnt allow type change, parameter was set to false")
         allow_type_changes = False
 
-    if override_input_edges_df is not None or override_input_elements_df is not None:
-        if override_input_edges_df is None or override_input_elements_df is None:
-            raise ValueError(
-                "Both 'override_input_edges_df' and 'override_input_elements_df' must be provided together."
-            )
+    # Copied flat dimensions / hierarchies can legitimately have elements but no parent-child edges.
+    # `override_input_elements_df` is therefore the required signal for override mode, while
+    # `override_input_edges_df` may remain None for edge-less structures retrieved from TM1.
+    if override_input_elements_df is not None:
         input_edges_df = override_input_edges_df
         input_elements_df = override_input_elements_df
+    elif override_input_edges_df is not None:
+        raise ValueError(
+            "'override_input_elements_df' is required when using override input dataframes."
+        )
     else:
         input_edges_df, input_elements_df = apply.init_input_schema(
             dimension_name=dimension_name, hierarchy_name=hierarchy_name, input_format=input_format,
@@ -430,13 +433,16 @@ def hierarchy_builder(
     )
     validation.validate_choice("output_mode", output_mode, {"build", "build_and_output", "output"})
 
-    if override_input_edges_df is not None or override_input_elements_df is not None:
-        if override_input_edges_df is None or override_input_elements_df is None:
-            raise ValueError(
-                "Both 'override_input_edges_df' and 'override_input_elements_df' must be provided together."
-            )
+    # Copied flat dimensions / hierarchies can legitimately have elements but no parent-child edges.
+    # `override_input_elements_df` is therefore the required signal for override mode, while
+    # `override_input_edges_df` may remain None for edge-less structures retrieved from TM1.
+    if override_input_elements_df is not None:
         input_edges_df = override_input_edges_df
         input_elements_df = override_input_elements_df
+    elif override_input_edges_df is not None:
+        raise ValueError(
+            "'override_input_elements_df' is required when using override input dataframes."
+        )
     else:
         input_edges_df, input_elements_df = apply.init_input_schema(
             dimension_name=dimension_name, hierarchy_name=hierarchy_name, input_format=input_format,

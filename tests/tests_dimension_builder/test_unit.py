@@ -928,7 +928,60 @@ def test_apply_updates_success(
     pd.testing.assert_frame_equal(output_elements_df, expected_elements_df)
 
 
-def test_dimension_builder_override_requires_both_dataframes():
+def test_dimension_builder_override_accepts_edge_less_structure(monkeypatch):
+    elements_df = pd.DataFrame(
+        {
+            "ElementName": ["A", "B"],
+            "ElementType": ["Numeric", "Numeric"],
+            "Dimension": ["Dim1", "Dim1"],
+            "Hierarchy": ["Dim1", "Dim1"],
+        }
+    )
+    existing_elements_df = elements_df.copy()
+    captured = {}
+
+    monkeypatch.setattr(
+        apply,
+        "init_existing_schema_for_builder",
+        lambda **_kwargs: (None, existing_elements_df),
+    )
+    monkeypatch.setattr(
+        apply,
+        "resolve_schema",
+        lambda **kwargs: (
+            captured.update(
+                {
+                    "input_edges_df": kwargs["input_edges_df"],
+                    "input_elements_df": kwargs["input_elements_df"],
+                }
+            )
+            or (kwargs["input_edges_df"], kwargs["input_elements_df"])
+        ),
+    )
+    monkeypatch.setattr(apply, "build_dimension_object", lambda **_kwargs: object())
+    monkeypatch.setattr(apply, "apply_hierarchy_sort_order_attributes", lambda *_args, **_kwargs: None)
+
+    class DummyDimensions:
+        def update_or_create(self, _dimension):
+            return None
+
+    class DummyTm1Service:
+        dimensions = DummyDimensions()
+
+    bedrock.dimension_builder(
+        dimension_name="Dim1",
+        input_format="parent_child",
+        build_strategy="rebuild",
+        tm1_service=DummyTm1Service(),
+        override_input_edges_df=None,
+        override_input_elements_df=elements_df,
+    )
+
+    assert captured["input_edges_df"] is None
+    pd.testing.assert_frame_equal(captured["input_elements_df"], elements_df)
+
+
+def test_dimension_builder_override_requires_elements_dataframe():
     with pytest.raises(ValueError) as excinfo:
         bedrock.dimension_builder(
             dimension_name="Dim1",
@@ -938,7 +991,7 @@ def test_dimension_builder_override_requires_both_dataframes():
             override_input_edges_df=pd.DataFrame({"Parent": ["Total"], "Child": ["A"]})
         )
 
-    assert "must be provided together" in str(excinfo.value)
+    assert "'override_input_elements_df' is required" in str(excinfo.value)
 
 
 def test_read_yaml_source_to_df_rejects_empty_list(tmp_path):
