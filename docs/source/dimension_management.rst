@@ -105,8 +105,8 @@ Build strategies:
 
 ``update``
    Apply additions and changes while preserving compatible legacy elements.
-   Legacy child relationships omitted from the input are reparented under the
-   orphan consolidation instead of being left untouched.
+   Existing child relationships omitted from the input remain unchanged.
+   Update mode does not generate an orphan consolidation.
 
 Common data sources
 -------------------

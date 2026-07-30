@@ -38,3 +38,6 @@ tests_integration_airflow/.db
 
 # testbench and benchpy
 schema/
+
+# Local TM1 Bedrock deployments
+.tm1_bedrock_deployments/

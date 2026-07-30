@@ -51,6 +51,22 @@ def test_get_legacy_edges_success(existing_df, input_df, expected_df):
     )
 
 
+def test_get_legacy_edges_returns_existing_edges_when_input_has_no_edges():
+    existing_df = pd.DataFrame(
+        {
+            "Parent": ["Total"],
+            "Child": ["A"],
+            "Dimension": ["Dim1"],
+            "Hierarchy": ["H1"],
+        }
+    )
+
+    output_df = utility.get_legacy_edges(existing_df=existing_df, input_df=None)
+
+    pd.testing.assert_frame_equal(output_df, existing_df)
+    assert output_df is not existing_df
+
+
 @parametrize_from_file
 def test_get_legacy_elements_success(existing_df, input_df, expected_df):
     existing_df = pd.DataFrame(existing_df)
@@ -903,6 +919,10 @@ def test_apply_update_on_elements_success(legacy_df, input_df, expected_df):
     pd.testing.assert_frame_equal(output_df, expected_df)
 
 
+def test_apply_dataframe_union_returns_none_when_both_dataframes_are_missing():
+    assert apply.apply_dataframe_union(legacy_df=None, input_df=None) is None
+
+
 @parametrize_from_file
 def test_apply_updates_success(
         mode, existing_edges_df, input_edges_df, existing_elements_df,
@@ -910,10 +930,10 @@ def test_apply_updates_success(
         expected_edges_df, expected_elements_df
 ):
     existing_edges_df = None if existing_edges_df is None else pd.DataFrame(existing_edges_df)
-    input_edges_df = pd.DataFrame(input_edges_df)
+    input_edges_df = None if input_edges_df is None else pd.DataFrame(input_edges_df)
     existing_elements_df = pd.DataFrame(existing_elements_df)
     input_elements_df = pd.DataFrame(input_elements_df)
-    expected_edges_df = pd.DataFrame(expected_edges_df)
+    expected_edges_df = None if expected_edges_df is None else pd.DataFrame(expected_edges_df)
     expected_elements_df = pd.DataFrame(expected_elements_df)
     output_edges_df, output_elements_df = apply.apply_updates(
         mode=mode,
@@ -924,7 +944,10 @@ def test_apply_updates_success(
         dimension_name=dimension_name,
         orphan_consolidation_name=orphan_consolidation_name
     )
-    pd.testing.assert_frame_equal(output_edges_df, expected_edges_df)
+    if expected_edges_df is None:
+        assert output_edges_df is None
+    else:
+        pd.testing.assert_frame_equal(output_edges_df, expected_edges_df)
     pd.testing.assert_frame_equal(output_elements_df, expected_elements_df)
 
 

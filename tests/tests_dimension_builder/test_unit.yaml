@@ -1945,16 +1945,37 @@ test_apply_updates_success:
     dimension_name: "Dim1"
     orphan_consolidation_name: "OrphanParent"
     expected_edges_df:
-      Parent: ["Total", "OrphanParent"]
+      Parent: ["Total", "Total"]
       Child: ["A", "B"]
       Weight: [1.0, 1.0]
       Dimension: ["Dim1", "Dim1"]
       Hierarchy: ["H1", "H1"]
     expected_elements_df:
-      ElementName: ["A", "B", "OrphanParent"]
-      ElementType: ["N", "C", "Consolidated"]
-      Dimension: ["Dim1", "Dim1", "Dim1"]
-      Hierarchy: ["H1", "H1", "H1"]
+      ElementName: ["A", "B"]
+      ElementType: ["N", "C"]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["H1", "H1"]
+  - mode: "update"
+    existing_edges_df: null
+    input_edges_df: null
+    existing_elements_df:
+      ElementName: ["A", "B"]
+      ElementType: ["N", "N"]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["Dim1", "Dim1"]
+    input_elements_df:
+      ElementName: ["A"]
+      ElementType: ["N"]
+      Dimension: ["Dim1"]
+      Hierarchy: ["Dim1"]
+    dimension_name: "Dim1"
+    orphan_consolidation_name: "OrphanParent"
+    expected_edges_df: null
+    expected_elements_df:
+      ElementName: ["A", "B"]
+      ElementType: ["N", "N"]
+      Dimension: ["Dim1", "Dim1"]
+      Hierarchy: ["Dim1", "Dim1"]
 
 test_init_input_schema_success:
   - input_datasource: "dummy.csv"

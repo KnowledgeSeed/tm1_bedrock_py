@@ -129,10 +129,13 @@ def assign_root_orphan_edges(
 
 @baseutils.log_exec_metrics
 def apply_dataframe_union(
-        legacy_df: pd.DataFrame, input_df: pd.DataFrame,
+        legacy_df: Optional[pd.DataFrame], input_df: Optional[pd.DataFrame],
         **_kwargs
-) -> pd.DataFrame:
-    return pd.concat([input_df, legacy_df], ignore_index=True).drop_duplicates()
+) -> Optional[pd.DataFrame]:
+    dataframes = [dataframe for dataframe in (input_df, legacy_df) if dataframe is not None]
+    if not dataframes:
+        return None
+    return pd.concat(dataframes, ignore_index=True).drop_duplicates()
 
 
 def refresh_legacy_attributes(
@@ -172,10 +175,10 @@ _UPDATE_STRATEGIES = {
 @baseutils.log_exec_metrics
 def apply_updates(
         mode: Literal["rebuild", "safe_rebuild", "safe_rebuild_unwind", "update"],
-        existing_edges_df: Optional[pd.DataFrame], input_edges_df: pd.DataFrame,
+        existing_edges_df: Optional[pd.DataFrame], input_edges_df: Optional[pd.DataFrame],
         existing_elements_df: pd.DataFrame, input_elements_df: pd.DataFrame,
         dimension_name: str, orphan_consolidation_name: str = "OrphanParent"
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+) -> Tuple[Optional[pd.DataFrame], pd.DataFrame]:
     if mode == "rebuild":
         return input_edges_df, input_elements_df
 
@@ -199,7 +202,7 @@ def apply_updates(
         orphan_consolidation_name=orphan_consolidation_name
     )
 
-    if mode in ('safe_rebuild', 'safe_rebuild_unwind', 'update'):
+    if mode in ('safe_rebuild', 'safe_rebuild_unwind'):
         updated_elements_df = add_orphan_consolidation_elements(
             elements_df=updated_elements_df, orphan_consolidation_name=orphan_consolidation_name,
             dimension_name=dimension_name, retained_hierarchies=retained_element_hierarchies
@@ -335,7 +338,7 @@ def delete_conflicting_elements(tm1_service: Any, conflicts: pd.DataFrame, dimen
 @baseutils.log_exec_metrics
 def resolve_schema(
         dimension_name: str, tm1_service: Any,
-        input_edges_df: pd.DataFrame, input_elements_df: pd.DataFrame,
+        input_edges_df: Optional[pd.DataFrame], input_elements_df: pd.DataFrame,
         existing_edges_df: Optional[pd.DataFrame], existing_elements_df: Optional[pd.DataFrame],
         mode: Literal["rebuild", "safe_rebuild", "safe_rebuild_unwind", "update"] = "rebuild",
         allow_type_changes: bool = False,

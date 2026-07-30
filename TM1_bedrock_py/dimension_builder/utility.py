@@ -72,9 +72,13 @@ def parse_attribute_string(
     return func(attr_name_and_type)
 
 
-def get_legacy_edges(existing_df: Optional[pd.DataFrame], input_df: pd.DataFrame) -> Optional[pd.DataFrame]:
+def get_legacy_edges(
+        existing_df: Optional[pd.DataFrame], input_df: Optional[pd.DataFrame]
+) -> Optional[pd.DataFrame]:
     if existing_df is None:
         return None
+    if input_df is None:
+        return existing_df.copy()
 
     keys = ["Parent", "Child", "Dimension", "Hierarchy"]
     merged = existing_df.merge(
